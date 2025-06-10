@@ -27,3 +27,6 @@ dist-ssr
 *.log
 *.zip
 *.DS_Store
+release/
+dist/
+out/
