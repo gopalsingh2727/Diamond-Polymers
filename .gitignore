@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+/dist
+/node_modules
+*.log
+*.zip
+*.DS_Store
