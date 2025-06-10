@@ -1,0 +1,68 @@
+
+  .step-form-wrapper {
+
+    max-width: 28rem;
+    padding: 2rem;
+    border-radius: 1rem;
+    background: white;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  }
+  
+  .form-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e293b;
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+  
+  .step-name-group {
+    margin-bottom: 1.5rem;
+  }
+  
+  .form-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #334155;
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Updated input styling */
+  .form-input {
+
+    color: #1e293b;
+    padding: 0.625rem 1rem;
+    border: none;
+    border-bottom: 2px solid #cbd5e1;
+    background-color: #fff;
+    font-size: 0.875rem;
+    transition: border-color 0.2s ease;
+  }
+
+  
+  /* Select styling */
+  .machine-select {
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%2342485A' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpath d='m6 9 6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1rem;
+    background-color: #fff;
+  }
+  
+  .save-button {
+    width: 100%;
+    padding: 0.75rem 1.5rem;
+    background-color: #3b82f6;
+    color: white;
+    font-weight: 500;
+    border-radius: 0.5rem;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .save-button:hover {
+    background-color: #2563eb;
+  }

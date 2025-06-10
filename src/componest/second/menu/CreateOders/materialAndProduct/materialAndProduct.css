@@ -1,0 +1,434 @@
+/* Material and Product Component Styles - Column Layout */
+
+
+
+/* Header and Main Select */
+.createProductCss > label {
+  display: block;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 12px;
+}
+.createProductCss{
+  padding-top: 10px;
+  justify-content: center;
+  align-items: center;
+  padding-bottom: 10px;
+}
+
+#myDropdown {
+  -webkit-appearance: none;
+  appearance: none;
+  background: none;
+  background-image: url("data:image/svg+xml;utf8,<svg fill='%23334155' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px 16px;
+  padding-right: 40px;
+  border-radius: 8px;
+  font-size: 16px;
+  color: #334155;
+  border: none;
+  transition: all 0.2s ease;
+  padding-left: 12px;
+}
+
+#myDropdown:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+
+
+.SeleteType{
+    border-bottom:  1px  solid #1e293b;
+}
+
+
+.materialInputs{
+  display: flex;
+  flex-direction: row;
+  margin: 10px;
+
+}
+
+.materialInputs .label{
+  margin-right: 100px;
+}
+
+.materialInputs input {
+  margin-right: 10px;
+  background: none ;
+  border: none;
+  color: black;
+}
+
+
+.materialForm {
+  display: flex;
+ 
+  gap: 20px;
+  max-width: 400px;
+ 
+}
+
+.materialForm > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.materialForm label {
+  margin-bottom: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #1e293b;
+}
+
+.materialForm .inputBox {
+  background: none;
+  color: black;
+
+  border: none;
+
+  font-size: 16px;
+}
+
+.materialForm li {
+  list-style: none;
+  font-size: 16px;
+  color: #475569;
+  padding-left: 10px;
+}
+
+.materialForm .inputBox {
+  background: none;
+  color: black;
+  border: none;
+  font-size: 16px;
+  transition: background-color 0.3s ease;
+}
+
+/* 👇 Add this for hover effect */
+.materialForm .inputBox:hover {
+  background-color: #f0f4f8; /* light gray-blue or choose your preferred color */
+}
+
+
+
+.printForm{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  border-top: 1px solid #333;
+  padding: 5px;
+  border-bottom: 1px solid #333
+  ;
+}
+
+
+#printSelect{
+  -webkit-appearance: none;
+  appearance: none;
+  background: none;
+  background-image: url("data:image/svg+xml;utf8,<svg fill='%23334155' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px 16px;
+  padding-right: 40px;
+  border-radius: 8px;
+  font-size: 16px;
+  color: #334155;
+  border: none;
+  transition: all 0.2s ease;
+  padding-left: 12px;
+}
+.imageUpload{
+  display: flex;
+  flex-direction: row;
+  font-size: xx-small;
+}
+
+.printSelectLabel{
+  padding-left: 10px;
+  padding-right: 10px;
+}
+.imageUpload {
+  display: flex; 
+  padding-left: 100px;
+  justify-content: end;
+}
+
+
+.section{
+  display: flex;
+  flex-direction: row;
+  margin: 5px;
+}
+
+.section .inputBox{
+  background: none;
+  color: black;
+  margin-left: 100px;
+  margin-right: 100px;
+  border: none;
+
+  font-size: 16px;
+}
+
+
+.popup-item{
+  display: flex;
+  flex-direction: row;
+
+  color: #0c214e;
+ 
+}
+.popup{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+ 
+
+ 
+}
+
+.popup-content{
+   display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  
+
+
+ 
+}
+
+
+.savedStepDisplay{
+  display: flex;
+  flex-direction: column;
+}
+
+.headerRow{
+  display: grid;
+  grid-template-columns: 130px 150px 150px 80px 80px 180px 40px;
+  gap: 10px;
+  font-weight: bold;
+  border-bottom: 1px solid #333;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.popupitemall{
+  display: grid;
+  grid-template-columns: 130px 150px 150px 80px 80px 180px 40px;
+  gap: 10px;
+  padding-left: 10px;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+
+.popupitemall input {
+  background: none;
+  color: black;
+  border: none;
+
+}
+
+.popupButtons{
+  border-top: #333 1px solid;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+ justify-content: flex-end;
+ padding: 1rem;
+ gap: 10px;
+}
+
+
+
+
+/* Container for the whole saved step block */
+.section-result {
+
+
+ 
+  margin-top: 4px;
+}
+
+/* Header row for the step table */
+.stepHeaderRow {
+  display: grid;
+  grid-template-columns: 40px 130px 150px 80px 80px 80px 150px;
+  gap: 10px;
+  padding-left: 10px;
+
+  font-weight: bold;
+
+}
+
+
+/* Each data row */
+.stepRow {
+  display: grid;
+  grid-template-columns: 40px 130px 150px 80px 80px 80px 150px;
+  gap: 10px;
+  padding-left: 10px;
+
+  align-items: center;
+
+}
+
+
+
+.stepRow:hover {
+  background-color: #e0f2fe;
+}
+
+/* Adjust text inside each cell */
+.stepRow span,
+.stepHeaderRow strong {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+
+.Configured-Step{
+  display: flex;
+  flex-direction: row;
+  border-bottom: 1px solid  #333;
+  border-top: 1px solid  #333;
+  justify-content: end;
+  gap: 12px;
+}
+
+#NotesTextarea{
+  width: 10px;
+  background-color: red;
+}
+
+
+.NotesTextarea {
+    width: 59vh !important;
+    background-color: transparent;
+    height:10px;
+    color: #333;
+    height: 50px !important;
+    padding: 4px; 
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    resize: vertical;
+    font-size: 14px;
+    box-sizing: border-box; /* ensures padding doesn't overflow the width */
+  }
+.NotesTextarea:focus {
+        outline: none;
+        border-color: #4f46e5;
+        box-shadow: 0 0 5px rgba(79, 70, 229, 0.5);
+        background-color: #fff;
+    }
+
+.CreateOrdersFooter{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+}
+
+
+
+
+.CreateOrdersButton {
+  width: 150px;
+  height: 40px;
+  background-color: #0c214e;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+
+}
+.ButtonWrapper {
+  margin-right: 40px;
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  padding: 1rem;
+}
+
+
+.BottomGusset{
+  display: flex;
+  flex-direction: row;
+  border-bottom: 1px solid #000;
+
+}
+
+
+
+
+.bagWeightInput .inputBox {
+  background: none;
+  color: black;
+
+  border: none;
+
+  font-size: 16px;
+}
+
+
+.SeleteType{
+  display: flex;
+  flex-direction: row;
+
+
+}
+
+
+.gussetInputs{
+   display: flex;
+  flex-direction: row;
+
+}
+
+
+
+.bagWeightInput {
+   display: flex;
+  flex-direction: row;
+ 
+}
+
+.BagWeight{
+  padding-left: 10px;
+}
+.bottomGussetSelectandflapandAriHole{
+  display: flex;
+  flex-direction: row;
+}
+
+
+.divRow{
+  display: flex;
+  flex-direction: column;
+  
+
+}
+
+.dimensionInputs{
+  display: flex;
+  flex-direction: row;
+}
+.GusseClassName{
+  display: flex;
+  flex-direction: row;
+}

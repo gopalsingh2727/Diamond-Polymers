@@ -1,0 +1,293 @@
+.CrateOrdersHaders {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; 
+  margin: 2px;
+  position: relative;
+  height: 60px;
+  border-bottom: 1px solid #333;
+}
+.CreateOrdersHaders1 {
+  position: absolute;
+  left:  50%;
+  transform: translateX(-50%);
+}
+
+.CreteOrdersTitel {
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+  text-align: center;
+  margin: 0;
+}
+
+.CreateOrdersBody {
+  display: flex;
+  flex-direction: row;
+}
+
+.createOdersForm {
+  position: absolute;
+  top: 68px; /* directly below header */
+  left: 0;
+  
+  width: 90vw;
+  min-height: calc(100vh - 60px); /* fill remaining screen below header */
+  padding: 15px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+  border-left: #333 solid 1px;
+  border-radius: 16px;
+
+  background-color: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+
+  font-size: 16px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+.sideMenu {
+
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch; /* Makes all <p> tags stretch to full width */
+  gap: 8px; /* Adds spacing between items */
+  padding: 20px;
+  width: 10vw;
+  height: 50vh;
+
+  position: fixed;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  
+  border-left: #333 solid 1px;
+  border-radius: 16px 0 0 16px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  font-size: 16px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  background-color: rgba(255, 255, 255, 0.1); 
+}
+.sideMenu p {
+ 
+  padding: 10px 10px;
+  margin: 0;
+  width: 100%;
+  text-align: left;
+  font-size: clamp(12px, 1.5vw, 16px); 
+  border-radius: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.sideMenu p:hover {
+  background-color: rgba(255, 255, 255, 0.15); /* subtle hover effect */
+}
+
+
+.OrderIDanddata{
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.OrderIDCreate{
+  
+  font-weight: 900;
+  padding-top: 10px;
+  color:#333;
+  text-align: center;
+  margin: 0;
+}
+.CurstomerNameInput {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-bottom: 2px solid #333; /* Use thicker border for better visibility */
+  color: #333;
+  padding: 10px;
+  outline: none; /* Prevent default focus border */
+  width: 30vw;
+  box-sizing: border-box; /* Makes padding not affect width */
+}
+.CurstomerAddressInput{
+  background-color: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-bottom: 0.5px solid #333; /* Use thicker border for better visibility */
+  color: #333;
+  padding: 10px;
+  outline: none; /* Prevent default focus border */
+  width: 50vw;
+  box-sizing: border-box; /* Makes padding not affect width */
+  margin-top: 10px;
+}
+
+.CurstomerInput{
+  background-color: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-bottom: 0.5px solid #333; /* Use thicker border for better visibility */
+  color: #333;
+  padding: 10px;
+  margin-right: 10px;
+  outline: none; /* Prevent default focus border */
+  padding: 10px;
+  box-sizing: border-box; /* Makes padding not affect width */
+  margin-top: 10px;
+}
+
+.CreateOrdersForm{
+  border-bottom: #0c214e  solid 1.2px;
+  padding-bottom: 20px;
+}
+.CreateMaterialInput{
+  background-color: rgba(255, 255, 255, 0.1);
+  border: none;
+  
+  color: #333;
+  padding: 10px;
+  outline: none; /* Prevent default focus border */
+ 
+  box-sizing: border-box; /* Makes padding not affect width */
+}
+.CreateMaterialandProduct{
+
+  width: 100%;
+
+  align-items: center;
+  gap: 20px;
+}
+
+.popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.3); /* overlay */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.popup-content {
+  background-color: white;
+  padding: 20px;
+  border-radius: 16px;
+  min-width: 300px;
+  box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.2);
+}
+.CreateMaterialinput {
+  display: flex; 
+  justify-content: space-between;
+  align-items: center; /* Optional: vertically align input and label */
+  gap: 100px; /* Space between input and label */
+  margin-right: 10px;
+}
+
+
+.ButtonWrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.CreateOrdersButton {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+
+  width: 150px;
+  height: 40px;
+  background-color: #0c214e;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.CreateOrdersFooter {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+}
+
+
+.CreateOrdersButton {
+  width: 150px;
+  height: 40px;
+  background-color: #0c214e;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+  margin-right:50px;
+  margin-bottom:10px ;
+}
+
+.CreateOrdersFooter{
+  display: flex;
+  justify-content: space ;  
+  align-items: center;
+  gap: 20px;
+  margin-top: 20px; 
+}
+
+.CreateOrdersFooter {
+  position: fixed;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  display: flex;
+  
+  align-items: center;
+  padding: 0 20px;
+  z-index: 1000;
+ 
+}
+
+.CreateOrdersFooterbuttom {
+  position: fixed;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end; /* Align content to the right */
+  padding: 0 20px;
+  z-index: 1000;
+}
+
+
+.sideMenu p {
+   font-size: 12px;
+}
+
+
+.sideMenuPtag{
+  margin-top: 100px;
+}
+

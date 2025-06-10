@@ -1,0 +1,21 @@
+.menu-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.menu-item.selected {
+  background-color: #007bff;
+  color: white;
+  border-radius: 4px;
+}
+
+.menu-item.toggle {
+  font-weight: bold;
+}
+
+.menu-divider {
+  margin: 8px 0;
+  border: none;
+  border-bottom: 1px solid #ccc;
+}

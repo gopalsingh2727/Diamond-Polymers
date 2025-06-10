@@ -1,0 +1,90 @@
+.DispatchTabale {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+
+  overflow: hidden;
+}
+.ordersHeaderDispatch{
+  display: flex;
+  position: relative;
+  justify-content: space-between;
+  flex-direction:row;
+  width: 95%;
+  padding: 10px;
+  padding-left: 20px;
+  align-items: center;
+
+
+
+}
+
+
+
+.orderItem{
+  display: flex;
+  position: relative;
+  justify-content: space-between;
+  flex-direction:row;
+  padding-left: 10px;
+  align-items: center;
+  width: 95%;
+  border-bottom: 1px solid #ccc;
+
+  
+ 
+}
+
+.orderItem{
+  cursor: pointer;
+  
+}
+.item-2 {
+   width: 30vh;
+  margin: 0 auto;
+  margin-left: 50%;
+
+
+}
+.item-3{
+  width: 85vw;
+
+}
+
+.ButtonInDispatchDiv{
+   display: flex;
+
+   background: none;
+   color: none
+   ;
+   flex-direction: column;
+
+}
+
+
+.ButtonINDispatch{
+  font-weight: 900;
+
+  background: none !important;
+  color: black !important;
+
+
+}
+
+
+.orderItem.selected {
+  background-color: #007bff;
+  color: white;
+  font-weight: bold;
+  border-radius: 6px;
+  padding: 5px;
+  margin: 10px;
+
+}
+
+.status-list {
+  padding: 8px;
+  margin: 4px 0;
+    border: none !important;
+}
