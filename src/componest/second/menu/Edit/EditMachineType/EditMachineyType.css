@@ -332,3 +332,41 @@
     flex-direction: row;
     justify-content: space-between;
 }
+
+
+.emt-edit-text {
+  cursor: pointer;
+}
+
+.EditMachineType table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.EditMachineType th,
+.EditMachineType td {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+.bg-blue-100 {
+  background-color: #ebf8ff;
+}
+
+.detail-container {
+  padding: 16px;
+  border: 1px solid #ccc;
+}
+
+.TopButtonEdit {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.save-button,
+.Delete {
+  margin-left: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+}

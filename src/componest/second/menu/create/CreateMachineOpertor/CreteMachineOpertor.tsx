@@ -1,26 +1,50 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { getMachines } from "../../../../redux/create/machine/MachineActions";
+import { createOperator } from "../../../../redux/create/CreateMachineOpertor/MachineOpertorActions";
+import { RootState } from "../../../../redux/rootReducer";
 import "./CreateMachineOpertor.css";
+import { AppDispatch } from "../../../../../store";
 
 type OperatorData = {
   username: string;
   password: string;
   confirmPassword: string;
-  pin: string;
-  confirmPin: string;
-  machineName: string;
+  machineId: string;
 };
 
 const CreteMachineOpertor = () => {
+  const dispatch = useDispatch<AppDispatch>();
   const [formData, setFormData] = useState<OperatorData>({
     username: "",
     password: "",
     confirmPassword: "",
-    pin: "",
-    confirmPin: "",
-    machineName: "",
+    machineId: "",
   });
+  const { success, error, loading } = useSelector(
+    (state: RootState) => state.operatorCreate
+  );
 
   const [showPassword, setShowPassword] = useState(false);
+
+  const { machines: machineList } = useSelector(
+    (state: RootState) => state.machineList
+  );
+
+  useEffect(() => {
+    dispatch(getMachines());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (success) {
+      setFormData({
+        username: "",
+        password: "",
+        confirmPassword: "",
+        machineId: "",
+      });
+    }
+  }, [success]);
 
   const handleChange = (field: keyof OperatorData, value: string) => {
     setFormData({ ...formData, [field]: value });
@@ -31,21 +55,19 @@ const CreteMachineOpertor = () => {
       alert("Passwords do not match!");
       return;
     }
-    if (formData.pin !== formData.confirmPin) {
-      alert("PINs do not match!");
+
+    if (!formData.username || !formData.password || !formData.machineId) {
+      alert("All fields are required!");
       return;
     }
 
-    // dispatch(addOperator(formData));
-    
-    setFormData({
-      username: "",
-      password: "",
-      confirmPassword: "",
-      pin: "",
-      confirmPin: "",
-      machineName: "",
-    });
+    dispatch(
+      createOperator({
+        username: formData.username,
+        password: formData.password,
+        machineId: formData.machineId,
+      })
+    );
   };
 
   return (
@@ -63,7 +85,7 @@ const CreteMachineOpertor = () => {
           />
         </div>
       </div>
-    
+
       {/* Row 2: Password + Confirm Password */}
       <div className="form-column">
         <div className="form-input-group">
@@ -123,55 +145,34 @@ const CreteMachineOpertor = () => {
           </div>
         </div>
       </div>
-    
-      {/* Row 3: PIN + Confirm PIN */}
+
+      {/* Row 3: Machine Name Dropdown */}
       <div className="form-column">
         <div className="form-input-group">
-          <label className="input-label">PIN</label>
-          <input
-            type="text"
-            value={formData.pin}
-            onChange={(e) => handleChange("pin", e.target.value)}
+          <label className="input-label">Machine</label>
+          <select
+            value={formData.machineId}
+            onChange={(e) => handleChange("machineId", e.target.value)}
             className="form-input"
-            placeholder="Enter PIN"
-          />
-        </div>
-        <div className="form-input-group">
-          <label className="input-label">Confirm PIN</label>
-          <input
-            type="text"
-            value={formData.confirmPin}
-            onChange={(e) => handleChange("confirmPin", e.target.value)}
-            className="form-input"
-            placeholder="Confirm PIN"
-          />
-        </div>
-      </div>
-    
-      {/* Row 4: Machine Name */}
-      <div className="form-column">
-        <div className="form-input-group">
-          <label className="input-label">Machine Name</label>
-          <input
-            type="text"
-            value={formData.machineName}
-            onChange={(e) => handleChange("machineName", e.target.value)}
-            className="form-input"
-            placeholder="Enter machine name"
-          />
+          >
+            <option value="">Select machine</option>
+            {machineList.map((machine: any) => (
+              <option key={machine._id} value={machine._id}>
+                {machine.machineName} ({machine.machineType?.type || machine.machineType})
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
       {/* Submit Button */}
       <div className="form-column">
         <div className="form-input-group">
-          <button
-            type="button"
-            onClick={handleSubmit}
-            className="save-button"
-          >
-            Submit
+          <button type="button" onClick={handleSubmit} className="save-button" disabled={loading}>
+            {loading ? "Submitting..." : "Submit"}
           </button>
+          {success && <div className="success-msg">Operator created successfully!</div>}
+          {error && <div className="error-msg">{error}</div>}
         </div>
       </div>
     </div>

@@ -1,13 +1,19 @@
 {
   "name": "electron-vite-project",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.0.1",
   "type": "module",
+  "appId": "com.27Infinity.27this",
+  "repository": {
+  "type": "git",
+  "url": "git@github.com:gopalsingh2727/Diamond-Polymers.git"
+},
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build && electron-builder",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "build:win": "electron-builder --win"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",

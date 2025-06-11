@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, ChangeEvent } from "react";
 import "./materialAndProduct.css";
 import Data from "../../../../allCompones/date";
-import PrintOrder from './print';
+// import PrintOrder from './print';
 // ================ Type Definitions ================
 type Product = {
   name: string;
@@ -15,6 +15,8 @@ type Material = {
   totalWeight: string;
   onePieceWeight: string;
   totalPieces: string;
+  weight: number;
+  percentage: number;
 };
 
 type StepEntry = {
@@ -88,26 +90,26 @@ const MaterialAndProduct: React.FC = () => {
   const [height, setHeight] = useState("");
   const [gauge, setGauge] = useState("");
 
-const [isPrinting, setIsPrinting] = useState(false);
-const [orderDate, setOrderDate] = useState('');
+// const [isPrinting, setIsPrinting] = useState(false);
+// const [orderDate, setOrderDate] = useState('');
 
-useEffect(() => {
-  const generateOrderId = () => {
-    const date = new Date();
-    const formattedDate = date.toISOString().slice(0, 10).replace(/-/g, "");
-    setOrderDate(format(date, 'MMMM dd, yyyy')); // Store formatted date
-    const random = Math.floor(100 + Math.random() * 900);
-    return `ORD-${formattedDate}-${random}`;
-  };
-  setOrderId(generateOrderId());
-}, []);
-const handlePrint = () => {
-  setIsPrinting(true);
-  setTimeout(() => {
-    window.print();
-    setIsPrinting(false);
-  }, 100);
-};
+// useEffect(() => {
+//   const generateOrderId = () => {
+//     const date = new Date();
+//     const formattedDate = date.toISOString().slice(0, 10).replace(/-/g, "");
+//     setOrderDate(format(date, 'MMMM dd, yyyy')); // Store formatted date
+//     const random = Math.floor(100 + Math.random() * 900);
+//     return `ORD-${formattedDate}-${random}`;
+//   };
+//   setOrderId(generateOrderId());
+// }, []);
+// const handlePrint = () => {
+//   setIsPrinting(true);
+//   setTimeout(() => {
+//     window.print();
+//     setIsPrinting(false);
+//   }, 100);
+// };
 
 
 
@@ -157,6 +159,8 @@ const handlePrint = () => {
     totalWeight: '',
     onePieceWeight: '',
     totalPieces: '',
+    weight: 0,
+    percentage: 0,
   });
   
   // Dimension units
@@ -309,9 +313,13 @@ const handlePrint = () => {
     setActiveProductIndex(-1);
     setPopupIndex(index);
   };
-
+// interface MixingData {
+//   materials: Material[];
+//   Loss: number;
+//   // Add other properties as needed
+// }
 // Add this state variable to your component
-const [savedMixingData, setSavedMixingData] = useState(null);
+// const [savedMixingData, setSavedMixingData] = useState<MixingData | null>(null);
 
 // const saveMixing = () => {
 //   // Save the current mixing data
@@ -934,7 +942,7 @@ const [savedMixingData, setSavedMixingData] = useState(null);
 )}
 
 {/* Saved Mixing Data Display */}
-{savedMixingData && (
+{/* {savedMixingData && (
   <div className="section-result" onDoubleClick={() => setShowMixingPopup(true)}>
     <div className="savedStepDisplay">
       <div className="stepHeaderRow">
@@ -944,15 +952,19 @@ const [savedMixingData, setSavedMixingData] = useState(null);
         <strong>Weight (kg)</strong>
         <strong>Percentage (%)</strong>
       </div>
-      {savedMixingData.materials.map((material, index) => (
-        <div key={index} className="stepRow">
-          <span>{index + 1}</span>
-          <span>{material.name}</span>
-          <span>{material.type}</span>
-          <span>{material.weight}</span>
-          <span>{typeof material.percentage === 'number' ? material.percentage.toFixed(2) : material.percentage}%</span>
-        </div>
-      ))}
+     {savedMixingData && savedMixingData.materials.map((material: Material, index: number) => (
+  <div key={index} className="stepRow">
+    <span>{index + 1}</span>
+    <span>{material.materialType}</span>
+    <span>{material.materialName}</span>
+    <span>{material.weight}</span>
+    <span>{material.percentage.toFixed(2)}%</span>
+  </div>
+))}
+
+{savedMixingData && (
+  <span>{savedMixingData.Loss} kg</span>
+)}
       <div className="stepRow" style={{ backgroundColor: '#f0f0f0', fontWeight: 'bold' }}>
         <span></span>
         <span>Total Loss:</span>
@@ -965,7 +977,7 @@ const [savedMixingData, setSavedMixingData] = useState(null);
       <h4>✓ Mixing Materials Configured</h4>
     </div>
   </div>
-)}
+)} */}
           {showPrintSelect && (
             <div className="printSection">
               <div className="printForm">
@@ -1295,7 +1307,7 @@ const [savedMixingData, setSavedMixingData] = useState(null);
       </div>
 
       <div>
-        {isPrinting && (
+        {/* {isPrinting && (
   <PrintOrder
     orderId={orderId}
     date={orderDate}
@@ -1323,7 +1335,7 @@ const [savedMixingData, setSavedMixingData] = useState(null);
     products={products}
     note={note}
   />
-)}
+)} */}
       </div>
     </div>
   );

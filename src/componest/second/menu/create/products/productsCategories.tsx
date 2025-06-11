@@ -1,18 +1,31 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { addProductCategory } from "../../../../redux/create/products/ProductActions";
+import { addProductCategory } from "../../../../redux/create/products/productCategories/productCategoriesActions";
+import { RootState } from "../../../../redux/rootReducer";
 import "./productcategories.css";
-import { AppDispatch } from '../../../../../store'; 
+import { AppDispatch } from "../../../../../store";
+
 const ProductCategories = () => {
   const [categoryName, setCategoryName] = useState("");
- const dispatch = useDispatch<AppDispatch>();
-  const categories = useSelector((state: any) => state.productCategories?.categories || []);
+
+  const dispatch = useDispatch<AppDispatch>();
+
+  const {
+
+    loading,
+    error,
+    success,
+  } = useSelector((state: RootState) => state.productCategories);
 
   const handleAddCategory = () => {
     if (categoryName.trim() === "") return;
     dispatch(addProductCategory(categoryName.trim()));
-    setCategoryName("");
   };
+
+  // Reset input after successful add
+  useEffect(() => {
+    if (success) setCategoryName("");
+  }, [success]);
 
   return (
     <div className="form-grid">
@@ -30,20 +43,16 @@ const ProductCategories = () => {
         <button
           onClick={handleAddCategory}
           className="save-button"
-          disabled={categoryName.trim() === ""}
+          disabled={loading || categoryName.trim() === ""}
         >
-          Add
+          {loading ? "Adding..." : "Add"}
         </button>
+
+        {error && <div className="error-msg">{error}</div>}
+        {success && <div className="success-msg">Category added successfully!</div>}
       </div>
 
-      <div>
-        <h3 className="input-label">Category List:</h3>
-        <ul>
-          {categories.map((cat: string, index: number) => (
-            <li key={index}>{cat}</li>
-          ))}
-        </ul>
-      </div>
+   
     </div>
   );
 };

@@ -1,147 +1,212 @@
-import React, { useEffect, useState } from "react";
-import './EditMachineyType.css';
+// import React, { useEffect, useState, useCallback } from "react";
+// import "./EditMachineyType.css";
+// import { useDispatch, useSelector } from "react-redux";
+// import { getAllMachineTypes } from "../../../../redux/create/machineType/machineTypeActions";
+// import { RootState } from "../../../../redux/rootReducer";
+// import { AppDispatch } from "../../../../../store";
 
-const EditMachineType = () => {
-  const [machineTypes, setMachineTypes] = useState([
-    {
-      id: 1,
-      type: "Creater",
-      totalMachines: 2,
-      machines: [
-        { name: "CR-101", x: 20, y: 30, z: 10 },
-        { name: "CR-102", x: 25, y: 35, z: 15 },
-      ],
-    },
-    {
-      id: 2,
-      type: "Printer",
-      totalMachines: 1,
-      machines: [{ name: "PR-201", x: 10, y: 15, z: 5 }],
-    },
-    {
-      id: 3,
-      type: "Cutter",
-      totalMachines: 1,
-      machines: [{ name: "CT-301", x: 12, y: 18, z: 8 }],
-    },
-  ]);
+// // Update interface to match backend data
+// interface Machine {
+//   _id: string;
+//   machineName: string;
+//   sizeX: string;
+//   sizeY: string;
+//   sizeZ: string;
+// }
 
-  const [selectedRow, setSelectedRow] = useState(0);
-  const [showDetail, setShowDetail] = useState(false);
-  const [editType, setEditType] = useState("");
+// interface MachineType {
+//   _id: string;
+//   type: string;
+//   description: string;
+//   machines: Machine[];
+// }
 
-  const handleKeyDown = (e: KeyboardEvent) => {
-    if (showDetail) return;
+// const EditMachineType: React.FC = () => {
+//   const dispatch = useDispatch<AppDispatch>();
+//   const {
+//     items: machineTypes = [],
+//     loading,
+//     error,
+//   } = useSelector((state: RootState) => state.machineTypeList || {});
 
-    if (e.key === "ArrowDown") {
-      setSelectedRow((prev) => Math.min(prev + 1, machineTypes.length - 1));
-    } else if (e.key === "ArrowUp") {
-      setSelectedRow((prev) => Math.max(prev - 1, 0));
-    } else if (e.key === "Enter") {
-      setEditType(machineTypes[selectedRow].type);
-      setShowDetail(true);
-    }
-  };
+//   const [selectedRow, setSelectedRow] = useState(0);
+//   const [showDetail, setShowDetail] = useState(false);
+//   const [editType, setEditType] = useState("");
+//   const [editDescription, setEditDescription] = useState("");
 
-  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEditType(e.target.value);
-  };
+//   const selectedItem = machineTypes[selectedRow];
 
-  const handleEditSave = () => {
-    const updated = [...machineTypes];
-    updated[selectedRow].type = editType;
-    setMachineTypes(updated);
-    alert("Machine Type updated!");
-  };
+//   const handleKeyDown = useCallback(
+//     (e: KeyboardEvent) => {
+//       if (showDetail || machineTypes.length === 0) return;
 
-  const selectedItem = machineTypes[selectedRow];
+//       if (e.key === "ArrowDown") {
+//         setSelectedRow((prev) => Math.min(prev + 1, machineTypes.length - 1));
+//       } else if (e.key === "ArrowUp") {
+//         setSelectedRow((prev) => Math.max(prev - 1, 0));
+//       } else if (e.key === "Enter") {
+//         const selected = machineTypes[selectedRow];
+//         if (selected) {
+//           setEditType(selected.type);
+//           setEditDescription(selected.description);
+//           setShowDetail(true);
+//         }
+//       }
+//     },
+//     [machineTypes, selectedRow, showDetail]
+//   );
 
-  useEffect(() => {
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedRow, showDetail]);
+//   useEffect(() => {
+//     dispatch(getAllMachineTypes());
+//   }, [dispatch]);
 
+//   useEffect(() => {
+//     window.addEventListener("keydown", handleKeyDown);
+//     return () => window.removeEventListener("keydown", handleKeyDown);
+//   }, [handleKeyDown]);
+
+//   const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+//     setEditType(e.target.value);
+//   };
+
+//   const handleDescriptionChange = (
+//     e: React.ChangeEvent<HTMLTextAreaElement>
+//   ) => {
+//     setEditDescription(e.target.value);
+//   };
+
+//   const handleEditSave = () => {
+//     if (!editType.trim()) {
+//       alert("Type cannot be empty");
+//       return;
+//     }
+
+//     // TODO: Add real update API logic
+//     alert("Machine Type updated! (not saved to DB)");
+//   };
+
+//   return (
+//     <div className="EditMachineType">
+//       {loading && <p>Loading...</p>}
+//       {error && <p style={{ color: "red" }}>{error}</p>}
+
+//       {!showDetail && !loading && machineTypes.length > 0 ? (
+//         <table>
+//           <thead>
+//             <tr>
+//               <th>No</th>
+//               <th>Machine Type</th>
+//               <th>Total Machines</th>
+//               <th>Edit</th>
+//             </tr>
+//           </thead>
+//           <tbody>
+//             {machineTypes.map((item, index) => (
+//               <tr
+//                 key={item._id}
+//                 className={selectedRow === index ? "bg-blue-100" : ""}
+//               >
+//                 <td>{index + 1}</td>
+//                 <td>{item.type}</td>
+//                 <td>{item.machines?.length ?? 0}</td>
+//                 <td
+//                   className="text-blue-600 emt-edit-text"
+//                   onClick={() => {
+//                     setSelectedRow(index);
+//                     setEditType(item.type);
+//                     setEditDescription(item.description);
+//                     setShowDetail(true);
+//                   }}
+//                 >
+//                   Edit
+//                 </td>
+//               </tr>
+//             ))}
+//           </tbody>
+//         </table>
+//       ) : showDetail && selectedItem ? (
+//         <div className="detail-container">
+//           <div className="TopButtonEdit">
+//             <button onClick={() => setShowDetail(false)}>Back</button>
+//             <button onClick={handleEditSave} className="Delete">
+//               Delete
+//             </button>
+//           </div>
+
+//           <div className="form-section">
+//             <label>Machine Type:</label>
+//             <input
+//               type="text"
+//               value={editType}
+//               onChange={handleEditChange}
+//             />
+//           </div>
+
+//           <div className="form-section">
+//             <label>Description:</label>
+//             <textarea
+//               value={editDescription}
+//               onChange={handleDescriptionChange}
+//               rows={3}
+//             />
+//           </div>
+
+//           <button
+//             onClick={handleEditSave}
+//             className="save-button"
+//             disabled={
+//               editType === selectedItem.type &&
+//               editDescription === selectedItem.description
+//             }
+//           >
+//             Save
+//           </button>
+
+//           <div className="info-section">
+//             <p>
+//               <strong>Total Machines:</strong>{" "}
+//               {selectedItem?.machines?.length ?? 0}
+//             </p>
+//           </div>
+
+//           <table className="machine-details-table">
+//             <thead>
+//               <tr>
+//                 <th>Machine Name</th>
+//                 <th>Size X</th>
+//                 <th>Size Y</th>
+//                 <th>Size Z</th>
+//               </tr>
+//             </thead>
+//             <tbody>
+//               {selectedItem?.machines.map((m, idx) => (
+//                 <tr key={idx}>
+//                   <td>{m.machineName}</td>
+//                   <td>{m.sizeX}</td>
+//                   <td>{m.sizeY}</td>
+//                   <td>{m.sizeZ}</td>
+//                 </tr>
+//               ))}
+//             </tbody>
+//           </table>
+//         </div>
+//       ) : (
+//         !loading && <p>No machine types available.</p>
+//       )}
+//     </div>
+//   );
+// };
+
+// export default EditMachineType;
+
+
+const EditMachineType: React.FC = () => {
   return (
-    <div className="emt-container">
-      {!showDetail ? (
-        <table className="emt-table">
-          <thead className="emt-thead">
-            <tr>
-              <th className="emt-th">No</th>
-              <th className="emt-th">Machine Type</th>
-              <th className="emt-th">Total Machines</th>
-              <th className="emt-th">Edit</th>
-            </tr>
-          </thead>
-          <tbody>
-            {machineTypes.map((item, index) => (
-              <tr
-                key={item.id}
-                className={selectedRow === index ? "emt-row-selected" : ""}
-              >
-                <td className="emt-td">{index + 1}</td>
-                <td className="emt-td">{item.type}</td>
-                <td className="emt-td">{item.totalMachines}</td>
-                <td className="emt-td emt-edit-text">Edit</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      ) : (
-        <div>
-          <div className="emt-top-buttons">
-            <button
-              onClick={() => setShowDetail(false)}
-              className="emt-btn-back"
-            >
-              Back
-            </button>
-            <button onClick={handleEditSave} className="emt-btn-delete">
-              Delete
-            </button>
-          </div>
-
-          <div className="emt-edit-field">
-            <label className="emt-label">Machine Type:</label>
-            <input
-              type="text"
-              value={editType}
-              onChange={handleEditChange}
-              className="emt-input"
-            />
-            <button onClick={handleEditSave} className="emt-btn-save">
-              Save
-            </button>
-          </div>
-
-          <p className="emt-info">
-            <strong>Total Machines:</strong> {selectedItem.totalMachines}
-          </p>
-
-          <table className="emt-table">
-            <thead className="emt-thead">
-              <tr>
-                <th className="emt-th">Machine Name</th>
-                <th className="emt-th">Size X</th>
-                <th className="emt-th">Size Y</th>
-                <th className="emt-th">Size Z</th>
-              </tr>
-            </thead>
-            <tbody>
-              {selectedItem.machines.map((m, idx) => (
-                <tr key={idx}>
-                  <td className="emt-td">{m.name}</td>
-                  <td className="emt-td">{m.x}</td>
-                  <td className="emt-td">{m.y}</td>
-                  <td className="emt-td">{m.z}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+    <div className="EditMachineType">
+      <h2>Edit Machine Type</h2>
+      <p>This component is under construction.</p>
+      {/* Placeholder for future content */}
     </div>
   );
-};
-
+}
 export default EditMachineType;

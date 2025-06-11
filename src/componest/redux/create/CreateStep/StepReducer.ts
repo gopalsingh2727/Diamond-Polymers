@@ -1,31 +1,31 @@
 import {
-  CREATE_OPERATOR_REQUEST,
-  CREATE_OPERATOR_SUCCESS,
-  CREATE_OPERATOR_FAIL,
-} from "./MachineOpertorConstants";
+  CREATE_STEP_REQUEST,
+  CREATE_STEP_SUCCESS,
+  CREATE_STEP_FAIL,
+} from "./StpeContants";
 
-interface OperatorCreateState {
+interface StepState {
   loading: boolean;
   success: boolean;
   error: string | null;
 }
 
-const initialState: OperatorCreateState = {
+const initialState: StepState = {
   loading: false,
   success: false,
   error: null,
 };
 
-export const operatorCreateReducer = (
+export const stepCreateReducer = (
   state = initialState,
   action: any
-): OperatorCreateState => {
+): StepState => {
   switch (action.type) {
-    case CREATE_OPERATOR_REQUEST:
+    case CREATE_STEP_REQUEST:
       return { loading: true, success: false, error: null };
-    case CREATE_OPERATOR_SUCCESS:
+    case CREATE_STEP_SUCCESS:
       return { loading: false, success: true, error: null };
-    case CREATE_OPERATOR_FAIL:
+    case CREATE_STEP_FAIL:
       return { loading: false, success: false, error: action.payload };
     default:
       return state;

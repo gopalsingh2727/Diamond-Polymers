@@ -1,46 +1,148 @@
 import axios from "axios";
 import {
-  ADD_PRODUCT_CATEGORY,
-  SET_PRODUCT_CATEGORIES,
+  CREATE_PRODUCT_REQUEST,
+  CREATE_PRODUCT_SUCCESS,
+  CREATE_PRODUCT_FAIL,
+  GET_PRODUCTS_REQUEST,
+  GET_PRODUCTS_SUCCESS,
+  GET_PRODUCTS_FAIL,
+  UPDATE_PRODUCT_REQUEST,
+  UPDATE_PRODUCT_SUCCESS,
+  UPDATE_PRODUCT_FAIL,
+  DELETE_PRODUCT_REQUEST,
+  DELETE_PRODUCT_SUCCESS,
+  DELETE_PRODUCT_FAIL,
 } from "./ProductContants";
+import { Dispatch } from "redux";
+import { RootState } from "../../rootReducer";
 
-export const setProductCategories = (categories: string[]) => ({
-  type: SET_PRODUCT_CATEGORIES,
-  payload: categories,
-});
+// ✅ Create Product
+export const createProduct = (product: {
+  productName: string;
+  price: number;
+  productType: string;
+  sizeX: number;
+  sizeY: number;
+  sizeZ: number;
+}) => async (dispatch: Dispatch, getState: () => RootState) => {
+  try {
+    dispatch({ type: CREATE_PRODUCT_REQUEST });
 
-export const addProductCategory = (categoryName: string) => {
-  return async (dispatch: any, getState: any) => {
-    try {
-      const token = getState().auth?.token || localStorage.getItem("authToken");
-      console.log('jhjh');
-      
-      // Get branchId from state or localStorage
-      const branchId =
-        getState().auth?.selectedBranch || localStorage.getItem("selectedBranch");
+    const token = getState().auth?.token || localStorage.getItem("authToken");
+    const branchId = localStorage.getItem("selectedBranch");
+    if (!branchId) throw new Error("Branch ID not found");
 
-      if (!branchId) {
-        throw new Error("Branch ID is missing.");
-      }
-      console.log(branchId , 'product');
-      
-      const response = await axios.post(
-        "http://localhost:3000/dev/producttype",
-        { categoryName, branchId }, // 👈 include branchId here
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+    const config = {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: token ? `Bearer ${token}` : "",
+      },
+    };
 
-      dispatch({
-        type: ADD_PRODUCT_CATEGORY,
-        payload: response.data.categoryName || categoryName,
-      });
+    const payload = { ...product, branchId };
 
-    } catch (error: any) {
-      console.error("Failed to add category:", error.response?.data || error.message);
-    }
-  };
+    const { data } = await axios.post("/dev/product", payload, config);
+
+    dispatch({ type: CREATE_PRODUCT_SUCCESS, payload: data });
+  } catch (error: any) {
+    dispatch({
+      type: CREATE_PRODUCT_FAIL,
+      payload: error.response?.data?.message || error.message,
+    });
+  }
+};
+
+// ✅ Get Products
+export const getProducts = () => async (
+  dispatch: Dispatch,
+  getState: () => RootState
+) => {
+  try {
+    dispatch({ type: GET_PRODUCTS_REQUEST });
+
+    const token = getState().auth?.token || localStorage.getItem("authToken");
+    const branchId = localStorage.getItem("selectedBranch");
+    if (!branchId) throw new Error("Branch ID not found");
+
+    const config = {
+      headers: {
+        Authorization: token ? `Bearer ${token}` : "",
+      },
+    };
+
+    const { data } = await axios.get(`/dev/product?branchId=${branchId}`, config);
+
+    dispatch({ type: GET_PRODUCTS_SUCCESS, payload: data });
+  } catch (error: any) {
+    dispatch({
+      type: GET_PRODUCTS_FAIL,
+      payload: error.response?.data?.message || error.message,
+    });
+  }
+};
+
+// ✅ Update Product
+export const updateProduct = (
+  id: string,
+  updateData: {
+    productName?: string;
+    productType?: string;
+    price?: number;
+    sizeX?: number;
+    sizeY?: number;
+    sizeZ?: number;
+  }
+) => async (dispatch: Dispatch, getState: () => RootState) => {
+  try {
+    dispatch({ type: UPDATE_PRODUCT_REQUEST });
+
+    const token = getState().auth?.token || localStorage.getItem("authToken");
+    const branchId = localStorage.getItem("selectedBranch");
+    if (!branchId) throw new Error("Branch ID not found");
+
+    const config = {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: token ? `Bearer ${token}` : "",
+      },
+    };
+
+    const { data } = await axios.put(`/dev/product/${id}`, { ...updateData, branchId }, config);
+
+    dispatch({ type: UPDATE_PRODUCT_SUCCESS, payload: data });
+  } catch (error: any) {
+    dispatch({
+      type: UPDATE_PRODUCT_FAIL,
+      payload: error.response?.data?.message || error.message,
+    });
+  }
+};
+
+// ✅ Delete Product
+export const deleteProduct = (id: string) => async (
+  dispatch: Dispatch,
+  getState: () => RootState
+) => {
+  try {
+    dispatch({ type: DELETE_PRODUCT_REQUEST });
+
+    const token = getState().auth?.token || localStorage.getItem("authToken");
+    const branchId = localStorage.getItem("selectedBranch");
+    if (!branchId) throw new Error("Branch ID not found");
+
+    const config = {
+      headers: {
+        Authorization: token ? `Bearer ${token}` : "",
+      },
+    };
+
+    await axios.delete(`/dev/product/${id}`, config);
+
+    dispatch({ type: DELETE_PRODUCT_SUCCESS, payload: id });
+  } catch (error: any) {
+    dispatch({
+      type: DELETE_PRODUCT_FAIL,
+      payload: error.response?.data?.message || error.message,
+    });
+  }
 };

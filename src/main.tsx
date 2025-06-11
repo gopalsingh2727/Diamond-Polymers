@@ -14,7 +14,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   </React.StrictMode>,
 )
 
-// Proper Electron loading handling
+
 window.addEventListener('DOMContentLoaded', () => {
   postMessage({ payload: 'removeLoading' }, '*')
 })

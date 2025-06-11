@@ -1,9 +1,9 @@
 import { useEffect, useState, KeyboardEvent } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchBranches } from './redux/Branch/BranchActions'; // Update path as needed
-import type { RootState, AppDispatch } from '../store'; // Import your store types
+import { fetchBranches } from './redux/Branch/BranchActions'; 
+import type { RootState, AppDispatch } from '../store'; 
 
-// import UpdateElectron from '../components/update/Modal/index';
+import Update from '../components/update';
 import './indexComponents.css';
 import Menu from './main/sidebar/menu';
 
@@ -102,10 +102,11 @@ function IndexComponentes() {
             alt="Application Logo"
           />
           <div>
-            {/* <UpdateElectron /> */}
+            <Update/>
           </div>
         </div>
         <div className="item">
+          
           <Menu />
         </div>
         <div className="item">s</div>

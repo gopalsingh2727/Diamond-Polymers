@@ -1,97 +1,43 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { getMachineTypes } from "../../../../redux/create/machineType/machineTypeActions";
+import { createMachine } from "../../../../redux/create/machine/MachineActions";
+import { RootState } from "../../../../redux/rootReducer";
+import { AppDispatch } from "../../../../../store";
 import "./createMachine.css";
 
-// Type definitions
-type MachineSize = {
-  x: string;
-  y: string;
-  z: string;
-};
+type MachineSize = { x: string; y: string; z: string };
 
-type MachineData = {
-  machineName: string;
-  machineType: MachineType;
-  size: MachineSize;
-};
-
-enum MachineType {
-  CREATE = "create",
-  BOTTOM = "bottom",
-  STITCHING = "stitching",
-  CUT = "cut"
-}
-
-const CreateMachine = () => {
+const CreateMachine: React.FC = () => {
   const [machineName, setMachineName] = useState("");
-  const [machineType, setMachineType] = useState<MachineType>(MachineType.CREATE);
+  const [machineType, setMachineType] = useState("");
   const [size, setSize] = useState<MachineSize>({ x: "", y: "", z: "" });
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [savedMessage, setSavedMessage] = useState("");
 
   const containerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
 
-  // Form validation
-  const isValidForm = () => {
-    return (
-      machineName.trim().length > 0 &&
-      Object.values(size).every(val => val.trim().length > 0)
-    );
-  };
+  const { items: machineTypes, loading } = useSelector(
+    (state: RootState) => state.machineTypeList
+  );
 
-  const handleSubmit = (e?: React.FormEvent) => {
-    e?.preventDefault();
-    
-    if (!isValidForm()) {
-      alert("Please fill all required fields");
-      return;
-    }
+  useEffect(() => {
+    dispatch(getMachineTypes());
+  }, [dispatch]);
 
-    const newMachine: MachineData = {
-      machineName: machineName.trim(),
-      machineType,
-      size: {
-        x: size.x.trim(),
-        y: size.y.trim(),
-        z: size.z.trim()
-      }
-    };
-
-    console.log("Saved Machine:", newMachine);
-    resetForm();
-    navigate(-1);
-  };
-
-  const resetForm = () => {
-    setMachineName("");
-    setMachineType(MachineType.CREATE);
-    setSize({ x: "", y: "", z: "" });
-    setHasUnsavedChanges(false);
-    localStorage.removeItem("machineDraft");
-  };
-
-  const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === "Escape") {
-      if (hasUnsavedChanges) {
-        confirm("Discard changes?") && navigate(-1);
-      } else {
-        navigate(-1);
-      }
-    }
-  };
-
-  // Save draft to localStorage
   useEffect(() => {
     const draft = localStorage.getItem("machineDraft");
     if (draft) {
-      const parsed: MachineData = JSON.parse(draft);
+      const parsed = JSON.parse(draft);
       setMachineName(parsed.machineName);
       setMachineType(parsed.machineType);
       setSize(parsed.size);
     }
   }, []);
 
-  // Auto-save draft
   useEffect(() => {
     const timer = setTimeout(() => {
       if (machineName || Object.values(size).some(Boolean)) {
@@ -102,36 +48,72 @@ const CreateMachine = () => {
         setHasUnsavedChanges(true);
       }
     }, 500);
-
     return () => clearTimeout(timer);
   }, [machineName, machineType, size]);
 
-  // Focus management
   useEffect(() => {
     containerRef.current?.focus();
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (hasUnsavedChanges) {
+          confirm("Discard changes?") && navigate(-1);
+        } else {
+          navigate(-1);
+        }
+      }
+    };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [hasUnsavedChanges, navigate]);
+
+  const isValidForm = () => {
+    return (
+      machineName.trim().length > 0 &&
+      machineType &&
+      Object.values(size).every(val => val.trim().length > 0)
+    );
+  };
+
+  const handleSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
+
+    if (!isValidForm()) {
+      alert("Please fill all required fields");
+      return;
+    }
+
+    const newMachine = {
+      machineName: machineName.trim(),
+      machineType,
+      size: {
+        x: size.x.trim(),
+        y: size.y.trim(),
+        z: size.z.trim()
+      }
+    };
+
+    dispatch(createMachine(newMachine));
+    setSavedMessage("✅ Machine saved successfully.");
+    resetForm();
+  };
+
+  const resetForm = () => {
+    setMachineName("");
+    setMachineType("");
+    setSize({ x: "", y: "", z: "" });
+    setHasUnsavedChanges(false);
+    localStorage.removeItem("machineDraft");
+  };
 
   return (
-    <div
-      ref={containerRef}
-      className="create-step-container"
-     
-      aria-labelledby="machineFormTitle"
-    >
-      <form 
-        onSubmit={handleSubmit}
-        className="step-form-wrapper"
-      >
-        <h2 id="machineFormTitle" className="form-title">
-          Create Machine
-        </h2>
+    <div ref={containerRef} className="create-step-container" aria-labelledby="machineFormTitle">
+      <form onSubmit={handleSubmit} className="step-form-wrapper">
+        <h2 id="machineFormTitle" className="form-title">Create Machine</h2>
+
+        {savedMessage && <div className="success-msg">{savedMessage}</div>}
 
         <div className="form-group">
-          <label htmlFor="machineName" className="form-label">
-            Machine Name *
-          </label>
+          <label htmlFor="machineName" className="form-label">Machine Name *</label>
           <input
             id="machineName"
             type="text"
@@ -141,25 +123,27 @@ const CreateMachine = () => {
             placeholder="Enter machine name"
             aria-required="true"
           />
-          
         </div>
 
         <div className="form-group">
-          <label htmlFor="machineType" className="form-label">
-            Machine Type *
-          </label>
+          <label htmlFor="machineType" className="form-label">Machine Type *</label>
           <select
             id="machineType"
             value={machineType}
-            onChange={(e) => setMachineType(e.target.value as MachineType)}
+            onChange={(e) => setMachineType(e.target.value)}
             className="form-input machine-select"
             aria-required="true"
           >
-            {Object.values(MachineType).map((type) => (
-              <option key={type} value={type}>
-                {type.charAt(0).toUpperCase() + type.slice(1)}
-              </option>
-            ))}
+            <option value="">Select Machine Type</option>
+            {loading ? (
+              <option disabled>Loading...</option>
+            ) : (
+              machineTypes.map((type: any) => (
+                <option key={type._id} value={type._id}>
+                  {type.type}
+                </option>
+              ))
+            )}
           </select>
         </div>
 
@@ -174,10 +158,10 @@ const CreateMachine = () => {
                 step="0.1"
                 placeholder={`Size ${axis.toUpperCase()}`}
                 value={size[axis]}
-                onChange={(e) => 
-                  setSize(prev => ({
+                onChange={(e) =>
+                  setSize((prev) => ({
                     ...prev,
-                    [axis]: e.target.value
+                    [axis]: e.target.value,
                   }))
                 }
                 className="form-input"
@@ -189,24 +173,7 @@ const CreateMachine = () => {
         </fieldset>
 
         <div className="form-actions">
-          <button
-            type="button"
-            className="cancel-button"
-            onClick={() => {
-              if (hasUnsavedChanges) {
-                confirm("Discard changes?") && navigate(-1);
-              } else {
-                navigate(-1);
-              }
-            }}
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            className="save-button"
-            disabled={!isValidForm()}
-          >
+          <button type="submit" className="save-button" disabled={!isValidForm()}>
             Save Machine
           </button>
         </div>
