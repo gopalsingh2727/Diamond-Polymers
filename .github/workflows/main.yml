@@ -3,7 +3,7 @@ name: Build and Publish Electron App
 on:
   push:
     tags:
-      - 'v*.*.*'  # Triggers workflow when a new version tag is pushed (e.g., v1.0.0)
+      - 'v*.*.*'  
 
 jobs:
   build:
