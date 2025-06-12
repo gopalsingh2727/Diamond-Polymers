@@ -1,131 +1,153 @@
-import type { ProgressInfo } from 'electron-updater'
-import { useCallback, useEffect, useState } from 'react'
-import Modal from './Modal/index'
-import Progress from './Progress/index'
-import './update.css'
+import { useCallback, useEffect, useState } from 'react';
+import type { ProgressInfo } from 'electron-updater';
+import Modal from './Modal/index';
+import Progress from './Progress/index';
+import './update.css';
+
+type VersionInfo = {
+  version: string;
+  newVersion: string;
+  update: boolean;
+};
+
+type ErrorType = {
+  message: string;
+  [key: string]: any;
+};
 
 const Update = () => {
-  const [checking, setChecking] = useState(false)
-  const [updateAvailable, setUpdateAvailable] = useState(false)
-  const [versionInfo, setVersionInfo] = useState<VersionInfo>()
-  const [updateError, setUpdateError] = useState<ErrorType>()
-  const [progressInfo, setProgressInfo] = useState<Partial<ProgressInfo>>()
-  const [modalOpen, setModalOpen] = useState<boolean>(false)
+  const [checking, setChecking] = useState(false);
+  const [updateAvailable, setUpdateAvailable] = useState(false);
+  const [versionInfo, setVersionInfo] = useState<VersionInfo>();
+  const [updateError, setUpdateError] = useState<ErrorType>();
+  const [progressInfo, setProgressInfo] = useState<Partial<ProgressInfo>>();
+  const [modalOpen, setModalOpen] = useState<boolean>(false);
   const [modalBtn, setModalBtn] = useState<{
-    cancelText?: string
-    okText?: string
-    onCancel?: () => void
-    onOk?: () => void
+    cancelText?: string;
+    okText?: string;
+    onCancel?: () => void;
+    onOk?: () => void;
   }>({
     onCancel: () => setModalOpen(false),
     onOk: () => window.ipcRenderer.invoke('start-download'),
-  })
+  });
 
   const checkUpdate = async () => {
-    setChecking(true)
-    /**
-     * @type {import('electron-updater').UpdateCheckResult | null | { message: string, error: Error }}
-     */
-    const result = await window.ipcRenderer.invoke('check-update')
-    setProgressInfo({ percent: 0 })
-    setChecking(false)
-    setModalOpen(true)
+    setChecking(true);
+    const result = await window.ipcRenderer.invoke('check-update');
+    setProgressInfo({ percent: 0 });
+    setChecking(false);
+    setModalOpen(true);
+
     if (result?.error) {
-      setUpdateAvailable(false)
-      setUpdateError(result?.error)
+      setUpdateAvailable(false);
+      setUpdateError(result?.error);
     }
-  }
+  };
 
-  const onUpdateCanAvailable = useCallback((_event: Electron.IpcRendererEvent, arg1: VersionInfo) => {
-    setVersionInfo(arg1)
-    setUpdateError(undefined)
-    // Can be update
-    if (arg1.update) {
-      setModalBtn(state => ({
-        ...state,
-        cancelText: 'Cancel',
-        okText: 'Update',
-        onOk: () => window.ipcRenderer.invoke('start-download'),
-      }))
-      setUpdateAvailable(true)
-    } else {
-      setUpdateAvailable(false)
-    }
-  }, [])
+  const onUpdateCanAvailable = useCallback(
+    (_event: Electron.IpcRendererEvent, info: VersionInfo) => {
+      setVersionInfo(info);
+      setUpdateError(undefined);
 
-  const onUpdateError = useCallback((_event: Electron.IpcRendererEvent, arg1: ErrorType) => {
-    setUpdateAvailable(false)
-    setUpdateError(arg1)
-  }, [])
+      if (info.update) {
+        setUpdateAvailable(true);
+        setModalBtn({
+          cancelText: 'Cancel',
+          okText: 'Update',
+          onCancel: () => setModalOpen(false),
+          onOk: () => window.ipcRenderer.invoke('start-download'),
+        });
+      } else {
+        setUpdateAvailable(false);
+      }
+    },
+    []
+  );
 
-  const onDownloadProgress = useCallback((_event: Electron.IpcRendererEvent, arg1: ProgressInfo) => {
-    setProgressInfo(arg1)
-  }, [])
-const onUpdateDownloaded = useCallback((_event: Electron.IpcRendererEvent) => {
-  setProgressInfo({ percent: 100 })
-  setModalBtn(state => ({
-    ...state,
-    cancelText: 'Later',
-    okText: 'Install now',
-    onOk: () => window.ipcRenderer.invoke('quit-and-install'),
-  }))
-}, [])
+  const onUpdateError = useCallback(
+    (_event: Electron.IpcRendererEvent, err: ErrorType) => {
+      setUpdateAvailable(false);
+      setUpdateError(err);
+    },
+    []
+  );
+
+  const onDownloadProgress = useCallback(
+    (_event: Electron.IpcRendererEvent, progress: ProgressInfo) => {
+      setProgressInfo(progress);
+    },
+    []
+  );
+
+  const onUpdateDownloaded = useCallback((_event: Electron.IpcRendererEvent) => {
+    setProgressInfo({ percent: 100 });
+    setModalBtn({
+      cancelText: 'Later',
+      okText: 'Install now',
+      onCancel: () => setModalOpen(false),
+      onOk: () => window.ipcRenderer.invoke('quit-and-install'),
+    });
+  }, []);
 
   useEffect(() => {
-    // Get version information and whether to update
-    window.ipcRenderer.on('update-can-available', onUpdateCanAvailable)
-    window.ipcRenderer.on('update-error', onUpdateError)
-    window.ipcRenderer.on('download-progress', onDownloadProgress)
-    window.ipcRenderer.on('update-downloaded', onUpdateDownloaded)
+    window.ipcRenderer.on('update-can-available', onUpdateCanAvailable);
+    window.ipcRenderer.on('update-error', onUpdateError);
+    window.ipcRenderer.on('download-progress', onDownloadProgress);
+    window.ipcRenderer.on('update-downloaded', onUpdateDownloaded);
 
     return () => {
-      window.ipcRenderer.off('update-can-available', onUpdateCanAvailable)
-      window.ipcRenderer.off('update-error', onUpdateError)
-      window.ipcRenderer.off('download-progress', onDownloadProgress)
-      window.ipcRenderer.off('update-downloaded', onUpdateDownloaded)
-    }
-  }, [])
+      window.ipcRenderer.off('update-can-available', onUpdateCanAvailable);
+      window.ipcRenderer.off('update-error', onUpdateError);
+      window.ipcRenderer.off('download-progress', onDownloadProgress);
+      window.ipcRenderer.off('update-downloaded', onUpdateDownloaded);
+    };
+  }, [onUpdateCanAvailable, onUpdateError, onDownloadProgress, onUpdateDownloaded]);
 
   return (
     <>
       <Modal
         open={modalOpen}
-        cancelText={modalBtn?.cancelText}
-        okText={modalBtn?.okText}
-        onCancel={modalBtn?.onCancel}
-        onOk={modalBtn?.onOk}
-        footer={updateAvailable ? /* hide footer */null : undefined}
+        cancelText={modalBtn.cancelText}
+        okText={modalBtn.okText}
+        onCancel={modalBtn.onCancel}
+        onOk={modalBtn.onOk}
+        footer={updateAvailable ? null : undefined}
       >
-        <div className='modal-slot'>
-          {updateError
-            ? (
-              <div>
-                <p>Error downloading the latest version.</p>
-                <p>{updateError.message}</p>
+        <div className="modal-slot">
+          {updateError ? (
+            <div>
+              <p>Error downloading the latest version.</p>
+              <p>{updateError.message}</p>
+            </div>
+          ) : updateAvailable ? (
+            <div>
+              <div>New version available: v{versionInfo?.newVersion}</div>
+              <div className="new-version__target">
+                v{versionInfo?.version} → v{versionInfo?.newVersion}
               </div>
-            ) : updateAvailable
-              ? (
-                <div>
-                  <div>The last version is: v{versionInfo?.newVersion}</div>
-                  <div className='new-version__target'>v{versionInfo?.version} -&gt; v{versionInfo?.newVersion}</div>
-                  <div className='update__progress'>
-                    <div className='progress__title'>Update progress:</div>
-                    <div className='progress__bar'>
-                      <Progress percent={progressInfo?.percent} ></Progress>
-                    </div>
-                  </div>
+              <div className="update__progress">
+                <div className="progress__title">Update progress:</div>
+                <div className="progress__bar">
+                  <Progress percent={progressInfo?.percent} />
                 </div>
-              )
-              : (
-                <div className='can-not-available'>{JSON.stringify(versionInfo ?? {}, null, 2)}</div>
-              )}
+              </div>
+            </div>
+          ) : (
+            <div className="can-not-available">
+              {versionInfo?.version
+                ? `You are already on the latest version: v${versionInfo.version}`
+                : `Unable to check version at the moment.`}
+            </div>
+          )}
         </div>
       </Modal>
+
       <button disabled={checking} onClick={checkUpdate}>
         {checking ? 'Checking...' : 'Check update'}
       </button>
     </>
-  )
-}
+  );
+};
 
-export default Update
+export default Update;

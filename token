@@ -1,7 +1,10 @@
 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
+GH_TOKEN=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 npm run publish
 
-git tag v0.0.3
-git push origin v0.0.3
+
+
+git tag v0.1.5
+git push origin v0.1.5
 
 
 git lfs track "*.zip"
@@ -14,3 +17,6 @@ git add your-large-file.zip
 # Commit and push
 git commit -m "Track large file with Git LFS"
 git push origin main
+
+
+cat src/componest/second/menu/create/CreateMachineOpertor/CreteMachineOpertor.tsx | head -20

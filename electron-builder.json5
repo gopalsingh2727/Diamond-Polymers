@@ -1,12 +1,20 @@
 // @see - https://www.electron.build/configuration/configuration
 {
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
-  "appId": "YourAppID",
+  "appId": "com.27infinity.in",
   "asar": true,
   "productName": "27this",
   "directories": {
     "output": "release/${version}"
   },
+  "publish": [
+  {
+    "provider": "github",
+    "owner": "gopalsingh2727",
+    "repo": "Diamond-Polymers",
+    "private": true
+  }
+],
   "files": [
     "dist",
     "dist-electron"
