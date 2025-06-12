@@ -13,7 +13,12 @@
     "owner": "gopalsingh2727",
     "repo": "Diamond-Polymers",
     "private": true
+  },
+  {
+  "extraMetadata": {
+    "env": "nodenvironment"
   }
+},
 ],
   "files": [
     "dist",
