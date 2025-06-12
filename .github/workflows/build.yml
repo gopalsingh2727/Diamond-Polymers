@@ -50,5 +50,5 @@ jobs:
 
       - name: Publish release
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.THIS_27 }}
         run: npx electron-builder --publish always
