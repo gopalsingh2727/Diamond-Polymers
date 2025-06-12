@@ -1,6 +1,6 @@
 import { BackButton } from "../../../allCompones/BackButton";
 import  { useEffect, useState } from "react";
-import './marketing.css';
+
 
 const Marketing = () => {
   const [showEmail, setShowEmail] = useState(false);
