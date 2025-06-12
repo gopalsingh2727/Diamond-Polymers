@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { getMachines } from "../../../../redux/create/machine/MachineActions";
 import { createOperator } from "../../../../redux/create/CreateMachineOpertor/MachineOpertorActions";
 import { RootState } from "../../../../redux/rootReducer";
-import "./createMachineOpertor.css";
+import "./createMachineOpertor.css"
 import { AppDispatch } from "../../../../../store";
 
 type OperatorData = {
