@@ -15,52 +15,47 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Fix file casing issues
+        run: |
+          # Fix CSS filename casing in CI
+          if [ -f "src/componest/second/menu/create/CreateMachineOpertor/createMachineOpertor.css" ]; then
+            mv "src/componest/second/menu/create/CreateMachineOpertor/createMachineOpertor.css" \
+               "src/componest/second/menu/create/CreateMachineOpertor/CreateMachineOperator.css"
+          fi
+
+          # Fix component filename typo
+          if [ -f "src/componest/second/menu/create/CreateMachineOpertor/CreteMachineOpertor.tsx" ]; then
+            mv "src/componest/second/menu/create/CreateMachineOpertor/CreteMachineOpertor.tsx" \
+               "src/componest/second/menu/create/CreateMachineOpertor/CreateMachineOperator.tsx"
+          fi
+
+          # Update import in component
+          if [ -f "src/componest/second/menu/create/CreateMachineOpertor/CreateMachineOperator.tsx" ]; then
+            sed -i 's|\./createMachineOpertor\.css|./CreateMachineOperator.css|' \
+                "src/componest/second/menu/create/CreateMachineOpertor/CreateMachineOperator.tsx"
+          fi
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
 
-      - name: Fix file casing issues
-        run: |
-          # Rename misspelled directories
-          if [ -d "src/componest" ]; then
-            mv src/componest src/components
-          fi
-          
-          # Fix component filename
-          if [ -f "src/components/second/menu/create/CreateMachineOpertor/CreteMachineOpertor.tsx" ]; then
-            git mv src/components/second/menu/create/CreateMachineOpertor/CreteMachineOpertor.tsx \
-                  src/components/second/menu/create/CreateMachineOpertor/CreateMachineOperator.tsx
-          fi
-          
-          # Fix CSS filename
-          if [ -f "src/components/second/menu/create/CreateMachineOpertor/createMachineOpertor.css" ]; then
-            git mv src/components/second/menu/create/CreateMachineOpertor/createMachineOpertor.css \
-                  src/components/second/menu/create/CreateMachineOpertor/CreateMachineOperator.css
-          fi
-          
-          # Update import in component
-          if [ -f "src/components/second/menu/create/CreateMachineOpertor/CreateMachineOperator.tsx" ]; then
-            sed -i 's|\./createMachineOpertor\.css|./CreateMachineOperator.css|' \
-                src/components/second/menu/create/CreateMachineOpertor/CreateMachineOperator.tsx
-          fi
-
       - name: Install dependencies
         run: |
           npm ci
           npm install -D postcss-import @tailwindcss/nesting
 
-      - name: Verify directory structure
+      - name: Verify critical files
         run: |
-          # Check for correct directory casing
-          if [ ! -d "src/components" ]; then
-            echo "::error::Directory 'src/components' not found."
+          # Verify component file
+          if [ ! -f "src/componest/second/menu/create/CreateMachineOpertor/CreateMachineOperator.tsx" ]; then
+            echo "::error::Component file not found"
             exit 1
           fi
           
-          # Verify critical CSS file exists
-          CSS_PATH="src/components/second/menu/create/CreateMachineOpertor/CreateMachineOperator.css"
+          # Verify CSS file
+          CSS_PATH="src/componest/second/menu/create/CreateMachineOpertor/CreateMachineOperator.css"
           if [ ! -f "$CSS_PATH" ]; then
             echo "::error::CSS file not found at $CSS_PATH"
             exit 1
