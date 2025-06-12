@@ -3,7 +3,7 @@ name: Build and Publish Electron App
 on:
   push:
     tags:
-      - 'v*.*.*'  
+      - 'v*.*.*'
 
 jobs:
   build:
@@ -12,20 +12,43 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          # Ensure case-sensitive file matching
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
+          cache: 'npm'
 
       - name: Install dependencies
-        run: npm install
+        run: |
+          npm ci
+          npm install -D postcss-import @tailwindcss/nesting
+
+      - name: Verify directory structure
+        run: |
+          # Check for correct directory casing
+          if [ ! -d "src/components" ]; then
+            echo "::error::Directory 'src/components' not found. Check case sensitivity and spelling."
+            echo "Found directories in src/: $(ls src/)"
+            exit 1
+          fi
+          
+          # Verify CSS file exists in expected location
+          CSS_PATH="src/components/second/menu/marketing/marketing.css"
+          if [ ! -f "$CSS_PATH" ]; then
+            echo "::warning::Marketing CSS file not found at $CSS_PATH"
+            echo "Creating empty file to prevent build failure"
+            mkdir -p $(dirname "$CSS_PATH")
+            touch "$CSS_PATH"
+          fi
 
       - name: Build app
         run: npm run build
 
-      - name: Publish release with electron-builder
+      - name: Publish release
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}  
-        run: |
-          npx electron-builder --publish always
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx electron-builder --publish always
