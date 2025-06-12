@@ -1,5 +1,4 @@
 name: Build and Publish Electron App
-
 on:
   push:
     tags:
@@ -7,13 +6,15 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          # Ensure case-sensitive file matching
           fetch-depth: 0
           
       - name: Setup Node.js
@@ -28,11 +29,12 @@ jobs:
           npm install -D postcss-import @tailwindcss/nesting
           
       - name: Verify directory structure
+        shell: bash
         run: |
           # Check for correct directory casing
           if [ ! -d "src/components" ]; then
             echo "::error::Directory 'src/components' not found. Check case sensitivity and spelling."
-            echo "Found directories in src/: $(ls src/)"
+            echo "Found directories in src/: $(ls src/ 2>/dev/null || dir src\\ 2>/dev/null || echo 'src directory not found')"
             exit 1
           fi
           # Verify CSS file exists in expected location
@@ -40,17 +42,14 @@ jobs:
           if [ ! -f "$CSS_PATH" ]; then
             echo "::warning::Marketing CSS file not found at $CSS_PATH"
             echo "Creating empty file to prevent build failure"
-            mkdir -p $(dirname "$CSS_PATH")
-            touch "$CSS_PATH"
+            mkdir -p $(dirname "$CSS_PATH") 2>/dev/null || mkdir "$(dirname "$CSS_PATH")" 2>/dev/null || true
+            touch "$CSS_PATH" 2>/dev/null || echo "" > "$CSS_PATH"
           fi
           
       - name: Build app
         run: npm run build
-        
-      - name: Install snapcraft
-        run: sudo snap install snapcraft --classic
-        
+          
       - name: Publish release
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN  }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx electron-builder --publish always
