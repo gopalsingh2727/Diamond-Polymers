@@ -1,6 +1,7 @@
-.update-progress {
-  display: flex;
-  align-items: center;
+.modal-slot {
+  .update-progress {
+    display: flex;
+  }
 }
 
 .update-progress-pr {

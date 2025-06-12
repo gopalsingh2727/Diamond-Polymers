@@ -5,9 +5,9 @@
   "type": "module",
   "appId": "com.27Infinity.27this",
   "repository": {
-  "type": "git",
-  "url": "git@github.com:gopalsingh2727/Diamond-Polymers.git"
-},
+    "type": "git",
+    "url": "git@github.com:gopalsingh2727/Diamond-Polymers.git"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build && electron-builder",
@@ -59,9 +59,10 @@
     "eslint": "^8.57.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",
-    "postcss": "^8.5.4",
-    "postcss-nesting": "^13.0.1",
-    "tailwindcss": "^3.4.0",
+    "postcss": "^8.5.5",
+    "postcss-nested": "^7.0.2",
+    "postcss-nesting": "^13.0.2",
+    "tailwindcss": "^3.4.17",
     "typescript": "^5.2.2",
     "vite": "^6.3.5",
     "vite-plugin-electron": "^0.28.6",
