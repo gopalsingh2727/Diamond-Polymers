@@ -4,7 +4,7 @@ import { RootState } from "../../../../redux/rootReducer";
 import { AppDispatch } from "../../../../../store";
 import { createStep } from "../../../../redux/create/CreateStep/StpeActions";
 import { getMachines } from "../../../../redux/create/machine/MachineActions";
-import "./CreateStep.css";
+import "./createStep.css";
 
 const CreateStep: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
