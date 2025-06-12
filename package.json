@@ -41,7 +41,9 @@
       "target": [
         "nsis",
         "zip"
-      ]
+      ],
+      "signingHashAlgorithms": [],
+      "certificateFile": null
     },
     "publish": [
       {
