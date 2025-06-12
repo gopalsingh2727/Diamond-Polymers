@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { createAccount } from "../../../../redux/create/createNewAccount/NewAccountActions";
 import { RootState } from "../../../../../store";
 import { indianStates } from "./indianStates";
-import "./CreateNewAccount.css";
+import "./createNewAccount.css";
 // import imageCompression from 'browser-image-compression';
 type AccountFormData = {
   companyName?: string;
