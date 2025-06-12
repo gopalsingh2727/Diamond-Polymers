@@ -1,4 +1,16 @@
 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
 
-git tag v1.0.0
-git push origin v1.0.0
+git tag v0.0.3
+git push origin v0.0.3
+
+
+git lfs track "*.zip"
+git lfs track "*.bin"
+
+# Add tracked files
+git add .gitattributes
+git add your-large-file.zip
+
+# Commit and push
+git commit -m "Track large file with Git LFS"
+git push origin main
