@@ -19,3 +19,7 @@
   border: none;
   border-bottom: 1px solid #ccc;
 }
+
+.placeholder {
+  display: none;
+}
