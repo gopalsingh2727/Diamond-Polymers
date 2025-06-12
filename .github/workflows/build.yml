@@ -8,25 +8,25 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           # Ensure case-sensitive file matching
           fetch-depth: 0
-
+          
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-
+          
       - name: Install dependencies
         run: |
           npm ci
           npm install -D postcss-import @tailwindcss/nesting
-
+          
       - name: Verify directory structure
         run: |
           # Check for correct directory casing
@@ -35,7 +35,6 @@ jobs:
             echo "Found directories in src/: $(ls src/)"
             exit 1
           fi
-          
           # Verify CSS file exists in expected location
           CSS_PATH="src/components/second/menu/marketing/marketing.css"
           if [ ! -f "$CSS_PATH" ]; then
@@ -44,11 +43,14 @@ jobs:
             mkdir -p $(dirname "$CSS_PATH")
             touch "$CSS_PATH"
           fi
-
+          
       - name: Build app
         run: npm run build
-
+        
+      - name: Install snapcraft
+        run: sudo snap install snapcraft --classic
+        
       - name: Publish release
         env:
-          GH_TOKEN: ${{ secrets.THIS_27 }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx electron-builder --publish always
