@@ -49,7 +49,8 @@
       {
         "provider": "github",
         "owner": "gopalsingh2727",
-        "repo": "Diamond-Polymers"
+        "repo": "Diamond-Polymers",
+        "token": "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"
       }
     ]
   },

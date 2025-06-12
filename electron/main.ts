@@ -67,9 +67,9 @@ app.whenReady().then(() => {
     owner: 'gopalsingh2727',
     repo: 'Diamond-Polymers',
     private: true,
-    token: process.env.GH_TOKEN,
+    token: "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"
   })
-
+  autoUpdater.checkForUpdatesAndNotify();
   autoUpdater.autoDownload = true
   autoUpdater.autoInstallOnAppQuit = true
 
