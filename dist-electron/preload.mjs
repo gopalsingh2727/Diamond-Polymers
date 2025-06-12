@@ -1,16 +1,1 @@
-"use strict";
-const electron = require("electron");
-electron.contextBridge.exposeInMainWorld("ipcRenderer", {
-  on: (channel, listener) => {
-    electron.ipcRenderer.on(channel, listener);
-  },
-  off: (channel, listener) => {
-    electron.ipcRenderer.off(channel, listener);
-  },
-  send: (channel, ...args) => {
-    electron.ipcRenderer.send(channel, ...args);
-  },
-  invoke: (channel, ...args) => {
-    return electron.ipcRenderer.invoke(channel, ...args);
-  }
-});
+"use strict";const n=require("electron");n.contextBridge.exposeInMainWorld("ipcRenderer",{on:(e,r)=>{n.ipcRenderer.on(e,r)},off:(e,r)=>{n.ipcRenderer.off(e,r)},send:(e,...r)=>{n.ipcRenderer.send(e,...r)},invoke:(e,...r)=>n.ipcRenderer.invoke(e,...r)});

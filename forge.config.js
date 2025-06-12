@@ -12,30 +12,25 @@ module.exports = {
   makers: [
   {
     name: '@electron-forge/maker-zip',
-    config: {
-      arch: ['x64', 'arm64']
-    },
-    platforms: ['darwin']
+    config: {}
   },
   {
     name: '@electron-forge/maker-dmg',
-    config: {},
-    platforms: ['darwin']
+    config: {
+      name: 'DiamondPolymers'
+    }
   },
   {
     name: '@electron-forge/maker-squirrel',
-    config: {},
-    arch: ['ia32', 'x64']
+    config: {}
   },
   {
     name: '@electron-forge/maker-deb',
-    config: {},
-    arch: ['ia32', 'x64']
+    config: {}
   },
   {
     name: '@electron-forge/maker-rpm',
-    config: {},
-    arch: ['ia32', 'x64']
+    config: {}
   }
 ],
   publishers: [
