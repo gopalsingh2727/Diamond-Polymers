@@ -13,7 +13,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          # Ensure case-sensitive file matching
           fetch-depth: 0
 
       - name: Setup Node.js
@@ -21,6 +20,31 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
+
+      - name: Fix file casing issues
+        run: |
+          # Rename misspelled directories
+          if [ -d "src/componest" ]; then
+            mv src/componest src/components
+          fi
+          
+          # Fix component filename
+          if [ -f "src/components/second/menu/create/CreateMachineOpertor/CreteMachineOpertor.tsx" ]; then
+            git mv src/components/second/menu/create/CreateMachineOpertor/CreteMachineOpertor.tsx \
+                  src/components/second/menu/create/CreateMachineOpertor/CreateMachineOperator.tsx
+          fi
+          
+          # Fix CSS filename
+          if [ -f "src/components/second/menu/create/CreateMachineOpertor/createMachineOpertor.css" ]; then
+            git mv src/components/second/menu/create/CreateMachineOpertor/createMachineOpertor.css \
+                  src/components/second/menu/create/CreateMachineOpertor/CreateMachineOperator.css
+          fi
+          
+          # Update import in component
+          if [ -f "src/components/second/menu/create/CreateMachineOpertor/CreateMachineOperator.tsx" ]; then
+            sed -i 's|\./createMachineOpertor\.css|./CreateMachineOperator.css|' \
+                src/components/second/menu/create/CreateMachineOpertor/CreateMachineOperator.tsx
+          fi
 
       - name: Install dependencies
         run: |
@@ -31,18 +55,15 @@ jobs:
         run: |
           # Check for correct directory casing
           if [ ! -d "src/components" ]; then
-            echo "::error::Directory 'src/components' not found. Check case sensitivity and spelling."
-            echo "Found directories in src/: $(ls src/)"
+            echo "::error::Directory 'src/components' not found."
             exit 1
           fi
           
-          # Verify CSS file exists in expected location
-          CSS_PATH="src/components/second/menu/marketing/marketing.css"
+          # Verify critical CSS file exists
+          CSS_PATH="src/components/second/menu/create/CreateMachineOpertor/CreateMachineOperator.css"
           if [ ! -f "$CSS_PATH" ]; then
-            echo "::warning::Marketing CSS file not found at $CSS_PATH"
-            echo "Creating empty file to prevent build failure"
-            mkdir -p $(dirname "$CSS_PATH")
-            touch "$CSS_PATH"
+            echo "::error::CSS file not found at $CSS_PATH"
+            exit 1
           fi
 
       - name: Build app
