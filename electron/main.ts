@@ -2,6 +2,18 @@ import { app, BrowserWindow, ipcMain } from 'electron'
 import { autoUpdater } from 'electron-updater'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
+import dotenv from 'dotenv'
+dotenv.config()
+
+import * as log from 'electron-log'
+
+autoUpdater.logger = log
+
+
+log.transports.file.level = 'info'
+
+// Log something
+log.info('Logger initialized')
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 process.env.APP_ROOT = path.join(__dirname, '..')
@@ -49,9 +61,17 @@ app.on('activate', () => {
 app.whenReady().then(() => {
   createWindow()
 
-  // --- UPDATE HANDLERS BELOW ---
+  
+  autoUpdater.setFeedURL({
+    provider: 'github',
+    owner: 'gopalsingh2727',
+    repo: 'Diamond-Polymers',
+    private: true,
+    token: process.env.GH_TOKEN,
+  })
 
-  autoUpdater.autoDownload = false
+  autoUpdater.autoDownload = true
+  autoUpdater.autoInstallOnAppQuit = true
 
   ipcMain.handle('check-update', async () => {
     try {

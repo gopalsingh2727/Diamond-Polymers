@@ -1,14 +1,13 @@
 {
   "name": "electron-vite-project",
   "private": true,
-  "version": "0.0.6",
+  "version": "0.0.8",
   "type": "module",
   "appId": "com.27Infinity.27this",
   "repository": {
     "type": "git",
     "url": "git@github.com:gopalsingh2727/Diamond-Polymers.git"
   },
-
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build && electron-builder",
@@ -19,33 +18,39 @@
     "make-mac": "electron-forge make --platform darwin --arch arm64",
     "make": "electron-forge make"
   },
- "build": {
-  "appId": "com.27Infinity.27this",
-  "productName": "DiamondPolymers",
-  "directories": {
-    "output": "release"
+  "build": {
+    "appId": "com.27Infinity.27this",
+    "productName": "DiamondPolymers",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/",
+      "dist-electron/",
+      "node_modules/",
+      "package.json"
+    ],
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "category": "public.app-category.productivity"
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "zip"
+      ]
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "gopalsingh2727",
+        "repo": "Diamond-Polymers"
+      }
+    ]
   },
-  "files": [
-    "dist/",
-    "dist-electron/",
-    "node_modules/",
-    "package.json"
-  ],
-  "mac": {
-    "target": ["dmg", "zip"],
-    "category": "public.app-category.productivity"
-  },
-  "win": {
-    "target": ["nsis", "zip"]
-  },
-  "publish": [
-    {
-      "provider": "github",
-      "owner": "gopalsingh2727",
-      "repo": "Diamond-Polymers"
-    }
-  ]
-},
   "dependencies": {
     "@heroicons/react": "^2.2.0",
     "@material-tailwind/react": "^2.1.10",
@@ -56,6 +61,8 @@
     "browserify": "^17.0.1",
     "buffer": "^6.0.3",
     "crypto-browserify": "^3.12.1",
+    "dotenv": "^16.5.0",
+    "electron-log": "^5.4.1",
     "electron-squirrel-startup": "^1.0.1",
     "electron-updater": "^6.6.2",
     "file-saver": "^2.0.5",
