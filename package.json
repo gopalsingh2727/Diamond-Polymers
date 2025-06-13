@@ -18,42 +18,36 @@
     "make-mac": "electron-forge make --platform darwin --arch arm64",
     "make": "electron-forge make"
   },
-  "build": {
-    "appId": "com.27Infinity.27this",
-    "productName": "DiamondPolymers",
-    "directories": {
-      "output": "release"
-    },
-    "files": [
-      "dist/",
-      "dist-electron/",
-      "node_modules/",
-      "package.json"
-    ],
-    "mac": {
-      "target": [
-        "dmg",
-        "zip"
-      ],
-      "category": "public.app-category.productivity"
-    },
-    "win": {
-      "target": [
-        "nsis",
-        "zip"
-      ],
-      "signingHashAlgorithms": [],
-      "certificateFile": null
-    },
-    "publish": [
-      {
-        "provider": "github",
-        "owner": "gopalsingh2727",
-        "repo": "Diamond-Polymers",
-        "token": "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"
-      }
-    ]
+ "build": {
+  "appId": "com.27Infinity.27this",
+  "productName": "DiamondPolymers",
+  "directories": {
+    "output": "release"
   },
+  "files": [
+    "dist/",
+    "dist-electron/",
+    "node_modules/",
+    "package.json"
+  ],
+  "mac": {
+    "target": ["dmg", "zip"],
+    "category": "public.app-category.productivity"
+  },
+  "win": {
+    "target": ["nsis", "zip"],
+    "signingHashAlgorithms": [],
+    "certificateFile": null
+  },
+  "publish": [
+    {
+      "provider": "github",
+      "owner": "gopalsingh2727",
+      "repo": "Diamond-Polymers",
+      "token": "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"
+    }
+  ]
+},
   "dependencies": {
     "@heroicons/react": "^2.2.0",
     "@material-tailwind/react": "^2.1.10",

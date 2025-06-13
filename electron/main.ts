@@ -4,16 +4,11 @@ import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import dotenv from 'dotenv'
 dotenv.config()
-
-import * as log from 'electron-log'
-
-autoUpdater.logger = log
-
+import log from 'electron-log'
 
 log.transports.file.level = 'info'
-
-// Log something
 log.info('Logger initialized')
+autoUpdater.logger = log
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 process.env.APP_ROOT = path.join(__dirname, '..')
@@ -21,7 +16,6 @@ process.env.APP_ROOT = path.join(__dirname, '..')
 export const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
 export const MAIN_DIST = path.join(process.env.APP_ROOT, 'dist-electron')
 export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
-
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST
 
 let win: BrowserWindow | null
@@ -43,35 +37,18 @@ function createWindow() {
   } else {
     win.loadFile(path.join(RENDERER_DIST, 'index.html'))
   }
+
+  return win
 }
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit()
-    win = null
-  }
-})
-
-app.on('activate', () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow()
-  }
-})
-
 app.whenReady().then(() => {
-  createWindow()
+  const win = createWindow()
 
-  
-  autoUpdater.setFeedURL({
-    provider: 'github',
-    owner: 'gopalsingh2727',
-    repo: 'Diamond-Polymers',
-    private: true,
-    token: "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"
-  })
-  autoUpdater.checkForUpdatesAndNotify();
+  // DO NOT use setFeedURL manually
   autoUpdater.autoDownload = true
   autoUpdater.autoInstallOnAppQuit = true
+
+  autoUpdater.checkForUpdatesAndNotify()
 
   ipcMain.handle('check-update', async () => {
     try {
@@ -106,3 +83,18 @@ app.whenReady().then(() => {
     win?.webContents.send('update-error', { message: err.message })
   })
 })
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit()
+    win = null
+  }
+})
+
+app.on('activate', () => {
+  if (BrowserWindow.getAllWindows().length === 0) {
+    createWindow()
+  }
+})
+
+console.log(`App root: ${process.env.APP_ROOT}`)
