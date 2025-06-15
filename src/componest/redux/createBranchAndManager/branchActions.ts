@@ -3,46 +3,148 @@ import {
   BRANCH_CREATE_REQUEST,
   BRANCH_CREATE_SUCCESS,
   BRANCH_CREATE_FAIL,
+  BRANCH_LIST_REQUEST,
+  BRANCH_LIST_SUCCESS,
+  BRANCH_LIST_FAIL,
+  BRANCH_UPDATE_REQUEST,
+  BRANCH_UPDATE_SUCCESS,
+  BRANCH_UPDATE_FAIL,
+  BRANCH_DELETE_REQUEST,
+  BRANCH_DELETE_SUCCESS,
+  BRANCH_DELETE_FAIL,
 } from "./branchConstants";
+import { AppDispatch, RootState } from "../../../store";
 
-export const createBranch = (data: any) => async (dispatch: any, getState: any) => {
-  try {
-    dispatch({ type: BRANCH_CREATE_REQUEST });
+// Helpers
+const getToken = (getState: () => RootState): string | null => {
+  return getState().auth?.token || localStorage.getItem("authToken");
+};
 
-    const state = getState();
-    const token = state.auth?.token || localStorage.getItem("authToken");
+const getHeaders = (token: string | null) => {
+  const apiKey = import.meta.env.VITE_API_KEY;
+  return {
+    "Content-Type": "application/json",
+    Authorization: token ? `Bearer ${token}` : "",
+    "x-api-key": apiKey,
+  };
+};
 
-    if (!data.name || typeof data.name !== "string" || !data.name.trim()) {
-      throw new Error("Branch name is required and must be a string.");
+const baseUrl = import.meta.env.VITE_API_27INFINITY_IN;
+
+// ─── CREATE ───────────────────────────────────────────────
+export const createBranch = (data: { name: string; location?: string }) => {
+  return async (dispatch: AppDispatch, getState: () => RootState) => {
+    try {
+      dispatch({ type: BRANCH_CREATE_REQUEST });
+
+      const token = getToken(getState);
+
+      if (!data.name || typeof data.name !== "string" || !data.name.trim()) {
+        throw new Error("Branch name is required and must be a string.");
+      }
+
+      const payload = {
+        name: data.name.trim(),
+        location: data.location?.trim() || "",
+      };
+
+      const response = await axios.post(
+        `${baseUrl}/dev/branch/create`,
+        payload,
+        { headers: getHeaders(token) }
+      );
+
+      dispatch({
+        type: BRANCH_CREATE_SUCCESS,
+        payload: response.data,
+      });
+
+      if (response.data?._id) {
+        localStorage.setItem("selectedBranch", response.data._id);
+      }
+
+    } catch (error: any) {
+      dispatch({
+        type: BRANCH_CREATE_FAIL,
+        payload:
+          error.response?.data?.message || error.message || "Branch creation failed",
+      });
     }
+  };
+};
 
-    const config = {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    };
+// ─── LIST ───────────────────────────────────────────────
+export const listBranches = () => {
+  return async (dispatch: AppDispatch, getState: () => RootState) => {
+    try {
+      dispatch({ type: BRANCH_LIST_REQUEST });
 
-    const payload = {
-      name: data.name.trim(),
-      location: data.location?.trim() || "",
-    };
+      const token = getToken(getState);
 
-    const response = await axios.post(
-      `http://localhost:3000/dev/branch/create`,
-      payload,
-      config
-    );
+      const { data } = await axios.get(`${baseUrl}/dev/branch/branches`, {
+        headers: getHeaders(token),
+      });
 
-    dispatch({
-      type: BRANCH_CREATE_SUCCESS,
-      payload: response.data,
-    });
-  } catch (error: any) {
-    dispatch({
-      type: BRANCH_CREATE_FAIL,
-      payload:
-        error.response?.data?.message || error.message || "Branch creation failed",
-    });
-  }
+      dispatch({ type: BRANCH_LIST_SUCCESS, payload: data });
+
+    } catch (error: any) {
+      dispatch({
+        type: BRANCH_LIST_FAIL,
+        payload: error.response?.data?.message || "Failed to fetch branches",
+      });
+    }
+  };
+};
+
+// ─── UPDATE ───────────────────────────────────────────────
+export const updateBranch = (branchId: string, data: { name?: string; location?: string }) => {
+  return async (dispatch: AppDispatch, getState: () => RootState) => {
+    try {
+      dispatch({ type: BRANCH_UPDATE_REQUEST });
+
+      const token = getToken(getState);
+
+      const payload = {
+        ...(data.name && { name: data.name.trim() }),
+        ...(data.location && { location: data.location.trim() }),
+      };
+
+      const response = await axios.put(
+        `${baseUrl}/dev/branch/${branchId}`,
+        payload,
+        { headers: getHeaders(token) }
+      );
+
+      dispatch({ type: BRANCH_UPDATE_SUCCESS, payload: response.data });
+
+    } catch (error: any) {
+      dispatch({
+        type: BRANCH_UPDATE_FAIL,
+        payload: error.response?.data?.message || "Failed to update branch",
+      });
+    }
+  };
+};
+
+// ─── DELETE ───────────────────────────────────────────────
+export const deleteBranch = (branchId: string) => {
+  return async (dispatch: AppDispatch, getState: () => RootState) => {
+    try {
+      dispatch({ type: BRANCH_DELETE_REQUEST });
+
+      const token = getToken(getState);
+
+      await axios.delete(`${baseUrl}/dev/branch/${branchId}`, {
+        headers: getHeaders(token),
+      });
+
+      dispatch({ type: BRANCH_DELETE_SUCCESS, payload: branchId });
+
+    } catch (error: any) {
+      dispatch({
+        type: BRANCH_DELETE_FAIL,
+        payload: error.response?.data?.message || "Failed to delete branch",
+      });
+    }
+  };
 };

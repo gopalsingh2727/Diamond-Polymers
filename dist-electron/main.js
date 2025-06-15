@@ -17569,21 +17569,37 @@ dotenv.config();
 log.transports.file.level = "info";
 log.info("Logger initialized");
 mainExports$1.autoUpdater.logger = log;
+log.log("AutoUpdater initialized", app.getVersion());
 const __dirname$1 = path.dirname(fileURLToPath(import.meta.url));
 process.env.APP_ROOT = path.join(__dirname$1, "..");
 const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
 const MAIN_DIST = path.join(process.env.APP_ROOT, "dist-electron");
 const RENDERER_DIST = path.join(process.env.APP_ROOT, "dist");
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, "public") : RENDERER_DIST;
-let win;
+let win = null;
+let splash = null;
 function createWindow() {
+  splash = new BrowserWindow({
+    width: 400,
+    height: 300,
+    frame: false,
+    transparent: true,
+    alwaysOnTop: true,
+    resizable: false
+  });
+  splash.loadFile(path.join(process.env.VITE_PUBLIC, "splash.html"));
   win = new BrowserWindow({
+    show: false,
+    width: 1200,
+    height: 800,
     icon: path.join(process.env.VITE_PUBLIC, "electron-vite.svg"),
     webPreferences: {
       preload: path.join(__dirname$1, "preload.mjs")
     }
   });
   win.webContents.on("did-finish-load", () => {
+    splash == null ? void 0 : splash.close();
+    win == null ? void 0 : win.show();
     win == null ? void 0 : win.webContents.send("main-process-message", (/* @__PURE__ */ new Date()).toLocaleString());
   });
   if (VITE_DEV_SERVER_URL) {

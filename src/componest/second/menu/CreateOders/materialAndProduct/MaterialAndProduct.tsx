@@ -28,6 +28,8 @@ type StepEntry = {
     SizeY: string;
     SizeZ: string;
     OptereName: string;
+    StartTime:string;
+    EndTime:string;
   }[];
 };
 
@@ -220,7 +222,6 @@ const MaterialAndProduct: React.FC = () => {
 
 
 
-// Inside your MaterialAndProduct component
 
 
 
@@ -253,8 +254,7 @@ const MaterialAndProduct: React.FC = () => {
     }
   }, [materiaType, materialName, totalWeight]);
 
-  // ================ Helper Functions ================
-  // Filter step suggestions
+  
   const suggestions = stepData.filter((step) =>
     step.stepname.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -725,7 +725,7 @@ const MaterialAndProduct: React.FC = () => {
         
 
 
-            {showBottomGusset && (
+    {showBottomGusset && (
             <div className="divRow">
               <label>Bottom Gusset</label>
               <input
@@ -831,6 +831,7 @@ const MaterialAndProduct: React.FC = () => {
                   <label>Mixing</label>
                   <select 
                     value={mixing}
+                    id="myDropdown"
                     onChange={handleMixingChange}
                   >
                     <option value="">Select</option>
@@ -841,18 +842,7 @@ const MaterialAndProduct: React.FC = () => {
               </div>
 
             
-              {savedMixing && (
-                <div className="savedMixingDisplay" onDoubleClick={editMixing}>
-                   <div className="mixingTable">
-                   
-                      
-                    <div className="mixingLoss">
-                      <strong>Total Loss: {savedMixing.loss} kg</strong>
-                    </div>
-                  </div>
-                  <p><em>Double-click to edit</em></p>
-                </div>
-              )}
+              
             </div>
           )}
 {showMixingPopup && (
@@ -865,7 +855,7 @@ const MaterialAndProduct: React.FC = () => {
           <span>Type</span>
           <span>Weight (kg)</span>
           <span>%</span>
-          <span>Action</span>
+
         </div>
         {mixMaterials.map((mat, i) => (
           <div key={i} className="popupitemall">
@@ -887,9 +877,17 @@ const MaterialAndProduct: React.FC = () => {
               onChange={(e) => handleMixChange(i, "weight", parseFloat(e.target.value) || 0)}
               placeholder="Weight"
             />
-            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              {typeof mat.percentage === 'number' ? mat.percentage.toFixed(2) : mat.percentage}%
-            </span>
+            <input
+            type="number"
+            value={mat.percentage}
+            onChange={(e) => handleMixChange(i, "percentage", parseFloat(e.target.value) || 0)}
+            placeholder="Percentage"
+            
+            
+            
+            
+            
+            />
             {i !== 0 ? (
               <button
                 onClick={() => handleRemoveRow(i)}
@@ -941,6 +939,38 @@ const MaterialAndProduct: React.FC = () => {
   </div>
 )}
 
+
+
+
+{savedMixing && (
+                <div className="SaveMixing">
+                  <div className="SaveMixingDisplay">
+                    <div className="SaveMixingHeaderRow">
+                      <strong>#</strong>
+                      <strong>Material Name</strong>
+                      <strong>Material Type</strong>
+                      <strong>Weight (kg)</strong>
+                      <strong>Percentage (%)</strong>
+                    </div>
+                    {savedMixing.data.map((material, index) => (
+                      <div key={index} className="SaveMixingstepRow">
+                        <span>{index + 1}</span>
+                        <span>{material.name}</span>
+                        <span>{material.type}</span>
+                        <span>{material.weight.toFixed(2)}</span>
+                        <span>{material.percentage}%</span>
+                      </div>
+                    ))}
+                    <div className="stepRow" style={{ backgroundColor: '#f0f0f0', fontWeight: 'bold' }}>
+                      <span></span>
+                      <span>Total Loss:</span>
+                      <span></span>
+                      <span>{savedMixing.loss} kg</span>
+                      <span></span>
+                    </div>
+                  </div>
+                </div>
+)}
 {/* Saved Mixing Data Display */}
 {/* {savedMixingData && (
   <div className="section-result" onDoubleClick={() => setShowMixingPopup(true)}>
@@ -1124,6 +1154,26 @@ const MaterialAndProduct: React.FC = () => {
                             }}
                             placeholder="Operator Name"
                           />
+                           <input
+                            type="text"
+                            value={step.StartTime}
+                            onChange={(e) => {
+                              const updated = { ...selectedStep };
+                              updated.steps[index].StartTime = e.target.value;
+                              setSelectedStep({ ...updated });
+                            }}
+                            placeholder="Operator Name"
+                          />
+                          <input
+                            type="text"
+                            value={step.EndTime}
+                            onChange={(e) => {
+                              const updated = { ...selectedStep };
+                              updated.steps[index].EndTime = e.target.value;
+                              setSelectedStep({ ...updated });
+                            }}
+                            placeholder="Operator Name"
+                          />
                           <button
                             onClick={() => {
                               const updated = { ...selectedStep };
@@ -1154,7 +1204,9 @@ const MaterialAndProduct: React.FC = () => {
                             SizeX: '',
                             SizeY: '',
                             SizeZ: '',
-                            OptereName: ''
+                            OptereName: '',
+                            StartTime:'',
+                            EndTime:'',
                           });
                           setSelectedStep({ ...updated });
                         }}
@@ -1198,6 +1250,8 @@ const MaterialAndProduct: React.FC = () => {
                       <strong>Size Y</strong>
                       <strong>Size Z</strong>
                       <strong>Operator Name</strong>
+                      <strong>Start Time</strong>
+                      <strong>Ending Time</strong>
                     </div>
                     {savedStep.steps.map((step, index) => (
                       <div key={index} className="stepRow">
@@ -1208,6 +1262,8 @@ const MaterialAndProduct: React.FC = () => {
                         <span>{step.SizeY}</span>
                         <span>{step.SizeZ}</span>
                         <span>{step.OptereName}</span>
+                        <span>{step.StartTime}</span>
+                        <span>{step.EndTime}</span>
                       </div>
                     ))}
                   </div>

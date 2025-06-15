@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Loading App</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      font-family: 'Pacifico', cursive;
+      color: #000;
+    }
+
+    img.logo {
+      width: 120px;
+      height: auto;
+      max-height: 120px;
+      margin-bottom: 30px;
+      animation: fadeIn 2s ease-out forwards;
+    }
+
+    .handwrite {
+      width: 80%;
+      max-width: 600px;
+      height: auto;
+      margin: 0 auto;
+    }
+
+    path {
+      fill: none;
+      stroke: #000;
+      stroke-width: 2;
+      stroke-dasharray: 1000;
+      stroke-dashoffset: 1000;
+      animation: draw 4s forwards ease-in-out;
+    }
+
+    .loader {
+      font-size: 1.5rem;
+      margin-top: 30px;
+      opacity: 0;
+      animation: fadeIn 1s 3s forwards;
+    }
+
+    @keyframes draw {
+      to {
+        stroke-dashoffset: 0;
+      }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+  </style>
+
+  <!-- Handwritten font -->
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Logo image -->
+  <img src="./logo.png" alt="Logo" class="logo" />
+
+  <!-- SVG handwriting animation (placeholder path) -->
+  <svg class="handwrite" viewBox="0 0 500 100">
+    <path d="M10,60
+      C20,20 40,20 50,60
+      S80,100 90,60
+      S120,20 130,60
+      S160,100 170,60
+      S200,20 210,60
+      S240,100 250,60
+      S280,20 290,60
+      S320,100 330,60
+      S360,20 370,60
+      S400,100 410,60
+      S440,20 450,60" />
+  </svg>
+
+  <!-- Launch message -->
+  <div class="loader">DIAMOND POLYMERS</div>
+</body>
+</html>

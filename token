@@ -27,3 +27,12 @@ git tag -d v0.1.8
 git push origin :refs/tags/v0.1.8
 
 npm run build electron-builder --publish always
+
+
+
+Give me a Redux async action   
+that uses axios to POST to an API. The API URL should come from VITE_API_27INFINITY_IN,
+ and the request should send x-api-key from VITE_API_KEY 
+ 
+
+

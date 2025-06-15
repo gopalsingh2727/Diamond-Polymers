@@ -3,7 +3,8 @@ name: Build and Publish Electron App
 on:
   push:
     tags:
-      - 'v*'  # Trigger on version tags like v1.0.0
+      - 'v*'  
+      # Trigger on version tags like v1.0.0
 
 jobs:
   build:
@@ -28,6 +29,7 @@ jobs:
         run: |
           npm ci
           npm install -D postcss-import @tailwindcss/nesting
+      
 
       - name: Verify directory structure
         shell: bash

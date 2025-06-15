@@ -1,7 +1,7 @@
 {
   "name": "electron-vite-project",
   "private": true,
-  "version": "0.2.4",
+  "version": "0.2.5",
   "type": "module",
   "appId": "com.27Infinity.27this",
   "repository": {
@@ -18,36 +18,43 @@
     "make-mac": "electron-forge make --platform darwin --arch arm64",
     "make": "electron-forge make"
   },
- "build": {
-  "appId": "com.27Infinity.27this",
-  "productName": "DiamondPolymers",
-  "directories": {
-    "output": "release"
+  "build": {
+    "appId": "com.27Infinity.27this",
+    "productName": "DiamondPolymers",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/",
+      "dist-electron/",
+      "node_modules/",
+      "package.json",
+      "bin/ffmpeg.dll"
+    ],
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "category": "public.app-category.productivity"
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "zip"
+      ],
+      "signingHashAlgorithms": [],
+      "certificateFile": null
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "gopalsingh2727",
+        "repo": "Diamond-Polymers",
+        "token": "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"
+      }
+    ]
   },
-  "files": [
-    "dist/",
-    "dist-electron/",
-    "node_modules/",
-    "package.json"
-  ],
-  "mac": {
-    "target": ["dmg", "zip"],
-    "category": "public.app-category.productivity"
-  },
-  "win": {
-    "target": ["nsis", "zip"],
-    "signingHashAlgorithms": [],
-    "certificateFile": null
-  },
-  "publish": [
-    {
-      "provider": "github",
-      "owner": "gopalsingh2727",
-      "repo": "Diamond-Polymers",
-      "token": "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"
-    }
-  ]
-},
   "dependencies": {
     "@heroicons/react": "^2.2.0",
     "@material-tailwind/react": "^2.1.10",
@@ -62,6 +69,7 @@
     "electron-log": "^5.4.1",
     "electron-squirrel-startup": "^1.0.1",
     "electron-updater": "^6.6.2",
+    "ffmpeg-static": "^5.2.0",
     "file-saver": "^2.0.5",
     "lucide": "^0.511.0",
     "lucide-react": "^0.511.0",
@@ -96,7 +104,7 @@
     "@vitejs/plugin-react": "^4.2.1",
     "autoprefixer": "^10.4.21",
     "dotenv-cli": "^8.0.0",
-    "electron": "^30.0.1",
+    "electron": "^30.5.1",
     "electron-builder": "^24.13.3",
     "eslint": "^8.57.0",
     "eslint-plugin-react-hooks": "^4.6.0",

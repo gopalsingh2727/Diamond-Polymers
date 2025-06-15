@@ -1,7 +1,7 @@
 import axios from "axios";
 import { AppDispatch, RootState } from "../../../store";
 
-// Action Types
+
 export const FETCH_BRANCHES_REQUEST = "FETCH_BRANCHES_REQUEST";
 export const FETCH_BRANCHES_SUCCESS = "FETCH_BRANCHES_SUCCESS";
 export const FETCH_BRANCHES_FAIL = "FETCH_BRANCHES_FAIL";
@@ -14,6 +14,10 @@ export const BRANCH_LIST_REQUEST = "BRANCH_LIST_REQUEST";
 export const BRANCH_LIST_SUCCESS = "BRANCH_LIST_SUCCESS";
 export const BRANCH_LIST_FAIL = "BRANCH_LIST_FAIL";
 
+// Environment Variables
+const baseUrl = import.meta.env.VITE_API_27INFINITY_IN;
+const API_KEY = import.meta.env.VITE_API_KEY;
+
 // Helpers
 const getToken = (getState: () => RootState): string | null => {
   return getState().auth?.token || localStorage.getItem("authToken");
@@ -23,7 +27,7 @@ const getUserData = (getState: () => RootState): any => {
   return getState().auth?.userData || JSON.parse(localStorage.getItem("userData") || "{}");
 };
 
-// Fetch Branches (based on role)
+// Fetch Branches
 export const fetchBranches = () => {
   return async (dispatch: AppDispatch, getState: () => RootState) => {
     dispatch({ type: FETCH_BRANCHES_REQUEST });
@@ -35,15 +39,18 @@ export const fetchBranches = () => {
 
       let url = "";
       if (role === "admin") {
-        url = "http://localhost:3000/dev/branch/branches";
+        url = `${baseUrl}/branch/branches`;
       } else if (role === "manager") {
-        url = "http://localhost:3000/dev/manager";
+        url = `${baseUrl}/manager/getMyBranch`;
       } else {
         throw new Error("Unauthorized role");
       }
 
       const { data } = await axios.get(url, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "x-api-key": API_KEY,
+        },
       });
 
       const branches = role === "manager" ? [data] : data;
@@ -77,9 +84,14 @@ export const selectBranch = (branchId: string) => {
       const token = getToken(getState);
 
       const { data } = await axios.post(
-        "http://localhost:3000/dev/branch/selectBranch",
+        `${baseUrl}/branch/selectBranch`,
         { branchId },
-        { headers: { Authorization: `Bearer ${token}` } }
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "x-api-key": API_KEY,
+          },
+        }
       );
 
       dispatch({ type: SELECT_BRANCH_SUCCESS, payload: data });
@@ -104,8 +116,11 @@ export const listBranches = () => {
     try {
       const token = getToken(getState);
 
-      const { data } = await axios.get("http://localhost:3000/dev/branch/branches", {
-        headers: { Authorization: `Bearer ${token}` },
+      const { data } = await axios.get(`${baseUrl}/branch/branches`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "x-api-key": API_KEY,
+        },
       });
 
       dispatch({ type: BRANCH_LIST_SUCCESS, payload: data });

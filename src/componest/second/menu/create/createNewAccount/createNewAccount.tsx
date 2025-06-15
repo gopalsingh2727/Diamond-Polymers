@@ -33,7 +33,7 @@ const CreateNewAccount: React.FC<Props> = ({ initialData = {} }) => {
   const dispatch = useDispatch();
 
   const { loading, error: reduxError } = useSelector(
-    (state: RootState) => state.account
+    (state: RootState) => state.createAccount
   );
 
   const [formValues, setFormValues] = useState<AccountFormData>({

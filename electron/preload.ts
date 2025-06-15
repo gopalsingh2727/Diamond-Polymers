@@ -1,23 +1,60 @@
-import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron'
+// preload.ts
+import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
 
 contextBridge.exposeInMainWorld('ipcRenderer', {
-  
+  /**
+   * Listen for events from main process
+   */
   on: (channel: string, listener: (event: IpcRendererEvent, ...args: any[]) => void) => {
-    ipcRenderer.on(channel, listener)
+    try {
+      ipcRenderer.on(channel, listener);
+    } catch (err) {
+      console.error('ipcRenderer.on error:', err);
+    }
   },
 
-
+  /**
+   * Remove event listener
+   */
   off: (channel: string, listener: (...args: any[]) => void) => {
-    ipcRenderer.off(channel, listener)
+    try {
+      ipcRenderer.off(channel, listener);
+    } catch (err) {
+      console.error('ipcRenderer.off error:', err);
+    }
   },
 
-
+  /**
+   * Send message to main process
+   */
   send: (channel: string, ...args: any[]) => {
-    ipcRenderer.send(channel, ...args)
+    try {
+      ipcRenderer.send(channel, ...args);
+    } catch (err) {
+      console.error('ipcRenderer.send error:', err);
+    }
   },
 
-
+  /**
+   * Invoke method in main process
+   */
   invoke: (channel: string, ...args: any[]) => {
-    return ipcRenderer.invoke(channel, ...args)
+    try {
+      return ipcRenderer.invoke(channel, ...args);
+    } catch (err) {
+      console.error('ipcRenderer.invoke error:', err);
+      return Promise.reject(err);
+    }
+  },
+
+  /**
+   * Listen once for event from main process
+   */
+  once: (channel: string, listener: (event: IpcRendererEvent, ...args: any[]) => void) => {
+    try {
+      ipcRenderer.once(channel, listener);
+    } catch (err) {
+      console.error('ipcRenderer.once error:', err);
+    }
   }
-})
+});

@@ -2,7 +2,7 @@
 import { combineReducers } from "redux";
 import authReducer from "./login/authReducer";
 import { branchListReducer, branchReducer } from "./Branch/BranchReducer";
-import { accountReducer } from "./create/createNewAccount/NewAccountReducer";
+import {  createAccountReducer, deleteAccountReducer, getAccountsReducer, updateAccountReducer } from "./create/createNewAccount/NewAccountReducer";
 
 import { branchCreateReducer } from "./createBranchAndManager/branchReducer";
 import { adminCreateReducer } from "./Admin/adminReducer";
@@ -18,17 +18,24 @@ import {
   machineListReducer,
   machineUpdateReducer,
 } from "./create/machine/MachineReducer";
-import { stepCreateReducer } from "./create/CreateStep/StepReducer";
-import { operatorCreateReducer } from "./create/CreateMachineOpertor/MachineOpertorReducer";
+
+import { operatorCreateReducer, operatorDeleteReducer, operatorListReducer, operatorUpdateReducer } from "./create/CreateMachineOpertor/MachineOpertorReducer";
 import { productCategoryReducer, productTypeWithProductsReducer } from "./create/products/productCategories/productCategoriesReducer";
 import { materialCategoryReducer } from "./create/Materials/MaterialsCategories/MaterialsCategoriesReducer";
 import { materialCreateReducer } from "./create/Materials/MaterialReducer";
+import { stepCreateReducer, stepListReducer, stepUpdateReducer } from "./create/CreateStep/StepReducer";
+
+
 
 
 const rootReducer = combineReducers({
   auth: authReducer,
   branches: branchReducer,
-  account: accountReducer,
+  // account: accountReducer,
+  createAccount: createAccountReducer,
+  getAccounts: getAccountsReducer,
+  updateAccount: updateAccountReducer,
+  deleteAccount: deleteAccountReducer,
 
   branchCreate: branchCreateReducer,
   branchList: branchListReducer,
@@ -42,8 +49,18 @@ const rootReducer = combineReducers({
   machineDetail: machineDetailReducer,
   machineList: machineListReducer,
 
+
   stepCreate: stepCreateReducer,
+  stepList: stepListReducer,
+  stepUpdate: stepUpdateReducer,
+  // stepDelete: stepDeleteReducer,
+
+
+
   operatorCreate: operatorCreateReducer,
+  operatorList: operatorListReducer,
+  operatorUpdate: operatorUpdateReducer,
+  operatorDelete: operatorDeleteReducer,
 
   productCategories: productCategoryReducer,
   materialCategories: materialCategoryReducer,

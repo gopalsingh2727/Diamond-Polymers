@@ -1,6 +1,6 @@
 /* Material and Product Component Styles - Column Layout */
 
-
+    grid-template-columns: 40px 130px 150px 53px 53px 75px 149px 92px 88px;
 
 /* Header and Main Select */
 .createProductCss > label {
@@ -262,7 +262,7 @@
 /* Header row for the step table */
 .stepHeaderRow {
   display: grid;
-  grid-template-columns: 40px 130px 150px 80px 80px 80px 150px;
+  grid-template-columns: 40px 130px 150px 53px 53px 75px 149px 92px 88px;
   gap: 10px;
   padding-left: 10px;
 
@@ -274,7 +274,7 @@
 /* Each data row */
 .stepRow {
   display: grid;
-  grid-template-columns: 40px 130px 150px 80px 80px 80px 150px;
+  grid-template-columns: 40px 130px 150px 53px 53px 75px 149px 92px 88px;
   gap: 10px;
   padding-left: 10px;
 
@@ -431,4 +431,107 @@
 .GusseClassName{
   display: flex;
   flex-direction: row;
+}
+
+
+
+.section-result{
+
+}
+
+.SaveMixingDisplay {
+  display: flex;
+  flex-direction: column;
+  height: 100px;
+  overflow-y: auto; 
+  font-size: 14px;
+  width: 100%;
+}
+
+.SaveMixingDisplay::-webkit-scrollbar {
+  width: 6px;
+  flex-direction: row;
+}
+
+.SaveMixingDisplay::-webkit-scrollbar-thumb {
+  background-color: #888;
+  border-radius: 4px;
+}
+
+.SaveMixingDisplay::-webkit-scrollbar-thumb:hover {
+  background-color: #555;
+}
+
+.SaveMixingHeaderRow  {
+
+  gap: 10px;
+  font-weight: bold;
+  padding-left: 10px;
+}
+.SaveMixingHeaderRow strong{
+  display: inline-block; /* or flex if needed */
+}
+.SaveMixingHeaderRow strong:nth-child(1) { width: 40px;}
+.SaveMixingHeaderRow strong:nth-child(2) { width: 150px; }
+.SaveMixingHeaderRow strong:nth-child(3) { width: 150px; }
+.SaveMixingHeaderRow strong:nth-child(4) { width: 150px; }
+.SaveMixingHeaderRow strong:nth-child(6) { width: 150px; }
+.SaveMixingstepRow   strong:nth-child(7) { width: 150px; }
+
+
+
+
+
+.SaveMixingHeaderRow {
+  border: 1px solid #000;
+}
+.SaveMixingstepRow {
+  display: flex;
+  
+}
+
+.SaveMixingstepRow span {
+  padding-left: 10px;
+  
+  
+}
+
+
+.SaveMixingstepRow span:nth-child(1) { width: 40px; }
+.SaveMixingstepRow span:nth-child(2) { width: 150px; }
+.SaveMixingstepRow span:nth-child(3) { width: 150px; }
+.SaveMixingstepRow span:nth-child(4) { width: 150px; }
+.SaveMixingstepRow span:nth-child(5) { width: 150px; }
+.SaveMixingstepRow span:nth-child(6) { width: 150px; }
+.SaveMixingstepRow span:nth-child(7) { width: 150px; }
+
+
+.SaveMixing{
+  border-top: 1px solid #000;
+  padding-top: 3px;
+  
+}
+
+
+.savedStepDisplay{
+  display: flex;
+  flex-direction: column;
+  height: 100px;
+  overflow-y: auto; 
+  font-size: 14px;
+  width: 100%;
+}
+
+.savedStepDisplay::-webkit-scrollbar {
+  width: 6px;
+  flex-direction: row;
+}
+
+.savedStepDisplay:-webkit-scrollbar-thumb {
+  background-color: #888;
+  border-radius: 4px;
+}
+
+.savedStepDisplay::-webkit-scrollbar-thumb:hover {
+  background-color: #555;
 }

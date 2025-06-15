@@ -6,29 +6,42 @@ import {
   LOGOUT,
 } from "./authConstants";
 
+
+
+
+
+
+
 export const login = (username: string, password: string) => {
   return async (dispatch: any) => {
     dispatch({ type: LOGIN_REQUEST });
 
+    const API_KEY = "27infinity.in_5f84c89315f74a2db149c06a93cf4820";
+
     const loginEndpoints = [
-      { url: "http://localhost:3000/dev/admin/login", role: "admin" },
-      { url: "http://localhost:3000/dev/manager/login", role: "manager" },
+      { url: "https://2dc8ytsiog.execute-api.ap-south-1.amazonaws.com/dev/admin/login", role: "admin" },
+      { url: "https://2dc8ytsiog.execute-api.ap-south-1.amazonaws.com/dev/manager/login", role: "manager" },
     ];
 
     for (const endpoint of loginEndpoints) {
       try {
-        const response = await axios.post(endpoint.url, { username, password });
+        const response = await axios.post(
+          endpoint.url,
+          { username, password },
+          {
+            headers: {
+              "x-api-key": API_KEY,
+            },
+          }
+        );
 
         const { token, user, branches } = response.data;
 
-        // Add role and branches into userData object
         const userData = { ...user, role: endpoint.role, branches };
 
-        // Save token and userData to localStorage
         localStorage.setItem("authToken", token);
         localStorage.setItem("userData", JSON.stringify(userData));
 
-        
         dispatch({
           type: LOGIN_SUCCESS,
           payload: {
@@ -37,13 +50,13 @@ export const login = (username: string, password: string) => {
           },
         });
 
-        return; // stop after successful login
+        return; 
       } catch (err) {
        
+        console.error(`Login failed for ${endpoint.role}`, err?.response?.data || err.message);
       }
     }
 
-    // If all endpoints fail
     dispatch({
       type: LOGIN_FAIL,
       payload: "Invalid username or password",
