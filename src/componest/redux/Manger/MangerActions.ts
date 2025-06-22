@@ -3,72 +3,127 @@ import {
   MANAGER_CREATE_REQUEST,
   MANAGER_CREATE_SUCCESS,
   MANAGER_CREATE_FAIL,
+  MANAGER_GET_ALL_REQUEST,
+  MANAGER_GET_ALL_SUCCESS,
+  MANAGER_GET_ALL_FAIL,
+  MANAGER_UPDATE_REQUEST,
+  MANAGER_UPDATE_SUCCESS,
+  MANAGER_UPDATE_FAIL,
+  MANAGER_DELETE_REQUEST,
+  MANAGER_DELETE_SUCCESS,
+  MANAGER_DELETE_FAIL,
 } from "./MangerContants";
 
-export const newcreateManager = (data: { 
-  username: string; 
-  password: string; 
-  branchId: string 
+const baseUrl = import.meta.env.VITE_API_27INFINITY_IN;
+const API_KEY = import.meta.env.VITE_API_KEY;
+
+const getAuthHeaders = (token: string) => ({
+  Authorization: `Bearer ${token}`,
+  "Content-Type": "application/json",
+  "x-api-key": API_KEY,
+});
+
+// ✅ Create Manager
+export const createManager = (data: {
+  username: string;
+  password: string;
+  branchId: string;
 }) => async (dispatch: any, getState: any) => {
   try {
     dispatch({ type: MANAGER_CREATE_REQUEST });
-    
-    // 1. Improve token retrieval
-    const token = getState().auth?.token || localStorage.getItem("authToken") || "";
-    
-    // 2. Validate token exists before making request
-    if (!token) {
-      throw new Error("Authentication token not found");
-    }
 
-    const config = {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    };
+    const token = getState().auth?.token || localStorage.getItem("authToken");
+    if (!token) throw new Error("Authentication token not found");
 
-    // 3. Use environment variable for API base URL
-    const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
-    
-    // 4. Make the API request
     const response = await axios.post(
-      `${API_URL}/dev/manager/create`, 
-      data, 
-      config
+      `${baseUrl}/dev/manager/create`,
+      data,
+      { headers: getAuthHeaders(token) }
     );
 
-    // 5. Validate response structure
-    if (response.data && response.data.success) {
-      dispatch({
-        type: MANAGER_CREATE_SUCCESS,
-        payload: response.data.manager || response.data,
-      });
-    } else {
-      throw new Error("Unexpected response format from server");
-    }
+    dispatch({
+      type: MANAGER_CREATE_SUCCESS,
+      payload: response.data.manager || response.data,
+    });
   } catch (error: any) {
-    // 6. Improved error handling
-    let errorMessage = "Something went wrong";
-    
-    if (error.response) {
-      // Server responded with error status (4xx/5xx)
-      errorMessage = error.response.data?.message || 
-                    error.response.statusText || 
-                    `Server error: ${error.response.status}`;
-    } else if (error.request) {
-      // Request was made but no response received
-      errorMessage = "No response from server. Check your network connection.";
-    } else {
-      // Other errors (like token validation error)
-      errorMessage = error.message || error.toString();
-    }
-
-    console.error("Manager creation failed:", errorMessage, error);
-    
     dispatch({
       type: MANAGER_CREATE_FAIL,
-      payload: errorMessage,
+      payload: error.response?.data?.message || error.message,
+    });
+  }
+};
+
+// ✅ Get All Managers
+export const getAllManagers = () => async (dispatch: any, getState: any) => {
+  try {
+    dispatch({ type: MANAGER_GET_ALL_REQUEST });
+
+    const token = getState().auth?.token || localStorage.getItem("authToken");
+    if (!token) throw new Error("Authentication token not found");
+
+    const { data } = await axios.get(`${baseUrl}/dev/manager`, {
+      headers: getAuthHeaders(token),
+    });
+
+    dispatch({ type: MANAGER_GET_ALL_SUCCESS, payload: data });
+  } catch (error: any) {
+    dispatch({
+      type: MANAGER_GET_ALL_FAIL,
+      payload: error.response?.data?.message || error.message,
+    });
+  }
+};
+
+// ✅ Update Manager
+export const updateManager = (
+  id: string,
+  updateData: {
+    username?: string;
+    password?: string;
+    branchId?: string;
+  }
+) => async (dispatch: any, getState: any) => {
+  try {
+    dispatch({ type: MANAGER_UPDATE_REQUEST });
+
+    const token = getState().auth?.token || localStorage.getItem("authToken");
+    if (!token) throw new Error("Authentication token not found");
+
+    const { data } = await axios.put(
+      `${baseUrl}/dev/manager/${id}`,
+      updateData,
+      { headers: getAuthHeaders(token) }
+    );
+
+    dispatch({ type: MANAGER_UPDATE_SUCCESS, payload: data });
+  } catch (error: any) {
+    dispatch({
+      type: MANAGER_UPDATE_FAIL,
+      payload: error.response?.data?.message || error.message,
+    });
+  }
+};
+
+// ✅ Delete Manager
+export const deleteManager = (id: string) => async (
+  dispatch: any,
+  getState: any
+) => {
+  try {
+    dispatch({ type: MANAGER_DELETE_REQUEST });
+
+    const token = getState().auth?.token || localStorage.getItem("authToken");
+    if (!token) throw new Error("Authentication token not found");
+
+    await axios.delete(`${baseUrl}/dev/manager/${id}`, {
+      headers: getAuthHeaders(token),
+    });
+
+    dispatch({ type: MANAGER_DELETE_SUCCESS, payload: id });
+  } catch (error: any) {
+    dispatch({
+      type: MANAGER_DELETE_FAIL,
+      payload: error.response?.data?.message || error.message,
     });
   }
 };

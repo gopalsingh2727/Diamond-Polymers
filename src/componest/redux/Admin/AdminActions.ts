@@ -5,27 +5,40 @@ export const CREATE_ADMIN_SUCCESS = 'CREATE_ADMIN_SUCCESS';
 export const CREATE_ADMIN_FAIL = 'CREATE_ADMIN_FAIL';
 
 export const createAdmin = (adminData: { username: string; password: string }) => {
-  return async (dispatch: any, getState: any) => {
-    try {
-      dispatch({ type: CREATE_ADMIN_REQUEST });
+  return async (dispatch: any) => {
+    dispatch({ type: CREATE_ADMIN_REQUEST });
 
-      const token = getState().auth?.token || localStorage.getItem('authToken');
-      const baseUrl = import.meta.env.VITE_API_27INFINITY_IN; 
+    try {
+
+
+      const endpoint = {
+        url: "https://qdf1tp45h1.execute-api.ap-south-1.amazonaws.com/dev/admin/create",
+      };
       const apiKey = import.meta.env.VITE_API_KEY;
 
-      const response = await axios.post(`${baseUrl}/admin`, adminData, {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-          'x-api-key': apiKey,
+      const response = await axios.post(
+        endpoint.url,
+        {
+          username: adminData.username,
+          password: adminData.password,
         },
-      });
+        {
+          headers: {
+            "x-api-key": apiKey,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log("Admin created:", response.data);
 
       dispatch({
         type: CREATE_ADMIN_SUCCESS,
         payload: response.data.message,
       });
     } catch (error: any) {
+      console.error("Admin creation failed:", error.response?.data || error.message);
+
       dispatch({
         type: CREATE_ADMIN_FAIL,
         payload: error.response?.data?.message || error.message,

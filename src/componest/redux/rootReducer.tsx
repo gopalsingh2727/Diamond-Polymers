@@ -1,15 +1,36 @@
 // components/redux/rootReducer.ts
 import { combineReducers } from "redux";
+import { LOGOUT } from "./login/authConstants";
+// Auth
 import authReducer from "./login/authReducer";
-import { branchListReducer, branchReducer } from "./Branch/BranchReducer";
-import {  createAccountReducer, deleteAccountReducer, getAccountsReducer, updateAccountReducer } from "./create/createNewAccount/NewAccountReducer";
 
+// Branch
+import { branchListReducer, branchReducer } from "./Branch/BranchReducer";
 import { branchCreateReducer } from "./createBranchAndManager/branchReducer";
+
+// Admin & Manager
 import { adminCreateReducer } from "./Admin/adminReducer";
-import { managerCreateReducer } from "./Manger/MangerReducer";
+import {
+  managerCreateReducer,
+  managerDeleteReducer,
+  managerListReducer,
+  managerUpdateReducer,
+} from "./Manger/MangerReducer";
+
+// Account
+import {
+  createAccountReducer,
+  deleteAccountReducer,
+  getAccountsReducer,
+  updateAccountReducer,
+} from "./create/createNewAccount/NewAccountReducer";
+
+// Machine Types & Machines
 import {
   machineTypeCreateReducer,
+  machineTypeDeleteReducer,
   machineTypeListReducer,
+  machineTypeUpdateReducer,
 } from "./create/machineType/machineTypeReducer";
 import {
   machineCreateReducer,
@@ -19,61 +40,121 @@ import {
   machineUpdateReducer,
 } from "./create/machine/MachineReducer";
 
-import { operatorCreateReducer, operatorDeleteReducer, operatorListReducer, operatorUpdateReducer } from "./create/CreateMachineOpertor/MachineOpertorReducer";
-import { productCategoryReducer, productTypeWithProductsReducer } from "./create/products/productCategories/productCategoriesReducer";
+// Machine Operators
+import {
+  operatorCreateReducer,
+  operatorDeleteReducer,
+  operatorListReducer,
+  operatorUpdateReducer,
+} from "./create/CreateMachineOpertor/MachineOpertorReducer";
+
+// Products
+import {
+  productCategoryReducer,
+  productTypeWithProductsReducer,
+} from "./create/products/productCategories/productCategoriesReducer";
+
+// Materials
 import { materialCategoryReducer } from "./create/Materials/MaterialsCategories/MaterialsCategoriesReducer";
-import { materialCreateReducer } from "./create/Materials/MaterialReducer";
-import { stepCreateReducer, stepListReducer, stepUpdateReducer } from "./create/CreateStep/StepReducer";
+import {
+  materialCreateReducer,
+  materialDeleteReducer,
+  materialListReducer,
+  materialUpdateReducer,
+} from "./create/Materials/MaterialReducer";
 
+// Steps
+import {
+  stepCreateReducer,
+  stepDeleteReducer,
+  stepListReducer,
+  stepUpdateReducer,
+  // If you have a delete reducer, import and include it
+  // stepDeleteReducer,
+} from "./create/CreateStep/StepReducer";
+import { createProduct } from "./create/products/ProductActions";
+import { productDeleteReducer, productListReducer, productUpdateReducer } from "./create/products/ProductReducer";
+// import { getMaterialCategoriesReducer } from "./create/Materials/MaterialsCategories/MaterialsCategoriesActions";
 
-
-
-const rootReducer = combineReducers({
+const appReducer = combineReducers({
+  // Auth
   auth: authReducer,
+
+  // Branch
   branches: branchReducer,
-  // account: accountReducer,
+  branchList: branchListReducer,
+  branchCreate: branchCreateReducer,
+
+  // Account
   createAccount: createAccountReducer,
   getAccounts: getAccountsReducer,
   updateAccount: updateAccountReducer,
   deleteAccount: deleteAccountReducer,
 
-  branchCreate: branchCreateReducer,
-  branchList: branchListReducer,
+  // Admin & Manager
   adminCreate: adminCreateReducer,
   managerCreate: managerCreateReducer,
+  managerList: managerListReducer,
+  managerUpdate: managerUpdateReducer,
+  managerDelete: managerDeleteReducer,
 
+  // Machine Types
   machineTypeCreate: machineTypeCreateReducer,
   machineTypeList: machineTypeListReducer,
-
+  machineTypeUpdate: machineTypeUpdateReducer,
+  machineTypeDelete: machineTypeDeleteReducer,
+  
+  // Machines
   machineCreate: machineCreateReducer,
   machineDetail: machineDetailReducer,
   machineList: machineListReducer,
+  machineUpdate: machineUpdateReducer,
+  machineDelete: machineDeleteReducer,
 
-
-  stepCreate: stepCreateReducer,
-  stepList: stepListReducer,
-  stepUpdate: stepUpdateReducer,
-  // stepDelete: stepDeleteReducer,
-
-
-
+  // Machine Operators
   operatorCreate: operatorCreateReducer,
   operatorList: operatorListReducer,
   operatorUpdate: operatorUpdateReducer,
   operatorDelete: operatorDeleteReducer,
 
+  // Product Categories and Types
   productCategories: productCategoryReducer,
-  materialCategories: materialCategoryReducer,
-  materialCreate:materialCreateReducer, 
-
   productTypeWithProductsReducer: productTypeWithProductsReducer,
 
+  // Materials
+  materialCategories: materialCategoryReducer,
+  materialCreate: materialCreateReducer,
+  materialList: materialListReducer,
+  materialUpdate: materialUpdateReducer,
+  materialDelete: materialDeleteReducer,
+  // materialCategoriesList: getMaterialCategoriesReducer,
+
+  // Steps
+  stepCreate: stepCreateReducer,
+  stepList: stepListReducer,
+  stepUpdate: stepUpdateReducer,
+  stepDelete: stepDeleteReducer, 
 
 
-  machineUpdate: machineUpdateReducer,
-  machineDelete: machineDeleteReducer,
- 
+  // product 
+  createProduct:createProduct,
+  productList:productListReducer,
+  productUpdate:productUpdateReducer,
+  productDelete:productDeleteReducer,
+
+
 });
+
+const rootReducer = (state: any, action: any) => {
+  if (action.type === LOGOUT) {
+    state = undefined;
+  }
+  return appReducer(state, action);
+};
+
+
+
+
 
 export type RootState = ReturnType<typeof rootReducer>;
 export default rootReducer;

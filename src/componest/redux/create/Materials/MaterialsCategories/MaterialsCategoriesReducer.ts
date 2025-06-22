@@ -8,6 +8,12 @@ import {
   GET_ALL_MATERIAL_TYPES_REQUEST,
   GET_ALL_MATERIAL_TYPES_SUCCESS,
   GET_ALL_MATERIAL_TYPES_FAIL,
+  UPDATE_MATERIAL_CATEGORY_REQUEST,
+  UPDATE_MATERIAL_CATEGORY_SUCCESS,
+  UPDATE_MATERIAL_CATEGORY_FAIL,
+  DELETE_MATERIAL_CATEGORY_REQUEST,
+  DELETE_MATERIAL_CATEGORY_SUCCESS,
+  DELETE_MATERIAL_CATEGORY_FAIL,
 } from "./MaterialsCategoriesContants";
 
 interface MaterialType {
@@ -19,7 +25,7 @@ interface MaterialType {
 
 interface MaterialCategoryState {
   loading: boolean;
-  categories: MaterialType[];  // now this supports embedded materials too
+  categories: MaterialType[];
   error: string | null;
   success: boolean;
 }
@@ -39,6 +45,8 @@ export const materialCategoryReducer = (
     case ADD_MATERIAL_CATEGORY_REQUEST:
     case GET_MATERIAL_CATEGORIES_REQUEST:
     case GET_ALL_MATERIAL_TYPES_REQUEST:
+    case UPDATE_MATERIAL_CATEGORY_REQUEST:
+    case DELETE_MATERIAL_CATEGORY_REQUEST:
       return { ...state, loading: true, success: false };
 
     case ADD_MATERIAL_CATEGORY_SUCCESS:
@@ -58,9 +66,31 @@ export const materialCategoryReducer = (
         success: false,
       };
 
+    case UPDATE_MATERIAL_CATEGORY_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        success: true,
+        categories: state.categories.map((cat) =>
+          cat._id === action.payload._id ? action.payload : cat
+        ),
+      };
+
+    case DELETE_MATERIAL_CATEGORY_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        success: true,
+        categories: state.categories.filter(
+          (cat) => cat._id !== action.payload
+        ),
+      };
+
     case ADD_MATERIAL_CATEGORY_FAIL:
     case GET_MATERIAL_CATEGORIES_FAIL:
     case GET_ALL_MATERIAL_TYPES_FAIL:
+    case UPDATE_MATERIAL_CATEGORY_FAIL:
+    case DELETE_MATERIAL_CATEGORY_FAIL:
       return { ...state, loading: false, error: action.payload, success: false };
 
     default:

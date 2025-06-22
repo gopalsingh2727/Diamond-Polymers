@@ -19,18 +19,18 @@ import {
 import { Dispatch } from "redux";
 import { RootState } from "../../rootReducer";
 
-// 🔁 Environment Config
+// ENV
 const baseUrl = import.meta.env.VITE_API_27INFINITY_IN;
 const apiKey = import.meta.env.VITE_API_KEY;
 
-// 🔧 Headers Utility
-const getHeaders = (token?: string) => ({
-  "Content-Type": "application/json",
+// Headers helper
+const getHeaders = (token?: string, isJson: boolean = false) => ({
+  ...(isJson && { "Content-Type": "application/json" }),
   "x-api-key": apiKey,
   Authorization: token ? `Bearer ${token}` : "",
 });
 
-// CREATE
+// CREATE MACHINE
 export const createMachine = (machineData: {
   machineName: string;
   machineType: string;
@@ -39,7 +39,7 @@ export const createMachine = (machineData: {
   try {
     dispatch({ type: CREATE_MACHINE_REQUEST });
 
-    const token = getState().auth?.token || localStorage.getItem("authToken");
+    const token = getState().auth?.token ?? localStorage.getItem("authToken") ?? undefined;
     const branchId = localStorage.getItem("selectedBranch");
     if (!branchId) throw new Error("Branch ID not found");
 
@@ -52,11 +52,9 @@ export const createMachine = (machineData: {
       branchId,
     };
 
-    const { data } = await axios.post(
-      `${baseUrl}/dev/machine`,
-      payload,
-      { headers: getHeaders(token) }
-    );
+    const { data } = await axios.post(`${baseUrl}/machine`, payload, {
+      headers: getHeaders(token, true),
+    });
 
     dispatch({ type: CREATE_MACHINE_SUCCESS, payload: data });
   } catch (error: any) {
@@ -67,20 +65,16 @@ export const createMachine = (machineData: {
   }
 };
 
-// GET by ID
-export const getMachineById = (id: string) => async (
-  dispatch: Dispatch,
-  getState: () => RootState
-) => {
+// GET MACHINE BY ID
+export const getMachineById = (id: string) => async (dispatch: Dispatch, getState: () => RootState) => {
   try {
     dispatch({ type: GET_MACHINE_REQUEST });
 
-    const token = getState().auth?.token || localStorage.getItem("authToken");
+    const token = getState().auth?.token ?? localStorage.getItem("authToken") ?? undefined;
 
-    const { data } = await axios.get(
-      `${baseUrl}/dev/machine/${id}`,
-      { headers: getHeaders(token) }
-    );
+    const { data } = await axios.get(`${baseUrl}/machine/${id}`, {
+      headers: getHeaders(token),
+    });
 
     dispatch({ type: GET_MACHINE_SUCCESS, payload: data.machine });
   } catch (error: any) {
@@ -91,21 +85,21 @@ export const getMachineById = (id: string) => async (
   }
 };
 
-// GET ALL
-export const getMachines = () => async (
-  dispatch: Dispatch,
-  getState: () => RootState
-) => {
+// GET ALL MACHINES
+export const getMachines = () => async (dispatch: Dispatch, getState: () => RootState) => {
   try {
     dispatch({ type: GET_MACHINES_REQUEST });
 
-    const token = getState().auth?.token || localStorage.getItem("authToken");
+    const token = getState().auth?.token ?? localStorage.getItem("authToken") ?? undefined;
+    const branchId = localStorage.getItem("selectedBranch");
+    if (!branchId) throw new Error("Branch ID not found");
 
-    const { data } = await axios.get(
-      `${baseUrl}/dev/machine`,
-      { headers: getHeaders(token) }
-    );
-
+    const { data } = await axios.get(`${baseUrl}/machine`, {
+      headers: getHeaders(token),
+      // params: { branchId }, // ✅ Fixed: Pass branchId
+    });
+    
+    
     dispatch({ type: GET_MACHINES_SUCCESS, payload: data.machines });
   } catch (error: any) {
     dispatch({
@@ -115,23 +109,23 @@ export const getMachines = () => async (
   }
 };
 
-// UPDATE
-export const updateMachine = (id: string, updateData: any) => async (
-  dispatch: Dispatch,
-  getState: () => RootState
-) => {
+// UPDATE MACHINE
+export const updateMachine = (id: string, updateData: any) => async (dispatch: Dispatch, getState: () => RootState) => {
   try {
     dispatch({ type: UPDATE_MACHINE_REQUEST });
 
-    const token = getState().auth?.token || localStorage.getItem("authToken");
+    const token = getState().auth?.token ?? localStorage.getItem("authToken") ?? undefined;
     const branchId = localStorage.getItem("selectedBranch");
     if (!branchId) throw new Error("Branch ID not found");
 
-    const { data } = await axios.put(
-      `${baseUrl}/dev/machine/${id}`,
-      updateData,
-      { headers: getHeaders(token) }
-    );
+    const payload = {
+      ...updateData,
+      branchId,
+    };
+
+    const { data } = await axios.put(`${baseUrl}/machine/${id}`, payload, {
+      headers: getHeaders(token, true),
+    });
 
     dispatch({ type: UPDATE_MACHINE_SUCCESS, payload: data });
   } catch (error: any) {
@@ -142,20 +136,18 @@ export const updateMachine = (id: string, updateData: any) => async (
   }
 };
 
-// DELETE
-export const deleteMachine = (id: string) => async (
-  dispatch: Dispatch,
-  getState: () => RootState
-) => {
+// DELETE MACHINE
+export const deleteMachine = (id: string) => async (dispatch: Dispatch, getState: () => RootState) => {
   try {
     dispatch({ type: DELETE_MACHINE_REQUEST });
 
-    const token = getState().auth?.token || localStorage.getItem("authToken");
+    const token = getState().auth?.token ?? localStorage.getItem("authToken") ?? undefined;
     const branchId = localStorage.getItem("selectedBranch");
     if (!branchId) throw new Error("Branch ID not found");
 
     await axios.delete(`${baseUrl}/dev/machine/${id}`, {
       headers: getHeaders(token),
+      params: { branchId }, // ✅ Ensure branch context is passed if required
     });
 
     dispatch({ type: DELETE_MACHINE_SUCCESS, payload: id });

@@ -6,21 +6,20 @@ import {
   LOGOUT,
 } from "./authConstants";
 
+export const SET_SELECTED_BRANCH_IN_AUTH = "SET_SELECTED_BRANCH_IN_AUTH";
 
+// ✅ Base URL and API Key from env
+const baseUrl = import.meta.env.VITE_API_27INFINITY_IN;
+const API_KEY = import.meta.env.VITE_API_KEY;
 
-
-
-
-
+// ✅ Login
 export const login = (username: string, password: string) => {
   return async (dispatch: any) => {
     dispatch({ type: LOGIN_REQUEST });
 
-    const API_KEY = "27infinity.in_5f84c89315f74a2db149c06a93cf4820";
-
     const loginEndpoints = [
-      { url: "https://2dc8ytsiog.execute-api.ap-south-1.amazonaws.com/dev/admin/login", role: "admin" },
-      { url: "https://2dc8ytsiog.execute-api.ap-south-1.amazonaws.com/dev/manager/login", role: "manager" },
+      { url: `${baseUrl}/admin/login`, role: "admin" },
+      { url: `${baseUrl}/manager/login`, role: "manager" },
     ];
 
     for (const endpoint of loginEndpoints) {
@@ -36,11 +35,19 @@ export const login = (username: string, password: string) => {
         );
 
         const { token, user, branches } = response.data;
-
         const userData = { ...user, role: endpoint.role, branches };
 
         localStorage.setItem("authToken", token);
         localStorage.setItem("userData", JSON.stringify(userData));
+
+        console.log(userData, "this call"); // To inspect the full object
+console.log(localStorage.getItem("selectedBranch"), "selectedBranch from localStorage");
+console.log(localStorage.getItem("userData"), "userData string from localStorage");
+
+        
+
+
+
 
         dispatch({
           type: LOGIN_SUCCESS,
@@ -50,13 +57,13 @@ export const login = (username: string, password: string) => {
           },
         });
 
-        return; 
-      } catch (err) {
-       
+        return; // Stop after first successful login
+      } catch (err: any) {
         console.error(`Login failed for ${endpoint.role}`, err?.response?.data || err.message);
       }
     }
 
+    // If both failed
     dispatch({
       type: LOGIN_FAIL,
       payload: "Invalid username or password",
@@ -64,22 +71,19 @@ export const login = (username: string, password: string) => {
   };
 };
 
+// ✅ Logout
 export const logout = () => {
   return (dispatch: any) => {
-    localStorage.removeItem("selectedBranch")
+    localStorage.removeItem("selectedBranch");
     localStorage.removeItem("authToken");
     localStorage.removeItem("userData");
+
     dispatch({ type: LOGOUT });
   };
 };
 
-
-export const SET_SELECTED_BRANCH_IN_AUTH = "SET_SELECTED_BRANCH_IN_AUTH";
-
+// ✅ Set Selected Branch
 export const setSelectedBranchInAuth = (branchId: string) => {
-  console.log("Selected branchId:", branchId); 
-
-  
   return (dispatch: any) => {
     localStorage.setItem("selectedBranch", branchId);
     dispatch({
@@ -87,4 +91,4 @@ export const setSelectedBranchInAuth = (branchId: string) => {
       payload: branchId,
     });
   };
-};
+}; 

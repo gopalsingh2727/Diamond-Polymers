@@ -15,7 +15,7 @@ import {
 } from "./NewAccountConstants";
 import { AppDispatch, RootState } from "../../../../store";
 
-const baseUrl = 'http://localhost:3000/dev/customer';
+const baseUrl = import.meta.env.VITE_API_27INFINITY_IN;
 const apiKey = import.meta.env.VITE_API_KEY;
 
 const getAuthHeaders = (getState: () => RootState) => {
@@ -26,7 +26,6 @@ const getAuthHeaders = (getState: () => RootState) => {
   };
 };
 
-// ✅ Create Account
 export const createAccount = (data: any) => async (dispatch: AppDispatch, getState: () => RootState) => {
   try {
     dispatch({ type: CREATE_ACCOUNT_REQUEST });
@@ -34,11 +33,12 @@ export const createAccount = (data: any) => async (dispatch: AppDispatch, getSta
     const branchId = localStorage.getItem("selectedBranch");
     if (!branchId) throw new Error("Branch ID missing");
 
-    let payload = data;
-    let headers = {
+    let headers: any = {
       ...getAuthHeaders(getState),
       "Content-Type": "application/json",
     };
+
+    let payload = data;
 
     if (data instanceof FormData) {
       data.append("branchId", branchId);
@@ -48,7 +48,14 @@ export const createAccount = (data: any) => async (dispatch: AppDispatch, getSta
       payload = { ...data, branchId };
     }
 
-    const response = await axios.post(`${baseUrl}`, payload, { headers });
+    // Debug log to inspect payload
+    if (payload instanceof FormData) {
+      for (let pair of payload.entries()) {
+        console.log(`${pair[0]}: ${pair[1]}`);
+      }
+    }
+
+    const response = await axios.post(`${baseUrl}/customer`, payload, { headers });
 
     dispatch({
       type: CREATE_ACCOUNT_SUCCESS,
@@ -75,16 +82,21 @@ export const createAccount = (data: any) => async (dispatch: AppDispatch, getSta
 
 
 
-
-// ✅ Get All Accounts
-export const getAccounts = () => async (dispatch: AppDispatch, getState: () => RootState) => {
+export const getAccounts = () => async (
+  dispatch: AppDispatch,
+  getState: () => RootState
+) => {
   try {
     dispatch({ type: GET_ACCOUNTS_REQUEST });
 
     const branchId = localStorage.getItem("selectedBranch");
-    const { data } = await axios.get(`${baseUrl}/dev/customer?branchId=${branchId}`, {
+    if (!branchId) throw new Error("Branch ID not found");
+
+    const { data } = await axios.get(`${baseUrl}/customer`, {
       headers: getAuthHeaders(getState),
     });
+    console.log(data,"customer");
+    
 
     dispatch({ type: GET_ACCOUNTS_SUCCESS, payload: data });
   } catch (error: any) {

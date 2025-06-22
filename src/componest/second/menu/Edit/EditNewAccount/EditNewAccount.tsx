@@ -1,98 +1,310 @@
-import React, { useState } from "react";
-import CreateNewAccount from "../../create/createNewAccount/createNewAccount";
+import React, { useEffect, useState, useCallback } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  getAccounts,
+  updateAccount,
+} from "../../../../redux/create/createNewAccount/NewAccountActions";
+import { RootState } from "../../../../redux/rootReducer";
+import { AppDispatch } from "../../../../../store";
+import { indianStates } from "../../create/createNewAccount/indianStates";
+import "./EditAccount.css";
 
-const dummyAccounts = [
-  {
-    id: 1,
-    company: "ABC Enterprises",
-    first_name: "Raj",
-    last_name: "Kumar",
-    email: "raj@example.com",
-    phone1: "9876543210",
-    state: "Tamil Nadu",
-    pincode: "600001",
-  },
-  {
-    id: 2,
-    company: "XYZ Pvt Ltd",
-    first_name: "Priya",
-    last_name: "Sharma",
-    email: "priya@example.com",
-    phone1: "9123456789",
-    state: "Delhi",
-    pincode: "110001",
-  },
-  // Add more dummy accounts
-];
+interface Account {
+  _id: string;
+  companyName?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone1?: string;
+  phone2?: string;
+  whatsapp?: string;
+  telephone?: string;
+  address1?: string;
+  address2?: string;
+  state?: string;
+  pinCode?: string;
+  imageUrl?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
 
-const EditNewAccount = () => {
-  const [selectedAccount, setSelectedAccount] = useState<any | null>(null);
-  const [focusedRow, setFocusedRow] = useState<number>(-1);
+const EditAccount: React.FC = () => {
+  const dispatch = useDispatch<AppDispatch>();
 
-const handleKeyDown = (e: React.KeyboardEvent, account: any) => {
-  if (e.key === "Enter") {
-    setSelectedAccount(account);
-  } else if (e.key === "ArrowDown") {
-    setFocusedRow((prev) => Math.min(prev + 1, dummyAccounts.length - 1));
-  } else if (e.key === "ArrowUp") {
-    setFocusedRow((prev) => Math.max(prev - 1, 0));
-  }
-};
+  const { accounts = [], loading, error } = useSelector(
+    (state: RootState) => state.getAccounts || {}
+  );
+
+  const [selectedRow, setSelectedRow] = useState(0);
+  const [showDetail, setShowDetail] = useState(false);
+  const [form, setForm] = useState<Partial<Account>>({});
+
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (showDetail || accounts.length === 0) return;
+
+      if (e.key === "ArrowDown") {
+        setSelectedRow((prev) => Math.min(prev + 1, accounts.length - 1));
+      } else if (e.key === "ArrowUp") {
+        setSelectedRow((prev) => Math.max(prev - 1, 0));
+      } else if (e.key === "Enter") {
+        const selected = accounts[selectedRow];
+        if (selected) {
+          setForm(selected);
+          setShowDetail(true);
+        }
+      }
+    },
+    [accounts, selectedRow, showDetail]
+  );
+
+  useEffect(() => {
+    dispatch(getAccounts());
+  }, [dispatch]);
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleKeyDown]);
+
+  const handleFormChange = (key: keyof Account, value: string) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleSave = async () => {
+    if (!form._id) return;
+    try {
+      await dispatch(updateAccount(form._id, form));
+      alert("Account updated successfully!");
+      setShowDetail(false);
+      dispatch(getAccounts());
+    } catch (err) {
+      alert("Failed to update account.");
+    }
+  };
+
+  const handleRowClick = (index: number, item: Account) => {
+    setSelectedRow(index);
+    setForm(item);
+    setShowDetail(true);
+  };
 
   return (
-    <div className="p-4">
-      <h2 className="text-xl font-semibold mb-4">Accounts</h2>
-      <table className="table-auto w-full border">
-        <thead>
-          <tr className="bg-gray-200">
-            <th className="px-4 py-2">Company</th>
-            <th className="px-4 py-2">Name</th>
-            <th className="px-4 py-2">Email</th>
-            <th className="px-4 py-2">Phone</th>
-            <th className="px-4 py-2">State</th>
-            <th className="px-4 py-2">Pin</th>
-          </tr>
-        </thead>
-        <tbody>
-          {dummyAccounts.map((account, index) => (
-            <tr
-              key={account.id}
-              tabIndex={0}
-              className={`cursor-pointer ${
-                index === focusedRow ? "bg-blue-100" : ""
-              }`}
-              onKeyDown={(e) => handleKeyDown(e, account)}
-              onClick={() => setSelectedAccount(account)}
-              onFocus={() => setFocusedRow(index)}
-            >
-              <td className="px-4 py-2">{account.company}</td>
-              <td className="px-4 py-2">{account.first_name} {account.last_name}</td>
-              <td className="px-4 py-2">{account.email}</td>
-              <td className="px-4 py-2">{account.phone1}</td>
-              <td className="px-4 py-2">{account.state}</td>
-              <td className="px-4 py-2">{account.pincode}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="EditAccount EditMachineType">
+      {loading && <p>Loading...</p>}
+      {error && <p style={{ color: "red" }}>{error}</p>}
 
-      {selectedAccount && (
-        <div className="fixed top-0 left-0 w-full h-full bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white p-4 rounded-lg max-h-[90vh] overflow-auto w-full max-w-xl">
-            <h3 className="text-lg font-bold mb-2">Edit Account</h3>
-              <button
-              onClick={() => setSelectedAccount(null)}
-              className="mt-4 bg-red-500 text-white px-4 py-2 rounded"
-            >
-              Close
-            </button>
-            <CreateNewAccount initialData={selectedAccount} />
-          
+      {!showDetail && !loading && accounts.length > 0 ? (
+        <table>
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>Company</th>
+              <th>Name</th>
+              <th>Phone</th>
+              <th>State</th>
+            </tr>
+          </thead>
+          <tbody>
+            {accounts.map((item, index) => (
+              <tr
+                key={item._id}
+                className={selectedRow === index ? "bg-blue-100" : ""}
+                onClick={() => handleRowClick(index, item)}
+                style={{ cursor: "pointer" }}
+              >
+                <td>{index + 1}</td>
+                <td>{item.companyName || "N/A"}</td>
+                <td>
+                  {[item.firstName, item.lastName].filter(Boolean).join(" ") ||
+                    "N/A"}
+                </td>
+                <td>{item.phone1 || "N/A"}</td>
+                <td>{item.state || "N/A"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : showDetail && form ? (
+        <div id="CreateAccountCss">
+          <div className="CreateAccountTitelCss">
+            <h6>Edit Account</h6>
+          </div>
+          <div className="create-account-container">
+            <form className="form-container">
+              <div className="form-group">
+                <label>Company Name</label>
+                <input
+                  className="CurstomerAddressInput"
+                  name="companyName"
+                  value={form.companyName || ""}
+                  onChange={(e) => handleFormChange("companyName", e.target.value)}
+                />
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>First Name *</label>
+                  <input
+                    className="CurstomerInput"
+                    name="firstName"
+                    value={form.firstName || ""}
+                    onChange={(e) => handleFormChange("firstName", e.target.value)}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Last Name *</label>
+                  <input
+                    className="CurstomerInput"
+                    name="lastName"
+                    value={form.lastName || ""}
+                    onChange={(e) => handleFormChange("lastName", e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Email</label>
+                <input
+                  className="CurstomerAddressInput"
+                  type="email"
+                  name="email"
+                  value={form.email || ""}
+                  onChange={(e) => handleFormChange("email", e.target.value)}
+                />
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Phone 1 *</label>
+                  <input
+                    className="CurstomerInput"
+                    name="phone1"
+                    value={form.phone1 || ""}
+                    onChange={(e) => handleFormChange("phone1", e.target.value)}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Phone 2</label>
+                  <input
+                    className="CurstomerInput"
+                    name="phone2"
+                    value={form.phone2 || ""}
+                    onChange={(e) => handleFormChange("phone2", e.target.value)}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>WhatsApp</label>
+                  <input
+                    className="CurstomerInput"
+                    name="whatsapp"
+                    value={form.whatsapp || ""}
+                    onChange={(e) => handleFormChange("whatsapp", e.target.value)}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Telephone</label>
+                  <input
+                    className="CurstomerInput"
+                    name="telephone"
+                    value={form.telephone || ""}
+                    onChange={(e) => handleFormChange("telephone", e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
+                
+              </div>
+
+              <div className="form-group">
+                <label>Address Line 1 *</label>
+                <input
+                  name="address1"
+                  className="CurstomerAddressInput"
+                  value={form.address1 || ""}
+                  onChange={(e) => handleFormChange("address1", e.target.value)}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Address Line 2</label>
+                <input
+                  name="address2"
+                  className="CurstomerAddressInput"
+                  value={form.address2 || ""}
+                  onChange={(e) => handleFormChange("address2", e.target.value)}
+                />
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>State *</label>
+                  <select
+                    name="state"
+                    value={form.state || ""}
+                    onChange={(e) => handleFormChange("state", e.target.value)}
+                  >
+                    <option value="">Select State</option>
+                    {indianStates.map((state) => (
+                      <option key={state} value={state}>
+                        {state}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Pin Code *</label>
+                  <input
+                    name="pinCode"
+                    className="CurstomerInput"
+                    value={form.pinCode || ""}
+                    onChange={(e) => handleFormChange("pinCode", e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {form.imageUrl && (
+                <div className="form-group">
+                  <label>Profile Image</label>
+                  <div className="image-preview">
+                    <img
+                      src={form.imageUrl}
+                      alt="Account"
+                      style={{ maxWidth: '200px', maxHeight: '200px' }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="form-group">
+                <button type="button" onClick={handleSave}>
+                  Update Account
+                </button>
+                <button type="button" onClick={() => setShowDetail(false)} style={{ marginLeft: '10px' }}>
+                  Back
+                </button>
+              </div>
+
+              <div className="info-section">
+                <p>
+                  <strong>Created:</strong>{" "}
+                  {form.createdAt && new Date(form.createdAt).toLocaleString()}
+                </p>
+                <p>
+                  <strong>Updated:</strong>{" "}
+                  {form.updatedAt && new Date(form.updatedAt).toLocaleString()}
+                </p>
+              </div>
+            </form>
           </div>
         </div>
+      ) : (
+        !loading && <p>No accounts available.</p>
       )}
     </div>
   );
 };
 
-export default EditNewAccount;
+export default EditAccount;

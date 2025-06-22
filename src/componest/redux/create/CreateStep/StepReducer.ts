@@ -59,7 +59,9 @@ export const stepListReducer = (
     case GET_STEPS_REQUEST:
       return { ...state, loading: true };
     case GET_STEPS_SUCCESS:
-      return { loading: false, steps: action.payload, error: null };
+      return { loading: false, steps: Array.isArray(action.payload.steps)
+          ? action.payload.steps
+          : [], error: null };
     case GET_STEPS_FAIL:
       return { loading: false, steps: [], error: action.payload };
     default:

@@ -11,10 +11,10 @@
   margin-bottom: 12px;
 }
 .createProductCss{
-  padding-top: 10px;
+  padding-top: 3px;
   justify-content: center;
   align-items: center;
-  padding-bottom: 10px;
+  padding-bottom: 3px;
 }
 
 #myDropdown {
@@ -49,7 +49,7 @@
 .materialInputs{
   display: flex;
   flex-direction: row;
-  margin: 10px;
+  /* margin: 10px; */
 
 }
 
@@ -213,7 +213,8 @@
 
 .headerRow{
   display: grid;
-  grid-template-columns: 130px 150px 150px 80px 80px 180px 40px;
+  grid-template-columns: 111px 119px 51px 49px 50px 119px 85px 86px 166px 77px;
+
   gap: 10px;
   font-weight: bold;
   border-bottom: 1px solid #333;
@@ -221,9 +222,25 @@
   margin-bottom: 10px;
 }
 
+
+.headerRowmaterialMixpop{
+ display: grid;
+  grid-template-columns: 132px 116px 160px 49px ;
+
+  gap: 10px;
+  font-weight: bold;
+  border-bottom: 1px solid #333;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+
+
+
 .popupitemall{
   display: grid;
-  grid-template-columns: 130px 150px 150px 80px 80px 180px 40px;
+  grid-template-columns: 132px 116px 160px 49px 25px;
+
   gap: 10px;
   padding-left: 10px;
   margin-bottom: 5px;
@@ -262,7 +279,7 @@
 /* Header row for the step table */
 .stepHeaderRow {
   display: grid;
-  grid-template-columns: 40px 130px 150px 53px 53px 75px 149px 92px 88px;
+  grid-template-columns: 22px 122px 112px 53px 50px 75px 125px 78px 116px 133px;
   gap: 10px;
   padding-left: 10px;
 
@@ -274,7 +291,7 @@
 /* Each data row */
 .stepRow {
   display: grid;
-  grid-template-columns: 40px 130px 150px 53px 53px 75px 149px 92px 88px;
+  grid-template-columns: 22px 122px 112px 53px 50px 75px 125px 78px 116px 133px;
   gap: 10px;
   padding-left: 10px;
 
@@ -413,6 +430,9 @@
 }
 .bottomGussetSelectandflapandAriHole{
   display: flex;
+  align-items: flex-end;
+  padding-left: 10px;
+  gap: 18px;
   flex-direction: row;
 }
 
@@ -534,4 +554,41 @@
 
 .savedStepDisplay::-webkit-scrollbar-thumb:hover {
   background-color: #555;
+}
+
+
+
+
+.suggestion-list {
+  position: absolute;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  width: 100%;
+}
+
+.suggestionItem {
+  padding: 8px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+}
+
+.suggestionItem:hover {
+  background-color: #f5f5f5;
+}
+
+
+.suggestion-list {
+  border: 1px solid red;
+}
+
+
+
+.buttonStepRowNote{
+  border: none;
+  color: #000;
+  background: none !important;
 }

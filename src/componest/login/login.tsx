@@ -5,7 +5,7 @@ import type { AppDispatch } from '../../store';
 
 const LoginForm = () => {
   const dispatch = useDispatch<AppDispatch>();
-  // const dispatch = useDispatch();
+
   const auth = useSelector((state: any) => state.auth);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");

@@ -4,7 +4,10 @@ import { createAccount } from "../../../../redux/create/createNewAccount/NewAcco
 import { RootState } from "../../../../../store";
 import { indianStates } from "./indianStates";
 import "./createNewAccount.css";
+// Note: You'll need to install and import imageCompression
+// npm install browser-image-compression
 // import imageCompression from 'browser-image-compression';
+
 type AccountFormData = {
   companyName?: string;
   firstName: string;
@@ -74,10 +77,11 @@ const CreateNewAccount: React.FC<Props> = ({ initialData = {} }) => {
         image: null,
       });
       
-      // Clear file input separately
+      // Clear file input and preview
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
+      setPreviewUrl(null);
     }
   }, [loading, reduxError]);
 
@@ -89,53 +93,59 @@ const CreateNewAccount: React.FC<Props> = ({ initialData = {} }) => {
     setValidationErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
-// const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
-// const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif'];
+  const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+  const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif'];
 
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-// const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
 
-// const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-//   const file = e.target.files?.[0] || null;
+    if (!file) {
+      setFormValues(prev => ({ ...prev, image: null }));
+      setPreviewUrl(null);
+      return;
+    }
 
-//   if (!file) return;
+    if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+      setValidationErrors({ image: 'Only JPG, PNG, or GIF images are allowed' });
+      return;
+    }
 
-//   if (!ALLOWED_MIME_TYPES.includes(file.type)) {
-//     setValidationErrors({ image: 'Only JPG, PNG, or GIF images are allowed' });
-//     return;
-//   }
+    try {
+      let imageFile = file;
 
-//   try {
-//     let imageFile = file;
+      if (file.size > MAX_IMAGE_SIZE) {
+        // If you have imageCompression installed, uncomment this:
+        /*
+        const compressedFile = await imageCompression(file, {
+          maxSizeMB: 1, 
+          maxWidthOrHeight: 1920, 
+          useWebWorker: false,
+        });
+        imageFile = compressedFile;
+        console.log('Image compressed from', file.size, 'to', compressedFile.size);
+        */
+        
+        // For now, just show error if file is too large
+        setValidationErrors({ image: 'Image size must be less than 5MB' });
+        return;
+      }
 
-//     if (file.size > MAX_IMAGE_SIZE) {
-//       const compressedFile = await imageCompression(file, {
-//         maxSizeMB: 1, 
-//         maxWidthOrHeight: 1920, 
-//         useWebWorker: false,
-//       });
+      setValidationErrors(prev => ({ ...prev, image: undefined }));
+      setFormValues(prev => ({ ...prev, image: imageFile }));
 
-//       imageFile = compressedFile;
-//       console.log('Image compressed from', file.size, 'to', compressedFile.size);
-//     }
-
-//     setValidationErrors(prev => ({ ...prev, image: undefined }));
-//     setFormValues(prev => ({ ...prev, image: imageFile }));
-
-//     const reader = new FileReader();
-//     reader.onload = () => setPreviewUrl(reader.result as string);
-//     reader.readAsDataURL(imageFile);
-//   } catch (err) {
-//     console.error('Image compression error:', err);
-//     setValidationErrors({ image: 'Image compression failed. Try another image.' });
-//   }
-// };
-
+      const reader = new FileReader();
+      reader.onload = () => setPreviewUrl(reader.result as string);
+      reader.readAsDataURL(imageFile);
+    } catch (err) {
+      console.error('Image compression error:', err);
+      setValidationErrors({ image: 'Image compression failed. Try another image.' });
+    }
+  };
 
   const validate = (): boolean => {
     const errors: ValidationErrors = {};
-    
-      
 
     if (!formValues.firstName.trim()) {
       errors.firstName = "First Name is required";
@@ -354,18 +364,23 @@ const CreateNewAccount: React.FC<Props> = ({ initialData = {} }) => {
           </div>
         </div>
 
-       <input 
-  ref={fileInputRef}
-  type="file"
-  accept="image/*"
-  onChange={(e) =>
-    setFormValues({
-      ...formValues,
-      image: e.target.files?.[0], 
-    })
-  }
-/>
-
+        <div className="form-group">
+          <label>Profile Image</label>
+          <input 
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+          />
+          {validationErrors.image && (
+            <small className="error-text">{validationErrors.image}</small>
+          )}
+          {previewUrl && (
+            <div className="image-preview">
+              <img src={previewUrl} alt="Preview" style={{ maxWidth: '200px', maxHeight: '200px' }} />
+            </div>
+          )}
+        </div>
 
         {/* Show redux error from API call */}
         {reduxError && <div className="error-text">{reduxError}</div>}
@@ -375,10 +390,6 @@ const CreateNewAccount: React.FC<Props> = ({ initialData = {} }) => {
             {loading ? "Saving..." : "Create Account"}
           </button>
         </div>
-    
-
-       
-      
       </form>
     </div>
     </div>

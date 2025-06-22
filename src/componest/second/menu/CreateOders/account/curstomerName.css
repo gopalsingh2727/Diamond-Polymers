@@ -1,0 +1,22 @@
+.customerInputRow {
+display: flex;
+    align-items: center;
+    flex-direction: column;
+    justify-content: space-between;
+    
+    height: 10px;
+    gap: 10px;
+}
+
+.customerImageDiv {
+  width: 100px;
+  height: 100px;
+  overflow: hidden;
+  border: 1px solid #ccc;
+}
+
+.customerImageDiv img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}

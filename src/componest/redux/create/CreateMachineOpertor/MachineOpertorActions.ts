@@ -67,12 +67,14 @@ export const listOperators = () => async (dispatch: Dispatch, getState: () => Ro
     const branchId = getBranchId();
     if (!branchId) throw new Error("Branch ID missing");
 
-    const { data } = await axios.get(`${baseUrl}/operators?branchId=${branchId}`, {
+    const { data } = await axios.get(`${baseUrl}/operator`, {
       headers: {
         Authorization: `Bearer ${token}`,
         "x-api-key": API_KEY,
       },
     });
+    console.log(data, "this update of");
+    
 
     dispatch({ type: FETCH_OPERATORS_SUCCESS, payload: data });
   } catch (error: any) {
@@ -93,7 +95,7 @@ export const updateOperator = (operatorId: string, updates: any) => async (
 
     const token = getToken(getState);
 
-    const { data } = await axios.put(`${baseUrl}/operators/${operatorId}`, updates, {
+    const { data } = await axios.put(`${baseUrl}/operator/${operatorId}`, updates, {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
@@ -120,7 +122,7 @@ export const deleteOperator = (operatorId: string) => async (
 
     const token = getToken(getState);
 
-    const { data } = await axios.delete(`${baseUrl}/operators/${operatorId}`, {
+    const { data } = await axios.delete(`${baseUrl}/operator/${operatorId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
         "x-api-key": API_KEY,

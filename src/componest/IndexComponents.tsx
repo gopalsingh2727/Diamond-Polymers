@@ -89,7 +89,7 @@ function IndexComponents() {
           <img src={logo} className="logoHeders" alt="Application Logo" />
           <div><Update /></div>
         </div>
-        <div className="item"><Menu /></div>
+        <div className="item"><Menu/></div>
         <div className="item">{/* Reserved for future use */}</div>
         <div className="item"><Data /></div>
       </div>

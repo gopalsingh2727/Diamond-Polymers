@@ -1,0 +1,49 @@
+/* Add to your materialAndProduct.css */
+.suggestion-list {
+  position: absolute;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  width: 100%;
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.suggestionItem {
+  padding: 10px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #eee;
+}
+
+.suggestionItem:hover {
+  background-color: #f5f5f5;
+}
+
+.material-count {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.material-name-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.material-type-badge {
+  background-color: #e0e7ff;
+  color: #4f46e5;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.material-name {
+  flex: 1;
+}
