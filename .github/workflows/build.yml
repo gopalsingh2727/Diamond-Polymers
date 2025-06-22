@@ -3,8 +3,10 @@ name: Build and Publish Electron App
 on:
   push:
     tags:
-      - 'v*'  
-      # Trigger on version tags like v1.0.0
+      - 'v*'
+
+permissions:
+  contents: write  # Required to upload release assets
 
 jobs:
   build:
@@ -29,34 +31,18 @@ jobs:
         run: |
           npm ci
           npm install -D postcss-import @tailwindcss/nesting
-      
 
-      - name: Verify directory structure
-        shell: bash
-        run: |
-          if [ ! -d "src/components" ]; then
-            echo "::error::Directory 'src/components' not found."
-            ls src/ || echo "src not found"
-            exit 1
-          fi
-
-          CSS_PATH="src/components/second/menu/marketing/marketing.css"
-          if [ ! -f "$CSS_PATH" ]; then
-            echo "::warning::Marketing CSS file not found at $CSS_PATH"
-            mkdir -p "$(dirname "$CSS_PATH")"
-            touch "$CSS_PATH"
-          fi
-
-      - name: Build app
+      - name: Build Electron App
         run: npm run build
+
+      - name: List build output
+        run: ls -R release/
 
       - name: Publish release to GitHub
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: npx electron-builder --publish always
 
-      - name: Show debug logs on failure
+      - name: Debug logs on failure
         if: failure()
-        run: |
-          echo "🔍 Checking for build logs..."
-          find . -type f -name "*.log" || echo "No log files found"
+        run: find . -type f -name "*.log" || echo "No logs found"
