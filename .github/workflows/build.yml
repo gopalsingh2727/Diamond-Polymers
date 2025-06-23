@@ -49,15 +49,15 @@ jobs:
 
       - name: Build and publish Electron app
         env:
-         
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          # Use GITHUB_TOKEN (automatically provided)
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if [ "${{ matrix.os }}" = "macos-latest" ]; then
-            npx electron-builder --mac --${{ matrix.arch }} --publish always
+            npm run build && npx electron-builder --mac --${{ matrix.arch }} --publish always
           elif [ "${{ matrix.os }}" = "windows-latest" ]; then
-            npx electron-builder --win --${{ matrix.arch }} --publish always
+            npm run build && npx electron-builder --win --${{ matrix.arch }} --publish always
           else
-            npx electron-builder --linux --${{ matrix.arch }} --publish always
+            npm run build && npx electron-builder --linux --${{ matrix.arch }} --publish always
           fi
         shell: bash
 
@@ -72,21 +72,5 @@ jobs:
             release/
           retention-days: 7
 
-  create-release:
-    needs: build-and-publish
-    runs-on: ubuntu-latest
-    if: success()
-    
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
-        with:
-          draft: false
-          prerelease: false
-          generate_release_notes: true
-          tag_name: ${{ github.ref_name }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+  # Electron-builder handles publishing automatically
+  # No separate release creation needed

@@ -4,10 +4,12 @@
   "version": "0.2.6",
   "type": "module",
   "appId": "com.27Infinity.27this",
+  "homepage": "https://github.com/gopalsingh2727/Diamond-Polymers",
   "repository": {
     "type": "git",
-    "url": "git@github.com:gopalsingh2727/Diamond-Polymers.git"
+    "url": "https://github.com/gopalsingh2727/Diamond-Polymers.git"
   },
+ 
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build && electron-builder",
@@ -25,36 +27,65 @@
       "output": "release"
     },
     "files": [
-      "dist/",
-      "dist-electron/",
-      "node_modules/",
+      "dist/**/*",
+      "dist-electron/**/*",
+      "node_modules/**/*",
       "package.json",
       "bin/ffmpeg.dll"
     ],
+    "extraResources": [
+      {
+        "from": "bin/",
+        "to": "bin/",
+        "filter": ["**/*"]
+      }
+    ],
     "mac": {
       "target": [
-        "dmg",
-        "zip"
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        },
+        {
+          "target": "zip",
+          "arch": ["x64", "arm64"]
+        }
       ],
-      "category": "public.app-category.productivity"
+      "category": "public.app-category.productivity",
+      "icon": "build/icon.icns"
     },
     "win": {
       "target": [
-        "nsis",
-        "zip"
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        },
+        {
+          "target": "zip",
+          "arch": ["x64"]
+        }
       ],
-      "signingHashAlgorithms": [],
-      "certificateFile": null
+      "icon": "build/icon.ico"
     },
-    "publish": [
-      {
-        "provider": "github",
-        "owner": "gopalsingh2727",
-        "repo": "Diamond-Polymers"
-
-      }
-    ]
-  }, 
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": ["x64"]
+        },
+        {
+          "target": "deb",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "build/icon.png"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "gopalsingh2727",
+      "repo": "Diamond-Polymers"
+    }
+  },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
     "@material-tailwind/react": "^2.1.10",
