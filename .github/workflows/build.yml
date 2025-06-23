@@ -3,19 +3,27 @@ name: Build and Publish Electron App
 on:
   push:
     tags:
-      - 'v*'  
+      - 'v*'
 
-      
 permissions:
-  contents: write 
+  contents: write
 
 jobs:
-  build:
+  build-and-publish:
     strategy:
       matrix:
-        os: [macos-latest, windows-latest]
+        include:
+          - os: macos-latest
+            arch: x64
+          - os: macos-latest
+            arch: arm64
+          - os: windows-latest
+            arch: x64
+          - os: ubuntu-latest
+            arch: x64
+    
     runs-on: ${{ matrix.os }}
-
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -29,48 +37,56 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: |
-          npm ci
-          npm install -D postcss-import @tailwindcss/nesting
-      
+        run: npm ci
 
-      - name: Verify directory structure
-        shell: bash
-        run: |
-          if [ ! -d "src/components" ]; then
-            echo "::error::Directory 'src/components' not found."
-            ls src/ || echo "src not found"
-            exit 1
-          fi
+      # Optional: Only if you actually need these specific packages
+      - name: Install additional dependencies
+        run: npm install -D postcss-import @tailwindcss/nesting
+        continue-on-error: true
 
-          CSS_PATH="src/components/second/menu/marketing/marketing.css"
-          if [ ! -f "$CSS_PATH" ]; then
-            echo "::warning::Marketing CSS file not found at $CSS_PATH"
-            mkdir -p "$(dirname "$CSS_PATH")"
-            touch "$CSS_PATH"
-          fi
-
-      - name: Build app
+      - name: Build application
         run: npm run build
-      
-      - name: List build output
-        run: ls -R release/
-      
-      - name: Show release output
-        run: ls -lh release/
-        
-      - name: 🚀 Upload to GitHub Release
+
+      - name: Build and publish Electron app
+        env:
+         
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          if [ "${{ matrix.os }}" = "macos-latest" ]; then
+            npx electron-builder --mac --${{ matrix.arch }} --publish always
+          elif [ "${{ matrix.os }}" = "windows-latest" ]; then
+            npx electron-builder --win --${{ matrix.arch }} --publish always
+          else
+            npx electron-builder --linux --${{ matrix.arch }} --publish always
+          fi
+        shell: bash
+
+      - name: Upload build artifacts (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs-${{ matrix.os }}-${{ matrix.arch }}
+          path: |
+            **/*.log
+            dist/
+            release/
+          retention-days: 7
+
+  create-release:
+    needs: build-and-publish
+    runs-on: ubuntu-latest
+    if: success()
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          files: release/**/*
-
-      - name: Publish release to GitHub
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          tag_name: ${{ github.ref_name }}
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-        run: npx electron-builder --publish always
-
-      - name: Show debug logs on failure
-        if: failure()
-        run: |
-          echo "🔍 Checking for build logs..."
-          find . -type f -name "*.log" || echo "No log files found"  i think is ok 
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
