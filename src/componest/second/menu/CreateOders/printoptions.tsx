@@ -1,10 +1,30 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import StepContainre from "./stepContainer";
 
-const PrintImage = () => {
+interface PrintImageProps {
+  onPrintDataChange?: (printData: { printWork: string; selectedFile: File | null }) => void;
+  customerData?: {
+    name: string;
+    address: string;
+    phone: string;
+    email: string;
+    companyName: string;
+    imageUrl: string;
+  };
+}
+
+const PrintImage: React.FC<PrintImageProps> = ({ onPrintDataChange, customerData }) => {
   // State declarations
   const [printWork, setPrintWork] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>("");
+
+  // Effect to notify parent component of changes
+  useEffect(() => {
+    if (onPrintDataChange) {
+      onPrintDataChange({ printWork, selectedFile });
+    }
+  }, [printWork, selectedFile, onPrintDataChange]);
 
   // Handler functions
   const handleChangePrint = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -12,6 +32,7 @@ const PrintImage = () => {
     // Reset file when changing print option
     if (e.target.value !== "yes") {
       setSelectedFile(null);
+      setPreviewUrl("");
     }
   };
 
@@ -20,6 +41,11 @@ const PrintImage = () => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setSelectedFile(file);
+      
+      // Create preview URL
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+      
       console.log("Selected file:", file.name);
       // Add your file processing logic here
     }
@@ -35,6 +61,15 @@ const PrintImage = () => {
     }
     return false; // Don't show otherwise
   };
+
+  // Clean up preview URL on unmount
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
 
   return (
     <div className="printSection">
@@ -52,15 +87,48 @@ const PrintImage = () => {
 
         {printWork === "yes" && (
           <div className="imageUpload">
-            <input
-              type="file"
-              id="printImage"
-              accept="image/*"
-              onChange={handleFileChange}
-            />
+            {/* Customer Info Display when print is selected */}
+            {customerData && (
+              <div className="customerPrintInfo">
+                <h6>Print Details for:</h6>
+                <div className="customerPrintDetails">
+                  <p><strong>Name:</strong> {customerData.name}</p>
+                  <p><strong>Company:</strong> {customerData.companyName}</p>
+                  <p><strong>Address:</strong> {customerData.address}</p>
+                  <p><strong>Phone:</strong> {customerData.phone}</p>
+                  <p><strong>Email:</strong> {customerData.email}</p>
+                </div>
+              </div>
+            )}
+            
+            <div className="fileUploadSection">
+              <label htmlFor="printImage">Upload Print Image:</label>
+              <input
+                type="file"
+                id="printImage"
+                accept="image/*"
+                onChange={handleFileChange}
+              />
+            </div>
+
             {selectedFile && (
               <div className="fileSelected">
                 <p>✓ Image selected: {selectedFile.name}</p>
+                {previewUrl && (
+                  <div className="imagePreview">
+                    <img 
+                      src={previewUrl} 
+                      alt="Print preview" 
+                      style={{ maxWidth: '200px', maxHeight: '200px', objectFit: 'contain' }}
+                    />
+                  </div>
+                )}
+                <div className="printSummary">
+                  <p><strong>Ready for printing:</strong></p>
+                  <p>Customer: {customerData?.name || 'Unknown'}</p>
+                  <p>Image: {selectedFile.name}</p>
+                  <p>Size: {(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                </div>
               </div>
             )}
           </div>
@@ -73,7 +141,6 @@ const PrintImage = () => {
         )}
       </div>
 
-    
       {shouldShowStepContainer() && <StepContainre />}
     </div>
   );

@@ -52,6 +52,14 @@ jobs:
       
       - name: List build output
         run: ls -R release/
+      
+      - name: Show release output
+        run: ls -lh release/
+        
+      - name: 🚀 Upload to GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: release/**/*
 
       - name: Publish release to GitHub
         env:

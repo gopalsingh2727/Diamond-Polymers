@@ -55,14 +55,12 @@ const MixingRow = ({ mat, index, onMixChange, onRemove, isFirst }: MixingRowProp
   const [showNameSuggestions, setShowNameSuggestions] = useState(false);
 
   const handleNameSuggestionSelect = (data: any) => {
-    console.log('Name suggestion selected:', data); // Debug log
-    
+    console.log('Name suggestion selected:', data);
     
     if (data.materialName) {
       onMixChange(index, "name", data.materialName);
     }
     
-    // Update material type if provided
     if (data.materialTypeName) {
       onMixChange(index, "type", data.materialTypeName);
     }
@@ -71,7 +69,7 @@ const MixingRow = ({ mat, index, onMixChange, onRemove, isFirst }: MixingRowProp
   };
 
   const handleTypeSuggestionSelect = (data: any) => {
-    console.log('Type suggestion selected:', data); // Debug log
+    console.log('Type suggestion selected:', data);
     
     if (data.materialTypeName) {
       onMixChange(index, "type", data.materialTypeName);
@@ -79,7 +77,6 @@ const MixingRow = ({ mat, index, onMixChange, onRemove, isFirst }: MixingRowProp
     
     setShowTypeSuggestions(false);
   };
-  
 
   return (
     <div className="popupitemall">
@@ -186,6 +183,7 @@ const MaterialInOders: React.FC<MaterialInOdersProps> = ({
   const [materialName, setMaterialName] = useState('');
   const [totalWeight, setTotalWeight] = useState('');
   const [onePieceWeight, setOnePieceWeight] = useState('');
+  const [totalPieces, setTotalPieces] = useState('');
 
   // Mixing states
   const [mixing, setMixing] = useState("no");
@@ -194,32 +192,22 @@ const MaterialInOders: React.FC<MaterialInOdersProps> = ({
   const [savedMixing, setSavedMixing] = useState<SavedMixingData | null>(null);
   const [loss] = useState(0);
 
-  const [formState, setFormState] = useState<Material>({
-    materialType: '',
-    materialName: '',
-    totalWeight: '',
-    onePieceWeight: '',
-    totalPieces: '',
-    weight: 0,
-    percentage: 0,
-  });
-
   const [showTypeSuggestions, setShowTypeSuggestions] = useState(false);
   const [showNameSuggestions, setShowNameSuggestions] = useState(false);
 
   // Calculation functions
-  const convertDimensionToMM = (value: number, unit: string): number => {
-    if (unit === "inch") {
-      return value * 25.4; // Convert inch to mm
+  const convertDimensionToInch = (value: number, unit: string): number => {
+    if (unit === "mm") {
+      return value / 25.4; // Convert mm to inch
     }
-    return value; // Already in mm
+    return value; // Already in inch
   };
 
-  const convertGaugeToMicron = (value: number, unit: string): number => {
-    if (unit === "gauge") {
-      return value / 4; 
+  const convertGaugeToGauge = (value: number, unit: string): number => {
+    if (unit === "micron") {
+      return value * 4; // Convert micron to gauge (1 micron = 4 gauge)
     }
-    return value; 
+    return value; // Already in gauge
   };
 
   const calculateOneBagWeight = () => {
@@ -228,30 +216,33 @@ const MaterialInOders: React.FC<MaterialInOdersProps> = ({
     const gauge = parseFloat(materialValues.gauge) || 0;
     const mol = materialData.mol || 0;
     
-    console.log(mol , "this data");
-    
-    if (width === 0 || height === 0 || gauge === 0) return 0;
+    if (width === 0 || height === 0 || gauge === 0 || mol === 0) return 0;
 
+    // Convert dimensions to inches for calculation
+    const widthInch = convertDimensionToInch(width, dimensionUnit);
+    const heightInch = convertDimensionToInch(height, dimensionUnit);
     
-    const widthMM = convertDimensionToMM(width, dimensionUnit);
-    const heightMM = convertDimensionToMM(height, dimensionUnit);
-    
-    // Convert gauge to micron
-    const gaugeMicron = convertGaugeToMicron(gauge, gaugeUnit);
+    // Convert to gauge for calculation
+    const gaugeValue = convertGaugeToGauge(gauge, gaugeUnit);
 
-    // Calculate: OneBagWeight = W * L * Gauge / mol
-    const oneBagWeight = (widthMM * heightMM * gaugeMicron / mol) ; 
+    // Formula: (W) Inch X (L) Inch X Gauge / Mol = One Piece Weight in grams
+    console.log(mol );
+    console.log(gaugeValue);
+    
+    const oneBagWeight = (widthInch * heightInch * gaugeValue) / mol;
+    console.log(oneBagWeight , "thid");
+    
     return oneBagWeight;
   };
-
+ 
   const calculateTotalWeight = () => {
-    const totalPcs = parseFloat(formState.totalPieces) || 0;
+    const totalPcs = parseFloat(totalPieces) || 0;
     const oneBagWt = calculateOneBagWeight();
     
     if (totalPcs === 0 || oneBagWt === 0) return 0;
     
-    // TotalWeight = TotalPcs * OneBagWeight
-    return totalPcs * oneBagWt;
+    // TotalWeight in kg = (TotalPcs * OneBagWeight in grams) / 1000
+    return (totalPcs * oneBagWt) / 1000;
   };
 
   const calculateTotalPieces = () => {
@@ -260,8 +251,8 @@ const MaterialInOders: React.FC<MaterialInOdersProps> = ({
     
     if (totalWt === 0 || oneBagWt === 0) return 0;
     
-    // TotalPcs = TotalWeight / OneBagWeight
-    return Math.round(totalWt / oneBagWt);
+    // TotalPcs = (TotalWeight in kg * 1000) / OneBagWeight in grams
+    return Math.round((totalWt * 1000) / oneBagWt);
   };
 
   // Auto-calculate when dependencies change
@@ -271,21 +262,19 @@ const MaterialInOders: React.FC<MaterialInOdersProps> = ({
   }, [materialValues.width, materialValues.height, materialValues.gauge, dimensionUnit, gaugeUnit, materialData.mol]);
 
   useEffect(() => {
-    if (formState.totalPieces && !totalWeight) {
+    if (totalPieces && !totalWeight) {
       const calculatedTotalWeight = calculateTotalWeight();
       setTotalWeight(calculatedTotalWeight.toFixed(3));
     }
-  }, [formState.totalPieces, onePieceWeight]);
+  }, [totalPieces, onePieceWeight]);
 
   useEffect(() => {
-    if (totalWeight && !formState.totalPieces) {
+    if (totalWeight && !totalPieces) {
       const calculatedTotalPieces = calculateTotalPieces();
-      setFormState(prev => ({ ...prev, totalPieces: calculatedTotalPieces.toString() }));
+      setTotalPieces(calculatedTotalPieces.toString());
     }
   }, [totalWeight, onePieceWeight]);
 
-
- 
   // Recalculate when material changes (mol value changes)
   useEffect(() => {
     if (materialData.mol && materialValues.width && materialValues.height && materialValues.gauge) {
@@ -293,7 +282,7 @@ const MaterialInOders: React.FC<MaterialInOdersProps> = ({
       setOnePieceWeight(calculatedOneBagWeight.toFixed(6));
       
       // Recalculate total weight if total pieces exists
-      if (formState.totalPieces) {
+      if (totalPieces) {
         const calculatedTotalWeight = calculateTotalWeight();
         setTotalWeight(calculatedTotalWeight.toFixed(3));
       }
@@ -301,7 +290,7 @@ const MaterialInOders: React.FC<MaterialInOdersProps> = ({
       // Recalculate total pieces if total weight exists
       if (totalWeight) {
         const calculatedTotalPieces = calculateTotalPieces();
-        setFormState(prev => ({ ...prev, totalPieces: calculatedTotalPieces.toString() }));
+        setTotalPieces(calculatedTotalPieces.toString());
       }
     }
   }, [materialData.mol]);
@@ -312,13 +301,8 @@ const MaterialInOders: React.FC<MaterialInOdersProps> = ({
       materialData.category.trim() !== '' &&
       materialName.trim() !== '' &&
       totalWeight.trim() !== '' &&
-      formState.totalPieces.trim() !== ''
+      totalPieces.trim() !== ''
     );
-  };
-
-  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormState(prev => ({ ...prev, [name]: value }));
   };
 
   const handleMixingChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -336,51 +320,47 @@ const MaterialInOders: React.FC<MaterialInOdersProps> = ({
       ]);
       setShowMixingPopup(true);
     } else if (value === "no") {
-     
       setMixMaterials([]);
       setSavedMixing(null);
       setShowMixingPopup(false);
     }
   };
 
-const handleCategorySelect = (selectedMaterial: any) => {
-  console.log("Selected Material:", selectedMaterial);
+  const handleCategorySelect = (selectedMaterial: any) => {
+    console.log("Selected Material:", selectedMaterial);
 
-  if (selectedMaterial.materialName) {
-    if (selectedMaterial.materialMol !== undefined) {
-      console.log("Selected materialMol:", selectedMaterial.materialMol);
+    if (selectedMaterial.materialName) {
+      if (selectedMaterial.materialMol !== undefined) {
+        console.log("Selected materialMol:", selectedMaterial.materialMol);
+      } else {
+        console.warn("No materialMol found for selected material:", selectedMaterial.materialName);
+      }
+
+      setMaterialData(prev => ({
+        ...prev,
+        category: selectedMaterial.materialTypeName || '',
+        mol: selectedMaterial.materialMol !== undefined ? selectedMaterial.materialMol : prev.mol,
+      }));
+      setMaterialName(selectedMaterial.materialName);
     } else {
-      console.warn("No materialMol found for selected material:", selectedMaterial.materialName);
+      setMaterialData(prev => ({
+        ...prev,
+        category: selectedMaterial.materialTypeName,
+      }));
     }
-
-    setMaterialData(prev => ({
-      ...prev,
-      category: selectedMaterial.materialTypeName || '',
-      mol: selectedMaterial.materialMol !== undefined ? selectedMaterial.materialMol : prev.mol,
-    }));
-    setMaterialName(selectedMaterial.materialName);
-  } else {
-    setMaterialData(prev => ({
-      ...prev,
-      category: selectedMaterial.materialTypeName,
-    }));
-  }
-};
-
-
-
+  };
 
   const handleMixChange = (
     index: number,
     key: keyof MixMaterial,
     value: string | number
   ) => {
-    console.log(`Updating mix material ${index}, ${key}:`, value); // Debug log
+    console.log(`Updating mix material ${index}, ${key}:`, value);
     
     setMixMaterials(prev => {
       const updated = [...prev];
       updated[index] = { ...updated[index], [key]: value };
-      console.log('Updated mix materials:', updated); // Debug log
+      console.log('Updated mix materials:', updated);
       return updated;
     });
   };
@@ -394,7 +374,7 @@ const handleCategorySelect = (selectedMaterial: any) => {
   };
 
   const saveMixing = () => {
-    console.log('Saving mixing data:', mixMaterials); // Debug log
+    console.log('Saving mixing data:', mixMaterials);
     setSavedMixing({
       data: mixMaterials,
       loss
@@ -407,6 +387,26 @@ const handleCategorySelect = (selectedMaterial: any) => {
       ...prev,
       category: e.target.value,
     }));
+  };
+
+  const handleTotalWeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setTotalWeight(value);
+    
+    // Clear total pieces when total weight is being manually entered
+    if (value) {
+      setTotalPieces('');
+    }
+  };
+
+  const handleTotalPiecesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setTotalPieces(value);
+    
+    // Clear total weight when total pieces is being manually entered
+    if (value) {
+      setTotalWeight('');
+    }
   };
 
   return (
@@ -455,7 +455,7 @@ const handleCategorySelect = (selectedMaterial: any) => {
             />
           </div>
           <div className="divRow">
-              <label>G/µm</label>
+            <label>G/µm</label>
             <select
               value={gaugeUnit}
               id="myDropdown"
@@ -557,11 +557,11 @@ const handleCategorySelect = (selectedMaterial: any) => {
             </div>
           </div>
           <div>
-            <label>Total Weight (kg)</label>
+            <label>Total Weight</label>
             <input
               type="text"
               value={totalWeight}
-              onChange={(e) => setTotalWeight(e.target.value)}
+              onChange={handleTotalWeightChange}
               placeholder="Total Weight"
               className="inputBox"
             />
@@ -582,9 +582,8 @@ const handleCategorySelect = (selectedMaterial: any) => {
             <label>Total Pieces</label>
             <input
               type="text"
-              value={formState.totalPieces}
-              name="totalPieces"
-              onChange={handleFormChange}
+              value={totalPieces}
+              onChange={handleTotalPiecesChange}
               placeholder="Total Pieces"
               className="inputBox"
             />
@@ -683,7 +682,6 @@ const handleCategorySelect = (selectedMaterial: any) => {
         </div>
       )}
 
-     
       {isAllDataFilled() && <PrintImage />}
     </div>
   );

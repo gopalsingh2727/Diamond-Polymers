@@ -1,1 +1,62 @@
-"use strict";const c=require("electron");try{c.contextBridge.exposeInMainWorld("ipcRenderer",{on:(r,o)=>{try{c.ipcRenderer.on(r,o)}catch(e){console.error("ipcRenderer.on error:",e)}},off:(r,o)=>{try{c.ipcRenderer.off(r,o)}catch(e){console.error("ipcRenderer.off error:",e)}},send:(r,...o)=>{try{c.ipcRenderer.send(r,...o)}catch(e){console.error("ipcRenderer.send error:",e)}},invoke:(r,...o)=>{try{return c.ipcRenderer.invoke(r,...o)}catch(e){return console.error("ipcRenderer.invoke error:",e),Promise.reject(e)}},once:(r,o)=>{try{c.ipcRenderer.once(r,o)}catch(e){console.error("ipcRenderer.once error:",e)}}})}catch(r){console.error("contextBridge expose error:",r)}process.on("uncaughtException",r=>{console.error("Uncaught Exception in preload:",r)});
+"use strict";
+const electron = require("electron");
+try {
+  electron.contextBridge.exposeInMainWorld("ipcRenderer", {
+    /**
+     * Listen for events from main process
+     */
+    on: (channel, listener) => {
+      try {
+        electron.ipcRenderer.on(channel, listener);
+      } catch (err) {
+        console.error("ipcRenderer.on error:", err);
+      }
+    },
+    /**
+     * Remove event listener
+     */
+    off: (channel, listener) => {
+      try {
+        electron.ipcRenderer.off(channel, listener);
+      } catch (err) {
+        console.error("ipcRenderer.off error:", err);
+      }
+    },
+    /**
+     * Send message to main process
+     */
+    send: (channel, ...args) => {
+      try {
+        electron.ipcRenderer.send(channel, ...args);
+      } catch (err) {
+        console.error("ipcRenderer.send error:", err);
+      }
+    },
+    /**
+     * Invoke method in main process
+     */
+    invoke: (channel, ...args) => {
+      try {
+        return electron.ipcRenderer.invoke(channel, ...args);
+      } catch (err) {
+        console.error("ipcRenderer.invoke error:", err);
+        return Promise.reject(err);
+      }
+    },
+    /**
+     * Listen once for event from main process
+     */
+    once: (channel, listener) => {
+      try {
+        electron.ipcRenderer.once(channel, listener);
+      } catch (err) {
+        console.error("ipcRenderer.once error:", err);
+      }
+    }
+  });
+} catch (e) {
+  console.error("contextBridge expose error:", e);
+}
+process.on("uncaughtException", (error) => {
+  console.error("Uncaught Exception in preload:", error);
+});
