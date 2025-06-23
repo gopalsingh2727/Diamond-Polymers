@@ -55,12 +55,14 @@ const MixingRow = ({ mat, index, onMixChange, onRemove, isFirst }: MixingRowProp
   const [showNameSuggestions, setShowNameSuggestions] = useState(false);
 
   const handleNameSuggestionSelect = (data: any) => {
-    console.log('Name suggestion selected:', data);
+    console.log('Name suggestion selected:', data); // Debug log
+    
     
     if (data.materialName) {
       onMixChange(index, "name", data.materialName);
     }
     
+    // Update material type if provided
     if (data.materialTypeName) {
       onMixChange(index, "type", data.materialTypeName);
     }
@@ -69,7 +71,7 @@ const MixingRow = ({ mat, index, onMixChange, onRemove, isFirst }: MixingRowProp
   };
 
   const handleTypeSuggestionSelect = (data: any) => {
-    console.log('Type suggestion selected:', data);
+    console.log('Type suggestion selected:', data); // Debug log
     
     if (data.materialTypeName) {
       onMixChange(index, "type", data.materialTypeName);
@@ -77,6 +79,7 @@ const MixingRow = ({ mat, index, onMixChange, onRemove, isFirst }: MixingRowProp
     
     setShowTypeSuggestions(false);
   };
+  
 
   return (
     <div className="popupitemall">
@@ -183,7 +186,6 @@ const MaterialInOders: React.FC<MaterialInOdersProps> = ({
   const [materialName, setMaterialName] = useState('');
   const [totalWeight, setTotalWeight] = useState('');
   const [onePieceWeight, setOnePieceWeight] = useState('');
-  const [totalPieces, setTotalPieces] = useState('');
 
   // Mixing states
   const [mixing, setMixing] = useState("no");
@@ -192,22 +194,32 @@ const MaterialInOders: React.FC<MaterialInOdersProps> = ({
   const [savedMixing, setSavedMixing] = useState<SavedMixingData | null>(null);
   const [loss] = useState(0);
 
+  const [formState, setFormState] = useState<Material>({
+    materialType: '',
+    materialName: '',
+    totalWeight: '',
+    onePieceWeight: '',
+    totalPieces: '',
+    weight: 0,
+    percentage: 0,
+  });
+
   const [showTypeSuggestions, setShowTypeSuggestions] = useState(false);
   const [showNameSuggestions, setShowNameSuggestions] = useState(false);
 
   // Calculation functions
-  const convertDimensionToInch = (value: number, unit: string): number => {
-    if (unit === "mm") {
-      return value / 25.4; // Convert mm to inch
+  const convertDimensionToMM = (value: number, unit: string): number => {
+    if (unit === "inch") {
+      return value * 25.4; // Convert inch to mm
     }
-    return value; // Already in inch
+    return value; // Already in mm
   };
 
-  const convertGaugeToGauge = (value: number, unit: string): number => {
-    if (unit === "micron") {
-      return value * 4; // Convert micron to gauge (1 micron = 4 gauge)
+  const convertGaugeToMicron = (value: number, unit: string): number => {
+    if (unit === "gauge") {
+      return value / 4; 
     }
-    return value; // Already in gauge
+    return value; 
   };
 
   const calculateOneBagWeight = () => {
@@ -216,33 +228,30 @@ const MaterialInOders: React.FC<MaterialInOdersProps> = ({
     const gauge = parseFloat(materialValues.gauge) || 0;
     const mol = materialData.mol || 0;
     
-    if (width === 0 || height === 0 || gauge === 0 || mol === 0) return 0;
+    console.log(mol , "this data");
+    
+    if (width === 0 || height === 0 || gauge === 0) return 0;
 
-    // Convert dimensions to inches for calculation
-    const widthInch = convertDimensionToInch(width, dimensionUnit);
-    const heightInch = convertDimensionToInch(height, dimensionUnit);
     
-    // Convert to gauge for calculation
-    const gaugeValue = convertGaugeToGauge(gauge, gaugeUnit);
+    const widthMM = convertDimensionToMM(width, dimensionUnit);
+    const heightMM = convertDimensionToMM(height, dimensionUnit);
+    
+    // Convert gauge to micron
+    const gaugeMicron = convertGaugeToMicron(gauge, gaugeUnit);
 
-    // Formula: (W) Inch X (L) Inch X Gauge / Mol = One Piece Weight in grams
-    console.log(mol );
-    console.log(gaugeValue);
-    
-    const oneBagWeight = (widthInch * heightInch * gaugeValue) / mol;
-    console.log(oneBagWeight , "thid");
-    
+    // Calculate: OneBagWeight = W * L * Gauge / mol
+    const oneBagWeight = (widthMM * heightMM * gaugeMicron / mol) ; 
     return oneBagWeight;
   };
- 
+
   const calculateTotalWeight = () => {
-    const totalPcs = parseFloat(totalPieces) || 0;
+    const totalPcs = parseFloat(formState.totalPieces) || 0;
     const oneBagWt = calculateOneBagWeight();
     
     if (totalPcs === 0 || oneBagWt === 0) return 0;
     
-    // TotalWeight in kg = (TotalPcs * OneBagWeight in grams) / 1000
-    return (totalPcs * oneBagWt) / 1000;
+    // TotalWeight = TotalPcs * OneBagWeight
+    return totalPcs * oneBagWt;
   };
 
   const calculateTotalPieces = () => {
@@ -251,8 +260,8 @@ const MaterialInOders: React.FC<MaterialInOdersProps> = ({
     
     if (totalWt === 0 || oneBagWt === 0) return 0;
     
-    // TotalPcs = (TotalWeight in kg * 1000) / OneBagWeight in grams
-    return Math.round((totalWt * 1000) / oneBagWt);
+    // TotalPcs = TotalWeight / OneBagWeight
+    return Math.round(totalWt / oneBagWt);
   };
 
   // Auto-calculate when dependencies change
@@ -262,19 +271,21 @@ const MaterialInOders: React.FC<MaterialInOdersProps> = ({
   }, [materialValues.width, materialValues.height, materialValues.gauge, dimensionUnit, gaugeUnit, materialData.mol]);
 
   useEffect(() => {
-    if (totalPieces && !totalWeight) {
+    if (formState.totalPieces && !totalWeight) {
       const calculatedTotalWeight = calculateTotalWeight();
       setTotalWeight(calculatedTotalWeight.toFixed(3));
     }
-  }, [totalPieces, onePieceWeight]);
+  }, [formState.totalPieces, onePieceWeight]);
 
   useEffect(() => {
-    if (totalWeight && !totalPieces) {
+    if (totalWeight && !formState.totalPieces) {
       const calculatedTotalPieces = calculateTotalPieces();
-      setTotalPieces(calculatedTotalPieces.toString());
+      setFormState(prev => ({ ...prev, totalPieces: calculatedTotalPieces.toString() }));
     }
   }, [totalWeight, onePieceWeight]);
 
+
+ 
   // Recalculate when material changes (mol value changes)
   useEffect(() => {
     if (materialData.mol && materialValues.width && materialValues.height && materialValues.gauge) {
@@ -282,7 +293,7 @@ const MaterialInOders: React.FC<MaterialInOdersProps> = ({
       setOnePieceWeight(calculatedOneBagWeight.toFixed(6));
       
       // Recalculate total weight if total pieces exists
-      if (totalPieces) {
+      if (formState.totalPieces) {
         const calculatedTotalWeight = calculateTotalWeight();
         setTotalWeight(calculatedTotalWeight.toFixed(3));
       }
@@ -290,7 +301,7 @@ const MaterialInOders: React.FC<MaterialInOdersProps> = ({
       // Recalculate total pieces if total weight exists
       if (totalWeight) {
         const calculatedTotalPieces = calculateTotalPieces();
-        setTotalPieces(calculatedTotalPieces.toString());
+        setFormState(prev => ({ ...prev, totalPieces: calculatedTotalPieces.toString() }));
       }
     }
   }, [materialData.mol]);
@@ -301,8 +312,13 @@ const MaterialInOders: React.FC<MaterialInOdersProps> = ({
       materialData.category.trim() !== '' &&
       materialName.trim() !== '' &&
       totalWeight.trim() !== '' &&
-      totalPieces.trim() !== ''
+      formState.totalPieces.trim() !== ''
     );
+  };
+
+  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormState(prev => ({ ...prev, [name]: value }));
   };
 
   const handleMixingChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -320,47 +336,51 @@ const MaterialInOders: React.FC<MaterialInOdersProps> = ({
       ]);
       setShowMixingPopup(true);
     } else if (value === "no") {
+     
       setMixMaterials([]);
       setSavedMixing(null);
       setShowMixingPopup(false);
     }
   };
 
-  const handleCategorySelect = (selectedMaterial: any) => {
-    console.log("Selected Material:", selectedMaterial);
+const handleCategorySelect = (selectedMaterial: any) => {
+  console.log("Selected Material:", selectedMaterial);
 
-    if (selectedMaterial.materialName) {
-      if (selectedMaterial.materialMol !== undefined) {
-        console.log("Selected materialMol:", selectedMaterial.materialMol);
-      } else {
-        console.warn("No materialMol found for selected material:", selectedMaterial.materialName);
-      }
-
-      setMaterialData(prev => ({
-        ...prev,
-        category: selectedMaterial.materialTypeName || '',
-        mol: selectedMaterial.materialMol !== undefined ? selectedMaterial.materialMol : prev.mol,
-      }));
-      setMaterialName(selectedMaterial.materialName);
+  if (selectedMaterial.materialName) {
+    if (selectedMaterial.materialMol !== undefined) {
+      console.log("Selected materialMol:", selectedMaterial.materialMol);
     } else {
-      setMaterialData(prev => ({
-        ...prev,
-        category: selectedMaterial.materialTypeName,
-      }));
+      console.warn("No materialMol found for selected material:", selectedMaterial.materialName);
     }
-  };
+
+    setMaterialData(prev => ({
+      ...prev,
+      category: selectedMaterial.materialTypeName || '',
+      mol: selectedMaterial.materialMol !== undefined ? selectedMaterial.materialMol : prev.mol,
+    }));
+    setMaterialName(selectedMaterial.materialName);
+  } else {
+    setMaterialData(prev => ({
+      ...prev,
+      category: selectedMaterial.materialTypeName,
+    }));
+  }
+};
+
+
+
 
   const handleMixChange = (
     index: number,
     key: keyof MixMaterial,
     value: string | number
   ) => {
-    console.log(`Updating mix material ${index}, ${key}:`, value);
+    console.log(`Updating mix material ${index}, ${key}:`, value); // Debug log
     
     setMixMaterials(prev => {
       const updated = [...prev];
       updated[index] = { ...updated[index], [key]: value };
-      console.log('Updated mix materials:', updated);
+      console.log('Updated mix materials:', updated); // Debug log
       return updated;
     });
   };
@@ -374,7 +394,7 @@ const MaterialInOders: React.FC<MaterialInOdersProps> = ({
   };
 
   const saveMixing = () => {
-    console.log('Saving mixing data:', mixMaterials);
+    console.log('Saving mixing data:', mixMaterials); // Debug log
     setSavedMixing({
       data: mixMaterials,
       loss
@@ -387,26 +407,6 @@ const MaterialInOders: React.FC<MaterialInOdersProps> = ({
       ...prev,
       category: e.target.value,
     }));
-  };
-
-  const handleTotalWeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setTotalWeight(value);
-    
-    // Clear total pieces when total weight is being manually entered
-    if (value) {
-      setTotalPieces('');
-    }
-  };
-
-  const handleTotalPiecesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setTotalPieces(value);
-    
-    // Clear total weight when total pieces is being manually entered
-    if (value) {
-      setTotalWeight('');
-    }
   };
 
   return (
@@ -455,7 +455,7 @@ const MaterialInOders: React.FC<MaterialInOdersProps> = ({
             />
           </div>
           <div className="divRow">
-            <label>G/µm</label>
+              <label>G/µm</label>
             <select
               value={gaugeUnit}
               id="myDropdown"
@@ -557,11 +557,11 @@ const MaterialInOders: React.FC<MaterialInOdersProps> = ({
             </div>
           </div>
           <div>
-            <label>Total Weight</label>
+            <label>Total Weight (kg)</label>
             <input
               type="text"
               value={totalWeight}
-              onChange={handleTotalWeightChange}
+              onChange={(e) => setTotalWeight(e.target.value)}
               placeholder="Total Weight"
               className="inputBox"
             />
@@ -582,8 +582,9 @@ const MaterialInOders: React.FC<MaterialInOdersProps> = ({
             <label>Total Pieces</label>
             <input
               type="text"
-              value={totalPieces}
-              onChange={handleTotalPiecesChange}
+              value={formState.totalPieces}
+              name="totalPieces"
+              onChange={handleFormChange}
               placeholder="Total Pieces"
               className="inputBox"
             />
@@ -682,6 +683,7 @@ const MaterialInOders: React.FC<MaterialInOdersProps> = ({
         </div>
       )}
 
+     
       {isAllDataFilled() && <PrintImage />}
     </div>
   );

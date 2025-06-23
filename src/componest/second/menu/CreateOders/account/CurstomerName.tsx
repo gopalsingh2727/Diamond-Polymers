@@ -136,7 +136,7 @@ const CustomerName: React.FC = () => {
         </div>
 
         {/* Print Section - Shows when customer data is available */}
-        {/* {showPrintSection && (
+        {showPrintSection && (
           <div className="printWorkSection">
             <h5>Print Work Options</h5>
             <PrintImage 
@@ -160,7 +160,7 @@ const CustomerName: React.FC = () => {
               </div>
             )}
           </div>
-        )} */}
+        )}
       </div>
     </div>
   );
