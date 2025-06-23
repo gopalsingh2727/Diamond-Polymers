@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Data from "../../../../allCompones/date";
 import CustomerSuggestions from "../SuggestionInput/CustomerSuggestionInput";
-import PrintImage from "../printoptions"; // Import your PrintImage component
+import PrintImage from "../printoptions"; 
 import "../materialAndProduct/materialAndProduct.css";
 import './curstomerName.css'
 
