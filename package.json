@@ -1,7 +1,7 @@
 {
   "name": "electron-vite-project",
   "private": true,
-  "version": "0.3.2",
+  "version": "0.2.5",
   "type": "module",
   "appId": "com.27Infinity.27this",
   "repository": {
