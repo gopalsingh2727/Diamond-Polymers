@@ -67,19 +67,7 @@
       ],
       "icon": "build/icon.ico"
     },
-    "linux": {
-      "target": [
-        {
-          "target": "AppImage",
-          "arch": ["x64"]
-        },
-        {
-          "target": "deb",
-          "arch": ["x64"]
-        }
-      ],
-      "icon": "build/icon.png"
-    },
+    
     "publish": {
       "provider": "github",
       "owner": "gopalsingh2727",
