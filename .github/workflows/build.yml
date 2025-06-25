@@ -41,8 +41,9 @@ jobs:
 
       - name: Build application
         run: npm run build
-
+      
       - name: Build and publish Electron app
+        run: echo "GH_TOKEN is ${GH_TOKEN} "
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
