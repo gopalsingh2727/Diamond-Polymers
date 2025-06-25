@@ -1,14 +1,14 @@
 {
   "name": "electron-vite-project",
   "private": true,
-  "version": "0.2.6",
+  "version": "1.0.0",
   "type": "module",
   "appId": "com.27Infinity.27this",
-  "homepage": "https://github.com/gopalsingh2727/Diamond-Polymers",
   "repository": {
     "type": "git",
-    "url": "https://github.com/gopalsingh2727/Diamond-Polymers.git"
-  },
+    "url": "git@github.com:gopalsingh2727/Diamond-Polymers.git"
+
+},
  
   "scripts": {
     "dev": "vite",
@@ -71,7 +71,8 @@
     "publish": {
       "provider": "github",
       "owner": "gopalsingh2727",
-      "repo": "Diamond-Polymers"
+      "repo": "Diamond-Polymers",
+      "token": "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"
       
     }
   },
