@@ -44,7 +44,8 @@ jobs:
 
       - name: Build and publish Electron app
         env:
-          GH_TOKEN: ${{  github.token }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           if [ "${{ matrix.os }}" = "macos-latest" ]; then
             npx electron-builder --mac --${{ matrix.arch }} --publish always
