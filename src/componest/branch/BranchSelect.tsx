@@ -20,6 +20,13 @@ const BranchSelect = () => {
     }
   }, [isAuthenticated, userData?.role, userData?.selectedBranch, dispatch]);
 
+  useEffect(() => {
+    if (error === "Invalid or expired token") {
+      localStorage.removeItem("userData"); // or remove "token" if you're using that
+      navigate("/login");
+    }
+  }, [error, navigate]);
+
   const handleBranchSelect = () => {
     if (!selectedBranch) return;
 
