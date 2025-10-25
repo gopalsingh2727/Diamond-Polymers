@@ -36,6 +36,15 @@
  
 }
 
+
+.ordersTable{
+  font-size: small;
+  justify-content:normal;
+    display: grid;
+  grid-template-columns: 0.8fr 1.7fr 1.8fr 2fr 1.3fr  0.3fr;
+  
+}
+
 .orderItem{
   cursor: pointer;
   

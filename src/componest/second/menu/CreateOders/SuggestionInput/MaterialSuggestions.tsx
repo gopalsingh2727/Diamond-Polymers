@@ -6,14 +6,14 @@ import { getAllMaterialTypesWithMaterials } from "../../../../redux/create/Mater
 interface Props {
   materialName: string;
   onSelect: (data: any) => void;
-  suggestionType?: 'type' | 'name'; 
+  suggestionType?: 'type' | 'name';
   selectedMaterialType?: string;
-  showSuggestions?: boolean; // New prop to control visibility
+  showSuggestions?: boolean;
 }
 
-const MaterialSuggestions: React.FC<Props> = ({ 
-  materialName, 
-  onSelect, 
+const MaterialSuggestions: React.FC<Props> = ({
+  materialName,
+  onSelect,
   suggestionType = 'type',
   selectedMaterialType = '',
   showSuggestions = false
@@ -25,8 +25,9 @@ const MaterialSuggestions: React.FC<Props> = ({
   const materialCategories = materialCategoryState.categories || [];
   const loading = materialCategoryState.loading || false;
   const error = materialCategoryState.error;
-   console.log(materialCategoryState , "this call ");
-   
+  
+  console.log(materialCategoryState, "this call");
+
   useEffect(() => {
     if (!hasFetched.current && !loading && materialCategories.length === 0) {
       dispatch(getAllMaterialTypesWithMaterials() as any);
@@ -50,7 +51,7 @@ const MaterialSuggestions: React.FC<Props> = ({
       // Show only material names from selected type
       if (!selectedMaterialType) return [];
       
-      const selectedCategory = materialCategories.find((cat: any) => 
+      const selectedCategory = materialCategories.find((cat: any) =>
         cat.materialTypeName === selectedMaterialType
       );
       
@@ -65,18 +66,48 @@ const MaterialSuggestions: React.FC<Props> = ({
     }
   }, [materialName, materialCategories, suggestionType, selectedMaterialType]);
 
+  // FIXED: Handle material type selection - now includes ID
   const handleTypeClick = (category: any) => {
+    console.log('🔧 MaterialSuggestions - Type clicked:', category);
+    
     onSelect({
+      _id: category._id, 
+      materialTypeId: category._id, // ✅ Also provide as materialTypeId for consistency
       materialTypeName: category.materialTypeName,
-      materialName: "",
+      branchId: category.branchId,
+      productId: category.productId,
+      createdAt: category.createdAt,
+      updatedAt: category.updatedAt,
+      materials: category.materials, // Include materials array if needed
+      materialName: "" , 
     });
   };
 
+  // FIXED: Handle material name selection - now includes all necessary IDs
   const handleNameClick = (material: any) => {
+    console.log('🔧 MaterialSuggestions - Material clicked:', material);
+    
+    // Find the parent category to get the type name
+    const parentCategory = materialCategories.find((cat: any) =>
+      cat.materialTypeName === selectedMaterialType
+    );
+    
     onSelect({
-      materialTypeName: selectedMaterialType,
+      _id: material._id, // ✅ Pass the material ID
+      materialId: material._id, // ✅ Also provide as materialId for consistency
       materialName: material.materialName,
-      materialMol: material.materialMol
+      materialType: material.materialType, // ✅ This is the type ID reference
+      materialTypeId: material.materialType, // ✅ Also provide as materialTypeId
+      materialTypeName: selectedMaterialType, // ✅ Pass the type name
+      materialMol: material.materialMol,
+      branchId: material.branchId,
+      createdAt: material.createdAt,
+      updatedAt: material.updatedAt,
+      // Include parent category info if available
+      category: parentCategory ? {
+        _id: parentCategory._id,
+        materialTypeName: parentCategory.materialTypeName
+      } : null
     });
   };
 

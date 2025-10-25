@@ -1,32 +1,40 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-
-
-
-
-const Notes  = () =>{
-      const [note, setNote] = useState("");
-       return(
-         <div className="CreateOrdersFooter">
-        <div className="Notes">
-          <h3>Notes</h3>
-          <textarea
-            placeholder="Write your note here..."
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            className="NotesTextarea "
-            rows={4}
-          />
-        </div>
-      </div>
-
-
-
-       )
+interface NotesProps {
+  onNotesChange?: (notes: string) => void;
 }
 
+const Notes = ({ onNotesChange }: NotesProps) => {
+  const [note, setNote] = useState("");
 
+  // Call the parent callback whenever notes change
+  useEffect(() => {
+    if (onNotesChange) {
+      onNotesChange(note);
+    }
+  }, [note, onNotesChange]);
 
+  const handleNoteChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setNote(e.target.value);
+  };
 
+  return (
+    <div >
+      <div className="Notes">
+        <h3>Notes</h3>
+        <textarea
+          placeholder="Write your note here..."
+          value={note}
+          onChange={handleNoteChange}
+          className="NotesTextarea"
+          rows={4}
+        />
+      
+        
+      </div>
+     
+    </div>
+  );
+};
 
 export default Notes;

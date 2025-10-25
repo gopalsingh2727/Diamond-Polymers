@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import MaterialSuggestions from "../SuggestionInput/MaterialSuggestions";
 import '../materialAndProduct/materialAndProduct.css';
 import PrintImage from "../printoptions";
 
 type MixMaterial = {
+  _id: string;
   name: string;
   type: string;
   weight: number;
@@ -16,6 +17,7 @@ type SavedMixingData = {
 };
 
 type MaterialFormData = {
+  id: string;
   materialType: string;
   materialName: string;
   width: string;
@@ -30,9 +32,12 @@ interface MaterialInOdersProps {
   showBottomGusset: boolean;
   showFlap: boolean;
   showAirHole: boolean;
+  initialData?: any;
+  isEditMode?: boolean;
 }
 
 type Material = {
+  id: string;
   materialType: string;
   materialName: string;
   totalWeight: string;
@@ -50,36 +55,47 @@ type MixingRowProps = {
   isFirst: boolean;
 };
 
+export type MaterialData = {
+  mainMaterialId: string;
+  materialTypeId: string; 
+  materialType: string;
+  materialName: string;
+  width: string;
+  height: string;
+  gauge: string;
+  totalWeight: string;
+  onePieceWeight: string;
+  totalPieces: string;
+  dimensionUnit: string;
+  gaugeUnit: string;
+  bottomGusset: string;
+  flap: string;
+  airHole: string;
+  mixing: string;
+  mixingData: MixMaterial[];
+};
+
 const MixingRow = ({ mat, index, onMixChange, onRemove, isFirst }: MixingRowProps) => {
   const [showTypeSuggestions, setShowTypeSuggestions] = useState(false);
   const [showNameSuggestions, setShowNameSuggestions] = useState(false);
 
   const handleNameSuggestionSelect = (data: any) => {
-    console.log('Name suggestion selected:', data); // Debug log
+    const materialId = data._id || data.id || data.materialId || '';
+    const materialName = data.materialName || data.name || '';
+    const materialType = data.materialTypeName || data.typeName || data.materialType || data.type || '';
     
-    
-    if (data.materialName) {
-      onMixChange(index, "name", data.materialName);
-    }
-    
-    // Update material type if provided
-    if (data.materialTypeName) {
-      onMixChange(index, "type", data.materialTypeName);
-    }
+    if (materialId) onMixChange(index, "_id", materialId);
+    if (materialName) onMixChange(index, "name", materialName);
+    if (materialType) onMixChange(index, "type", materialType);
     
     setShowNameSuggestions(false);
   };
 
   const handleTypeSuggestionSelect = (data: any) => {
-    console.log('Type suggestion selected:', data); // Debug log
-    
-    if (data.materialTypeName) {
-      onMixChange(index, "type", data.materialTypeName);
-    }
-    
+    const typeName = data.materialTypeName || data.typeName || data.name || '';
+    if (typeName) onMixChange(index, "type", typeName);
     setShowTypeSuggestions(false);
   };
-  
 
   return (
     <div className="popupitemall">
@@ -92,6 +108,7 @@ const MixingRow = ({ mat, index, onMixChange, onRemove, isFirst }: MixingRowProp
           readOnly={isFirst}
           onFocus={() => !isFirst && setShowTypeSuggestions(true)}
           onBlur={() => setTimeout(() => setShowTypeSuggestions(false), 200)}
+          style={isFirst ? { backgroundColor: '#f5f5f5', cursor: 'not-allowed' } : {}}
         />
         {!isFirst && (
           <MaterialSuggestions
@@ -112,7 +129,9 @@ const MixingRow = ({ mat, index, onMixChange, onRemove, isFirst }: MixingRowProp
           readOnly={isFirst}
           onFocus={() => !isFirst && setShowNameSuggestions(true)}
           onBlur={() => setTimeout(() => setShowNameSuggestions(false), 200)}
+          style={isFirst ? { backgroundColor: '#f5f5f5', cursor: 'not-allowed' } : {}}
         />
+
         {!isFirst && (
           <MaterialSuggestions
             materialName={mat.name}
@@ -156,13 +175,12 @@ const MixingRow = ({ mat, index, onMixChange, onRemove, isFirst }: MixingRowProp
   );
 };
 
-const MaterialInOders: React.FC<MaterialInOdersProps> = ({
-  showBottomGusset,
-  showFlap,
-  showAirHole,
-}) => {
-  // Material form data state
+const MaterialInOders = forwardRef((
+  { showBottomGusset, showFlap, showAirHole, initialData, isEditMode }: MaterialInOdersProps,
+  ref: React.ForwardedRef<{ getMaterialData: () => MaterialData }>
+) => {
   const [materialValues, setMaterialValues] = useState<MaterialFormData>({
+    id: '',
     materialType: '',
     materialName: '',
     width: '',
@@ -175,26 +193,20 @@ const MaterialInOders: React.FC<MaterialInOdersProps> = ({
 
   const [dimensionUnit, setDimensionUnit] = useState("mm");
   const [gaugeUnit, setGaugeUnit] = useState("gauge");
-
-  // Bag features
   const [bottomGusset, setBottomGusset] = useState('');
   const [flap, setFlap] = useState('');
   const [airHole, setAirHole] = useState('');
-
-  // Material form states
-  const [materialData, setMaterialData] = useState({ category: '', mol: 0});
+  const [materialData, setMaterialData] = useState({ category: '', mol: 0 });
   const [materialName, setMaterialName] = useState('');
   const [totalWeight, setTotalWeight] = useState('');
   const [onePieceWeight, setOnePieceWeight] = useState('');
-
-  // Mixing states
   const [mixing, setMixing] = useState("no");
   const [showMixingPopup, setShowMixingPopup] = useState(false);
   const [mixMaterials, setMixMaterials] = useState<MixMaterial[]>([]);
   const [savedMixing, setSavedMixing] = useState<SavedMixingData | null>(null);
   const [loss] = useState(0);
-
   const [formState, setFormState] = useState<Material>({
+    id: '',
     materialType: '',
     materialName: '',
     totalWeight: '',
@@ -203,111 +215,176 @@ const MaterialInOders: React.FC<MaterialInOdersProps> = ({
     weight: 0,
     percentage: 0,
   });
-
   const [showTypeSuggestions, setShowTypeSuggestions] = useState(false);
   const [showNameSuggestions, setShowNameSuggestions] = useState(false);
+  const [mainMaterialId, setMainMaterialId] = useState('');
+  const [materialTypeId, setMaterialTypeId] = useState('');
 
-  // Calculation functions
-  const convertDimensionToMM = (value: number, unit: string): number => {
-    if (unit === "inch") {
-      return value * 25.4; // Convert inch to mm
+  // FIXED: Enhanced initial data loading for edit mode
+  useEffect(() => {
+    if (isEditMode && initialData) {
+      console.log('🔄 Loading material data for edit:', initialData);
+      
+      // Set material values with comprehensive mapping
+      setMaterialValues({
+        id: initialData.material?._id || initialData.materialId || '',
+        materialType: initialData.material?.materialTypeName || initialData.materialType || '',
+        materialName: initialData.material?.materialName || initialData.materialName || '',
+        width: initialData.Width?.toString() || initialData.width || '',
+        height: initialData.Height?.toString() || initialData.height || '',
+        gauge: initialData.Thickness?.toString() || initialData.gauge || '',
+        totalWeight: initialData.materialWeight?.toString() || initialData.totalWeight || '',
+        onePieceWeight: initialData.onePieceWeight?.toString() || '',
+        totalPieces: initialData.totalPieces?.toString() || '',
+      });
+
+      // Set other fields
+      setDimensionUnit(initialData.dimensionUnit || 'mm');
+      setGaugeUnit(initialData.gaugeUnit || 'gauge');
+      setBottomGusset(initialData.BottomGusset?.toString() || initialData.bottomGusset?.toString() || '');
+      setFlap(initialData.Flap?.toString() || initialData.flap?.toString() || '');
+      setAirHole(initialData.AirHole?.toString() || initialData.airHole?.toString() || '');
+      
+      // Set material data
+      setMaterialData({
+        category: initialData.material?.materialTypeName || initialData.materialType || '',
+        mol: initialData.material?.mol || 0
+      });
+      
+      setMaterialName(initialData.material?.materialName || initialData.materialName || '');
+      setTotalWeight(initialData.materialWeight?.toString() || initialData.totalWeight || '');
+      setOnePieceWeight(initialData.onePieceWeight?.toString() || '');
+      
+      // Set form state
+      setFormState({
+        id: initialData._id || '',
+        materialType: initialData.material?.materialTypeName || initialData.materialType || '',
+        materialName: initialData.material?.materialName || initialData.materialName || '',
+        totalWeight: initialData.materialWeight?.toString() || initialData.totalWeight || '',
+        onePieceWeight: initialData.onePieceWeight?.toString() || '',
+        totalPieces: initialData.totalPieces?.toString() || '',
+        weight: 0,
+        percentage: 0,
+      });
+
+      // Set IDs
+      setMainMaterialId(initialData.material?._id || initialData.materialId || '');
+      setMaterialTypeId(initialData.material?.materialType || initialData.materialTypeId || '');
+      
+      // Set mixing data if available
+      if (initialData.mixMaterial && initialData.mixMaterial.length > 0) {
+        setMixing('yes');
+        setMixMaterials(initialData.mixMaterial);
+        setSavedMixing({
+          data: initialData.mixMaterial,
+          loss: initialData.mixingLoss || 0
+        });
+      } else if (initialData.mixingData && initialData.mixingData.length > 0) {
+        setMixing('yes');
+        setMixMaterials(initialData.mixingData);
+        setSavedMixing({
+          data: initialData.mixingData,
+          loss: initialData.mixingLoss || 0
+        });
+      }
     }
-    return value; // Already in mm
+  }, [isEditMode, initialData]);
+
+  const convertDimensionToMM = (value: number, unit: string): number => {
+    if (unit === "inch") return value * 25.4;
+    return value;
   };
 
   const convertGaugeToMicron = (value: number, unit: string): number => {
-    if (unit === "gauge") {
-      return value / 4; 
-    }
-    return value; 
+    if (unit === "gauge") return value / 4;
+    return value;
   };
 
-  const calculateOneBagWeight = () => {
+  const calculateOneBagWeight = (): number => {
     const width = parseFloat(materialValues.width) || 0;
     const height = parseFloat(materialValues.height) || 0;
     const gauge = parseFloat(materialValues.gauge) || 0;
     const mol = materialData.mol || 0;
     
-    console.log(mol , "this data");
-    
     if (width === 0 || height === 0 || gauge === 0) return 0;
 
-    
     const widthMM = convertDimensionToMM(width, dimensionUnit);
     const heightMM = convertDimensionToMM(height, dimensionUnit);
-    
-    // Convert gauge to micron
     const gaugeMicron = convertGaugeToMicron(gauge, gaugeUnit);
 
-    // Calculate: OneBagWeight = W * L * Gauge / mol
-    const oneBagWeight = (widthMM * heightMM * gaugeMicron / mol) ; 
-    return oneBagWeight;
+    return (widthMM * heightMM * gaugeMicron / mol);
   };
 
-  const calculateTotalWeight = () => {
+  const calculateTotalWeight = (): number => {
     const totalPcs = parseFloat(formState.totalPieces) || 0;
     const oneBagWt = calculateOneBagWeight();
-    
-    if (totalPcs === 0 || oneBagWt === 0) return 0;
-    
-    // TotalWeight = TotalPcs * OneBagWeight
     return totalPcs * oneBagWt;
   };
 
-  const calculateTotalPieces = () => {
+  const calculateTotalPieces = (): number => {
     const totalWt = parseFloat(totalWeight) || 0;
     const oneBagWt = calculateOneBagWeight();
-    
-    if (totalWt === 0 || oneBagWt === 0) return 0;
-    
-    // TotalPcs = TotalWeight / OneBagWeight
-    return Math.round(totalWt / oneBagWt);
+    return oneBagWt ? Math.round(totalWt / oneBagWt) : 0;
   };
 
-  // Auto-calculate when dependencies change
   useEffect(() => {
-    const calculatedOneBagWeight = calculateOneBagWeight();
-    setOnePieceWeight(calculatedOneBagWeight.toFixed(6));
-  }, [materialValues.width, materialValues.height, materialValues.gauge, dimensionUnit, gaugeUnit, materialData.mol]);
+    if (!isEditMode) {
+      const calculatedOneBagWeight = calculateOneBagWeight();
+      setOnePieceWeight(calculatedOneBagWeight.toFixed(6));
+    }
+  }, [materialValues.width, materialValues.height, materialValues.gauge, dimensionUnit, gaugeUnit, materialData.mol, isEditMode]);
 
   useEffect(() => {
-    if (formState.totalPieces && !totalWeight) {
+    if (!isEditMode && formState.totalPieces && !totalWeight) {
       const calculatedTotalWeight = calculateTotalWeight();
       setTotalWeight(calculatedTotalWeight.toFixed(3));
     }
-  }, [formState.totalPieces, onePieceWeight]);
+  }, [formState.totalPieces, onePieceWeight, isEditMode]);
 
   useEffect(() => {
-    if (totalWeight && !formState.totalPieces) {
+    if (!isEditMode && totalWeight && !formState.totalPieces) {
       const calculatedTotalPieces = calculateTotalPieces();
       setFormState(prev => ({ ...prev, totalPieces: calculatedTotalPieces.toString() }));
     }
-  }, [totalWeight, onePieceWeight]);
+  }, [totalWeight, onePieceWeight, isEditMode]);
 
-
- 
-  // Recalculate when material changes (mol value changes)
   useEffect(() => {
-    if (materialData.mol && materialValues.width && materialValues.height && materialValues.gauge) {
+    if (!isEditMode && materialData.mol && materialValues.width && materialValues.height && materialValues.gauge) {
       const calculatedOneBagWeight = calculateOneBagWeight();
       setOnePieceWeight(calculatedOneBagWeight.toFixed(6));
       
-      // Recalculate total weight if total pieces exists
       if (formState.totalPieces) {
         const calculatedTotalWeight = calculateTotalWeight();
         setTotalWeight(calculatedTotalWeight.toFixed(3));
       }
       
-      // Recalculate total pieces if total weight exists
       if (totalWeight) {
         const calculatedTotalPieces = calculateTotalPieces();
         setFormState(prev => ({ ...prev, totalPieces: calculatedTotalPieces.toString() }));
       }
     }
-  }, [materialData.mol]);
+  }, [materialData.mol, isEditMode]);
 
-  // Check if all required fields are filled
-  const isAllDataFilled = () => {
+  // Update mixing materials when main material changes
+  useEffect(() => {
+    if (mixing === "yes" && mainMaterialId && materialName && materialData.category && !isEditMode) {
+      setMixMaterials(prev => {
+        const updatedMaterials = [...prev];
+        if (updatedMaterials.length > 0) {
+          updatedMaterials[0] = {
+            _id: mainMaterialId,
+            name: materialName,
+            type: materialData.category,
+            weight: updatedMaterials[0].weight,
+            percentage: updatedMaterials[0].percentage
+          };
+        }
+        return updatedMaterials;
+      });
+    }
+  }, [mainMaterialId, materialName, materialData.category, mixing, isEditMode]);
+
+  const isAllDataFilled = (): boolean => {
     return (
       materialData.category.trim() !== '' &&
       materialName.trim() !== '' &&
@@ -326,67 +403,75 @@ const MaterialInOders: React.FC<MaterialInOdersProps> = ({
     setMixing(value);
     
     if (value === "yes") {
-      setMixMaterials([
-        {
-          name: materialName,
-          type: materialData.category,
-          weight: 0,
-          percentage: 0
+      if (mainMaterialId && materialName && materialData.category) {
+        if (!isEditMode || mixMaterials.length === 0) {
+          setMixMaterials([
+            {
+              _id: mainMaterialId,
+              name: materialName,
+              type: materialData.category,
+              weight: 0,
+              percentage: 0
+            }
+          ]);
         }
-      ]);
-      setShowMixingPopup(true);
+        setShowMixingPopup(true);
+      } else {
+        alert('Please select a material first before enabling mixing');
+        setMixing('no');
+      }
     } else if (value === "no") {
-     
       setMixMaterials([]);
       setSavedMixing(null);
       setShowMixingPopup(false);
     }
   };
 
-const handleCategorySelect = (selectedMaterial: any) => {
-  console.log("Selected Material:", selectedMaterial);
-
-  if (selectedMaterial.materialName) {
-    if (selectedMaterial.materialMol !== undefined) {
-      console.log("Selected materialMol:", selectedMaterial.materialMol);
-    } else {
-      console.warn("No materialMol found for selected material:", selectedMaterial.materialName);
-    }
-
+  // FIXED Material Type Selection Handler
+  const handleMaterialTypeSelect = (selectedMaterial: any) => {
+    const typeId = selectedMaterial._id || selectedMaterial.materialTypeId || '';
+    const typeName = selectedMaterial.materialTypeName || selectedMaterial.name || '';
+    
+    setMaterialTypeId(typeId);
     setMaterialData(prev => ({
       ...prev,
-      category: selectedMaterial.materialTypeName || '',
-      mol: selectedMaterial.materialMol !== undefined ? selectedMaterial.materialMol : prev.mol,
+      category: typeName,
     }));
-    setMaterialName(selectedMaterial.materialName);
-  } else {
-    setMaterialData(prev => ({
-      ...prev,
-      category: selectedMaterial.materialTypeName,
-    }));
-  }
-};
+    setShowTypeSuggestions(false);
+  };
 
-
-
+  // FIXED Material Name Selection Handler
+  const handleMaterialNameSelect = (selectedMaterial: any) => {
+    const materialId = selectedMaterial._id || selectedMaterial.materialId || '';
+    const typeId = selectedMaterial.materialTypeId || selectedMaterial.materialType || materialTypeId || '';
+    const matName = selectedMaterial.materialName || selectedMaterial.name || '';
+    const typeName = selectedMaterial.materialTypeName || materialData.category || '';
+    const mol = selectedMaterial.materialMol || selectedMaterial.mol || 0;
+    
+    setMainMaterialId(materialId);
+    if (typeId) setMaterialTypeId(typeId);
+    setMaterialName(matName);
+    setMaterialData({
+      category: typeName,
+      mol: mol,
+    });
+    setShowNameSuggestions(false);
+  };
 
   const handleMixChange = (
     index: number,
     key: keyof MixMaterial,
     value: string | number
   ) => {
-    console.log(`Updating mix material ${index}, ${key}:`, value); // Debug log
-    
     setMixMaterials(prev => {
       const updated = [...prev];
       updated[index] = { ...updated[index], [key]: value };
-      console.log('Updated mix materials:', updated); // Debug log
       return updated;
     });
   };
 
   const handleAddRow = () => {
-    setMixMaterials(prev => [...prev, { name: '', type: '', weight: 0, percentage: 0 }]);
+    setMixMaterials(prev => [...prev, { _id: '', name: '', type: '', weight: 0, percentage: 0 }]);
   };
 
   const handleRemoveRow = (index: number) => {
@@ -394,11 +479,12 @@ const handleCategorySelect = (selectedMaterial: any) => {
   };
 
   const saveMixing = () => {
-    console.log('Saving mixing data:', mixMaterials); // Debug log
-    setSavedMixing({
+    const mixingDataToSave = {
       data: mixMaterials,
       loss
-    });
+    };
+    
+    setSavedMixing(mixingDataToSave);
     setShowMixingPopup(false);
   };
 
@@ -408,6 +494,36 @@ const handleCategorySelect = (selectedMaterial: any) => {
       category: e.target.value,
     }));
   };
+
+  const getMaterialData = () => {
+    const data = {
+      mainMaterialId: mainMaterialId,
+      materialTypeId: materialTypeId,
+      materialType: materialData.category,
+      materialName: materialName,
+      width: materialValues.width,
+      height: materialValues.height,
+      gauge: materialValues.gauge,
+      totalWeight: totalWeight,
+      onePieceWeight: onePieceWeight,
+      totalPieces: formState.totalPieces,
+      dimensionUnit: dimensionUnit,
+      gaugeUnit: gaugeUnit,
+      bottomGusset: bottomGusset,
+      flap: flap,
+      airHole: airHole,
+      mixing: mixing,
+      mixingData: savedMixing?.data || []
+    };
+    
+    console.log('Getting Material Data:', data);
+    return data;
+  };
+
+  // Expose data via ref
+  useImperativeHandle(ref, () => ({
+    getMaterialData: getMaterialData
+  }));
 
   return (
     <div>
@@ -455,7 +571,7 @@ const handleCategorySelect = (selectedMaterial: any) => {
             />
           </div>
           <div className="divRow">
-              <label>G/µm</label>
+            <label>G/µm</label>
             <select
               value={gaugeUnit}
               id="myDropdown"
@@ -511,6 +627,10 @@ const handleCategorySelect = (selectedMaterial: any) => {
         <div className="materialForm">
           <div className="createProductCss">
             <div className="materialForm">
+              {/* Hidden inputs for IDs */}
+              <input type="hidden" name="materialTypeId" value={materialTypeId} />
+              <input type="hidden" name="mainMaterialId" value={mainMaterialId} />
+              
               <div>
                 <label>Material Type</label>
                 <input
@@ -519,18 +639,18 @@ const handleCategorySelect = (selectedMaterial: any) => {
                   value={materialData.category}
                   placeholder="Material Type"
                   className="inputBox"
-                  onFocus={() => setShowTypeSuggestions(true)}
+                  onFocus={() => !isEditMode && setShowTypeSuggestions(true)}
                   onBlur={() => setTimeout(() => setShowTypeSuggestions(false), 200)}
+                  readOnly={isEditMode}
                 />
-                <MaterialSuggestions
-                  materialName={materialData.category}
-                  onSelect={(data) => {
-                    handleCategorySelect(data);
-                    setShowTypeSuggestions(false);
-                  }}
-                  suggestionType="type"
-                  showSuggestions={showTypeSuggestions && materialData.category.length > 0}
-                />
+                {!isEditMode && (
+                  <MaterialSuggestions
+                    materialName={materialData.category}
+                    onSelect={handleMaterialTypeSelect}
+                    suggestionType="type"
+                    showSuggestions={showTypeSuggestions && materialData.category.length > 0}
+                  />
+                )}
               </div>
               <div>
                 <label>Material Name</label>
@@ -540,19 +660,20 @@ const handleCategorySelect = (selectedMaterial: any) => {
                   onChange={(e) => setMaterialName(e.target.value)}
                   placeholder="Material Name"
                   className="inputBox"
-                  onFocus={() => setShowNameSuggestions(true)}
+                  onFocus={() => !isEditMode && setShowNameSuggestions(true)}
                   onBlur={() => setTimeout(() => setShowNameSuggestions(false), 200)}
+                  readOnly={isEditMode}
                 />
-                <MaterialSuggestions
-                  materialName={materialName}
-                  onSelect={(data) => {
-                    handleCategorySelect(data);
-                    setShowNameSuggestions(false);
-                  }}
-                  suggestionType="name"
-                  selectedMaterialType={materialData.category}
-                  showSuggestions={showNameSuggestions && materialName.length > 0 && materialData.category.length > 0}
-                />
+                
+                {!isEditMode && (
+                  <MaterialSuggestions
+                    materialName={materialName}
+                    onSelect={handleMaterialNameSelect}
+                    suggestionType="name"
+                    selectedMaterialType={materialData.category}
+                    showSuggestions={showNameSuggestions && materialName.length > 0 && materialData.category.length > 0}
+                  />
+                )}
               </div>
             </div>
           </div>
@@ -574,8 +695,8 @@ const handleCategorySelect = (selectedMaterial: any) => {
               onChange={(e) => setOnePieceWeight(e.target.value)}
               placeholder="One Piece Weight"
               className="inputBox"
-              readOnly
-              style={{ backgroundColor: '#f5f5f5' }}
+              readOnly={!isEditMode}
+              style={!isEditMode ? { backgroundColor: '#f5f5f5' } : {}}
             />
           </div>
           <div>
@@ -683,10 +804,9 @@ const handleCategorySelect = (selectedMaterial: any) => {
         </div>
       )}
 
-     
-      {isAllDataFilled() && <PrintImage />}
+   
     </div>
   );
-};
+});
 
 export default MaterialInOders;

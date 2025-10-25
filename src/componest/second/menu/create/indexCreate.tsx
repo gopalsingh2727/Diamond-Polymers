@@ -9,6 +9,8 @@ import CreateMaterials from "./Materials/createMaterials";
 import MaterialsCategories from "./Materials/materialsCategories";
 import CreateMachineType from "./machine/createMachineType";
 import Headers from "../../header/Headers";
+import  DeviceAccess from './deviceAccess/deviceAccess';
+import DiveceAccessCreate from "./deviceAccess/deviceAccessCreate";
 import './create.css';
 import '../../../main/sidebar/menu.css';
 import ErrorBoundary from '../../../error/error';
@@ -20,6 +22,8 @@ const Layout = () => {
     { key: "machine", label: "Create Machine" },
     { key: "step", label: "Create Step" },
     { key: "Create Machine Operator", label: "Create Machine Operator" },
+    {key:"Create Device Access" , label: "Create Device Access"},
+    {key:"Create Access" , label:"Create Access"},
     { key: "products", label: "Products" },
     { key: "categories", label: "Product Categories" },
     { key: "materials", label: "Create Materials" },
@@ -72,6 +76,10 @@ const Layout = () => {
         return <ErrorBoundary><CreateStep /></ErrorBoundary>;
       case "Create Machine Operator":
         return <ErrorBoundary><CreteMachineOpertor /></ErrorBoundary>;
+      case "Create Device Access":
+        return <ErrorBoundary><DiveceAccessCreate/></ErrorBoundary> 
+      case "Create Access":
+        return <ErrorBoundary><DeviceAccess/></ErrorBoundary>
       case "products":
         return <ErrorBoundary><Products /></ErrorBoundary>;
       case "categories":

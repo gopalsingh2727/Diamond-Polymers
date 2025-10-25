@@ -352,10 +352,15 @@
 
 .CreateOrdersFooter{
     display: flex;
-    justify-content: space-between;
+    /* justify-content: space-between; */
     align-items: center;
     margin-top: 20px;
+    position: 'fixed',
+   
+
+ 
 }
+
 
 
 
@@ -369,6 +374,7 @@
   border-radius: 8px;
   cursor: pointer;
   font-size: 16px;
+   margin-left: auto;
   font-weight: bold;
   transition: background-color 0.3s ease;
 
@@ -590,4 +596,16 @@
   border: none;
   color: #000;
   background: none !important;
+}
+
+
+
+.popupitemallStep{
+  display: grid;
+     background: none !important;
+    grid-template-columns: 111px 119px 51px 49px 50px 119px 85px 86px 166px 77px;
+    gap: 10px;
+    padding-left: 10px;
+    margin-bottom: 5px;
+    font-weight: bold;
 }

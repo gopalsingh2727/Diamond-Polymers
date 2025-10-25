@@ -1,128 +1,238 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { BackButton } from "../../../allCompones/BackButton";
 import "./indexAllOders.css";
 
-// Define the types for side and sidebar
-interface SideItem {
-  side: string;
-  allSide: string;
+// Import Redux actions
+import { getAllMachineTypes } from "../../../redux/create/machineType/machineTypeActions";
+import { getMachines } from "../../../redux/create/machine/MachineActions";
+import { fetchOrders } from "../../../redux/oders/OdersActions";
+import { RootState } from "../../../redux/rootReducer";
+import { AppDispatch } from "../../../../store";
+
+// Define interfaces
+interface MachineType {
+  _id: string;
+  type: string;
+  description?: string;
+  machines?: Machine[];
+  branchId?: {
+    _id: string;
+    name: string;
+  };
 }
 
-interface SidebarDataItem {
-  name: string;
-  sides: SideItem[];
+interface Machine {
+  _id: string;
+  machineName: string;
+  sizeX: string;
+  sizeY: string;
+  sizeZ: string;
+  machineType: {
+    _id: string;
+    type: string;
+    description?: string;
+  };
+  branchId: {
+    _id: string;
+    name: string;
+  };
 }
 
-// Define order data structure
-interface OrderData {
+interface Order {
+  _id: string;
+  orderId: string;
+  customer?: {
+    _id?: string;
+    companyName?: string;
+    name?: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+  overallStatus: string;
+  materialWeight?: number;
+  Width?: number;
+  Height?: number;
+  Thickness?: number;
+  Notes?: string;
+  branch?: {
+    _id?: string;
+    name: string;
+    code: string;
+  };
+  material?: {
+    _id?: string;
+    name?: string;
+    type?: string;
+  };
+  steps?: any[];
+  stepsCount?: number;
+  totalMachines?: number;
+  completedSteps?: number;
+  currentStepIndex?: number;
+  
+  // For machine assignment (if available)
+  assignedMachine?: string; // Machine ID or name
+  assignedMachineType?: string; // Machine Type ID or name
+}
+
+// Define order data structure for display
+interface DisplayOrder {
   orderID: string;
   date: string;
   companyName: string;
-  status: "Complete" | "Pending" | "Cancel" | "Stop" | "Dispatch";
+  status: "Complete" | "Pending" | "Cancel" | "Stop" | "Dispatch" | "In-Progress" | "Ready" | "Unknown";
   machineName: string;
   machineType: string;
-  machineStatus: "Start" | "Stop" | "Pending";
+  machineStatus: "Start" | "Stop" | "Pending" | "Unknown";
+  materialWeight?: number;
+  dimensions?: string;
+  branch?: string;
+  completionProgress?: string;
+  notes?: string;
 }
 
-const sidebarData: SidebarDataItem[] = [
-  {
-    name: "sideBar1A",
-    sides: [
-      { side: "1", allSide: "12" },
-      { side: "2", allSide: "2" },
-    ]
-  },
-  {
-    name: "sideBar2B",
-    sides: [
-      { side: "1", allSide: "12" },
-    ]
-  }
-];
-
-// Sample order data
-const orderData: OrderData[] = [
-  {
-    orderID: "ORD001",
-    date: "2025-06-01",
-    companyName: "ABC Manufacturing",
-    status: "Complete",
-    machineName: "Machine A1",
-    machineType: "CNC Mill",
-    machineStatus: "Stop"
-  },
-  {
-    orderID: "ORD002",
-    date: "2025-06-01",
-    companyName: "XYZ Industries",
-    status: "Pending",
-    machineName: "Machine B2",
-    machineType: "Lathe",
-    machineStatus: "Start"
-  },
-  {
-    orderID: "ORD003",
-    date: "2025-05-31",
-    companyName: "DEF Corp",
-    status: "Dispatch",
-    machineName: "Machine C3",
-    machineType: "Drill Press",
-    machineStatus: "Start"
-  },
-  {
-    orderID: "ORD004",
-    date: "2025-05-30",
-    companyName: "GHI Solutions",
-    status: "Cancel",
-    machineName: "Machine D4",
-    machineType: "Grinder",
-    machineStatus: "Stop"
-  },
-  {
-    orderID: "ORD005",
-    date: "2025-05-29",
-    companyName: "JKL Tech",
-    status: "Stop",
-    machineName: "Machine E5",
-    machineType: "Press",
-    machineStatus: "Pending"
-  }
-];
-
 const IndexAllOders = () => {
-  const [selectedSidebar, setSelectedSidebar] = useState<string | null>(null);
-  const [selectedSide, setSelectedSide] = useState<SideItem | null>(null);
-  const [showGlobalAll, setShowGlobalAll] = useState(false);
+  const dispatch = useDispatch<AppDispatch>();
+  
+  // Redux selectors
+  const machineTypesState = useSelector((state: RootState) => state.machineTypeList as any);
+  const machinesState = useSelector((state: RootState) => state.machineList as any);
+  const ordersState = useSelector((state: RootState) => state.orderList as any);
+
+  const { items: machineTypes = [], loading: machineTypesLoading } = machineTypesState || {};
+  const { machines = [], loading: machinesLoading } = machinesState || {};
+  const { orders = [], loading: ordersLoading } = ordersState || {};
+
+  // Component state
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const [machineTypeFilter, setMachineTypeFilter] = useState<string[]>([]);
   const [machineNameFilter, setMachineNameFilter] = useState<string[]>([]);
+  const [showGlobalAll, setShowGlobalAll] = useState(true);
 
-  // Get unique machine types and names for filter options
-  const uniqueMachineTypes = [...new Set(orderData.map(order => order.machineType))];
-  const uniqueMachineNames = [...new Set(orderData.map(order => order.machineName))];
+  // Load data on component mount
+  useEffect(() => {
+    dispatch(getAllMachineTypes());
+    dispatch(getMachines());
+    dispatch(fetchOrders({}));
+  }, [dispatch]);
 
-  const handleSidebarSelect = (sidebarName: string) => {
-    if (selectedSidebar === sidebarName) {
-      setSelectedSidebar(null); // Toggle off
-    } else {
-      setSelectedSidebar(sidebarName);
+  // Get unique machine types and names from Redux data
+  const uniqueMachineTypes = machineTypes.map((mt: MachineType) => mt.type);
+  const uniqueMachineNames = machines.map((m: Machine) => m.machineName);
+
+  // Helper function to map order status to display status
+  const mapOrderStatus = (status: string): DisplayOrder['status'] => {
+    const statusLower = status?.toLowerCase() || '';
+    if (statusLower.includes('complete') || statusLower === 'completed') return 'Complete';
+    if (statusLower.includes('pending') || statusLower === 'wait for approval') return 'Pending';
+    if (statusLower.includes('cancel')) return 'Cancel';
+    if (statusLower.includes('stop') || statusLower.includes('hold')) return 'Stop';
+    if (statusLower.includes('dispatch')) return 'Dispatch';
+    if (statusLower.includes('progress')) return 'In-Progress';
+    if (statusLower.includes('ready')) return 'Ready';
+    return 'Unknown';
+  };
+
+  // Helper function to determine machine status based on order progress
+  const getMachineStatus = (order: Order): DisplayOrder['machineStatus'] => {
+    if (!order.stepsCount || order.stepsCount === 0) return 'Unknown';
+    
+    const progress = (order.completedSteps || 0) / order.stepsCount;
+    
+    if (progress === 1) return 'Stop'; // Completed
+    if (progress > 0) return 'Start'; // In progress
+    return 'Pending'; // Not started
+  };
+
+  // Helper function to find assigned machine info
+  const getAssignedMachineInfo = (order: Order) => {
+    // Try to find machine assignment from order data
+    // This depends on how machine assignment is stored in your orders
+    
+    // Option 1: If machine ID is stored in order
+    if (order.assignedMachine) {
+      const machine = machines.find((m: Machine) => 
+        m._id === order.assignedMachine || m.machineName === order.assignedMachine
+      );
+      if (machine) {
+        return {
+          machineName: machine.machineName,
+          machineType: machine.machineType.type
+        };
+      }
     }
-    setSelectedSide(null); // Reset selected side
+
+    // Option 2: If machine type is stored in order
+    if (order.assignedMachineType) {
+      const machineType = machineTypes.find((mt: MachineType) => 
+        mt._id === order.assignedMachineType || mt.type === order.assignedMachineType
+      );
+      if (machineType) {
+        // Get first available machine of this type
+        const machine = machines.find((m: Machine) => m.machineType._id === machineType._id);
+        return {
+          machineName: machine?.machineName || 'Unassigned',
+          machineType: machineType.type
+        };
+      }
+    }
+
+    // Option 3: Assign based on material type or other criteria
+    // This is a fallback - you might want to implement specific logic here
+    if (order.material?.type) {
+      // Simple mapping example - customize based on your business logic
+      const suggestedMachineType = machineTypes.find((mt: MachineType) => 
+        mt.type.toLowerCase().includes(order.material?.type?.toLowerCase() || '')
+      );
+      
+      if (suggestedMachineType) {
+        const machine = machines.find((m: Machine) => m.machineType._id === suggestedMachineType._id);
+        return {
+          machineName: machine?.machineName || 'Auto-assigned',
+          machineType: suggestedMachineType.type
+        };
+      }
+    }
+
+    // Default fallback
+    return {
+      machineName: 'Unassigned',
+      machineType: 'Not specified'
+    };
   };
 
-  const handleSideSelect = (sideItem: SideItem) => {
-    setSelectedSide(sideItem);
-    setShowGlobalAll(false);
+  // Transform orders to display format
+  const transformOrdersToDisplay = (): DisplayOrder[] => {
+    return orders.map((order: Order) => {
+      const machineInfo = getAssignedMachineInfo(order);
+      
+      return {
+        orderID: order.orderId || order._id,
+        date: new Date(order.createdAt).toISOString().split('T')[0],
+        companyName: order.customer?.companyName || order.customer?.name || 'Unknown Customer',
+        status: mapOrderStatus(order.overallStatus),
+        machineName: machineInfo.machineName,
+        machineType: machineInfo.machineType,
+        machineStatus: getMachineStatus(order),
+        materialWeight: order.materialWeight,
+        dimensions: order.Width && order.Height && order.Thickness 
+          ? `${order.Width}×${order.Height}×${order.Thickness}`
+          : undefined,
+        branch: order.branch?.name,
+        completionProgress: order.stepsCount 
+          ? `${order.completedSteps || 0}/${order.stepsCount}`
+          : undefined,
+        notes: order.Notes
+      };
+    });
   };
 
-  const handleNoneSelect = () => {
-    setSelectedSide(null);
-    setShowGlobalAll(false);
-  };
+  const displayOrders = transformOrdersToDisplay();
 
+  // Event handlers
   const handleGlobalAllSelect = () => {
-    setSelectedSide(null);
     setShowGlobalAll(true);
     setStatusFilter([]);
     setMachineTypeFilter([]);
@@ -138,8 +248,6 @@ const IndexAllOders = () => {
       }
     });
     setShowGlobalAll(true);
-    setSelectedSide(null);
-    setSelectedSidebar(null);
   };
 
   const handleMachineTypeFilter = (machineType: string) => {
@@ -151,8 +259,6 @@ const IndexAllOders = () => {
       }
     });
     setShowGlobalAll(true);
-    setSelectedSide(null);
-    setSelectedSidebar(null);
   };
 
   const handleMachineNameFilter = (machineName: string) => {
@@ -164,8 +270,6 @@ const IndexAllOders = () => {
       }
     });
     setShowGlobalAll(true);
-    setSelectedSide(null);
-    setSelectedSidebar(null);
   };
 
   const resetAllFilters = () => {
@@ -178,7 +282,7 @@ const IndexAllOders = () => {
 
   // Filter orders based on search and all filters
   const getFilteredOrders = () => {
-    let filtered = orderData;
+    let filtered = displayOrders;
 
     // Filter by search text
     if (searchText) {
@@ -186,7 +290,8 @@ const IndexAllOders = () => {
         order.orderID.toLowerCase().includes(searchText.toLowerCase()) ||
         order.companyName.toLowerCase().includes(searchText.toLowerCase()) ||
         order.machineName.toLowerCase().includes(searchText.toLowerCase()) ||
-        order.machineType.toLowerCase().includes(searchText.toLowerCase())
+        order.machineType.toLowerCase().includes(searchText.toLowerCase()) ||
+        (order.notes && order.notes.toLowerCase().includes(searchText.toLowerCase()))
       );
     }
 
@@ -208,54 +313,95 @@ const IndexAllOders = () => {
     return filtered;
   };
 
-  const renderOrderCard = (order: OrderData) => (
-    <div key={order.orderID} className="order-card" style={{
+const renderOrderCard = (order: DisplayOrder) => (
+  <div
+    key={order.orderID}
+    className="order-card"
+    style={{
       border: "1px solid #ddd",
       borderRadius: "8px",
       padding: "15px",
       margin: "10px 0",
-      backgroundColor: "#f9f9f9"
-    }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
-        <h4 style={{ margin: 0, color: "#2c3e50" }}>Order ID: {order.orderID}</h4>
-        <span style={{
-          padding: "4px 8px",
-          borderRadius: "4px",
-          fontSize: "12px",
-          fontWeight: "bold",
-          color: "white",
-          backgroundColor: 
-            order.status === "Complete" ? "#27ae60" :
-            order.status === "Pending" ? "#f39c12" :
-            order.status === "Dispatch" ? "#3498db" :
-            order.status === "Cancel" ? "#e74c3c" : "#95a5a6"
-        }}>
-          {order.status}
-        </span>
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", fontSize: "14px" }}>
-        <div><strong>Date:</strong> {order.date}</div>
-        <div><strong>Company:</strong> {order.companyName}</div>
-        <div><strong>Machine:</strong> {order.machineName}</div>
-        <div><strong>Type:</strong> {order.machineType}</div>
-        <div style={{ gridColumn: "1 / -1" }}>
-          <strong>Machine Status:</strong> 
-          <span style={{
-            marginLeft: "5px",
-            padding: "2px 6px",
-            borderRadius: "3px",
-            fontSize: "12px",
-            backgroundColor: 
-              order.machineStatus === "Start" ? "#27ae60" :
-              order.machineStatus === "Stop" ? "#e74c3c" : "#f39c12",
-            color: "white"
-          }}>
-            {order.machineStatus}
-          </span>
+      backgroundColor: "#f9f9f9",
+    }}
+  >
+    <table style={{ width: "100%", fontSize: "14px", borderCollapse: "collapse" }}>
+      <thead>
+        <tr style={{ backgroundColor: "#ecf0f1", textAlign: "left" }}>
+          <th style={{ padding: "8px" }}>Order ID</th>
+          <th style={{ padding: "8px" }}>Date</th>
+          <th style={{ padding: "8px" }}>Machine</th>
+          <th style={{ padding: "8px" }}>Type</th>
+          <th style={{ padding: "8px" }}>Machine Status</th>
+          <th style={{ padding: "8px" }}>Status</th>
+          <th style={{ padding: "8px" }}>Weight</th>
+          <th style={{ padding: "8px" }}>Dimensions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style={{ backgroundColor: "#f9f9f9", borderBottom: "1px solid #ddd" }}>
+          <td style={{ padding: "8px" }}>{order.orderID}</td>
+          <td style={{ padding: "8px" }}>{order.date}</td>
+          <td style={{ padding: "8px" }}>{order.machineName}</td>
+          <td style={{ padding: "8px" }}>{order.machineType}</td>
+          <td style={{ padding: "8px" }}>
+            <span style={{
+              padding: "2px 6px",
+              borderRadius: "3px",
+              fontSize: "12px",
+              color: "white",
+              backgroundColor:
+                order.machineStatus === "Start" ? "#27ae60" :
+                order.machineStatus === "Stop" ? "#e74c3c" :
+                order.machineStatus === "Pending" ? "#f39c12" :
+                "#95a5a6"
+            }}>
+              {order.machineStatus}
+            </span>
+          </td>
+          <td style={{ padding: "8px" }}>
+            <span style={{
+              padding: "4px 8px",
+              borderRadius: "4px",
+              fontSize: "12px",
+              fontWeight: "bold",
+              color: "white",
+              backgroundColor:
+                order.status === "Complete" ? "#27ae60" :
+                order.status === "Pending" ? "#f39c12" :
+                order.status === "Dispatch" ? "#3498db" :
+                order.status === "In-Progress" ? "#9b59b6" :
+                order.status === "Ready" ? "#1abc9c" :
+                order.status === "Cancel" ? "#e74c3c" :
+                "#95a5a6"
+            }}>
+              {order.status}
+            </span>
+          </td>
+          <td style={{ padding: "8px" }}>{order.materialWeight || "-"}</td>
+          <td style={{ padding: "8px" }}>{order.dimensions || "-"}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    {/* Optional fields below the table */}
+    <div style={{ marginTop: "10px" }}>
+      {order.completionProgress && (
+        <div>
+          <strong>Progress:</strong> {order.completionProgress}
         </div>
-      </div>
+      )}
+      {order.notes && (
+        <div style={{ marginTop: "5px" }}>
+          <strong>Notes:</strong>{" "}
+          <span style={{ fontSize: "12px", color: "#666" }}>{order.notes}</span>
+        </div>
+      )}
     </div>
-  );
+  </div>
+);
+
+  const isLoading = machineTypesLoading || machinesLoading || ordersLoading;
 
   return (
     <div className="container">
@@ -272,7 +418,7 @@ const IndexAllOders = () => {
         <div className="sidebarGroup">
           <h3>Filter by Status <span style={{fontSize: "12px", color: "#666"}}>({statusFilter.length} selected)</span></h3>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "5px", marginTop: "10px" }}>
-            {["Complete", "Pending", "Cancel", "Stop", "Dispatch"].map((status) => (
+            {["Complete", "Pending", "Cancel", "Stop", "Dispatch", "In-Progress", "Ready"].map((status) => (
               <button
                 key={status}
                 onClick={() => handleStatusFilter(status)}
@@ -311,7 +457,7 @@ const IndexAllOders = () => {
         <div className="sidebarGroup">
           <h3>Filter by Machine Type <span style={{fontSize: "12px", color: "#666"}}>({machineTypeFilter.length} selected)</span></h3>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "5px", marginTop: "10px" }}>
-            {uniqueMachineTypes.map((machineType) => (
+            {uniqueMachineTypes.map((machineType: string) => (
               <button
                 key={machineType}
                 onClick={() => handleMachineTypeFilter(machineType)}
@@ -350,7 +496,7 @@ const IndexAllOders = () => {
         <div className="sidebarGroup">
           <h3>Filter by Machine Name <span style={{fontSize: "12px", color: "#666"}}>({machineNameFilter.length} selected)</span></h3>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "5px", marginTop: "10px" }}>
-            {uniqueMachineNames.map((machineName) => (
+            {uniqueMachineNames.map((machineName: string) => (
               <button
                 key={machineName}
                 onClick={() => handleMachineNameFilter(machineName)}
@@ -405,30 +551,21 @@ const IndexAllOders = () => {
           </button>
         </div>
 
-        {sidebarData.map((sidebar, index) => (
-          <div key={index} className="sidebarGroup">
-            <h3 onClick={() => handleSidebarSelect(sidebar.name)}>{sidebar.name}</h3>
-            {selectedSidebar === sidebar.name && (
-              <ul>
-                {sidebar.sides.map((sideItem, idx) => (
-                  <li key={idx} onClick={() => handleSideSelect(sideItem)}>
-                    Side: {sideItem.side}
-                  </li>
-                ))}
-                <li onClick={handleNoneSelect} style={{ fontWeight: "bold", color: "red" }}>
-                  None
-                </li>
-              </ul>
-            )}
-          </div>
-        ))}
+        {/* Loading and Data Summary */}
+        <div className="sidebarGroup" style={{ fontSize: "12px", color: "#666" }}>
+          <div>📊 Data Summary:</div>
+          <div>• Machine Types: {machineTypes.length}</div>
+          <div>• Machines: {machines.length}</div>
+          <div>• Orders: {orders.length}</div>
+          {isLoading && <div style={{ color: "#f39c12" }}>⏳ Loading...</div>}
+        </div>
       </div>
 
       <div className="item">
         <div className="inputBoxAllodersSrearchbox">
           <input 
             type="text" 
-            placeholder="Search orders, company, machine name, or machine type..." 
+            placeholder="Search orders, company, machine name, machine type, or notes..." 
             className="input"
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
@@ -495,22 +632,13 @@ const IndexAllOders = () => {
         )}
         
         <div className="AllInputOders">
-          {selectedSidebar && !selectedSide && !showGlobalAll && (
-            <div>
-              <h2>{selectedSidebar}</h2>
-              <p>Select a specific side or view all orders above.</p>
+          {isLoading && (
+            <div style={{ textAlign: "center", padding: "20px" }}>
+              <p>Loading machine types, machines, and orders...</p>
             </div>
           )}
 
-          {selectedSide && (
-            <div>
-              <h4>Selected AllSide: {selectedSide.allSide}</h4>
-              <p>Showing orders for side {selectedSide.side}</p>
-              {getFilteredOrders().slice(0, 2).map(renderOrderCard)}
-            </div>
-          )}
-
-          {showGlobalAll && (
+          {!isLoading && showGlobalAll && (
             <div>
               <h3>
                 {statusFilter.length === 0 && machineTypeFilter.length === 0 && machineNameFilter.length === 0 
@@ -542,21 +670,6 @@ const IndexAllOders = () => {
                   </button>
                 </div>
               )}
-            </div>
-          )}
-
-          {selectedSidebar && !selectedSide && !showGlobalAll && (
-            <div>
-              {sidebarData
-                .filter((sidebar) => sidebar.name === selectedSidebar)
-                .flatMap((sidebar, idx1) =>
-                  sidebar.sides.map((sideItem, idx2) => (
-                    <div key={`${idx1}-${idx2}`}>
-                      <h4>AllSide: {sideItem.allSide}</h4>
-                      {getFilteredOrders().slice(0, 1).map(renderOrderCard)}
-                    </div>
-                  ))
-                )}
             </div>
           )}
         </div>

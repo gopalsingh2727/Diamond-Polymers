@@ -8,6 +8,8 @@ import {
 import { getMachineTypes } from "../../../../redux/create/machineType/machineTypeActions";
 import { RootState } from "../../../../redux/rootReducer";
 import { AppDispatch } from "../../../../../store";
+import { Edit, Trash2, Save, X, Search, Filter } from 'lucide-react';
+import "./editMachines.css";
 
 // Define interfaces for type safety
 interface MachineType {
@@ -30,6 +32,11 @@ interface Machine {
   branchId: {
     _id: string;
     name: string;
+  };
+  tableConfig?: {
+    columns: any[];
+    formulas: any;
+    settings: any;
   };
 }
 
@@ -67,11 +74,40 @@ const EditMachines: React.FC = () => {
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteInput, setDeleteInput] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterType, setFilterType] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   useEffect(() => {
     dispatch(getMachines());
     dispatch(getMachineTypes());
-  }, [dispatch, updateSuccess, deleteSuccess]);
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (updateSuccess) {
+      setSuccessMessage("✅ Machine updated successfully!");
+      setTimeout(() => setSuccessMessage(""), 3000);
+      dispatch(getMachines());
+    }
+  }, [updateSuccess, dispatch]);
+
+  useEffect(() => {
+    if (deleteSuccess) {
+      setSuccessMessage("✅ Machine deleted successfully!");
+      setTimeout(() => setSuccessMessage(""), 3000);
+      dispatch(getMachines());
+    }
+  }, [deleteSuccess, dispatch]);
+
+  const filteredMachines = machines.filter((machine: Machine) => {
+    const matchesSearch = machine.machineName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         machine.machineType?.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         machine.branchId?.name.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesFilter = !filterType || machine.machineType?._id === filterType;
+    
+    return matchesSearch && matchesFilter;
+  });
 
   const handleKeyDown = (
     e: React.KeyboardEvent<HTMLTableRowElement>,
@@ -79,7 +115,7 @@ const EditMachines: React.FC = () => {
   ) => {
     if (e.key === "Enter") openEditor(machine);
     else if (e.key === "ArrowDown")
-      setFocusedRow((prev) => Math.min(prev + 1, machines.length - 1));
+      setFocusedRow((prev) => Math.min(prev + 1, filteredMachines.length - 1));
     else if (e.key === "ArrowUp")
       setFocusedRow((prev) => Math.max(prev - 1, 0));
   };
@@ -102,9 +138,24 @@ const EditMachines: React.FC = () => {
   const handleUpdate = () => {
     if (!selectedMachine) return;
 
+    if (!editForm.machineName.trim()) {
+      alert("Please enter machine name");
+      return;
+    }
+
+    if (!editForm.machineTypeId) {
+      alert("Please select machine type");
+      return;
+    }
+
+    if (!editForm.sizeX || !editForm.sizeY || !editForm.sizeZ) {
+      alert("Please enter all size dimensions");
+      return;
+    }
+
     dispatch(
       updateMachine(selectedMachine._id, {
-        machineName: editForm.machineName,
+        machineName: editForm.machineName.trim(),
         sizeX: editForm.sizeX,
         sizeY: editForm.sizeY,
         sizeZ: editForm.sizeZ,
@@ -131,147 +182,322 @@ const EditMachines: React.FC = () => {
 
   const cancelDelete = () => setShowDeleteConfirm(false);
 
+  const clearFilters = () => {
+    setSearchTerm("");
+    setFilterType("");
+  };
+
   return (
-    <div className="EditMachineType p-4">
-      <h2 className="text-xl font-semibold mb-4">Machine List</h2>
-
-      {loading && <p>Loading...</p>}
-      {error && <p className="text-red-500">{error}</p>}
-
-      {!selectedMachine ? (
-        <table className="w-full border border-collapse">
-          <thead className="bg-gray-200">
-            <tr>
-              <th className="p-2 border">Machine Name</th>
-              <th className="p-2 border">Type</th>
-              <th className="p-2 border">Size X</th>
-              <th className="p-2 border">Size Y</th>
-              <th className="p-2 border">Size Z</th>
-              <th className="p-2 border">Branch</th>
-            </tr>
-          </thead>
-          <tbody>
-            {machines.map((machine: Machine, index: number) => (
-              <tr
-                key={machine._id}
-                tabIndex={0}
-                onClick={() => openEditor(machine)}
-                onKeyDown={(e) => handleKeyDown(e, machine)}
-                onFocus={() => setFocusedRow(index)}
-                className={focusedRow === index ? "bg-blue-100" : ""}
-              >
-                <td className="p-2 border">{machine.machineName}</td>
-                <td className="p-2 border">{machine.machineType?.type}</td>
-                <td className="p-2 border">{machine.sizeX}</td>
-                <td className="p-2 border">{machine.sizeY}</td>
-                <td className="p-2 border">{machine.sizeZ}</td>
-                <td className="p-2 border">{machine.branchId?.name}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      ) : (
-        <div className="bg-white p-4 shadow-md rounded max-w-lg">
-          <h3 className="text-lg font-bold mb-2">Edit Machine</h3>
-
-          <label className="block mb-1">Machine Name</label>
-          <input
-            value={editForm.machineName}
-            onChange={(e) => handleEditChange("machineName", e.target.value)}
-            className="border p-2 mb-3 w-full"
-          />
-
-          <label className="block mb-1">Machine Type</label>
-          <select
-            value={editForm.machineTypeId}
-            onChange={(e) =>
-              handleEditChange("machineTypeId", e.target.value)
-            }
-            className="border p-2 mb-3 w-full"
-          >
-            <option value="">Select Type</option>
-            {machineTypes.map((type: MachineType) => (
-              <option key={type._id} value={type._id}>
-                {type.type}
-              </option>
-            ))}
-          </select>
-
-          <label className="block mb-1">Size X</label>
-          <input
-            value={editForm.sizeX}
-            onChange={(e) => handleEditChange("sizeX", e.target.value)}
-            className="border p-2 mb-3 w-full"
-          />
-
-          <label className="block mb-1">Size Y</label>
-          <input
-            value={editForm.sizeY}
-            onChange={(e) => handleEditChange("sizeY", e.target.value)}
-            className="border p-2 mb-3 w-full"
-          />
-
-          <label className="block mb-1">Size Z</label>
-          <input
-            value={editForm.sizeZ}
-            onChange={(e) => handleEditChange("sizeZ", e.target.value)}
-            className="border p-2 mb-3 w-full"
-          />
-
-          <div className="flex gap-3 mt-4">
-            <button
-              onClick={handleUpdate}
-              className="bg-green-600 text-white px-4 py-2 rounded"
-            >
-              Save
-            </button>
-            <button
-              onClick={handleDeleteClick}
-              className="bg-red-500 text-white px-4 py-2 rounded"
-            >
-              Delete
-            </button>
-            <button
-              onClick={() => setSelectedMachine(null)}
-              className="bg-gray-400 text-white px-4 py-2 rounded"
-            >
-              Cancel
-            </button>
-          </div>
+    <div className="EditMachinesCss">
+      <div className="EditMachinesContainer">
+        <div className="EditMachinesHeader">
+          <h2 className="EditMachinesTitle">Machine Management</h2>
+          {successMessage && (
+            <div className="EditMachinesSuccessMessage">{successMessage}</div>
+          )}
         </div>
-      )}
 
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded shadow-lg max-w-sm w-full text-center">
-            <h3 className="text-lg font-bold mb-4">
-              Type{" "}
-              <span className="text-red-600 font-mono">DELETE</span> to confirm
-            </h3>
-            <input
-              type="text"
-              value={deleteInput}
-              onChange={(e) => setDeleteInput(e.target.value)}
-              className="border p-2 w-full mb-4"
-              placeholder="Type DELETE to confirm"
-            />
-            <div className="flex justify-center gap-4">
+        {loading && <div className="EditMachinesLoading">Loading machines...</div>}
+        {error && <div className="EditMachinesError">Error: {error}</div>}
+
+        {!selectedMachine ? (
+          <div className="EditMachinesTableSection">
+            {/* Search and Filter Controls */}
+            <div className="EditMachinesControls">
+              <div className="EditMachinesSearchGroup">
+                <Search size={20} />
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search machines..."
+                  className="EditMachinesSearchInput"
+                />
+              </div>
+              <div className="EditMachinesFilterGroup">
+                <Filter size={20} />
+                <select
+                  value={filterType}
+                  onChange={(e) => setFilterType(e.target.value)}
+                  className="EditMachinesFilterSelect"
+                >
+                  <option value="">All Types</option>
+                  {machineTypes.map((type: MachineType) => (
+                    <option key={type._id} value={type._id}>
+                      {type.type}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {(searchTerm || filterType) && (
+                <button onClick={clearFilters} className="EditMachinesClearFiltersBtn">
+                  Clear Filters
+                </button>
+              )}
+            </div>
+
+            {/* Results Summary */}
+            <div className="EditMachinesResultsSummary">
+              Showing {filteredMachines.length} of {machines.length} machines
+            </div>
+
+            {/* Machines Table */}
+            <div className="EditMachinesTableWrapper">
+              <table className="EditMachinesTable">
+                <thead className="EditMachinesTableHeader">
+                  <tr>
+                    <th className="EditMachinesTableHeaderCell">Machine Name</th>
+                    <th className="EditMachinesTableHeaderCell">Type</th>
+                    <th className="EditMachinesTableHeaderCell">Size X</th>
+                    <th className="EditMachinesTableHeaderCell">Size Y</th>
+                    <th className="EditMachinesTableHeaderCell">Size Z</th>
+                    <th className="EditMachinesTableHeaderCell">Branch</th>
+                    <th className="EditMachinesTableHeaderCell">Table Config</th>
+                    <th className="EditMachinesTableHeaderCell">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="EditMachinesTableBody">
+                  {filteredMachines.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="EditMachinesEmptyRow">
+                        {searchTerm || filterType ? "No machines match your filters" : "No machines found"}
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredMachines.map((machine: Machine, index: number) => (
+                      <tr
+                        key={machine._id}
+                        tabIndex={0}
+                        onKeyDown={(e) => handleKeyDown(e, machine)}
+                        onFocus={() => setFocusedRow(index)}
+                        className={`EditMachinesTableRow ${
+                          focusedRow === index ? "EditMachinesTableRowFocused" : ""
+                        }`}
+                      >
+                        <td className="EditMachinesTableCell EditMachinesMachineNameCell">
+                          <div className="EditMachinesMachineNameContent">
+                            {machine.machineName}
+                          </div>
+                        </td>
+                        <td className="EditMachinesTableCell">
+                          <span className="EditMachinesMachineTypeTag">
+                            {machine.machineType?.type || "N/A"}
+                          </span>
+                        </td>
+                        <td className="EditMachinesTableCell EditMachinesSizeCell">
+                          {machine.sizeX}
+                        </td>
+                        <td className="EditMachinesTableCell EditMachinesSizeCell">
+                          {machine.sizeY}
+                        </td>
+                        <td className="EditMachinesTableCell EditMachinesSizeCell">
+                          {machine.sizeZ}
+                        </td>
+                        <td className="EditMachinesTableCell">
+                          {machine.branchId?.name || "N/A"}
+                        </td>
+                        <td className="EditMachinesTableCell">
+                          <div className="EditMachinesTableConfigIndicator">
+                            {machine.tableConfig ? (
+                              <span className="EditMachinesTableConfigYes">
+                                ✅ {machine.tableConfig.columns?.length || 0} columns
+                              </span>
+                            ) : (
+                              <span className="EditMachinesTableConfigNo">❌ Not configured</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="EditMachinesTableCell">
+                          <div className="EditMachinesTableActions">
+                            <button
+                              onClick={() => openEditor(machine)}
+                              className="EditMachinesEditBtn"
+                              title="Edit machine"
+                            >
+                              <Edit size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : (
+          <div className="EditMachinesEditForm">
+            <div className="EditMachinesEditHeader">
+              <h3 className="EditMachinesEditTitle">Edit Machine</h3>
               <button
-                onClick={confirmDelete}
-                className="bg-red-600 text-white px-4 py-2 rounded"
+                onClick={() => setSelectedMachine(null)}
+                className="EditMachinesCloseBtn"
+                title="Close editor"
               >
-                Confirm
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="EditMachinesFormGrid">
+              <div className="EditMachinesFormGroup">
+                <label className="EditMachinesFormLabel">Machine Name *</label>
+                <input
+                  type="text"
+                  value={editForm.machineName}
+                  onChange={(e) => handleEditChange("machineName", e.target.value)}
+                  className="EditMachinesFormInput"
+                  placeholder="Enter machine name"
+                />
+              </div>
+
+              <div className="EditMachinesFormGroup">
+                <label className="EditMachinesFormLabel">Machine Type *</label>
+                <select
+                  value={editForm.machineTypeId}
+                  onChange={(e) => handleEditChange("machineTypeId", e.target.value)}
+                  className="EditMachinesFormSelect"
+                >
+                  <option value="">Select Type</option>
+                  {machineTypes.map((type: MachineType) => (
+                    <option key={type._id} value={type._id}>
+                      {type.type}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="EditMachinesFormGroup">
+                <label className="EditMachinesFormLabel">Size X *</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.1"
+                  value={editForm.sizeX}
+                  onChange={(e) => handleEditChange("sizeX", e.target.value)}
+                  className="EditMachinesFormInput"
+                  placeholder="Enter X dimension"
+                />
+              </div>
+
+              <div className="EditMachinesFormGroup">
+                <label className="EditMachinesFormLabel">Size Y *</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.1"
+                  value={editForm.sizeY}
+                  onChange={(e) => handleEditChange("sizeY", e.target.value)}
+                  className="EditMachinesFormInput"
+                  placeholder="Enter Y dimension"
+                />
+              </div>
+
+              <div className="EditMachinesFormGroup">
+                <label className="EditMachinesFormLabel">Size Z *</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.1"
+                  value={editForm.sizeZ}
+                  onChange={(e) => handleEditChange("sizeZ", e.target.value)}
+                  className="EditMachinesFormInput"
+                  placeholder="Enter Z dimension"
+                />
+              </div>
+            </div>
+
+            {/* Current Machine Info */}
+            <div className="EditMachinesCurrentInfo">
+              <h4 className="EditMachinesCurrentInfoTitle">Current Machine Information</h4>
+              <div className="EditMachinesCurrentInfoGrid">
+                <div className="EditMachinesInfoItem">
+                  <span className="EditMachinesInfoLabel">Branch:</span>
+                  <span className="EditMachinesInfoValue">{selectedMachine.branchId?.name || "N/A"}</span>
+                </div>
+                <div className="EditMachinesInfoItem">
+                  <span className="EditMachinesInfoLabel">Table Configuration:</span>
+                  <span className="EditMachinesInfoValue">
+                    {selectedMachine.tableConfig ? (
+                      <span className="EditMachinesTableConfigYes">
+                        ✅ {selectedMachine.tableConfig.columns?.length || 0} columns configured
+                      </span>
+                    ) : (
+                      <span className="EditMachinesTableConfigNo">❌ No table configuration</span>
+                    )}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="EditMachinesFormActions">
+              <button
+                onClick={handleUpdate}
+                className="EditMachinesSaveBtn"
+                disabled={!editForm.machineName.trim() || !editForm.machineTypeId}
+              >
+                <Save size={16} />
+                Save Changes
               </button>
               <button
-                onClick={cancelDelete}
-                className="bg-gray-400 text-white px-4 py-2 rounded"
+                onClick={handleDeleteClick}
+                className="EditMachinesDeleteBtn"
+              >
+                <Trash2 size={16} />
+                Delete Machine
+              </button>
+              <button
+                onClick={() => setSelectedMachine(null)}
+                className="EditMachinesCancelBtn"
               >
                 Cancel
               </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteConfirm && (
+          <div className="EditMachinesModal">
+            <div className="EditMachinesModalContent">
+              <h3 className="EditMachinesModalTitle">
+                Confirm Machine Deletion
+              </h3>
+              <div className="EditMachinesModalBody">
+                <p className="EditMachinesModalText">
+                  You are about to delete the machine: <strong>{selectedMachine?.machineName}</strong>
+                </p>
+                <p className="EditMachinesModalWarning">
+                  This action cannot be undone. Type{" "}
+                  <span className="EditMachinesDeleteKeyword">DELETE</span> to confirm.
+                </p>
+                <input
+                  type="text"
+                  value={deleteInput}
+                  onChange={(e) => setDeleteInput(e.target.value)}
+                  className="EditMachinesModalInput"
+                  placeholder="Type DELETE to confirm"
+                  autoFocus
+                />
+              </div>
+              <div className="EditMachinesModalActions">
+                <button
+                  onClick={confirmDelete}
+                  className="EditMachinesModalConfirmBtn"
+                  disabled={deleteInput !== "DELETE"}
+                >
+                  Confirm Delete
+                </button>
+                <button
+                  onClick={cancelDelete}
+                  className="EditMachinesModalCancelBtn"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

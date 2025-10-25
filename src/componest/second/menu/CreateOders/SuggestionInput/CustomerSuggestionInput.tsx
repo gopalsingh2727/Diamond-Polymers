@@ -40,13 +40,7 @@ const CustomerSuggestions: React.FC<Props> = ({ customerName, onSelect }) => {
         const nameMatch = name.toLowerCase().includes(searchTerm);
         const companyMatch = company.toLowerCase().includes(searchTerm);
         
-        console.log(`Checking account:`, {
-          name,
-          company,
-          searchTerm,
-          nameMatch,
-          companyMatch
-        });
+      
         
         return nameMatch || companyMatch;
       });
@@ -83,7 +77,7 @@ const CustomerSuggestions: React.FC<Props> = ({ customerName, onSelect }) => {
     <ul className="suggestion-list">
       {filtered.map((acc, idx) => (
         <li
-          key={acc.id || idx} // Better key using ID if available
+          key={acc.id || idx} 
           className="suggestionItem"
           onClick={() => onSelect(acc)}
         >

@@ -1,17 +1,18 @@
-import React from "react";
+import React, { useEffect } from "react";
 
-interface Props {
+interface SeleteTypeProps {
   selectedOption: string;
-  onChange: (value: string) => void;
+  onChange: (type: string) => void;
   showBottomGusset: boolean;
-  setShowBottomGusset: (val: boolean) => void;
+  setShowBottomGusset: (show: boolean) => void;
   showFlap: boolean;
-  setShowFlap: (val: boolean) => void;
+  setShowFlap: (show: boolean) => void;
   showAirHole: boolean;
-  setShowAirHole: (val: boolean) => void;
+  setShowAirHole: (show: boolean) => void;
+  initialType?: string;
 }
 
-const SeleteType: React.FC<Props> = ({
+const SeleteType: React.FC<SeleteTypeProps> = ({
   selectedOption,
   onChange,
   showBottomGusset,
@@ -20,15 +21,44 @@ const SeleteType: React.FC<Props> = ({
   setShowFlap,
   showAirHole,
   setShowAirHole,
+  initialType
 }) => {
-  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  
+  // Set initial type in edit mode
+  useEffect(() => {
+    if (initialType && !selectedOption) {
+      const lower = initialType.toLowerCase();
+      if (lower.includes('material')) {
+        onChange('material');
+      } else if (lower.includes('product')) {
+        onChange('product');
+      }
+    }
+  }, [initialType, selectedOption, onChange]);
+
+  const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     onChange(e.target.value);
+  };
+
+  const handleCheckboxChange = (type: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const checked = e.target.checked;
+    switch (type) {
+      case 'bottomGusset':
+        setShowBottomGusset(checked);
+        break;
+      case 'flap':
+        setShowFlap(checked);
+        break;
+      case 'airHole':
+        setShowAirHole(checked);
+        break;
+    }
   };
 
   return (
     <div className="SeleteType">
       <label htmlFor="myDropdown">Choose a type:</label>
-      <select id="myDropdown" value={selectedOption} onChange={handleChange}>
+      <select id="myDropdown" value={selectedOption} onChange={handleTypeChange}>
         <option value="">-- Select --</option>
         <option value="product">Product</option>
         <option value="material">Material</option>
@@ -36,34 +66,31 @@ const SeleteType: React.FC<Props> = ({
 
       {selectedOption === "material" && (
         <div className="bottomGussetSelectandflapandAriHole">
-          <div>
-            <label>
+          <h6>Additional Options:</h6>
+          <div className="checkbox-group">
+            <label className="checkbox-label">
               <input
                 type="checkbox"
                 checked={showBottomGusset}
-                onChange={(e) => setShowBottomGusset(e.target.checked)}
+                onChange={handleCheckboxChange('bottomGusset')}
               />
-              Bottom Gusset
+              <span>Bottom Gusset</span>
             </label>
-          </div>
-          <div>
-            <label>
+            <label className="checkbox-label">
               <input
                 type="checkbox"
                 checked={showFlap}
-                onChange={(e) => setShowFlap(e.target.checked)}
+                onChange={handleCheckboxChange('flap')}
               />
-              Flap
+              <span>Flap</span>
             </label>
-          </div>
-          <div>
-            <label>
+            <label className="checkbox-label">
               <input
                 type="checkbox"
                 checked={showAirHole}
-                onChange={(e) => setShowAirHole(e.target.checked)}
+                onChange={handleCheckboxChange('airHole')}
               />
-              Air Hole
+              <span>Air Hole</span>
             </label>
           </div>
         </div>
@@ -71,6 +98,5 @@ const SeleteType: React.FC<Props> = ({
     </div>
   );
 };
-
 
 export default SeleteType;

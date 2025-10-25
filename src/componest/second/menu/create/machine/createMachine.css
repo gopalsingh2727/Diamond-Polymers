@@ -1,68 +1,734 @@
+/* Main Container */
+.createMachineCss {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  background-color: #f5f7fa;
+  border-radius: 12px;
+  padding: 20px;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
 
-  .step-form-wrapper {
+/* Main Form */
+.CreateMachineForm {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 1200px;
+  padding: 30px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  margin: 20px 0;
+  box-sizing: border-box;
+}
 
-    max-width: 28rem;
-    padding: 2rem;
-    border-radius: 1rem;
-    background: white;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-  }
-  
-  .form-title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #1e293b;
-    text-align: center;
-    margin-bottom: 1.5rem;
-  }
-  
-  .step-name-group {
-    margin-bottom: 1.5rem;
-  }
-  
-  .form-label {
-    display: block;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: #334155;
-    margin-bottom: 0.5rem;
-  }
-  
-  /* Updated input styling */
-  .form-input {
+/* Form Title */
+.CreateMachineFormTitle {
+  font-size: 28px;
+  font-weight: 700;
+  color: #2c3e50;
+  text-align: center;
+  margin-bottom: 30px;
+  padding-bottom: 15px;
+  border-bottom: 3px solid #3498db;
+}
 
-    color: #1e293b;
-    padding: 0.625rem 1rem;
-    border: none;
-    border-bottom: 2px solid #cbd5e1;
-    background-color: #fff;
-    font-size: 0.875rem;
-    transition: border-color 0.2s ease;
-  }
+/* Success Message */
+.CreateMachineSuccessMsg {
+  background-color: #d4edda;
+  color: #155724;
+  padding: 12px 20px;
+  border-radius: 8px;
+  margin-bottom: 25px;
+  border: 1px solid #c3e6cb;
+  font-weight: 500;
+  text-align: center;
+  animation: fadeIn 0.5s ease-in;
+}
 
-  
-  /* Select styling */
-  .machine-select {
-    appearance: none;
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%2342485A' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpath d='m6 9 6 6 6-6'/%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right 1rem center;
-    background-size: 1rem;
-    background-color: #fff;
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Form Groups */
+.CreateMachineFormGroup {
+  margin-bottom: 25px;
+  display: flex;
+  flex-direction: column;
+}
+
+.CrareMachineform-group {
+  margin-bottom: 25px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Form Labels */
+.CreateMachineFormLabel {
+  font-weight: 600;
+  color: #34495e;
+  margin-bottom: 8px;
+  font-size: 14px;
+  letter-spacing: 0.5px;
+}
+
+/* Form Inputs */
+.CreateMachineFormInput {
+  padding: 12px 16px;
+  border: 2px solid #e0e6ed;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #2c3e50;
+  background-color: #ffffff;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.CreateMachineFormInput:focus {
+  border-color: #3498db;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+.CreateMachineFormInput:hover {
+  border-color: #bdc3c7;
+}
+
+/* Machine Type Select */
+.CreateMachineMachineSelect {
+  padding: 12px 16px;
+  border: 2px solid #e0e6ed;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #2c3e50;
+  background-color: #ffffff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.CreateMachineMachineSelect:focus {
+  border-color: #3498db;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+/* Size Inputs Container */
+.CreateMachineSizeInputs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  margin-top: 8px;
+}
+
+.CreateMachineSizeInput {
+  padding: 12px 16px;
+  border: 2px solid #e0e6ed;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #2c3e50;
+  background-color: #ffffff;
+  transition: all 0.3s ease;
+  outline: none;
+  text-align: center;
+}
+
+.CreateMachineSizeInput:focus {
+  border-color: #3498db;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+/* Table Configuration Section */
+.CreateMachineTableConfigurationSection {
+  background-color: #f8f9fc;
+  padding: 25px;
+  border-radius: 10px;
+  border: 1px solid #e3e8f0;
+  margin: 20px 0;
+}
+
+.CreateMachineSectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.CreateMachineSectionTitle {
+  font-size: 22px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 0;
+}
+
+.CreateMachineSubsectionTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: #34495e;
+  margin: 20px 0 15px 0;
+  border-bottom: 2px solid #ecf0f1;
+  padding-bottom: 8px;
+}
+
+/* Export Config Button */
+.CreateMachineExportConfigBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background-color: #27ae60;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.CreateMachineExportConfigBtn:hover {
+  background-color: #229954;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+}
+
+/* Template Selection */
+.CreateMachineTemplateSelection {
+  margin-bottom: 30px;
+}
+
+.CreateMachineTemplateButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.CreateMachineTemplateBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px;
+  background-color: #ffffff;
+  color: #3498db;
+  border: 2px solid #3498db;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.CreateMachineTemplateBtn:hover {
+  background-color: #3498db;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+}
+
+/* Column Management */
+.CreateMachineColumnManagement {
+  margin-bottom: 30px;
+}
+
+.CreateMachineCurrentColumns {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.CreateMachineColumnItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  background-color: #ffffff;
+  border: 1px solid #e3e8f0;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.CreateMachineColumnItem:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-color: #3498db;
+}
+
+.CreateMachineColumnInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.CreateMachineColumnTypeIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background-color: #ecf0f1;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+  color: #34495e;
+}
+
+.CreateMachineColumnName {
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 14px;
+}
+
+.CreateMachineColumnType {
+  color: #7f8c8d;
+  font-size: 12px;
+  font-style: italic;
+}
+
+.CreateMachineRequiredBadge {
+  background-color: #e74c3c;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.CreateMachineRemoveColumnBtn {
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  padding: 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.CreateMachineRemoveColumnBtn:hover {
+  background-color: #c0392b;
+  transform: scale(1.1);
+}
+
+/* Add Column Form */
+.CreateMachineAddColumnForm {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  border: 2px dashed #bdc3c7;
+}
+
+.CreateMachineColumnInputs {
+  display: grid;
+  grid-template-columns: 2fr 1fr auto auto;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.CreateMachineColumnNameInput {
+  padding: 10px 14px;
+  border: 2px solid #e0e6ed;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #2c3e50;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.CreateMachineColumnNameInput:focus {
+  border-color: #3498db;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.1);
+}
+
+.CreateMachineColumnTypeSelect {
+  padding: 10px 14px;
+  border: 2px solid #e0e6ed;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #2c3e50;
+  background-color: #ffffff;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.CreateMachineColumnTypeSelect:focus {
+  border-color: #3498db;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.1);
+}
+
+.CreateMachineRequiredCheckbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #34495e;
+  cursor: pointer;
+}
+
+.CreateMachineRequiredCheckbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.CreateMachineAddColumnBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.CreateMachineAddColumnBtn:hover {
+  background-color: #2980b9;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(52, 152, 219, 0.3);
+}
+
+/* Formula Management */
+.CreateMachineFormulaManagement {
+  margin-bottom: 30px;
+}
+
+.CreateMachineCurrentFormulas {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.CreateMachineFormulaItem {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #e3e8f0;
+  transition: all 0.3s ease;
+}
+
+.CreateMachineFormulaItem:hover {
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border-color: #f39c12;
+}
+
+.CreateMachineFormulaHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.CreateMachineFormulaColumnName {
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 16px;
+}
+
+.CreateMachineRemoveFormulaBtn {
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  padding: 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.CreateMachineRemoveFormulaBtn:hover {
+  background-color: #c0392b;
+  transform: scale(1.1);
+}
+
+.CreateMachineFormulaExpression,
+.CreateMachineFormulaDependencies,
+.CreateMachineFormulaDescription {
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #34495e;
+}
+
+.CreateMachineFormulaExpression strong,
+.CreateMachineFormulaDependencies strong,
+.CreateMachineFormulaDescription strong {
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+/* Add Formula Form */
+.CreateMachineAddFormulaForm {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  border: 2px dashed #f39c12;
+}
+
+.CreateMachineFormulaInputs {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.CreateMachineFormulaColumnSelect {
+  padding: 10px 14px;
+  border: 2px solid #e0e6ed;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #2c3e50;
+  background-color: #ffffff;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.CreateMachineFormulaColumnSelect:focus {
+  border-color: #f39c12;
+  box-shadow: 0 0 0 2px rgba(243, 156, 18, 0.1);
+}
+
+.CreateMachineFormulaExpressionInput {
+  padding: 10px 14px;
+  border: 2px solid #e0e6ed;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #2c3e50;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.CreateMachineFormulaExpressionInput:focus {
+  border-color: #f39c12;
+  box-shadow: 0 0 0 2px rgba(243, 156, 18, 0.1);
+}
+
+.CreateMachineFormulaDescriptionInput {
+  grid-column: 1 / -1;
+  padding: 10px 14px;
+  border: 2px solid #e0e6ed;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #2c3e50;
+  outline: none;
+  transition: all 0.3s ease;
+  margin-bottom: 12px;
+}
+
+.CreateMachineFormulaDescriptionInput:focus {
+  border-color: #f39c12;
+  box-shadow: 0 0 0 2px rgba(243, 156, 18, 0.1);
+}
+
+.CreateMachineAddFormulaBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px;
+  background-color: #f39c12;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.CreateMachineAddFormulaBtn:hover:not(:disabled) {
+  background-color: #e67e22;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(243, 156, 18, 0.3);
+}
+
+.CreateMachineAddFormulaBtn:disabled {
+  background-color: #bdc3c7;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.CreateMachineFormulaHelp {
+  margin-top: 15px;
+  padding: 12px;
+  background-color: #f8f9fc;
+  border-radius: 6px;
+  border: 1px solid #e3e8f0;
+}
+
+.CreateMachineFormulaHelp p {
+  margin: 5px 0;
+  font-size: 12px;
+  color: #7f8c8d;
+}
+
+.CreateMachineFormulaHelp strong {
+  color: #34495e;
+}
+
+/* Table Preview */
+.CreateMachineTablePreview {
+  margin-top: 20px;
+}
+
+.CreateMachinePreviewTableWrapper {
+  overflow-x: auto;
+  border: 1px solid #e3e8f0;
+  border-radius: 8px;
+  background-color: #ffffff;
+}
+
+.CreateMachinePreviewTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.CreateMachinePreviewHeader {
+  background-color: #34495e;
+  color: white;
+  padding: 12px 10px;
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 2px solid #2c3e50;
+}
+
+.CreateMachinePreviewRow {
+  border-bottom: 1px solid #ecf0f1;
+  transition: background-color 0.2s ease;
+}
+
+.CreateMachinePreviewRow:hover {
+  background-color: #f8f9fc;
+}
+
+.CreateMachinePreviewCell {
+  padding: 12px 10px;
+  color: #2c3e50;
+  vertical-align: middle;
+}
+
+.CreateMachineCellContent {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Form Actions */
+.CreateMachineFormActions {
+  display: flex;
+  justify-content: center;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 2px solid #ecf0f1;
+}
+
+.CreateMachineSaveButton {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 15px 30px;
+  background: linear-gradient(135deg, #3498db, #2980b9);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 200px;
+  justify-content: center;
+}
+
+.CreateMachineSaveButton:hover:not(:disabled) {
+  background: linear-gradient(135deg, #2980b9, #1f618d);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(52, 152, 219, 0.3);
+}
+
+.CreateMachineSaveButton:disabled {
+  background: linear-gradient(135deg, #bdc3c7, #95a5a6);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .CreateMachineForm {
+    padding: 20px;
+    margin: 10px;
   }
   
-  .save-button {
-    width: 100%;
-    padding: 0.75rem 1.5rem;
-    background-color: #3b82f6;
-    color: white;
-    font-weight: 500;
-    border-radius: 0.5rem;
-    border: none;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
+  .CreateMachineSizeInputs {
+    grid-template-columns: 1fr;
   }
   
-  .save-button:hover {
-    background-color: #2563eb;
+  .CreateMachineColumnInputs {
+    grid-template-columns: 1fr;
+    gap: 10px;
   }
+  
+  .CreateMachineFormulaInputs {
+    grid-template-columns: 1fr;
+  }
+  
+  .CreateMachineSectionHeader {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .CreateMachineTemplateButtons {
+    flex-direction: column;
+  }
+  
+  .CreateMachinePreviewTableWrapper {
+    font-size: 12px;
+  }
+  
+  .CreateMachinePreviewHeader,
+  .CreateMachinePreviewCell {
+    padding: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .CreateMachineFormTitle {
+    font-size: 24px;
+  }
+  
+  .CreateMachineSectionTitle {
+    font-size: 18px;
+  }
+  
+  .CreateMachineSubsectionTitle {
+    font-size: 16px;
+  }
+  
+  .CreateMachineColumnItem {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  
+  .CreateMachineColumnInfo {
+    justify-content: space-between;
+  }
+}

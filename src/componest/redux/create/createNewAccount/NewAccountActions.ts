@@ -40,6 +40,7 @@ export const createAccount = (data: any) => async (dispatch: AppDispatch, getSta
 
     let payload = data;
 
+
     if (data instanceof FormData) {
       data.append("branchId", branchId);
       payload = data;
@@ -56,7 +57,7 @@ export const createAccount = (data: any) => async (dispatch: AppDispatch, getSta
     }
 
     const response = await axios.post(`${baseUrl}/customer`, payload, { headers });
-
+    console.log("Account created successfully:", response.data);
     dispatch({
       type: CREATE_ACCOUNT_SUCCESS,
       payload: response.data.customer,

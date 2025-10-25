@@ -8,6 +8,10 @@ import authReducer from "./login/authReducer";
 import { branchListReducer, branchReducer } from "./Branch/BranchReducer";
 import { branchCreateReducer } from "./createBranchAndManager/branchReducer";
 
+
+
+
+
 // Admin & Manager
 import { adminCreateReducer } from "./Admin/adminReducer";
 import {
@@ -74,6 +78,8 @@ import {
 } from "./create/CreateStep/StepReducer";
 import { createProduct } from "./create/products/ProductActions";
 import { productDeleteReducer, productListReducer, productUpdateReducer } from "./create/products/ProductReducer";
+import { deviceAccessCreateReducer, deviceAccessReducer } from "./deviceAccess/deviceAccessReducers";
+import { accountOrdersReducer, orderListReducer} from "./oders/orderReducers";
 // import { getMaterialCategoriesReducer } from "./create/Materials/MaterialsCategories/MaterialsCategoriesActions";
 
 const appReducer = combineReducers({
@@ -128,7 +134,7 @@ const appReducer = combineReducers({
   materialUpdate: materialUpdateReducer,
   materialDelete: materialDeleteReducer,
   // materialCategoriesList: getMaterialCategoriesReducer,
-
+  
   // Steps
   stepCreate: stepCreateReducer,
   stepList: stepListReducer,
@@ -141,6 +147,14 @@ const appReducer = combineReducers({
   productList:productListReducer,
   productUpdate:productUpdateReducer,
   productDelete:productDeleteReducer,
+
+
+
+  orderList: orderListReducer,
+ accountOrders:  accountOrdersReducer,
+  //device Access create 
+ 
+  deviceAccess: deviceAccessReducer,
 
 
 });

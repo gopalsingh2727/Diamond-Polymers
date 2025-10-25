@@ -30,6 +30,7 @@ function IndexMenuRoute() {
       <Route path="marketing" element={<Marketing/>} />
       <Route path="Account" element={<Account/>} />
       <Route path="AccountInfo" element = {<AccountInfo/>}/>
+      
 
        
 
