@@ -5,6 +5,7 @@ import { fetchBranches } from "../redux/Branch/BranchActions";
 import { setSelectedBranchInAuth } from "../redux/login/authActions";
 import type { RootState, AppDispatch } from "../../store";
 
+
 const BranchSelect = () => {
   const dispatch: AppDispatch = useDispatch();
   const navigate = useNavigate();
@@ -46,6 +47,7 @@ const BranchSelect = () => {
 
   return (
     <div className="fixed inset-0 from-gray-50 to-gray-100 flex items-center justify-center p-4">
+
       <div className="bg-white rounded-2xl shadow-xl overflow-hidden w-full max-w-md border border-gray-200">
         <div className="p-6 text-center border-b border-gray-100">
           <h2 className="text-2xl font-bold text-gray-800 text-black">Select Your Branch</h2>

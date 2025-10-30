@@ -19,11 +19,9 @@ console.log(userRole);
     { name: "Dispatch", path: "/menu/dispatch" },
     { name: "All Orders", path: "/menu/IndexAllOders" },
     { name: "Account", path: "/menu/Account" },
-    { name: "Marketing", path: "/menu/marketing" },
-    { name: "Address", path: "/menu/adderss" },
-    
-   
-    ...(userRole === "admin" ? [{ name: "Settings", path: "/menu/SystemSetting" }] : []),
+    // { name: "Marketing", path: "/menu/marketing" },
+    {name: "Report Dashboard", path: "/menu/reportDashboard" },
+    // { name: "Address", path: "/menu/adderss" },
     { name: "Logout", path: "/login" },
   ];
 

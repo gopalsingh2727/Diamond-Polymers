@@ -1,0 +1,527 @@
+/* ============================================
+   REPORT LAYOUT
+   CSS Module for Grid, Flex, and Layout Components
+   ============================================ */
+
+/* Grid Layouts */
+.grid2 {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .grid2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.grid3 {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .grid3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.grid4 {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .grid4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* Custom Grid Gaps */
+.gridGapSmall {
+  gap: 0.5rem;
+}
+
+.gridGapMedium {
+  gap: 1rem;
+}
+
+.gridGapLarge {
+  gap: 1.5rem;
+}
+
+.gridGapXLarge {
+  gap: 2rem;
+}
+
+/* Auto-fit Grid (Responsive) */
+.gridAutoFit {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+/* Flex Layouts */
+.flexRow {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+}
+
+.flexColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.flexWrap {
+  flex-wrap: wrap;
+}
+
+.flexNoWrap {
+  flex-wrap: nowrap;
+}
+
+/* Flex Alignment */
+.flexCenter {
+  align-items: center;
+  justify-content: center;
+}
+
+.flexBetween {
+  justify-content: space-between;
+  align-items: center;
+}
+
+.flexStart {
+  justify-content: flex-start;
+  align-items: flex-start;
+}
+
+.flexEnd {
+  justify-content: flex-end;
+  align-items: flex-end;
+}
+
+/* Container */
+.container {
+  width: 100%;
+  max-width: 80rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  .container {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+.containerFluid {
+  width: 100%;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+/* Section */
+.section {
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+}
+
+.sectionLarge {
+  padding-top: 3rem;
+  padding-bottom: 3rem;
+}
+
+@media (min-width: 1024px) {
+  .sectionLarge {
+    padding-top: 4rem;
+    padding-bottom: 4rem;
+  }
+}
+
+/* Card Layout */
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .cardGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
+  .cardGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Sidebar Layout */
+.sidebarLayout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+  .sidebarLayout {
+    grid-template-columns: 16rem 1fr;
+  }
+}
+
+.sidebarLayoutReverse {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+  .sidebarLayoutReverse {
+    grid-template-columns: 1fr 16rem;
+  }
+}
+
+/* Main Content Area */
+.mainContent {
+  min-height: calc(100vh - 4rem);
+  padding: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+  .mainContent {
+    padding: 2rem;
+  }
+}
+
+/* Spacing Utilities */
+.spaceY1 > * + * {
+  margin-top: 0.25rem;
+}
+
+.spaceY2 > * + * {
+  margin-top: 0.5rem;
+}
+
+.spaceY3 > * + * {
+  margin-top: 0.75rem;
+}
+
+.spaceY4 > * + * {
+  margin-top: 1rem;
+}
+
+.spaceY6 > * + * {
+  margin-top: 1.5rem;
+}
+
+.spaceY8 > * + * {
+  margin-top: 2rem;
+}
+
+/* Stack Layout */
+.stack {
+  display: flex;
+  flex-direction: column;
+}
+
+.stackSmall {
+  gap: 0.5rem;
+}
+
+.stackMedium {
+  gap: 1rem;
+}
+
+.stackLarge {
+  gap: 1.5rem;
+}
+
+/* Inline Layout */
+.inline {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.inlineSmall {
+  gap: 0.5rem;
+}
+
+.inlineMedium {
+  gap: 1rem;
+}
+
+.inlineLarge {
+  gap: 1.5rem;
+}
+
+/* Responsive Utilities */
+.mobileOnly {
+  display: block;
+}
+
+@media (min-width: 768px) {
+  .mobileOnly {
+    display: none;
+  }
+}
+
+.desktopOnly {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .desktopOnly {
+    display: block;
+  }
+}
+
+.tabletUp {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .tabletUp {
+    display: block;
+  }
+}
+
+.tabletDown {
+  display: block;
+}
+
+@media (min-width: 768px) {
+  .tabletDown {
+    display: none;
+  }
+}
+
+/* Aspect Ratio Containers */
+.aspect16x9 {
+  position: relative;
+  padding-bottom: 56.25%;
+  overflow: hidden;
+}
+
+.aspect16x9 > * {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.aspect4x3 {
+  position: relative;
+  padding-bottom: 75%;
+  overflow: hidden;
+}
+
+.aspect4x3 > * {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.aspectSquare {
+  position: relative;
+  padding-bottom: 100%;
+  overflow: hidden;
+}
+
+.aspectSquare > * {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Divider */
+.divider {
+  border: 0;
+  border-top: 1px solid #e2e8f0;
+  margin: 1.5rem 0;
+}
+
+.dividerVertical {
+  border: 0;
+  border-left: 1px solid #e2e8f0;
+  height: 100%;
+  margin: 0 1rem;
+}
+
+/* Panel */
+.panel {
+  background-color: #ffffff;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+  padding: 1.5rem;
+}
+
+.panelHeader {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.panelBody {
+  padding: 0;
+}
+
+.panelFooter {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+/* Well */
+.well {
+  background-color: #f8fafc;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  border: 1px solid #e2e8f0;
+}
+
+/* Sticky Header */
+.stickyTop {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background-color: #ffffff;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* Two Column Layout */
+.twoColumn {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 1024px) {
+  .twoColumn {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.twoColumnAsymmetric {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 1024px) {
+  .twoColumnAsymmetric {
+    grid-template-columns: 2fr 1fr;
+  }
+}
+
+/* Masonry Layout (CSS Grid fallback) */
+.masonry {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 1rem;
+  grid-auto-rows: min-content;
+}
+
+@media (min-width: 768px) {
+  .masonry {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .masonry {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Print Layout */
+@media print {
+  .container,
+  .containerFluid {
+    max-width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  
+  .section,
+  .sectionLarge {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+  
+  .grid2,
+  .grid3,
+  .grid4 {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+  
+  .mobileOnly,
+  .desktopOnly,
+  .tabletUp,
+  .tabletDown {
+    display: block;
+  }
+  
+  .divider {
+    margin: 1rem 0;
+  }
+}
+
+/* Dark Mode */
+@media (prefers-color-scheme: dark) {
+  .panel,
+  .stickyTop {
+    background-color: #1e293b;
+    border-color: #334155;
+  }
+  
+  .well {
+    background-color: #0f172a;
+    border-color: #334155;
+  }
+  
+  .divider,
+  .dividerVertical {
+    border-color: #334155;
+  }
+  
+  .panelHeader,
+  .panelFooter {
+    border-color: #334155;
+  }
+}

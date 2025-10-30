@@ -1,0 +1,406 @@
+/* ============================================
+   REPORT CHARTS
+   CSS Module for Chart Components
+   ============================================ */
+
+/* Chart Container */
+.chartContainer {
+  background-color: #ffffff;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+}
+
+/* Chart Header */
+.chartHeader {
+  border-bottom: 1px solid #f1f5f9;
+  padding: 1.5rem;
+  background-color: #fafafa;
+}
+
+.chartTitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 0.25rem;
+  line-height: 1.5;
+}
+
+.chartDescription {
+  font-size: 0.875rem;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+/* Chart Body */
+.chartBody {
+  padding: 1.5rem;
+}
+
+.chartWrapper {
+  width: 100%;
+  height: 24rem;
+  position: relative;
+}
+
+/* Chart Variants */
+.chartSmall .chartWrapper {
+  height: 16rem;
+}
+
+.chartMedium .chartWrapper {
+  height: 24rem;
+}
+
+.chartLarge .chartWrapper {
+  height: 32rem;
+}
+
+.chartFullHeight .chartWrapper {
+  height: 40rem;
+}
+
+/* Chart Controls */
+.chartControls {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.chartControl {
+  padding: 0.375rem 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  background-color: #ffffff;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.chartControl:hover {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.chartControlActive {
+  background-color: #3b82f6;
+  color: #ffffff;
+  border-color: #3b82f6;
+}
+
+.chartControlActive:hover {
+  background-color: #2563eb;
+}
+
+/* Legend */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e2e8f0;
+  background-color: #fafafa;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #334155;
+}
+
+.legendColor {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 0.125rem;
+  flex-shrink: 0;
+}
+
+.legendLabel {
+  line-height: 1.5;
+}
+
+/* Tooltip Styles */
+.chartTooltip {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  padding: 0.75rem;
+  font-size: 0.875rem;
+}
+
+.tooltipLabel {
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 0.5rem;
+}
+
+.tooltipValue {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #334155;
+  margin-top: 0.25rem;
+}
+
+.tooltipDot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Loading State */
+.chartLoading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 24rem;
+}
+
+.spinner {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 3px solid #e2e8f0;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Empty State */
+.chartEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 24rem;
+  text-align: center;
+  color: #64748b;
+}
+
+.emptyIcon {
+  width: 4rem;
+  height: 4rem;
+  margin-bottom: 1rem;
+  color: #cbd5e1;
+}
+
+.emptyTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 0.5rem;
+}
+
+.emptyDescription {
+  font-size: 0.875rem;
+  color: #64748b;
+  max-width: 20rem;
+}
+
+/* Chart Footer */
+.chartFooter {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e2e8f0;
+  background-color: #fafafa;
+  font-size: 0.75rem;
+  color: #64748b;
+  text-align: center;
+}
+
+/* Responsive Chart */
+@media (max-width: 767px) {
+  .chartWrapper {
+    height: 20rem;
+  }
+  
+  .chartSmall .chartWrapper {
+    height: 14rem;
+  }
+  
+  .chartBody {
+    padding: 1rem;
+  }
+  
+  .legend {
+    padding: 0.75rem 1rem;
+    gap: 0.75rem;
+  }
+}
+
+/* Grid Container for Multiple Charts */
+.chartsGrid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .chartsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .chartsGridThree {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Chart Card with Stat */
+.chartWithStat {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.statValue {
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1;
+}
+
+.statLabel {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-top: 0.5rem;
+}
+
+.statChange {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.statChangePositive {
+  color: #10b981;
+}
+
+.statChangeNegative {
+  color: #ef4444;
+}
+
+/* Annotation */
+.chartAnnotation {
+  position: absolute;
+  background-color: rgba(255, 255, 255, 0.95);
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  color: #334155;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Export Actions */
+.exportActions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  padding: 0 1.5rem 1rem;
+}
+
+/* Print Styles */
+@media print {
+  .chartContainer {
+    page-break-inside: avoid;
+    box-shadow: none;
+    border: 1px solid #e2e8f0;
+  }
+  
+  .chartWrapper {
+    page-break-inside: avoid;
+  }
+  
+  .chartControls,
+  .exportActions {
+    display: none;
+  }
+  
+  .chartBody {
+    padding: 1rem;
+  }
+}
+
+/* Dark Mode */
+@media (prefers-color-scheme: dark) {
+  .chartContainer {
+    background-color: #1e293b;
+    border-color: #334155;
+  }
+  
+  .chartHeader,
+  .chartFooter,
+  .legend {
+    background-color: #0f172a;
+    border-color: #334155;
+  }
+  
+  .chartTitle,
+  .emptyTitle,
+  .statValue {
+    color: #f1f5f9;
+  }
+  
+  .chartDescription,
+  .emptyDescription,
+  .chartFooter,
+  .statLabel {
+    color: #94a3b8;
+  }
+  
+  .legendItem {
+    color: #cbd5e1;
+  }
+  
+  .chartTooltip {
+    background-color: #0f172a;
+    border-color: #334155;
+  }
+  
+  .tooltipLabel {
+    color: #f1f5f9;
+  }
+  
+  .tooltipValue {
+    color: #cbd5e1;
+  }
+  
+  .chartControl {
+    background-color: #1e293b;
+    border-color: #334155;
+    color: #cbd5e1;
+  }
+  
+  .chartControl:hover {
+    background-color: #334155;
+  }
+  
+  .spinner {
+    border-color: #334155;
+    border-top-color: #60a5fa;
+  }
+  
+  .chartAnnotation {
+    background-color: rgba(15, 23, 42, 0.95);
+    border-color: #334155;
+    color: #cbd5e1;
+  }
+}

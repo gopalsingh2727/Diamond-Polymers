@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { BackButton } from "../../../allCompones/BackButton";
 import "./indexAllOders.css";
+import { Download, Printer } from "lucide-react";
 
 // Import Redux actions
 import { getAllMachineTypes } from "../../../redux/create/machineType/machineTypeActions";
@@ -74,13 +75,18 @@ interface Order {
   // For machine assignment (if available)
   assignedMachine?: string; // Machine ID or name
   assignedMachineType?: string; // Machine Type ID or name
+  operator?: string;
+  assignedOperator?: string;
 }
 
 // Define order data structure for display
 interface DisplayOrder {
   orderID: string;
   date: string;
+  time: string;
+  datetime: Date;
   companyName: string;
+  operator: string;
   status: "Complete" | "Pending" | "Cancel" | "Stop" | "Dispatch" | "In-Progress" | "Ready" | "Unknown";
   machineName: string;
   machineType: string;
@@ -109,6 +115,10 @@ const IndexAllOders = () => {
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const [machineTypeFilter, setMachineTypeFilter] = useState<string[]>([]);
   const [machineNameFilter, setMachineNameFilter] = useState<string[]>([]);
+  const [operatorFilter, setOperatorFilter] = useState<string[]>([]);
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+  const [sortBy, setSortBy] = useState("date-desc");
   const [showGlobalAll, setShowGlobalAll] = useState(true);
 
   // Load data on component mount
@@ -118,9 +128,10 @@ const IndexAllOders = () => {
     dispatch(fetchOrders({}));
   }, [dispatch]);
 
-  // Get unique machine types and names from Redux data
-  const uniqueMachineTypes = machineTypes.map((mt: MachineType) => mt.type);
-  const uniqueMachineNames = machines.map((m: Machine) => m.machineName);
+  // Get unique values from Redux data
+  const uniqueMachineTypes = Array.from(new Set(machineTypes.map((mt: MachineType) => mt.type)));
+  const uniqueMachineNames = Array.from(new Set(machines.map((m: Machine) => m.machineName)));
+  const uniqueOperators = Array.from(new Set(orders.map((o: Order) => o.operator || o.assignedOperator || "Unassigned")));
 
   // Helper function to map order status to display status
   const mapOrderStatus = (status: string): DisplayOrder['status'] => {
@@ -207,11 +218,15 @@ const IndexAllOders = () => {
   const transformOrdersToDisplay = (): DisplayOrder[] => {
     return orders.map((order: Order) => {
       const machineInfo = getAssignedMachineInfo(order);
+      const createdDate = new Date(order.createdAt);
       
       return {
         orderID: order.orderId || order._id,
-        date: new Date(order.createdAt).toISOString().split('T')[0],
+        date: createdDate.toLocaleDateString(),
+        time: createdDate.toLocaleTimeString(),
+        datetime: createdDate,
         companyName: order.customer?.companyName || order.customer?.name || 'Unknown Customer',
+        operator: order.operator || order.assignedOperator || 'Unassigned',
         status: mapOrderStatus(order.overallStatus),
         machineName: machineInfo.machineName,
         machineType: machineInfo.machineType,
@@ -237,6 +252,11 @@ const IndexAllOders = () => {
     setStatusFilter([]);
     setMachineTypeFilter([]);
     setMachineNameFilter([]);
+    setOperatorFilter([]);
+    setFromDate("");
+    setToDate("");
+    setSearchText("");
+    setSortBy("date-desc");
   };
 
   const handleStatusFilter = (status: string) => {
@@ -272,11 +292,26 @@ const IndexAllOders = () => {
     setShowGlobalAll(true);
   };
 
+  const handleOperatorFilter = (operator: string) => {
+    setOperatorFilter(prev => {
+      if (prev.includes(operator)) {
+        return prev.filter(o => o !== operator);
+      } else {
+        return [...prev, operator];
+      }
+    });
+    setShowGlobalAll(true);
+  };
+
   const resetAllFilters = () => {
     setStatusFilter([]);
     setMachineTypeFilter([]);
     setMachineNameFilter([]);
+    setOperatorFilter([]);
+    setFromDate("");
+    setToDate("");
     setSearchText("");
+    setSortBy("date-desc");
     setShowGlobalAll(true);
   };
 
@@ -291,6 +326,7 @@ const IndexAllOders = () => {
         order.companyName.toLowerCase().includes(searchText.toLowerCase()) ||
         order.machineName.toLowerCase().includes(searchText.toLowerCase()) ||
         order.machineType.toLowerCase().includes(searchText.toLowerCase()) ||
+        order.operator.toLowerCase().includes(searchText.toLowerCase()) ||
         (order.notes && order.notes.toLowerCase().includes(searchText.toLowerCase()))
       );
     }
@@ -310,108 +346,231 @@ const IndexAllOders = () => {
       filtered = filtered.filter(order => machineNameFilter.includes(order.machineName));
     }
 
+    // Filter by operator (multiple selection)
+    if (operatorFilter.length > 0) {
+      filtered = filtered.filter(order => operatorFilter.includes(order.operator));
+    }
+
+    // Filter by date range
+    if (fromDate) {
+      filtered = filtered.filter(order => order.date >= fromDate);
+    }
+    if (toDate) {
+      filtered = filtered.filter(order => order.date <= toDate);
+    }
+
+    // Sorting
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case "date-desc":
+          return b.datetime.getTime() - a.datetime.getTime();
+        case "date-asc":
+          return a.datetime.getTime() - b.datetime.getTime();
+        case "order-asc":
+          return a.orderID.localeCompare(b.orderID);
+        case "order-desc":
+          return b.orderID.localeCompare(a.orderID);
+        default:
+          return 0;
+      }
+    });
+
     return filtered;
   };
 
-const renderOrderCard = (order: DisplayOrder) => (
-  <div
-    key={order.orderID}
-    className="order-card"
-    style={{
-      border: "1px solid #ddd",
-      borderRadius: "8px",
-      padding: "15px",
-      margin: "10px 0",
-      backgroundColor: "#f9f9f9",
-    }}
-  >
-    <table style={{ width: "100%", fontSize: "14px", borderCollapse: "collapse" }}>
-      <thead>
-        <tr style={{ backgroundColor: "#ecf0f1", textAlign: "left" }}>
-          <th style={{ padding: "8px" }}>Order ID</th>
-          <th style={{ padding: "8px" }}>Date</th>
-          <th style={{ padding: "8px" }}>Machine</th>
-          <th style={{ padding: "8px" }}>Type</th>
-          <th style={{ padding: "8px" }}>Machine Status</th>
-          <th style={{ padding: "8px" }}>Status</th>
-          <th style={{ padding: "8px" }}>Weight</th>
-          <th style={{ padding: "8px" }}>Dimensions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr style={{ backgroundColor: "#f9f9f9", borderBottom: "1px solid #ddd" }}>
-          <td style={{ padding: "8px" }}>{order.orderID}</td>
-          <td style={{ padding: "8px" }}>{order.date}</td>
-          <td style={{ padding: "8px" }}>{order.machineName}</td>
-          <td style={{ padding: "8px" }}>{order.machineType}</td>
-          <td style={{ padding: "8px" }}>
-            <span style={{
-              padding: "2px 6px",
-              borderRadius: "3px",
-              fontSize: "12px",
-              color: "white",
-              backgroundColor:
-                order.machineStatus === "Start" ? "#27ae60" :
-                order.machineStatus === "Stop" ? "#e74c3c" :
-                order.machineStatus === "Pending" ? "#f39c12" :
-                "#95a5a6"
-            }}>
-              {order.machineStatus}
-            </span>
-          </td>
-          <td style={{ padding: "8px" }}>
-            <span style={{
-              padding: "4px 8px",
-              borderRadius: "4px",
-              fontSize: "12px",
-              fontWeight: "bold",
-              color: "white",
-              backgroundColor:
-                order.status === "Complete" ? "#27ae60" :
-                order.status === "Pending" ? "#f39c12" :
-                order.status === "Dispatch" ? "#3498db" :
-                order.status === "In-Progress" ? "#9b59b6" :
-                order.status === "Ready" ? "#1abc9c" :
-                order.status === "Cancel" ? "#e74c3c" :
-                "#95a5a6"
-            }}>
-              {order.status}
-            </span>
-          </td>
-          <td style={{ padding: "8px" }}>{order.materialWeight || "-"}</td>
-          <td style={{ padding: "8px" }}>{order.dimensions || "-"}</td>
-        </tr>
-      </tbody>
-    </table>
+  // Export to Excel
+  const exportToExcel = () => {
+    const data = getFilteredOrders();
+    const csv = [
+      ["Order ID", "Date", "Time", "Company", "Operator", "Machine", "Type", "Status", "Machine Status", "Weight", "Dimensions", "Progress", "Notes"],
+      ...data.map((o) => [
+        o.orderID,
+        o.date,
+        o.time,
+        o.companyName,
+        o.operator,
+        o.machineName,
+        o.machineType,
+        o.status,
+        o.machineStatus,
+        o.materialWeight || "-",
+        o.dimensions || "-",
+        o.completionProgress || "-",
+        o.notes || "-",
+      ]),
+    ]
+      .map((row) => row.map((cell) => `"${cell}"`).join(","))
+      .join("\n");
 
-    {/* Optional fields below the table */}
-    <div style={{ marginTop: "10px" }}>
-      {order.completionProgress && (
-        <div>
-          <strong>Progress:</strong> {order.completionProgress}
-        </div>
-      )}
-      {order.notes && (
-        <div style={{ marginTop: "5px" }}>
-          <strong>Notes:</strong>{" "}
-          <span style={{ fontSize: "12px", color: "#666" }}>{order.notes}</span>
-        </div>
-      )}
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `orders_${new Date().toISOString().split("T")[0]}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Print
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const renderOrderCard = (order: DisplayOrder) => (
+    <div
+      key={order.orderID}
+      className="order-card"
+      style={{
+        border: "1px solid #ddd",
+        borderRadius: "8px",
+        padding: "15px",
+        margin: "10px 0",
+        backgroundColor: "#f9f9f9",
+      }}
+    >
+      <table style={{ width: "100%", fontSize: "14px", borderCollapse: "collapse" }}>
+        <thead>
+          <tr style={{ backgroundColor: "#ecf0f1", textAlign: "left" }}>
+            <th style={{ padding: "8px" }}>Order ID</th>
+            <th style={{ padding: "8px" }}>Date & Time</th>
+            <th style={{ padding: "8px" }}>Operator</th>
+            <th style={{ padding: "8px" }}>Machine</th>
+            <th style={{ padding: "8px" }}>Type</th>
+            <th style={{ padding: "8px" }}>Machine Status</th>
+            <th style={{ padding: "8px" }}>Status</th>
+            <th style={{ padding: "8px" }}>Weight</th>
+            <th style={{ padding: "8px" }}>Dimensions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style={{ backgroundColor: "#f9f9f9", borderBottom: "1px solid #ddd" }}>
+            <td style={{ padding: "8px" }}>{order.orderID}</td>
+            <td style={{ padding: "8px" }}>{order.date} {order.time}</td>
+            <td style={{ padding: "8px" }}>{order.operator}</td>
+            <td style={{ padding: "8px" }}>{order.machineName}</td>
+            <td style={{ padding: "8px" }}>{order.machineType}</td>
+            <td style={{ padding: "8px" }}>
+              <span style={{
+                padding: "2px 6px",
+                borderRadius: "3px",
+                fontSize: "12px",
+                color: "white",
+                backgroundColor:
+                  order.machineStatus === "Start" ? "#27ae60" :
+                  order.machineStatus === "Stop" ? "#e74c3c" :
+                  order.machineStatus === "Pending" ? "#f39c12" :
+                  "#95a5a6"
+              }}>
+                {order.machineStatus}
+              </span>
+            </td>
+            <td style={{ padding: "8px" }}>
+              <span style={{
+                padding: "4px 8px",
+                borderRadius: "4px",
+                fontSize: "12px",
+                fontWeight: "bold",
+                color: "white",
+                backgroundColor:
+                  order.status === "Complete" ? "#27ae60" :
+                  order.status === "Pending" ? "#f39c12" :
+                  order.status === "Dispatch" ? "#3498db" :
+                  order.status === "In-Progress" ? "#9b59b6" :
+                  order.status === "Ready" ? "#1abc9c" :
+                  order.status === "Cancel" ? "#e74c3c" :
+                  "#95a5a6"
+              }}>
+                {order.status}
+              </span>
+            </td>
+            <td style={{ padding: "8px" }}>{order.materialWeight || "-"}</td>
+            <td style={{ padding: "8px" }}>{order.dimensions || "-"}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      {/* Optional fields below the table */}
+      <div style={{ marginTop: "10px" }}>
+        {order.branch && (
+          <div>
+            <strong>Branch:</strong> {order.branch}
+          </div>
+        )}
+        {order.completionProgress && (
+          <div>
+            <strong>Progress:</strong> {order.completionProgress}
+          </div>
+        )}
+        {order.notes && (
+          <div style={{ marginTop: "5px" }}>
+            <strong>Notes:</strong>{" "}
+            <span style={{ fontSize: "12px", color: "#666" }}>{order.notes}</span>
+          </div>
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
 
   const isLoading = machineTypesLoading || machinesLoading || ordersLoading;
+  const filteredOrders = getFilteredOrders();
 
   return (
     <div className="container">
       <div className="item">
         <BackButton />
+        {/* Export/Print Buttons */}
+        <div style={{ 
+          display: "flex", 
+          justifyContent: "flex-end", 
+          gap: "10px",
+          marginTop: "10px"
+        }}>
+          <button
+            onClick={exportToExcel}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "5px",
+              padding: "8px 15px",
+              backgroundColor: "#27ae60",
+              color: "white",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer",
+              fontSize: "13px",
+              fontWeight: "500"
+            }}
+            title="Download as CSV"
+          >
+            <Download size={16} /> Excel
+          </button>
+          <button
+            onClick={handlePrint}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "5px",
+              padding: "8px 15px",
+              backgroundColor: "#3498db",
+              color: "white",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer",
+              fontSize: "13px",
+              fontWeight: "500"
+            }}
+            title="Print orders"
+          >
+            <Printer size={16} /> Print
+          </button>
+        </div>
       </div>
       
       <div className="item">
         <div className="sidebarGroup">
-          <h3 onClick={handleGlobalAllSelect}>Show All Orders</h3>
+          <h3 onClick={handleGlobalAllSelect} style={{ cursor: "pointer" }}>Show All Orders</h3>
         </div>
         
         {/* Status Filter Buttons */}
@@ -531,6 +690,90 @@ const renderOrderCard = (order: DisplayOrder) => (
           </div>
         </div>
 
+        {/* Operator Filter */}
+        <div className="sidebarGroup">
+          <h3>Filter by Operator <span style={{fontSize: "12px", color: "#666"}}>({operatorFilter.length} selected)</span></h3>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "5px", marginTop: "10px" }}>
+            {uniqueOperators.map((operator: string) => (
+              <button
+                key={operator}
+                onClick={() => handleOperatorFilter(operator)}
+                style={{
+                  padding: "5px 10px",
+                  border: "1px solid #ddd",
+                  borderRadius: "4px",
+                  backgroundColor: operatorFilter.includes(operator) ? "#9b59b6" : "white",
+                  color: operatorFilter.includes(operator) ? "white" : "black",
+                  cursor: "pointer",
+                  fontSize: "12px",
+                  fontWeight: operatorFilter.includes(operator) ? "bold" : "normal"
+                }}
+              >
+                {operatorFilter.includes(operator) ? "✓ " : ""}{operator}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Date Range Filter */}
+        <div className="sidebarGroup">
+          <h3>Filter by Date Range</h3>
+          <div style={{ marginBottom: "10px" }}>
+            <label style={{ fontSize: "12px", color: "#666", display: "block", marginBottom: "5px" }}>From Date:</label>
+            <input
+              type="date"
+              value={fromDate}
+              onChange={(e) => setFromDate(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "8px",
+                border: "1px solid #ddd",
+                borderRadius: "4px",
+                fontSize: "12px",
+                boxSizing: "border-box"
+              }}
+            />
+          </div>
+          <div>
+            <label style={{ fontSize: "12px", color: "#666", display: "block", marginBottom: "5px" }}>To Date:</label>
+            <input
+              type="date"
+              value={toDate}
+              onChange={(e) => setToDate(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "8px",
+                border: "1px solid #ddd",
+                borderRadius: "4px",
+                fontSize: "12px",
+                boxSizing: "border-box"
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Sort By */}
+        <div className="sidebarGroup">
+          <h3>Sort By</h3>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            style={{
+              width: "100%",
+              padding: "8px",
+              border: "1px solid #ddd",
+              borderRadius: "4px",
+              fontSize: "12px",
+              boxSizing: "border-box"
+            }}
+          >
+            <option value="date-desc">Latest First</option>
+            <option value="date-asc">Oldest First</option>
+            <option value="order-asc">Order ID (A-Z)</option>
+            <option value="order-desc">Order ID (Z-A)</option>
+          </select>
+        </div>
+
         {/* Reset All Filters Button */}
         <div className="sidebarGroup">
           <button
@@ -557,7 +800,8 @@ const renderOrderCard = (order: DisplayOrder) => (
           <div>• Machine Types: {machineTypes.length}</div>
           <div>• Machines: {machines.length}</div>
           <div>• Orders: {orders.length}</div>
-          {isLoading && <div style={{ color: "#f39c12" }}>⏳ Loading...</div>}
+          <div>• Filtered: {filteredOrders.length}</div>
+          {isLoading && <div style={{ color: "#f39c12", marginTop: "5px" }}>⏳ Loading...</div>}
         </div>
       </div>
 
@@ -565,7 +809,7 @@ const renderOrderCard = (order: DisplayOrder) => (
         <div className="inputBoxAllodersSrearchbox">
           <input 
             type="text" 
-            placeholder="Search orders, company, machine name, machine type, or notes..." 
+            placeholder="Search orders, company, machine name, machine type, operator, or notes..." 
             className="input"
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
@@ -573,7 +817,7 @@ const renderOrderCard = (order: DisplayOrder) => (
         </div>
         
         {/* Active Filters Display */}
-        {(statusFilter.length > 0 || machineTypeFilter.length > 0 || machineNameFilter.length > 0 || searchText) && (
+        {(statusFilter.length > 0 || machineTypeFilter.length > 0 || machineNameFilter.length > 0 || operatorFilter.length > 0 || fromDate || toDate || searchText) && (
           <div style={{ 
             backgroundColor: "#f8f9fa", 
             padding: "10px", 
@@ -616,6 +860,28 @@ const renderOrderCard = (order: DisplayOrder) => (
                   Machines: {machineNameFilter.join(", ")}
                 </span>
               )}
+              {operatorFilter.length > 0 && (
+                <span style={{ 
+                  backgroundColor: "#9b59b6", 
+                  color: "white", 
+                  padding: "2px 6px", 
+                  borderRadius: "3px", 
+                  fontSize: "12px" 
+                }}>
+                  Operators: {operatorFilter.join(", ")}
+                </span>
+              )}
+              {(fromDate || toDate) && (
+                <span style={{ 
+                  backgroundColor: "#16a085", 
+                  color: "white", 
+                  padding: "2px 6px", 
+                  borderRadius: "3px", 
+                  fontSize: "12px" 
+                }}>
+                  {fromDate && toDate ? `Date: ${fromDate} to ${toDate}` : fromDate ? `From: ${fromDate}` : `To: ${toDate}`}
+                </span>
+              )}
               {searchText && (
                 <span style={{ 
                   backgroundColor: "#6c757d", 
@@ -641,16 +907,16 @@ const renderOrderCard = (order: DisplayOrder) => (
           {!isLoading && showGlobalAll && (
             <div>
               <h3>
-                {statusFilter.length === 0 && machineTypeFilter.length === 0 && machineNameFilter.length === 0 
+                {statusFilter.length === 0 && machineTypeFilter.length === 0 && machineNameFilter.length === 0 && operatorFilter.length === 0 && !fromDate && !toDate
                   ? "All Orders" 
                   : "Filtered Orders"
                 }
                 <span style={{ fontSize: "14px", marginLeft: "10px", color: "#666" }}>
-                  ({getFilteredOrders().length} orders)
+                  ({filteredOrders.length} orders)
                 </span>
               </h3>
-              {getFilteredOrders().length > 0 ? (
-                getFilteredOrders().map(renderOrderCard)
+              {filteredOrders.length > 0 ? (
+                filteredOrders.map(renderOrderCard)
               ) : (
                 <div style={{ textAlign: "center", color: "#666", padding: "20px" }}>
                   <p>No orders found matching your criteria.</p>
@@ -674,6 +940,20 @@ const renderOrderCard = (order: DisplayOrder) => (
           )}
         </div>
       </div>
+
+      {/* Print Styles */}
+      <style>{`
+        @media print {
+          button, input[type="text"], input[type="date"], select { display: none !important; }
+          .sidebarGroup { display: none !important; }
+          .item:first-child { display: none !important; }
+          [style*="display: flex"] { display: none !important; }
+          table { border: 1px solid #000; width: 100%; }
+          th, td { border: 1px solid #000 !important; padding: 8px; }
+          th { background-color: #ecf0f1 !important; }
+          .order-card { page-break-inside: avoid; }
+        }
+      `}</style>
     </div>
   );
 };

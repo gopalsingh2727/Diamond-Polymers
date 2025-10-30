@@ -1,6 +1,6 @@
 import { BackButton } from "../../../allCompones/BackButton";
 import React, { useState, useMemo, useEffect } from "react";
-import {  useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { getAccounts } from "../../../redux/create/createNewAccount/NewAccountActions";
 import { RootState } from "../../../redux/rootReducer";
@@ -36,20 +36,20 @@ const Account: React.FC = () => {
 
   const displayedAccounts = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
-    if (!query) return accounts;
+    if (!query) return accounts || [];
 
-    return accounts.filter(acc =>
+    return (accounts || []).filter(acc =>
       acc.companyName?.toLowerCase().includes(query) ||
       acc.firstName?.toLowerCase().includes(query) ||
       acc.lastName?.toLowerCase().includes(query) ||
-      (`${acc.firstName} ${acc.lastName}`).toLowerCase().includes(query) ||
+      (`${acc.firstName || ''} ${acc.lastName || ''}`).toLowerCase().includes(query) ||
       acc.email?.toLowerCase().includes(query) ||
-      acc.phone1.includes(query) ||
+      acc.phone1?.includes(query) ||
       acc.phone2?.includes(query) ||
       acc.whatsapp?.includes(query) ||
       acc.telephone?.includes(query) ||
       acc.state?.toLowerCase().includes(query) ||
-      acc.pinCode.includes(query) ||
+      acc.pinCode?.includes(query) ||
       acc.address1?.toLowerCase().includes(query) ||
       acc.address2?.toLowerCase().includes(query)
     );
@@ -89,7 +89,7 @@ const Account: React.FC = () => {
   };
 
   const handleAccountSelect = (account: AccountData) => {
-    navigate('/menu/AccountInfo', { state: { accountData: account ,  } });
+    navigate('/menu/AccountInfo', { state: { accountData: account } });
   };
 
   const getFullName = (a: AccountData) => `${a.firstName || ''} ${a.lastName || ''}`.trim();

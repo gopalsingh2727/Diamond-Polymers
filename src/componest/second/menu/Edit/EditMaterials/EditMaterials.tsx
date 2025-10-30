@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   getMaterials,
@@ -35,46 +35,61 @@ const EditMaterials: React.FC = () => {
   const { categories: materialCategories = [] } = useSelector(
     (state: RootState) => state.materialCategories || {}
   );
-  const { success: updateSuccess } = useSelector(
-    (state: RootState) => state.materialUpdate || {}
-  );
-  const { success: deleteSuccess } = useSelector(
-    (state: RootState) => state.materialDelete || {}
-  );
 
-  const [focusedRow, setFocusedRow] = useState<number>(-1);
+  const [selectedRow, setSelectedRow] = useState(0);
+  const [showDetail, setShowDetail] = useState(false);
   const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(null);
   const [editForm, setEditForm] = useState({
     materialName: "",
     materialMol: "",
     materialTypeId: "",
   });
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteInput, setDeleteInput] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const rowRefs = useRef<(HTMLTableRowElement | null)[]>([]);
+  // Filter materials based on search term
+  const filteredMaterials = materials.filter((material: Material) => {
+    if (!searchTerm) return true;
+    
+    const search = searchTerm.toLowerCase();
+    return (
+      material.materialName?.toLowerCase().includes(search) ||
+      material.materialMol?.toString().includes(search) ||
+      material.materialType?.materialTypeName?.toLowerCase().includes(search)
+    );
+  });
+
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (showDetail || filteredMaterials.length === 0) return;
+
+      if (e.key === "ArrowDown") {
+        setSelectedRow((prev) => Math.min(prev + 1, filteredMaterials.length - 1));
+      } else if (e.key === "ArrowUp") {
+        setSelectedRow((prev) => Math.max(prev - 1, 0));
+      } else if (e.key === "Enter") {
+        const selected = filteredMaterials[selectedRow];
+        if (selected) {
+          openEditor(selected);
+        }
+      }
+    },
+    [filteredMaterials, selectedRow, showDetail]
+  );
 
   useEffect(() => {
     dispatch(getMaterials());
     dispatch(getMaterialCategories());
-  }, [dispatch, updateSuccess, deleteSuccess]);
+  }, [dispatch]);
 
   useEffect(() => {
-    if (focusedRow >= 0 && rowRefs.current[focusedRow]) {
-      rowRefs.current[focusedRow]?.focus();
-    }
-  }, [focusedRow]);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleKeyDown]);
 
-  const handleKeyDown = (
-    e: React.KeyboardEvent<HTMLTableRowElement>,
-    material: Material
-  ) => {
-    if (e.key === "Enter") openEditor(material);
-    else if (e.key === "ArrowDown")
-      setFocusedRow((prev) => Math.min(prev + 1, materials.length - 1));
-    else if (e.key === "ArrowUp")
-      setFocusedRow((prev) => Math.max(prev - 1, 0));
-  };
+  useEffect(() => {
+    // Reset selected row when search changes
+    setSelectedRow(0);
+  }, [searchTerm]);
 
   const openEditor = (material: Material) => {
     setSelectedMaterial(material);
@@ -83,13 +98,14 @@ const EditMaterials: React.FC = () => {
       materialMol: material.materialMol?.toString() || "",
       materialTypeId: material.materialType?._id || "",
     });
+    setShowDetail(true);
   };
 
   const handleEditChange = (field: keyof typeof editForm, value: string) => {
     setEditForm({ ...editForm, [field]: value });
   };
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
     if (!selectedMaterial) return;
 
     if (
@@ -97,160 +113,237 @@ const EditMaterials: React.FC = () => {
       !editForm.materialMol.trim() ||
       !editForm.materialTypeId
     ) {
-      alert("❌ All fields are required");
+      alert("All fields are required");
       return;
     }
 
-    dispatch(
-      updateMaterial(selectedMaterial._id, {
-        materialName: editForm.materialName.trim(),
-        materialMol: parseFloat(editForm.materialMol.trim()) || 0,
-        materialType: editForm.materialTypeId,
-      })
-    );
-    setSelectedMaterial(null);
-  };
-
-  const handleDeleteClick = () => {
-    setDeleteInput("");
-    setShowDeleteConfirm(true);
-  };
-
-  const confirmDelete = () => {
-    if (deleteInput === "DELETE" && selectedMaterial) {
-      dispatch(deleteMaterial(selectedMaterial._id));
-      setShowDeleteConfirm(false);
+    try {
+      await dispatch(
+        updateMaterial(selectedMaterial._id, {
+          materialName: editForm.materialName.trim(),
+          materialMol: parseFloat(editForm.materialMol.trim()) || 0,
+          materialType: editForm.materialTypeId,
+        })
+      );
+      alert("Material updated successfully!");
+      setShowDetail(false);
       setSelectedMaterial(null);
-    } else {
-      alert("❌ Type DELETE to confirm deletion");
+      dispatch(getMaterials());
+    } catch (err) {
+      alert("Failed to update material.");
     }
   };
 
-  const cancelDelete = () => setShowDeleteConfirm(false);
+  const handleDelete = async () => {
+    if (!selectedMaterial) return;
+
+    if (!window.confirm("Are you sure you want to delete this material?"))
+      return;
+
+    try {
+      await dispatch(deleteMaterial(selectedMaterial._id));
+      alert("Deleted successfully.");
+      setShowDetail(false);
+      setSelectedMaterial(null);
+      dispatch(getMaterials());
+    } catch (err) {
+      alert("Failed to delete.");
+    }
+  };
+
+  const handleRowClick = (index: number, material: Material) => {
+    setSelectedRow(index);
+    openEditor(material);
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const clearSearch = () => {
+    setSearchTerm("");
+  };
 
   return (
-    <div className="EditMaterials p-4">
-      <h2 className="text-xl font-semibold mb-4">Material List</h2>
+    <div className="EditMachineType">
+       {loading && <p className="loadingAndError">Loading...</p>}
+      {error && <p className="loadingAndError"  style={{ color: "red" }}>{error}</p>}
 
-      {loading && <p>Loading...</p>}
-      {error && <p className="text-red-500">{error}</p>}
-
-      {!selectedMaterial ? (
-        <table className="w-full border border-collapse">
-          <thead className="bg-gray-200">
-            <tr>
-              <th className="p-2 border">Name</th>
-              <th className="p-2 border">Mol</th>
-              <th className="p-2 border">Category</th>
-              <th className="p-2 border">Branch</th>
-            </tr>
-          </thead>
-          <tbody>
-            {materials.map((material, index) => (
-              <tr
-                key={material._id}
-                ref={(el) => (rowRefs.current[index] = el)}
-                tabIndex={0}
-                onClick={() => openEditor(material)}
-                onKeyDown={(e) => handleKeyDown(e, material)}
-                onFocus={() => setFocusedRow(index)}
-                className={focusedRow === index ? "bg-blue-100" : ""}
-              >
-                <td className="p-2 border">{material.materialName}</td>
-                <td className="p-2 border">{material.materialMol}</td>
-                <td className="p-2 border">
-                  {material.materialType?.materialTypeName || "-"}
-                </td>
-                <td className="p-2 border">{material.branchId || "-"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      ) : (
-        <div className="bg-white p-4 shadow-md rounded max-w-lg">
-          <h3 className="text-lg font-bold mb-2">Edit Material</h3>
-
-          <label className="block mb-1">Name</label>
-          <input
-            value={editForm.materialName}
-            onChange={(e) => handleEditChange("materialName", e.target.value)}
-            className="border p-2 mb-3 w-full"
-          />
-
-          <label className="block mb-1">Mol</label>
-          <input
-            type="number"
-            value={editForm.materialMol}
-            onChange={(e) => handleEditChange("materialMol", e.target.value)}
-            className="border p-2 mb-3 w-full"
-          />
-
-          <label className="block mb-1">Material Category</label>
-          <select
-            value={editForm.materialTypeId}
-            onChange={(e) => handleEditChange("materialTypeId", e.target.value)}
-            className="border p-2 mb-3 w-full"
-          >
-            <option value="">Select Category</option>
-            {materialCategories.map((type: MaterialType) => (
-              <option key={type._id} value={type._id}>
-                {type.materialTypeName}
-              </option>
-            ))}
-          </select>
-
-          <div className="flex gap-3 mt-4">
-            <button
-              onClick={handleUpdate}
-              className="bg-green-600 text-white px-4 py-2 rounded"
-            >
-              Save Changes
-            </button>
-            <button
-              onClick={handleDeleteClick}
-              className="bg-red-500 text-white px-4 py-2 rounded"
-            >
-              Delete
-            </button>
-            <button
-              onClick={() => setSelectedMaterial(null)}
-              className="bg-gray-400 text-white px-4 py-2 rounded"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded shadow-lg max-w-sm w-full text-center">
-            <h3 className="text-lg font-bold mb-4">
-              Type <span className="text-red-600 font-mono">DELETE</span> to confirm
-            </h3>
-            <input
-              type="text"
-              value={deleteInput}
-              onChange={(e) => setDeleteInput(e.target.value)}
-              className="border p-2 w-full mb-4"
-              placeholder="Type DELETE to confirm"
-            />
-            <div className="flex justify-center gap-4">
-              <button
-                onClick={confirmDelete}
-                className="bg-red-600 text-white px-4 py-2 rounded"
-              >
-                Confirm
-              </button>
-              <button
-                onClick={cancelDelete}
-                className="bg-gray-400 text-white px-4 py-2 rounded"
-              >
-                Cancel
-              </button>
+      {!showDetail && !loading && materials.length > 0 ? (
+        <>
+          {/* Search Bar */}
+          <div style={{
+            marginBottom: '20px',
+            display: 'flex',
+            gap: '10px',
+            alignItems: 'center'
+          }}>
+            <div style={{ position: 'relative', flex: 1 }}>
+              <input
+                type="text"
+                placeholder="Search by material name, mol, or category..."
+                value={searchTerm}
+                onChange={handleSearchChange}
+                style={{
+                  width: '100%',
+                  padding: '12px 40px 12px 40px',
+                  fontSize: '15px',
+                  border: '2px solid #ddd',
+                  borderRadius: '8px',
+                  outline: 'none',
+                  transition: 'border-color 0.3s ease',
+                }}
+                onFocus={(e) => e.target.style.borderColor = '#2d89ef'}
+                onBlur={(e) => e.target.style.borderColor = '#ddd'}
+              />
+              <span style={{
+                position: 'absolute',
+                left: '14px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                fontSize: '18px',
+                color: '#666',
+              }}>
+                🔍
+              </span>
+              {searchTerm && (
+                <button
+                  onClick={clearSearch}
+                  style={{
+                    position: 'absolute',
+                    right: '10px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    fontSize: '20px',
+                    cursor: 'pointer',
+                    color: '#999',
+                    padding: '4px 8px',
+                  }}
+                  title="Clear search"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+            <div style={{
+              padding: '12px 16px',
+              background: '#f5f5f5',
+              borderRadius: '8px',
+              fontSize: '14px',
+              color: '#666',
+              whiteSpace: 'nowrap',
+            }}>
+              {filteredMaterials.length} of {materials.length} materials
             </div>
           </div>
+
+          {/* Table */}
+          {filteredMaterials.length > 0 ? (
+            <table>
+              <thead>
+                <tr>
+                  <th>No</th>
+                  <th>Material Name</th>
+                  <th>Mol</th>
+                  <th>Category</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredMaterials.map((material: Material, index: number) => (
+                  <tr
+                    key={material._id}
+                    className={selectedRow === index ? "bg-blue-100" : ""}
+                    onClick={() => handleRowClick(index, material)}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <td>{index + 1}</td>
+                    <td>{material.materialName}</td>
+                    <td>{material.materialMol}</td>
+                    <td>{material.materialType?.materialTypeName || "N/A"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div style={{
+              padding: '40px',
+              textAlign: 'center',
+              color: '#999',
+              fontSize: '16px',
+            }}>
+              No materials found matching "{searchTerm}"
+            </div>
+          )}
+        </>
+      ) : showDetail && selectedMaterial ? (
+        <div className="detail-container">
+          <div className="TopButtonEdit">
+            <button onClick={() => setShowDetail(false)}>Back</button>
+            <button onClick={handleDelete} className="Delete">
+              Delete
+            </button>
+          </div>
+
+          <div className="form-section">
+            <label>Material Name:</label>
+            <input
+              type="text"
+              value={editForm.materialName}
+              onChange={(e) => handleEditChange("materialName", e.target.value)}
+            />
+          </div>
+
+          <div className="form-section">
+            <label>Mol:</label>
+            <input
+              type="number"
+              step="0.01"
+              value={editForm.materialMol}
+              onChange={(e) => handleEditChange("materialMol", e.target.value)}
+            />
+          </div>
+
+          <div className="form-section">
+            <label>Material Category:</label>
+            <select
+              value={editForm.materialTypeId}
+              onChange={(e) => handleEditChange("materialTypeId", e.target.value)}
+            >
+              <option value="">Select Category</option>
+              {materialCategories.map((type: MaterialType) => (
+                <option key={type._id} value={type._id}>
+                  {type.materialTypeName}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <button
+            onClick={handleUpdate}
+            className="save-button"
+            disabled={
+              !editForm.materialName.trim() ||
+              !editForm.materialMol.trim() ||
+              !editForm.materialTypeId
+            }
+          >
+            Save
+          </button>
+
+          <div className="info-section">
+            <p>
+              <strong>Current Category:</strong>{" "}
+              {selectedMaterial.materialType?.materialTypeName || "N/A"}
+            </p>
+            <p>
+              <strong>Current Mol:</strong> {selectedMaterial.materialMol}
+            </p>
+          </div>
         </div>
+      ) : (
+        !loading && <p>No materials available.</p>
       )}
     </div>
   );

@@ -1,0 +1,286 @@
+/* ============================================
+   REPORT BUTTONS
+   CSS Module for Button Components
+   ============================================ */
+
+/* Button Container */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+/* Base Button Styles */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.5;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.button:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+/* Primary Button */
+.primary {
+  background-color: #3b82f6;
+  color: #ffffff;
+}
+
+.primary:hover:not(:disabled) {
+  background-color: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.primary:active:not(:disabled) {
+  background-color: #1d4ed8;
+  transform: translateY(0);
+}
+
+/* Secondary Button */
+.secondary {
+  background-color: #f1f5f9;
+  color: #334155;
+}
+
+.secondary:hover:not(:disabled) {
+  background-color: #e2e8f0;
+  transform: translateY(-1px);
+}
+
+.secondary:active:not(:disabled) {
+  background-color: #cbd5e1;
+}
+
+/* Export Button */
+.export {
+  background-color: #10b981;
+  color: #ffffff;
+}
+
+.export:hover:not(:disabled) {
+  background-color: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.export:active:not(:disabled) {
+  background-color: #047857;
+  transform: translateY(0);
+}
+
+/* Print Button */
+.print {
+  background-color: #475569;
+  color: #ffffff;
+}
+
+.print:hover:not(:disabled) {
+  background-color: #334155;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.print:active:not(:disabled) {
+  background-color: #1e293b;
+  transform: translateY(0);
+}
+
+/* Danger/Delete Button */
+.danger {
+  background-color: #ef4444;
+  color: #ffffff;
+}
+
+.danger:hover:not(:disabled) {
+  background-color: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.danger:active:not(:disabled) {
+  background-color: #b91c1c;
+  transform: translateY(0);
+}
+
+/* Outline Button */
+.outline {
+  background-color: transparent;
+  color: #3b82f6;
+  border: 1px solid #3b82f6;
+}
+
+.outline:hover:not(:disabled) {
+  background-color: #eff6ff;
+}
+
+.outline:active:not(:disabled) {
+  background-color: #dbeafe;
+}
+
+/* Ghost Button */
+.ghost {
+  background-color: transparent;
+  color: #334155;
+}
+
+.ghost:hover:not(:disabled) {
+  background-color: #f8fafc;
+}
+
+.ghost:active:not(:disabled) {
+  background-color: #f1f5f9;
+}
+
+/* Button Icon */
+.icon {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+
+/* Button Sizes */
+.small {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+}
+
+.small .icon {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.large {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+}
+
+.large .icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* Full Width Button */
+.fullWidth {
+  width: 100%;
+}
+
+/* Button Group */
+.buttonGroup {
+  display: inline-flex;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.buttonGroup .button {
+  border-radius: 0;
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.buttonGroup .button:first-child {
+  border-top-left-radius: 0.5rem;
+  border-bottom-left-radius: 0.5rem;
+}
+
+.buttonGroup .button:last-child {
+  border-top-right-radius: 0.5rem;
+  border-bottom-right-radius: 0.5rem;
+  border-right: none;
+}
+
+/* Loading State */
+.loading {
+  position: relative;
+  color: transparent;
+  pointer-events: none;
+}
+
+.loading::after {
+  content: '';
+  position: absolute;
+  width: 1rem;
+  height: 1rem;
+  top: 50%;
+  left: 50%;
+  margin-left: -0.5rem;
+  margin-top: -0.5rem;
+  border: 2px solid transparent;
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Icon Only Button */
+.iconOnly {
+  padding: 0.5rem;
+  aspect-ratio: 1;
+}
+
+.iconOnly.small {
+  padding: 0.375rem;
+}
+
+.iconOnly.large {
+  padding: 0.75rem;
+}
+
+/* Print Styles */
+@media print {
+  .actions {
+    display: none !important;
+  }
+}
+
+/* Dark Mode */
+@media (prefers-color-scheme: dark) {
+  .secondary {
+    background-color: #334155;
+    color: #f1f5f9;
+  }
+  
+  .secondary:hover:not(:disabled) {
+    background-color: #475569;
+  }
+  
+  .ghost {
+    color: #cbd5e1;
+  }
+  
+  .ghost:hover:not(:disabled) {
+    background-color: #1e293b;
+  }
+  
+  .outline {
+    border-color: #60a5fa;
+    color: #60a5fa;
+  }
+  
+  .outline:hover:not(:disabled) {
+    background-color: #1e3a8a;
+  }
+}

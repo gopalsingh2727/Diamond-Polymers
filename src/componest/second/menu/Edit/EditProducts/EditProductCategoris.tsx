@@ -86,8 +86,8 @@ const EditProductCategories: React.FC = () => {
 
   return (
     <div className="EditMachineType">
-      {loading && <p>Loading...</p>}
-      {error && <p style={{ color: "red" }}>{error}</p>}
+       {loading && <p className="loadingAndError">Loading...</p>}
+      {error && <p className="loadingAndError"  style={{ color: "red" }}>{error}</p>}
 
       {!showDetail && !loading && productTypes.length > 0 ? (
         <table>

@@ -2,14 +2,16 @@ import React, { useState, useEffect, useRef } from "react";
 import EditNewAccount from "./EditNewAccount/EditNewAccount";
 import EditMaterials from "./EditMaterials/EditMaterials";
 import EditStep from "./EditCreateStep/EditStep";
-import EditProduct from "./EditProducts/EditProduct";
-import EditProductCategoris from "./EditProducts/EditProductCategoris";
+// import EditProduct from "./EditProducts/EditProduct";
+// import EditProductCategoris from "./EditProducts/EditProductCategoris";
+import EditDeviceAccess from "./EditDeviceAccess/EditDeviceAccess";
+import EditAccess from "./EditDeviceAccess/EditDeviceAccessCreate";
 import EditMachine from "./EditMachine/EditMachine";
 import MaterialsCategories from "./EditMaterials/MaterialsCategories";
 import EditMachineOpertor from "./EditMachineOpertor/EditMachineOPertor";
 import EditMachineType from "./EditMachineType/EditMachineyType";
 import UpdataIDAndPassword from "./UpdataIDandPassword/UpdataIDAndPassword";
-
+import ErrorBoundary from "../../../error/error";  
 import Headers from "../../header/Headers";
 import "../create/create.css";
 import "../../../main/sidebar/menu.css";
@@ -26,15 +28,18 @@ const EditIndex = () => {
  console.log(userRole , "this Role Me");
  
   const baseComponentsMap: Record<string, JSX.Element> = {
-    account: <EditNewAccount />,
-    machineType: <EditMachineType />,
-    machine: <EditMachine />,
-    step: <EditStep />,
-    machineOperator: <EditMachineOpertor />,
-    products: <EditProduct />,
-    categories: <EditProductCategoris />,
-    materials: <EditMaterials />,
-    materialsCategories: <MaterialsCategories />
+    account: <ErrorBoundary> <EditNewAccount /> </ErrorBoundary>,
+    machineType: <ErrorBoundary> <EditMachineType /> </ErrorBoundary>,
+    machine: <ErrorBoundary> <EditMachine /> </ErrorBoundary>,
+    step: <ErrorBoundary> <EditStep /> </ErrorBoundary>,
+    machineOperator: <ErrorBoundary> <EditMachineOpertor /> </ErrorBoundary>,
+    DeviceAccess: <ErrorBoundary> <EditDeviceAccess /></ErrorBoundary>,
+    Access: <ErrorBoundary> <EditAccess /></ErrorBoundary>,
+    // products: <EditProduct />,
+    // categories: <EditProductCategoris />,
+
+    materials: <ErrorBoundary> <EditMaterials /> </ErrorBoundary>,
+    materialsCategories: <ErrorBoundary> <MaterialsCategories /></ErrorBoundary> ,
   };
 
   const baseTitlesMap: Record<string, string> = {
@@ -43,8 +48,10 @@ const EditIndex = () => {
     machine: "Machine",
     step: "Step",
     machineOperator: "Machine Operator",
-    products: "Products",
-    categories: "Product Categories",
+    DeviceAccess: "Device Access",
+    Access: "Access",
+    // products: "Products",
+    // categories: "Product Categories",
     materials: "Materials",
     materialsCategories: "Materials Categories"
   };

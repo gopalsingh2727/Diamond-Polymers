@@ -1,4 +1,4 @@
-// Updated BranchActions.ts - Fixed for Manager Role
+// Updated BranchActions.ts - Fixed for both Admin and Manager
 
 import axios from "axios";
 import { AppDispatch, RootState } from "../../../store";
@@ -47,16 +47,16 @@ const storeBranchId = (branchId: string, userData: any) => {
     };
     localStorage.setItem("userData", JSON.stringify(updatedUserData));
 
-    console.log("Branch ID stored successfully");
+    console.log("✅ Branch ID stored successfully");
     console.log("Updated localStorage userData:", localStorage.getItem("userData"));
     console.log("selectedBranch:", localStorage.getItem("selectedBranch"));
     console.log("=== END STORING BRANCH ID ===");
   } catch (error) {
-    console.error("Error storing branch ID:", error);
+    console.error("❌ Error storing branch ID:", error);
   }
 };
 
-// Fetch Branches - Fixed for Manager
+// Fetch Branches - Fixed for both Admin and Manager
 export const fetchBranches = () => {
   return async (dispatch: AppDispatch, getState: () => RootState) => {
     dispatch({ type: FETCH_BRANCHES_REQUEST });
@@ -71,54 +71,80 @@ export const fetchBranches = () => {
       console.log("User data:", userData);
 
       let url = "";
+      let branches: any[] = [];
+      let branchId: string | null = null;
+
       if (role === "admin") {
         url = `${baseUrl}/branch/branches`;
+        
+        const { data } = await axios.get(url, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "x-api-key": API_KEY,
+          },
+        });
+
+        console.log("Admin API Response:", data);
+
+        // ✅ Extract branches array from response
+        branches = data.branches || data || [];
+        
+        // ✅ Ensure branches is an array
+        if (!Array.isArray(branches)) {
+          console.error("❌ Invalid branches data:", branches);
+          branches = [];
+        }
+
+        console.log(`✅ Found ${branches.length} branches for admin`);
+
+        // Get first branch ID if available
+        if (branches.length > 0) {
+          branchId = branches[0]._id || branches[0].id;
+          console.log("Admin default branch ID:", branchId);
+        }
+
       } else if (role === "manager") {
         url = `${baseUrl}/manager/getMyBranch`;
+        
+        const { data } = await axios.get(url, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "x-api-key": API_KEY,
+          },
+        });
+
+        console.log("Manager API Response:", data);
+
+        // ✅ For manager, wrap single branch in array
+        branches = [data];
+        branchId = data.branchId || data._id || data.id;
+        
+        console.log("Manager branch ID:", branchId);
+
       } else {
         throw new Error("Unauthorized role");
       }
 
-      console.log("API URL:", url);
+      console.log("Branches to dispatch:", branches);
 
-      const { data } = await axios.get(url, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "x-api-key": API_KEY,
-        },
+      // ✅ Dispatch branches array (always an array)
+      dispatch({ 
+        type: FETCH_BRANCHES_SUCCESS, 
+        payload: branches 
       });
 
-      console.log("API Response:", data);
-
-      const branches = role === "manager" ? [data] : data;
-      dispatch({ type: FETCH_BRANCHES_SUCCESS, payload: branches });
-
-      // Fixed: Proper branch ID extraction and storage
-      let branchId = null;
-      if (role === "manager") {
-        // For manager, data should be the branch object directly
-        branchId = data.branchId || data._id || data.id;
-        console.log("Manager branch ID:", branchId);
-      } else if (role === "admin" && data && data.length > 0) {
-      
-        branchId = data[0]._id || data[0].id;
-        console.log("Admin default branch ID:", branchId);
-      }
-
+      // ✅ Store branch ID if found
       if (branchId) {
         console.log("Storing branch ID:", branchId);
         storeBranchId(branchId, userData);
-        
-        // Also dispatch to Redux if you have that action
-        // dispatch(setSelectedBranchInAuth(branchId));
       } else {
-        console.error("No branch ID found in response");
+        console.warn("⚠️ No branch ID found in response");
       }
 
       console.log("=== END FETCHING BRANCHES ===");
 
     } catch (error: any) {
-      console.error("Fetch branches error:", error);
+      console.error("❌ Fetch branches error:", error);
       dispatch({
         type: FETCH_BRANCHES_FAIL,
         payload: error?.response?.data?.message || "Failed to fetch branches",
@@ -175,7 +201,15 @@ export const listBranches = () => {
         },
       });
 
-      dispatch({ type: BRANCH_LIST_SUCCESS, payload: data });
+      console.log("List branches response:", data);
+
+      // ✅ Extract branches array
+      const branches = data.branches || data || [];
+
+      dispatch({ 
+        type: BRANCH_LIST_SUCCESS, 
+        payload: branches 
+      });
 
     } catch (error: any) {
       dispatch({

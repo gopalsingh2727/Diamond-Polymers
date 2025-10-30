@@ -78,3 +78,11 @@ button {
   cursor: pointer;
 }
 
+
+.loadingAndError {
+  display: flex;
+  justify-content: center; /* horizontal center */
+  align-items: center;     /* vertical center */
+  height: 80vh;           /* full screen height */
+  text-align: center;
+}

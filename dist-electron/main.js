@@ -121,7 +121,7 @@ function requirePolyfills() {
       };
     }
     if (platform === "win32") {
-      fs2.rename = typeof fs2.rename !== "function" ? fs2.rename : function(fs$rename) {
+      fs2.rename = typeof fs2.rename !== "function" ? fs2.rename : (function(fs$rename) {
         function rename(from, to, cb) {
           var start = Date.now();
           var backoff = 0;
@@ -144,9 +144,9 @@ function requirePolyfills() {
         }
         if (Object.setPrototypeOf) Object.setPrototypeOf(rename, fs$rename);
         return rename;
-      }(fs2.rename);
+      })(fs2.rename);
     }
-    fs2.read = typeof fs2.read !== "function" ? fs2.read : function(fs$read) {
+    fs2.read = typeof fs2.read !== "function" ? fs2.read : (function(fs$read) {
       function read(fd, buffer, offset, length, position, callback_) {
         var callback;
         if (callback_ && typeof callback_ === "function") {
@@ -163,8 +163,8 @@ function requirePolyfills() {
       }
       if (Object.setPrototypeOf) Object.setPrototypeOf(read, fs$read);
       return read;
-    }(fs2.read);
-    fs2.readSync = typeof fs2.readSync !== "function" ? fs2.readSync : /* @__PURE__ */ function(fs$readSync) {
+    })(fs2.read);
+    fs2.readSync = typeof fs2.readSync !== "function" ? fs2.readSync : /* @__PURE__ */ (function(fs$readSync) {
       return function(fd, buffer, offset, length, position) {
         var eagCounter = 0;
         while (true) {
@@ -179,7 +179,7 @@ function requirePolyfills() {
           }
         }
       };
-    }(fs2.readSync);
+    })(fs2.readSync);
     function patchLchmod(fs22) {
       fs22.lchmod = function(path2, mode, callback) {
         fs22.open(
@@ -502,7 +502,7 @@ function requireGracefulFs() {
   if (!fs2[gracefulQueue]) {
     var queue = commonjsGlobal[gracefulQueue] || [];
     publishQueue(fs2, queue);
-    fs2.close = function(fs$close) {
+    fs2.close = (function(fs$close) {
       function close(fd, cb) {
         return fs$close.call(fs2, fd, function(err) {
           if (!err) {
@@ -516,8 +516,8 @@ function requireGracefulFs() {
         value: fs$close
       });
       return close;
-    }(fs2.close);
-    fs2.closeSync = function(fs$closeSync) {
+    })(fs2.close);
+    fs2.closeSync = (function(fs$closeSync) {
       function closeSync(fd) {
         fs$closeSync.apply(fs2, arguments);
         resetQueue();
@@ -526,7 +526,7 @@ function requireGracefulFs() {
         value: fs$closeSync
       });
       return closeSync;
-    }(fs2.closeSync);
+    })(fs2.closeSync);
     if (/\bgfs4\b/i.test(process.env.NODE_DEBUG || "")) {
       process.on("exit", function() {
         debug(fs2[gracefulQueue]);
@@ -2171,10 +2171,10 @@ function requireUtils() {
   utils = { stringify, stripBom };
   return utils;
 }
-var jsonfile_1;
+var jsonfile$1;
 var hasRequiredJsonfile$1;
 function requireJsonfile$1() {
-  if (hasRequiredJsonfile$1) return jsonfile_1;
+  if (hasRequiredJsonfile$1) return jsonfile$1;
   hasRequiredJsonfile$1 = 1;
   let _fs;
   try {
@@ -2236,14 +2236,13 @@ function requireJsonfile$1() {
     const str2 = stringify(obj, options);
     return fs2.writeFileSync(file2, str2, options);
   }
-  const jsonfile2 = {
+  jsonfile$1 = {
     readFile,
     readFileSync,
     writeFile,
     writeFileSync
   };
-  jsonfile_1 = jsonfile2;
-  return jsonfile_1;
+  return jsonfile$1;
 }
 var jsonfile;
 var hasRequiredJsonfile;
@@ -8262,7 +8261,7 @@ function requireDumper() {
     return quotingType === QUOTING_TYPE_DOUBLE ? STYLE_DOUBLE : STYLE_SINGLE;
   }
   function writeScalar(state, string, level, iskey, inblock) {
-    state.dump = function() {
+    state.dump = (function() {
       if (string.length === 0) {
         return state.quotingType === QUOTING_TYPE_DOUBLE ? '""' : "''";
       }
@@ -8300,7 +8299,7 @@ function requireDumper() {
         default:
           throw new YAMLException("impossible error: invalid scalar style");
       }
-    }();
+    })();
   }
   function blockHeader(string, indentPerLevel) {
     var indentIndicator = needIndentIndicator(string) ? String(indentPerLevel) : "";
@@ -8314,12 +8313,12 @@ function requireDumper() {
   }
   function foldString(string, width) {
     var lineRe = /(\n+)([^\n]*)/g;
-    var result = function() {
+    var result = (function() {
       var nextLF = string.indexOf("\n");
       nextLF = nextLF !== -1 ? nextLF : string.length;
       lineRe.lastIndex = nextLF;
       return foldLine(string.slice(0, nextLF), width);
-    }();
+    })();
     var prevMoreIndented = string[0] === "\n" || string[0] === " ";
     var moreIndented;
     var match;
@@ -8866,6 +8865,9 @@ function requireIdentifiers() {
   hasRequiredIdentifiers = 1;
   const numeric = /^[0-9]+$/;
   const compareIdentifiers = (a, b) => {
+    if (typeof a === "number" && typeof b === "number") {
+      return a === b ? 0 : a < b ? -1 : 1;
+    }
     const anum = numeric.test(a);
     const bnum = numeric.test(b);
     if (anum && bnum) {
@@ -8972,7 +8974,25 @@ function requireSemver$1() {
       if (!(other instanceof SemVer)) {
         other = new SemVer(other, this.options);
       }
-      return compareIdentifiers(this.major, other.major) || compareIdentifiers(this.minor, other.minor) || compareIdentifiers(this.patch, other.patch);
+      if (this.major < other.major) {
+        return -1;
+      }
+      if (this.major > other.major) {
+        return 1;
+      }
+      if (this.minor < other.minor) {
+        return -1;
+      }
+      if (this.minor > other.minor) {
+        return 1;
+      }
+      if (this.patch < other.patch) {
+        return -1;
+      }
+      if (this.patch > other.patch) {
+        return 1;
+      }
+      return 0;
     }
     comparePre(other) {
       if (!(other instanceof SemVer)) {
@@ -9733,6 +9753,7 @@ function requireRange() {
     return result;
   };
   const parseComparator = (comp, options) => {
+    comp = comp.replace(re2[t.BUILD], "");
     debug("comp", comp, options);
     comp = replaceCarets(comp, options);
     debug("caret", comp);
@@ -10645,12 +10666,12 @@ function requireLodash_isequal() {
     var freeModule = freeExports && true && module && !module.nodeType && module;
     var moduleExports = freeModule && freeModule.exports === freeExports;
     var freeProcess = moduleExports && freeGlobal.process;
-    var nodeUtil = function() {
+    var nodeUtil = (function() {
       try {
         return freeProcess && freeProcess.binding && freeProcess.binding("util");
       } catch (e) {
       }
-    }();
+    })();
     var nodeIsTypedArray = nodeUtil && nodeUtil.isTypedArray;
     function arrayFilter(array, predicate) {
       var index = -1, length = array == null ? 0 : array.length, resIndex = 0, result = [];
@@ -10719,10 +10740,10 @@ function requireLodash_isequal() {
     var coreJsData = root["__core-js_shared__"];
     var funcToString = funcProto.toString;
     var hasOwnProperty = objectProto.hasOwnProperty;
-    var maskSrcKey = function() {
+    var maskSrcKey = (function() {
       var uid = /[^.]+$/.exec(coreJsData && coreJsData.keys && coreJsData.keys.IE_PROTO || "");
       return uid ? "Symbol(src)_1." + uid : "";
-    }();
+    })();
     var nativeObjectToString = objectProto.toString;
     var reIsNative = RegExp(
       "^" + funcToString.call(hasOwnProperty).replace(reRegExpChar, "\\$&").replace(/hasOwnProperty|(function).*?(?=\\\()| for .+?(?=\\\])/g, "$1.*?") + "$"
@@ -11231,9 +11252,9 @@ function requireLodash_isequal() {
     function eq(value, other) {
       return value === other || value !== value && other !== other;
     }
-    var isArguments = baseIsArguments(/* @__PURE__ */ function() {
+    var isArguments = baseIsArguments(/* @__PURE__ */ (function() {
       return arguments;
-    }()) ? baseIsArguments : function(value) {
+    })()) ? baseIsArguments : function(value) {
       return isObjectLike(value) && hasOwnProperty.call(value, "callee") && !propertyIsEnumerable.call(value, "callee");
     };
     var isArray = Array.isArray;
@@ -14667,7 +14688,7 @@ function requireMain$2() {
   if (hasRequiredMain$2) return main$3;
   hasRequiredMain$2 = 1;
   (function(exports) {
-    var __createBinding = main$3 && main$3.__createBinding || (Object.create ? function(o, m, k, k2) {
+    var __createBinding = main$3 && main$3.__createBinding || (Object.create ? (function(o, m, k, k2) {
       if (k2 === void 0) k2 = k;
       var desc = Object.getOwnPropertyDescriptor(m, k);
       if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
@@ -14676,10 +14697,10 @@ function requireMain$2() {
         } };
       }
       Object.defineProperty(o, k2, desc);
-    } : function(o, m, k, k2) {
+    }) : (function(o, m, k, k2) {
       if (k2 === void 0) k2 = k;
       o[k2] = m[k];
-    });
+    }));
     var __exportStar = main$3 && main$3.__exportStar || function(m, exports2) {
       for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports2, p)) __createBinding(exports2, m, p);
     };
@@ -14773,7 +14794,7 @@ function requireMain$2() {
 }
 var mainExports$1 = requireMain$2();
 var main$1 = { exports: {} };
-const version = "16.5.0";
+const version = "16.6.1";
 const require$$4 = {
   version
 };
@@ -14808,8 +14829,10 @@ function requireMain$1() {
     return obj;
   }
   function _parseVault(options) {
+    options = options || {};
     const vaultPath = _vaultPath(options);
-    const result = DotenvModule.configDotenv({ path: vaultPath });
+    options.path = vaultPath;
+    const result = DotenvModule.configDotenv(options);
     if (!result.parsed) {
       const err = new Error(`MISSING_DATA: Cannot parse ${vaultPath} for an unknown reason`);
       err.code = "MISSING_DATA";
@@ -14837,6 +14860,9 @@ function requireMain$1() {
   }
   function _debug(message) {
     console.log(`[dotenv@${version2}][DEBUG] ${message}`);
+  }
+  function _log(message) {
+    console.log(`[dotenv@${version2}] ${message}`);
   }
   function _dotenvKey(options) {
     if (options && options.DOTENV_KEY && options.DOTENV_KEY.length > 0) {
@@ -14905,8 +14931,9 @@ function requireMain$1() {
   }
   function _configVault(options) {
     const debug = Boolean(options && options.debug);
-    if (debug) {
-      _debug("Loading env from encrypted .env.vault");
+    const quiet = options && "quiet" in options ? options.quiet : true;
+    if (debug || !quiet) {
+      _log("Loading env from encrypted .env.vault");
     }
     const parsed = DotenvModule._parseVault(options);
     let processEnv = process.env;
@@ -14920,6 +14947,7 @@ function requireMain$1() {
     const dotenvPath = path2.resolve(process.cwd(), ".env");
     let encoding = "utf8";
     const debug = Boolean(options && options.debug);
+    const quiet = options && "quiet" in options ? options.quiet : true;
     if (options && options.encoding) {
       encoding = options.encoding;
     } else {
@@ -14956,6 +14984,22 @@ function requireMain$1() {
       processEnv = options.processEnv;
     }
     DotenvModule.populate(processEnv, parsedAll, options);
+    if (debug || !quiet) {
+      const keysCount = Object.keys(parsedAll).length;
+      const shortPaths = [];
+      for (const filePath of optionPaths) {
+        try {
+          const relative = path2.relative(process.cwd(), filePath);
+          shortPaths.push(relative);
+        } catch (e) {
+          if (debug) {
+            _debug(`Failed to load ${filePath} ${e.message}`);
+          }
+          lastError = e;
+        }
+      }
+      _log(`injecting env (${keysCount}) from ${shortPaths.join(",")}`);
+    }
     if (lastError) {
       return { parsed: parsedAll, error: lastError };
     } else {
@@ -16176,6 +16220,8 @@ function requireInitialize() {
   const os = require$$2;
   const path2 = require$$1$1;
   const preloadInitializeFn = requireElectronLogPreload();
+  let preloadInitialized = false;
+  let spyConsoleInitialized = false;
   initialize = {
     initialize({
       externalApi,
@@ -16192,6 +16238,7 @@ function requireInitialize() {
               externalApi,
               getSessions,
               includeFutureSession,
+              logger,
               preloadOption: preload
             });
           }
@@ -16208,9 +16255,15 @@ function requireInitialize() {
     externalApi,
     getSessions,
     includeFutureSession,
+    logger,
     preloadOption
   }) {
     let preloadPath = typeof preloadOption === "string" ? preloadOption : void 0;
+    if (preloadInitialized) {
+      logger.warn(new Error("log.initialize({ preload }) already called").stack);
+      return;
+    }
+    preloadInitialized = true;
     try {
       preloadPath = path2.resolve(
         __dirname,
@@ -16239,6 +16292,13 @@ function requireInitialize() {
     });
   }
   function initializeSpyRendererConsole({ externalApi, logger }) {
+    if (spyConsoleInitialized) {
+      logger.warn(
+        new Error("log.initialize({ spyRendererConsole }) already called").stack
+      );
+      return;
+    }
+    spyConsoleInitialized = true;
     const levels = ["debug", "info", "warn", "error"];
     externalApi.onEveryWebContentsEvent(
       "console-message",
@@ -16845,7 +16905,8 @@ function requireStyle() {
     blue: "\x1B[34m",
     magenta: "\x1B[35m",
     cyan: "\x1B[36m",
-    white: "\x1B[37m"
+    white: "\x1B[37m",
+    gray: "\x1B[90m"
   };
   function styleToAnsi(style2) {
     const color = style2.replace(/color:\s*(\w+).*/, "$1").toLowerCase();
@@ -16918,6 +16979,15 @@ function requireConsole() {
   });
   function consoleTransportFactory(logger) {
     return Object.assign(transport, {
+      colorMap: {
+        error: "red",
+        warn: "yellow",
+        info: "cyan",
+        verbose: "unset",
+        debug: "gray",
+        silly: "gray",
+        default: "unset"
+      },
       format: DEFAULT_FORMAT,
       level: "silly",
       transforms: [
@@ -16945,7 +17015,11 @@ function requireConsole() {
     if (typeof transport.format !== "string" || !transport.format.includes("%c")) {
       return data;
     }
-    return [`color:${levelToStyle(message.level)}`, "color:unset", ...data];
+    return [
+      `color:${levelToStyle(message.level, transport)}`,
+      "color:unset",
+      ...data
+    ];
   }
   function canUseStyles(useStyleValue, level) {
     if (typeof useStyleValue === "boolean") {
@@ -16961,9 +17035,8 @@ function requireConsole() {
     const nextTransform = useStyles ? applyAnsiStyles : removeStyles;
     return nextTransform(args);
   }
-  function levelToStyle(level) {
-    const map2 = { error: "red", warn: "yellow", info: "cyan", default: "unset" };
-    return map2[level] || map2.default;
+  function levelToStyle(level, transport) {
+    return transport.colorMap[level] || transport.colorMap.default;
   }
   return console_1;
 }

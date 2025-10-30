@@ -1,0 +1,80 @@
+/* ============================================
+   ISOLATION WRAPPER - Fixed positioning with working buttons
+   ============================================ */
+#report-dashboard-root.isolated-wrapper {
+  /* Fixed positioning - covers entire viewport */
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  
+  /* Enable scrolling inside */
+  overflow-y: auto;
+  overflow-x: hidden;
+  
+  /* FIX: Allow pointer events */
+  pointer-events: auto;
+  
+  /* Isolation */
+  z-index: 1; /* Changed from 9999 - too high! */
+  isolation: isolate;
+  
+  /* Prevent parent scroll */
+  overscroll-behavior: contain;
+  
+  /* Base styles */
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  color: #0f172a;
+  background-color: #f8fafc;
+  line-height: 1.5;
+  font-size: 16px;
+}
+
+/* Reset box-sizing for all children */
+#report-dashboard-root.isolated-wrapper *,
+#report-dashboard-root.isolated-wrapper *::before,
+#report-dashboard-root.isolated-wrapper *::after {
+  box-sizing: border-box;
+}
+
+/* IMPORTANT: Ensure all interactive elements work */
+#report-dashboard-root.isolated-wrapper button,
+#report-dashboard-root.isolated-wrapper a,
+#report-dashboard-root.isolated-wrapper input,
+#report-dashboard-root.isolated-wrapper select,
+#report-dashboard-root.isolated-wrapper textarea,
+#report-dashboard-root.isolated-wrapper label {
+  pointer-events: auto !important;
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+}
+
+/* Smooth scrolling */
+#report-dashboard-root.isolated-wrapper {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Custom scrollbar styling */
+#report-dashboard-root.isolated-wrapper::-webkit-scrollbar {
+  width: 12px;
+}
+
+#report-dashboard-root.isolated-wrapper::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+#report-dashboard-root.isolated-wrapper::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 6px;
+}
+
+#report-dashboard-root.isolated-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}

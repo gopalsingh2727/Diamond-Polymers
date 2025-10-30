@@ -48,19 +48,35 @@ const EditMachineType: React.FC = () => {
   const [editType, setEditType] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editId, setEditId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const selectedItem = machineTypes[selectedRow];
+  // Filter machine types based on search term
+  const filteredMachineTypes = machineTypes.filter((machineType) => {
+    if (!searchTerm) return true;
+    
+    const search = searchTerm.toLowerCase();
+    return (
+      machineType.type?.toLowerCase().includes(search) ||
+      machineType.description?.toLowerCase().includes(search) ||
+      machineType.branchId?.name?.toLowerCase().includes(search) ||
+      machineType.machines?.some(m => 
+        m.machineName?.toLowerCase().includes(search)
+      )
+    );
+  });
+
+  const selectedItem = filteredMachineTypes[selectedRow];
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      if (showDetail || machineTypes.length === 0) return;
+      if (showDetail || filteredMachineTypes.length === 0) return;
 
       if (e.key === "ArrowDown") {
-        setSelectedRow((prev) => Math.min(prev + 1, machineTypes.length - 1));
+        setSelectedRow((prev) => Math.min(prev + 1, filteredMachineTypes.length - 1));
       } else if (e.key === "ArrowUp") {
         setSelectedRow((prev) => Math.max(prev - 1, 0));
       } else if (e.key === "Enter") {
-        const selected = machineTypes[selectedRow];
+        const selected = filteredMachineTypes[selectedRow];
         if (selected) {
           setEditId(selected._id);
           setEditType(selected.type);
@@ -69,7 +85,7 @@ const EditMachineType: React.FC = () => {
         }
       }
     },
-    [machineTypes, selectedRow, showDetail]
+    [filteredMachineTypes, selectedRow, showDetail]
   );
 
   useEffect(() => {
@@ -80,6 +96,11 @@ const EditMachineType: React.FC = () => {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleKeyDown]);
+
+  useEffect(() => {
+    // Reset selected row when search changes
+    setSelectedRow(0);
+  }, [searchTerm]);
 
   const handleEditSave = async () => {
     if (!editType.trim()) {
@@ -123,46 +144,131 @@ const EditMachineType: React.FC = () => {
     setShowDetail(true);
   };
 
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const clearSearch = () => {
+    setSearchTerm("");
+  };
+
   return (
     <div className="EditMachineType">
-      {loading && <p>Loading...</p>}
-      {error && <p style={{ color: "red" }}>{error}</p>}
+       {loading && <p className="loadingAndError">Loading...</p>}
+      {error && <p className="loadingAndError"  style={{ color: "red" }}>{error}</p>}
 
       {!showDetail && !loading && machineTypes.length > 0 ? (
-        <table>
-          <thead>
-            <tr>
-              <th>No</th>
-              <th>Machine Type</th>
-              <th>Total Machines</th>
-              <th>Branch</th>
-              <th>Created</th>
-              <th>Updated</th>
-              <th>Edit</th>
-            </tr>
-          </thead>
-          <tbody>
-            {machineTypes.map((item: MachineType, index: number) => (
-              <tr
-                key={item._id}
-                className={selectedRow === index ? "bg-blue-100" : ""}
-              >
-                <td>{index + 1}</td>
-                <td>{item.type}</td>
-                <td>{item.machines?.length ?? 0}</td>
-                <td>{item.branchId?.name || "N/A"}</td>
-                <td>{new Date(item.createdAt).toLocaleString()}</td>
-                <td>{new Date(item.updatedAt).toLocaleString()}</td>
-                <td
-                  className="text-blue-600 emt-edit-text"
-                  onClick={() => handleRowClick(index, item)}
+        <>
+          {/* Search Bar */}
+          <div style={{
+            marginBottom: '20px',
+            display: 'flex',
+            gap: '10px',
+            alignItems: 'center'
+          }}>
+            <div style={{ position: 'relative', flex: 1 }}>
+              <input
+                type="text"
+                placeholder="Search by machine type, description, branch, or machine name..."
+                value={searchTerm}
+                onChange={handleSearchChange}
+                style={{
+                  width: '100%',
+                  padding: '12px 40px 12px 40px',
+                  fontSize: '15px',
+                  border: '2px solid #ddd',
+                  borderRadius: '8px',
+                  outline: 'none',
+                  transition: 'border-color 0.3s ease',
+                }}
+                onFocus={(e) => e.target.style.borderColor = '#2d89ef'}
+                onBlur={(e) => e.target.style.borderColor = '#ddd'}
+              />
+              <span style={{
+                position: 'absolute',
+                left: '14px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                fontSize: '18px',
+                color: '#666',
+              }}>
+                🔍
+              </span>
+              {searchTerm && (
+                <button
+                  onClick={clearSearch}
+                  style={{
+                    position: 'absolute',
+                    right: '10px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    fontSize: '20px',
+                    cursor: 'pointer',
+                    color: '#999',
+                    padding: '4px 8px',
+                  }}
+                  title="Clear search"
                 >
-                  Edit
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                  ✕
+                </button>
+              )}
+            </div>
+            <div style={{
+              padding: '12px 16px',
+              background: '#f5f5f5',
+              borderRadius: '8px',
+              fontSize: '14px',
+              color: '#666',
+              whiteSpace: 'nowrap',
+            }}>
+              {filteredMachineTypes.length} of {machineTypes.length} types
+            </div>
+          </div>
+
+          {/* Table */}
+          {filteredMachineTypes.length > 0 ? (
+            <table>
+              <thead>
+                <tr>
+                  <th>No</th>
+                  <th>Machine Type</th>
+                  <th>Total Machines</th>
+                  <th>Branch</th>
+                  <th>Created</th>
+                  <th>Updated</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredMachineTypes.map((item: MachineType, index: number) => (
+                  <tr
+                    key={item._id}
+                    className={selectedRow === index ? "bg-blue-100" : ""}
+                    onClick={() => handleRowClick(index, item)}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <td>{index + 1}</td>
+                    <td>{item.type}</td>
+                    <td>{item.machines?.length ?? 0}</td>
+                    <td>{item.branchId?.name || "N/A"}</td>
+                    <td>{new Date(item.createdAt).toLocaleString()}</td>
+                    <td>{new Date(item.updatedAt).toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div style={{
+              padding: '40px',
+              textAlign: 'center',
+              color: '#999',
+              fontSize: '16px',
+            }}>
+              No machine types found matching "{searchTerm}"
+            </div>
+          )}
+        </>
       ) : showDetail && selectedItem ? (
         <div className="detail-container">
           <div className="TopButtonEdit">

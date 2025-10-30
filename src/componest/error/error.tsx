@@ -1,5 +1,6 @@
 // components/ErrorBoundary.tsx
 import React from "react";
+import { BackButton } from "../allCompones/BackButton";
 
 class ErrorBoundary extends React.Component<
   { children: React.ReactNode },
@@ -21,8 +22,11 @@ class ErrorBoundary extends React.Component<
   render() {
     if (this.state.hasError) {
       return <div>
+        <BackButton/>
         <h1>Something went wrong.</h1>
         <p>Please try again later.</p>
+         <p>Please Call This Number Also Take Picture</p>
+        <p>+91 9352568398</p>
         <p>If the problem persists, contact support.</p>
         <p></p>
         <p>We apologize for the inconvenience.</p>

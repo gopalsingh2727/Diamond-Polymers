@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   getMachines,
@@ -8,7 +8,6 @@ import {
 import { getMachineTypes } from "../../../../redux/create/machineType/machineTypeActions";
 import { RootState } from "../../../../redux/rootReducer";
 import { AppDispatch } from "../../../../../store";
-import { Edit, Trash2, Save, X, Search, Filter } from 'lucide-react';
 import "./editMachines.css";
 
 // Define interfaces for type safety
@@ -55,14 +54,9 @@ const EditMachines: React.FC = () => {
   
   const machineTypeListState = useSelector((state: RootState) => state.machineTypeList) as any;
   const { items: machineTypes = [] } = machineTypeListState;
-  
-  const machineUpdateState = useSelector((state: RootState) => state.machineUpdate) as any;
-  const { success: updateSuccess } = machineUpdateState;
-  
-  const machineDeleteState = useSelector((state: RootState) => state.machineDelete) as any;
-  const { success: deleteSuccess } = machineDeleteState;
 
-  const [focusedRow, setFocusedRow] = useState<number>(-1);
+  const [selectedRow, setSelectedRow] = useState(0);
+  const [showDetail, setShowDetail] = useState(false);
   const [selectedMachine, setSelectedMachine] = useState<Machine | null>(null);
   const [editForm, setEditForm] = useState<EditForm>({
     machineName: "",
@@ -71,12 +65,40 @@ const EditMachines: React.FC = () => {
     sizeZ: "",
     machineTypeId: "",
   });
-
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteInput, setDeleteInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterType, setFilterType] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
+
+  // Filter machines based on search term
+  const filteredMachines = machines.filter((machine: Machine) => {
+    if (!searchTerm) return true;
+    
+    const search = searchTerm.toLowerCase();
+    return (
+      machine.machineName?.toLowerCase().includes(search) ||
+      machine.machineType?.type?.toLowerCase().includes(search) ||
+      machine.branchId?.name?.toLowerCase().includes(search) ||
+      machine.sizeX?.toLowerCase().includes(search) ||
+      machine.sizeY?.toLowerCase().includes(search) ||
+      machine.sizeZ?.toLowerCase().includes(search)
+    );
+  });
+
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (showDetail || filteredMachines.length === 0) return;
+
+      if (e.key === "ArrowDown") {
+        setSelectedRow((prev) => Math.min(prev + 1, filteredMachines.length - 1));
+      } else if (e.key === "ArrowUp") {
+        setSelectedRow((prev) => Math.max(prev - 1, 0));
+      } else if (e.key === "Enter") {
+        const selected = filteredMachines[selectedRow];
+        if (selected) {
+          openEditor(selected);
+        }
+      }
+    },
+    [filteredMachines, selectedRow, showDetail]
+  );
 
   useEffect(() => {
     dispatch(getMachines());
@@ -84,41 +106,14 @@ const EditMachines: React.FC = () => {
   }, [dispatch]);
 
   useEffect(() => {
-    if (updateSuccess) {
-      setSuccessMessage("✅ Machine updated successfully!");
-      setTimeout(() => setSuccessMessage(""), 3000);
-      dispatch(getMachines());
-    }
-  }, [updateSuccess, dispatch]);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleKeyDown]);
 
   useEffect(() => {
-    if (deleteSuccess) {
-      setSuccessMessage("✅ Machine deleted successfully!");
-      setTimeout(() => setSuccessMessage(""), 3000);
-      dispatch(getMachines());
-    }
-  }, [deleteSuccess, dispatch]);
-
-  const filteredMachines = machines.filter((machine: Machine) => {
-    const matchesSearch = machine.machineName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         machine.machineType?.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         machine.branchId?.name.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesFilter = !filterType || machine.machineType?._id === filterType;
-    
-    return matchesSearch && matchesFilter;
-  });
-
-  const handleKeyDown = (
-    e: React.KeyboardEvent<HTMLTableRowElement>,
-    machine: Machine
-  ) => {
-    if (e.key === "Enter") openEditor(machine);
-    else if (e.key === "ArrowDown")
-      setFocusedRow((prev) => Math.min(prev + 1, filteredMachines.length - 1));
-    else if (e.key === "ArrowUp")
-      setFocusedRow((prev) => Math.max(prev - 1, 0));
-  };
+    // Reset selected row when search changes
+    setSelectedRow(0);
+  }, [searchTerm]);
 
   const openEditor = (machine: Machine) => {
     setSelectedMachine(machine);
@@ -129,13 +124,14 @@ const EditMachines: React.FC = () => {
       sizeZ: machine.sizeZ,
       machineTypeId: machine.machineType?._id || "",
     });
+    setShowDetail(true);
   };
 
   const handleEditChange = (field: keyof EditForm, value: string) => {
     setEditForm({ ...editForm, [field]: value });
   };
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
     if (!selectedMachine) return;
 
     if (!editForm.machineName.trim()) {
@@ -153,351 +149,288 @@ const EditMachines: React.FC = () => {
       return;
     }
 
-    dispatch(
-      updateMachine(selectedMachine._id, {
-        machineName: editForm.machineName.trim(),
-        sizeX: editForm.sizeX,
-        sizeY: editForm.sizeY,
-        sizeZ: editForm.sizeZ,
-        machineType: editForm.machineTypeId,
-      })
-    );
-    setSelectedMachine(null);
-  };
-
-  const handleDeleteClick = () => {
-    setDeleteInput("");
-    setShowDeleteConfirm(true);
-  };
-
-  const confirmDelete = () => {
-    if (deleteInput === "DELETE" && selectedMachine) {
-      dispatch(deleteMachine(selectedMachine._id));
-      setShowDeleteConfirm(false);
+    try {
+      await dispatch(
+        updateMachine(selectedMachine._id, {
+          machineName: editForm.machineName.trim(),
+          sizeX: editForm.sizeX,
+          sizeY: editForm.sizeY,
+          sizeZ: editForm.sizeZ,
+          machineType: editForm.machineTypeId,
+        })
+      );
+      alert("Machine updated successfully!");
+      setShowDetail(false);
       setSelectedMachine(null);
-    } else {
-      alert("❌ Type DELETE to confirm deletion");
+      dispatch(getMachines());
+    } catch (err) {
+      alert("Failed to update machine.");
     }
   };
 
-  const cancelDelete = () => setShowDeleteConfirm(false);
+  const handleDelete = async () => {
+    if (!selectedMachine) return;
 
-  const clearFilters = () => {
+    if (!window.confirm("Are you sure you want to delete this machine?"))
+      return;
+
+    try {
+      await dispatch(deleteMachine(selectedMachine._id));
+      alert("Deleted successfully.");
+      setShowDetail(false);
+      setSelectedMachine(null);
+      dispatch(getMachines());
+    } catch (err) {
+      alert("Failed to delete.");
+    }
+  };
+
+  const handleRowClick = (index: number, machine: Machine) => {
+    setSelectedRow(index);
+    openEditor(machine);
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const clearSearch = () => {
     setSearchTerm("");
-    setFilterType("");
   };
 
   return (
-    <div className="EditMachinesCss">
-      <div className="EditMachinesContainer">
-        <div className="EditMachinesHeader">
-          <h2 className="EditMachinesTitle">Machine Management</h2>
-          {successMessage && (
-            <div className="EditMachinesSuccessMessage">{successMessage}</div>
-          )}
-        </div>
+    <div className="EditMachineType">
+       {loading && <p className="loadingAndError">Loading...</p>}
+      {error && <p className="loadingAndError"  style={{ color: "red" }}>{error}</p>}
 
-        {loading && <div className="EditMachinesLoading">Loading machines...</div>}
-        {error && <div className="EditMachinesError">Error: {error}</div>}
-
-        {!selectedMachine ? (
-          <div className="EditMachinesTableSection">
-            {/* Search and Filter Controls */}
-            <div className="EditMachinesControls">
-              <div className="EditMachinesSearchGroup">
-                <Search size={20} />
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search machines..."
-                  className="EditMachinesSearchInput"
-                />
-              </div>
-              <div className="EditMachinesFilterGroup">
-                <Filter size={20} />
-                <select
-                  value={filterType}
-                  onChange={(e) => setFilterType(e.target.value)}
-                  className="EditMachinesFilterSelect"
+      {!showDetail && !loading && machines.length > 0 ? (
+        <>
+          {/* Search Bar */}
+          <div style={{
+            marginBottom: '20px',
+            display: 'flex',
+            gap: '10px',
+            alignItems: 'center'
+          }}>
+            <div style={{ position: 'relative', flex: 1 }}>
+              <input
+                type="text"
+                placeholder="Search by machine name, type, branch, or size..."
+                value={searchTerm}
+                onChange={handleSearchChange}
+                style={{
+                  width: '100%',
+                  padding: '12px 40px 12px 40px',
+                  fontSize: '15px',
+                  border: '2px solid #ddd',
+                  borderRadius: '8px',
+                  outline: 'none',
+                  transition: 'border-color 0.3s ease',
+                }}
+                onFocus={(e) => e.target.style.borderColor = '#2d89ef'}
+                onBlur={(e) => e.target.style.borderColor = '#ddd'}
+              />
+              <span style={{
+                position: 'absolute',
+                left: '14px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                fontSize: '18px',
+                color: '#666',
+              }}>
+                🔍
+              </span>
+              {searchTerm && (
+                <button
+                  onClick={clearSearch}
+                  style={{
+                    position: 'absolute',
+                    right: '10px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    fontSize: '20px',
+                    cursor: 'pointer',
+                    color: '#999',
+                    padding: '4px 8px',
+                  }}
+                  title="Clear search"
                 >
-                  <option value="">All Types</option>
-                  {machineTypes.map((type: MachineType) => (
-                    <option key={type._id} value={type._id}>
-                      {type.type}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              {(searchTerm || filterType) && (
-                <button onClick={clearFilters} className="EditMachinesClearFiltersBtn">
-                  Clear Filters
+                  ✕
                 </button>
               )}
             </div>
-
-            {/* Results Summary */}
-            <div className="EditMachinesResultsSummary">
-              Showing {filteredMachines.length} of {machines.length} machines
+            <div style={{
+              padding: '12px 16px',
+              background: '#f5f5f5',
+              borderRadius: '8px',
+              fontSize: '14px',
+              color: '#666',
+              whiteSpace: 'nowrap',
+            }}>
+              {filteredMachines.length} of {machines.length} machines
             </div>
+          </div>
 
-            {/* Machines Table */}
-            <div className="EditMachinesTableWrapper">
-              <table className="EditMachinesTable">
-                <thead className="EditMachinesTableHeader">
-                  <tr>
-                    <th className="EditMachinesTableHeaderCell">Machine Name</th>
-                    <th className="EditMachinesTableHeaderCell">Type</th>
-                    <th className="EditMachinesTableHeaderCell">Size X</th>
-                    <th className="EditMachinesTableHeaderCell">Size Y</th>
-                    <th className="EditMachinesTableHeaderCell">Size Z</th>
-                    <th className="EditMachinesTableHeaderCell">Branch</th>
-                    <th className="EditMachinesTableHeaderCell">Table Config</th>
-                    <th className="EditMachinesTableHeaderCell">Actions</th>
+          {/* Table */}
+          {filteredMachines.length > 0 ? (
+            <table>
+              <thead>
+                <tr>
+                  <th>No</th>
+                  <th>Machine Name</th>
+                  <th>Type</th>
+                  <th>Size X</th>
+                  <th>Size Y</th>
+                  <th>Size Z</th>
+                  <th>Branch</th>
+                  <th>Table Config</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredMachines.map((machine: Machine, index: number) => (
+                  <tr
+                    key={machine._id}
+                    className={selectedRow === index ? "bg-blue-100" : ""}
+                    onClick={() => handleRowClick(index, machine)}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <td>{index + 1}</td>
+                    <td>{machine.machineName}</td>
+                    <td>{machine.machineType?.type || "N/A"}</td>
+                    <td>{machine.sizeX}</td>
+                    <td>{machine.sizeY}</td>
+                    <td>{machine.sizeZ}</td>
+                    <td>{machine.branchId?.name || "N/A"}</td>
+                    <td>
+                      {machine.tableConfig ? (
+                        <span style={{ color: 'green' }}>
+                          ✅ {machine.tableConfig.columns?.length || 0} cols
+                        </span>
+                      ) : (
+                        <span style={{ color: '#999' }}>❌ No config</span>
+                      )}
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="EditMachinesTableBody">
-                  {filteredMachines.length === 0 ? (
-                    <tr>
-                      <td colSpan={8} className="EditMachinesEmptyRow">
-                        {searchTerm || filterType ? "No machines match your filters" : "No machines found"}
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredMachines.map((machine: Machine, index: number) => (
-                      <tr
-                        key={machine._id}
-                        tabIndex={0}
-                        onKeyDown={(e) => handleKeyDown(e, machine)}
-                        onFocus={() => setFocusedRow(index)}
-                        className={`EditMachinesTableRow ${
-                          focusedRow === index ? "EditMachinesTableRowFocused" : ""
-                        }`}
-                      >
-                        <td className="EditMachinesTableCell EditMachinesMachineNameCell">
-                          <div className="EditMachinesMachineNameContent">
-                            {machine.machineName}
-                          </div>
-                        </td>
-                        <td className="EditMachinesTableCell">
-                          <span className="EditMachinesMachineTypeTag">
-                            {machine.machineType?.type || "N/A"}
-                          </span>
-                        </td>
-                        <td className="EditMachinesTableCell EditMachinesSizeCell">
-                          {machine.sizeX}
-                        </td>
-                        <td className="EditMachinesTableCell EditMachinesSizeCell">
-                          {machine.sizeY}
-                        </td>
-                        <td className="EditMachinesTableCell EditMachinesSizeCell">
-                          {machine.sizeZ}
-                        </td>
-                        <td className="EditMachinesTableCell">
-                          {machine.branchId?.name || "N/A"}
-                        </td>
-                        <td className="EditMachinesTableCell">
-                          <div className="EditMachinesTableConfigIndicator">
-                            {machine.tableConfig ? (
-                              <span className="EditMachinesTableConfigYes">
-                                ✅ {machine.tableConfig.columns?.length || 0} columns
-                              </span>
-                            ) : (
-                              <span className="EditMachinesTableConfigNo">❌ Not configured</span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="EditMachinesTableCell">
-                          <div className="EditMachinesTableActions">
-                            <button
-                              onClick={() => openEditor(machine)}
-                              className="EditMachinesEditBtn"
-                              title="Edit machine"
-                            >
-                              <Edit size={16} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div style={{
+              padding: '40px',
+              textAlign: 'center',
+              color: '#999',
+              fontSize: '16px',
+            }}>
+              No machines found matching "{searchTerm}"
             </div>
+          )}
+        </>
+      ) : showDetail && selectedMachine ? (
+        <div className="detail-container">
+          <div className="TopButtonEdit">
+            <button onClick={() => setShowDetail(false)}>Back</button>
+            <button onClick={handleDelete} className="Delete">
+              Delete
+            </button>
           </div>
-        ) : (
-          <div className="EditMachinesEditForm">
-            <div className="EditMachinesEditHeader">
-              <h3 className="EditMachinesEditTitle">Edit Machine</h3>
-              <button
-                onClick={() => setSelectedMachine(null)}
-                className="EditMachinesCloseBtn"
-                title="Close editor"
-              >
-                <X size={20} />
-              </button>
-            </div>
 
-            <div className="EditMachinesFormGrid">
-              <div className="EditMachinesFormGroup">
-                <label className="EditMachinesFormLabel">Machine Name *</label>
-                <input
-                  type="text"
-                  value={editForm.machineName}
-                  onChange={(e) => handleEditChange("machineName", e.target.value)}
-                  className="EditMachinesFormInput"
-                  placeholder="Enter machine name"
-                />
-              </div>
-
-              <div className="EditMachinesFormGroup">
-                <label className="EditMachinesFormLabel">Machine Type *</label>
-                <select
-                  value={editForm.machineTypeId}
-                  onChange={(e) => handleEditChange("machineTypeId", e.target.value)}
-                  className="EditMachinesFormSelect"
-                >
-                  <option value="">Select Type</option>
-                  {machineTypes.map((type: MachineType) => (
-                    <option key={type._id} value={type._id}>
-                      {type.type}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="EditMachinesFormGroup">
-                <label className="EditMachinesFormLabel">Size X *</label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.1"
-                  value={editForm.sizeX}
-                  onChange={(e) => handleEditChange("sizeX", e.target.value)}
-                  className="EditMachinesFormInput"
-                  placeholder="Enter X dimension"
-                />
-              </div>
-
-              <div className="EditMachinesFormGroup">
-                <label className="EditMachinesFormLabel">Size Y *</label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.1"
-                  value={editForm.sizeY}
-                  onChange={(e) => handleEditChange("sizeY", e.target.value)}
-                  className="EditMachinesFormInput"
-                  placeholder="Enter Y dimension"
-                />
-              </div>
-
-              <div className="EditMachinesFormGroup">
-                <label className="EditMachinesFormLabel">Size Z *</label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.1"
-                  value={editForm.sizeZ}
-                  onChange={(e) => handleEditChange("sizeZ", e.target.value)}
-                  className="EditMachinesFormInput"
-                  placeholder="Enter Z dimension"
-                />
-              </div>
-            </div>
-
-            {/* Current Machine Info */}
-            <div className="EditMachinesCurrentInfo">
-              <h4 className="EditMachinesCurrentInfoTitle">Current Machine Information</h4>
-              <div className="EditMachinesCurrentInfoGrid">
-                <div className="EditMachinesInfoItem">
-                  <span className="EditMachinesInfoLabel">Branch:</span>
-                  <span className="EditMachinesInfoValue">{selectedMachine.branchId?.name || "N/A"}</span>
-                </div>
-                <div className="EditMachinesInfoItem">
-                  <span className="EditMachinesInfoLabel">Table Configuration:</span>
-                  <span className="EditMachinesInfoValue">
-                    {selectedMachine.tableConfig ? (
-                      <span className="EditMachinesTableConfigYes">
-                        ✅ {selectedMachine.tableConfig.columns?.length || 0} columns configured
-                      </span>
-                    ) : (
-                      <span className="EditMachinesTableConfigNo">❌ No table configuration</span>
-                    )}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="EditMachinesFormActions">
-              <button
-                onClick={handleUpdate}
-                className="EditMachinesSaveBtn"
-                disabled={!editForm.machineName.trim() || !editForm.machineTypeId}
-              >
-                <Save size={16} />
-                Save Changes
-              </button>
-              <button
-                onClick={handleDeleteClick}
-                className="EditMachinesDeleteBtn"
-              >
-                <Trash2 size={16} />
-                Delete Machine
-              </button>
-              <button
-                onClick={() => setSelectedMachine(null)}
-                className="EditMachinesCancelBtn"
-              >
-                Cancel
-              </button>
-            </div>
+          <div className="form-section">
+            <label>Machine Name:</label>
+            <input
+              type="text"
+              value={editForm.machineName}
+              onChange={(e) => handleEditChange("machineName", e.target.value)}
+            />
           </div>
-        )}
 
-        {/* Delete Confirmation Modal */}
-        {showDeleteConfirm && (
-          <div className="EditMachinesModal">
-            <div className="EditMachinesModalContent">
-              <h3 className="EditMachinesModalTitle">
-                Confirm Machine Deletion
-              </h3>
-              <div className="EditMachinesModalBody">
-                <p className="EditMachinesModalText">
-                  You are about to delete the machine: <strong>{selectedMachine?.machineName}</strong>
-                </p>
-                <p className="EditMachinesModalWarning">
-                  This action cannot be undone. Type{" "}
-                  <span className="EditMachinesDeleteKeyword">DELETE</span> to confirm.
-                </p>
-                <input
-                  type="text"
-                  value={deleteInput}
-                  onChange={(e) => setDeleteInput(e.target.value)}
-                  className="EditMachinesModalInput"
-                  placeholder="Type DELETE to confirm"
-                  autoFocus
-                />
-              </div>
-              <div className="EditMachinesModalActions">
-                <button
-                  onClick={confirmDelete}
-                  className="EditMachinesModalConfirmBtn"
-                  disabled={deleteInput !== "DELETE"}
-                >
-                  Confirm Delete
-                </button>
-                <button
-                  onClick={cancelDelete}
-                  className="EditMachinesModalCancelBtn"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
+          <div className="form-section">
+            <label>Machine Type:</label>
+            <select
+              value={editForm.machineTypeId}
+              onChange={(e) => handleEditChange("machineTypeId", e.target.value)}
+            >
+              <option value="">Select Type</option>
+              {machineTypes.map((type: MachineType) => (
+                <option key={type._id} value={type._id}>
+                  {type.type}
+                </option>
+              ))}
+            </select>
           </div>
-        )}
-      </div>
+
+          <div className="form-section">
+            <label>Size X:</label>
+            <input
+              type="number"
+              min="0"
+              step="0.1"
+              value={editForm.sizeX}
+              onChange={(e) => handleEditChange("sizeX", e.target.value)}
+            />
+          </div>
+
+          <div className="form-section">
+            <label>Size Y:</label>
+            <input
+              type="number"
+              min="0"
+              step="0.1"
+              value={editForm.sizeY}
+              onChange={(e) => handleEditChange("sizeY", e.target.value)}
+            />
+          </div>
+
+          <div className="form-section">
+            <label>Size Z:</label>
+            <input
+              type="number"
+              min="0"
+              step="0.1"
+              value={editForm.sizeZ}
+              onChange={(e) => handleEditChange("sizeZ", e.target.value)}
+            />
+          </div>
+
+          <button
+            onClick={handleUpdate}
+            className="save-button"
+            disabled={
+              !editForm.machineName.trim() || 
+              !editForm.machineTypeId ||
+              (editForm.machineName === selectedMachine.machineName &&
+               editForm.sizeX === selectedMachine.sizeX &&
+               editForm.sizeY === selectedMachine.sizeY &&
+               editForm.sizeZ === selectedMachine.sizeZ &&
+               editForm.machineTypeId === selectedMachine.machineType?._id)
+            }
+          >
+            Save
+          </button>
+
+          <div className="info-section">
+            <p>
+              <strong>Branch:</strong> {selectedMachine.branchId?.name || "N/A"}
+            </p>
+            <p>
+              <strong>Current Type:</strong> {selectedMachine.machineType?.type || "N/A"}
+            </p>
+            <p>
+              <strong>Table Configuration:</strong>{" "}
+              {selectedMachine.tableConfig ? (
+                <span style={{ color: 'green' }}>
+                  ✅ {selectedMachine.tableConfig.columns?.length || 0} columns configured
+                </span>
+              ) : (
+                <span style={{ color: '#999' }}>❌ No table configuration</span>
+              )}
+            </p>
+          </div>
+        </div>
+      ) : (
+        !loading && <p>No machines available.</p>
+      )}
     </div>
   );
 };

@@ -3,8 +3,9 @@ import CreateAccount from "./createNewAccount/createNewAccount";
 import CreateMachine from "./machine/CreateMachine";
 import CreateStep from "./CreateStep/CreateStep";
 import CreteMachineOpertor from "./CreateMachineOpertor/CreteMachineOpertor";
-import Products from "./products/products";
-import ProductCategories from "./products/productsCategories";
+// import Products from "./products/products";
+// import ProductCategories from "./products/productsCategories";
+
 import CreateMaterials from "./Materials/createMaterials";
 import MaterialsCategories from "./Materials/materialsCategories";
 import CreateMachineType from "./machine/createMachineType";
@@ -24,8 +25,9 @@ const Layout = () => {
     { key: "Create Machine Operator", label: "Create Machine Operator" },
     {key:"Create Device Access" , label: "Create Device Access"},
     {key:"Create Access" , label:"Create Access"},
-    { key: "products", label: "Products" },
-    { key: "categories", label: "Product Categories" },
+
+    // { key: "products", label: "Products" },
+    // { key: "categories", label: "Product Categories" },
     { key: "materials", label: "Create Materials" },
     { key: "materialsCategories", label: "Materials Categories" }
   ];
@@ -80,10 +82,10 @@ const Layout = () => {
         return <ErrorBoundary><DiveceAccessCreate/></ErrorBoundary> 
       case "Create Access":
         return <ErrorBoundary><DeviceAccess/></ErrorBoundary>
-      case "products":
-        return <ErrorBoundary><Products /></ErrorBoundary>;
-      case "categories":
-        return <ErrorBoundary><ProductCategories /></ErrorBoundary>;
+      // case "products":
+      //   return <ErrorBoundary><Products /></ErrorBoundary>;
+      // case "categories":
+      //   return <ErrorBoundary><ProductCategories /></ErrorBoundary>;
       case "materials":
         return <ErrorBoundary><CreateMaterials /></ErrorBoundary>;
       case "materialsCategories":

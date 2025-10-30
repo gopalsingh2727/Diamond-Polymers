@@ -607,7 +607,7 @@ export const collectDataFromRefs = (customerRef: any, materialRef: any, stepRef?
     
     // Validate that required machine IDs are present
     const machinesWithoutIds = orderData.steps.flatMap((step, stepIndex) => 
-      step.machines.filter((machine, machineIndex) => !machine.machineId)
+      step.machines.filter((machine) => !machine.machineId)
         .map((machine, machineIndex) => ({ stepIndex, machineIndex, machineName: machine.machineName }))
     );
     
@@ -1225,8 +1225,24 @@ export const UPDATE_ORDER_SUCCESS = 'UPDATE_ORDER_SUCCESS';
 export const UPDATE_ORDER_FAILURE = 'UPDATE_ORDER_FAILURE';
 
 // Add this action creator to your OdersActions.js
-export const updateOrder = (orderId, orderData) => {
-  return async (dispatch, getState) => {
+// Interfaces for the order update functionality
+interface UpdatedOrderData {
+  [key: string]: any; // For dynamic fields
+  updatedAt: string;
+}
+
+interface UpdateOrderSuccessPayload {
+  order: UpdatedOrderData;
+  message: string;
+}
+
+interface OrderUpdateResponse {
+  order: UpdatedOrderData;
+  message: string;
+}
+
+export const updateOrder = (orderId: string, orderData: Partial<UpdatedOrderData>) => {
+  return async (dispatch: Dispatch<OrderActionTypes>, getState: () => RootState) => {
     try {
       dispatch({ type: UPDATE_ORDER_REQUEST });
       
@@ -1234,7 +1250,7 @@ export const updateOrder = (orderId, orderData) => {
       const token = state.auth.token; // Adjust path based on your auth state structure
       
       // Get current form data from relevant components
-      const updatedOrderData = {
+      const updatedOrderData: UpdatedOrderData = {
         ...orderData,
         // Add any additional fields that need to be updated
         updatedAt: new Date().toISOString()
@@ -1253,24 +1269,24 @@ export const updateOrder = (orderId, orderData) => {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
-      const updatedOrder = await response.json();
+      const updatedOrder: OrderUpdateResponse = await response.json();
       
       dispatch({
         type: UPDATE_ORDER_SUCCESS,
         payload: {
           order: updatedOrder,
           message: 'Order updated successfully!'
-        }
+        } as UpdateOrderSuccessPayload
       });
       
       // Optionally refresh the orders list
       dispatch(fetchOrders());
       
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Update order error:', error);
       dispatch({
         type: UPDATE_ORDER_FAILURE,
-        payload: error.message || 'Failed to update order'
+        payload: error instanceof Error ? error.message : 'Failed to update order'
       });
     }
   };
