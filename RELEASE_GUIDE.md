@@ -12,7 +12,6 @@ When you push code with a version tag, GitHub Actions automatically:
 
 ### Step 1: Update Version
 ```bash
-cd /Users/gopalsingh/Desktop/27/27mainAll/main27
 npm version patch  # For 1.0.1 -> 1.0.2 (bug fixes)
 # OR
 npm version minor  # For 1.0.1 -> 1.1.0 (new features)
@@ -22,10 +21,8 @@ npm version major  # For 1.0.1 -> 2.0.0 (breaking changes)
 
 ### Step 2: Push with Tag
 ```bash
-git add .
-git commit -m "Release v1.0.2"
-git push origin main
-git push origin --tags  # This triggers the build
+git push origin main && git push origin --tags
+# This triggers the build for all platforms automatically
 ```
 
 ### Step 3: Wait for Build
@@ -101,21 +98,20 @@ v2.0.0 - Major redesign
 # Check current version
 npm version
 
-# Create patch release (1.0.1 -> 1.0.2)
-npm version patch && git push && git push --tags
+# Create patch release (1.0.1 -> 1.0.2) and trigger auto-build
+npm version patch && git push origin main && git push origin --tags
 
-# Create minor release (1.0.1 -> 1.1.0)
-npm version minor && git push && git push --tags
+# Create minor release (1.0.1 -> 1.1.0) and trigger auto-build
+npm version minor && git push origin main && git push origin --tags
 
-# Create major release (1.0.1 -> 2.0.0)
-npm version major && git push && git push --tags
+# Create major release (1.0.1 -> 2.0.0) and trigger auto-build
+npm version major && git push origin main && git push origin --tags
 
-# Build locally without publishing
+# Build locally for testing (no publish)
 npm run build
 
-# Manually publish (requires GITHUB_TOKEN)
-export GITHUB_TOKEN=your_token_here
-npm run publish
+# View latest releases
+gh release list
 ```
 
 ## Security Note
