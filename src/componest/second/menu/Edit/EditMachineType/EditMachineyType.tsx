@@ -51,19 +51,20 @@ const EditMachineType: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
 
   // Filter machine types based on search term
-  const filteredMachineTypes = machineTypes.filter((machineType) => {
-    if (!searchTerm) return true;
-    
-    const search = searchTerm.toLowerCase();
-    return (
-      machineType.type?.toLowerCase().includes(search) ||
-      machineType.description?.toLowerCase().includes(search) ||
-      machineType.branchId?.name?.toLowerCase().includes(search) ||
-      machineType.machines?.some(m => 
-        m.machineName?.toLowerCase().includes(search)
-      )
-    );
-  });
+  const filteredMachineTypes = machineTypes.filter((machineType: MachineType) => {
+  if (!searchTerm) return true;
+
+  const search = searchTerm.toLowerCase();
+
+  return (
+    machineType.type?.toLowerCase().includes(search) ||
+    machineType.description?.toLowerCase().includes(search) ||
+    machineType.branchId?.name?.toLowerCase().includes(search) ||
+    machineType.machines?.some((m: Machine) =>
+      m.machineName?.toLowerCase().includes(search)
+    )
+  );
+});
 
   const selectedItem = filteredMachineTypes[selectedRow];
 
@@ -171,6 +172,7 @@ const EditMachineType: React.FC = () => {
                 type="text"
                 placeholder="Search by machine type, description, branch, or machine name..."
                 value={searchTerm}
+                className="w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition-all"
                 onChange={handleSearchChange}
                 style={{
                   width: '100%',

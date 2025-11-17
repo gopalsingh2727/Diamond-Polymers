@@ -92,7 +92,7 @@ const EditStep: React.FC = () => {
     },
     [filteredSteps, selectedRow, showDetail]
   );
-
+  
   useEffect(() => {
     dispatch(getSteps());
     dispatch(getMachines());
@@ -221,6 +221,7 @@ const EditStep: React.FC = () => {
                 type="text"
                 placeholder="Search by step name, branch, or machine..."
                 value={searchTerm}
+                                className="w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition-all"
                 onChange={handleSearchChange}
                 style={{
                   width: '100%',

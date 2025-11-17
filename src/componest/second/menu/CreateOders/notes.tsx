@@ -2,10 +2,19 @@ import { useState, useEffect } from "react";
 
 interface NotesProps {
   onNotesChange?: (notes: string) => void;
+  initialNotes?: string;
+  isEditMode?: boolean;
 }
 
-const Notes = ({ onNotesChange }: NotesProps) => {
-  const [note, setNote] = useState("");
+const Notes = ({ onNotesChange, initialNotes }: NotesProps) => {
+  const [note, setNote] = useState(initialNotes || "");
+
+  // Initialize note from initial data
+  useEffect(() => {
+    if (initialNotes) {
+      setNote(initialNotes);
+    }
+  }, [initialNotes]);
 
   // Call the parent callback whenever notes change
   useEffect(() => {
@@ -29,10 +38,10 @@ const Notes = ({ onNotesChange }: NotesProps) => {
           className="NotesTextarea"
           rows={4}
         />
-      
-        
+
+
       </div>
-     
+
     </div>
   );
 };

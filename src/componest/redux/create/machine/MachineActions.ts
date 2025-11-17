@@ -18,6 +18,7 @@ import {
 } from "./MachineContants";
 import { Dispatch } from "redux";
 import { RootState } from "../../rootReducer";
+import { cacheData, invalidateCache, isCacheValid } from "../../cache/dataCacheReducer";
 
 // ENV
 const baseUrl = import.meta.env.VITE_API_27INFINITY_IN;
@@ -30,131 +31,233 @@ const getHeaders = (token?: string, isJson: boolean = false) => ({
   Authorization: token ? `Bearer ${token}` : "",
 });
 
-// CREATE MACHINE
-export const createMachine = (machineData: {
+// ✅ UPDATED: Added tableConfig support
+interface TableColumn {
+  name: string;
+  dataType: 'text' | 'number' | 'formula' | 'date';
+  isRequired: boolean;
+  order: number;
+  placeholder: string;
+}
+
+interface Formula {
+  expression: string;
+  dependencies: string[];
+  description: string;
+}
+
+interface TableRow {
+  id: string;
+  data: Record<string, any>;
+}
+
+interface TableConfig {
+  columns: TableColumn[];
+  formulas: Record<string, Formula>;
+  data?: TableRow[];
+  settings?: {
+    autoCalculate: boolean;
+    autoUpdateOrders: boolean;
+    maxRows: number;
+    enableHistory: boolean;
+  };
+}
+
+interface MachineData {
   machineName: string;
   machineType: string;
-  size: { x: string; y: string; z: string };
-}) => async (dispatch: Dispatch, getState: () => RootState) => {
-  try {
-    dispatch({ type: CREATE_MACHINE_REQUEST });
+  sizeX: string;
+  sizeY: string;
+  sizeZ: string;
+  tableConfig?: TableConfig;
+}
 
-    const token = getState().auth?.token ?? localStorage.getItem("authToken") ?? undefined;
-    const branchId = localStorage.getItem("selectedBranch");
-    if (!branchId) throw new Error("Branch ID not found");
+// ✅ CREATE MACHINE - Now accepts tableConfig and invalidates cache
+export const createMachine = (machineData: MachineData) =>
+  async (dispatch: Dispatch, getState: () => RootState) => {
+    try {
+      dispatch({ type: CREATE_MACHINE_REQUEST });
 
-    const payload = {
-      machineName: machineData.machineName,
-      machineType: machineData.machineType,
-      sizeX: machineData.size.x,
-      sizeY: machineData.size.y,
-      sizeZ: machineData.size.z,
-      branchId,
-    };
+      const token = getState().auth?.token ?? localStorage.getItem("authToken") ?? undefined;
+      const branchId = localStorage.getItem("selectedBranch");
 
-    const { data } = await axios.post(`${baseUrl}/machine`, payload, {
-      headers: getHeaders(token, true),
-    });
+      if (!branchId) throw new Error("Branch ID not found");
 
-    dispatch({ type: CREATE_MACHINE_SUCCESS, payload: data });
-  } catch (error: any) {
-    dispatch({
-      type: CREATE_MACHINE_FAIL,
-      payload: error.response?.data?.message || error.message,
-    });
-  }
-};
+      // ✅ Include tableConfig in payload
+      const payload = {
+        machineName: machineData.machineName,
+        machineType: machineData.machineType,
+        sizeX: machineData.sizeX,
+        sizeY: machineData.sizeY,
+        sizeZ: machineData.sizeZ,
+        branchId,
+        ...(machineData.tableConfig && { tableConfig: machineData.tableConfig })
+      };
+      console.log(payload , "payload in create machine");
+
+      const { data } = await axios.post(`${baseUrl}/machine`, payload, {
+        headers: getHeaders(token, true),
+      });
+
+      dispatch({ type: CREATE_MACHINE_SUCCESS, payload: data });
+
+      // ✅ Invalidate machines cache so other managers see the new machine
+      dispatch(invalidateCache(['machines']));
+      console.log('🔄 Machine created - cache invalidated for all managers');
+
+      return data; // ✅ Return data for component use
+    } catch (error: any) {
+      dispatch({
+        type: CREATE_MACHINE_FAIL,
+        payload: error.response?.data?.message || error.message,
+      });
+      throw error; // ✅ Throw error for component handling
+    }
+  };
 
 // GET MACHINE BY ID
-export const getMachineById = (id: string) => async (dispatch: Dispatch, getState: () => RootState) => {
-  try {
-    dispatch({ type: GET_MACHINE_REQUEST });
+export const getMachineById = (id: string) =>
+  async (dispatch: Dispatch, getState: () => RootState) => {
+    try {
+      dispatch({ type: GET_MACHINE_REQUEST });
 
-    const token = getState().auth?.token ?? localStorage.getItem("authToken") ?? undefined;
+      const token = getState().auth?.token ?? localStorage.getItem("authToken") ?? undefined;
 
-    const { data } = await axios.get(`${baseUrl}/machine/${id}`, {
-      headers: getHeaders(token),
-    });
+      const { data } = await axios.get(`${baseUrl}/machine/${id}`, {
+        headers: getHeaders(token),
+      });
 
-    dispatch({ type: GET_MACHINE_SUCCESS, payload: data.machine });
-  } catch (error: any) {
-    dispatch({
-      type: GET_MACHINE_FAIL,
-      payload: error.response?.data?.message || error.message,
-    });
-  }
-};
+      dispatch({ type: GET_MACHINE_SUCCESS, payload: data.machine });
+      return data.machine;
+    } catch (error: any) {
+      dispatch({
+        type: GET_MACHINE_FAIL,
+        payload: error.response?.data?.message || error.message,
+      });
+      throw error;
+    }
+  };
 
-// GET ALL MACHINES
-export const getMachines = () => async (dispatch: Dispatch, getState: () => RootState) => {
-  try {
-    dispatch({ type: GET_MACHINES_REQUEST });
+// ✅ GET ALL MACHINES - With caching support
+export const getMachines = () =>
+  async (dispatch: Dispatch, getState: () => RootState) => {
+    try {
+      dispatch({ type: GET_MACHINES_REQUEST });
 
-    const token = getState().auth?.token ?? localStorage.getItem("authToken") ?? undefined;
-    const branchId = localStorage.getItem("selectedBranch");
-    if (!branchId) throw new Error("Branch ID not found");
+      const token = getState().auth?.token ?? localStorage.getItem("authToken") ?? undefined;
+      const branchId = localStorage.getItem("selectedBranch");
 
-    const { data } = await axios.get(`${baseUrl}/machine`, {
-      headers: getHeaders(token),
-      // params: { branchId }, // ✅ Fixed: Pass branchId
-    });
-    
-    
-    dispatch({ type: GET_MACHINES_SUCCESS, payload: data.machines });
-  } catch (error: any) {
-    dispatch({
-      type: GET_MACHINES_FAIL,
-      payload: error.response?.data?.message || error.message,
-    });
-  }
-};
+      if (!branchId) throw new Error("Branch ID not found");
 
-// UPDATE MACHINE
-export const updateMachine = (id: string, updateData: any) => async (dispatch: Dispatch, getState: () => RootState) => {
-  try {
-    dispatch({ type: UPDATE_MACHINE_REQUEST });
+      const { data } = await axios.get(`${baseUrl}/machine`, {
+        headers: getHeaders(token),
+        params: { branchId }, // ✅ Send branchId as query param
+      });
 
-    const token = getState().auth?.token ?? localStorage.getItem("authToken") ?? undefined;
-    const branchId = localStorage.getItem("selectedBranch");
-    if (!branchId) throw new Error("Branch ID not found");
+      dispatch({ type: GET_MACHINES_SUCCESS, payload: data.machines });
 
-    const payload = {
-      ...updateData,
-      branchId,
-    };
+      // ✅ Cache the machines data for 10 minutes
+      dispatch(cacheData('machines', data.machines));
+      console.log('💾 Machines cached successfully');
 
-    const { data } = await axios.put(`${baseUrl}/machine/${id}`, payload, {
-      headers: getHeaders(token, true),
-    });
+      return data.machines;
+    } catch (error: any) {
+      dispatch({
+        type: GET_MACHINES_FAIL,
+        payload: error.response?.data?.message || error.message,
+      });
+      throw error;
+    }
+  };
 
-    dispatch({ type: UPDATE_MACHINE_SUCCESS, payload: data });
-  } catch (error: any) {
-    dispatch({
-      type: UPDATE_MACHINE_FAIL,
-      payload: error.response?.data?.message || error.message,
-    });
-  }
-};
+/**
+ * 🚀 Smart helper: Only fetches machines if cache is missing or expired
+ * Use this in components instead of getMachines() to reduce API calls
+ */
+export const getMachinesIfNeeded = () =>
+  async (dispatch: Dispatch, getState: () => RootState) => {
+    const state = getState();
+    const machinesCache = state.dataCache?.machines;
 
-// DELETE MACHINE
-export const deleteMachine = (id: string) => async (dispatch: Dispatch, getState: () => RootState) => {
-  try {
-    dispatch({ type: DELETE_MACHINE_REQUEST });
+    // Check if we have valid cached data
+    if (isCacheValid(machinesCache)) {
+      const age = Math.floor((Date.now() - new Date(machinesCache!.lastFetched).getTime()) / 1000 / 60);
+      console.log(`✅ Using cached machines data (age: ${age} minutes)`);
 
-    const token = getState().auth?.token ?? localStorage.getItem("authToken") ?? undefined;
-    const branchId = localStorage.getItem("selectedBranch");
-    if (!branchId) throw new Error("Branch ID not found");
+      // Update Redux state with cached data (in case it's not there)
+      dispatch({ type: GET_MACHINES_SUCCESS, payload: machinesCache!.data });
 
-    await axios.delete(`${baseUrl}/dev/machine/${id}`, {
-      headers: getHeaders(token),
-      params: { branchId }, // ✅ Ensure branch context is passed if required
-    });
+      return machinesCache!.data;
+    } else {
+      console.log('📊 No valid cache - fetching machines from API');
+      return dispatch(getMachines());
+    }
+  };
 
-    dispatch({ type: DELETE_MACHINE_SUCCESS, payload: id });
-  } catch (error: any) {
-    dispatch({
-      type: DELETE_MACHINE_FAIL,
-      payload: error.response?.data?.message || error.message,
-    });
-  }
-};
+// ✅ UPDATE MACHINE - Now supports tableConfig updates and invalidates cache
+export const updateMachine = (id: string, updateData: Partial<MachineData>) =>
+  async (dispatch: Dispatch, getState: () => RootState) => {
+    try {
+      dispatch({ type: UPDATE_MACHINE_REQUEST });
+
+      const token = getState().auth?.token ?? localStorage.getItem("authToken") ?? undefined;
+      const branchId = localStorage.getItem("selectedBranch");
+
+      if (!branchId) throw new Error("Branch ID not found");
+
+      const payload = {
+        ...updateData,
+        branchId,
+      };
+
+      const { data } = await axios.put(`${baseUrl}/machine/${id}`, payload, {
+        headers: getHeaders(token, true),
+      });
+
+      dispatch({ type: UPDATE_MACHINE_SUCCESS, payload: data });
+
+      // ✅ Invalidate machines cache so all managers see the update
+      dispatch(invalidateCache(['machines']));
+      console.log('🔄 Machine updated - cache invalidated for all managers');
+
+      return data;
+    } catch (error: any) {
+      dispatch({
+        type: UPDATE_MACHINE_FAIL,
+        payload: error.response?.data?.message || error.message,
+      });
+      throw error;
+    }
+  };
+
+// ✅ DELETE MACHINE - Invalidates cache
+export const deleteMachine = (id: string) =>
+  async (dispatch: Dispatch, getState: () => RootState) => {
+    try {
+      dispatch({ type: DELETE_MACHINE_REQUEST });
+
+      const token = getState().auth?.token ?? localStorage.getItem("authToken") ?? undefined;
+      const branchId = localStorage.getItem("selectedBranch");
+
+      if (!branchId) throw new Error("Branch ID not found");
+
+      await axios.delete(`${baseUrl}/machine/${id}`, {
+        headers: getHeaders(token),
+        params: { branchId },
+      });
+
+      dispatch({ type: DELETE_MACHINE_SUCCESS, payload: id });
+
+      // ✅ Invalidate machines cache so all managers see the deletion
+      dispatch(invalidateCache(['machines']));
+      console.log('🔄 Machine deleted - cache invalidated for all managers');
+
+      return id;
+    } catch (error: any) {
+      dispatch({
+        type: DELETE_MACHINE_FAIL,
+        payload: error.response?.data?.message || error.message,
+      });
+      throw error;
+    }
+  };

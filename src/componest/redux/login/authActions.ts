@@ -5,6 +5,7 @@ import {
   LOGIN_SUCCESS,
   LOGOUT,
 } from "./authConstants";
+import { getOrderFormDataIfNeeded, clearOrderFormData } from "../oders/orderFormDataActions";
 
 export const SET_SELECTED_BRANCH_IN_AUTH = "SET_SELECTED_BRANCH_IN_AUTH";
 
@@ -13,7 +14,7 @@ const baseUrl = import.meta.env.VITE_API_27INFINITY_IN;
 const API_KEY = import.meta.env.VITE_API_KEY;
 
 // ✅ Login
-export const login = (username: string, password: string) => {
+export const login = (email: string, password: string) => {
   return async (dispatch: any) => {
     dispatch({ type: LOGIN_REQUEST });
 
@@ -26,7 +27,7 @@ export const login = (username: string, password: string) => {
       try {
         const response = await axios.post(
           endpoint.url,
-          { username, password },
+          { email, password },
           {
             headers: {
               "x-api-key": API_KEY,
@@ -57,6 +58,16 @@ console.log(localStorage.getItem("userData"), "userData string from localStorage
           },
         });
 
+        // ✅ Fetch form data if user has selected a branch (uses cache if available)
+        const selectedBranch = userData.selectedBranch || localStorage.getItem("selectedBranch");
+        if (selectedBranch) {
+          try {
+            await dispatch(getOrderFormDataIfNeeded() as any);
+          } catch (error) {
+            console.error("Failed to fetch order form data on login:", error);
+          }
+        }
+
         return; // Stop after first successful login
       } catch (err: any) {
         console.error(`Login failed for ${endpoint.role}`, err?.response?.data || err.message);
@@ -66,7 +77,7 @@ console.log(localStorage.getItem("userData"), "userData string from localStorage
     // If both failed
     dispatch({
       type: LOGIN_FAIL,
-      payload: "Invalid username or password",
+      payload: "Invalid email or password",
     });
   };
 };
@@ -78,17 +89,44 @@ export const logout = () => {
     localStorage.removeItem("authToken");
     localStorage.removeItem("userData");
 
+    // ✅ Clear order form data cache
+    dispatch(clearOrderFormData());
+
     dispatch({ type: LOGOUT });
   };
 };
 
 // ✅ Set Selected Branch
+// authActions.ts
+
+
+// ✅ Set Selected Branch
 export const setSelectedBranchInAuth = (branchId: string) => {
-  return (dispatch: any) => {
-    localStorage.setItem("selectedBranch", branchId);
+  return async (dispatch: any) => {
+    // Get existing userData from localStorage
+    const storedData = localStorage.getItem("userData");
+    const userData = storedData ? JSON.parse(storedData) : {};
+
+    // Update the userData object with the new branch
+    const updatedUserData = {
+      ...userData,
+      selectedBranch: branchId,
+    };
+
+    // Save the updated userData back to localStorage
+    localStorage.setItem("userData", JSON.stringify(updatedUserData));
+
+    // Dispatch the action to update Redux store
     dispatch({
       type: SET_SELECTED_BRANCH_IN_AUTH,
       payload: branchId,
     });
+
+    // ✅ Fetch form data for the newly selected branch (uses cache if available)
+    try {
+      await dispatch(getOrderFormDataIfNeeded() as any);
+    } catch (error) {
+      console.error("Failed to fetch order form data for branch:", error);
+    }
   };
-}; 
+};

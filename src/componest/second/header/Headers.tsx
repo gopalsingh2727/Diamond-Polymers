@@ -3,16 +3,8 @@
 import './header.css';
 import { BackButton } from "../../allCompones/BackButton";
 
-const Headers = ({ title = "Header" }: { title?: string }) => {
-  // const navigate = useNavigate();
+const Headers = () => {
 
-  // const handleBack = () => {
-  //   if (window.history.length > 2) {
-  //     navigate(-1);
-  //   } else {
-  //     navigate("/");
-  //   }
-  // };
 
   return (
     <div className="header-container">
@@ -20,7 +12,7 @@ const Headers = ({ title = "Header" }: { title?: string }) => {
 
       <div className="header-center">
         <h1 className="header-title">
-          {title}
+   
         </h1>
       </div>
 

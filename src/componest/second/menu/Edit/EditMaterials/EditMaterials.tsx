@@ -182,6 +182,7 @@ const EditMaterials: React.FC = () => {
               <input
                 type="text"
                 placeholder="Search by material name, mol, or category..."
+                                className="w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition-all"
                 value={searchTerm}
                 onChange={handleSearchChange}
                 style={{

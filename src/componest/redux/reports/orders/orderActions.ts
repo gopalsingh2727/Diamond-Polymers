@@ -68,8 +68,18 @@ const getAuthHeaders = (token: string) => ({
   "x-api-key": API_KEY,
 });
 
-const getToken = (getState: () => RootState) =>
-  getState().auth?.token || localStorage.getItem("authToken");
+const getToken = (getState: () => RootState) => {
+  // cast to any to safely access possible auth locations without TypeScript error
+  const state: any = getState();
+  // try multiple common locations and fall back to localStorage
+  return (
+    state?.auth?.token ||
+    state?.authToken ||
+    state?.orders?.auth?.token ||
+    state?.orders?.token ||
+    localStorage.getItem("authToken")
+  );
+};
 
 const getBranchId = () => localStorage.getItem("selectedBranch");
 

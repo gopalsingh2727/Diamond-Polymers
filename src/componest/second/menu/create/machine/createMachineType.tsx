@@ -1,8 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { addMachineType } from "../../../../redux/create/machineType/machineTypeActions";
 import { RootState } from "../../../../redux/rootReducer";
 import { AppDispatch } from "../../../../../store";
+import { ActionButton } from '../../../../../components/shared/ActionButton';
+import { ToastContainer } from '../../../../../components/shared/Toast';
+import { useCRUD } from '../../../../../hooks/useCRUD';
 
 const CreateMachineType: React.FC = () => {
   const [machineTypeName, setMachineTypeName] = useState("");
@@ -10,22 +13,30 @@ const CreateMachineType: React.FC = () => {
 
   const dispatch = useDispatch<AppDispatch>();
 
-  const { loading, success, error } = useSelector(
+  // 🚀 CRUD System Integration
+  const { saveState, handleSave, toast } = useCRUD();
+
+  const { loading } = useSelector(
     (state: RootState) => state.machineTypeCreate
   );
 
   const handleAddMachineType = () => {
-    if (!machineTypeName.trim() || !description.trim()) return;
-    dispatch(addMachineType(machineTypeName, description));
-    setMachineTypeName("");
-    setDescription("");
-  };
-
-  useEffect(() => {
-    if (success) {
-      console.log("Machine type added successfully");
+    if (!machineTypeName.trim() || !description.trim()) {
+      toast.error('Validation Error', 'Please fill all required fields');
+      return;
     }
-  }, [success]);
+
+    handleSave(
+      () => dispatch(addMachineType(machineTypeName, description)),
+      {
+        successMessage: 'Machine type added successfully!',
+        onSuccess: () => {
+          setMachineTypeName("");
+          setDescription("");
+        }
+      }
+    );
+  };
 
   return (
     <div className="form-grid">
@@ -47,16 +58,19 @@ const CreateMachineType: React.FC = () => {
             placeholder="Enter Description"
           />
         </div>
-        <button
+        <ActionButton
+          type="save"
+          state={saveState}
           onClick={handleAddMachineType}
           className="save-button"
-          disabled={loading || !machineTypeName.trim() || !description.trim()}
+          disabled={!machineTypeName.trim() || !description.trim()}
         >
-          {loading ? "Adding..." : "Add"}
-        </button>
-        {error && <div className="error-msg">{error}</div>}
-        {success && <div className="success-msg">Machine type added!</div>}
+          Add Machine Type
+        </ActionButton>
       </div>
+
+      {/* Toast notifications */}
+      <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
     </div>
   );
 };

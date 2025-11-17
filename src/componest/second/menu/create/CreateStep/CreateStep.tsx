@@ -4,6 +4,9 @@ import { RootState } from "../../../../redux/rootReducer";
 import { AppDispatch } from "../../../../../store";
 import { createStep } from "../../../../redux/create/CreateStep/StpeActions";
 import { getMachines } from "../../../../redux/create/machine/MachineActions";
+import { ActionButton } from '../../../../../components/shared/ActionButton';
+import { ToastContainer } from '../../../../../components/shared/Toast';
+import { useCRUD } from '../../../../../hooks/useCRUD';
 import "./createStep.css";
 
 const CreateStep: React.FC = () => {
@@ -11,13 +14,11 @@ const CreateStep: React.FC = () => {
   const [stepName, setStepName] = useState("");
   const [machines, setMachines] = useState<{ machineId: string }[]>([{ machineId: "" }]);
 
-  const { machines: machineList, loading, error: machineError } = useSelector(
-    (state: RootState) => state.machineList
-  );
- 
+  // 🚀 CRUD System Integration
+  const { saveState, handleSave, toast } = useCRUD();
 
-  const { success, error: stepError } = useSelector(
-    (state: RootState) => state.stepCreate
+  const { machines: machineList, loading } = useSelector(
+    (state: RootState) => state.machineList
   );
 
   useEffect(() => {
@@ -40,16 +41,16 @@ const CreateStep: React.FC = () => {
     setMachines(updated);
   };
 
-  const handleSave = () => {
+  const handleSubmit = () => {
     const filtered = machines.filter((m) => m.machineId);
 
     if (!stepName.trim()) {
-      alert("Step name is required");
+      toast.error('Validation Error', 'Step name is required');
       return;
     }
 
     if (filtered.length === 0) {
-      alert("At least one machine is required");
+      toast.error('Validation Error', 'At least one machine is required');
       return;
     }
 
@@ -61,15 +62,17 @@ const CreateStep: React.FC = () => {
       })),
     };
 
-    dispatch(createStep(stepData));
+    handleSave(
+      () => dispatch(createStep(stepData)),
+      {
+        successMessage: 'Production step created successfully!',
+        onSuccess: () => {
+          setStepName("");
+          setMachines([{ machineId: "" }]);
+        }
+      }
+    );
   };
-
-  useEffect(() => {
-    if (success) {
-      setStepName("");
-      setMachines([{ machineId: "" }]);
-    }
-  }, [success]);
 
   return (
     <div className="create-step-container">
@@ -128,17 +131,17 @@ const CreateStep: React.FC = () => {
           ))}
         </div>
 
-        <button
+        <ActionButton
+          type="save"
+          state={saveState}
+          onClick={handleSubmit}
           className="save-button"
-          onClick={handleSave}
-          disabled={loading}
         >
-          {loading ? "Saving..." : "Save Production Step ✓"}
-        </button>
+          Save Production Step ✓
+        </ActionButton>
 
-        {machineError && <div className="error-msg">{machineError}</div>}
-        {success && <div className="success-msg">Step saved successfully!</div>}
-        {stepError && <div className="error-msg">{stepError}</div>}
+        {/* Toast notifications */}
+        <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
       </div>
     </div>
   );

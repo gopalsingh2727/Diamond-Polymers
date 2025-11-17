@@ -1,36 +1,27 @@
-const { FusesPlugin } = require('@electron-forge/plugin-fuses');
-const { FuseV1Options, FuseVersion } = require('@electron/fuses');
+import { FusesPlugin } from '@electron-forge/plugin-fuses';
+import { FuseV1Options, FuseVersion } from '@electron/fuses';
 
-module.exports = {
+export default {
   packagerConfig: {
     asar: true,
-    // Build for multiple architectures
-    arch: ['x64', 'arm64'], // For macOS: Intel and Apple Silicon
-    // For Windows/Linux, you might want: ['ia32', 'x64']
+    name: 'DiamondPolymers',
+    executableName: 'DiamondPolymers',
   },
   rebuildConfig: {},
   makers: [
   {
     name: '@electron-forge/maker-zip',
+    platforms: ['darwin', 'win32', 'linux'],
     config: {}
-  },
-  {
-    name: '@electron-forge/maker-dmg',
-    config: {
-      name: 'DiamondPolymers'
-    }
   },
   {
     name: '@electron-forge/maker-squirrel',
-    config: {}
-  },
-  {
-    name: '@electron-forge/maker-deb',
-    config: {}
-  },
-  {
-    name: '@electron-forge/maker-rpm',
-    config: {}
+    platforms: ['win32'],
+    config: {
+      name: 'DiamondPolymers',
+      authors: 'Diamond Polymers',
+      description: '27 Manufacturing Management System'
+    }
   }
 ],
   publishers: [
@@ -40,7 +31,7 @@ module.exports = {
         repository: {
           owner: 'gopalsingh2727',
           name: 'Diamond-Polymers'
-  
+
         },
         prerelease: false,
         draft: true

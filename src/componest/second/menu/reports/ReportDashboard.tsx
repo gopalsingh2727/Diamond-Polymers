@@ -1,17 +1,16 @@
-import { Provider } from 'react-redux';
-import store from './redux/store';
-import { ReportDashboards } from "./components/ReportDashboard";
-import './styles/IsolatedWrapper.css';
-import './styles/index.css';
+// import { ReportDashboards } from "./components/ReportDashboard";
+// import './styles/IsolatedWrapper.css';
+// import './styles/index.css';
+
+import { BackButton } from "../../../allCompones/BackButton"
+import AnalyticsDashboard from "../../../Analytics/AnalyticsDashboard";
 
 
 export default function App() {
   return (
-    <Provider store={store}>
-      <div id="report-dashboard-root" className="isolated-wrapper">
-  
-        <ReportDashboards />
-      </div>
-    </Provider>
+    <div id="report-dashboard-root" className="isolated-wrapper">
+      <BackButton/>
+      <AnalyticsDashboard />
+    </div>
   );
 }

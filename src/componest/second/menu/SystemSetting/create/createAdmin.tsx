@@ -1,11 +1,17 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { createAdmin } from '../../../../redux/Admin/AdminActions';
+import { ActionButton } from '../../../../../components/shared/ActionButton';
+import { ToastContainer } from '../../../../../components/shared/Toast';
+import { useCRUD } from '../../../../../hooks/useCRUD';
 import { AppDispatch } from "../../../../../store";
 
 const CreateAdmin = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { loading, success, error } = useSelector((state: any) => state.adminCreate || {});
+  const { loading } = useSelector((state: any) => state.adminCreate || {});
+
+  // 🚀 CRUD System Integration
+  const { saveState, handleSave, toast } = useCRUD();
 
   const [formData, setFormData] = useState({
     username: '',
@@ -16,18 +22,23 @@ const CreateAdmin = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    dispatch(createAdmin(formData));
+  const handleSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
+
+    handleSave(
+      () => dispatch(createAdmin(formData)),
+      {
+        successMessage: 'Admin created successfully!',
+        onSuccess: () => {
+          setFormData({ username: '', password: '' });
+        }
+      }
+    );
   };
 
   return (
     <div className="p-6 max-w-md mx-auto bg-white rounded shadow-md">
       <h2 className="text-xl font-bold mb-4">Create Admin</h2>
-
-      {loading && <p className="text-blue-500">Creating admin...</p>}
-      {success && <p className="text-green-500">Admin created successfully!</p>}
-      {error && <p className="text-red-500">{error}</p>}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <input
@@ -48,14 +59,18 @@ const CreateAdmin = () => {
           onChange={handleChange}
           required
         />
-        <button
-          type="submit"
+        <ActionButton
+          type="save"
+          state={saveState}
+          onClick={handleSubmit}
           className="bg-blue-600 text-white px-4 py-2 rounded"
-          disabled={loading}
         >
           Create Admin
-        </button>
+        </ActionButton>
       </form>
+
+      {/* Toast notifications */}
+      <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
     </div>
   );
 };

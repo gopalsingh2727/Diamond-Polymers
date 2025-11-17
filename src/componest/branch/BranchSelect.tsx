@@ -5,7 +5,6 @@ import { fetchBranches } from "../redux/Branch/BranchActions";
 import { setSelectedBranchInAuth } from "../redux/login/authActions";
 import type { RootState, AppDispatch } from "../../store";
 
-
 const BranchSelect = () => {
   const dispatch: AppDispatch = useDispatch();
   const navigate = useNavigate();
@@ -23,7 +22,7 @@ const BranchSelect = () => {
 
   useEffect(() => {
     if (error === "Invalid or expired token") {
-      localStorage.removeItem("userData"); // or remove "token" if you're using that
+      localStorage.removeItem("userData");
       navigate("/login");
     }
   }, [error, navigate]);
@@ -31,12 +30,7 @@ const BranchSelect = () => {
   const handleBranchSelect = () => {
     if (!selectedBranch) return;
 
-    const updatedUserData = {
-      ...userData,
-      selectedBranch,
-    };
-
-    localStorage.setItem("userData", JSON.stringify(updatedUserData));
+    // Use the action creator which handles localStorage update
     dispatch(setSelectedBranchInAuth(selectedBranch));
     navigate("/");
   };
@@ -46,12 +40,11 @@ const BranchSelect = () => {
   }
 
   return (
-    <div className="fixed inset-0 from-gray-50 to-gray-100 flex items-center justify-center p-4">
-
+    <div className="fixed inset-0 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-xl overflow-hidden w-full max-w-md border border-gray-200">
         <div className="p-6 text-center border-b border-gray-100">
-          <h2 className="text-2xl font-bold text-gray-800 text-black">Select Your Branch</h2>
-          <p className="text-gray-700 mt-2">Please choose a branch to continue</p>
+          <h2 className="text-2xl font-bold text-gray-800">Select Your Branch</h2>
+          <p className="text-gray-600 mt-2">Please choose a branch to continue</p>
         </div>
 
         <div className="p-6">
@@ -83,7 +76,7 @@ const BranchSelect = () => {
                     />
                   </svg>
                   <select
-                    className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none text-black"
+                    className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none text-gray-800"
                     value={selectedBranch}
                     onChange={(e) => setSelectedBranch(e.target.value)}
                   >
@@ -121,7 +114,9 @@ const BranchSelect = () => {
           )}
         </div>
 
-        <div className="bg-gray-50 px-6 py-4 text-center border-t border-gray-100"></div>
+        <div className="bg-gray-50 px-6 py-4 text-center border-t border-gray-100">
+          <p className="text-gray-500 text-xs">You can change your branch later from the dashboard</p>
+        </div>
       </div>
     </div>
   );

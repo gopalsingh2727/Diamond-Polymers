@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch } from "../../../../store";
+import { AppDispatch, RootState } from "../../../../store";
 import { getAccounts } from "../../../redux/create/createNewAccount/NewAccountActions";
 
 import './adderss.css';
-import { BackButton, SearchBox, handleKeyNavigation } from "../../../allCompones/BackButton";
+import { BackButton, SearchBox } from "../../../allCompones/BackButton";
 import EmailView from './email';
 import WhatsAppView from './WhatsApp';
 import SMSView from './sms';
@@ -54,7 +54,7 @@ export default function AddressList() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === ' ') {
         e.preventDefault();
-        const address = addresses[selectedIndex];
+        const address = addresses?.[selectedIndex];
         if (address) toggleSelection(address);
       }
 

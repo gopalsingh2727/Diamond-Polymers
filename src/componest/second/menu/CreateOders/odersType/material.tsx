@@ -1,7 +1,6 @@
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from "react";
-import MaterialSuggestions from "../SuggestionInput/MaterialSuggestions";
+import OptimizedSuggestions from "../SuggestionInput/OptimizedSuggestions";
 import '../materialAndProduct/materialAndProduct.css';
-import PrintImage from "../printoptions";
 
 type MixMaterial = {
   _id: string;
@@ -16,24 +15,12 @@ type SavedMixingData = {
   loss: number;
 };
 
-type MaterialFormData = {
-  id: string;
-  materialType: string;
-  materialName: string;
-  width: string;
-  height: string;
-  gauge: string;
-  totalWeight: string;
-  onePieceWeight: string;
-  totalPieces: string;
-};
-
 interface MaterialInOdersProps {
-  showBottomGusset: boolean;
-  showFlap: boolean;
-  showAirHole: boolean;
   initialData?: any;
   isEditMode?: boolean;
+  showBottomGusset?: boolean;
+  showFlap?: boolean;
+  showAirHole?: boolean;
 }
 
 type Material = {
@@ -60,17 +47,9 @@ export type MaterialData = {
   materialTypeId: string; 
   materialType: string;
   materialName: string;
-  width: string;
-  height: string;
-  gauge: string;
   totalWeight: string;
   onePieceWeight: string;
   totalPieces: string;
-  dimensionUnit: string;
-  gaugeUnit: string;
-  bottomGusset: string;
-  flap: string;
-  airHole: string;
   mixing: string;
   mixingData: MixMaterial[];
 };
@@ -111,10 +90,10 @@ const MixingRow = ({ mat, index, onMixChange, onRemove, isFirst }: MixingRowProp
           style={isFirst ? { backgroundColor: '#f5f5f5', cursor: 'not-allowed' } : {}}
         />
         {!isFirst && (
-          <MaterialSuggestions
-            materialName={mat.type}
+          <OptimizedSuggestions
+            searchTerm={mat.type}
             onSelect={handleTypeSuggestionSelect}
-            suggestionType="type"
+            suggestionType="materialType"
             showSuggestions={showTypeSuggestions && mat.type.length > 0}
           />
         )}
@@ -133,12 +112,12 @@ const MixingRow = ({ mat, index, onMixChange, onRemove, isFirst }: MixingRowProp
         />
 
         {!isFirst && (
-          <MaterialSuggestions
-            materialName={mat.name}
+          <OptimizedSuggestions
+            searchTerm={mat.name}
             onSelect={handleNameSuggestionSelect}
-            suggestionType="name"
-            selectedMaterialType={mat.type}
-            showSuggestions={showNameSuggestions && mat.name.length > 0}
+            suggestionType="materialName"
+            filterBy={mat._id}
+            showSuggestions={showNameSuggestions && mat.name.length > 0 && mat.type.length > 0}
           />
         )}
       </div>
@@ -176,27 +155,10 @@ const MixingRow = ({ mat, index, onMixChange, onRemove, isFirst }: MixingRowProp
 };
 
 const MaterialInOders = forwardRef((
-  { showBottomGusset, showFlap, showAirHole, initialData, isEditMode }: MaterialInOdersProps,
+  { initialData, isEditMode }: MaterialInOdersProps,
   ref: React.ForwardedRef<{ getMaterialData: () => MaterialData }>
 ) => {
-  const [materialValues, setMaterialValues] = useState<MaterialFormData>({
-    id: '',
-    materialType: '',
-    materialName: '',
-    width: '',
-    height: '',
-    gauge: '',
-    totalWeight: '',
-    onePieceWeight: '',
-    totalPieces: '',
-  });
-
-  const [dimensionUnit, setDimensionUnit] = useState("mm");
-  const [gaugeUnit, setGaugeUnit] = useState("gauge");
-  const [bottomGusset, setBottomGusset] = useState('');
-  const [flap, setFlap] = useState('');
-  const [airHole, setAirHole] = useState('');
-  const [materialData, setMaterialData] = useState({ category: '', mol: 0 });
+  const [materialData, setMaterialData] = useState({ category: '' });
   const [materialName, setMaterialName] = useState('');
   const [totalWeight, setTotalWeight] = useState('');
   const [onePieceWeight, setOnePieceWeight] = useState('');
@@ -220,35 +182,13 @@ const MaterialInOders = forwardRef((
   const [mainMaterialId, setMainMaterialId] = useState('');
   const [materialTypeId, setMaterialTypeId] = useState('');
 
-  // FIXED: Enhanced initial data loading for edit mode
+  // Load initial data for edit mode
   useEffect(() => {
     if (isEditMode && initialData) {
       console.log('🔄 Loading material data for edit:', initialData);
       
-      // Set material values with comprehensive mapping
-      setMaterialValues({
-        id: initialData.material?._id || initialData.materialId || '',
-        materialType: initialData.material?.materialTypeName || initialData.materialType || '',
-        materialName: initialData.material?.materialName || initialData.materialName || '',
-        width: initialData.Width?.toString() || initialData.width || '',
-        height: initialData.Height?.toString() || initialData.height || '',
-        gauge: initialData.Thickness?.toString() || initialData.gauge || '',
-        totalWeight: initialData.materialWeight?.toString() || initialData.totalWeight || '',
-        onePieceWeight: initialData.onePieceWeight?.toString() || '',
-        totalPieces: initialData.totalPieces?.toString() || '',
-      });
-
-      // Set other fields
-      setDimensionUnit(initialData.dimensionUnit || 'mm');
-      setGaugeUnit(initialData.gaugeUnit || 'gauge');
-      setBottomGusset(initialData.BottomGusset?.toString() || initialData.bottomGusset?.toString() || '');
-      setFlap(initialData.Flap?.toString() || initialData.flap?.toString() || '');
-      setAirHole(initialData.AirHole?.toString() || initialData.airHole?.toString() || '');
-      
-      // Set material data
       setMaterialData({
-        category: initialData.material?.materialTypeName || initialData.materialType || '',
-        mol: initialData.material?.mol || 0
+        category: initialData.material?.materialTypeName || initialData.materialType || ''
       });
       
       setMaterialName(initialData.material?.materialName || initialData.materialName || '');
@@ -290,81 +230,6 @@ const MaterialInOders = forwardRef((
     }
   }, [isEditMode, initialData]);
 
-  const convertDimensionToMM = (value: number, unit: string): number => {
-    if (unit === "inch") return value * 25.4;
-    return value;
-  };
-
-  const convertGaugeToMicron = (value: number, unit: string): number => {
-    if (unit === "gauge") return value / 4;
-    return value;
-  };
-
-  const calculateOneBagWeight = (): number => {
-    const width = parseFloat(materialValues.width) || 0;
-    const height = parseFloat(materialValues.height) || 0;
-    const gauge = parseFloat(materialValues.gauge) || 0;
-    const mol = materialData.mol || 0;
-    
-    if (width === 0 || height === 0 || gauge === 0) return 0;
-
-    const widthMM = convertDimensionToMM(width, dimensionUnit);
-    const heightMM = convertDimensionToMM(height, dimensionUnit);
-    const gaugeMicron = convertGaugeToMicron(gauge, gaugeUnit);
-
-    return (widthMM * heightMM * gaugeMicron / mol);
-  };
-
-  const calculateTotalWeight = (): number => {
-    const totalPcs = parseFloat(formState.totalPieces) || 0;
-    const oneBagWt = calculateOneBagWeight();
-    return totalPcs * oneBagWt;
-  };
-
-  const calculateTotalPieces = (): number => {
-    const totalWt = parseFloat(totalWeight) || 0;
-    const oneBagWt = calculateOneBagWeight();
-    return oneBagWt ? Math.round(totalWt / oneBagWt) : 0;
-  };
-
-  useEffect(() => {
-    if (!isEditMode) {
-      const calculatedOneBagWeight = calculateOneBagWeight();
-      setOnePieceWeight(calculatedOneBagWeight.toFixed(6));
-    }
-  }, [materialValues.width, materialValues.height, materialValues.gauge, dimensionUnit, gaugeUnit, materialData.mol, isEditMode]);
-
-  useEffect(() => {
-    if (!isEditMode && formState.totalPieces && !totalWeight) {
-      const calculatedTotalWeight = calculateTotalWeight();
-      setTotalWeight(calculatedTotalWeight.toFixed(3));
-    }
-  }, [formState.totalPieces, onePieceWeight, isEditMode]);
-
-  useEffect(() => {
-    if (!isEditMode && totalWeight && !formState.totalPieces) {
-      const calculatedTotalPieces = calculateTotalPieces();
-      setFormState(prev => ({ ...prev, totalPieces: calculatedTotalPieces.toString() }));
-    }
-  }, [totalWeight, onePieceWeight, isEditMode]);
-
-  useEffect(() => {
-    if (!isEditMode && materialData.mol && materialValues.width && materialValues.height && materialValues.gauge) {
-      const calculatedOneBagWeight = calculateOneBagWeight();
-      setOnePieceWeight(calculatedOneBagWeight.toFixed(6));
-      
-      if (formState.totalPieces) {
-        const calculatedTotalWeight = calculateTotalWeight();
-        setTotalWeight(calculatedTotalWeight.toFixed(3));
-      }
-      
-      if (totalWeight) {
-        const calculatedTotalPieces = calculateTotalPieces();
-        setFormState(prev => ({ ...prev, totalPieces: calculatedTotalPieces.toString() }));
-      }
-    }
-  }, [materialData.mol, isEditMode]);
-
   // Update mixing materials when main material changes
   useEffect(() => {
     if (mixing === "yes" && mainMaterialId && materialName && materialData.category && !isEditMode) {
@@ -383,15 +248,6 @@ const MaterialInOders = forwardRef((
       });
     }
   }, [mainMaterialId, materialName, materialData.category, mixing, isEditMode]);
-
-  const isAllDataFilled = (): boolean => {
-    return (
-      materialData.category.trim() !== '' &&
-      materialName.trim() !== '' &&
-      totalWeight.trim() !== '' &&
-      formState.totalPieces.trim() !== ''
-    );
-  };
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -427,7 +283,7 @@ const MaterialInOders = forwardRef((
     }
   };
 
-  // FIXED Material Type Selection Handler
+  // Material Type Selection Handler
   const handleMaterialTypeSelect = (selectedMaterial: any) => {
     const typeId = selectedMaterial._id || selectedMaterial.materialTypeId || '';
     const typeName = selectedMaterial.materialTypeName || selectedMaterial.name || '';
@@ -440,20 +296,18 @@ const MaterialInOders = forwardRef((
     setShowTypeSuggestions(false);
   };
 
-  // FIXED Material Name Selection Handler
+  // Material Name Selection Handler
   const handleMaterialNameSelect = (selectedMaterial: any) => {
     const materialId = selectedMaterial._id || selectedMaterial.materialId || '';
     const typeId = selectedMaterial.materialTypeId || selectedMaterial.materialType || materialTypeId || '';
     const matName = selectedMaterial.materialName || selectedMaterial.name || '';
     const typeName = selectedMaterial.materialTypeName || materialData.category || '';
-    const mol = selectedMaterial.materialMol || selectedMaterial.mol || 0;
     
     setMainMaterialId(materialId);
     if (typeId) setMaterialTypeId(typeId);
     setMaterialName(matName);
     setMaterialData({
-      category: typeName,
-      mol: mol,
+      category: typeName
     });
     setShowNameSuggestions(false);
   };
@@ -501,17 +355,9 @@ const MaterialInOders = forwardRef((
       materialTypeId: materialTypeId,
       materialType: materialData.category,
       materialName: materialName,
-      width: materialValues.width,
-      height: materialValues.height,
-      gauge: materialValues.gauge,
       totalWeight: totalWeight,
       onePieceWeight: onePieceWeight,
       totalPieces: formState.totalPieces,
-      dimensionUnit: dimensionUnit,
-      gaugeUnit: gaugeUnit,
-      bottomGusset: bottomGusset,
-      flap: flap,
-      airHole: airHole,
       mixing: mixing,
       mixingData: savedMixing?.data || []
     };
@@ -527,102 +373,6 @@ const MaterialInOders = forwardRef((
 
   return (
     <div>
-      <div className="materialInputs">
-        <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-          <div className="divRow">
-            <label>Width</label>
-            <input
-              type="text"
-              value={materialValues.width}
-              onChange={(e) => setMaterialValues(prev => ({ ...prev, width: e.target.value }))}
-              placeholder="Enter Width"
-              className="inputBox"
-            />
-          </div>
-          <div className="divRow">
-            <label>Height</label>
-            <input
-              type="text"
-              value={materialValues.height}
-              onChange={(e) => setMaterialValues(prev => ({ ...prev, height: e.target.value }))}
-              placeholder="Enter Height"
-              className="inputBox"
-            />
-          </div>
-          <div className="divRow">
-            <label>Measurement</label>
-            <select
-              id="myDropdown"
-              value={dimensionUnit}
-              onChange={(e) => setDimensionUnit(e.target.value)}
-            >
-              <option value="mm">mm</option>
-              <option value="inch">inch</option>
-            </select>
-          </div>
-          <div className="divRow">
-            <label>Thickness</label>
-            <input
-              type="text"
-              value={materialValues.gauge}
-              onChange={(e) => setMaterialValues(prev => ({ ...prev, gauge: e.target.value }))}
-              placeholder="Enter Gauge/Micron"
-              className="inputBox"
-            />
-          </div>
-          <div className="divRow">
-            <label>G/µm</label>
-            <select
-              value={gaugeUnit}
-              id="myDropdown"
-              onChange={(e) => setGaugeUnit(e.target.value)}
-            >
-              <option value="gauge">gauge</option>
-              <option value="micron">micron</option>
-            </select>
-          </div>
-        </div>
-
-        {showBottomGusset && (
-          <div className="divRow">
-            <label>Bottom Gusset</label>
-            <input
-              type="number"
-              value={bottomGusset}
-              onChange={(e) => setBottomGusset(e.target.value)}
-              placeholder="Enter Bottom Gusset"
-              className="inputBox"
-            />
-          </div>
-        )}
-
-        {showFlap && (
-          <div className="divRow">
-            <label>Flap</label>
-            <input
-              type="number"
-              value={flap}
-              onChange={(e) => setFlap(e.target.value)}
-              placeholder="Enter Flap"
-              className="inputBox"
-            />
-          </div>
-        )}
-
-        {showAirHole && (
-          <div className="divRow">
-            <label>Air Hole</label>
-            <input
-              type="number"
-              value={airHole}
-              onChange={(e) => setAirHole(e.target.value)}
-              placeholder="Enter Air Hole"
-              className="inputBox"
-            />
-          </div>
-        )}
-      </div>
-
       <div className="createProductCss">
         <div className="materialForm">
           <div className="createProductCss">
@@ -644,10 +394,10 @@ const MaterialInOders = forwardRef((
                   readOnly={isEditMode}
                 />
                 {!isEditMode && (
-                  <MaterialSuggestions
-                    materialName={materialData.category}
+                  <OptimizedSuggestions
+                    searchTerm={materialData.category}
                     onSelect={handleMaterialTypeSelect}
-                    suggestionType="type"
+                    suggestionType="materialType"
                     showSuggestions={showTypeSuggestions && materialData.category.length > 0}
                   />
                 )}
@@ -666,11 +416,11 @@ const MaterialInOders = forwardRef((
                 />
                 
                 {!isEditMode && (
-                  <MaterialSuggestions
-                    materialName={materialName}
+                  <OptimizedSuggestions
+                    searchTerm={materialName}
                     onSelect={handleMaterialNameSelect}
-                    suggestionType="name"
-                    selectedMaterialType={materialData.category}
+                    suggestionType="materialName"
+                    filterBy={materialTypeId}
                     showSuggestions={showNameSuggestions && materialName.length > 0 && materialData.category.length > 0}
                   />
                 )}
@@ -695,8 +445,6 @@ const MaterialInOders = forwardRef((
               onChange={(e) => setOnePieceWeight(e.target.value)}
               placeholder="One Piece Weight"
               className="inputBox"
-              readOnly={!isEditMode}
-              style={!isEditMode ? { backgroundColor: '#f5f5f5' } : {}}
             />
           </div>
           <div>
@@ -803,8 +551,6 @@ const MaterialInOders = forwardRef((
           </div>
         </div>
       )}
-
-   
     </div>
   );
 });

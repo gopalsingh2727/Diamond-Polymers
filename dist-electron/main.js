@@ -836,7 +836,7 @@ var hasRequiredFs;
 function requireFs() {
   if (hasRequiredFs) return fs;
   hasRequiredFs = 1;
-  (function(exports) {
+  (function(exports$1) {
     const u = requireUniversalify().fromCallback;
     const fs2 = requireGracefulFs();
     const api = [
@@ -877,11 +877,11 @@ function requireFs() {
     ].filter((key) => {
       return typeof fs2[key] === "function";
     });
-    Object.assign(exports, fs2);
+    Object.assign(exports$1, fs2);
     api.forEach((method) => {
-      exports[method] = u(fs2[method]);
+      exports$1[method] = u(fs2[method]);
     });
-    exports.exists = function(filename, callback) {
+    exports$1.exists = function(filename, callback) {
       if (typeof callback === "function") {
         return fs2.exists(filename, callback);
       }
@@ -889,7 +889,7 @@ function requireFs() {
         return fs2.exists(filename, resolve);
       });
     };
-    exports.read = function(fd, buffer, offset, length, position, callback) {
+    exports$1.read = function(fd, buffer, offset, length, position, callback) {
       if (typeof callback === "function") {
         return fs2.read(fd, buffer, offset, length, position, callback);
       }
@@ -900,7 +900,7 @@ function requireFs() {
         });
       });
     };
-    exports.write = function(fd, buffer, ...args) {
+    exports$1.write = function(fd, buffer, ...args) {
       if (typeof args[args.length - 1] === "function") {
         return fs2.write(fd, buffer, ...args);
       }
@@ -912,7 +912,7 @@ function requireFs() {
       });
     };
     if (typeof fs2.writev === "function") {
-      exports.writev = function(fd, buffers, ...args) {
+      exports$1.writev = function(fd, buffers, ...args) {
         if (typeof args[args.length - 1] === "function") {
           return fs2.writev(fd, buffers, ...args);
         }
@@ -925,7 +925,7 @@ function requireFs() {
       };
     }
     if (typeof fs2.realpath.native === "function") {
-      exports.realpath.native = u(fs2.realpath.native);
+      exports$1.realpath.native = u(fs2.realpath.native);
     } else {
       process.emitWarning(
         "fs.realpath.native is not a function. Is fs being monkey-patched?",
@@ -2925,13 +2925,13 @@ var hasRequiredBrowser;
 function requireBrowser() {
   if (hasRequiredBrowser) return browser.exports;
   hasRequiredBrowser = 1;
-  (function(module, exports) {
-    exports.formatArgs = formatArgs;
-    exports.save = save;
-    exports.load = load;
-    exports.useColors = useColors;
-    exports.storage = localstorage();
-    exports.destroy = /* @__PURE__ */ (() => {
+  (function(module, exports$1) {
+    exports$1.formatArgs = formatArgs;
+    exports$1.save = save;
+    exports$1.load = load;
+    exports$1.useColors = useColors;
+    exports$1.storage = localstorage();
+    exports$1.destroy = /* @__PURE__ */ (() => {
       let warned = false;
       return () => {
         if (!warned) {
@@ -2940,7 +2940,7 @@ function requireBrowser() {
         }
       };
     })();
-    exports.colors = [
+    exports$1.colors = [
       "#0000CC",
       "#0000FF",
       "#0033CC",
@@ -3052,14 +3052,14 @@ function requireBrowser() {
       });
       args.splice(lastC, 0, c);
     }
-    exports.log = console.debug || console.log || (() => {
+    exports$1.log = console.debug || console.log || (() => {
     });
     function save(namespaces) {
       try {
         if (namespaces) {
-          exports.storage.setItem("debug", namespaces);
+          exports$1.storage.setItem("debug", namespaces);
         } else {
-          exports.storage.removeItem("debug");
+          exports$1.storage.removeItem("debug");
         }
       } catch (error2) {
       }
@@ -3067,7 +3067,7 @@ function requireBrowser() {
     function load() {
       let r;
       try {
-        r = exports.storage.getItem("debug") || exports.storage.getItem("DEBUG");
+        r = exports$1.storage.getItem("debug") || exports$1.storage.getItem("DEBUG");
       } catch (error2) {
       }
       if (!r && typeof process !== "undefined" && "env" in process) {
@@ -3081,7 +3081,7 @@ function requireBrowser() {
       } catch (error2) {
       }
     }
-    module.exports = requireCommon$1()(exports);
+    module.exports = requireCommon$1()(exports$1);
     const { formatters } = module.exports;
     formatters.j = function(v) {
       try {
@@ -3213,25 +3213,25 @@ var hasRequiredNode$1;
 function requireNode$1() {
   if (hasRequiredNode$1) return node$1.exports;
   hasRequiredNode$1 = 1;
-  (function(module, exports) {
+  (function(module, exports$1) {
     const tty = require$$1$2;
     const util2 = require$$4$1;
-    exports.init = init;
-    exports.log = log2;
-    exports.formatArgs = formatArgs;
-    exports.save = save;
-    exports.load = load;
-    exports.useColors = useColors;
-    exports.destroy = util2.deprecate(
+    exports$1.init = init;
+    exports$1.log = log2;
+    exports$1.formatArgs = formatArgs;
+    exports$1.save = save;
+    exports$1.load = load;
+    exports$1.useColors = useColors;
+    exports$1.destroy = util2.deprecate(
       () => {
       },
       "Instance method `debug.destroy()` is deprecated and no longer does anything. It will be removed in the next major version of `debug`."
     );
-    exports.colors = [6, 2, 3, 4, 5, 1];
+    exports$1.colors = [6, 2, 3, 4, 5, 1];
     try {
       const supportsColor = requireSupportsColor();
       if (supportsColor && (supportsColor.stderr || supportsColor).level >= 2) {
-        exports.colors = [
+        exports$1.colors = [
           20,
           21,
           26,
@@ -3312,7 +3312,7 @@ function requireNode$1() {
       }
     } catch (error2) {
     }
-    exports.inspectOpts = Object.keys(process.env).filter((key) => {
+    exports$1.inspectOpts = Object.keys(process.env).filter((key) => {
       return /^debug_/i.test(key);
     }).reduce((obj, key) => {
       const prop = key.substring(6).toLowerCase().replace(/_([a-z])/g, (_, k) => {
@@ -3332,7 +3332,7 @@ function requireNode$1() {
       return obj;
     }, {});
     function useColors() {
-      return "colors" in exports.inspectOpts ? Boolean(exports.inspectOpts.colors) : tty.isatty(process.stderr.fd);
+      return "colors" in exports$1.inspectOpts ? Boolean(exports$1.inspectOpts.colors) : tty.isatty(process.stderr.fd);
     }
     function formatArgs(args) {
       const { namespace: name, useColors: useColors2 } = this;
@@ -3347,13 +3347,13 @@ function requireNode$1() {
       }
     }
     function getDate() {
-      if (exports.inspectOpts.hideDate) {
+      if (exports$1.inspectOpts.hideDate) {
         return "";
       }
       return (/* @__PURE__ */ new Date()).toISOString() + " ";
     }
     function log2(...args) {
-      return process.stderr.write(util2.formatWithOptions(exports.inspectOpts, ...args) + "\n");
+      return process.stderr.write(util2.formatWithOptions(exports$1.inspectOpts, ...args) + "\n");
     }
     function save(namespaces) {
       if (namespaces) {
@@ -3367,12 +3367,12 @@ function requireNode$1() {
     }
     function init(debug) {
       debug.inspectOpts = {};
-      const keys = Object.keys(exports.inspectOpts);
+      const keys = Object.keys(exports$1.inspectOpts);
       for (let i = 0; i < keys.length; i++) {
-        debug.inspectOpts[keys[i]] = exports.inspectOpts[keys[i]];
+        debug.inspectOpts[keys[i]] = exports$1.inspectOpts[keys[i]];
       }
     }
-    module.exports = requireCommon$1()(exports);
+    module.exports = requireCommon$1()(exports$1);
     const { formatters } = module.exports;
     formatters.o = function(v) {
       this.inspectOpts.colors = this.useColors;
@@ -4220,7 +4220,7 @@ var hasRequiredSax;
 function requireSax() {
   if (hasRequiredSax) return sax;
   hasRequiredSax = 1;
-  (function(exports) {
+  (function(exports$1) {
     (function(sax2) {
       sax2.parser = function(strict, opt) {
         return new SAXParser(strict, opt);
@@ -4555,266 +4555,266 @@ function requireSax() {
         // <script> ... <
       };
       sax2.XML_ENTITIES = {
-        "amp": "&",
-        "gt": ">",
-        "lt": "<",
-        "quot": '"',
-        "apos": "'"
+        amp: "&",
+        gt: ">",
+        lt: "<",
+        quot: '"',
+        apos: "'"
       };
       sax2.ENTITIES = {
-        "amp": "&",
-        "gt": ">",
-        "lt": "<",
-        "quot": '"',
-        "apos": "'",
-        "AElig": 198,
-        "Aacute": 193,
-        "Acirc": 194,
-        "Agrave": 192,
-        "Aring": 197,
-        "Atilde": 195,
-        "Auml": 196,
-        "Ccedil": 199,
-        "ETH": 208,
-        "Eacute": 201,
-        "Ecirc": 202,
-        "Egrave": 200,
-        "Euml": 203,
-        "Iacute": 205,
-        "Icirc": 206,
-        "Igrave": 204,
-        "Iuml": 207,
-        "Ntilde": 209,
-        "Oacute": 211,
-        "Ocirc": 212,
-        "Ograve": 210,
-        "Oslash": 216,
-        "Otilde": 213,
-        "Ouml": 214,
-        "THORN": 222,
-        "Uacute": 218,
-        "Ucirc": 219,
-        "Ugrave": 217,
-        "Uuml": 220,
-        "Yacute": 221,
-        "aacute": 225,
-        "acirc": 226,
-        "aelig": 230,
-        "agrave": 224,
-        "aring": 229,
-        "atilde": 227,
-        "auml": 228,
-        "ccedil": 231,
-        "eacute": 233,
-        "ecirc": 234,
-        "egrave": 232,
-        "eth": 240,
-        "euml": 235,
-        "iacute": 237,
-        "icirc": 238,
-        "igrave": 236,
-        "iuml": 239,
-        "ntilde": 241,
-        "oacute": 243,
-        "ocirc": 244,
-        "ograve": 242,
-        "oslash": 248,
-        "otilde": 245,
-        "ouml": 246,
-        "szlig": 223,
-        "thorn": 254,
-        "uacute": 250,
-        "ucirc": 251,
-        "ugrave": 249,
-        "uuml": 252,
-        "yacute": 253,
-        "yuml": 255,
-        "copy": 169,
-        "reg": 174,
-        "nbsp": 160,
-        "iexcl": 161,
-        "cent": 162,
-        "pound": 163,
-        "curren": 164,
-        "yen": 165,
-        "brvbar": 166,
-        "sect": 167,
-        "uml": 168,
-        "ordf": 170,
-        "laquo": 171,
-        "not": 172,
-        "shy": 173,
-        "macr": 175,
-        "deg": 176,
-        "plusmn": 177,
-        "sup1": 185,
-        "sup2": 178,
-        "sup3": 179,
-        "acute": 180,
-        "micro": 181,
-        "para": 182,
-        "middot": 183,
-        "cedil": 184,
-        "ordm": 186,
-        "raquo": 187,
-        "frac14": 188,
-        "frac12": 189,
-        "frac34": 190,
-        "iquest": 191,
-        "times": 215,
-        "divide": 247,
-        "OElig": 338,
-        "oelig": 339,
-        "Scaron": 352,
-        "scaron": 353,
-        "Yuml": 376,
-        "fnof": 402,
-        "circ": 710,
-        "tilde": 732,
-        "Alpha": 913,
-        "Beta": 914,
-        "Gamma": 915,
-        "Delta": 916,
-        "Epsilon": 917,
-        "Zeta": 918,
-        "Eta": 919,
-        "Theta": 920,
-        "Iota": 921,
-        "Kappa": 922,
-        "Lambda": 923,
-        "Mu": 924,
-        "Nu": 925,
-        "Xi": 926,
-        "Omicron": 927,
-        "Pi": 928,
-        "Rho": 929,
-        "Sigma": 931,
-        "Tau": 932,
-        "Upsilon": 933,
-        "Phi": 934,
-        "Chi": 935,
-        "Psi": 936,
-        "Omega": 937,
-        "alpha": 945,
-        "beta": 946,
-        "gamma": 947,
-        "delta": 948,
-        "epsilon": 949,
-        "zeta": 950,
-        "eta": 951,
-        "theta": 952,
-        "iota": 953,
-        "kappa": 954,
-        "lambda": 955,
-        "mu": 956,
-        "nu": 957,
-        "xi": 958,
-        "omicron": 959,
-        "pi": 960,
-        "rho": 961,
-        "sigmaf": 962,
-        "sigma": 963,
-        "tau": 964,
-        "upsilon": 965,
-        "phi": 966,
-        "chi": 967,
-        "psi": 968,
-        "omega": 969,
-        "thetasym": 977,
-        "upsih": 978,
-        "piv": 982,
-        "ensp": 8194,
-        "emsp": 8195,
-        "thinsp": 8201,
-        "zwnj": 8204,
-        "zwj": 8205,
-        "lrm": 8206,
-        "rlm": 8207,
-        "ndash": 8211,
-        "mdash": 8212,
-        "lsquo": 8216,
-        "rsquo": 8217,
-        "sbquo": 8218,
-        "ldquo": 8220,
-        "rdquo": 8221,
-        "bdquo": 8222,
-        "dagger": 8224,
-        "Dagger": 8225,
-        "bull": 8226,
-        "hellip": 8230,
-        "permil": 8240,
-        "prime": 8242,
-        "Prime": 8243,
-        "lsaquo": 8249,
-        "rsaquo": 8250,
-        "oline": 8254,
-        "frasl": 8260,
-        "euro": 8364,
-        "image": 8465,
-        "weierp": 8472,
-        "real": 8476,
-        "trade": 8482,
-        "alefsym": 8501,
-        "larr": 8592,
-        "uarr": 8593,
-        "rarr": 8594,
-        "darr": 8595,
-        "harr": 8596,
-        "crarr": 8629,
-        "lArr": 8656,
-        "uArr": 8657,
-        "rArr": 8658,
-        "dArr": 8659,
-        "hArr": 8660,
-        "forall": 8704,
-        "part": 8706,
-        "exist": 8707,
-        "empty": 8709,
-        "nabla": 8711,
-        "isin": 8712,
-        "notin": 8713,
-        "ni": 8715,
-        "prod": 8719,
-        "sum": 8721,
-        "minus": 8722,
-        "lowast": 8727,
-        "radic": 8730,
-        "prop": 8733,
-        "infin": 8734,
-        "ang": 8736,
-        "and": 8743,
-        "or": 8744,
-        "cap": 8745,
-        "cup": 8746,
-        "int": 8747,
-        "there4": 8756,
-        "sim": 8764,
-        "cong": 8773,
-        "asymp": 8776,
-        "ne": 8800,
-        "equiv": 8801,
-        "le": 8804,
-        "ge": 8805,
-        "sub": 8834,
-        "sup": 8835,
-        "nsub": 8836,
-        "sube": 8838,
-        "supe": 8839,
-        "oplus": 8853,
-        "otimes": 8855,
-        "perp": 8869,
-        "sdot": 8901,
-        "lceil": 8968,
-        "rceil": 8969,
-        "lfloor": 8970,
-        "rfloor": 8971,
-        "lang": 9001,
-        "rang": 9002,
-        "loz": 9674,
-        "spades": 9824,
-        "clubs": 9827,
-        "hearts": 9829,
-        "diams": 9830
+        amp: "&",
+        gt: ">",
+        lt: "<",
+        quot: '"',
+        apos: "'",
+        AElig: 198,
+        Aacute: 193,
+        Acirc: 194,
+        Agrave: 192,
+        Aring: 197,
+        Atilde: 195,
+        Auml: 196,
+        Ccedil: 199,
+        ETH: 208,
+        Eacute: 201,
+        Ecirc: 202,
+        Egrave: 200,
+        Euml: 203,
+        Iacute: 205,
+        Icirc: 206,
+        Igrave: 204,
+        Iuml: 207,
+        Ntilde: 209,
+        Oacute: 211,
+        Ocirc: 212,
+        Ograve: 210,
+        Oslash: 216,
+        Otilde: 213,
+        Ouml: 214,
+        THORN: 222,
+        Uacute: 218,
+        Ucirc: 219,
+        Ugrave: 217,
+        Uuml: 220,
+        Yacute: 221,
+        aacute: 225,
+        acirc: 226,
+        aelig: 230,
+        agrave: 224,
+        aring: 229,
+        atilde: 227,
+        auml: 228,
+        ccedil: 231,
+        eacute: 233,
+        ecirc: 234,
+        egrave: 232,
+        eth: 240,
+        euml: 235,
+        iacute: 237,
+        icirc: 238,
+        igrave: 236,
+        iuml: 239,
+        ntilde: 241,
+        oacute: 243,
+        ocirc: 244,
+        ograve: 242,
+        oslash: 248,
+        otilde: 245,
+        ouml: 246,
+        szlig: 223,
+        thorn: 254,
+        uacute: 250,
+        ucirc: 251,
+        ugrave: 249,
+        uuml: 252,
+        yacute: 253,
+        yuml: 255,
+        copy: 169,
+        reg: 174,
+        nbsp: 160,
+        iexcl: 161,
+        cent: 162,
+        pound: 163,
+        curren: 164,
+        yen: 165,
+        brvbar: 166,
+        sect: 167,
+        uml: 168,
+        ordf: 170,
+        laquo: 171,
+        not: 172,
+        shy: 173,
+        macr: 175,
+        deg: 176,
+        plusmn: 177,
+        sup1: 185,
+        sup2: 178,
+        sup3: 179,
+        acute: 180,
+        micro: 181,
+        para: 182,
+        middot: 183,
+        cedil: 184,
+        ordm: 186,
+        raquo: 187,
+        frac14: 188,
+        frac12: 189,
+        frac34: 190,
+        iquest: 191,
+        times: 215,
+        divide: 247,
+        OElig: 338,
+        oelig: 339,
+        Scaron: 352,
+        scaron: 353,
+        Yuml: 376,
+        fnof: 402,
+        circ: 710,
+        tilde: 732,
+        Alpha: 913,
+        Beta: 914,
+        Gamma: 915,
+        Delta: 916,
+        Epsilon: 917,
+        Zeta: 918,
+        Eta: 919,
+        Theta: 920,
+        Iota: 921,
+        Kappa: 922,
+        Lambda: 923,
+        Mu: 924,
+        Nu: 925,
+        Xi: 926,
+        Omicron: 927,
+        Pi: 928,
+        Rho: 929,
+        Sigma: 931,
+        Tau: 932,
+        Upsilon: 933,
+        Phi: 934,
+        Chi: 935,
+        Psi: 936,
+        Omega: 937,
+        alpha: 945,
+        beta: 946,
+        gamma: 947,
+        delta: 948,
+        epsilon: 949,
+        zeta: 950,
+        eta: 951,
+        theta: 952,
+        iota: 953,
+        kappa: 954,
+        lambda: 955,
+        mu: 956,
+        nu: 957,
+        xi: 958,
+        omicron: 959,
+        pi: 960,
+        rho: 961,
+        sigmaf: 962,
+        sigma: 963,
+        tau: 964,
+        upsilon: 965,
+        phi: 966,
+        chi: 967,
+        psi: 968,
+        omega: 969,
+        thetasym: 977,
+        upsih: 978,
+        piv: 982,
+        ensp: 8194,
+        emsp: 8195,
+        thinsp: 8201,
+        zwnj: 8204,
+        zwj: 8205,
+        lrm: 8206,
+        rlm: 8207,
+        ndash: 8211,
+        mdash: 8212,
+        lsquo: 8216,
+        rsquo: 8217,
+        sbquo: 8218,
+        ldquo: 8220,
+        rdquo: 8221,
+        bdquo: 8222,
+        dagger: 8224,
+        Dagger: 8225,
+        bull: 8226,
+        hellip: 8230,
+        permil: 8240,
+        prime: 8242,
+        Prime: 8243,
+        lsaquo: 8249,
+        rsaquo: 8250,
+        oline: 8254,
+        frasl: 8260,
+        euro: 8364,
+        image: 8465,
+        weierp: 8472,
+        real: 8476,
+        trade: 8482,
+        alefsym: 8501,
+        larr: 8592,
+        uarr: 8593,
+        rarr: 8594,
+        darr: 8595,
+        harr: 8596,
+        crarr: 8629,
+        lArr: 8656,
+        uArr: 8657,
+        rArr: 8658,
+        dArr: 8659,
+        hArr: 8660,
+        forall: 8704,
+        part: 8706,
+        exist: 8707,
+        empty: 8709,
+        nabla: 8711,
+        isin: 8712,
+        notin: 8713,
+        ni: 8715,
+        prod: 8719,
+        sum: 8721,
+        minus: 8722,
+        lowast: 8727,
+        radic: 8730,
+        prop: 8733,
+        infin: 8734,
+        ang: 8736,
+        and: 8743,
+        or: 8744,
+        cap: 8745,
+        cup: 8746,
+        int: 8747,
+        there4: 8756,
+        sim: 8764,
+        cong: 8773,
+        asymp: 8776,
+        ne: 8800,
+        equiv: 8801,
+        le: 8804,
+        ge: 8805,
+        sub: 8834,
+        sup: 8835,
+        nsub: 8836,
+        sube: 8838,
+        supe: 8839,
+        oplus: 8853,
+        otimes: 8855,
+        perp: 8869,
+        sdot: 8901,
+        lceil: 8968,
+        rceil: 8969,
+        lfloor: 8970,
+        rfloor: 8971,
+        lang: 9001,
+        rang: 9002,
+        loz: 9674,
+        spades: 9824,
+        clubs: 9827,
+        hearts: 9829,
+        diams: 9830
       };
       Object.keys(sax2.ENTITIES).forEach(function(key) {
         var e = sax2.ENTITIES[key];
@@ -4853,7 +4853,8 @@ function requireSax() {
         return parser;
       }
       function end(parser) {
-        if (parser.sawRoot && !parser.closedRoot) strictFail(parser, "Unclosed root tag");
+        if (parser.sawRoot && !parser.closedRoot)
+          strictFail(parser, "Unclosed root tag");
         if (parser.state !== S.BEGIN && parser.state !== S.BEGIN_WHITESPACE && parser.state !== S.TEXT) {
           error2(parser, "Unexpected end");
         }
@@ -4943,7 +4944,10 @@ function requireSax() {
           tag.local = qn.local;
           tag.uri = tag.ns[qn.prefix] || "";
           if (tag.prefix && !tag.uri) {
-            strictFail(parser, "Unbound namespace prefix: " + JSON.stringify(parser.tagName));
+            strictFail(
+              parser,
+              "Unbound namespace prefix: " + JSON.stringify(parser.tagName)
+            );
             tag.uri = qn.prefix;
           }
           var parent = parser.tags[parser.tags.length - 1] || parser;
@@ -4971,7 +4975,10 @@ function requireSax() {
               uri
             };
             if (prefix && prefix !== "xmlns" && !uri) {
-              strictFail(parser, "Unbound namespace prefix: " + JSON.stringify(prefix));
+              strictFail(
+                parser,
+                "Unbound namespace prefix: " + JSON.stringify(prefix)
+              );
               a.uri = prefix;
             }
             parser.tag.attributes[name] = a;
@@ -5079,7 +5086,7 @@ function requireSax() {
           }
         }
         entity = entity.replace(/^0+/, "");
-        if (isNaN(num) || numStr.toLowerCase() !== entity) {
+        if (isNaN(num) || numStr.toLowerCase() !== entity || num < 0 || num > 1114111) {
           strictFail(parser, "Invalid character entity");
           return "&" + parser.entity + ";";
         }
@@ -5337,10 +5344,22 @@ function requireSax() {
               }
               continue;
             case S.CDATA:
+              var starti = i - 1;
+              while (c && c !== "]") {
+                c = charAt(chunk, i++);
+                if (c && parser.trackPosition) {
+                  parser.position++;
+                  if (c === "\n") {
+                    parser.line++;
+                    parser.column = 0;
+                  } else {
+                    parser.column++;
+                  }
+                }
+              }
+              parser.cdata += chunk.substring(starti, i - 1);
               if (c === "]") {
                 parser.state = S.CDATA_ENDING;
-              } else {
-                parser.cdata += c;
               }
               continue;
             case S.CDATA_ENDING:
@@ -5419,7 +5438,10 @@ function requireSax() {
                 openTag(parser, true);
                 closeTag(parser);
               } else {
-                strictFail(parser, "Forward-slash in opening tag not followed by >");
+                strictFail(
+                  parser,
+                  "Forward-slash in opening tag not followed by >"
+                );
                 parser.state = S.ATTRIB;
               }
               continue;
@@ -5676,7 +5698,7 @@ function requireSax() {
           }
         })();
       }
-    })(exports);
+    })(exports$1);
   })(sax);
   return sax;
 }
@@ -5796,88 +5818,88 @@ var hasRequiredOut;
 function requireOut() {
   if (hasRequiredOut) return out;
   hasRequiredOut = 1;
-  (function(exports) {
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.CURRENT_APP_PACKAGE_FILE_NAME = exports.CURRENT_APP_INSTALLER_FILE_NAME = exports.XElement = exports.parseXml = exports.UUID = exports.parseDn = exports.retry = exports.githubUrl = exports.getS3LikeProviderBaseUrl = exports.ProgressCallbackTransform = exports.MemoLazy = exports.safeStringifyJson = exports.safeGetHeader = exports.parseJson = exports.HttpExecutor = exports.HttpError = exports.DigestTransform = exports.createHttpError = exports.configureRequestUrl = exports.configureRequestOptionsFromUrl = exports.configureRequestOptions = exports.newError = exports.CancellationToken = exports.CancellationError = void 0;
-    exports.asArray = asArray;
+  (function(exports$1) {
+    Object.defineProperty(exports$1, "__esModule", { value: true });
+    exports$1.CURRENT_APP_PACKAGE_FILE_NAME = exports$1.CURRENT_APP_INSTALLER_FILE_NAME = exports$1.XElement = exports$1.parseXml = exports$1.UUID = exports$1.parseDn = exports$1.retry = exports$1.githubUrl = exports$1.getS3LikeProviderBaseUrl = exports$1.ProgressCallbackTransform = exports$1.MemoLazy = exports$1.safeStringifyJson = exports$1.safeGetHeader = exports$1.parseJson = exports$1.HttpExecutor = exports$1.HttpError = exports$1.DigestTransform = exports$1.createHttpError = exports$1.configureRequestUrl = exports$1.configureRequestOptionsFromUrl = exports$1.configureRequestOptions = exports$1.newError = exports$1.CancellationToken = exports$1.CancellationError = void 0;
+    exports$1.asArray = asArray;
     var CancellationToken_1 = requireCancellationToken();
-    Object.defineProperty(exports, "CancellationError", { enumerable: true, get: function() {
+    Object.defineProperty(exports$1, "CancellationError", { enumerable: true, get: function() {
       return CancellationToken_1.CancellationError;
     } });
-    Object.defineProperty(exports, "CancellationToken", { enumerable: true, get: function() {
+    Object.defineProperty(exports$1, "CancellationToken", { enumerable: true, get: function() {
       return CancellationToken_1.CancellationToken;
     } });
     var error_1 = requireError();
-    Object.defineProperty(exports, "newError", { enumerable: true, get: function() {
+    Object.defineProperty(exports$1, "newError", { enumerable: true, get: function() {
       return error_1.newError;
     } });
     var httpExecutor_1 = requireHttpExecutor();
-    Object.defineProperty(exports, "configureRequestOptions", { enumerable: true, get: function() {
+    Object.defineProperty(exports$1, "configureRequestOptions", { enumerable: true, get: function() {
       return httpExecutor_1.configureRequestOptions;
     } });
-    Object.defineProperty(exports, "configureRequestOptionsFromUrl", { enumerable: true, get: function() {
+    Object.defineProperty(exports$1, "configureRequestOptionsFromUrl", { enumerable: true, get: function() {
       return httpExecutor_1.configureRequestOptionsFromUrl;
     } });
-    Object.defineProperty(exports, "configureRequestUrl", { enumerable: true, get: function() {
+    Object.defineProperty(exports$1, "configureRequestUrl", { enumerable: true, get: function() {
       return httpExecutor_1.configureRequestUrl;
     } });
-    Object.defineProperty(exports, "createHttpError", { enumerable: true, get: function() {
+    Object.defineProperty(exports$1, "createHttpError", { enumerable: true, get: function() {
       return httpExecutor_1.createHttpError;
     } });
-    Object.defineProperty(exports, "DigestTransform", { enumerable: true, get: function() {
+    Object.defineProperty(exports$1, "DigestTransform", { enumerable: true, get: function() {
       return httpExecutor_1.DigestTransform;
     } });
-    Object.defineProperty(exports, "HttpError", { enumerable: true, get: function() {
+    Object.defineProperty(exports$1, "HttpError", { enumerable: true, get: function() {
       return httpExecutor_1.HttpError;
     } });
-    Object.defineProperty(exports, "HttpExecutor", { enumerable: true, get: function() {
+    Object.defineProperty(exports$1, "HttpExecutor", { enumerable: true, get: function() {
       return httpExecutor_1.HttpExecutor;
     } });
-    Object.defineProperty(exports, "parseJson", { enumerable: true, get: function() {
+    Object.defineProperty(exports$1, "parseJson", { enumerable: true, get: function() {
       return httpExecutor_1.parseJson;
     } });
-    Object.defineProperty(exports, "safeGetHeader", { enumerable: true, get: function() {
+    Object.defineProperty(exports$1, "safeGetHeader", { enumerable: true, get: function() {
       return httpExecutor_1.safeGetHeader;
     } });
-    Object.defineProperty(exports, "safeStringifyJson", { enumerable: true, get: function() {
+    Object.defineProperty(exports$1, "safeStringifyJson", { enumerable: true, get: function() {
       return httpExecutor_1.safeStringifyJson;
     } });
     var MemoLazy_1 = requireMemoLazy();
-    Object.defineProperty(exports, "MemoLazy", { enumerable: true, get: function() {
+    Object.defineProperty(exports$1, "MemoLazy", { enumerable: true, get: function() {
       return MemoLazy_1.MemoLazy;
     } });
     var ProgressCallbackTransform_1 = requireProgressCallbackTransform();
-    Object.defineProperty(exports, "ProgressCallbackTransform", { enumerable: true, get: function() {
+    Object.defineProperty(exports$1, "ProgressCallbackTransform", { enumerable: true, get: function() {
       return ProgressCallbackTransform_1.ProgressCallbackTransform;
     } });
     var publishOptions_1 = requirePublishOptions();
-    Object.defineProperty(exports, "getS3LikeProviderBaseUrl", { enumerable: true, get: function() {
+    Object.defineProperty(exports$1, "getS3LikeProviderBaseUrl", { enumerable: true, get: function() {
       return publishOptions_1.getS3LikeProviderBaseUrl;
     } });
-    Object.defineProperty(exports, "githubUrl", { enumerable: true, get: function() {
+    Object.defineProperty(exports$1, "githubUrl", { enumerable: true, get: function() {
       return publishOptions_1.githubUrl;
     } });
     var retry_1 = requireRetry();
-    Object.defineProperty(exports, "retry", { enumerable: true, get: function() {
+    Object.defineProperty(exports$1, "retry", { enumerable: true, get: function() {
       return retry_1.retry;
     } });
     var rfc2253Parser_1 = requireRfc2253Parser();
-    Object.defineProperty(exports, "parseDn", { enumerable: true, get: function() {
+    Object.defineProperty(exports$1, "parseDn", { enumerable: true, get: function() {
       return rfc2253Parser_1.parseDn;
     } });
     var uuid_1 = requireUuid();
-    Object.defineProperty(exports, "UUID", { enumerable: true, get: function() {
+    Object.defineProperty(exports$1, "UUID", { enumerable: true, get: function() {
       return uuid_1.UUID;
     } });
     var xml_1 = requireXml();
-    Object.defineProperty(exports, "parseXml", { enumerable: true, get: function() {
+    Object.defineProperty(exports$1, "parseXml", { enumerable: true, get: function() {
       return xml_1.parseXml;
     } });
-    Object.defineProperty(exports, "XElement", { enumerable: true, get: function() {
+    Object.defineProperty(exports$1, "XElement", { enumerable: true, get: function() {
       return xml_1.XElement;
     } });
-    exports.CURRENT_APP_INSTALLER_FILE_NAME = "installer.exe";
-    exports.CURRENT_APP_PACKAGE_FILE_NAME = "package.7z";
+    exports$1.CURRENT_APP_INSTALLER_FILE_NAME = "installer.exe";
+    exports$1.CURRENT_APP_PACKAGE_FILE_NAME = "package.7z";
     function asArray(v) {
       if (v == null) {
         return [];
@@ -8754,19 +8776,19 @@ var hasRequiredRe;
 function requireRe() {
   if (hasRequiredRe) return re.exports;
   hasRequiredRe = 1;
-  (function(module, exports) {
+  (function(module, exports$1) {
     const {
       MAX_SAFE_COMPONENT_LENGTH,
       MAX_SAFE_BUILD_LENGTH,
       MAX_LENGTH
     } = requireConstants();
     const debug = requireDebug();
-    exports = module.exports = {};
-    const re2 = exports.re = [];
-    const safeRe = exports.safeRe = [];
-    const src2 = exports.src = [];
-    const safeSrc = exports.safeSrc = [];
-    const t = exports.t = {};
+    exports$1 = module.exports = {};
+    const re2 = exports$1.re = [];
+    const safeRe = exports$1.safeRe = [];
+    const src2 = exports$1.src = [];
+    const safeSrc = exports$1.safeSrc = [];
+    const t = exports$1.t = {};
     let R = 0;
     const LETTERDASHNUMBER = "[a-zA-Z0-9-]";
     const safeRegexReplacements = [
@@ -8819,18 +8841,18 @@ function requireRe() {
     createToken("COERCERTLFULL", src2[t.COERCEFULL], true);
     createToken("LONETILDE", "(?:~>?)");
     createToken("TILDETRIM", `(\\s*)${src2[t.LONETILDE]}\\s+`, true);
-    exports.tildeTrimReplace = "$1~";
+    exports$1.tildeTrimReplace = "$1~";
     createToken("TILDE", `^${src2[t.LONETILDE]}${src2[t.XRANGEPLAIN]}$`);
     createToken("TILDELOOSE", `^${src2[t.LONETILDE]}${src2[t.XRANGEPLAINLOOSE]}$`);
     createToken("LONECARET", "(?:\\^)");
     createToken("CARETTRIM", `(\\s*)${src2[t.LONECARET]}\\s+`, true);
-    exports.caretTrimReplace = "$1^";
+    exports$1.caretTrimReplace = "$1^";
     createToken("CARET", `^${src2[t.LONECARET]}${src2[t.XRANGEPLAIN]}$`);
     createToken("CARETLOOSE", `^${src2[t.LONECARET]}${src2[t.XRANGEPLAINLOOSE]}$`);
     createToken("COMPARATORLOOSE", `^${src2[t.GTLT]}\\s*(${src2[t.LOOSEPLAIN]})$|^$`);
     createToken("COMPARATOR", `^${src2[t.GTLT]}\\s*(${src2[t.FULLPLAIN]})$|^$`);
     createToken("COMPARATORTRIM", `(\\s*)${src2[t.GTLT]}\\s*(${src2[t.LOOSEPLAIN]}|${src2[t.XRANGEPLAIN]})`, true);
-    exports.comparatorTrimReplace = "$1$2$3";
+    exports$1.comparatorTrimReplace = "$1$2$3";
     createToken("HYPHENRANGE", `^\\s*(${src2[t.XRANGEPLAIN]})\\s+-\\s+(${src2[t.XRANGEPLAIN]})\\s*$`);
     createToken("HYPHENRANGELOOSE", `^\\s*(${src2[t.XRANGEPLAINLOOSE]})\\s+-\\s+(${src2[t.XRANGEPLAINLOOSE]})\\s*$`);
     createToken("STAR", "(<|>)?=?\\s*\\*");
@@ -10646,7 +10668,7 @@ var hasRequiredLodash_isequal;
 function requireLodash_isequal() {
   if (hasRequiredLodash_isequal) return lodash_isequal.exports;
   hasRequiredLodash_isequal = 1;
-  (function(module, exports) {
+  (function(module, exports$1) {
     var LARGE_ARRAY_SIZE = 200;
     var HASH_UNDEFINED = "__lodash_hash_undefined__";
     var COMPARE_PARTIAL_FLAG = 1, COMPARE_UNORDERED_FLAG = 2;
@@ -10662,7 +10684,7 @@ function requireLodash_isequal() {
     var freeGlobal = typeof commonjsGlobal == "object" && commonjsGlobal && commonjsGlobal.Object === Object && commonjsGlobal;
     var freeSelf = typeof self == "object" && self && self.Object === Object && self;
     var root = freeGlobal || freeSelf || Function("return this")();
-    var freeExports = exports && !exports.nodeType && exports;
+    var freeExports = exports$1 && !exports$1.nodeType && exports$1;
     var freeModule = freeExports && true && module && !module.nodeType && module;
     var moduleExports = freeModule && freeModule.exports === freeExports;
     var freeProcess = moduleExports && freeGlobal.process;
@@ -11533,14 +11555,14 @@ var hasRequiredElectronHttpExecutor;
 function requireElectronHttpExecutor() {
   if (hasRequiredElectronHttpExecutor) return electronHttpExecutor;
   hasRequiredElectronHttpExecutor = 1;
-  (function(exports) {
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.ElectronHttpExecutor = exports.NET_SESSION_NAME = void 0;
-    exports.getNetSession = getNetSession;
+  (function(exports$1) {
+    Object.defineProperty(exports$1, "__esModule", { value: true });
+    exports$1.ElectronHttpExecutor = exports$1.NET_SESSION_NAME = void 0;
+    exports$1.getNetSession = getNetSession;
     const builder_util_runtime_1 = requireOut();
-    exports.NET_SESSION_NAME = "electron-updater";
+    exports$1.NET_SESSION_NAME = "electron-updater";
     function getNetSession() {
-      return require$$1$4.session.fromPartition(exports.NET_SESSION_NAME, {
+      return require$$1$4.session.fromPartition(exports$1.NET_SESSION_NAME, {
         cache: false
       });
     }
@@ -11602,7 +11624,7 @@ function requireElectronHttpExecutor() {
         });
       }
     }
-    exports.ElectronHttpExecutor = ElectronHttpExecutor;
+    exports$1.ElectronHttpExecutor = ElectronHttpExecutor;
   })(electronHttpExecutor);
   return electronHttpExecutor;
 }
@@ -13087,16 +13109,16 @@ var hasRequiredTypes;
 function requireTypes() {
   if (hasRequiredTypes) return types;
   hasRequiredTypes = 1;
-  (function(exports) {
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.UpdaterSignal = exports.UPDATE_DOWNLOADED = exports.DOWNLOAD_PROGRESS = exports.CancellationToken = void 0;
-    exports.addHandler = addHandler;
+  (function(exports$1) {
+    Object.defineProperty(exports$1, "__esModule", { value: true });
+    exports$1.UpdaterSignal = exports$1.UPDATE_DOWNLOADED = exports$1.DOWNLOAD_PROGRESS = exports$1.CancellationToken = void 0;
+    exports$1.addHandler = addHandler;
     const builder_util_runtime_1 = requireOut();
-    Object.defineProperty(exports, "CancellationToken", { enumerable: true, get: function() {
+    Object.defineProperty(exports$1, "CancellationToken", { enumerable: true, get: function() {
       return builder_util_runtime_1.CancellationToken;
     } });
-    exports.DOWNLOAD_PROGRESS = "download-progress";
-    exports.UPDATE_DOWNLOADED = "update-downloaded";
+    exports$1.DOWNLOAD_PROGRESS = "download-progress";
+    exports$1.UPDATE_DOWNLOADED = "update-downloaded";
     class UpdaterSignal {
       constructor(emitter) {
         this.emitter = emitter;
@@ -13108,16 +13130,16 @@ function requireTypes() {
         addHandler(this.emitter, "login", handler);
       }
       progress(handler) {
-        addHandler(this.emitter, exports.DOWNLOAD_PROGRESS, handler);
+        addHandler(this.emitter, exports$1.DOWNLOAD_PROGRESS, handler);
       }
       updateDownloaded(handler) {
-        addHandler(this.emitter, exports.UPDATE_DOWNLOADED, handler);
+        addHandler(this.emitter, exports$1.UPDATE_DOWNLOADED, handler);
       }
       updateCancelled(handler) {
         addHandler(this.emitter, "update-cancelled", handler);
       }
     }
-    exports.UpdaterSignal = UpdaterSignal;
+    exports$1.UpdaterSignal = UpdaterSignal;
     function addHandler(emitter, event, handler) {
       {
         emitter.on(event, handler);
@@ -14687,7 +14709,7 @@ var hasRequiredMain$2;
 function requireMain$2() {
   if (hasRequiredMain$2) return main$3;
   hasRequiredMain$2 = 1;
-  (function(exports) {
+  (function(exports$1) {
     var __createBinding = main$3 && main$3.__createBinding || (Object.create ? (function(o, m, k, k2) {
       if (k2 === void 0) k2 = k;
       var desc = Object.getOwnPropertyDescriptor(m, k);
@@ -14701,53 +14723,53 @@ function requireMain$2() {
       if (k2 === void 0) k2 = k;
       o[k2] = m[k];
     }));
-    var __exportStar = main$3 && main$3.__exportStar || function(m, exports2) {
-      for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports2, p)) __createBinding(exports2, m, p);
+    var __exportStar = main$3 && main$3.__exportStar || function(m, exports$12) {
+      for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports$12, p)) __createBinding(exports$12, m, p);
     };
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.NsisUpdater = exports.MacUpdater = exports.RpmUpdater = exports.PacmanUpdater = exports.DebUpdater = exports.AppImageUpdater = exports.Provider = exports.NoOpLogger = exports.AppUpdater = exports.BaseUpdater = void 0;
+    Object.defineProperty(exports$1, "__esModule", { value: true });
+    exports$1.NsisUpdater = exports$1.MacUpdater = exports$1.RpmUpdater = exports$1.PacmanUpdater = exports$1.DebUpdater = exports$1.AppImageUpdater = exports$1.Provider = exports$1.NoOpLogger = exports$1.AppUpdater = exports$1.BaseUpdater = void 0;
     const fs_extra_1 = /* @__PURE__ */ requireLib();
     const path2 = require$$1$1;
     var BaseUpdater_1 = requireBaseUpdater();
-    Object.defineProperty(exports, "BaseUpdater", { enumerable: true, get: function() {
+    Object.defineProperty(exports$1, "BaseUpdater", { enumerable: true, get: function() {
       return BaseUpdater_1.BaseUpdater;
     } });
     var AppUpdater_1 = requireAppUpdater();
-    Object.defineProperty(exports, "AppUpdater", { enumerable: true, get: function() {
+    Object.defineProperty(exports$1, "AppUpdater", { enumerable: true, get: function() {
       return AppUpdater_1.AppUpdater;
     } });
-    Object.defineProperty(exports, "NoOpLogger", { enumerable: true, get: function() {
+    Object.defineProperty(exports$1, "NoOpLogger", { enumerable: true, get: function() {
       return AppUpdater_1.NoOpLogger;
     } });
     var Provider_1 = requireProvider();
-    Object.defineProperty(exports, "Provider", { enumerable: true, get: function() {
+    Object.defineProperty(exports$1, "Provider", { enumerable: true, get: function() {
       return Provider_1.Provider;
     } });
     var AppImageUpdater_1 = requireAppImageUpdater();
-    Object.defineProperty(exports, "AppImageUpdater", { enumerable: true, get: function() {
+    Object.defineProperty(exports$1, "AppImageUpdater", { enumerable: true, get: function() {
       return AppImageUpdater_1.AppImageUpdater;
     } });
     var DebUpdater_1 = requireDebUpdater();
-    Object.defineProperty(exports, "DebUpdater", { enumerable: true, get: function() {
+    Object.defineProperty(exports$1, "DebUpdater", { enumerable: true, get: function() {
       return DebUpdater_1.DebUpdater;
     } });
     var PacmanUpdater_1 = requirePacmanUpdater();
-    Object.defineProperty(exports, "PacmanUpdater", { enumerable: true, get: function() {
+    Object.defineProperty(exports$1, "PacmanUpdater", { enumerable: true, get: function() {
       return PacmanUpdater_1.PacmanUpdater;
     } });
     var RpmUpdater_1 = requireRpmUpdater();
-    Object.defineProperty(exports, "RpmUpdater", { enumerable: true, get: function() {
+    Object.defineProperty(exports$1, "RpmUpdater", { enumerable: true, get: function() {
       return RpmUpdater_1.RpmUpdater;
     } });
     var MacUpdater_1 = requireMacUpdater();
-    Object.defineProperty(exports, "MacUpdater", { enumerable: true, get: function() {
+    Object.defineProperty(exports$1, "MacUpdater", { enumerable: true, get: function() {
       return MacUpdater_1.MacUpdater;
     } });
     var NsisUpdater_1 = requireNsisUpdater();
-    Object.defineProperty(exports, "NsisUpdater", { enumerable: true, get: function() {
+    Object.defineProperty(exports$1, "NsisUpdater", { enumerable: true, get: function() {
       return NsisUpdater_1.NsisUpdater;
     } });
-    __exportStar(requireTypes(), exports);
+    __exportStar(requireTypes(), exports$1);
     let _autoUpdater;
     function doLoadAutoUpdater() {
       if (process.platform === "win32") {
@@ -14783,7 +14805,7 @@ function requireMain$2() {
       }
       return _autoUpdater;
     }
-    Object.defineProperty(exports, "autoUpdater", {
+    Object.defineProperty(exports$1, "autoUpdater", {
       enumerable: true,
       get: () => {
         return _autoUpdater || doLoadAutoUpdater();
@@ -17639,10 +17661,6 @@ function requireSrc() {
 var srcExports = requireSrc();
 const log = /* @__PURE__ */ getDefaultExportFromCjs(srcExports);
 dotenv.config();
-log.transports.file.level = "info";
-log.info("Logger initialized");
-mainExports$1.autoUpdater.logger = log;
-log.log("AutoUpdater initialized", app.getVersion());
 const __dirname$1 = path.dirname(fileURLToPath(import.meta.url));
 process.env.APP_ROOT = path.join(__dirname$1, "..");
 const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
@@ -17683,6 +17701,10 @@ function createWindow() {
   return win;
 }
 app.whenReady().then(() => {
+  log.transports.file.level = "info";
+  log.info("Logger initialized");
+  mainExports$1.autoUpdater.logger = log;
+  log.log("AutoUpdater initialized", app.getVersion());
   const win2 = createWindow();
   mainExports$1.autoUpdater.autoDownload = true;
   mainExports$1.autoUpdater.autoInstallOnAppQuit = true;
@@ -17722,7 +17744,11 @@ app.on("window-all-closed", () => {
 });
 app.on("activate", () => {
   if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow();
+    if (app.isReady()) {
+      createWindow();
+    } else {
+      app.whenReady().then(createWindow);
+    }
   }
 });
 console.log(`App root: ${process.env.APP_ROOT}`);

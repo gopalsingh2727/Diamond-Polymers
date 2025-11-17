@@ -5,72 +5,80 @@ import { BackButton } from "../../../allCompones/BackButton";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import "../Dispatch/Dispatch.css";
-
-// Import your Redux actions and types
 import { fetchOrders } from "../../../redux/oders/OdersActions";
 import { RootState } from "../../../../store";
 
-// Define interfaces for type safety (same as DayBook)
 interface Order {
   _id: string;
   orderId: string;
-  customer?: {
-    _id?: string;
-    companyName?: string;  
-    name?: string;
-    address1?: string;
-    address2?: string;
-    pinCode?: string;
-    state?: string;
-    imageUrl?: string;
-    whatsapp?: string;
-    phone2?: string;
-    telephone?: string;
-    firstName?: string;
-    lastName?: string;
-    address?: string;
-    phone?: string;
-    phone1?: string;
-    email?: string;
-  };
-  createdAt: string;
-  updatedAt: string;
-  overallStatus: string;  
+  customerId: string;
+  materialId: string;
   materialWeight?: number;
   Width?: number;        
   Height?: number;       
   Thickness?: number;  
-  Notes?: string;
-  branch?: {
-    _id?: string;
-    name: string;
-    code: string;
-  };
-  material?: {
-    _id?: string;
-    name?: string;
-    type?: string;
-  };
-  creator?: {
-    username: string;
-    email: string;
-  };
-  steps?: any[];
-  stepsCount?: number;
-  totalMachines?: number;
-  completedSteps?: number;
   SealingType?: string;
   BottomGusset?: string;
   Flap?: string;
   AirHole?: string;
   Printing?: boolean;
   mixMaterial?: any[];
+  steps?: {
+    stepId: string;
+    machines: {
+      machineId: string;
+      operatorId: string | null;
+      status: string;
+      startedAt: string | null;
+      completedAt: string | null;
+      note: string | null;
+      reason: string | null;
+      _id: string;
+    }[];
+    _id: string;
+  }[];
   currentStepIndex?: number;
-  branchId?: string;
-  createdBy?: string;
-  createdByRole?: string;
+  overallStatus: string;
+  branchId: string;
+  createdBy: string;
+  createdByRole: string;
+  createdAt: string;
+  updatedAt: string;
+  customer?: {
+    _id: string;
+    companyName: string;
+    firstName: string;
+    lastName: string;
+    phone1: string;
+    phone2: string;
+    whatsapp: string;
+    telephone: string;
+    address1: string;
+    address2: string;
+    state: string;
+    pinCode: string;
+    email: string;
+    imageUrl?: string;
+  };
+  branch?: {
+    _id: string;
+    name: string;
+    code: string;
+  };
+  material?: {
+    _id: string;
+    materialName: string;
+    materialType: string;
+    materialTypeName: string;
+    mol?: number;
+  };
+  creator?: any;
+  totalSteps?: number;
+  completedSteps?: number;
+  progressPercentage?: number;
+  Notes?: string;
   
-  // Additional dispatch-specific fields
+  // Dispatch-specific fields
   dispatchDate?: string;
   dispatchStatus?: string;
   carrier?: string;
@@ -102,7 +110,6 @@ interface OrderFilters {
   search?: string;
 }
 
-// Define default values for Redux state
 const defaultOrdersState = {
   orders: [],
   loading: false,
@@ -119,7 +126,7 @@ const DISPATCH_STATUSES = [
   'in-transit',
   'delivered',
   'dispatch-pending',
-  'completed' // Include completed orders that might need dispatch
+  'completed'
 ];
 
 export default function Dispatch() {
@@ -135,7 +142,7 @@ export default function Dispatch() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [limit, setLimit] = useState(50);
+  const [limit] = useState(50);
 
   // Refs
   const contentRef = useRef<HTMLDivElement>(null);
@@ -144,15 +151,11 @@ export default function Dispatch() {
 
   // Redux selectors
   const ordersState = useSelector((state: RootState) => {
-    console.log("🚚 Dispatch - Full Redux state:", state);
-    console.log("🚚 Dispatch - Orders state:", state.orderList);
-    
-    return state.orderList || defaultOrdersState;
+    return state.orders?.list || defaultOrdersState;
   });
 
   const authState = useSelector((state: RootState) => state.auth);
 
-  // Destructure after selector
   const { 
     orders: reduxOrders = [], 
     loading = false, 
@@ -162,17 +165,9 @@ export default function Dispatch() {
     statusCounts = null 
   } = ordersState;
 
-  console.log("🚚 Dispatch component state values:", {
-    ordersCount: reduxOrders.length,
-    loading,
-    error,
-    hasPagination: !!pagination,
-    hasSummary: !!summary
-  });
-
-  // Company info
-  const companyName = authState?.user?.companyName || "ABC Company";
-  const branchName = authState?.user?.branchName || "Main Branch";
+  // Company info - safe access with type assertion
+  const companyName = (authState as any)?.user?.companyName || "ABC Company";
+  const branchName = (authState as any)?.user?.branchName || "Main Branch";
 
   // Status color mapping for dispatch
   function getStatusColor(status: string): string {
@@ -185,6 +180,9 @@ export default function Dispatch() {
       'completed': '#10b981',
       'cancelled': '#ef4444',
       'on-hold': '#6b7280',
+      'pending': '#f59e0b',
+      'in-progress': '#3b82f6',
+      'Wait for Approval': '#f59e0b',
       'unknown': '#6b7280'
     };
     return colors[status] || '#6b7280';
@@ -200,56 +198,60 @@ export default function Dispatch() {
       'completed': 'Order completed and ready for dispatch',
       'cancelled': 'Order has been cancelled',
       'on-hold': 'Dispatch is on hold',
+      'pending': 'Order received and awaiting processing',
+      'in-progress': 'Order is being processed',
+      'Wait for Approval': 'Order is waiting for approval',
       'unknown': 'Status unknown'
     };
     return descriptions[status] || 'Status unknown';
   }
 
   // Transform orders and filter for dispatch-relevant orders
-  const transformedOrders: Order[] = Array.isArray(reduxOrders) ? reduxOrders
-    .filter(order => {
-      // Filter for dispatch-relevant orders
-      const status = order.overallStatus?.toLowerCase() || '';
-      
-      // Include orders that are completed, ready for dispatch, or already dispatched
-      return DISPATCH_STATUSES.some(dispatchStatus => 
-        status.includes(dispatchStatus.toLowerCase()) || 
-        status === 'completed' ||
-        status === 'ready' ||
-        order.completedSteps === order.stepsCount // Fully completed orders
-      );
-    })
-    .map(order => {
-    // Extract customer info properly
-    const customerName = order.customer?.companyName || order.customer?.name || 'Unknown Customer';
-    const customerPhone = order.customer?.phone1 || '';
-    
-    // Determine dispatch status
-    let dispatchStatus = order.overallStatus || 'unknown';
-    if (order.completedSteps === order.stepsCount && order.overallStatus === 'completed') {
-      dispatchStatus = 'ready-for-dispatch';
-    }
-    
-    return {
-      ...order,
-      id: order._id,
-      companyName: customerName,
-      name: customerName,
-      phone: customerPhone,
-      status: dispatchStatus,
-      date: new Date(order.createdAt).toISOString().split('T')[0],
-      AllStatus: {
-        [dispatchStatus]: {
-          color: getStatusColor(dispatchStatus),
-          description: getStatusDescription(dispatchStatus)
-        }
-      }
-    };
-  }) : [];
+  const transformedOrders: Order[] = Array.isArray(reduxOrders) 
+    ? reduxOrders
+        .filter((order: any) => {
+          // Filter for dispatch-relevant orders
+          const status = order.overallStatus?.toLowerCase() || '';
+          
+          // Include orders that are completed, ready for dispatch, or already dispatched
+          return DISPATCH_STATUSES.some(dispatchStatus => 
+            status.includes(dispatchStatus.toLowerCase()) || 
+            status === 'completed' ||
+            status === 'ready' ||
+            order.completedSteps === order.totalSteps
+          );
+        })
+        .map((order: any) => {
+          const customerName = order.customer?.companyName || order.customer?.firstName || 'Unknown Customer';
+          const customerPhone = order.customer?.phone1 || '';
+          
+          // Determine dispatch status
+          let dispatchStatus = order.overallStatus || 'unknown';
+          if (order.completedSteps === order.totalSteps && order.totalSteps > 0 && order.overallStatus === 'completed') {
+            dispatchStatus = 'ready-for-dispatch';
+          }
+          
+          return {
+            ...order,
+            id: order._id,
+            companyName: customerName,
+            name: customerName,
+            phone: customerPhone,
+            phone1: customerPhone,
+            status: dispatchStatus,
+            date: order.createdAt ? new Date(order.createdAt).toISOString().split('T')[0] : '',
+            AllStatus: {
+              [dispatchStatus]: {
+                color: getStatusColor(dispatchStatus),
+                description: getStatusDescription(dispatchStatus)
+              }
+            }
+          };
+        })
+    : [];
 
   // Filter orders based on search and date criteria
   const filteredOrders = transformedOrders.filter(order => {
-    // Date filtering
     if (!order.date) return false;
     
     const orderDate = new Date(order.date);
@@ -259,15 +261,13 @@ export default function Dispatch() {
     if (from && orderDate < from) return false;
     if (to && orderDate > to) return false;
     
-    // Status filtering
     if (statusFilter && order.status !== statusFilter) return false;
     
-    // Search filtering
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
       const matchesOrderId = order.orderId?.toLowerCase().includes(searchLower);
       const matchesCustomer = order.companyName?.toLowerCase().includes(searchLower);
-      const matchesPhone = order.phone1?.toLowerCase().includes(searchLower);
+      const matchesPhone = order.customer?.phone1?.toLowerCase().includes(searchLower);
       const matchesNotes = order.Notes?.toLowerCase().includes(searchLower);
       const matchesTrackingNumber = order.trackingNumber?.toLowerCase().includes(searchLower);
       
@@ -279,7 +279,7 @@ export default function Dispatch() {
     return true;
   });
 
-  // Helper function to create filters
+  // Create filters helper
   const createFilters = (): OrderFilters => {
     const filters: OrderFilters = {
       page: currentPage,
@@ -296,7 +296,7 @@ export default function Dispatch() {
     return filters;
   };
 
-  // Helper function to fetch orders
+  // Fetch orders helper
   const fetchOrdersData = () => {
     const filters = createFilters();
     console.log("🚚 Dispatch filters being sent:", filters);
@@ -308,13 +308,158 @@ export default function Dispatch() {
     }
   };
 
-  // Effects
+  // Handle order click - navigate to order form with complete data
+  const handleOrderClick = (order: Order) => {
+    console.log('🚚 Navigating to CreateOrders with dispatch order data:', order);
+    
+    // Create comprehensive order data structure for edit mode
+    const orderDataForEdit = {
+      // Core order info
+      _id: order._id,
+      orderId: order.orderId,
+      overallStatus: order.overallStatus,
+      status: order.overallStatus,
+      
+      // Timestamps
+      createdAt: order.createdAt,
+      updatedAt: order.updatedAt,
+      date: order.date,
+      
+      // Customer information - properly structured
+      customer: {
+        _id: order.customer?._id || order.customerId || '',
+        name: order.customer?.firstName && order.customer?.lastName 
+          ? `${order.customer.firstName} ${order.customer.lastName}`.trim()
+          : order.customer?.companyName || order.companyName || '',
+        companyName: order.customer?.companyName || order.companyName || '',
+        firstName: order.customer?.firstName || '',
+        lastName: order.customer?.lastName || '',
+        phone: order.customer?.phone1 || order.customer?.telephone || '',
+        phone1: order.customer?.phone1 || '',
+        phone2: order.customer?.phone2 || '',
+        telephone: order.customer?.telephone || '',
+        whatsapp: order.customer?.whatsapp || '',
+        email: order.customer?.email || '',
+        address: order.customer?.address1 || '',
+        address1: order.customer?.address1 || '',
+        address2: order.customer?.address2 || '',
+        state: order.customer?.state || '',
+        pinCode: order.customer?.pinCode || '',
+        imageUrl: order.customer?.imageUrl || ''
+      },
+      
+      // Legacy customer fields for backward compatibility
+      customerId: order.customer?._id || order.customerId || '',
+      companyName: order.customer?.companyName || order.companyName || '',
+      customerPhone: order.customer?.phone1 || '',
+      
+      // Material information - complete structure
+      material: {
+        _id: order.material?._id || order.materialId || '',
+        name: order.material?.materialName || '',
+        materialName: order.material?.materialName || '',
+        type: order.material?.materialType || '',
+        materialType: order.material?.materialType || '',
+        materialTypeName: order.material?.materialTypeName || '',
+        mol: order.material?.mol || 0
+      },
+      materialId: order.material?._id || order.materialId || '',
+      materialType: order.material?.materialTypeName || '',
+      materialName: order.material?.materialName || '',
+      
+      // Physical specifications
+      materialWeight: order.materialWeight || 0,
+      Width: order.Width || 0,
+      Height: order.Height || 0,
+      Thickness: order.Thickness || 0,
+      width: order.Width?.toString() || '',
+      height: order.Height?.toString() || '',
+      gauge: order.Thickness?.toString() || '',
+      totalWeight: order.materialWeight?.toString() || '',
+      
+      // Additional product features
+      SealingType: order.SealingType || '',
+      BottomGusset: order.BottomGusset || '',
+      Flap: order.Flap || '',
+      AirHole: order.AirHole || '',
+      Printing: order.Printing || false,
+      
+      // Mixing materials
+      mixMaterial: order.mixMaterial || [],
+      mixingData: order.mixMaterial || [],
+      mixing: (order.mixMaterial && order.mixMaterial.length > 0) ? 'yes' : 'no',
+      
+      // Steps and workflow
+      steps: order.steps || [],
+      currentStepIndex: order.currentStepIndex || 0,
+      stepsCount: order.totalSteps || 0,
+      totalMachines: order.steps?.reduce((total, step) => total + (step.machines?.length || 0), 0) || 0,
+      completedSteps: order.completedSteps || 0,
+      progressPercentage: order.progressPercentage || 0,
+      totalSteps: order.totalSteps || 0,
+      
+      // Branch information
+      branch: order.branch ? {
+        _id: order.branch._id,
+        name: order.branch.name,
+        code: order.branch.code
+      } : null,
+      branchId: order.branchId || order.branch?._id || '',
+      
+      // Creator information
+      createdBy: order.createdBy || '',
+      createdByRole: order.createdByRole || '',
+      creator: order.creator || null,
+      
+      // Notes and additional info
+      Notes: order.Notes || '',
+      notes: order.Notes || '',
+      
+      // Dispatch specific fields
+      dispatchDate: order.dispatchDate || '',
+      dispatchStatus: order.dispatchStatus || order.status,
+      carrier: order.carrier || '',
+      trackingNumber: order.trackingNumber || '',
+      
+      // Status tracking
+      AllStatus: order.AllStatus || {
+        [order.overallStatus]: {
+          color: getStatusColor(order.overallStatus),
+          description: getStatusDescription(order.overallStatus)
+        }
+      }
+    };
+
+    console.log('🚚 Complete order data for edit mode:', orderDataForEdit);
+
+    // Navigate to CreateOrders with comprehensive state
+    navigate("/menu/orderform", {
+      state: {
+        isEdit: true,
+        isDispatch: true, // Flag to indicate this is from dispatch
+        orderData: orderDataForEdit,
+        
+        // Additional legacy support
+        isEditMode: true,
+        editMode: true,
+        mode: 'edit',
+        
+        // Quick access fields
+        orderId: order.orderId,
+        customerName: orderDataForEdit.companyName,
+        materialType: orderDataForEdit.materialType,
+        materialName: orderDataForEdit.materialName
+      }
+    });
+  };
+
+  // Effect hooks
   useEffect(() => {
     console.log("🚚 Dispatch useEffect triggered - fetching orders");
     fetchOrdersData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, currentPage, limit, fromDate, toDate, searchTerm, statusFilter]);
 
-  // Auto-refresh every 30 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       console.log("🚚 Dispatch auto-refresh triggered");
@@ -322,16 +467,15 @@ export default function Dispatch() {
     }, 30000);
 
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, limit, fromDate, toDate, searchTerm, statusFilter]);
 
-  // Focus scroll wrapper on mount
   useEffect(() => {
     if (scrollWrapperRef.current) {
       scrollWrapperRef.current.focus();
     }
   }, []);
 
-  // Scroll to selected order
   useEffect(() => {
     const selectedOrder = ordersRef.current[selectedOrderIndex];
     if (selectedOrder) {
@@ -342,95 +486,11 @@ export default function Dispatch() {
     }
   }, [selectedOrderIndex]);
 
-  // Reset selected index when orders change
   useEffect(() => {
     if (selectedOrderIndex >= filteredOrders.length && filteredOrders.length > 0) {
       setSelectedOrderIndex(0);
     }
   }, [filteredOrders.length, selectedOrderIndex]);
-
-  // Handle order click - navigate to order form
-  const handleOrderClick = (order: Order) => {
-    console.log('🚚 Navigating to CreateOrders with dispatch order data:', order);
-    
-    const orderDataForEdit = {
-      _id: order._id,
-      orderId: order.orderId,
-      
-      customer: {
-        _id: order.customer?._id || '',
-        name: order.customer?.name || order.customer?.companyName || order.companyName || '',
-        companyName: order.customer?.companyName || order.companyName || '',
-        phone: order.customer?.phone1 || order.phone1 || '',
-        email: order.customer?.email || '',
-        address: order.customer?.address1 || '',
-        whatsapp: order.customer?.whatsapp || '',
-        phone2: order.customer?.phone2 || '',
-        pinCode: order.customer?.pinCode || '',
-        state: order.customer?.state || '',
-        imageUrl: order.customer?.imageUrl || '',
-        address1: order.customer?.address1 || '',
-        address2: order.customer?.address2 || '',
-        phone1: order.customer?.phone1 || order.customer?.phone || order.phone || '',
-        telephone: order.customer?.telephone || '',
-        firstName: order.customer?.firstName || '',
-        lastName: order.customer?.lastName || ''
-      },
-      
-      status: order.overallStatus,
-      overallStatus: order.overallStatus,
-      createdAt: order.createdAt,
-      updatedAt: order.updatedAt,
-      
-      material: order.material ? {
-        _id: order.material._id || '',
-        name: order.material.name || '',
-        type: order.material.type || ''
-      } : null,
-      materialId: order.materialId,
-      
-      materialWeight: order.materialWeight,
-      Width: order.Width,
-      Height: order.Height,
-      Thickness: order.Thickness,
-      
-      SealingType: order.SealingType || '',
-      BottomGusset: order.BottomGusset || '',
-      Flap: order.Flap || '',
-      AirHole: order.AirHole || '',
-      Printing: order.Printing || false,
-      mixMaterial: order.mixMaterial || [],
-      
-      steps: order.steps || [],
-      currentStepIndex: order.currentStepIndex || 0,
-      stepsCount: order.stepsCount || 0,
-      totalMachines: order.totalMachines || 0,
-      completedSteps: order.completedSteps || 0,
-      
-      branch: order.branch || null,
-      branchId: order.branchId,
-      
-      createdBy: order.createdBy,
-      createdByRole: order.createdByRole,
-      
-      Notes: order.Notes || '',
-      
-      // Dispatch specific fields
-      dispatchDate: order.dispatchDate || '',
-      dispatchStatus: order.dispatchStatus || order.status,
-      carrier: order.carrier || '',
-      trackingNumber: order.trackingNumber || ''
-    };
-
-    navigate("/menu/orderform", {
-      state: {
-        isEdit: true,
-        isDispatch: true, // Flag to indicate this is from dispatch
-        orderData: orderDataForEdit,
-        // ... rest of the state properties similar to DayBook
-      }
-    });
-  };
 
   // Event handlers
   const handleDateFilter = () => {
@@ -461,6 +521,28 @@ export default function Dispatch() {
     setCurrentPage(1);
   };
 
+  const handleKeyNavigation = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (filteredOrders.length === 0) return;
+
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setSelectedOrderIndex(prev => (prev + 1) % filteredOrders.length);
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        setSelectedOrderIndex(prev => (prev - 1 + filteredOrders.length) % filteredOrders.length);
+        break;
+      case "Enter":
+        if (e.shiftKey) {
+          setExpandedOrder(prev => (prev === selectedOrderIndex ? null : selectedOrderIndex));
+        } else {
+          handleOrderClick(filteredOrders[selectedOrderIndex]);
+        }
+        break;
+    }
+  };
+
   const handlePrint = () => {
     const currentDate = new Date().toLocaleDateString();
     const periodText =
@@ -479,7 +561,7 @@ export default function Dispatch() {
           <td>${order.date || 'N/A'}</td>
           <td>${order.orderId || 'N/A'}</td>
           <td>${order.companyName || 'N/A'}</td>
-          <td>${order.phone1 || 'N/A'}</td>
+          <td>${order.customer?.phone1 || 'N/A'}</td>
           <td>${order.status || 'N/A'}</td>
           <td>${order.materialWeight || 'N/A'}</td>
           <td>${order.branch?.name || 'N/A'}</td>
@@ -571,7 +653,7 @@ export default function Dispatch() {
       Date: order.date || 'N/A',
       OrderID: order.orderId || 'N/A',
       CustomerName: order.companyName || 'N/A',
-      Phone: order.phone1|| 'N/A',
+      Phone: order.customer?.phone1|| 'N/A',
       DispatchStatus: order.status || 'N/A',
       Weight: order.materialWeight || 'N/A',
       Width: order.Width || 'N/A',
@@ -579,11 +661,11 @@ export default function Dispatch() {
       Thickness: order.Thickness || 'N/A',
       Branch: order.branch?.name || 'N/A',
       BranchCode: order.branch?.code || 'N/A',
-      Material: order.material?.name || 'N/A',
+      Material: order.material?.materialName || 'N/A',
       TrackingNumber: order.trackingNumber || 'N/A',
       Carrier: order.carrier || 'N/A',
       DispatchDate: order.dispatchDate || 'N/A',
-      StepsCompleted: `${order.completedSteps || 0}/${order.stepsCount || 0}`,
+      StepsCompleted: `${order.completedSteps || 0}/${order.totalSteps || 0}`,
       CreatedBy: order.createdByRole || 'N/A',
       CreatedDate: order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A',
       UpdatedDate: order.updatedAt ? new Date(order.updatedAt).toLocaleDateString() : 'N/A',
@@ -601,28 +683,6 @@ export default function Dispatch() {
     saveAs(blob, filename);
   };
 
-  const handleKeyNavigation = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (filteredOrders.length === 0) return;
-
-    switch (e.key) {
-      case "ArrowDown":
-        e.preventDefault();
-        setSelectedOrderIndex(prev => (prev + 1) % filteredOrders.length);
-        break;
-      case "ArrowUp":
-        e.preventDefault();
-        setSelectedOrderIndex(prev => (prev - 1 + filteredOrders.length) % filteredOrders.length);
-        break;
-      case "Enter":
-        if (e.shiftKey) {
-          setExpandedOrder(prev => (prev === selectedOrderIndex ? null : selectedOrderIndex));
-        } else {
-          handleOrderClick(filteredOrders[selectedOrderIndex]);
-        }
-        break;
-    }
-  };
-
   return (
     <div className="container">
       {/* Header with filters */}
@@ -630,26 +690,10 @@ export default function Dispatch() {
         <BackButton />
         <div className="flex gap-4 items-center">
           <div>
-            <label>From:
-              <input 
-                type="date" 
-                value={fromDate} 
-                onChange={e => setFromDate(e.target.value)} 
-              />
-            </label>
-            <label className="ml-4">To:
-              <input 
-                type="date" 
-                value={toDate} 
-                onChange={e => setToDate(e.target.value)} 
-              />
-            </label>
-          </div>
-          
-          <div>
             <label>Search:
               <input 
-                type="text" 
+                type="text"
+                style={{background:"#fff", color:"#000"}}
                 placeholder="Order ID, Customer, Phone, Tracking..."
                 value={searchTerm}
                 onChange={e => handleSearch(e.target.value)}
@@ -661,6 +705,7 @@ export default function Dispatch() {
           <div>
             <label>Dispatch Status:
               <select 
+                style={{background:"#fff", color:"#000"}}
                 value={statusFilter} 
                 onChange={e => handleStatusFilter(e.target.value)}
                 className="ml-2 px-2 py-1 border rounded"
@@ -769,25 +814,26 @@ export default function Dispatch() {
                     <span>{order.trackingNumber || 'N/A'}</span>
                   </div>
 
-                  {expandedOrder === index && (
+                  {expandedOrder === index && order.AllStatus && (
                     <div className="status-list">
-                      {order.AllStatus && Object.entries(order.AllStatus).map(([status, { color, description }]) => (
+                      {Object.entries(order.AllStatus).map(([status, statusData]) => (
                         <div 
                           key={status} 
                           className="status-item p-2 m-1 rounded text-white text-sm"
-                          style={{ backgroundColor: color }}
+                          style={{ backgroundColor: statusData.color }}
                         >
-                          <strong>{status}:</strong> <span>{description}</span>
+                          <strong>{status}:</strong> <span>{statusData.description}</span>
                         </div>
                       ))}
                       <div className="p-2 text-xs text-gray-600">
-                        <div>Steps Completed: {order.completedSteps || 0}/{order.stepsCount || 0}</div>
+                        <div>Steps: {order.completedSteps || 0}/{order.totalSteps || 0}</div>
                         <div>Dimensions: {order.Width && order.Height && order.Thickness 
                           ? `${order.Width}×${order.Height}×${order.Thickness}`
                           : 'N/A'
                         }</div>
                         <div>Branch: {order.branch?.name || 'N/A'} ({order.branch?.code || 'N/A'})</div>
                         <div>Created: {order.createdAt ? new Date(order.createdAt).toLocaleString() : 'N/A'}</div>
+                        <div>Created By: {order.createdByRole || 'N/A'}</div>
                         {order.dispatchDate && <div>Dispatch Date: {new Date(order.dispatchDate).toLocaleString()}</div>}
                         {order.carrier && <div>Carrier: {order.carrier}</div>}
                         {order.SealingType && <div>Sealing: {order.SealingType}</div>}
@@ -831,21 +877,22 @@ export default function Dispatch() {
 
       {/* Summary */}
       <div className="item">
-        <div className="item bg-gray-100 p-4 rounded">
-          <div className="flex gap-6 text-sm">
-            <span><strong>Total Dispatch Orders:</strong> {filteredOrders.length}</span>
-            <span><strong>Ready for Dispatch:</strong> {filteredOrders.filter(o => o.status === 'ready-for-dispatch').length}</span>
-            <span><strong>Dispatched:</strong> {filteredOrders.filter(o => o.status === 'dispatched').length}</span>
-            <span><strong>In Transit:</strong> {filteredOrders.filter(o => o.status === 'in-transit').length}</span>
-            <span><strong>Delivered:</strong> {filteredOrders.filter(o => o.status === 'delivered').length}</span>
-            {summary && (
-              <>
-                <span><strong>Total Weight:</strong> {summary.totalWeight?.toFixed(2) || 'N/A'}</span>
-                <span><strong>Avg Weight:</strong> {summary.avgWeight?.toFixed(2) || 'N/A'}</span>
-              </>
-            )}
+        {summary && (
+          <div className="item bg-gray-100 p-4 rounded">
+            <div className="flex gap-6 text-sm">
+              <span><strong>Total Dispatch Orders:</strong> {filteredOrders.length}</span>
+              <span><strong>Ready for Dispatch:</strong> {filteredOrders.filter(o => o.status === 'ready-for-dispatch').length}</span>
+              <span><strong>Dispatched:</strong> {filteredOrders.filter(o => o.status === 'dispatched').length}</span>
+              <span><strong>In Transit:</strong> {filteredOrders.filter(o => o.status === 'in-transit').length}</span>
+              <span><strong>Delivered:</strong> {filteredOrders.filter(o => o.status === 'delivered').length}</span>
+              <span><strong>Total Weight:</strong> {summary.totalWeight?.toFixed(2) || 'N/A'}</span>
+              <span><strong>Avg Weight:</strong> {summary.avgWeight?.toFixed(2) || 'N/A'}</span>
+              {statusCounts && Object.entries(statusCounts).map(([status, count]) => (
+                <span key={status}><strong>{status}:</strong> {String(count)}</span>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Period Modal */}

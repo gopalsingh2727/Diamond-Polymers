@@ -14,6 +14,7 @@ console.log(userRole);
   const allMenuItems = [
     { name: "Create", path: "/menu/indexcreateroute" },
     { name: "Edit", path: "/menu/edit" },
+    { name: "Examples", path: "/menu/examples" }, // ✨ Edit section examples
     { name: "Create Orders", path: "/menu/orderform" },
     { name: "Day Book", path: "/menu/daybook" },
     { name: "Dispatch", path: "/menu/dispatch" },
@@ -67,7 +68,7 @@ console.log(userRole);
       <div className="menu-header-padding">
         <ul id="main-menu">
           {allMenuItems.map((item, index) => {
-            const isGroupDivider = index === 1 || index === 6 || index === 9;
+            const isGroupDivider = index === 1 || index === 5 || index === 7;
             return (
               <div
                 key={item.name}

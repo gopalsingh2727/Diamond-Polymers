@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchBranches } from './redux/Branch/BranchActions';
 import { setSelectedBranchInAuth } from './redux/login/authActions';
 import type { RootState, AppDispatch } from '../store';
+
 
 import Update from '../components/update';
 import './indexComponents.css';
@@ -21,41 +22,59 @@ function IndexComponents() {
   const [showBranchModal, setShowBranchModal] = useState(false);
   const [tempSelectedBranch, setTempSelectedBranch] = useState("");
 
+  // Ref to track if we've already set the manager's branch
+  const hasSetManagerBranch = useRef(false);
+
   const menuItems = ["Create", "Edit", "Settings", "Contact"];
 
   const { branches, loading } = useSelector((state: RootState) => state.branches);
   const { userData } = useSelector((state: RootState) => state.auth);
 
+  // Fetch branches on mount
   useEffect(() => {
     dispatch(fetchBranches());
   }, [dispatch]);
 
+  // Update branch name when branches or userData changes
   useEffect(() => {
-    if (!loading && branches.length > 0) {
-      const userData = JSON.parse(localStorage.getItem("userData") || "{}");
-      let selectedBranchId = userData?.selectedBranch?._id || userData?.selectedBranch || null;
-
+    if (!loading && branches.length > 0 && userData) {
       if (userData?.role === "manager") {
         const managerBranch = branches[0];
-        selectedBranchId = managerBranch?.id;
+        const managerBranchId = managerBranch?.id || (managerBranch as any)?._id;
 
-        if (!userData.selectedBranch || userData.selectedBranch !== selectedBranchId) {
-          const updatedUserData = {
-            ...userData,
-            selectedBranch: selectedBranchId,
-          };
-          localStorage.setItem("userData", JSON.stringify(updatedUserData));
+        // Get current selected branch ID
+        const currentSelectedId = userData.selectedBranch?._id || userData.selectedBranch;
+
+        // Only set the branch once if it's not set or doesn't match
+        if (!hasSetManagerBranch.current && (!currentSelectedId || currentSelectedId !== managerBranchId)) {
+          if (managerBranchId) {
+            hasSetManagerBranch.current = true;
+            dispatch(setSelectedBranchInAuth(managerBranchId));
+            return; // Exit early
+          }
         }
 
         setBranchName(managerBranch?.name || "Branch not found");
-      } else if (selectedBranchId) {
-        const foundBranch = branches.find((b: any) => b._id === selectedBranchId);
-        setBranchName(foundBranch?.name || "Branch not found");
       } else {
-        setBranchName("No branch selected");
+        // Admin or other roles
+        const selectedBranchId = userData?.selectedBranch?._id || userData?.selectedBranch || null;
+        
+        if (selectedBranchId) {
+          const foundBranch = branches.find((b: any) => b._id === selectedBranchId || b.id === selectedBranchId);
+          setBranchName(foundBranch?.name || "Branch not found");
+        } else {
+          setBranchName("No branch selected");
+        }
       }
     }
-  }, [branches, loading]);
+  }, [branches, loading, userData, dispatch]);
+
+  // Reset the ref when user data changes significantly (e.g., logout/login)
+  useEffect(() => {
+    if (!userData) {
+      hasSetManagerBranch.current = false;
+    }
+  }, [userData?.role]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -88,8 +107,8 @@ function IndexComponents() {
 
   const handleBranchClick = () => {
     if (userData?.role === "admin") {
-      const currentBranchId = JSON.parse(localStorage.getItem("userData") || "{}")?.selectedBranch;
-      setTempSelectedBranch(currentBranchId || "");
+      const currentBranchId = userData?.selectedBranch?._id || userData?.selectedBranch || "";
+      setTempSelectedBranch(currentBranchId);
       setShowBranchModal(true);
     }
   };
@@ -97,22 +116,15 @@ function IndexComponents() {
   const handleBranchChange = () => {
     if (!tempSelectedBranch) return;
 
-    const storedUserData = JSON.parse(localStorage.getItem("userData") || "{}");
-    const updatedUserData = {
-      ...storedUserData,
-      selectedBranch: tempSelectedBranch,
-    };
-
-    localStorage.setItem("userData", JSON.stringify(updatedUserData));
+    // Dispatch action to update Redux and localStorage
     dispatch(setSelectedBranchInAuth(tempSelectedBranch));
 
+    // Update branch name immediately
     const foundBranch = branches.find((b: any) => b._id === tempSelectedBranch);
     setBranchName(foundBranch?.name || "Branch not found");
     
+    // Close modal
     setShowBranchModal(false);
-    
-    // Optionally reload the page to refresh all data
-    window.location.reload();
   };
 
   return (

@@ -4,6 +4,9 @@ import { createMaterial } from "../../../../redux/create/Materials/MaterialsActi
 import { getMaterialCategories } from "../../../../redux/create/Materials/MaterialsCategories/MaterialsCategoriesActions";
 import { RootState } from "../../../../redux/rootReducer";
 import { AppDispatch } from "../../../../../store";
+import { ActionButton } from '../../../../../components/shared/ActionButton';
+import { ToastContainer } from '../../../../../components/shared/Toast';
+import { useCRUD } from '../../../../../hooks/useCRUD';
 import "./CreateMaterials.css";
 
 const CreateMaterials = () => {
@@ -12,7 +15,10 @@ const CreateMaterials = () => {
   const [materialMol, setMaterialMol] = useState("");
   const [category, setCategory] = useState("");
 
-  const { categories, loading, error } = useSelector(
+  // 🚀 CRUD System Integration
+  const { saveState, handleSave, toast } = useCRUD();
+
+  const { categories, loading } = useSelector(
     (state: RootState) => state.materialCategories
   );
 
@@ -20,23 +26,27 @@ const CreateMaterials = () => {
     dispatch(getMaterialCategories());
   }, [dispatch]);
 
-  const handleSave = () => {
+  const handleSubmit = () => {
     if (!materialName || !materialMol || !category) {
-      alert("All fields are required");
+      toast.error('Validation Error', 'All fields are required');
       return;
     }
 
-    dispatch(
-      createMaterial({
+    handleSave(
+      () => dispatch(createMaterial({
         materialName,
         materialMol: parseFloat(materialMol),
         materialType: category,
-      })
+      })),
+      {
+        successMessage: 'Material created successfully!',
+        onSuccess: () => {
+          setMaterialName("");
+          setMaterialMol("");
+          setCategory("");
+        }
+      }
     );
-
-    setMaterialName("");
-    setMaterialMol("");
-    setCategory("");
   };
 
   return (
@@ -78,11 +88,17 @@ const CreateMaterials = () => {
         </select>
       </div>
 
-      <button onClick={handleSave} className="save-button" disabled={loading}>
-        {loading ? "Saving..." : "Save Material"}
-      </button>
+      <ActionButton
+        type="save"
+        state={saveState}
+        onClick={handleSubmit}
+        className="save-button"
+      >
+        Save Material
+      </ActionButton>
 
-      {error && <div className="error-msg">{error}</div>}
+      {/* Toast notifications */}
+      <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
     </div>
   );
 };

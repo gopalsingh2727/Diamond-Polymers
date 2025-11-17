@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { getAccounts } from "../../../../redux/create/createNewAccount/NewAccountActions";
 import { RootState } from "../../../../redux/rootReducer";
 
+
 interface Props {
   customerName: string;
   onSelect: (account: any) => void;
@@ -74,7 +75,7 @@ const CustomerSuggestions: React.FC<Props> = ({ customerName, onSelect }) => {
   if (filtered.length === 0) return null;
 
   return (
-    <ul className="suggestion-list">
+    <ul className="suggestion-list" >
       {filtered.map((acc, idx) => (
         <li
           key={acc.id || idx} 

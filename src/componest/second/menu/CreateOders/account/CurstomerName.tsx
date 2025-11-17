@@ -1,6 +1,6 @@
 import React, { useState, forwardRef, useImperativeHandle, useEffect } from "react";
 import Data from "../../../../allCompones/date";
-import CustomerSuggestions from "../SuggestionInput/CustomerSuggestionInput";
+import OptimizedSuggestions from "../SuggestionInput/OptimizedSuggestions";
 import "../materialAndProduct/materialAndProduct.css";
 import './curstomerName.css';
 
@@ -18,25 +18,8 @@ interface CustomerData {
   imageUrl: string;
 }
 
-interface Account {
-  _id: string; 
-  firstName?: string;
-  lastName?: string;
-  companyName?: string;
-  address1?: string;
-  address2?: string;
-  phone1?: string;
-  telephone?: string;
-  whatsapp?: string;
-  email?: string;
-  phone2?: string;
-  pinCode?: string;
-  state?: string;
-  imageUrl?: string;
-}
-
 export interface CustomerNameRef {
-  getCustomerData: () => CustomerData;
+  getCustomerData: () => CustomerData & { status: string };
   resetCustomerData: () => void;
 }
 
@@ -59,6 +42,9 @@ const CustomerName = forwardRef<CustomerNameRef, CustomerNameProps>(({ initialDa
     state: '',
     imageUrl: '',
   });
+
+  const [status, setStatus] = useState<string>('Wait for Approval');
+  const [showCustomerSuggestions, setShowCustomerSuggestions] = useState(false);
   
   console.log('🔍 CustomerName - Initial data:', initialData);
   console.log('🔍 CustomerName - Is edit mode:', isEditMode);
@@ -95,25 +81,53 @@ const CustomerName = forwardRef<CustomerNameRef, CustomerNameProps>(({ initialDa
         state: customer.state || '',
         imageUrl: customer.imageUrl || '',
       });
+
+      // Set status from initial data
+      if (initialData.status) {
+        setStatus(initialData.overallStatus || initialData.status || 'Wait for Approval');
+      }
     }
   }, [isEditMode, initialData]);
 
-  const handleCustomerSelect = (account: Account) => {
-    console.log('Customer selected:', account);
-    setCustomerData({
-      _id: account._id || '',
-      name: `${account.firstName || ''} ${account.lastName || ''}`.trim() || account.companyName || '',
-      companyName: account.companyName || "",
-      address: `${account.address1 || ''} ${account.address2 || ''}`.trim(),
-      phone: account.phone1 || account.telephone || "",
-      whatsapp: account.whatsapp || "",
-      email: account.email || "",
-      phone2: account.phone2 || "",
-      pinCode: account.pinCode || "",
-      state: account.state || "",
-      imageUrl: account.imageUrl || "",
-    });
-  };
+// Replace your handleCustomerSelect function in CustomerName.tsx with this:
+
+const handleCustomerSelect = (account: any) => {
+  console.log('Customer selected:', account);
+  
+  // Extract username from email as fallback for name
+  const emailUsername = account.email 
+    ? account.email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())
+    : '';
+  
+  setCustomerData({
+    _id: account._id || '',
+    // Handle incomplete backend data with multiple fallbacks
+    name: account.accountName || 
+          (account.firstName && account.lastName ? `${account.firstName} ${account.lastName}`.trim() : '') ||
+          account.firstName ||
+          account.companyName || 
+          emailUsername ||
+          `Customer ${account._id?.slice(-6) || ''}` ||
+          '',
+    companyName: account.companyName || account.company || "",
+    address: account.address || 
+             (account.address1 && account.address2 ? `${account.address1} ${account.address2}`.trim() : account.address1 || '') ||
+             "",
+    phone: account.phoneNumber || 
+           account.phone1 || 
+           account.phone || 
+           account.telephone || 
+           account.mobile || 
+           "",
+    whatsapp: account.whatsapp || "",
+    email: account.email || "",
+    phone2: account.phone2 || "",
+    pinCode: account.pinCode || "",
+    state: account.state || "",
+    imageUrl: account.imageUrl || "",
+  });
+  setShowCustomerSuggestions(false);
+};
 
   const handleCustomerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -135,28 +149,44 @@ const CustomerName = forwardRef<CustomerNameRef, CustomerNameProps>(({ initialDa
       state: '',
       imageUrl: '',
     });
+    setStatus('Wait for Approval');
   };
 
   useImperativeHandle(ref, () => ({
-    getCustomerData: () => customerData,
+    getCustomerData: () => ({ ...customerData, status }),
     resetCustomerData,
   }));
+  
 
   return (
     <div>
       <div className="OrderIDanddata">
         <label className="OrderIDCreate">
-          <h5>Order ID:</h5>
+          <h5 className ="ManufacturingStepsTitel">Order ID:  {isEditMode && initialData?.orderId ? (
+                <span className="edit-order-id">{initialData.orderId}</span>
+              ):(
+                <p></p>
+              )}</h5><h6>
+             
+            
+                   
+          
+          </h6>
         </label>
         <div className="customerInputRow">
-          <h6>
-            {isEditMode && initialData?.orderId ? (
-              <span className="edit-order-id">{initialData.orderId}</span>
+             
+             {isEditMode && initialData?.createdAt ? (
+             <div className="createDateAndupdateDate">
+               <span className="edit-order-id">{initialData.createdAt}</span>
+               {/* <span className="edit-order-id">{initialData.updatedAt}</span> */}
+             </div>
+             
+                   
             ) : (
-              <Data />
+              <Data  />
             )}
-          </h6>
           <div className="customerImage">
+             
             <div className="customerImageDiv">
               {customerData.imageUrl && (
                 <img 
@@ -169,8 +199,21 @@ const CustomerName = forwardRef<CustomerNameRef, CustomerNameProps>(({ initialDa
               )}
             </div>
             <div>
-              <h6>Status:</h6>
-              <h6>{isEditMode && initialData?.status ? initialData.status : ''}</h6>
+              <h6 className ="ManufacturingStepsTitel">Status:</h6>
+              <select
+                name="overallStatus"
+                id="myDropdown"
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+              >
+                <option value="Wait for Approval" className ="ManufacturingStepsTitel">Wait for Approval</option>
+                <option value="pending" className ="ManufacturingStepsTitel">Pending</option>
+                <option value="approved" className ="ManufacturingStepsTitel">Approved</option>
+                <option value="in_progress">In Progress</option>
+                <option value="completed">Completed</option>
+                <option value="dispatched">Dispatched</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
             </div>
           </div>
         </div>
@@ -183,15 +226,20 @@ const CustomerName = forwardRef<CustomerNameRef, CustomerNameProps>(({ initialDa
             className="CurstomerNameInput"
             value={customerData.name}
             onChange={handleCustomerChange}
+            onFocus={() => !isEditMode && setShowCustomerSuggestions(true)}
+            onBlur={() => setTimeout(() => setShowCustomerSuggestions(false), 200)}
             type="text"
             placeholder="Enter Customer Name"
             autoComplete="off"
             required
+            readOnly={isEditMode}
           />
           {!isEditMode && (
-            <CustomerSuggestions
-              customerName={customerData.name}
+            <OptimizedSuggestions
+              searchTerm={customerData.name}
               onSelect={handleCustomerSelect}
+              suggestionType="customer"
+              showSuggestions={showCustomerSuggestions && customerData.name.length > 0}
             />
           )}
         </div>

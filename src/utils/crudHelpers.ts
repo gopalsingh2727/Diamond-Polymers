@@ -1,0 +1,217 @@
+import axios, { AxiosRequestConfig } from 'axios';
+
+const API_BASE_URL = import.meta.env.VITE_API_27INFINITY_IN || 'http://localhost:4000/dev';
+const API_KEY = import.meta.env.VITE_API_KEY || '27infinity.in_5f84c89315f74a2db149c06a93cf4820';
+
+/**
+ * Create axios instance with default configuration
+ */
+const createAPIClient = (token?: string) => {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'x-api-key': API_KEY
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  return axios.create({
+    baseURL: API_BASE_URL,
+    headers,
+    timeout: 30000
+  });
+};
+
+/**
+ * Generic CRUD API Helper Functions
+ */
+export const crudAPI = {
+  /**
+   * Create a new resource
+   */
+  create: async <T = any>(
+    endpoint: string,
+    data: any,
+    config?: AxiosRequestConfig
+  ): Promise<T> => {
+    const token = localStorage.getItem('token');
+    const client = createAPIClient(token || undefined);
+
+    try {
+      const response = await client.post(endpoint, data, config);
+      return response.data;
+    } catch (error) {
+      throw handleAPIError(error);
+    }
+  },
+
+  /**
+   * Read/Get a resource or list of resources
+   */
+  read: async <T = any>(
+    endpoint: string,
+    config?: AxiosRequestConfig
+  ): Promise<T> => {
+    const token = localStorage.getItem('token');
+    const client = createAPIClient(token || undefined);
+
+    try {
+      const response = await client.get(endpoint, config);
+      return response.data;
+    } catch (error) {
+      throw handleAPIError(error);
+    }
+  },
+
+  /**
+   * Update an existing resource
+   */
+  update: async <T = any>(
+    endpoint: string,
+    data: any,
+    config?: AxiosRequestConfig
+  ): Promise<T> => {
+    const token = localStorage.getItem('token');
+    const client = createAPIClient(token || undefined);
+
+    try {
+      const response = await client.put(endpoint, data, config);
+      return response.data;
+    } catch (error) {
+      throw handleAPIError(error);
+    }
+  },
+
+  /**
+   * Partially update a resource
+   */
+  patch: async <T = any>(
+    endpoint: string,
+    data: any,
+    config?: AxiosRequestConfig
+  ): Promise<T> => {
+    const token = localStorage.getItem('token');
+    const client = createAPIClient(token || undefined);
+
+    try {
+      const response = await client.patch(endpoint, data, config);
+      return response.data;
+    } catch (error) {
+      throw handleAPIError(error);
+    }
+  },
+
+  /**
+   * Delete a resource
+   */
+  delete: async <T = any>(
+    endpoint: string,
+    config?: AxiosRequestConfig
+  ): Promise<T> => {
+    const token = localStorage.getItem('token');
+    const client = createAPIClient(token || undefined);
+
+    try {
+      const response = await client.delete(endpoint, config);
+      return response.data;
+    } catch (error) {
+      throw handleAPIError(error);
+    }
+  }
+};
+
+/**
+ * Handle API errors consistently
+ */
+const handleAPIError = (error: any): Error => {
+  if (axios.isAxiosError(error)) {
+    if (error.response) {
+      // Server responded with error status
+      const message = error.response.data?.message || error.response.data?.error || error.message;
+      return new Error(message);
+    } else if (error.request) {
+      // Request made but no response
+      return new Error('No response from server. Please check your connection.');
+    } else {
+      // Error in request setup
+      return new Error(error.message);
+    }
+  }
+  return error instanceof Error ? error : new Error('Unknown error occurred');
+};
+
+/**
+ * Resource-specific CRUD helpers
+ */
+
+// Branch CRUD
+export const branchAPI = {
+  create: (data: any) => crudAPI.create('/branch/branch', data),
+  getAll: () => crudAPI.read('/branch/branches'),
+  getById: (id: string) => crudAPI.read(`/branch/branch/${id}`),
+  update: (id: string, data: any) => crudAPI.update(`/branch/branch/${id}`, data),
+  delete: (id: string) => crudAPI.delete(`/branch/branch/${id}`)
+};
+
+// Customer CRUD
+export const customerAPI = {
+  create: (data: any) => crudAPI.create('/customer/customer', data),
+  getAll: () => crudAPI.read('/customer/customers'),
+  getById: (id: string) => crudAPI.read(`/customer/customer/${id}`),
+  update: (id: string, data: any) => crudAPI.update(`/customer/customer/${id}`, data),
+  delete: (id: string) => crudAPI.delete(`/customer/customer/${id}`)
+};
+
+// Machine CRUD
+export const machineAPI = {
+  create: (data: any) => crudAPI.create('/machine/machine', data),
+  getAll: () => crudAPI.read('/machine/machines'),
+  getById: (id: string) => crudAPI.read(`/machine/machine/${id}`),
+  update: (id: string, data: any) => crudAPI.update(`/machine/machine/${id}`, data),
+  delete: (id: string) => crudAPI.delete(`/machine/machine/${id}`)
+};
+
+// Order CRUD
+export const orderAPI = {
+  create: (data: any) => crudAPI.create('/order/order', data),
+  getAll: () => crudAPI.read('/oders/oders'),
+  getById: (id: string) => crudAPI.read(`/order/order/${id}`),
+  update: (id: string, data: any) => crudAPI.update(`/order/order/${id}`, data),
+  delete: (id: string) => crudAPI.delete(`/order/order/${id}`)
+};
+
+// Product CRUD
+export const productAPI = {
+  create: (data: any) => crudAPI.create('/product/product', data),
+  getAll: () => crudAPI.read('/product/products'),
+  getById: (id: string) => crudAPI.read(`/product/product/${id}`),
+  update: (id: string, data: any) => crudAPI.update(`/product/product/${id}`, data),
+  delete: (id: string) => crudAPI.delete(`/product/product/${id}`)
+};
+
+// Material CRUD
+export const materialAPI = {
+  create: (data: any) => crudAPI.create('/material/material', data),
+  getAll: () => crudAPI.read('/material/materials'),
+  getById: (id: string) => crudAPI.read(`/material/material/${id}`),
+  update: (id: string, data: any) => crudAPI.update(`/material/material/${id}`, data),
+  delete: (id: string) => crudAPI.delete(`/material/material/${id}`)
+};
+
+/**
+ * Example Usage:
+ *
+ * import { branchAPI } from '@/utils/crudHelpers';
+ * import { useCRUD } from '@/hooks/useCRUD';
+ *
+ * const MyComponent = () => {
+ *   const { handleSave } = useCRUD();
+ *
+ *   const saveBranch = () => {
+ *     handleSave(() => branchAPI.create(branchData), {
+ *       successMessage: 'Branch created successfully'
+ *     });
+ *   };
+ * };
+ */

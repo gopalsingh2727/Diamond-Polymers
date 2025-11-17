@@ -10,12 +10,10 @@ import IndexEdit from "../../second/menu/Edit/EditRount/indexEdit";
 import Dispatch from "../../second/menu/Dispatch/Dispatch";
 import Marketing from "../../second/menu/marketing/Marketing";
 import Account from "../../second/menu/Account/Account";
-import  AccountInfo from "../../second/menu/Account/AccountInfo/AccountInfo";
+// import AccountInfo from "../../second/menu/Account/AccountInfo/AccountInfo";
 import ReportDashboard from "../../second/menu/reports/ReportDashboard";
+import ExamplesPage from "../../second/menu/Examples/ExamplesPage";
 import ErrorBoundary from "../../error/error";
-
-
-
 
 function IndexMenuRoute() {
   return (
@@ -25,20 +23,15 @@ function IndexMenuRoute() {
       <Route path="daybook" element={<DayBook/>} />
       <Route path ="orderform" element={<OrderForm/>} />
       {/* <Route path ="adderss" element={<Adderss/>} /> */}
-      <Route path="IndexAllOders"  element={<IndexAllOders />} />z
+      <Route path="IndexAllOders"  element={<IndexAllOders />} />
       <Route path="edit"  element = {<IndexEdit/>}/>
+      <Route path="examples" element={<ExamplesPage/>} /> {/* ✨ Edit section examples */}
       {/* <Route path="SystemSetting" element ={<SystemSetting/>} /> */}
       <Route path="dispatch" element={<Dispatch/>}/>
       <Route path="marketing" element={<Marketing/>} />
-      <Route path='reportDashboard' element ={<ErrorBoundary><ReportDashboard/></ErrorBoundary>} />  
+      <Route path='reportDashboard' element ={<ErrorBoundary><ReportDashboard/></ErrorBoundary>} />
       <Route path="Account" element={<Account/>} />
-      <Route path="AccountInfo" element = {<AccountInfo/>}/>
-      
-
-       
-
-     
-   
+      {/* <Route path="AccountInfo" element = {<AccountInfo/>}/> */}
     </Routes>
   );
 }

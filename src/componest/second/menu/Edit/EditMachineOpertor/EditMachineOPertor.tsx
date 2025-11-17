@@ -33,11 +33,12 @@ const EditMachineOpertor: React.FC = () => {
   const [selectedOperator, setSelectedOperator] = useState<Operator | null>(null);
   const [editForm, setEditForm] = useState({
     username: "",
-    password: "",
-    confirmPassword: "",
+    pin: "",
+    confirmPin: "",
     machineId: "",
   });
   const [searchTerm, setSearchTerm] = useState("");
+  const [showPin, setShowPin] = useState(false);
 
   // Filter operators based on search term
   const filteredOperators = operators.filter((operator: Operator) => {
@@ -90,14 +91,20 @@ const EditMachineOpertor: React.FC = () => {
     setSelectedOperator(operator);
     setEditForm({
       username: operator.username,
-      password: "",
-      confirmPassword: "",
+      pin: "",
+      confirmPin: "",
       machineId: operator.machineId || "",
     });
     setShowDetail(true);
   };
 
   const handleEditChange = (field: keyof typeof editForm, value: string) => {
+    // For PIN fields, only allow digits and max 4 characters
+    if (field === 'pin' || field === 'confirmPin') {
+      if (value && (!/^\d*$/.test(value) || value.length > 4)) {
+        return;
+      }
+    }
     setEditForm((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -109,8 +116,13 @@ const EditMachineOpertor: React.FC = () => {
       return;
     }
 
-    if (editForm.password && editForm.password !== editForm.confirmPassword) {
-      alert("Password and Confirm Password do not match");
+    if (editForm.pin && editForm.pin !== editForm.confirmPin) {
+      alert("PIN and Confirm PIN do not match");
+      return;
+    }
+
+    if (editForm.pin && editForm.pin.length !== 4) {
+      alert("PIN must be exactly 4 digits");
       return;
     }
 
@@ -119,8 +131,8 @@ const EditMachineOpertor: React.FC = () => {
       machineId: editForm.machineId,
     };
 
-    if (editForm.password.trim()) {
-      payload.password = editForm.password;
+    if (editForm.pin.trim()) {
+      payload.pin = editForm.pin;
     }
 
     try {
@@ -182,6 +194,7 @@ const EditMachineOpertor: React.FC = () => {
               <input
                 type="text"
                 placeholder="Search by username, machine, or branch..."
+                className="w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition-all"
                 value={searchTerm}
                 onChange={handleSearchChange}
                 style={{
@@ -299,23 +312,82 @@ const EditMachineOpertor: React.FC = () => {
           </div>
 
           <div className="form-section">
-            <label>Password (leave blank to keep current):</label>
-            <input
-              type="password"
-              value={editForm.password}
-              onChange={(e) => handleEditChange("password", e.target.value)}
-              placeholder="Enter new password or leave blank"
-            />
+            <label>New PIN (leave blank to keep current):</label>
+            <div style={{ position: "relative" }}>
+              <input
+                type={showPin ? "text" : "password"}
+                value={editForm.pin}
+                onChange={(e) => handleEditChange("pin", e.target.value)}
+                placeholder="Enter new 4-digit PIN or leave blank"
+                maxLength={4}
+                inputMode="numeric"
+                pattern="\d{4}"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPin(!showPin)}
+                style={{
+                  position: "absolute",
+                  right: "10px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: "1rem",
+                }}
+              >
+                {showPin ? "🙈" : "👁"}
+              </button>
+            </div>
+            {editForm.pin && (
+              <small style={{ color: "#666", fontSize: "0.85rem", marginTop: "4px", display: "block" }}>
+                {editForm.pin.length}/4 digits
+              </small>
+            )}
           </div>
 
           <div className="form-section">
-            <label>Confirm Password:</label>
-            <input
-              type="password"
-              value={editForm.confirmPassword}
-              onChange={(e) => handleEditChange("confirmPassword", e.target.value)}
-              placeholder="Confirm new password"
-            />
+            <label>Confirm PIN:</label>
+            <div style={{ position: "relative" }}>
+              <input
+                type={showPin ? "text" : "password"}
+                value={editForm.confirmPin}
+                onChange={(e) => handleEditChange("confirmPin", e.target.value)}
+                placeholder="Confirm new PIN"
+                maxLength={4}
+                inputMode="numeric"
+                pattern="\d{4}"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPin(!showPin)}
+                style={{
+                  position: "absolute",
+                  right: "10px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: "1rem",
+                }}
+              >
+                {showPin ? "🙈" : "👁"}
+              </button>
+            </div>
+            {editForm.pin && editForm.confirmPin && (
+              <small 
+                style={{ 
+                  color: editForm.pin === editForm.confirmPin ? "green" : "red",
+                  fontSize: "0.85rem",
+                  marginTop: "4px",
+                  display: "block"
+                }}
+              >
+                {editForm.pin === editForm.confirmPin ? "✓ PINs match" : "✗ PINs do not match"}
+              </small>
+            )}
           </div>
 
           <div className="form-section">
@@ -333,16 +405,17 @@ const EditMachineOpertor: React.FC = () => {
             </select>
           </div>
 
-          <button
-            onClick={handleUpdate}
-            className="save-button"
-            disabled={
-              !editForm.username.trim() ||
-              (editForm.password && editForm.password !== editForm.confirmPassword)
-            }
-          >
-            Save
-          </button>
+         <button
+  onClick={handleUpdate}
+  className="save-button"
+  disabled={
+    !editForm.username.trim() ||
+    (!!editForm.pin && editForm.pin !== editForm.confirmPin) ||
+    (!!editForm.pin && editForm.pin.length !== 4)
+  }
+>
+  Save
+</button>
 
           <div className="info-section">
             <p>

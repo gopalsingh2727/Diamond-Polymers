@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useContext, createContext } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   getAccounts,
@@ -7,6 +7,12 @@ import {
 import { RootState } from "../../../../redux/rootReducer";
 import { AppDispatch } from "../../../../../store";
 import { indianStates } from "../../create/createNewAccount/indianStates";
+import {
+  useInternalBackNavigation,
+  useListNavigation,
+  SearchBox,
+  ResultsCounter,
+} from "../../../../allCompones/BackButton";
 import "./EditAccount.css";
 
 interface Account {
@@ -28,8 +34,17 @@ interface Account {
   updatedAt?: string;
 }
 
+// Create context for back navigation
+interface BackNavigationContextType {
+  registerBackHandler: (handler: () => void) => void;
+  unregisterBackHandler: () => void;
+}
+
+export const BackNavigationContext = createContext<BackNavigationContextType | null>(null);
+
 const EditAccount: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const backNavContext = useContext(BackNavigationContext);
 
   const { accounts = [], loading, error } = useSelector(
     (state: RootState) => state.getAccounts || {}
@@ -56,23 +71,39 @@ const EditAccount: React.FC = () => {
     );
   });
 
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      if (showDetail || filteredAccounts.length === 0) return;
+  // Back handler function
+  const handleBackClick = () => {
+    if (showDetail) {
+      // If in detail view, go back to list
+      setShowDetail(false);
+      setForm({});
+    }
+  };
 
-      if (e.key === "ArrowDown") {
-        setSelectedRow((prev) => Math.min(prev + 1, filteredAccounts.length - 1));
-      } else if (e.key === "ArrowUp") {
-        setSelectedRow((prev) => Math.max(prev - 1, 0));
-      } else if (e.key === "Enter") {
-        const selected = filteredAccounts[selectedRow];
-        if (selected) {
-          setForm(selected);
-          setShowDetail(true);
-        }
+  // Register back handler with parent when component mounts or showDetail changes
+  useEffect(() => {
+    if (backNavContext) {
+      backNavContext.registerBackHandler(handleBackClick);
+      return () => backNavContext.unregisterBackHandler();
+    }
+  }, [showDetail, backNavContext]);
+
+  // Handle ESC key for internal back navigation
+  useInternalBackNavigation(showDetail, handleBackClick);
+
+  // Handle keyboard navigation for list view
+  useListNavigation(
+    !showDetail,
+    filteredAccounts.length,
+    selectedRow,
+    setSelectedRow,
+    () => {
+      const selected = filteredAccounts[selectedRow];
+      if (selected) {
+        setForm(selected);
+        setShowDetail(true);
       }
-    },
-    [filteredAccounts, selectedRow, showDetail]
+    }
   );
 
   useEffect(() => {
@@ -80,12 +111,6 @@ const EditAccount: React.FC = () => {
   }, [dispatch]);
 
   useEffect(() => {
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleKeyDown]);
-
-  useEffect(() => {
-    // Reset selected row when search changes
     setSelectedRow(0);
   }, [searchTerm]);
 
@@ -111,18 +136,10 @@ const EditAccount: React.FC = () => {
     setShowDetail(true);
   };
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  };
-
-  const clearSearch = () => {
-    setSearchTerm("");
-  };
-
   return (
     <div className="EditAccount EditMachineType">
-       {loading && <p className="loadingAndError">Loading...</p>}
-      {error && <p className="loadingAndError"  style={{ color: "red" }}>{error}</p>}
+      {loading && <p className="loadingAndError">Loading...</p>}
+      {error && <p className="loadingAndError" style={{ color: "red" }}>{error}</p>}
 
       {!showDetail && !loading && accounts.length > 0 ? (
         <>
@@ -133,65 +150,17 @@ const EditAccount: React.FC = () => {
             gap: '10px',
             alignItems: 'center'
           }}>
-            <div style={{ position: 'relative', flex: 1 }}>
-              <input
-                type="text"
-                placeholder="Search by company, name, phone, email, state, or pincode..."
-                value={searchTerm}
-                onChange={handleSearchChange}
-                style={{
-                  width: '100%',
-                  padding: '12px 40px 12px 40px',
-                  fontSize: '15px',
-                  border: '2px solid #ddd',
-                  borderRadius: '8px',
-                  outline: 'none',
-                  transition: 'border-color 0.3s ease',
-                }}
-                onFocus={(e) => e.target.style.borderColor = '#2d89ef'}
-                onBlur={(e) => e.target.style.borderColor = '#ddd'}
-              />
-              <span style={{
-                position: 'absolute',
-                left: '14px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                fontSize: '18px',
-                color: '#666',
-              }}>
-                🔍
-              </span>
-              {searchTerm && (
-                <button
-                  onClick={clearSearch}
-                  style={{
-                    position: 'absolute',
-                    right: '10px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    fontSize: '20px',
-                    cursor: 'pointer',
-                    color: '#999',
-                    padding: '4px 8px',
-                  }}
-                  title="Clear search"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
-            <div style={{
-              padding: '12px 16px',
-              background: '#f5f5f5',
-              borderRadius: '8px',
-              fontSize: '14px',
-              color: '#666',
-              whiteSpace: 'nowrap',
-            }}>
-              {filteredAccounts.length} of {accounts.length} accounts
-            </div>
+            <SearchBox
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onClear={() => setSearchTerm("")}
+              placeholder="Search by company, name, phone, email, state, or pincode..."
+            />
+            <ResultsCounter
+              filtered={filteredAccounts.length}
+              total={accounts.length}
+              itemName="accounts"
+            />
           </div>
 
           {/* Table */}
@@ -239,9 +208,6 @@ const EditAccount: React.FC = () => {
         </>
       ) : showDetail && form ? (
         <div id="CreateAccountCss">
-          <div className="CreateAccountTitelCss">
-            <h6>Edit Account</h6>
-          </div>
           <div className="create-account-container">
             <form className="form-container">
               <div className="form-group">
@@ -325,10 +291,6 @@ const EditAccount: React.FC = () => {
                 </div>
               </div>
 
-              <div className="form-row">
-                
-              </div>
-
               <div className="form-group">
                 <label>Address Line 1 *</label>
                 <input
@@ -393,9 +355,6 @@ const EditAccount: React.FC = () => {
               <div className="form-group">
                 <button type="button" onClick={handleSave}>
                   Update Account
-                </button>
-                <button type="button" onClick={() => setShowDetail(false)} style={{ marginLeft: '10px' }}>
-                  Back
                 </button>
               </div>
 

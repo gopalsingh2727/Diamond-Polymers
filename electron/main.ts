@@ -7,11 +7,6 @@ import log from 'electron-log';
 
 dotenv.config();
 
-log.transports.file.level = 'info';
-log.info('Logger initialized');
-autoUpdater.logger = log;
-log.log('AutoUpdater initialized', app.getVersion());
-
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 process.env.APP_ROOT = path.join(__dirname, '..');
 
@@ -63,6 +58,12 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  // Initialize logger
+  log.transports.file.level = 'info';
+  log.info('Logger initialized');
+  autoUpdater.logger = log;
+  log.log('AutoUpdater initialized', app.getVersion());
+
   const win = createWindow();
 
   autoUpdater.autoDownload = true;
@@ -112,7 +113,11 @@ app.on('window-all-closed', () => {
 
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow();
+    if (app.isReady()) {
+      createWindow();
+    } else {
+      app.whenReady().then(createWindow);
+    }
   }
 });
 

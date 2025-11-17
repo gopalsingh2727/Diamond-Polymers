@@ -12,37 +12,102 @@ import CreateMachineType from "./machine/createMachineType";
 import Headers from "../../header/Headers";
 import  DeviceAccess from './deviceAccess/deviceAccess';
 import DiveceAccessCreate from "./deviceAccess/deviceAccessCreate";
+import CreateFormula from "./formula/CreateFormula";
+import CreateProductSpec from "./productSpec/CreateProductSpec";
+import CreateMaterialSpec from "./materialSpec/CreateMaterialSpec";
+import CreateOrderType from "./orderType/CreateOrderType";
+import CalculationTool from "./calculation/CalculationTool";
+import MaterialCalculator from "./calculation/MaterialCalculator";
 import './create.css';
 import '../../../main/sidebar/menu.css';
 import ErrorBoundary from '../../../error/error';
+import Products from "./products/products";
+import ProductCategories from "./products/productsCategories";
+import MaterialFormulaList from "../../../MaterialFormula/MaterialFormulaList";
 
 const Layout = () => {
-  const menuItems = [
-    { key: "account", label: "Create Account" },
-    { key: "machineType", label: "Create Machine Type" },
-    { key: "machine", label: "Create Machine" },
-    { key: "step", label: "Create Step" },
-    { key: "Create Machine Operator", label: "Create Machine Operator" },
-    {key:"Create Device Access" , label: "Create Device Access"},
-    {key:"Create Access" , label:"Create Access"},
-
-    // { key: "products", label: "Products" },
-    // { key: "categories", label: "Product Categories" },
-    { key: "materials", label: "Create Materials" },
-    { key: "materialsCategories", label: "Materials Categories" }
+  const menuSections = [
+    {
+      title: "Account",
+      items: [
+        { key: "account", label: "Create Account" }
+      ]
+    },
+    {
+      title: "Machine Management",
+      items: [
+        { key: "machineType", label: "Create Machine Type" },
+        { key: "machine", label: "Create Machine" },
+        { key: "step", label: "Create Step" },
+        { key: "Create Machine Operator", label: "Create Machine Operator" }
+      ]
+    },
+    {
+      title: "Products & Materials",
+      items: [
+        { key: "products", label: "Products" },
+        { key: "categories", label: "Product Categories" },
+        { key: "materials", label: "Create Materials" },
+        { key: "materialsCategories", label: "Materials Categories" },
+        { key: "materialFormulas", label: "Material Formulas" }
+      ]
+    },
+    {
+      title: "Device Access",
+      items: [
+        { key: "Create Device Access", label: "Create Device Access" },
+        { key: "Create Access", label: "Create Access" }
+      ]
+    },
+    {
+      title: "Specifications",
+      items: [
+        { key: "productSpec", label: "Create Product Spec" },
+        { key: "materialSpec", label: "Create Material Spec" },
+        { key: "orderType", label: "Create Order Type" }
+      ]
+    },
+    {
+      title: "Formulas & Calculations",
+      items: [
+        { key: "formula", label: "Create Formula" },
+        { key: "calculation", label: "Calculation Tool" },
+        { key: "materialCalculator", label: "Material Calculator" }
+      ]
+    }
   ];
 
+  // Flatten all items for navigation
+  const menuItems = menuSections.flatMap(section => section.items);
+
   const [activeComponent, setActiveComponent] = useState("account");
-  const [title, setTitle] = useState("Create Account");
+
   const buttonRefs = useRef<(HTMLLIElement | null)[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
+
+  // Track which sections are expanded (default: all collapsed except Account)
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    "Account": true,
+    "Machine Management": false,
+    "Products & Materials": false,
+    "Device Access": false,
+    "Specifications": true,
+    "Formulas & Calculations": true
+  });
+
+  const toggleSection = (sectionTitle: string) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [sectionTitle]: !prev[sectionTitle]
+    }));
+  };
 
   useEffect(() => {
     const titles: Record<string, string> = {};
     menuItems.forEach(item => {
       titles[item.key] = item.label;
     });
-    setTitle(titles[activeComponent] || "Select an Option");
+   
   }, [activeComponent]);
 
   useEffect(() => {
@@ -82,14 +147,28 @@ const Layout = () => {
         return <ErrorBoundary><DiveceAccessCreate/></ErrorBoundary> 
       case "Create Access":
         return <ErrorBoundary><DeviceAccess/></ErrorBoundary>
-      // case "products":
-      //   return <ErrorBoundary><Products /></ErrorBoundary>;
-      // case "categories":
-      //   return <ErrorBoundary><ProductCategories /></ErrorBoundary>;
+      case "products":
+        return <ErrorBoundary><Products /></ErrorBoundary>;
+      case "categories":
+        return <ErrorBoundary><ProductCategories/></ErrorBoundary>;
       case "materials":
         return <ErrorBoundary><CreateMaterials /></ErrorBoundary>;
       case "materialsCategories":
         return <ErrorBoundary><MaterialsCategories /></ErrorBoundary>;
+      case "materialFormulas":
+        return <ErrorBoundary><MaterialFormulaList /></ErrorBoundary>;
+      case "formula":
+        return <ErrorBoundary><CreateFormula /></ErrorBoundary>;
+      case "productSpec":
+        return <ErrorBoundary><CreateProductSpec /></ErrorBoundary>;
+      case "materialSpec":
+        return <ErrorBoundary><CreateMaterialSpec /></ErrorBoundary>;
+      case "orderType":
+        return <ErrorBoundary><CreateOrderType /></ErrorBoundary>;
+      case "calculation":
+        return <ErrorBoundary><CalculationTool /></ErrorBoundary>;
+      case "materialCalculator":
+        return <ErrorBoundary><MaterialCalculator /></ErrorBoundary>;
       default:
         return <div>Select an option</div>;
     }
@@ -99,7 +178,7 @@ const Layout = () => {
     <div className="container">
       {/* Header */}
       <div className="item menu-header" style={{ gridColumn: "1 / -1" }}>
-        <Headers title={title} />
+        <Headers  />
       </div>
 
       {/* Sidebar */}
@@ -107,34 +186,90 @@ const Layout = () => {
         <div className="menu-container-create">
           <div className="menu-header-padding">
             <ul id="main-menu" style={{ listStyle: "none", padding: 0 }}>
-              {menuItems.map((item, index) => (
-                <div
-                  key={item.key}
-                  className={`menu-item-wrapper ${selectedIndex === index ? "selected" : ""} ${
-                    index === 0 || index === 4 || index === 6 ? "bottom-borders-menu" : ""
-                  }`}
-                >
-                  <li
-                    ref={(el) => (buttonRefs.current[index] = el)}
-                    tabIndex={0}
-                    onClick={() => {
-                      setActiveComponent(item.key);
-                      setSelectedIndex(index);
-                    }}
-                    onKeyDown={(e) => handleKeyDown(e, index)}
-                    style={{
-                      outline: "none",
-                      padding: "5px",
-                      borderRadius: "24px",
-                      cursor: "pointer",
-                      fontWeight: 900,
-                      textAlign: "center"
-                    }}
-                  >
-                    {item.label}
-                  </li>
-                </div>
-              ))}
+              {menuSections.map((section, sectionIndex) => {
+                const isExpanded = expandedSections[section.title];
+                const hasMultipleItems = section.items.length > 1;
+
+                return (
+                  <div key={section.title}>
+                    {/* Section Title - Clickable if multiple items */}
+                    <div
+                      onClick={() => hasMultipleItems && toggleSection(section.title)}
+                      style={{
+                        padding: "8px 10px",
+                        fontSize: "0.75rem",
+                        fontWeight: "bold",
+                        color: "#6b7280",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.05em",
+                        marginTop: sectionIndex > 0 ? "10px" : "0",
+                        cursor: hasMultipleItems ? "pointer" : "default",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        userSelect: "none"
+                      }}
+                    >
+                      <span>{section.title}</span>
+                      {hasMultipleItems && (
+                        <span style={{
+                          fontSize: "1rem",
+                          transition: "transform 0.2s ease",
+                          transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)"
+                        }}>
+                          ▼
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Section Items - Collapsible */}
+                    <div style={{
+                      maxHeight: isExpanded ? "1000px" : "0",
+                      overflow: "hidden",
+                      transition: "max-height 0.3s ease-in-out"
+                    }}>
+                      {section.items.map((item) => {
+                        const globalIndex = menuItems.findIndex(mi => mi.key === item.key);
+                        return (
+                          <div
+                            key={item.key}
+                            className={`menu-item-wrapper ${selectedIndex === globalIndex ? "selected" : ""}`}
+                          >
+                            <li
+                              ref={(el) => (buttonRefs.current[globalIndex] = el)}
+                              tabIndex={0}
+                              onClick={() => {
+                                setActiveComponent(item.key);
+                                setSelectedIndex(globalIndex);
+                              }}
+                              onKeyDown={(e) => handleKeyDown(e, globalIndex)}
+                              style={{
+                                outline: "none",
+                                padding: "5px",
+                                borderRadius: "24px",
+                                cursor: "pointer",
+                                fontWeight: 900,
+                                textAlign: "center"
+                              }}
+                            >
+                              {item.label}
+                            </li>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Section Divider */}
+                    {sectionIndex < menuSections.length - 1 && (
+                      <div style={{
+                        height: "1px",
+                        background: "#e5e7eb",
+                        margin: "8px 10px"
+                      }} />
+                    )}
+                  </div>
+                );
+              })}
             </ul>
           </div>
         </div>

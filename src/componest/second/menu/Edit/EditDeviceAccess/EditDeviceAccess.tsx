@@ -11,8 +11,13 @@ import { AppDispatch } from "../../../../../store";
 
 interface Device {
   _id: string;
+  deviceId: string;
   deviceName: string;
   location: string;
+  branchId?: {
+    _id: string;
+    branchName: string;
+  };
   machines?: Array<{
     machineId: string;
     machineName: string;
@@ -40,9 +45,13 @@ const EditDeviceAccess: React.FC = () => {
     if (!searchTerm) return true;
     
     const search = searchTerm.toLowerCase();
+    const branchName = typeof device.branchId === 'object' ? device.branchId?.branchName : '';
+    
     return (
+      device.deviceId?.toLowerCase().includes(search) ||
       device.deviceName?.toLowerCase().includes(search) ||
       device.location?.toLowerCase().includes(search) ||
+      branchName?.toLowerCase().includes(search) ||
       device.machines?.some((m: any) => 
         m.machineName?.toLowerCase().includes(search) ||
         m.machineType?.toLowerCase().includes(search)
@@ -80,7 +89,6 @@ const EditDeviceAccess: React.FC = () => {
   }, [handleKeyDown]);
 
   useEffect(() => {
-    // Reset selected row when search changes
     setSelectedRow(0);
   }, [searchTerm]);
 
@@ -154,10 +162,17 @@ const EditDeviceAccess: React.FC = () => {
     setSearchTerm("");
   };
 
+  const getBranchName = (branchId: any) => {
+    if (typeof branchId === 'object' && branchId?.branchName) {
+      return branchId.branchName;
+    }
+    return "N/A";
+  };
+
   return (
     <div className="EditMachineType">
        {loading && <p className="loadingAndError">Loading...</p>}
-      {error && <p className="loadingAndError"  style={{ color: "red" }}>{error}</p>}
+      {error && <p className="loadingAndError" style={{ color: "red" }}>{error}</p>}
 
       {!showDetail && !loading && deviceList.length > 0 ? (
         <>
@@ -171,7 +186,8 @@ const EditDeviceAccess: React.FC = () => {
             <div style={{ position: 'relative', flex: 1 }}>
               <input
                 type="text"
-                placeholder="Search by device name, location, or machine..."
+                placeholder="Search by device ID, name, branch, location, or machine..."
+                                className="w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition-all"
                 value={searchTerm}
                 onChange={handleSearchChange}
                 style={{
@@ -235,7 +251,9 @@ const EditDeviceAccess: React.FC = () => {
               <thead>
                 <tr>
                   <th>No</th>
+                  <th>Device ID</th>
                   <th>Device Name</th>
+                  <th>Branch Name</th>
                   <th>Location</th>
                   <th>Machines</th>
                 </tr>
@@ -249,7 +267,11 @@ const EditDeviceAccess: React.FC = () => {
                     style={{ cursor: "pointer" }}
                   >
                     <td>{index + 1}</td>
+                    <td style={{ fontFamily: 'monospace', fontWeight: '600' }}>
+                      {device.deviceId || "N/A"}
+                    </td>
                     <td>{device.deviceName}</td>
+                    <td>{getBranchName(device.branchId)}</td>
                     <td>{device.location || "N/A"}</td>
                     <td>{device.machines?.length || 0}</td>
                   </tr>
@@ -313,7 +335,13 @@ const EditDeviceAccess: React.FC = () => {
           <div className="info-section">
             <h4>Device Information</h4>
             <p>
+              <strong>Device ID:</strong> {selectedDevice.deviceId || "N/A"}
+            </p>
+            <p>
               <strong>Device Name:</strong> {selectedDevice.deviceName}
+            </p>
+            <p>
+              <strong>Branch Name:</strong> {getBranchName(selectedDevice.branchId)}
             </p>
             <p>
               <strong>Location:</strong> {selectedDevice.location || "N/A"}

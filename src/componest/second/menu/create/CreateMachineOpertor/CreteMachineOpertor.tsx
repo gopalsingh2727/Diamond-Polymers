@@ -8,8 +8,8 @@ import { AppDispatch } from "../../../../../store";
 
 type OperatorData = {
   username: string;
-  password: string;
-  confirmPassword: string;
+  pin: string;
+  confirmPin: string;
   machineId: string;
 };
 
@@ -17,15 +17,15 @@ const CreteMachineOpertor = () => {
   const dispatch = useDispatch<AppDispatch>();
   const [formData, setFormData] = useState<OperatorData>({
     username: "",
-    password: "",
-    confirmPassword: "",
+    pin: "",
+    confirmPin: "",
     machineId: "",
   });
   const { success, error, loading } = useSelector(
     (state: RootState) => state.operatorCreate
   );
 
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPin, setShowPin] = useState(false);
 
   const { machines: machineList } = useSelector(
     (state: RootState) => state.machineList
@@ -39,24 +39,35 @@ const CreteMachineOpertor = () => {
     if (success) {
       setFormData({
         username: "",
-        password: "",
-        confirmPassword: "",
+        pin: "",
+        confirmPin: "",
         machineId: "",
       });
     }
   }, [success]);
 
   const handleChange = (field: keyof OperatorData, value: string) => {
+    // For PIN fields, only allow digits and max 4 characters
+    if (field === 'pin' || field === 'confirmPin') {
+      if (value && (!/^\d*$/.test(value) || value.length > 4)) {
+        return;
+      }
+    }
     setFormData({ ...formData, [field]: value });
   };
 
   const handleSubmit = () => {
-    if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match!");
+    if (formData.pin !== formData.confirmPin) {
+      alert("PINs do not match!");
       return;
     }
 
-    if (!formData.username || !formData.password || !formData.machineId) {
+    if (formData.pin.length !== 4) {
+      alert("PIN must be exactly 4 digits!");
+      return;
+    }
+
+    if (!formData.username || !formData.pin || !formData.machineId) {
       alert("All fields are required!");
       return;
     }
@@ -64,7 +75,7 @@ const CreteMachineOpertor = () => {
     dispatch(
       createOperator({
         username: formData.username,
-        password: formData.password,
+        pin: formData.pin,
         machineId: formData.machineId,
       })
     );
@@ -86,21 +97,24 @@ const CreteMachineOpertor = () => {
         </div>
       </div>
 
-      {/* Row 2: Password + Confirm Password */}
+      {/* Row 2: PIN + Confirm PIN */}
       <div className="form-column">
         <div className="form-input-group">
-          <label className="input-label">Password</label>
+          <label className="input-label">PIN (4 digits)</label>
           <div style={{ position: "relative" }}>
             <input
-              type={showPassword ? "text" : "password"}
-              value={formData.password}
-              onChange={(e) => handleChange("password", e.target.value)}
+              type={showPin ? "text" : "password"}
+              value={formData.pin}
+              onChange={(e) => handleChange("pin", e.target.value)}
               className="form-input"
-              placeholder="Enter password"
+              placeholder="Enter 4-digit PIN"
+              maxLength={4}
+              inputMode="numeric"
+              pattern="\d{4}"
             />
             <button
               type="button"
-              onClick={() => setShowPassword(!showPassword)}
+              onClick={() => setShowPin(!showPin)}
               style={{
                 position: "absolute",
                 right: "10px",
@@ -112,23 +126,29 @@ const CreteMachineOpertor = () => {
                 fontSize: "1rem",
               }}
             >
-              {showPassword ? "🙈" : "👁"}
+              {showPin ? "🙈" : "👁"}
             </button>
           </div>
+          <small style={{ color: "#666", fontSize: "0.85rem", marginTop: "4px", display: "block" }}>
+            {formData.pin.length}/4 digits
+          </small>
         </div>
         <div className="form-input-group">
-          <label className="input-label">Confirm Password</label>
+          <label className="input-label">Confirm PIN</label>
           <div style={{ position: "relative" }}>
             <input
-              type={showPassword ? "text" : "password"}
-              value={formData.confirmPassword}
-              onChange={(e) => handleChange("confirmPassword", e.target.value)}
+              type={showPin ? "text" : "password"}
+              value={formData.confirmPin}
+              onChange={(e) => handleChange("confirmPin", e.target.value)}
               className="form-input"
-              placeholder="Confirm password"
+              placeholder="Confirm 4-digit PIN"
+              maxLength={4}
+              inputMode="numeric"
+              pattern="\d{4}"
             />
             <button
               type="button"
-              onClick={() => setShowPassword(!showPassword)}
+              onClick={() => setShowPin(!showPin)}
               style={{
                 position: "absolute",
                 right: "10px",
@@ -140,9 +160,21 @@ const CreteMachineOpertor = () => {
                 fontSize: "1rem",
               }}
             >
-              {showPassword ? "🙈" : "👁"}
+              {showPin ? "🙈" : "👁"}
             </button>
           </div>
+          {formData.pin && formData.confirmPin && (
+            <small 
+              style={{ 
+                color: formData.pin === formData.confirmPin ? "green" : "red",
+                fontSize: "0.85rem",
+                marginTop: "4px",
+                display: "block"
+              }}
+            >
+              {formData.pin === formData.confirmPin ? "✓ PINs match" : "✗ PINs do not match"}
+            </small>
+          )}
         </div>
       </div>
 
@@ -168,7 +200,12 @@ const CreteMachineOpertor = () => {
       {/* Submit Button */}
       <div className="form-column">
         <div className="form-input-group">
-          <button type="button" onClick={handleSubmit} className="save-button" disabled={loading}>
+          <button 
+            type="button" 
+            onClick={handleSubmit} 
+            className="save-button" 
+            disabled={loading || formData.pin.length !== 4 || formData.pin !== formData.confirmPin}
+          >
             {loading ? "Submitting..." : "Submit"}
           </button>
           {success && <div className="success-msg">Operator created successfully!</div>}

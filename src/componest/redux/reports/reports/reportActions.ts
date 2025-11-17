@@ -35,7 +35,6 @@ import {
   SET_BRANCH,
 } from './reportConstants';
 import { ReportActionTypes, DateRange, BranchState } from './reportTypes';
-import { RootState } from '../rootReducer';
 
 const baseUrl = import.meta.env.VITE_API_27INFINITY_IN;
 const API_KEY = import.meta.env.VITE_API_KEY;
@@ -46,65 +45,63 @@ const getAuthHeaders = (token: string) => ({
   "x-api-key": API_KEY,
 });
 
-const getToken = (getState: () => RootState) =>
-  getState().auth?.token || localStorage.getItem("authToken");
+const getToken = () => localStorage.getItem("authToken");
 
-const getBranchId = () => localStorage.getItem("selectedBranch");
+const getBranchId = () => {
+  const branchId = localStorage.getItem("selectedBranch");
+  // Return null if viewing all branches or if not set
+  if (!branchId || branchId === "all" || branchId === "null") {
+    return null;
+  }
+  return branchId;
+};
 
 // Fetch Overview Report Data
 export const fetchOverviewReport = (dateRange?: DateRange) =>
-  async (dispatch: Dispatch<ReportActionTypes>, getState: () => RootState) => {
+  async (dispatch: Dispatch<ReportActionTypes>) => {
     try {
       dispatch({ type: FETCH_OVERVIEW_REQUEST });
       dispatch({ type: SET_LOADING, payload: true });
 
-      const token = getToken(getState);
+      const token = getToken();
       const branchId = getBranchId();
 
       if (!token) {
-        throw new Error("Authentication token missing");
+        throw new Error("You are not logged in. Please login to view reports.");
       }
 
-      if (!branchId) {
-        throw new Error("Branch ID missing");
+      // Validate token format (JWT tokens have 3 parts separated by dots)
+      const tokenParts = token.split('.');
+      if (tokenParts.length !== 3) {
+        throw new Error("Invalid authentication token. Please login again.");
       }
 
-      // Build query params
-      const params: any = { branchId };
+      // Build query params - branchId is optional for viewing all branches
+      const params: any = {};
+      if (branchId) {
+        params.branchId = branchId;
+      }
       if (dateRange) {
         params.startDate = dateRange.from.toISOString();
         params.endDate = dateRange.to.toISOString();
       }
 
       console.log("Fetching overview report with params:", params);
+      console.log("API Base URL:", baseUrl);
+      console.log("Full URL:", `${baseUrl}/reports/overview`);
+      console.log("Has token:", !!token);
+      console.log("API Key:", API_KEY ? "Set" : "Not set");
 
-      // Fetch orders
-      const ordersResponse = await axios.get(`${baseUrl}/orders`, {
+      // Fetch overview report from new API endpoint
+      const response = await axios.get(`${baseUrl}/reports/overview`, {
         params,
         headers: getAuthHeaders(token),
         timeout: 30000,
       });
 
-      // Fetch efficiency trends (if you have a separate endpoint)
-      // const efficiencyResponse = await axios.get(`${baseUrl}/reports/efficiency`, {
-      //   params,
-      //   headers: getAuthHeaders(token),
-      // });
+      console.log("API Response:", response.data);
 
-      // Fetch production output (if you have a separate endpoint)
-      // const productionResponse = await axios.get(`${baseUrl}/reports/production`, {
-      //   params,
-      //   headers: getAuthHeaders(token),
-      // });
-
-      // For now, we'll extract data from orders response
-      const orders = ordersResponse.data?.data?.orders || ordersResponse.data?.orders || [];
-
-      // Calculate efficiency trends from orders
-      const efficiencyTrends = calculateEfficiencyTrends(orders, dateRange);
-      
-      // Calculate production output from orders
-      const productionOutput = calculateProductionOutput(orders, dateRange);
+      const { orders, efficiencyTrends, productionOutput } = response.data?.data || {};
 
       dispatch({
         type: FETCH_OVERVIEW_SUCCESS,
@@ -119,11 +116,38 @@ export const fetchOverviewReport = (dateRange?: DateRange) =>
       return { orders, efficiencyTrends, productionOutput };
 
     } catch (error: any) {
+      console.error("=== DETAILED ERROR INFO ===");
       console.error("Error fetching overview report:", error);
-      
+      console.error("Error response:", error.response);
+      console.error("Error status:", error.response?.status);
+      console.error("Error data:", error.response?.data);
+      console.error("Error message:", error.message);
+      console.error("Base URL:", baseUrl);
+      console.error("=========================");
+
       let errorMessage = "Failed to fetch overview report";
       if (axios.isAxiosError(error)) {
-        errorMessage = error.response?.data?.message || error.message;
+        if (error.response) {
+          // Server responded with error
+          const status = error.response.status;
+          const responseError = error.response.data?.error || error.response.data?.message;
+
+          if (status === 401 || status === 403 || responseError === "Invalid token") {
+            errorMessage = "Your session has expired. Please login again.";
+          } else if (status === 404) {
+            errorMessage = "Reports endpoint not found. Please check backend configuration.";
+          } else {
+            errorMessage = responseError || `Server error: ${status}`;
+          }
+        } else if (error.request) {
+          // Request made but no response
+          errorMessage = "Cannot connect to backend server. Please ensure the backend is running at " + baseUrl;
+        } else {
+          // Error setting up request
+          errorMessage = error.message;
+        }
+      } else {
+        errorMessage = error.message || "Unknown error occurred";
       }
 
       dispatch({
@@ -133,27 +157,32 @@ export const fetchOverviewReport = (dateRange?: DateRange) =>
 
       dispatch({ type: SET_ERROR, payload: errorMessage });
       dispatch({ type: SET_LOADING, payload: false });
-      
+
       throw error;
     }
   };
 
 // Fetch Orders Report Data
 export const fetchOrdersReport = (filters?: any) =>
-  async (dispatch: Dispatch<ReportActionTypes>, getState: () => RootState) => {
+  async (dispatch: Dispatch<ReportActionTypes>) => {
     try {
       dispatch({ type: FETCH_ORDERS_REPORT_REQUEST });
       dispatch({ type: SET_LOADING, payload: true });
 
-      const token = getToken(getState);
+      const token = getToken();
       const branchId = getBranchId();
 
       if (!token) {
         throw new Error("Authentication token missing");
       }
 
-      const params: any = { branchId };
-      
+      const params: any = {};
+
+      // Add branchId if not viewing all branches
+      if (branchId) {
+        params.branchId = branchId;
+      }
+
       // Add filters
       if (filters) {
         Object.keys(filters).forEach(key => {
@@ -165,13 +194,13 @@ export const fetchOrdersReport = (filters?: any) =>
 
       console.log("Fetching orders report with params:", params);
 
-      const response = await axios.get(`${baseUrl}/orders`, {
+      const response = await axios.get(`${baseUrl}/reports/orders`, {
         params,
         headers: getAuthHeaders(token),
         timeout: 30000,
       });
 
-      const orders = response.data?.data?.orders || response.data?.orders || [];
+      const orders = response.data?.data?.orders || [];
 
       dispatch({
         type: FETCH_ORDERS_REPORT_SUCCESS,
@@ -183,7 +212,7 @@ export const fetchOrdersReport = (filters?: any) =>
 
     } catch (error: any) {
       console.error("Error fetching orders report:", error);
-      
+
       let errorMessage = "Failed to fetch orders report";
       if (axios.isAxiosError(error)) {
         errorMessage = error.response?.data?.message || error.message;
@@ -196,27 +225,32 @@ export const fetchOrdersReport = (filters?: any) =>
 
       dispatch({ type: SET_ERROR, payload: errorMessage });
       dispatch({ type: SET_LOADING, payload: false });
-      
+
       throw error;
     }
   };
 
 // Fetch Production Report Data
 export const fetchProductionReport = (filters?: any) =>
-  async (dispatch: Dispatch<ReportActionTypes>, getState: () => RootState) => {
+  async (dispatch: Dispatch<ReportActionTypes>) => {
     try {
       dispatch({ type: FETCH_PRODUCTION_REQUEST });
       dispatch({ type: SET_LOADING, payload: true });
 
-      const token = getToken(getState);
+      const token = getToken();
       const branchId = getBranchId();
 
       if (!token) {
         throw new Error("Authentication token missing");
       }
 
-      const params: any = { branchId };
-      
+      const params: any = {};
+
+      // Add branchId if not viewing all branches
+      if (branchId) {
+        params.branchId = branchId;
+      }
+
       if (filters) {
         Object.keys(filters).forEach(key => {
           if (filters[key] && filters[key] !== 'all') {
@@ -227,25 +261,14 @@ export const fetchProductionReport = (filters?: any) =>
 
       console.log("Fetching production report with params:", params);
 
-      // Fetch orders
-      const ordersResponse = await axios.get(`${baseUrl}/orders`, {
+      // Fetch production report from new API endpoint
+      const response = await axios.get(`${baseUrl}/reports/production`, {
         params,
         headers: getAuthHeaders(token),
         timeout: 30000,
       });
 
-      // Fetch materials
-      const materialsResponse = await axios.get(`${baseUrl}/materials`, {
-        params: { branchId },
-        headers: getAuthHeaders(token),
-        timeout: 30000,
-      });
-
-      const orders = ordersResponse.data?.data?.orders || ordersResponse.data?.orders || [];
-      const materials = materialsResponse.data?.data?.materials || materialsResponse.data?.materials || [];
-      
-      // Calculate production output
-      const productionOutput = calculateProductionOutput(orders, filters?.dateRange);
+      const { orders, materials, productionOutput } = response.data?.data || {};
 
       dispatch({
         type: FETCH_PRODUCTION_SUCCESS,
@@ -261,7 +284,7 @@ export const fetchProductionReport = (filters?: any) =>
 
     } catch (error: any) {
       console.error("Error fetching production report:", error);
-      
+
       let errorMessage = "Failed to fetch production report";
       if (axios.isAxiosError(error)) {
         errorMessage = error.response?.data?.message || error.message;
@@ -274,27 +297,32 @@ export const fetchProductionReport = (filters?: any) =>
 
       dispatch({ type: SET_ERROR, payload: errorMessage });
       dispatch({ type: SET_LOADING, payload: false });
-      
+
       throw error;
     }
   };
 
 // Fetch Machines Report Data
 export const fetchMachinesReport = (filters?: any) =>
-  async (dispatch: Dispatch<ReportActionTypes>, getState: () => RootState) => {
+  async (dispatch: Dispatch<ReportActionTypes>) => {
     try {
       dispatch({ type: FETCH_MACHINES_REQUEST });
       dispatch({ type: SET_LOADING, payload: true });
 
-      const token = getToken(getState);
+      const token = getToken();
       const branchId = getBranchId();
 
       if (!token) {
         throw new Error("Authentication token missing");
       }
 
-      const params: any = { branchId };
-      
+      const params: any = {};
+
+      // Add branchId if not viewing all branches
+      if (branchId) {
+        params.branchId = branchId;
+      }
+
       if (filters) {
         Object.keys(filters).forEach(key => {
           if (filters[key] && filters[key] !== 'all') {
@@ -305,16 +333,14 @@ export const fetchMachinesReport = (filters?: any) =>
 
       console.log("Fetching machines report with params:", params);
 
-      const response = await axios.get(`${baseUrl}/machines`, {
+      // Fetch machines report from new API endpoint
+      const response = await axios.get(`${baseUrl}/reports/machines`, {
         params,
         headers: getAuthHeaders(token),
         timeout: 30000,
       });
 
-      const machines = response.data?.data?.machines || response.data?.machines || [];
-      
-      // Calculate machine utilization
-      const machineUtilization = calculateMachineUtilization(machines, filters?.dateRange);
+      const { machines, machineUtilization } = response.data?.data || {};
 
       dispatch({
         type: FETCH_MACHINES_SUCCESS,
@@ -329,7 +355,7 @@ export const fetchMachinesReport = (filters?: any) =>
 
     } catch (error: any) {
       console.error("Error fetching machines report:", error);
-      
+
       let errorMessage = "Failed to fetch machines report";
       if (axios.isAxiosError(error)) {
         errorMessage = error.response?.data?.message || error.message;
@@ -342,27 +368,32 @@ export const fetchMachinesReport = (filters?: any) =>
 
       dispatch({ type: SET_ERROR, payload: errorMessage });
       dispatch({ type: SET_LOADING, payload: false });
-      
+
       throw error;
     }
   };
 
 // Fetch Customers Report Data
 export const fetchCustomersReport = (filters?: any) =>
-  async (dispatch: Dispatch<ReportActionTypes>, getState: () => RootState) => {
+  async (dispatch: Dispatch<ReportActionTypes>) => {
     try {
       dispatch({ type: FETCH_CUSTOMERS_REQUEST });
       dispatch({ type: SET_LOADING, payload: true });
 
-      const token = getToken(getState);
+      const token = getToken();
       const branchId = getBranchId();
 
       if (!token) {
         throw new Error("Authentication token missing");
       }
 
-      const params: any = { branchId };
-      
+      const params: any = {};
+
+      // Add branchId if not viewing all branches
+      if (branchId) {
+        params.branchId = branchId;
+      }
+
       if (filters) {
         Object.keys(filters).forEach(key => {
           if (filters[key] && filters[key] !== 'all') {
@@ -373,22 +404,14 @@ export const fetchCustomersReport = (filters?: any) =>
 
       console.log("Fetching customers report with params:", params);
 
-      // Fetch customers
-      const customersResponse = await axios.get(`${baseUrl}/customers`, {
+      // Fetch customers report from new API endpoint
+      const response = await axios.get(`${baseUrl}/reports/customers`, {
         params,
         headers: getAuthHeaders(token),
         timeout: 30000,
       });
 
-      // Fetch orders for customer analysis
-      const ordersResponse = await axios.get(`${baseUrl}/orders`, {
-        params,
-        headers: getAuthHeaders(token),
-        timeout: 30000,
-      });
-
-      const customers = customersResponse.data?.data?.customers || customersResponse.data?.customers || [];
-      const orders = ordersResponse.data?.data?.orders || ordersResponse.data?.orders || [];
+      const { customers, orders } = response.data?.data || {};
 
       dispatch({
         type: FETCH_CUSTOMERS_SUCCESS,
@@ -403,7 +426,7 @@ export const fetchCustomersReport = (filters?: any) =>
 
     } catch (error: any) {
       console.error("Error fetching customers report:", error);
-      
+
       let errorMessage = "Failed to fetch customers report";
       if (axios.isAxiosError(error)) {
         errorMessage = error.response?.data?.message || error.message;
@@ -416,31 +439,38 @@ export const fetchCustomersReport = (filters?: any) =>
 
       dispatch({ type: SET_ERROR, payload: errorMessage });
       dispatch({ type: SET_LOADING, payload: false });
-      
+
       throw error;
     }
   };
 
 // Fetch Materials
 export const fetchMaterials = () =>
-  async (dispatch: Dispatch<ReportActionTypes>, getState: () => RootState) => {
+  async (dispatch: Dispatch<ReportActionTypes>) => {
     try {
       dispatch({ type: FETCH_MATERIALS_REQUEST });
 
-      const token = getToken(getState);
+      const token = getToken();
       const branchId = getBranchId();
 
       if (!token) {
         throw new Error("Authentication token missing");
       }
 
-      const response = await axios.get(`${baseUrl}/materials`, {
-        params: { branchId },
+      // Build params - branchId is optional for viewing all branches
+      const params: any = {};
+      if (branchId) {
+        params.branchId = branchId;
+      }
+
+      // Fetch materials report from new API endpoint
+      const response = await axios.get(`${baseUrl}/reports/materials`, {
+        params,
         headers: getAuthHeaders(token),
         timeout: 30000,
       });
 
-      const materials = response.data?.data?.materials || response.data?.materials || [];
+      const materials = response.data?.data?.materials || [];
 
       dispatch({
         type: FETCH_MATERIALS_SUCCESS,
@@ -451,7 +481,7 @@ export const fetchMaterials = () =>
 
     } catch (error: any) {
       console.error("Error fetching materials:", error);
-      
+
       let errorMessage = "Failed to fetch materials";
       if (axios.isAxiosError(error)) {
         errorMessage = error.response?.data?.message || error.message;
@@ -461,76 +491,10 @@ export const fetchMaterials = () =>
         type: FETCH_MATERIALS_FAILURE,
         payload: errorMessage,
       });
-      
+
       throw error;
     }
   };
-
-// Helper Functions
-const calculateEfficiencyTrends = (orders: any[], dateRange?: DateRange) => {
-  // Group orders by date and calculate average efficiency
-  const trends: { [key: string]: { total: number; count: number; orders: number } } = {};
-  
-  orders.forEach(order => {
-    if (order.realTimeData?.overallEfficiency > 0) {
-      const date = new Date(order.createdAt).toISOString().split('T')[0];
-      if (!trends[date]) {
-        trends[date] = { total: 0, count: 0, orders: 0 };
-      }
-      trends[date].total += order.realTimeData.overallEfficiency;
-      trends[date].count += 1;
-      trends[date].orders += 1;
-    }
-  });
-
-  return Object.keys(trends)
-    .sort()
-    .slice(-7) // Last 7 days
-    .map(date => ({
-      date,
-      efficiency: Math.round(trends[date].total / trends[date].count * 10) / 10,
-      orders: trends[date].orders,
-    }));
-};
-
-const calculateProductionOutput = (orders: any[], dateRange?: DateRange) => {
-  const output: { [key: string]: { netWeight: number; wastage: number } } = {};
-  
-  orders.forEach(order => {
-    const date = new Date(order.createdAt).toISOString().split('T')[0];
-    if (!output[date]) {
-      output[date] = { netWeight: 0, wastage: 0 };
-    }
-    output[date].netWeight += order.realTimeData?.totalNetWeight || 0;
-    output[date].wastage += order.realTimeData?.totalWastage || 0;
-  });
-
-  return Object.keys(output)
-    .sort()
-    .slice(-7) // Last 7 days
-    .map(date => ({
-      date,
-      netWeight: Math.round(output[date].netWeight),
-      wastage: Math.round(output[date].wastage),
-    }));
-};
-
-const calculateMachineUtilization = (machines: any[], dateRange?: DateRange) => {
-  // This would typically come from your machine tracking system
-  // For now, return sample data structure
-  const last7Days = Array.from({ length: 7 }, (_, i) => {
-    const date = new Date();
-    date.setDate(date.getDate() - (6 - i));
-    return date.toISOString().split('T')[0];
-  });
-
-  return last7Days.map(date => ({
-    date,
-    utilizationRate: Math.random() * 30 + 70, // Sample data 70-100%
-    activeHours: Math.random() * 8 + 16, // Sample data 16-24 hours
-    totalHours: 24,
-  }));
-};
 
 // Filter Actions
 export const setDateRange = (dateRange: DateRange): ReportActionTypes => ({

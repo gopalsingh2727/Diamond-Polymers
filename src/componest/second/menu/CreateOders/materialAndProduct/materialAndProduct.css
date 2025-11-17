@@ -79,7 +79,7 @@
 
 .materialForm label {
   margin-bottom: 8px;
-  font-size: 16px;
+  font-size: small;
   font-weight: bold;
   color: #1e293b;
 }
@@ -212,7 +212,7 @@
 
 .headerRow{
   display: grid;
-  grid-template-columns: 111px 119px 51px 49px 50px 119px 85px 86px 166px 77px;
+  grid-template-columns: 111px 119px 51px 49px 50px 119px 85px 86px 166px 77px 100px 100px;
 
   gap: 10px;
   font-weight: bold;
@@ -278,7 +278,7 @@
 /* Header row for the step table */
 .stepHeaderRow {
   display: grid;
-  grid-template-columns: 22px 122px 112px 53px 50px 75px 125px 78px 116px 133px;
+  grid-template-columns: 22px 122px 112px 53px 50px 75px 125px 78px 116px 133px 100px 100px;
   gap: 10px;
   padding-left: 10px;
 
@@ -290,8 +290,9 @@
 /* Each data row */
 .stepRow {
   display: grid;
-  grid-template-columns: 22px 122px 112px 53px 50px 75px 125px 78px 116px 133px;
+  grid-template-columns: 22px 122px 112px 53px 50px 75px 125px 78px 116px 133px 100px 100px;
   gap: 10px;
+
   padding-left: 10px;
 
   align-items: center;
@@ -603,9 +604,33 @@
 .popupitemallStep{
   display: grid;
      background: none !important;
-    grid-template-columns: 111px 119px 51px 49px 50px 119px 85px 86px 166px 77px;
+    grid-template-columns: 111px 119px 51px 49px 50px 119px 85px 86px 166px 77px 100px 100px;
     gap: 10px;
     padding-left: 10px;
     margin-bottom: 5px;
     font-weight: bold;
+}
+
+/* Center overlay on screen */
+.popup-overlay.Machine-Table {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;   /* center horizontally */
+  align-items: center;       /* center vertically */
+  background-color: rgba(0, 0, 0, 0.4); /* semi-transparent background */
+  z-index: 9999; /* ensure popup appears on top */
+}
+
+/* Inner popup box */
+.popup.Machine-Table {
+ 
+  border-radius: 10px;
+  padding: 25px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }

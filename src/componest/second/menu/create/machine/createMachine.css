@@ -732,3 +732,161 @@
     justify-content: space-between;
   }
 }
+
+
+
+/* Add these to your createMachine.css file */
+
+.CreateMachineViewModeTabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  border-bottom: 2px solid #e5e7eb;
+  padding-bottom: 0;
+}
+
+.CreateMachineTabButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: transparent;
+  color: #6b7280;
+  border: none;
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.CreateMachineTabButton.active {
+  background: #3b82f6;
+  color: white;
+}
+
+.CreateMachineTabButton:hover:not(.active) {
+  background: #f3f4f6;
+}
+
+.CreateMachinePreviewSection,
+.CreateMachineDataEntrySection {
+  margin-top: 24px;
+}
+
+.CreateMachineTestModeAlert {
+  background: #fef3c7;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: #92400e;
+}
+
+.CreateMachinePreviewTable .formula-cell {
+  background: #fef3c7;
+  font-weight: 600;
+}
+
+.CreateMachineTotalRow {
+  background: #f9fafb;
+  font-weight: 600;
+  border-top: 2px solid #e5e7eb;
+}
+
+.CreateMachineFormulaExplanation {
+  margin-top: 16px;
+  background: #ede9fe;
+  padding: 12px;
+  border-radius: 6px;
+}
+
+.CreateMachineFormulaExplanationItem {
+  margin-bottom: 6px;
+  font-size: 13px;
+  color: #6b21a8;
+}
+
+.CreateMachineRegenerateBtn,
+.CreateMachineAddRowBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: #8b5cf6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.CreateMachineAddRowBtn {
+  background: #10b981;
+}
+
+.CreateMachineDataInput {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.CreateMachineFormulaValue {
+  color: #6b7280;
+  font-style: italic;
+}
+
+.CreateMachineActionsHeader,
+.CreateMachineActionsCell {
+  text-align: center;
+}
+
+.CreateMachineRowActions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.CreateMachineEditRowBtn,
+.CreateMachineSaveRowBtn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.CreateMachineSaveRowBtn {
+  background: #10b981;
+}
+
+.CreateMachineDeleteRowBtn,
+.CreateMachineCancelRowBtn {
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.CreateMachineEmptyState {
+  text-align: center;
+  padding: 40px;
+  color: #6b7280;
+}
+
+.CreateMachineRequiredMark {
+  font-size: 10px;
+  color: #ef4444;
+  margin-left: 4px;
+}

@@ -3,7 +3,7 @@ export const getAuthToken = () => localStorage.getItem("authToken");
 export const getUserData = () => JSON.parse(localStorage.getItem("userData") || "null");
 export const getBranchId = () => localStorage.getItem("selectedBranch");
 
-// ✅ Redirect to login if branchId is missing
+
 export const validateBranchOrRedirect = () => {
   const token = getAuthToken();
   const branchId = getBranchId();

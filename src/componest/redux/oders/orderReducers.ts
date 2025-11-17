@@ -3,6 +3,7 @@
 import { combineReducers } from 'redux';
 import {
   OrderActionTypes,
+  OrderMachineTableActionTypes,
   OrderData,
   PaginationInfo,
   OrderSummary,
@@ -10,8 +11,8 @@ import {
   OrderFiltersResponse,
   OrderMeta,
   ValidationResult,
-  
-
+  OrderMachineTableResponse,
+  OrderMachineTableState,
 } from './orderTypes';
 
 
@@ -37,6 +38,21 @@ const CLEAR_ORDERS = 'CLEAR_ORDERS';
 const  GET_ACCOUNT_ORDERS_REQUEST = 'GET_ACCOUNT_ORDERS_REQUEST';
 const GET_ACCOUNT_ORDERS_SUCCESS = 'GET_ACCOUNT_ORDERS_SUCCESS';
 const GET_ACCOUNT_ORDERS_FAILURE = 'GET_ACCOUNT_ORDERS_FAILURE';
+
+// Machine Table Constants
+const FETCH_ORDER_MACHINE_TABLE_REQUEST = 'FETCH_ORDER_MACHINE_TABLE_REQUEST';
+const FETCH_ORDER_MACHINE_TABLE_SUCCESS = 'FETCH_ORDER_MACHINE_TABLE_SUCCESS';
+const FETCH_ORDER_MACHINE_TABLE_FAILURE = 'FETCH_ORDER_MACHINE_TABLE_FAILURE';
+const CLEAR_ORDER_MACHINE_TABLE = 'CLEAR_ORDER_MACHINE_TABLE';
+const ADD_MACHINE_TABLE_ROW_REQUEST = 'ADD_MACHINE_TABLE_ROW_REQUEST';
+const ADD_MACHINE_TABLE_ROW_SUCCESS = 'ADD_MACHINE_TABLE_ROW_SUCCESS';
+const ADD_MACHINE_TABLE_ROW_FAILURE = 'ADD_MACHINE_TABLE_ROW_FAILURE';
+const UPDATE_MACHINE_TABLE_ROW_REQUEST = 'UPDATE_MACHINE_TABLE_ROW_REQUEST';
+const UPDATE_MACHINE_TABLE_ROW_SUCCESS = 'UPDATE_MACHINE_TABLE_ROW_SUCCESS';
+const UPDATE_MACHINE_TABLE_ROW_FAILURE = 'UPDATE_MACHINE_TABLE_ROW_FAILURE';
+const DELETE_MACHINE_TABLE_ROW_REQUEST = 'DELETE_MACHINE_TABLE_ROW_REQUEST';
+const DELETE_MACHINE_TABLE_ROW_SUCCESS = 'DELETE_MACHINE_TABLE_ROW_SUCCESS';
+const DELETE_MACHINE_TABLE_ROW_FAILURE = 'DELETE_MACHINE_TABLE_ROW_FAILURE';
 
 
 // Additional action interfaces to handle CLEAR_ORDERS
@@ -100,6 +116,17 @@ const initialOrderFormState: OrderFormState = {
   isCreating: false,
   isUpdating: false,
   isDeleting: false,
+};
+
+const initialMachineTableState: OrderMachineTableState = {
+  currentMachineTable: null,
+  machineTablesCache: {},
+  loadingMachineTable: false,
+  updatingTableRow: false,
+  deletingTableRow: false,
+  addingTableRow: false,
+  machineTableError: null,
+  machineTableSuccess: null,
 };
 
 // Order List Reducer - THIS IS THE MAIN ONE YOUR COMPONENT USES
@@ -343,18 +370,166 @@ const orderFormReducer = (
   }
 };
 
+// Machine Table Reducer
+const machineTableReducer = (
+  state: OrderMachineTableState = initialMachineTableState,
+  action: OrderMachineTableActionTypes
+): OrderMachineTableState => {
+  console.log('🗂️ Machine Table Reducer - Action:', action.type);
 
+  switch (action.type) {
+    case FETCH_ORDER_MACHINE_TABLE_REQUEST:
+      console.log('🗂️ FETCH_ORDER_MACHINE_TABLE_REQUEST');
+      return {
+        ...state,
+        loadingMachineTable: true,
+        machineTableError: null,
+      };
+
+    case FETCH_ORDER_MACHINE_TABLE_SUCCESS:
+      console.log('🗂️ FETCH_ORDER_MACHINE_TABLE_SUCCESS:', action.payload);
+      const fetchedTable = action.payload as OrderMachineTableResponse;
+      return {
+        ...state,
+        currentMachineTable: fetchedTable,
+        machineTablesCache: {
+          ...state.machineTablesCache,
+          [fetchedTable.machine.machineId]: fetchedTable,
+        },
+        loadingMachineTable: false,
+        machineTableError: null,
+      };
+
+    case FETCH_ORDER_MACHINE_TABLE_FAILURE:
+      console.log('🗂️ FETCH_ORDER_MACHINE_TABLE_FAILURE:', action.payload);
+      return {
+        ...state,
+        loadingMachineTable: false,
+        machineTableError: action.payload as string,
+      };
+
+    case CLEAR_ORDER_MACHINE_TABLE:
+      console.log('🗂️ CLEAR_ORDER_MACHINE_TABLE');
+      return {
+        ...initialMachineTableState,
+      };
+
+    case ADD_MACHINE_TABLE_ROW_REQUEST:
+      console.log('🗂️ ADD_MACHINE_TABLE_ROW_REQUEST');
+      return {
+        ...state,
+        addingTableRow: true,
+        machineTableError: null,
+        machineTableSuccess: null,
+      };
+
+    case ADD_MACHINE_TABLE_ROW_SUCCESS:
+      console.log('🗂️ ADD_MACHINE_TABLE_ROW_SUCCESS:', action.payload);
+      const addedTable = action.payload as OrderMachineTableResponse;
+      return {
+        ...state,
+        currentMachineTable: addedTable,
+        machineTablesCache: {
+          ...state.machineTablesCache,
+          [addedTable.machine.machineId]: addedTable,
+        },
+        addingTableRow: false,
+        machineTableError: null,
+        machineTableSuccess: 'Row added successfully',
+      };
+
+    case ADD_MACHINE_TABLE_ROW_FAILURE:
+      console.log('🗂️ ADD_MACHINE_TABLE_ROW_FAILURE:', action.payload);
+      return {
+        ...state,
+        addingTableRow: false,
+        machineTableError: action.payload as string,
+        machineTableSuccess: null,
+      };
+
+    case UPDATE_MACHINE_TABLE_ROW_REQUEST:
+      console.log('🗂️ UPDATE_MACHINE_TABLE_ROW_REQUEST');
+      return {
+        ...state,
+        updatingTableRow: true,
+        machineTableError: null,
+        machineTableSuccess: null,
+      };
+
+    case UPDATE_MACHINE_TABLE_ROW_SUCCESS:
+      console.log('🗂️ UPDATE_MACHINE_TABLE_ROW_SUCCESS:', action.payload);
+      const updatedTable = action.payload as OrderMachineTableResponse;
+      return {
+        ...state,
+        currentMachineTable: updatedTable,
+        machineTablesCache: {
+          ...state.machineTablesCache,
+          [updatedTable.machine.machineId]: updatedTable,
+        },
+        updatingTableRow: false,
+        machineTableError: null,
+        machineTableSuccess: 'Row updated successfully',
+      };
+
+    case UPDATE_MACHINE_TABLE_ROW_FAILURE:
+      console.log('🗂️ UPDATE_MACHINE_TABLE_ROW_FAILURE:', action.payload);
+      return {
+        ...state,
+        updatingTableRow: false,
+        machineTableError: action.payload as string,
+        machineTableSuccess: null,
+      };
+
+    case DELETE_MACHINE_TABLE_ROW_REQUEST:
+      console.log('🗂️ DELETE_MACHINE_TABLE_ROW_REQUEST');
+      return {
+        ...state,
+        deletingTableRow: true,
+        machineTableError: null,
+        machineTableSuccess: null,
+      };
+
+    case DELETE_MACHINE_TABLE_ROW_SUCCESS:
+      console.log('🗂️ DELETE_MACHINE_TABLE_ROW_SUCCESS:', action.payload);
+      const deletedTable = action.payload as OrderMachineTableResponse;
+      return {
+        ...state,
+        currentMachineTable: deletedTable,
+        machineTablesCache: {
+          ...state.machineTablesCache,
+          [deletedTable.machine.machineId]: deletedTable,
+        },
+        deletingTableRow: false,
+        machineTableError: null,
+        machineTableSuccess: 'Row deleted successfully',
+      };
+
+    case DELETE_MACHINE_TABLE_ROW_FAILURE:
+      console.log('🗂️ DELETE_MACHINE_TABLE_ROW_FAILURE:', action.payload);
+      return {
+        ...state,
+        deletingTableRow: false,
+        machineTableError: action.payload as string,
+        machineTableSuccess: null,
+      };
+
+    default:
+      return state;
+  }
+};
 
 // Combined Order Reducer
 const orderReducer = combineReducers({
   list: orderListReducer,
   form: orderFormReducer,
+  machineTable: machineTableReducer,
 });
 
 // Export the combined state type
 export type CombinedOrderState = {
   list: OrderListState;
   form: OrderFormState;
+  machineTable: OrderMachineTableState;
 };
 
 
@@ -383,7 +558,7 @@ export const accountOrdersReducer = (state = initialState, action: any) => {
 
 
 
-export { orderListReducer, orderFormReducer };
+export { orderListReducer, orderFormReducer, machineTableReducer };
 export type { OrderListState, OrderFormState };
 
 // Default export

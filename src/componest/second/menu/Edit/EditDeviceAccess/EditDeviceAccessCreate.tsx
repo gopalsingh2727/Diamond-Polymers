@@ -99,7 +99,7 @@ const EditDeviceAccessCreate: React.FC = () => {
     }
 
     try {
-      await dispatch(updateDeviceAccess(form._id, "updateDevice", form));
+      await dispatch(updateDeviceAccess(form._id, "updateDetails", form));
       alert("Device access updated successfully!");
       setShowDetail(false);
       setConfirmPassword("");
@@ -144,6 +144,7 @@ const EditDeviceAccessCreate: React.FC = () => {
               <input
                 type="text"
                 placeholder="Search by device name or location..."
+                                className="w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition-all"
                 value={searchTerm}
                 onChange={handleSearchChange}
                 style={{

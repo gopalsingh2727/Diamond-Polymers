@@ -109,12 +109,23 @@
 }
 
 .OrderIDCreate{
-  
+  display: flex;
+  gap: 7px;
   font-weight: 900;
   padding-top: 10px;
   color:#333;
   text-align: center;
   margin: 0;
+}
+
+.edit-order-id{
+  font-size: small;
+}
+.ManufacturingStepsTitel{
+  font-size: small;
+}
+.checkbox-group{
+  gap: 2px;
 }
 .CurstomerNameInput {
   background-color: rgba(255, 255, 255, 0.1);

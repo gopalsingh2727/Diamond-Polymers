@@ -1,10 +1,8 @@
-import { useState, useEffect, useRef } from "react";
-import StepContainer from "./stepContainer"; // Fixed component name
+import { useState, useEffect } from "react";
+
 
 // Define the ref type for StepContainer
-interface StepContainerRef {
-  getStepData: () => any; // Adjust this type based on your actual StepContainer implementation
-}
+
 
 interface PrintImageProps {
   onPrintDataChange?: (printData: { printWork: string; selectedFile: File | null }) => void;
@@ -23,7 +21,7 @@ interface PrintImageProps {
 
 const PrintImage: React.FC<PrintImageProps> = ({ 
   onPrintDataChange, 
-  customerData,
+
   orderData,
   isEditMode = false
 }) => {
@@ -32,9 +30,7 @@ const PrintImage: React.FC<PrintImageProps> = ({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>("");
   
-  // Add ref for StepContainer
-  const stepContainerRef = useRef<StepContainerRef>(null);
-
+  
   // Initialize print work from order data if editing
   useEffect(() => {
     if (orderData && isEditMode) {
@@ -65,31 +61,10 @@ const PrintImage: React.FC<PrintImageProps> = ({
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Handle file upload logic here
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setSelectedFile(file);
-      
-      // Create preview URL
-      const url = URL.createObjectURL(file);
-      setPreviewUrl(url);
-      
-      console.log("Selected file:", file.name);
-      // Add your file processing logic here
-    }
-  };
+
 
   // Check if we should show StepContainer
-  const shouldShowStepContainer = () => {
-    if (printWork === "no") {
-      return true; // Show immediately if no print work
-    }
-    if (printWork === "yes") {
-      return true; // Show when print work is selected
-    }
-    return false;
-  };
+
 
   // Cleanup preview URL on unmount
   useEffect(() => {
@@ -103,37 +78,27 @@ const PrintImage: React.FC<PrintImageProps> = ({
   return (
     <div className="printSection">
       <div className="printForm">
-        <label htmlFor="printSelect" className="printSelectLabel">Print:</label>
+        <label htmlFor="printSelect" className="printSelectLabel ManufacturingStepsTitel" >Print:</label>
         <select
           id="printSelect"
           value={printWork}
           onChange={handleChangePrint}
         >
-          <option value="">Select Option</option>
+          {/* <option value="">Select Option</option> */}
           <option value="no">No</option>
           <option value="yes">Yes</option>
         </select>
 
         {printWork === "yes" && (
           <div className="printUploadSection">
-            <p>Print is Yes</p>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleFileChange}
-              className="fileInput"
-            />
-            {previewUrl && (
-              <div className="imagePreview">
-                <img src={previewUrl} alt="Print preview" style={{ maxWidth: '200px', maxHeight: '200px' }} />
-              </div>
-            )}
+            <p className="ManufacturingStepsTitel">Print is Yes</p>
+            
           </div>
         )}
 
         {printWork === "no" && (
           <div className="noPrintMessage">
-            <p>✓ No print work selected. Ready to proceed to next step.</p>
+            <p className="ManufacturingStepsTitel">✓ No print work selected. Ready to proceed to next step.</p>
           </div>
         )}
       </div>

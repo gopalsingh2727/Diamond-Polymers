@@ -34,6 +34,7 @@ body.dark h1 {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  font-size: small;
 }
 
 .fa-moon {
@@ -53,6 +54,7 @@ body.dark h1 {
   top: 2px;
   border-radius: 50%;
   transition: transform 0.2s linear;
+  font-size: small;
 }
 
 .checkbox:checked + .checkbox-label .ball {

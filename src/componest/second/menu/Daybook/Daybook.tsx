@@ -134,7 +134,7 @@ export default function DayBook() {
 
   // Redux selectors
   const ordersState = useSelector((state: RootState) => {
-    return state.orderList || defaultOrdersState;
+    return state.orders.list || defaultOrdersState;
   });
 
   const authState = useSelector((state: RootState) => state.auth);
@@ -632,9 +632,14 @@ export default function DayBook() {
       <div className="item">
         <BackButton />
         <div className="flex gap-4 items-center">
-          <div>
+          {/* <div>
             <label>From:
-              <input 
+              <input
+              //  style={{
+              //   background:"#fff",
+              //   color:"#000",
+              //   borderRadius
+              //  }}
                 type="date" 
                 value={fromDate} 
                 onChange={e => setFromDate(e.target.value)} 
@@ -647,12 +652,13 @@ export default function DayBook() {
                 onChange={e => setToDate(e.target.value)} 
               />
             </label>
-          </div>
+          </div> */}
           
           <div>
             <label>Search:
               <input 
                 type="text" 
+                style={{background:"#fff" , color:"#000"}}
                 placeholder="Order ID, Customer, Phone, Notes..."
                 value={searchTerm}
                 onChange={e => handleSearch(e.target.value)}
@@ -661,9 +667,10 @@ export default function DayBook() {
             </label>
           </div>
 
-          <div>
+          <div >
             <label>Status:
               <select 
+                style={{background:"#fff", color:"#000"}}
                 value={statusFilter} 
                 onChange={e => handleStatusFilter(e.target.value)}
                 className="ml-2 px-2 py-1 border rounded"

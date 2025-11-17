@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { RootState } from "../../../../redux/rootReducer";
-import { getSteps } from "../../../../redux/create/CreateStep/StpeActions";
+
 interface Step {
   _id: string;
   stepName: string;
@@ -36,25 +36,18 @@ interface Props {
 }
 
 const StepSuggestions: React.FC<Props> = ({ stepName, onSelect }) => {
-  const dispatch = useDispatch();
+  // ✅ OPTIMIZED: Use cached data from orderFormData
+  const orderFormData = useSelector((state: RootState) => state.orderFormData);
+  const steps = orderFormData?.data?.steps || [];
+  const loading = orderFormData?.loading || false;
+  const error = orderFormData?.error || null;
 
-  const { steps = [], loading, error } = useSelector(
-    (state: RootState) => state.stepList
-  );
- 
-  
   const [filtered, setFiltered] = useState<Step[]>([]);
-
-  useEffect(() => {
-    if (steps.length === 0 && !loading) {
-      dispatch(getSteps() as any);
-    }
-  }, [dispatch, steps.length, loading]);
 
   useEffect(() => {
     if (stepName.trim().length > 0 && Array.isArray(steps)) {
       const searchTerm = stepName.toLowerCase();
-      const results = steps.filter((step) =>
+      const results = steps.filter((step: any) =>
         step.stepName.toLowerCase().includes(searchTerm)
       );
       setFiltered(results.slice(0, 5));

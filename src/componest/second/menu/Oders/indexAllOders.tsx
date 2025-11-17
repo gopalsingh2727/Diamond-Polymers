@@ -5,11 +5,12 @@ import "./indexAllOders.css";
 import { Download, Printer } from "lucide-react";
 
 // Import Redux actions
-import { getAllMachineTypes } from "../../../redux/create/machineType/machineTypeActions";
-import { getMachines } from "../../../redux/create/machine/MachineActions";
 import { fetchOrders } from "../../../redux/oders/OdersActions";
 import { RootState } from "../../../redux/rootReducer";
 import { AppDispatch } from "../../../../store";
+
+
+
 
 // Define interfaces
 interface MachineType {
@@ -51,11 +52,18 @@ interface Order {
   createdAt: string;
   updatedAt: string;
   overallStatus: string;
+  priority?: 'low' | 'normal' | 'high' | 'urgent';
   materialWeight?: number;
   Width?: number;
   Height?: number;
   Thickness?: number;
   Notes?: string;
+  notes?: Array<{
+    message: string;
+    createdBy: string;
+    createdAt: Date;
+    noteType: 'general' | 'production' | 'quality' | 'delivery' | 'customer';
+  }>;
   branch?: {
     _id?: string;
     name: string;
@@ -71,7 +79,7 @@ interface Order {
   totalMachines?: number;
   completedSteps?: number;
   currentStepIndex?: number;
-  
+
   // For machine assignment (if available)
   assignedMachine?: string; // Machine ID or name
   assignedMachineType?: string; // Machine Type ID or name
@@ -87,7 +95,8 @@ interface DisplayOrder {
   datetime: Date;
   companyName: string;
   operator: string;
-  status: "Complete" | "Pending" | "Cancel" | "Stop" | "Dispatch" | "In-Progress" | "Ready" | "Unknown";
+  status: "Complete" | "Pending" | "Cancelled" | "Dispatched" | "In-Progress" | "Approved" | "Wait for Approval" | "Unknown";
+  priority: 'low' | 'normal' | 'high' | 'urgent';
   machineName: string;
   machineType: string;
   machineStatus: "Start" | "Stop" | "Pending" | "Unknown";
@@ -96,23 +105,32 @@ interface DisplayOrder {
   branch?: string;
   completionProgress?: string;
   notes?: string;
+  allNotes?: Array<{
+    message: string;
+    createdBy: string;
+    createdAt: Date;
+    noteType: 'general' | 'production' | 'quality' | 'delivery' | 'customer';
+  }>;
 }
 
 const IndexAllOders = () => {
   const dispatch = useDispatch<AppDispatch>();
   
-  // Redux selectors
-  const machineTypesState = useSelector((state: RootState) => state.machineTypeList as any);
-  const machinesState = useSelector((state: RootState) => state.machineList as any);
-  const ordersState = useSelector((state: RootState) => state.orderList as any);
+  // ✅ OPTIMIZED: Use cached data from orderFormData
+  const orderFormData = useSelector((state: RootState) => state.orderFormData);
+  const machineTypes = orderFormData?.data?.machineTypes || [];
+  const machines = orderFormData?.data?.machines || [];
+  const machineTypesLoading = orderFormData?.loading || false;
+  const machinesLoading = orderFormData?.loading || false;
 
-  const { items: machineTypes = [], loading: machineTypesLoading } = machineTypesState || {};
-  const { machines = [], loading: machinesLoading } = machinesState || {};
+  // Redux selectors for orders (still needed)
+  const ordersState = useSelector((state: RootState) => state.orders as any);
   const { orders = [], loading: ordersLoading } = ordersState || {};
 
   // Component state
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
+  const [priorityFilter, setPriorityFilter] = useState<string[]>([]);
   const [machineTypeFilter, setMachineTypeFilter] = useState<string[]>([]);
   const [machineNameFilter, setMachineNameFilter] = useState<string[]>([]);
   const [operatorFilter, setOperatorFilter] = useState<string[]>([]);
@@ -121,28 +139,30 @@ const IndexAllOders = () => {
   const [sortBy, setSortBy] = useState("date-desc");
   const [showGlobalAll, setShowGlobalAll] = useState(true);
 
-  // Load data on component mount
+  // Load orders on component mount (machines/types already cached!)
   useEffect(() => {
-    dispatch(getAllMachineTypes());
-    dispatch(getMachines());
-    dispatch(fetchOrders({}));
+    // Get accountId from localStorage, Redux state, or your auth provider
+    const accountId = localStorage.getItem('accountId') || '';
+    if (accountId) {
+      dispatch(fetchOrders({ accountId }));
+    }
   }, [dispatch]);
 
-  // Get unique values from Redux data
-  const uniqueMachineTypes = Array.from(new Set(machineTypes.map((mt: MachineType) => mt.type)));
-  const uniqueMachineNames = Array.from(new Set(machines.map((m: Machine) => m.machineName)));
-  const uniqueOperators = Array.from(new Set(orders.map((o: Order) => o.operator || o.assignedOperator || "Unassigned")));
+  // Get unique values from cached data
+  const uniqueMachineTypes = Array.from(new Set((machineTypes as any[]).map((mt: any) => mt.type || '')));
+  const uniqueMachineNames = Array.from(new Set((machines as any[]).map((m: any) => m.machineName || '')));
+  const uniqueOperators = Array.from(new Set((orders as any[]).map((o: any) => o.operator || o.assignedOperator || "Unassigned")));
 
   // Helper function to map order status to display status
   const mapOrderStatus = (status: string): DisplayOrder['status'] => {
     const statusLower = status?.toLowerCase() || '';
-    if (statusLower.includes('complete') || statusLower === 'completed') return 'Complete';
-    if (statusLower.includes('pending') || statusLower === 'wait for approval') return 'Pending';
-    if (statusLower.includes('cancel')) return 'Cancel';
-    if (statusLower.includes('stop') || statusLower.includes('hold')) return 'Stop';
-    if (statusLower.includes('dispatch')) return 'Dispatch';
-    if (statusLower.includes('progress')) return 'In-Progress';
-    if (statusLower.includes('ready')) return 'Ready';
+    if (statusLower === 'completed') return 'Complete';
+    if (statusLower === 'pending') return 'Pending';
+    if (statusLower === 'cancelled') return 'Cancelled';
+    if (statusLower === 'dispatched') return 'Dispatched';
+    if (statusLower === 'in_progress') return 'In-Progress';
+    if (statusLower === 'approved') return 'Approved';
+    if (statusLower === 'wait for approval') return 'Wait for Approval';
     return 'Unknown';
   };
 
@@ -219,7 +239,7 @@ const IndexAllOders = () => {
     return orders.map((order: Order) => {
       const machineInfo = getAssignedMachineInfo(order);
       const createdDate = new Date(order.createdAt);
-      
+
       return {
         orderID: order.orderId || order._id,
         date: createdDate.toLocaleDateString(),
@@ -228,18 +248,20 @@ const IndexAllOders = () => {
         companyName: order.customer?.companyName || order.customer?.name || 'Unknown Customer',
         operator: order.operator || order.assignedOperator || 'Unassigned',
         status: mapOrderStatus(order.overallStatus),
+        priority: order.priority || 'normal',
         machineName: machineInfo.machineName,
         machineType: machineInfo.machineType,
         machineStatus: getMachineStatus(order),
         materialWeight: order.materialWeight,
-        dimensions: order.Width && order.Height && order.Thickness 
+        dimensions: order.Width && order.Height && order.Thickness
           ? `${order.Width}×${order.Height}×${order.Thickness}`
           : undefined,
         branch: order.branch?.name,
-        completionProgress: order.stepsCount 
+        completionProgress: order.stepsCount
           ? `${order.completedSteps || 0}/${order.stepsCount}`
           : undefined,
-        notes: order.Notes
+        notes: order.Notes,
+        allNotes: order.notes
       };
     });
   };
@@ -250,6 +272,7 @@ const IndexAllOders = () => {
   const handleGlobalAllSelect = () => {
     setShowGlobalAll(true);
     setStatusFilter([]);
+    setPriorityFilter([]);
     setMachineTypeFilter([]);
     setMachineNameFilter([]);
     setOperatorFilter([]);
@@ -303,8 +326,20 @@ const IndexAllOders = () => {
     setShowGlobalAll(true);
   };
 
+  const handlePriorityFilter = (priority: string) => {
+    setPriorityFilter(prev => {
+      if (prev.includes(priority)) {
+        return prev.filter(p => p !== priority);
+      } else {
+        return [...prev, priority];
+      }
+    });
+    setShowGlobalAll(true);
+  };
+
   const resetAllFilters = () => {
     setStatusFilter([]);
+    setPriorityFilter([]);
     setMachineTypeFilter([]);
     setMachineNameFilter([]);
     setOperatorFilter([]);
@@ -334,6 +369,11 @@ const IndexAllOders = () => {
     // Filter by status (multiple selection)
     if (statusFilter.length > 0) {
       filtered = filtered.filter(order => statusFilter.includes(order.status));
+    }
+
+    // Filter by priority (multiple selection)
+    if (priorityFilter.length > 0) {
+      filtered = filtered.filter(order => priorityFilter.includes(order.priority));
     }
 
     // Filter by machine type (multiple selection)
@@ -382,7 +422,7 @@ const IndexAllOders = () => {
   const exportToExcel = () => {
     const data = getFilteredOrders();
     const csv = [
-      ["Order ID", "Date", "Time", "Company", "Operator", "Machine", "Type", "Status", "Machine Status", "Weight", "Dimensions", "Progress", "Notes"],
+      ["Order ID", "Date", "Time", "Company", "Operator", "Machine", "Type", "Status", "Priority", "Machine Status", "Weight", "Dimensions", "Progress", "Notes"],
       ...data.map((o) => [
         o.orderID,
         o.date,
@@ -392,6 +432,7 @@ const IndexAllOders = () => {
         o.machineName,
         o.machineType,
         o.status,
+        o.priority.toUpperCase(),
         o.machineStatus,
         o.materialWeight || "-",
         o.dimensions || "-",
@@ -440,6 +481,7 @@ const IndexAllOders = () => {
             <th style={{ padding: "8px" }}>Type</th>
             <th style={{ padding: "8px" }}>Machine Status</th>
             <th style={{ padding: "8px" }}>Status</th>
+            <th style={{ padding: "8px" }}>Priority</th>
             <th style={{ padding: "8px" }}>Weight</th>
             <th style={{ padding: "8px" }}>Dimensions</th>
           </tr>
@@ -476,13 +518,32 @@ const IndexAllOders = () => {
                 backgroundColor:
                   order.status === "Complete" ? "#27ae60" :
                   order.status === "Pending" ? "#f39c12" :
-                  order.status === "Dispatch" ? "#3498db" :
+                  order.status === "Dispatched" ? "#3498db" :
                   order.status === "In-Progress" ? "#9b59b6" :
-                  order.status === "Ready" ? "#1abc9c" :
-                  order.status === "Cancel" ? "#e74c3c" :
+                  order.status === "Approved" ? "#1abc9c" :
+                  order.status === "Wait for Approval" ? "#ffc107" :
+                  order.status === "Cancelled" ? "#e74c3c" :
                   "#95a5a6"
               }}>
                 {order.status}
+              </span>
+            </td>
+            <td style={{ padding: "8px" }}>
+              <span style={{
+                padding: "4px 8px",
+                borderRadius: "4px",
+                fontSize: "12px",
+                fontWeight: "bold",
+                color: "white",
+                backgroundColor:
+                  order.priority === "urgent" ? "#dc3545" :
+                  order.priority === "high" ? "#fd7e14" :
+                  order.priority === "normal" ? "#ffc107" :
+                  order.priority === "low" ? "#28a745" :
+                  "#6c757d"
+              }}>
+                {order.priority === "urgent" ? "🔴 " : order.priority === "high" ? "🟠 " : order.priority === "normal" ? "🟡 " : "🟢 "}
+                {order.priority.toUpperCase()}
               </span>
             </td>
             <td style={{ padding: "8px" }}>{order.materialWeight || "-"}</td>
@@ -577,7 +638,7 @@ const IndexAllOders = () => {
         <div className="sidebarGroup">
           <h3>Filter by Status <span style={{fontSize: "12px", color: "#666"}}>({statusFilter.length} selected)</span></h3>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "5px", marginTop: "10px" }}>
-            {["Complete", "Pending", "Cancel", "Stop", "Dispatch", "In-Progress", "Ready"].map((status) => (
+            {["Complete", "Pending", "Cancelled", "Dispatched", "In-Progress", "Approved", "Wait for Approval"].map((status) => (
               <button
                 key={status}
                 onClick={() => handleStatusFilter(status)}
@@ -608,6 +669,50 @@ const IndexAllOders = () => {
               }}
             >
               Clear Status
+            </button>
+          </div>
+        </div>
+
+        {/* Priority Filter Buttons */}
+        <div className="sidebarGroup">
+          <h3>Filter by Priority <span style={{fontSize: "12px", color: "#666"}}>({priorityFilter.length} selected)</span></h3>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "5px", marginTop: "10px" }}>
+            {[
+              { value: "urgent", label: "🔴 Urgent", color: "#dc3545" },
+              { value: "high", label: "🟠 High", color: "#fd7e14" },
+              { value: "normal", label: "🟡 Normal", color: "#ffc107" },
+              { value: "low", label: "🟢 Low", color: "#28a745" }
+            ].map(({ value, label, color }) => (
+              <button
+                key={value}
+                onClick={() => handlePriorityFilter(value)}
+                style={{
+                  padding: "5px 10px",
+                  border: "1px solid #ddd",
+                  borderRadius: "4px",
+                  backgroundColor: priorityFilter.includes(value) ? color : "white",
+                  color: priorityFilter.includes(value) ? "white" : "black",
+                  cursor: "pointer",
+                  fontSize: "12px",
+                  fontWeight: priorityFilter.includes(value) ? "bold" : "normal"
+                }}
+              >
+                {priorityFilter.includes(value) ? "✓ " : ""}{label}
+              </button>
+            ))}
+            <button
+              onClick={() => setPriorityFilter([])}
+              style={{
+                padding: "5px 10px",
+                border: "1px solid #ddd",
+                borderRadius: "4px",
+                backgroundColor: priorityFilter.length === 0 ? "#6c757d" : "white",
+                color: priorityFilter.length === 0 ? "white" : "black",
+                cursor: "pointer",
+                fontSize: "12px"
+              }}
+            >
+              Clear Priority
             </button>
           </div>
         </div>
@@ -817,34 +922,45 @@ const IndexAllOders = () => {
         </div>
         
         {/* Active Filters Display */}
-        {(statusFilter.length > 0 || machineTypeFilter.length > 0 || machineNameFilter.length > 0 || operatorFilter.length > 0 || fromDate || toDate || searchText) && (
-          <div style={{ 
-            backgroundColor: "#f8f9fa", 
-            padding: "10px", 
-            borderRadius: "6px", 
+        {(statusFilter.length > 0 || priorityFilter.length > 0 || machineTypeFilter.length > 0 || machineNameFilter.length > 0 || operatorFilter.length > 0 || fromDate || toDate || searchText) && (
+          <div style={{
+            backgroundColor: "#f8f9fa",
+            padding: "10px",
+            borderRadius: "6px",
             margin: "10px 0",
             border: "1px solid #dee2e6"
           }}>
             <strong>Active Filters:</strong>
             <div style={{ marginTop: "5px", display: "flex", flexWrap: "wrap", gap: "5px" }}>
               {statusFilter.length > 0 && (
-                <span style={{ 
-                  backgroundColor: "#007bff", 
-                  color: "white", 
-                  padding: "2px 6px", 
-                  borderRadius: "3px", 
-                  fontSize: "12px" 
+                <span style={{
+                  backgroundColor: "#007bff",
+                  color: "white",
+                  padding: "2px 6px",
+                  borderRadius: "3px",
+                  fontSize: "12px"
                 }}>
                   Status: {statusFilter.join(", ")}
                 </span>
               )}
+              {priorityFilter.length > 0 && (
+                <span style={{
+                  backgroundColor: "#fd7e14",
+                  color: "white",
+                  padding: "2px 6px",
+                  borderRadius: "3px",
+                  fontSize: "12px"
+                }}>
+                  Priority: {priorityFilter.map(p => p.toUpperCase()).join(", ")}
+                </span>
+              )}
               {machineTypeFilter.length > 0 && (
-                <span style={{ 
-                  backgroundColor: "#28a745", 
-                  color: "white", 
-                  padding: "2px 6px", 
-                  borderRadius: "3px", 
-                  fontSize: "12px" 
+                <span style={{
+                  backgroundColor: "#28a745",
+                  color: "white",
+                  padding: "2px 6px",
+                  borderRadius: "3px",
+                  fontSize: "12px"
                 }}>
                   Types: {machineTypeFilter.join(", ")}
                 </span>

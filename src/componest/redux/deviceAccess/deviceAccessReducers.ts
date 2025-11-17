@@ -1,3 +1,4 @@
+// Add this to your deviceAccessReducer.ts or create a types file
 
 import {
   DEVICE_ACCESS_CREATE_REQUEST,
@@ -14,198 +15,233 @@ import {
   DEVICE_ACCESS_DELETE_FAIL,
 } from "./deviceAccessConstants";
 
-interface DeviceAccess {
+// Define the Device Access type
+export interface DeviceAccess {
   _id: string;
+  deviceId: string;
   deviceName: string;
   location: string;
-  branchId: string;
-  createdAt: string;
-  updatedAt: string;
+  branchId?: {
+    _id: string;
+    branchName: string;
+  } | string;
+  password?: string;
+  pin?: string;
+  machines?: Array<{
+    machineId: string;
+    machineName: string;
+    machineType: string;
+  }>;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
-interface DeviceAccessState {
-  // Create functionality (detailed names)
-  createLoading: boolean;
-  createSuccess: boolean;
-  createError: string | null;
+// Define the state type
+export interface DeviceAccessState {
+  devices: DeviceAccess[];
   createdDevice: DeviceAccess | null;
-
-  // Create functionality (simple names for component compatibility)
   loading: boolean;
   success: boolean;
   error: string | null;
-
-  // List functionality
-  listLoading: boolean;
-  listError: string | null;
-  devices: DeviceAccess[];
-
-  // Update functionality
-  updateLoading: boolean;
-  updateSuccess: boolean;
-  updateError: string | null;
-  updatedDevice: DeviceAccess | null;
-
-  // Delete functionality
-  deleteLoading: boolean;
-  deleteSuccess: boolean;
-  deleteError: string | null;
-  deletedDeviceId: string | null;
 }
 
+// Initial state
 const initialState: DeviceAccessState = {
-  // Create state (detailed names)
-  createLoading: false,
-  createSuccess: false,
-  createError: null,
+  devices: [],
   createdDevice: null,
-
-  // Create state (simple names for component compatibility)
   loading: false,
   success: false,
   error: null,
-
-  // List state
-  listLoading: false,
-  listError: null,
-  devices: [],
-
-  // Update state
-  updateLoading: false,
-  updateSuccess: false,
-  updateError: null,
-  updatedDevice: null,
-
-  // Delete state
-  deleteLoading: false,
-  deleteSuccess: false,
-  deleteError: null,
-  deletedDeviceId: null,
 };
 
-export const deviceAccessReducer = (
+// Action types
+interface DeviceAccessCreateRequest {
+  type: typeof DEVICE_ACCESS_CREATE_REQUEST;
+}
+
+interface DeviceAccessCreateSuccess {
+  type: typeof DEVICE_ACCESS_CREATE_SUCCESS;
+  payload: DeviceAccess;
+}
+
+interface DeviceAccessCreateFail {
+  type: typeof DEVICE_ACCESS_CREATE_FAIL;
+  payload: string;
+}
+
+interface DeviceAccessListRequest {
+  type: typeof DEVICE_ACCESS_LIST_REQUEST;
+}
+
+interface DeviceAccessListSuccess {
+  type: typeof DEVICE_ACCESS_LIST_SUCCESS;
+  payload: DeviceAccess[];
+}
+
+interface DeviceAccessListFail {
+  type: typeof DEVICE_ACCESS_LIST_FAIL;
+  payload: string;
+}
+
+interface DeviceAccessUpdateRequest {
+  type: typeof DEVICE_ACCESS_UPDATE_REQUEST;
+}
+
+interface DeviceAccessUpdateSuccess {
+  type: typeof DEVICE_ACCESS_UPDATE_SUCCESS;
+  payload: DeviceAccess;
+}
+
+interface DeviceAccessUpdateFail {
+  type: typeof DEVICE_ACCESS_UPDATE_FAIL;
+  payload: string;
+}
+
+interface DeviceAccessDeleteRequest {
+  type: typeof DEVICE_ACCESS_DELETE_REQUEST;
+}
+
+interface DeviceAccessDeleteSuccess {
+  type: typeof DEVICE_ACCESS_DELETE_SUCCESS;
+  payload: string;
+}
+
+interface DeviceAccessDeleteFail {
+  type: typeof DEVICE_ACCESS_DELETE_FAIL;
+  payload: string;
+}
+
+interface DeviceAccessReset {
+  type: 'deviceAccess/reset';
+}
+
+type DeviceAccessActionTypes =
+  | DeviceAccessCreateRequest
+  | DeviceAccessCreateSuccess
+  | DeviceAccessCreateFail
+  | DeviceAccessListRequest
+  | DeviceAccessListSuccess
+  | DeviceAccessListFail
+  | DeviceAccessUpdateRequest
+  | DeviceAccessUpdateSuccess
+  | DeviceAccessUpdateFail
+  | DeviceAccessDeleteRequest
+  | DeviceAccessDeleteSuccess
+  | DeviceAccessDeleteFail
+  | DeviceAccessReset;
+
+// Reducer
+const deviceAccessReducer = (
   state = initialState,
-  action: any
+  action: DeviceAccessActionTypes
 ): DeviceAccessState => {
   switch (action.type) {
-    // Create cases
     case DEVICE_ACCESS_CREATE_REQUEST:
       return {
         ...state,
-        createLoading: true,
         loading: true,
-        createError: null,
-        error: null,
-        createSuccess: false,
         success: false,
+        error: null,
       };
 
     case DEVICE_ACCESS_CREATE_SUCCESS:
       return {
         ...state,
-        createLoading: false,
         loading: false,
-        createSuccess: true,
         success: true,
         createdDevice: action.payload,
-        createError: null,
         error: null,
-        devices: [...state.devices, action.payload],
       };
 
     case DEVICE_ACCESS_CREATE_FAIL:
       return {
         ...state,
-        createLoading: false,
         loading: false,
-        createError: action.payload,
-        error: action.payload,
-        createSuccess: false,
         success: false,
+        error: action.payload,
+        createdDevice: null,
       };
 
-    // List cases
     case DEVICE_ACCESS_LIST_REQUEST:
       return {
         ...state,
-        listLoading: true,
-        listError: null,
+        loading: true,
+        error: null,
       };
 
     case DEVICE_ACCESS_LIST_SUCCESS:
       return {
         ...state,
-        listLoading: false,
+        loading: false,
         devices: action.payload,
-        listError: null,
+        error: null,
       };
 
     case DEVICE_ACCESS_LIST_FAIL:
       return {
         ...state,
-        listLoading: false,
-        listError: action.payload,
+        loading: false,
+        error: action.payload,
+        devices: [],
       };
 
-    // Update cases
     case DEVICE_ACCESS_UPDATE_REQUEST:
       return {
         ...state,
-        updateLoading: true,
-        updateError: null,
-        updateSuccess: false,
+        loading: true,
+        error: null,
       };
 
     case DEVICE_ACCESS_UPDATE_SUCCESS:
       return {
         ...state,
-        updateLoading: false,
-        updateSuccess: true,
-        updatedDevice: action.payload,
-        updateError: null,
-        // Update the device in the devices array
+        loading: false,
         devices: state.devices.map((device) =>
           device._id === action.payload._id ? action.payload : device
         ),
+        error: null,
       };
 
     case DEVICE_ACCESS_UPDATE_FAIL:
       return {
         ...state,
-        updateLoading: false,
-        updateError: action.payload,
-        updateSuccess: false,
+        loading: false,
+        error: action.payload,
       };
 
-    // Delete cases
     case DEVICE_ACCESS_DELETE_REQUEST:
       return {
         ...state,
-        deleteLoading: true,
-        deleteError: null,
-        deleteSuccess: false,
+        loading: true,
+        error: null,
       };
 
     case DEVICE_ACCESS_DELETE_SUCCESS:
       return {
         ...state,
-        deleteLoading: false,
-        deleteSuccess: true,
-        deletedDeviceId: action.payload,
-        deleteError: null,
-        // Remove the device from the devices array
+        loading: false,
         devices: state.devices.filter((device) => device._id !== action.payload),
+        error: null,
       };
 
     case DEVICE_ACCESS_DELETE_FAIL:
       return {
         ...state,
-        deleteLoading: false,
-        deleteError: action.payload,
-        deleteSuccess: false,
+        loading: false,
+        error: action.payload,
+      };
+
+    case 'deviceAccess/reset':
+      return {
+        ...state,
+        success: false,
+        error: null,
+        createdDevice: null,
       };
 
     default:
       return state;
   }
 };
+
+export default deviceAccessReducer;

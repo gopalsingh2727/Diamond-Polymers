@@ -29,7 +29,7 @@ const getBranchId = () => localStorage.getItem("selectedBranch");
 // Create Operator
 export const createOperator = (operatorData: {
   username: string;
-  password: string;
+  pin: string;
   machineId: string;
 }) => async (dispatch: Dispatch, getState: () => RootState) => {
   try {
@@ -38,6 +38,11 @@ export const createOperator = (operatorData: {
     const token = getToken(getState);
     const branchId = getBranchId();
     if (!branchId) throw new Error("Branch ID missing");
+
+    // Validate PIN format
+    if (!/^\d{4}$/.test(operatorData.pin)) {
+      throw new Error("PIN must be exactly 4 digits");
+    }
 
     const payload = { ...operatorData, branchId };
 
@@ -94,6 +99,11 @@ export const updateOperator = (operatorId: string, updates: any) => async (
     dispatch({ type: UPDATE_OPERATOR_REQUEST });
 
     const token = getToken(getState);
+
+    // Validate PIN format if PIN is being updated
+    if (updates.pin && !/^\d{4}$/.test(updates.pin)) {
+      throw new Error("PIN must be exactly 4 digits");
+    }
 
     const { data } = await axios.put(`${baseUrl}/operator/${operatorId}`, updates, {
       headers: {

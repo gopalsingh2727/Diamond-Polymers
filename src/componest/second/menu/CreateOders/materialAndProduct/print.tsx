@@ -209,7 +209,7 @@ const MaterialSection: React.FC<{ materialData: PrintProps['materialData'] }> = 
     {/* Manufacturing Steps */}
     {materialData.savedStep && (
       <div className="steps-section">
-        <h3>Manufacturing Steps: {materialData.savedStep.stepname}</h3>
+        <h3 className="ManufacturingStepsTitel">Manufacturing Steps: {materialData.savedStep.stepname}</h3>
         <table className="steps-table">
           <thead>
             <tr>

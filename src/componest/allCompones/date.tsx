@@ -30,8 +30,8 @@ const Data = () => {
 
     return (
         <div>
-             <p>{formattedTime}</p>
-            <p>{formattedDate}</p>
+             <p className="ManufacturingStepsTitel">{formattedTime}</p>
+            <p className="ManufacturingStepsTitel">{formattedDate}</p>
            
         </div>
     );

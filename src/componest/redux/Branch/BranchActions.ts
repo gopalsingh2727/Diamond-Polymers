@@ -2,6 +2,7 @@
 
 import axios from "axios";
 import { AppDispatch, RootState } from "../../../store";
+import { getOrderFormDataIfNeeded } from "../oders/orderFormDataActions";
 
 export const FETCH_BRANCHES_REQUEST = "FETCH_BRANCHES_REQUEST";
 export const FETCH_BRANCHES_SUCCESS = "FETCH_BRANCHES_SUCCESS";
@@ -137,6 +138,13 @@ export const fetchBranches = () => {
       if (branchId) {
         console.log("Storing branch ID:", branchId);
         storeBranchId(branchId, userData);
+
+        // ✅ Fetch form data after branch is selected (uses cache if available)
+        try {
+          await dispatch(getOrderFormDataIfNeeded() as any);
+        } catch (error) {
+          console.error("❌ Failed to fetch order form data:", error);
+        }
       } else {
         console.warn("⚠️ No branch ID found in response");
       }
@@ -176,7 +184,14 @@ export const selectBranch = (branchId: string) => {
 
       const userData = getUserData(getState);
       storeBranchId(branchId, userData);
-    
+
+      // ✅ Fetch form data after branch is selected (uses cache if available)
+      try {
+        await dispatch(getOrderFormDataIfNeeded() as any);
+      } catch (error) {
+        console.error("❌ Failed to fetch order form data:", error);
+      }
+
     } catch (error: any) {
       dispatch({
         type: SELECT_BRANCH_FAIL,

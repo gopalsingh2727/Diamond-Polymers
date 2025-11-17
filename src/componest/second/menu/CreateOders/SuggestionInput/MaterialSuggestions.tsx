@@ -1,7 +1,6 @@
-import React, { useEffect, useRef, useMemo } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import React, { useMemo } from "react";
+import { useSelector } from "react-redux";
 import { RootState } from "../../../../redux/rootReducer";
-import { getAllMaterialTypesWithMaterials } from "../../../../redux/create/Materials/MaterialsCategories/MaterialsCategoriesActions";
 
 interface Props {
   materialName: string;
@@ -18,22 +17,22 @@ const MaterialSuggestions: React.FC<Props> = ({
   selectedMaterialType = '',
   showSuggestions = false
 }) => {
-  const dispatch = useDispatch();
-  const hasFetched = useRef(false);
-  
-  const materialCategoryState = useSelector((state: RootState) => state.materialCategories);
-  const materialCategories = materialCategoryState.categories || [];
-  const loading = materialCategoryState.loading || false;
-  const error = materialCategoryState.error;
-  
-  console.log(materialCategoryState, "this call");
+  // ✅ OPTIMIZED: Use cached data from orderFormData
+  const orderFormData = useSelector((state: RootState) => state.orderFormData);
+  const materialTypes = orderFormData?.data?.materialTypes || [];
+  const materials = orderFormData?.data?.materials || [];
+  const loading = orderFormData?.loading || false;
+  const error = orderFormData?.error;
 
-  useEffect(() => {
-    if (!hasFetched.current && !loading && materialCategories.length === 0) {
-      dispatch(getAllMaterialTypesWithMaterials() as any);
-      hasFetched.current = true;
-    }
-  }, [dispatch, loading, materialCategories.length]);
+  // Build material categories with nested materials
+  const materialCategories = useMemo(() => {
+    return materialTypes.map((type: any) => ({
+      ...type,
+      materials: materials.filter((m: any) =>
+        m.materialType?._id === type._id || m.materialType === type._id
+      )
+    }));
+  }, [materialTypes, materials]);
 
   const filtered = useMemo(() => {
     if (!materialName.trim()) return [];

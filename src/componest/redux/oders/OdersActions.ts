@@ -72,6 +72,8 @@ interface SchemaAlignedOrderData {
   product27InfinityId: string;
   Notes?: string;
   quantity?: number;
+  priority?: 'low' | 'normal' | 'high' | 'urgent';
+  overallStatus?: string;
 }
 
 // Helper function to validate ObjectId format
@@ -185,6 +187,11 @@ const collectDataFromDOM = (): SchemaAlignedOrderData => {
     if (!customerIdInput?.value) {
       throw new Error("Customer ID is required");
     }
+
+    // Collect Order Type ID from hidden input
+    const orderTypeIdInput = document.querySelector('input[name="orderTypeId"]') as HTMLInputElement;
+    const orderTypeId = orderTypeIdInput?.value || '';
+    console.log("Collected Order Type ID:", orderTypeId);
 
     // Collect Main Material IDs from hidden inputs - Enhanced search
     let mainMaterialIdInput = document.querySelector('input[name="mainMaterialId"]') as HTMLInputElement;
@@ -439,9 +446,14 @@ const collectDataFromDOM = (): SchemaAlignedOrderData => {
     const currentBranch = getCurrentBranch();
     const productInfinityId = getProductInfinityId();
 
+    // Collect priority and status from form
+    const prioritySelect = document.querySelector('select[name="priority"]') as HTMLSelectElement;
+    const statusSelect = document.querySelector('select[name="overallStatus"]') as HTMLSelectElement;
+
     // Structure the order data
     const orderData: SchemaAlignedOrderData = {
       customerId: customerIdInput.value,
+      orderTypeId: orderTypeId,
       materialId: mainMaterialId,
       materialTypeId: materialTypeId,
       materialWeight: Number(totalWeightInput?.value) || 0,
@@ -459,8 +471,10 @@ const collectDataFromDOM = (): SchemaAlignedOrderData => {
       createdBy: currentUser.id, // Use actual user ID from token
       createdByRole: currentUser.role, // Use actual user role from token
       product27InfinityId: productInfinityId || '',
-      Notes: notesTextarea?.value || ''
-    };
+      Notes: notesTextarea?.value || '',
+      priority: (prioritySelect?.value as any) || 'normal',
+      overallStatus: statusSelect?.value || 'Wait for Approval'
+    } as any;
 
     console.log("=== FINAL ORDER DATA ===");
     console.log("Complete Order Data:", JSON.stringify(orderData, null, 2));
@@ -920,117 +934,9 @@ const getToken = (getState: () => RootState) =>
 
 const getBranchId = () => localStorage.getItem("selectedBranch");
 
-// export const fetchOrders = (filters?: any) => 
-//   async (dispatch: Dispatch<OrderActionTypes>, getState: () => RootState) => {
-//     try {
-//       dispatch({ type: SET_LOADING, payload: true });
-      
-//       const token = getToken(getState);
-//       const branchId = getBranchId();
-      
-//       // Validate required data
-//       if (!token) {
-//         throw new Error("Authentication token missing. Please log in again.");
-//       }
-      
-//       if (!branchId) {
-//         throw new Error("Branch ID missing. Please select a branch.");
-//       }
-
-//       // Clean filters - remove undefined, null, or empty string values
-//       const cleanFilters = filters ? Object.entries(filters).reduce((acc, [key, value]) => {
-//         if (value !== undefined && value !== null && value !== '') {
-//           acc[key] = value;
-//         }
-//         return acc;
-//       }, {} as Record<string, any>) : {};
-
-//       // Add branchId to filters if not already present and user role requires it
-//       const userState = getState();
-//       const userRole = userState.auth?.user?.role;
-      
-//       // Only add branchId filter for non-admin users if not already specified
-//       if (userRole !== 'admin' && !cleanFilters.branchId) {
-//         cleanFilters.branchId = branchId;
-//       }
-
-//       // Build query string only if we have filters
-//       const queryParams = Object.keys(cleanFilters).length > 0 
-//         ? `?${new URLSearchParams(cleanFilters).toString()}` 
-//         : '';
-
-//       console.log('Fetching orders with filters:', cleanFilters);
-//       console.log('Query params:', queryParams);
-
-//       const response = await axios.get(`${baseUrl}/orders${queryParams}`, {
-//         headers: {
-//           'Authorization': `Bearer ${token}`,
-//           'x-api-key': API_KEY,
-//           'Content-Type': 'application/json'
-//         },
-//         timeout: 30000 // 30 second timeout
-//       });
-
-//       // Validate response data
-//       if (!response.data) {
-//         throw new Error("Invalid response from server");
-//       }
-
-//       dispatch({
-//         type: 'FETCH_ORDERS_SUCCESS',
-//         payload: response.data
-//       });
-
-//       dispatch({ type: SET_LOADING, payload: false });
-//       return response.data;
-
-//     } catch (error: any) {
-//       console.error('Error fetching orders:', error);
-      
-//       let errorMessage = "Failed to fetch orders";
-      
-//       if (axios.isAxiosError(error)) {
-//         if (error.response?.status === 401) {
-//           errorMessage = "Authentication failed. Please log in again.";
-//           // Optional: Clear auth token and redirect to login
-//           localStorage.removeItem("authToken");
-//           // dispatch(logout()); // Uncomment if you have a logout action
-//         } else if (error.response?.status === 403) {
-//           errorMessage = "Access denied. You don't have permission to view these orders.";
-//         } else if (error.response?.status === 404) {
-//           errorMessage = "Orders endpoint not found.";
-//         } else if (error.response?.status >= 500) {
-//           errorMessage = "Server error. Please try again later.";
-//         } else if (error.response?.data?.message) {
-//           errorMessage = error.response.data.message;
-//         } else if (error.code === 'ECONNABORTED') {
-//           errorMessage = "Request timeout. Please check your connection and try again.";
-//         } else if (error.message) {
-//           errorMessage = error.message;
-//         }
-//       } else if (error.message) {
-//         errorMessage = error.message;
-//       }
-
-//       dispatch({
-//         type: SET_ERROR,
-//         payload: errorMessage
-//       });
-
-//       dispatch({ type: SET_LOADING, payload: false });
-      
-//       // Don't re-throw the error if it's an auth error to prevent cascading failures
-//       if (error.response?.status === 401) {
-//         return null;
-//       }
-      
-//       throw error;
-//     }
-//   };
-
-// Alternative version with better TypeScript typing:
+// ✅ FIXED: Made accountId optional so Daybook can filter by date only
 interface OrderFilters {
-  accountId: string;
+  accountId?: string; // ✅ Now optional
   page?: number;
   limit?: number;
   sortBy?: string;
@@ -1040,8 +946,8 @@ interface OrderFilters {
   branchId?: string;
   materialId?: string;
   createdBy?: string;
-  startDate?: string;
-  endDate?: string;
+  startDate?: string; // ✅ Filter by specific date
+  endDate?: string; // ✅ Filter by date range
   search?: string;
 }
 
@@ -1255,15 +1161,25 @@ export const updateOrder = (orderId: string, orderData: Partial<UpdatedOrderData
         // Add any additional fields that need to be updated
         updatedAt: new Date().toISOString()
       };
-      
-      const response = await fetch(`/api/orders/${orderId}`, {
+
+      const updateUrl = `${baseUrl}/orders/${orderId}`;
+      console.log('🔄 UPDATE ORDER - URL:', updateUrl);
+      console.log('🔄 UPDATE ORDER - orderId:', orderId);
+      console.log('🔄 UPDATE ORDER - baseUrl:', baseUrl);
+      console.log('🔄 UPDATE ORDER - Data:', updatedOrderData);
+
+      const response = await fetch(updateUrl, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'x-api-key': API_KEY
         },
         body: JSON.stringify(updatedOrderData)
       });
+
+      console.log('🔄 UPDATE ORDER - Response status:', response.status);
+      console.log('🔄 UPDATE ORDER - Response ok:', response.ok);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -1352,5 +1268,241 @@ export const getAccountOrders = (accountId: string, filters?: OrderFilters) =>
         type: GET_ACCOUNT_ORDERS_FAILURE,
         payload: error.message || 'Failed to fetch account orders'
       });
+    }
+  };
+
+// ============================================================================
+// MACHINE TABLE DATA ACTIONS (for Orders)
+// ============================================================================
+
+/**
+ * Fetch machine table data for a specific machine in an order
+ * @param orderId - The ID of the order
+ * @param machineId - The ID of the machine
+ */
+export const fetchOrderMachineTableData = (orderId: string, machineId: string) =>
+  async (dispatch: Dispatch, getState: () => any) => {
+    try {
+      console.log('🔍 Fetching machine table data:', { orderId, machineId });
+      
+      dispatch({ type: FETCH_ORDER_MACHINE_TABLE_REQUEST });
+
+      const token = getToken(getState);
+
+      // Validate inputs
+      if (!orderId || !machineId) {
+        throw new Error('Order ID and Machine ID are required');
+      }
+
+      const response = await axios.get(
+        `${baseUrl}/orders/${orderId}/machines/${machineId}/table-data`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'x-api-key': API_KEY,
+          },
+        }
+      );
+
+      console.log('✅ Machine table data fetched successfully:', response.data);
+
+      if (response.data.success && response.data.data) {
+        dispatch({
+          type: FETCH_ORDER_MACHINE_TABLE_SUCCESS,
+          payload: response.data.data,
+        });
+        return response.data.data;
+      } else {
+        throw new Error('Invalid response format from server');
+      }
+    } catch (error: any) {
+      console.error('❌ Error fetching machine table data:', error);
+
+      let errorMessage = 'Failed to fetch machine table data';
+
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 401) {
+          errorMessage = 'Authentication failed. Please log in again.';
+        } else if (error.response?.status === 404) {
+          errorMessage = 'Machine or order not found';
+        } else if (error.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      dispatch({
+        type: FETCH_ORDER_MACHINE_TABLE_FAILURE,
+        payload: errorMessage,
+      });
+
+      throw error;
+    }
+  };
+
+/**
+ * Clear machine table data from state
+ */
+export const clearOrderMachineTable = () => ({
+  type: CLEAR_ORDER_MACHINE_TABLE,
+});
+
+/**
+ * Add a new row to machine table
+ * @param orderId - The ID of the order
+ * @param machineId - The ID of the machine
+ * @param rowData - The data for the new row
+ */
+export const addMachineTableRow = (orderId: string, machineId: string, rowData: any) =>
+  async (dispatch: Dispatch, getState: () => any) => {
+    try {
+      console.log('➕ Adding machine table row:', { orderId, machineId, rowData });
+
+      dispatch({ type: ADD_MACHINE_TABLE_ROW_REQUEST });
+
+      const token = getToken(getState);
+
+      const response = await axios.post(
+        `${baseUrl}/orders/${orderId}/machines/${machineId}/table-data/rows`,
+        { rowData },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'x-api-key': API_KEY,
+          },
+        }
+      );
+
+      console.log('✅ Row added successfully:', response.data);
+
+      if (response.data.success && response.data.data) {
+        dispatch({
+          type: ADD_MACHINE_TABLE_ROW_SUCCESS,
+          payload: response.data.data,
+        });
+        return response.data.data;
+      } else {
+        throw new Error('Invalid response format from server');
+      }
+    } catch (error: any) {
+      console.error('❌ Error adding table row:', error);
+
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to add table row';
+
+      dispatch({
+        type: ADD_MACHINE_TABLE_ROW_FAILURE,
+        payload: errorMessage,
+      });
+
+      throw error;
+    }
+  };
+
+/**
+ * Update an existing row in machine table
+ * @param orderId - The ID of the order
+ * @param machineId - The ID of the machine
+ * @param rowIndex - The index of the row to update
+ * @param rowData - The updated data for the row
+ */
+export const updateMachineTableRow = (orderId: string, machineId: string, rowIndex: number, rowData: any) =>
+  async (dispatch: Dispatch, getState: () => any) => {
+    try {
+      console.log('✏️ Updating machine table row:', { orderId, machineId, rowIndex, rowData });
+
+      dispatch({ type: UPDATE_MACHINE_TABLE_ROW_REQUEST });
+
+      const token = getToken(getState);
+
+      const response = await axios.put(
+        `${baseUrl}/orders/${orderId}/machines/${machineId}/table-data/rows/${rowIndex}`,
+        { rowData },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'x-api-key': API_KEY,
+          },
+        }
+      );
+
+      console.log('✅ Row updated successfully:', response.data);
+
+      if (response.data.success && response.data.data) {
+        dispatch({
+          type: UPDATE_MACHINE_TABLE_ROW_SUCCESS,
+          payload: response.data.data,
+        });
+        return response.data.data;
+      } else {
+        throw new Error('Invalid response format from server');
+      }
+    } catch (error: any) {
+      console.error('❌ Error updating table row:', error);
+
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to update table row';
+
+      dispatch({
+        type: UPDATE_MACHINE_TABLE_ROW_FAILURE,
+        payload: errorMessage,
+      });
+
+      throw error;
+    }
+  };
+
+/**
+ * Delete a row from machine table
+ * @param orderId - The ID of the order
+ * @param machineId - The ID of the machine
+ * @param rowIndex - The index of the row to delete
+ */
+export const deleteMachineTableRow = (orderId: string, machineId: string, rowIndex: number) =>
+  async (dispatch: Dispatch, getState: () => any) => {
+    try {
+      console.log('🗑️ Deleting machine table row:', { orderId, machineId, rowIndex });
+
+      dispatch({ type: DELETE_MACHINE_TABLE_ROW_REQUEST });
+
+      const token = getToken(getState);
+
+      const response = await axios.delete(
+        `${baseUrl}/orders/${orderId}/machines/${machineId}/table-data/rows/${rowIndex}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'x-api-key': API_KEY,
+          },
+        }
+      );
+
+      console.log('✅ Row deleted successfully:', response.data);
+
+      if (response.data.success && response.data.data) {
+        dispatch({
+          type: DELETE_MACHINE_TABLE_ROW_SUCCESS,
+          payload: response.data.data,
+        });
+        return response.data.data;
+      } else {
+        throw new Error('Invalid response format from server');
+      }
+    } catch (error: any) {
+      console.error('❌ Error deleting table row:', error);
+
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to delete table row';
+
+      dispatch({
+        type: DELETE_MACHINE_TABLE_ROW_FAILURE,
+        payload: errorMessage,
+      });
+
+      throw error;
     }
   };

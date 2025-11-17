@@ -4,10 +4,76 @@ import { useLocation, useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import { RootState } from "../../../../redux/rootReducer";
-import { Order } from "../../../../redux/oders/orderTypes";
+
 import { BackButton } from "../../../../allCompones/BackButton";
 import { getAccountOrders } from "../../../../redux/oders/OdersActions";
 
+// Define Order interface
+interface Order {
+  _id: string;
+  id?: string;
+  orderId?: string;
+  companyName?: string;
+  name?: string;
+  phone?: string;
+  phone1?: string;
+  status: string;
+  overallStatus?: string;
+  date: string;
+  productName?: string;
+  materialName?: string;
+  quantity?: string | number;
+  totalAmount?: string | number;
+  materialWeight?: string | number;
+  createdBy?: string;
+  createdByRole?: string;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+  Width?: number;
+  Height?: number;
+  Thickness?: number;
+  SealingType?: string;
+  BottomGusset?: string;
+  Flap?: string;
+  AirHole?: string;
+  Printing?: boolean;
+  mixMaterial?: any[];
+  steps?: any[];
+  currentStepIndex?: number;
+  stepsCount?: number;
+  totalMachines?: number;
+  completedSteps?: number;
+  branch?: any;
+  branchId?: string;
+  Notes?: string;
+  material?: {
+    _id?: string;
+    name?: string;
+    materialName?: string;
+    type?: string;
+  };
+  materialId?: string;
+  customer?: {
+    _id?: string;
+    name?: string;
+    companyName?: string;
+    phone?: string;
+    phone1?: string;
+    email?: string;
+    address?: string;
+    address1?: string;
+    address2?: string;
+    whatsapp?: string;
+    phone2?: string;
+    pinCode?: string;
+    state?: string;
+    imageUrl?: string;
+    telephone?: string;
+    firstName?: string;
+    lastName?: string;
+  };
+  AllStatus?: Record<string, { color: string; description: string }>;
+}
 
 interface AccountInfoProps {
   accountData?: {
@@ -28,6 +94,7 @@ interface OrderFilters {
   startDate?: string;
   endDate?: string;
   search?: string;
+  accountId: string; // Added required field
 }
 
 // Define default values for Redux state
@@ -55,7 +122,7 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [limit, setLimit] = useState(50);
+  const [limit] = useState(50); // Removed setLimit since it's not used
 
   // Refs - must be declared before useEffect
   const scrollWrapperRef = useRef<HTMLDivElement>(null);
@@ -85,13 +152,11 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
     ordersCount: reduxOrders.length,
     loading,
     error,
-    hasPagination: !!pagination,
-    hasSummary: !!summary
   });
 
   // Company info with safe access
-  const companyName = authState?.user?.companyName || "ABC Company";
-  const branchName = authState?.user?.branchName || "Main Branch";
+  const companyName = (authState as any)?.user?.companyName || "ABC Company";
+  const branchName = (authState as any)?.user?.branchName || "Main Branch";
 
   // Check if accountData exists
   if (!accountData) {
@@ -134,7 +199,7 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
   }
 
   // Transform orders to match component needs
-  const transformedOrders: Order[] = Array.isArray(reduxOrders) ? reduxOrders.map(order => {
+  const transformedOrders: Order[] = Array.isArray(reduxOrders) ? reduxOrders.map((order: any) => {
     const customerName = order.customer?.companyName || order.customer?.name || accountData.name || 'Unknown Customer';
     const customerPhone = order.customer?.phone1 || order.customer?.phone || accountData.phone || '';
     const orderStatus = order.overallStatus || order.status || 'unknown';
@@ -147,6 +212,7 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
       phone: customerPhone,
       phone1: customerPhone,
       status: orderStatus,
+      overallStatus: orderStatus,
       date: new Date(order.createdAt).toISOString().split('T')[0],
       productName: order.material?.name || order.material?.materialName || 'N/A',
       materialName: order.material?.name || order.material?.materialName || 'N/A',
@@ -196,6 +262,7 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
   // Helper function to create filters
   const createFilters = (): OrderFilters => {
     const filters: OrderFilters = {
+      accountId: accountData._id, // Added required accountId
       page: currentPage,
       limit,
       sortBy: 'createdAt',
@@ -225,6 +292,7 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
   useEffect(() => {
     console.log("🔄 AccountInfo useEffect triggered - fetching account orders");
     fetchAccountOrdersData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, accountData?._id, currentPage, limit, fromDate, toDate, searchTerm, statusFilter]);
 
   // Auto-refresh every 30 seconds
@@ -235,6 +303,7 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
     }, 30000);
 
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountData?._id, currentPage, limit, fromDate, toDate, searchTerm, statusFilter]);
 
   // Focus scroll wrapper on mount
@@ -759,13 +828,13 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
 
                   {expandedOrder === index && (
                     <div className="status-list">
-                      {order.AllStatus && Object.entries(order.AllStatus).map(([status, { color, description }]) => (
+                      {order.AllStatus && Object.entries(order.AllStatus).map(([status, statusData]) => (
                         <div
                           key={status}
                           className="status-item p-2 m-1 rounded text-white text-sm"
-                          style={{ backgroundColor: color }}
+                          style={{ backgroundColor: statusData.color }}
                         >
-                          <strong>{status}:</strong> <span>{description}</span>
+                          <strong>{status}:</strong> <span>{statusData.description}</span>
                         </div>
                       ))}
                       <div className="p-2 text-xs text-gray-600">
@@ -842,7 +911,7 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
               <span><strong>Total Weight:</strong> {summary.totalWeight?.toFixed(2) || 'N/A'}</span>
               <span><strong>Avg Weight:</strong> {summary.avgWeight?.toFixed(2) || 'N/A'}</span>
               {statusCounts && Object.entries(statusCounts).map(([status, count]) => (
-                <span key={status}><strong>{status}:</strong> {count}</span>
+                <span key={status}><strong>{status}:</strong> {String(count)}</span>
               ))}
             </div>
           </div>

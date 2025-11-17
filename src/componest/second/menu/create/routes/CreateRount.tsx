@@ -5,8 +5,10 @@ import CreteMachineOpertor from "../CreateMachineOpertor/CreteMachineOpertor";
 import CreateStep from "../CreateStep/CreateStep";
 import ProductCreate from "../products/products";
 import IndexCreate from "../indexCreate";
-import CreateMachine from "../machine/CreateMachine"; 
+import CreateMachine from "../machine/CreateMachine";
 import CreateMachineType from "../machine/createMachineType";
+import CreateOrder from "../orders/CreateOrder";
+import CreateOrderType from "../orderType/CreateOrderType";
 
 function IndexCreateRoute() {
   return (
@@ -19,7 +21,9 @@ function IndexCreateRoute() {
       <Route path="createStep" element={<CreateStep />} />
       <Route path="productCreate" element={<ProductCreate />} />
       <Route path="createMachineType"  element = {<CreateMachineType/>}/>
-      
+      <Route path="orders" element={<CreateOrder />} />
+      <Route path="orderType" element={<CreateOrderType />} />
+
     </Routes>
   );
 }

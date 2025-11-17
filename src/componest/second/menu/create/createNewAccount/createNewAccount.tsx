@@ -3,6 +3,9 @@ import { useDispatch, useSelector } from "react-redux";
 import { createAccount } from "../../../../redux/create/createNewAccount/NewAccountActions";
 import { RootState } from "../../../../../store";
 import { indianStates } from "./indianStates";
+import { ActionButton } from '../../../../../components/shared/ActionButton';
+import { ToastContainer } from '../../../../../components/shared/Toast';
+import { useCRUD } from '../../../../../hooks/useCRUD';
 import "./createNewAccount.css";
 // Note: You'll need to install and import imageCompression
 // npm install browser-image-compression
@@ -35,7 +38,10 @@ const CreateNewAccount: React.FC<Props> = ({ initialData = {} }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dispatch = useDispatch();
 
-  const { loading, error: reduxError } = useSelector(
+  // 🚀 CRUD System Integration
+  const { saveState, handleSave, toast } = useCRUD();
+
+  const { loading } = useSelector(
     (state: RootState) => state.createAccount
   );
 
@@ -57,33 +63,30 @@ const CreateNewAccount: React.FC<Props> = ({ initialData = {} }) => {
 
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
 
-  // Reset form after successful submission
-  useEffect(() => {
-    if (!loading && !reduxError && formRef.current) {
-      formRef.current.reset();
-      setFormValues({
-        companyName: "",
-        firstName: "",
-        lastName: "",
-        email: "",
-        phone1: "",
-        phone2: "",
-        whatsapp: "",
-        telephone: "",
-        address1: "",
-        address2: "",
-        state: "",
-        pinCode: "",
-        image: null,
-      });
-      
-      // Clear file input and preview
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-      setPreviewUrl(null);
+  const resetForm = () => {
+    formRef.current?.reset();
+    setFormValues({
+      companyName: "",
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone1: "",
+      phone2: "",
+      whatsapp: "",
+      telephone: "",
+      address1: "",
+      address2: "",
+      state: "",
+      pinCode: "",
+      image: null,
+    });
+
+    // Clear file input and preview
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
-  }, [loading, reduxError]);
+    setPreviewUrl(null);
+  };
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -177,9 +180,9 @@ const CreateNewAccount: React.FC<Props> = ({ initialData = {} }) => {
     return Object.keys(errors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-     
+  const handleSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
+
     if (!validate()) {
       return;
     }
@@ -195,7 +198,15 @@ const CreateNewAccount: React.FC<Props> = ({ initialData = {} }) => {
       }
     });
 
-    dispatch(createAccount(formData) as any);
+    handleSave(
+      () => dispatch(createAccount(formData) as any),
+      {
+        successMessage: 'Account created successfully!',
+        onSuccess: () => {
+          resetForm();
+        }
+      }
+    );
   };
 
   return (
@@ -382,15 +393,19 @@ const CreateNewAccount: React.FC<Props> = ({ initialData = {} }) => {
           )}
         </div>
 
-        {/* Show redux error from API call */}
-        {reduxError && <div className="error-text">{reduxError}</div>}
-
         <div className="form-group">
-          <button type="submit" disabled={loading}>
-            {loading ? "Saving..." : "Create Account"}
-          </button>
+          <ActionButton
+            type="save"
+            state={saveState}
+            onClick={handleSubmit}
+          >
+            Create Account
+          </ActionButton>
         </div>
       </form>
+
+      {/* Toast notifications */}
+      <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
     </div>
     </div>
   );

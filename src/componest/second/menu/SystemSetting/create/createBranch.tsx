@@ -1,7 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { createBranch } from "../../../../redux/createBranchAndManager/branchActions";
+import { ActionButton } from '../../../../../components/shared/ActionButton';
+import { ToastContainer } from '../../../../../components/shared/Toast';
+import { useCRUD } from '../../../../../hooks/useCRUD';
 import type { AppDispatch} from "../../../../../store";
+
 const CreateBranch: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
 
@@ -13,16 +17,19 @@ const CreateBranch: React.FC = () => {
 
   const [errors, setErrors] = useState<Partial<{ name: string; code: string }>>({});
 
+  // 🚀 CRUD System Integration
+  const { saveState, handleSave, toast } = useCRUD();
+
   const branchCreate = useSelector((state: any) => state.branchCreate);
-  const { loading, error, success } = branchCreate;
+  const { loading } = branchCreate;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     setErrors({ ...errors, [e.target.name]: "" });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
 
     let validationErrors: Partial<{ name: string; code: string }> = {};
     if (!formData.name.trim()) validationErrors.name = "Branch name is required";
@@ -33,23 +40,21 @@ const CreateBranch: React.FC = () => {
       return;
     }
 
-    dispatch(createBranch(formData));
+    handleSave(
+      () => dispatch(createBranch(formData)),
+      {
+        successMessage: 'Branch created successfully!',
+        onSuccess: () => {
+          setFormData({ name: "", location: "", code: "" });
+          setErrors({});
+        }
+      }
+    );
   };
-
-  useEffect(() => {
-    if (success) {
-      setFormData({ name: "", location: "", code: "" });
-    }
-  }, [success]);
 
   return (
     <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow">
       <h2 className="text-2xl font-semibold mb-4">Create New Branch</h2>
-
-      {error && <p className="text-red-600 text-sm mb-2">{error}</p>}
-      {success && (
-        <p className="text-green-600 text-sm mb-2">Branch created successfully!</p>
-      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
@@ -94,14 +99,18 @@ const CreateBranch: React.FC = () => {
           {errors.code && <p className="text-sm text-red-600 mt-1">{errors.code}</p>}
         </div>
 
-        <button
-          type="submit"
-          disabled={loading}
+        <ActionButton
+          type="save"
+          state={saveState}
+          onClick={handleSubmit}
           className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
         >
-          {loading ? "Creating..." : "Create Branch"}
-        </button>
+          Create Branch
+        </ActionButton>
       </form>
+
+      {/* Toast notifications */}
+      <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
     </div>
   );
 };

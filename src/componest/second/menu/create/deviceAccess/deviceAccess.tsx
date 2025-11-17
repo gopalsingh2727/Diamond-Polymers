@@ -17,7 +17,7 @@ const DeviceAccess: React.FC = () => {
   const { machines: machineList } = useSelector(
     (state: RootState) => state.machineList
   );
-  const { devices: deviceList, loading, error } = useSelector(
+  const { devices: deviceList, loading} = useSelector(
     (state: RootState) => state.deviceAccess
   );
 
@@ -45,14 +45,8 @@ const DeviceAccess: React.FC = () => {
     setMachineId("");
   };
 
-  // ✅ Remove machine
-  const handleRemoveMachine = (deviceId: string, machineId: string) => {
-    if (window.confirm("Remove this machine from device?")) {
-      dispatch(
-        updateDeviceAccess(deviceId, "removeMachine", { machineId })
-      );
-    }
-  };
+
+
 
   return (
     <div className="device-access-container">
@@ -97,43 +91,7 @@ const DeviceAccess: React.FC = () => {
         </div>
       </div>
 
-      <h3>Device Access List</h3>
-      {error && <div className="error-message">{error}</div>}
-      {deviceList.length === 0 ? (
-        <p>No devices found.</p>
-      ) : (
-        <div className="device-grid">
-          {deviceList.map((device: any) => (
-            <div key={device._id} className="device-card">
-              <h4>{device.deviceName}</h4>
-              <p>
-                <strong>Location:</strong> {device.location}
-              </p>
-
-              {device.machines?.length > 0 && (
-                <div>
-                  <strong>Machines:</strong>
-                  <ul>
-                    {device.machines.map((m: any) => (
-                      <li key={m.machineId}>
-                        {m.machineName} ({m.machineType}){" "}
-                        <button
-                          className="remove-button"
-                          onClick={() =>
-                            handleRemoveMachine(device._id, m.machineId)
-                          }
-                        >
-                          Remove
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+     
     </div>
   );
 };

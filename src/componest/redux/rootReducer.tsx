@@ -78,13 +78,61 @@ import {
 } from "./create/CreateStep/StepReducer";
 import { createProduct } from "./create/products/ProductActions";
 import { productDeleteReducer, productListReducer, productUpdateReducer } from "./create/products/ProductReducer";
-import { deviceAccessCreateReducer, deviceAccessReducer } from "./deviceAccess/deviceAccessReducers";
-import { accountOrdersReducer, orderListReducer} from "./oders/orderReducers";
+
+// Formula
+import {
+  formulaCreateReducer,
+  formulaListReducer,
+  formulaDetailReducer,
+  formulaUpdateReducer,
+  formulaDeleteReducer,
+  formulaTestReducer
+} from "./create/formula/formulaReducer";
+
+// Product Spec
+import {
+  productSpecCreateReducer,
+  productSpecListReducer,
+  productSpecDetailReducer,
+  productSpecUpdateReducer,
+  productSpecDeleteReducer
+} from "./create/productSpec/productSpecReducer";
+
+// Material Spec
+import {
+  materialSpecCreateReducer,
+  materialSpecListReducer,
+  materialSpecDetailReducer,
+  materialSpecUpdateReducer,
+  materialSpecDeleteReducer
+} from "./create/materialSpec/materialSpecReducer";
+
+// Order Type
+import {
+  orderTypeListReducer,
+  orderTypeDetailReducer,
+  defaultOrderTypeReducer,
+  orderTypeCreateReducer
+} from "./create/orderType/orderTypeReducer";
+
+import deviceAccessReducer from "./deviceAccess/deviceAccessReducers";
+import orderReducer, { accountOrdersReducer } from "./oders/orderReducers";
+import orderFormDataReducer from "./oders/orderFormDataReducer";
+import machineTableReducer from "./machineTable/machineTableReducer";
 // import { getMaterialCategoriesReducer } from "./create/Materials/MaterialsCategories/MaterialsCategoriesActions";
+
+// Reports
+import reportReducer from "./reports/reports/reportReducer";
+
+// ✅ Universal Data Cache
+import { dataCacheReducer } from "./cache/dataCacheReducer";
 
 const appReducer = combineReducers({
   // Auth
   auth: authReducer,
+
+  // ✅ Universal Data Cache (reduces API calls by 90%)
+  dataCache: dataCacheReducer,
 
   // Branch
   branches: branchReducer,
@@ -142,20 +190,53 @@ const appReducer = combineReducers({
   stepDelete: stepDeleteReducer, 
 
 
-  // product 
+  // product
   createProduct:createProduct,
   productList:productListReducer,
   productUpdate:productUpdateReducer,
   productDelete:productDeleteReducer,
 
+  // Formula
+  formulaCreate: formulaCreateReducer,
+  formulaList: formulaListReducer,
+  formulaDetail: formulaDetailReducer,
+  formulaUpdate: formulaUpdateReducer,
+  formulaDelete: formulaDeleteReducer,
+  formulaTest: formulaTestReducer,
 
+  // Product Spec
+  productSpecCreate: productSpecCreateReducer,
+  productSpecList: productSpecListReducer,
+  productSpecDetail: productSpecDetailReducer,
+  productSpecUpdate: productSpecUpdateReducer,
+  productSpecDelete: productSpecDeleteReducer,
 
-  orderList: orderListReducer,
- accountOrders:  accountOrdersReducer,
-  //device Access create 
- 
+  // Material Spec
+  materialSpecCreate: materialSpecCreateReducer,
+  materialSpecList: materialSpecListReducer,
+  materialSpecDetail: materialSpecDetailReducer,
+  materialSpecUpdate: materialSpecUpdateReducer,
+  materialSpecDelete: materialSpecDeleteReducer,
+
+  // Order Type
+  orderTypeList: orderTypeListReducer,
+  orderTypeDetail: orderTypeDetailReducer,
+  defaultOrderType: defaultOrderTypeReducer,
+  orderTypeCreate: orderTypeCreateReducer,
+
+  //machineTable
+  machineTable: machineTableReducer,
+
+  // Orders (includes list, form, and machineTable sub-reducers)
+  orders: orderReducer,
+  accountOrders: accountOrdersReducer,
+  orderFormData: orderFormDataReducer, // Single API call for all order form data
+
+  //device Access create
   deviceAccess: deviceAccessReducer,
 
+  // Reports
+  reports: reportReducer,
 
 });
 

@@ -30,13 +30,17 @@ const getHeaders = (token: string | null) => {
 
 const baseUrl = import.meta.env.VITE_API_27INFINITY_IN;
 
+export const resetDeviceAccessState = () => ({
+  type: 'deviceAccess/reset'
+});
+
+
+
 export const createDeviceAccess = (data: {
   deviceName: string;
   location: string;
   password: string;
   confirmPassword: string;
-  pin: string;
-  confirmPin: string;
 }) => {
   return async (dispatch: AppDispatch, getState: () => RootState) => {
     try {
@@ -50,15 +54,10 @@ export const createDeviceAccess = (data: {
         throw new Error("Passwords do not match");
       }
 
-      if (data.pin !== data.confirmPin) {
-        throw new Error("PINs do not match");
-      }
-
       const payload = {
         deviceName: data.deviceName.trim(),
         location: data.location.trim(),
         password: data.password,
-        pin: data.pin,
       };
 
       const response = await axios.post(
@@ -67,16 +66,27 @@ export const createDeviceAccess = (data: {
         { headers: getHeaders(token) }
       );
 
+      // Store the plain password temporarily for display
+      const deviceData = {
+        ...response.data,
+        plainPassword: data.password, // Add plain password for display
+      };
+
       dispatch({
         type: DEVICE_ACCESS_CREATE_SUCCESS,
-        payload: response.data,
+        payload: deviceData,
       });
+
+      return deviceData; // Return data for component use
     } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message || "Device access creation failed";
+      
       dispatch({
         type: DEVICE_ACCESS_CREATE_FAIL,
-        payload:
-          error.response?.data?.message || error.message || "Device access creation failed",
+        payload: errorMessage,
       });
+
+      throw error; // Re-throw to handle in component
     }
   };
 };
@@ -189,7 +199,7 @@ export const deleteDeviceAccess = (id: string) => {
 
       dispatch({
         type: DEVICE_ACCESS_DELETE_SUCCESS,
-        payload: id, // Pass the ID so we can remove it from the list
+        payload: id,
       });
     } catch (error: any) {
       dispatch({
