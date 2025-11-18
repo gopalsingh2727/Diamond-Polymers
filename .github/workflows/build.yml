@@ -17,8 +17,11 @@ jobs:
             arch: arm64
           - os: windows-latest
             arch: x64
-    
+
     runs-on: ${{ matrix.os }}
+
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
       - name: Checkout repository
@@ -39,20 +42,8 @@ jobs:
         run: npm install -D postcss-import @tailwindcss/nesting
         continue-on-error: true
 
-      - name: Build application
+      - name: Build and publish application
         run: npm run build
-      
-      - name: Build and publish Electron app
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          export GH_TOKEN="${{ secrets.GITHUB_TOKEN }}"
-          if [ "${{ matrix.os }}" = "macos-latest" ]; then
-            npx electron-builder --mac --${{ matrix.arch }} --publish always
-          elif [ "${{ matrix.os }}" = "windows-latest" ]; then
-            npx electron-builder --win --${{ matrix.arch }} --publish always
-          fi
-        shell: bash
 
       - name: Upload build artifacts (on failure)
         if: failure()
