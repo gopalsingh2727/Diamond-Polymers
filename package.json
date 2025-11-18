@@ -59,7 +59,6 @@
         }
       ],
       "category": "public.app-category.productivity",
-      "icon": "build/icon.icns",
       "identity": null,
       "hardenedRuntime": false,
       "gatekeeperAssess": false
@@ -79,7 +78,6 @@
           ]
         }
       ],
-      "icon": "build/icon.ico",
       "publisherName": "Diamond Polymers",
       "legalTrademarks": "Diamond Polymers",
       "requestedExecutionLevel": "asInvoker"
@@ -89,9 +87,6 @@
       "perMachine": false,
       "allowToChangeInstallationDirectory": true,
       "deleteAppDataOnUninstall": false,
-      "installerIcon": "build/icon.ico",
-      "uninstallerIcon": "build/icon.ico",
-      "installerHeaderIcon": "build/icon.ico",
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "Diamond Polymers"
