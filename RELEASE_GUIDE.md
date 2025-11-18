@@ -61,6 +61,46 @@ Once published, all users with the app installed will:
 3. Download and install updates automatically
 4. Update applies when they quit and relaunch
 
+## Installation Instructions for Users
+
+Since the app is not code-signed with paid certificates, users may see security warnings. Here's how to install:
+
+### macOS Installation
+
+**Option 1: Right-click method**
+1. Download the `.dmg` file
+2. Open the DMG and drag app to Applications
+3. **Right-click** (or Control-click) the app → Select **"Open"**
+4. Click **"Open"** in the dialog that appears
+5. The app will now open normally in the future
+
+**Option 2: Terminal method (if "damaged" error appears)**
+```bash
+xattr -cr /Applications/DiamondPolymers.app
+```
+Then open the app normally.
+
+**Option 3: System Settings**
+1. Try to open the app (it will be blocked)
+2. Go to **System Settings → Privacy & Security**
+3. Scroll down and click **"Open Anyway"** next to DiamondPolymers
+
+### Windows Installation
+
+1. Download the `.exe` installer
+2. Run the installer
+3. If SmartScreen appears:
+   - Click **"More info"**
+   - Click **"Run anyway"**
+4. Follow the installation wizard
+5. The app is now installed and will work normally
+
+### Why These Warnings Appear
+
+These warnings appear because the app isn't signed with official certificates ($99-500/year). The app is safe to use - it's just not recognized by Apple/Microsoft's trust system.
+
+---
+
 ## Troubleshooting
 
 ### Build Fails on GitHub Actions
