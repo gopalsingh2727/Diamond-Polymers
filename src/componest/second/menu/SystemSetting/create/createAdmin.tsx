@@ -63,7 +63,7 @@ const CreateAdmin = () => {
           type="save"
           state={saveState}
           onClick={handleSubmit}
-          className="bg-blue-600 text-white px-4 py-2 rounded"
+          className="bg-[#FF6B35] text-white px-4 py-2 rounded"
         >
           Create Admin
         </ActionButton>

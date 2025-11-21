@@ -65,10 +65,10 @@
 
 /* Selected Row Styling */
 .EditMachineType tbody tr.bg-blue-100 {
-  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-  border-left: 4px solid #3b82f6;
+  background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%);
+  border-left: 4px solid #FF6B35;
   font-weight: 600;
-  color: #1e40af;
+  color: #9a3412;
 }
 
 .EditMachineType tbody tr.bg-blue-100:hover {
@@ -77,7 +77,7 @@
 
 /* Edit Column Styling */
 .EditMachineType .text-blue-600 {
-  color: #3b82f6;
+  color: #FF6B35;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -87,8 +87,8 @@
 }
 
 .EditMachineType .text-blue-600:hover {
-  background: #dbeafe;
-  color: #1d4ed8;
+  background: #fed7aa;
+  color: #E55A2B;
   transform: scale(1.05);
 }
 
@@ -154,26 +154,26 @@
 }
 
 .EditMachineType .form-section input {
-  border: 2px solid #d1d5db;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-bottom: 0.5px solid #333;
   padding: 10px 14px;
-  border-radius: 6px;
   font-size: 14px;
   transition: all 0.2s ease;
   min-width: 200px;
-  background: white;
+  outline: none;
+  color: #333;
 }
 
 .EditMachineType .form-section input:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-  transform: scale(1.02);
+  border-bottom-color: #FF6B35;
+  border-bottom-width: 2px;
 }
 
 /* Save Button */
 .EditMachineType .save-button {
     width: 100px;
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  background: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%);
   color: white;
   border: none;
   padding: 10px 20px;
@@ -181,7 +181,7 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+  box-shadow: 0 2px 4px rgba(255, 107, 53, 0.2);
 }
 .Delete{
  background-color: red;

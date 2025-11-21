@@ -14,7 +14,13 @@ import {
   GET_ORDER_TYPES_BY_BRANCH_FAIL,
   GET_DEFAULT_ORDER_TYPE_REQUEST,
   GET_DEFAULT_ORDER_TYPE_SUCCESS,
-  GET_DEFAULT_ORDER_TYPE_FAIL
+  GET_DEFAULT_ORDER_TYPE_FAIL,
+  UPDATE_ORDER_TYPE_REQUEST,
+  UPDATE_ORDER_TYPE_SUCCESS,
+  UPDATE_ORDER_TYPE_FAIL,
+  DELETE_ORDER_TYPE_REQUEST,
+  DELETE_ORDER_TYPE_SUCCESS,
+  DELETE_ORDER_TYPE_FAIL
 } from "./orderTypeConstants";
 import { Dispatch } from "redux";
 import { RootState } from "../../rootReducer";
@@ -161,6 +167,49 @@ export const getDefaultOrderType = () => async (dispatch: Dispatch, getState: ()
   } catch (error: any) {
     const errorMessage = error.response?.data?.message || error.message || "Failed to fetch default order type";
     dispatch({ type: GET_DEFAULT_ORDER_TYPE_FAIL, payload: errorMessage });
+    throw error;
+  }
+};
+
+// Update Order Type
+export const updateOrderType = (id: string, orderTypeData: any) => async (dispatch: Dispatch, getState: () => RootState) => {
+  try {
+    dispatch({ type: UPDATE_ORDER_TYPE_REQUEST });
+
+    const token = getToken(getState);
+
+    const { data } = await axios.put(
+      `${baseUrl}/ordertype/${id}`,
+      orderTypeData,
+      { headers: getHeaders(token) }
+    );
+
+    dispatch({ type: UPDATE_ORDER_TYPE_SUCCESS, payload: data });
+    return data;
+  } catch (error: any) {
+    const errorMessage = error.response?.data?.message || error.message || "Failed to update order type";
+    dispatch({ type: UPDATE_ORDER_TYPE_FAIL, payload: errorMessage });
+    throw error;
+  }
+};
+
+// Delete Order Type
+export const deleteOrderType = (id: string) => async (dispatch: Dispatch, getState: () => RootState) => {
+  try {
+    dispatch({ type: DELETE_ORDER_TYPE_REQUEST });
+
+    const token = getToken(getState);
+
+    const { data } = await axios.delete(
+      `${baseUrl}/ordertype/${id}`,
+      { headers: getHeaders(token) }
+    );
+
+    dispatch({ type: DELETE_ORDER_TYPE_SUCCESS, payload: { id, ...data } });
+    return data;
+  } catch (error: any) {
+    const errorMessage = error.response?.data?.message || error.message || "Failed to delete order type";
+    dispatch({ type: DELETE_ORDER_TYPE_FAIL, payload: errorMessage });
     throw error;
   }
 };

@@ -1,0 +1,386 @@
+.settings-container {
+  position: relative;
+  display: inline-block;
+}
+
+.settings-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: #666;
+  transition: all 0.2s ease;
+}
+
+.settings-icon-btn:hover {
+  background: rgba(255, 107, 53, 0.1);
+  color: #FF6B35;
+}
+
+.settings-icon-btn:active {
+  transform: scale(0.95);
+}
+
+/* Settings Dropdown Menu - Rendered via createPortal */
+.settings-dropdown-menu {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  animation: dropdownSlideIn 0.2s ease;
+}
+
+@keyframes dropdownSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.settings-dropdown-menu .settings-menu-item {
+  border-radius: 0;
+}
+
+.settings-dropdown-menu .settings-menu-item:first-child {
+  border-radius: 12px 12px 0 0;
+}
+
+.settings-dropdown-menu .settings-menu-item:last-child {
+  border-radius: 0 0 12px 12px;
+}
+
+/* Dark mode for dropdown */
+.dark .settings-dropdown-menu {
+  background: #2a2a2a;
+  border-color: #444;
+}
+
+/* Settings Popup Modal */
+.settings-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999999;
+  animation: fadeIn 0.2s ease;
+}
+
+.settings-popup {
+  background: white;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 320px;
+  margin: 20px;
+  overflow: hidden;
+  animation: modalSlideIn 0.3s ease;
+}
+
+.settings-popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.settings-popup-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+.settings-popup-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: #666;
+  transition: all 0.15s ease;
+}
+
+.settings-popup-close:hover {
+  background: #f5f5f5;
+  color: #333;
+}
+
+.settings-popup-content {
+  padding: 8px;
+}
+
+.settings-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  font-size: 14px;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.settings-menu-item:hover {
+  background: rgba(255, 107, 53, 0.08);
+  color: #FF6B35;
+}
+
+.settings-menu-item:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.settings-menu-item svg {
+  flex-shrink: 0;
+}
+
+/* About Modal */
+.about-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999999;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.about-modal {
+  background: white;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 400px;
+  margin: 20px;
+  overflow: hidden;
+  animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.about-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid #eee;
+}
+
+.about-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+}
+
+.about-close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: #666;
+  transition: all 0.15s ease;
+}
+
+.about-close-btn:hover {
+  background: #f5f5f5;
+  color: #333;
+}
+
+.about-content {
+  padding: 24px;
+  text-align: center;
+}
+
+.about-logo {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 16px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #FF6B35, #FFA500);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.about-logo-text {
+  font-size: 32px;
+  font-weight: 700;
+  color: white;
+}
+
+.about-version {
+  font-size: 14px;
+  color: #666;
+  margin: 0 0 16px;
+}
+
+.about-description {
+  font-size: 14px;
+  color: #555;
+  margin: 0 0 20px;
+  line-height: 1.5;
+}
+
+.about-info {
+  text-align: left;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.about-info p {
+  margin: 0;
+  padding: 4px 0;
+  font-size: 13px;
+  color: #555;
+}
+
+.about-info strong {
+  color: #333;
+}
+
+.about-info a {
+  color: #FF6B35;
+  text-decoration: none;
+}
+
+.about-info a:hover {
+  text-decoration: underline;
+}
+
+.about-copyright {
+  font-size: 12px;
+  color: #999;
+  margin: 0;
+}
+
+/* Dark mode support */
+.dark .settings-icon-btn {
+  color: #aaa;
+}
+
+.dark .settings-icon-btn:hover {
+  background: rgba(255, 107, 53, 0.2);
+  color: #FF6B35;
+}
+
+.dark .settings-popup {
+  background: #2a2a2a;
+}
+
+.dark .settings-popup-header {
+  border-bottom-color: #444;
+}
+
+.dark .settings-popup-header h3 {
+  color: #e0e0e0;
+}
+
+.dark .settings-popup-close {
+  color: #aaa;
+}
+
+.dark .settings-popup-close:hover {
+  background: #3a3a3a;
+  color: #e0e0e0;
+}
+
+.dark .settings-menu-item {
+  color: #e0e0e0;
+}
+
+.dark .settings-menu-item:hover {
+  background: rgba(255, 107, 53, 0.15);
+}
+
+.dark .about-modal {
+  background: #2a2a2a;
+}
+
+.dark .about-header {
+  border-bottom-color: #444;
+}
+
+.dark .about-header h2 {
+  color: #e0e0e0;
+}
+
+.dark .about-close-btn {
+  color: #aaa;
+}
+
+.dark .about-close-btn:hover {
+  background: #3a3a3a;
+  color: #e0e0e0;
+}
+
+.dark .about-version {
+  color: #aaa;
+}
+
+.dark .about-description {
+  color: #ccc;
+}
+
+.dark .about-info {
+  background: #333;
+}
+
+.dark .about-info p {
+  color: #ccc;
+}
+
+.dark .about-info strong {
+  color: #e0e0e0;
+}
+
+.dark .about-copyright {
+  color: #777;
+}

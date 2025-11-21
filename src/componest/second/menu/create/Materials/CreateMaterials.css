@@ -1,61 +1,78 @@
+/* Create Materials Styles - Based on createStep.css */
+
 .form-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
-    margin: 2rem auto;
-    width: 100%;
-    padding: 2rem;
-    background: white;
-    border-radius: 1rem;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-  }
-  
-  .form-column {
-    display: flex;
-    gap: 1.5rem;
-    flex-wrap: wrap;
-  }
-  
-  .form-input-group {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .input-label {
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: #334155;
-    margin-bottom: 0.5rem;
-  }
-  
-  .form-input {
-    width: 100%;
-    padding: 0.625rem 1rem;
-    border: none;
-    border-bottom: 2px solid #cbd5e1;
-    background-color: #fff;
-    font-size: 0.875rem;
-    transition: border-color 0.2s ease;
-  }
-  
-  .form-input:focus {
-    outline: none;
-    border-bottom-color: #3b82f6;
-  }
-  
-  .save-button {
-    width: 100%;
-    padding: 0.75rem 1.5rem;
-    background-color: #3b82f6;
-    color: white;
-    font-weight: 500;
-    border-radius: 0.5rem;
-    border: none;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-  }
-  
-  .save-button:hover {
-    background-color: #2563eb;
-  }
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.input-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #334155;
+}
+
+.form-input {
+  width: 100%;
+  color: #1e293b;
+  padding: 0.625rem 1rem;
+  border: none;
+  border-bottom: 2px solid #cbd5e1;
+  background-color: #fff;
+  font-size: 0.875rem;
+  transition: border-color 0.2s ease;
+}
+
+.form-input:focus {
+  outline: none;
+  border-bottom-color: #FF6B35;
+}
+
+.save-button {
+  width: 100%;
+  padding: 0.75rem 1.5rem;
+  background-color: #FF6B35;
+  color: white;
+  font-weight: 500;
+  border-radius: 0.5rem;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.save-button:hover {
+  background-color: #e55a2b;
+}
+
+.save-button:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.error-msg {
+  color: #dc2626;
+  background-color: #fee2e2;
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+}
+
+.success-msg {
+  color: #059669;
+  background-color: #d1fae5;
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+}

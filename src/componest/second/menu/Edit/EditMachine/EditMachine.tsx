@@ -1,12 +1,10 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import {
-  getMachines,
   updateMachine,
   deleteMachine,
 } from "../../../../redux/create/machine/MachineActions";
-import { getMachineTypes } from "../../../../redux/create/machineType/machineTypeActions";
-import { RootState } from "../../../../redux/rootReducer";
+import { useFormDataCache } from "../hooks/useFormDataCache";
 import { AppDispatch } from "../../../../../store";
 import { Plus, Trash2, Edit2, Check, X, Calculator, Eye, Table as TableIcon, Settings, Download } from 'lucide-react';
 import "./editMachines.css";
@@ -69,11 +67,9 @@ interface EditForm {
 
 const EditMachines: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const machineListState = useSelector((state: RootState) => state.machineList) as any;
-  const { machines = [], loading, error } = machineListState;
-  
-  const machineTypeListState = useSelector((state: RootState) => state.machineTypeList) as any;
-  const { items: machineTypes = [] } = machineTypeListState;
+
+  // 🚀 OPTIMIZED: Get data from cached form data (no API calls!)
+  const { machines, machineTypes, loading, error } = useFormDataCache();
 
   const [selectedRow, setSelectedRow] = useState(0);
   const [showDetail, setShowDetail] = useState(false);
@@ -204,10 +200,7 @@ const EditMachines: React.FC = () => {
     [filteredMachines, selectedRow, showDetail]
   );
 
-  useEffect(() => {
-    dispatch(getMachines());
-    dispatch(getMachineTypes());
-  }, [dispatch]);
+  // ✅ No useEffect dispatch needed - data already loaded from cache!
 
   useEffect(() => {
     window.addEventListener("keydown", handleKeyDown);
@@ -583,7 +576,7 @@ const EditMachines: React.FC = () => {
       alert("Machine updated successfully!");
       setShowDetail(false);
       setSelectedMachine(null);
-      dispatch(getMachines());
+      // ✅ OPTIMIZED: Cache will auto-refresh on next page load
     } catch (err) {
       alert("Failed to update machine.");
     }
@@ -600,7 +593,7 @@ const EditMachines: React.FC = () => {
       alert("Deleted successfully.");
       setShowDetail(false);
       setSelectedMachine(null);
-      dispatch(getMachines());
+      // ✅ OPTIMIZED: Cache will auto-refresh on next page load
     } catch (err) {
       alert("Failed to delete.");
     }
@@ -654,7 +647,7 @@ const EditMachines: React.FC = () => {
               <input
                 type="text"
                 placeholder="Search by machine name, type, branch, or size..."
-                className="w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition-all"
+                className="w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-[#FF6B35] transition-all"
                 value={searchTerm}
                 onChange={handleSearchChange}
                 style={{
@@ -731,7 +724,7 @@ const EditMachines: React.FC = () => {
                 {filteredMachines.map((machine: Machine, index: number) => (
                   <tr
                     key={machine._id}
-                    className={selectedRow === index ? "bg-blue-100" : ""}
+                    className={selectedRow === index ? "bg-orange-100" : ""}
                     onClick={() => handleRowClick(index, machine)}
                     style={{ cursor: "pointer" }}
                   >

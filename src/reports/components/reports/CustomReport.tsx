@@ -499,7 +499,7 @@ export function CustomReport() {
           <YAxis stroke="#64748b" />
           <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #e2e8f0' }} />
           <Legend />
-          <Bar dataKey={valueKey} fill="#3b82f6" radius={[4, 4, 0, 0]} />
+          <Bar dataKey={valueKey} fill="#FF6B35" radius={[4, 4, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     );
@@ -522,7 +522,7 @@ export function CustomReport() {
           <YAxis stroke="#64748b" />
           <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #e2e8f0' }} />
           <Legend />
-          <Line type="monotone" dataKey={valueKey} stroke="#3b82f6" strokeWidth={2} />
+          <Line type="monotone" dataKey={valueKey} stroke="#FF6B35" strokeWidth={2} />
         </LineChart>
       </ResponsiveContainer>
     );
@@ -537,7 +537,7 @@ export function CustomReport() {
     const labelKey = keys[0];
     const valueKey = keys.find(k => typeof data[0][k] === 'number') || keys[1];
 
-    const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+    const COLORS = ['#FF6B35', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
     const pieData = data.map((item: any, index) => ({
       name: item[labelKey],
@@ -574,8 +574,8 @@ export function CustomReport() {
       <div className="flex flex-col gap-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <ReportIcon className="w-6 h-6 text-blue-600" />
+            <div className="p-2 bg-orange-100 rounded-lg">
+              <ReportIcon className="w-6 h-6 text-[#FF6B35]" />
             </div>
             <div>
               <h2 className="text-slate-900">{reportInfo.title}</h2>

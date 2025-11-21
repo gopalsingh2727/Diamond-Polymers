@@ -2,12 +2,13 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { BackButton } from "../../../allCompones/BackButton"; 
+import { BackButton } from "../../../allCompones/BackButton";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import "../Dispatch/Dispatch.css";
 import { fetchOrders } from "../../../redux/oders/OdersActions";
 import { RootState } from "../../../../store";
+import { useFormDataCache } from "../Edit/hooks/useFormDataCache";  // ✅ ADDED
 
 
 interface Order {
@@ -101,6 +102,7 @@ interface OrderFilters {
   startDate?: string;
   endDate?: string;
   search?: string;
+  orderTypeId?: string;  // ✅ ADDED: Order type filter
 }
 
 const defaultOrdersState = {
@@ -124,6 +126,7 @@ export default function DayBook() {
   const [showPeriodModal, setShowPeriodModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [orderTypeFilter, setOrderTypeFilter] = useState("");  // ✅ ADDED: Order type filter
   const [currentPage, setCurrentPage] = useState(1);
   const [limit, setLimit] = useState(50);
 
@@ -139,14 +142,17 @@ export default function DayBook() {
 
   const authState = useSelector((state: RootState) => state.auth);
 
-  const { 
-    orders: reduxOrders = [], 
-    loading = false, 
-    error = null, 
+  const {
+    orders: reduxOrders = [],
+    loading = false,
+    error = null,
     pagination = null,
     summary = null,
-    statusCounts = null 
+    statusCounts = null
   } = ordersState;
+
+  // ✅ ADDED: Get order types from cache
+  const { orderTypes = [] } = useFormDataCache();
 
   // Company info
   const companyName = authState?.user?.companyName || "ABC Company";
@@ -156,7 +162,7 @@ export default function DayBook() {
   function getStatusColor(status: string): string {
     const colors: Record<string, string> = {
       'pending': '#f59e0b',
-      'in-progress': '#3b82f6',
+      'in-progress': '#FF6B35',
       'completed': '#10b981',
       'cancelled': '#ef4444',
       'on-hold': '#6b7280',
@@ -243,6 +249,7 @@ export default function DayBook() {
     if (toDate) filters.endDate = toDate;
     if (searchTerm) filters.search = searchTerm;
     if (statusFilter) filters.status = statusFilter;
+    if (orderTypeFilter) filters.orderTypeId = orderTypeFilter;  // ✅ ADDED
 
     return filters;
   };
@@ -317,7 +324,32 @@ export default function DayBook() {
       materialId: order.material?._id || order.materialId || '',
       materialType: order.material?.materialTypeName || '',
       materialName: order.material?.materialName || '',
-      
+
+      // ✅ Product Spec information - ADDED
+      productSpec: (order as any).productSpec || null,
+      productSpecId: (order as any).productSpec?._id || (order as any).productSpecId || '',
+      product: (order as any).productSpec ? {
+        _id: (order as any).productSpec._id,
+        productName: (order as any).productSpec.productName,
+        productCode: (order as any).productSpec.productCode,
+        description: (order as any).productSpec.description,
+        width: (order as any).productSpec.width,
+        height: (order as any).productSpec.height,
+        thickness: (order as any).productSpec.thickness,
+        weight: (order as any).productSpec.weight,
+        category: (order as any).productSpec.category
+      } : null,
+      productName: (order as any).productSpec?.productName || '',
+      productType: (order as any).productSpec?.category || '',
+
+      // ✅ Material Spec information - ADDED
+      materialSpec: (order as any).materialSpec || null,
+      materialSpecId: (order as any).materialSpec?._id || (order as any).materialSpecId || '',
+
+      // ✅ Order Type information - ADDED
+      orderType: (order as any).orderType || null,
+      orderTypeId: (order as any).orderType?._id || (order as any).orderTypeId || '',
+
       // Physical specifications
       materialWeight: order.materialWeight || 0,
       Width: order.Width || 0,
@@ -397,11 +429,11 @@ export default function DayBook() {
     });
   };
 
-  // Effect hooks
+  // Effect hooks - Fetch orders
   useEffect(() => {
     console.log("🔄 useEffect triggered - fetching orders");
     fetchOrdersData();
-  }, [dispatch, currentPage, limit, fromDate, toDate, searchTerm, statusFilter]);
+  }, [dispatch, currentPage, limit, fromDate, toDate, searchTerm, statusFilter, orderTypeFilter]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -410,7 +442,7 @@ export default function DayBook() {
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [currentPage, limit, fromDate, toDate, searchTerm, statusFilter]);
+  }, [currentPage, limit, fromDate, toDate, searchTerm, statusFilter, orderTypeFilter]);  // ✅ ADDED orderTypeFilter
 
   useEffect(() => {
     if (scrollWrapperRef.current) {
@@ -460,6 +492,7 @@ export default function DayBook() {
     setToDate('');
     setSearchTerm('');
     setStatusFilter('');
+    setOrderTypeFilter('');  // ✅ ADDED
     setCurrentPage(1);
   };
 
@@ -669,9 +702,9 @@ export default function DayBook() {
 
           <div >
             <label>Status:
-              <select 
+              <select
                 style={{background:"#fff", color:"#000"}}
-                value={statusFilter} 
+                value={statusFilter}
                 onChange={e => handleStatusFilter(e.target.value)}
                 className="ml-2 px-2 py-1 border rounded"
               >
@@ -682,6 +715,25 @@ export default function DayBook() {
                 <option value="cancelled">Cancelled</option>
                 <option value="on-hold">On Hold</option>
                 <option value="Wait for Approval">Wait for Approval</option>
+              </select>
+            </label>
+          </div>
+
+          {/* ✅ ADDED: Order Type Filter */}
+          <div>
+            <label>Order Type:
+              <select
+                style={{background:"#fff", color:"#000"}}
+                value={orderTypeFilter}
+                onChange={e => setOrderTypeFilter(e.target.value)}
+                className="ml-2 px-2 py-1 border rounded"
+              >
+                <option value="">All Types</option>
+                {Array.isArray(orderTypes) && orderTypes.map((type: any) => (
+                  <option key={type._id} value={type._id}>
+                    {type.typeName} ({type.typeCode})
+                  </option>
+                ))}
               </select>
             </label>
           </div>
@@ -760,17 +812,23 @@ export default function DayBook() {
                   <div
                     ref={el => ordersRef.current[index] = el}
                     className={`orderItem  ordersTable ${selectedOrderIndex === index ? "selected" : ""}`}
-                    onClick={() => setSelectedOrderIndex(index)}
+                    onClick={() => {
+                      setSelectedOrderIndex(index);
+                      // Toggle expand on single click
+                      setExpandedOrder(expandedOrder === index ? null : index);
+                    }}
                     onDoubleClick={() => handleOrderClick(order)}
                     style={{ cursor: "pointer" }}
                   >
-                    <span>{order.date || 'N/A'}</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      {expandedOrder === index ? '▼' : '▶'} {order.date || 'N/A'}
+                    </span>
                     <span>{order.orderId || 'N/A'}</span>
                     <span>{order.companyName || 'N/A'}</span>
                     <span>{order.status || 'Unknown'}</span>
                     <span>{order.materialWeight || 'N/A'}</span>
                     <span>
-                      {order.Width && order.Height && order.Thickness 
+                      {order.Width && order.Height && order.Thickness
                         ? `${order.Width}×${order.Height}×${order.Thickness}`
                         : 'N/A'
                       }
@@ -778,28 +836,97 @@ export default function DayBook() {
                   </div>
 
                   {expandedOrder === index && (
-                    <div className="status-list">
-                      {order.AllStatus && Object.entries(order.AllStatus).map(([status, { color, description }]) => (
-                        <div 
-                          key={status} 
-                          className="status-item p-2 m-1 rounded text-white text-sm"
-                          style={{ backgroundColor: color }}
-                        >
-                          <strong>{status}:</strong> <span>{description}</span>
+                    <div className="status-list" style={{ backgroundColor: '#f9fafb', padding: '16px', margin: '8px 0', borderRadius: '8px' }}>
+                      {/* Order Status */}
+                      {order.AllStatus && Object.entries(order.AllStatus).length > 0 && (
+                        <div className="mb-3">
+                          <strong className="block mb-2 text-sm text-gray-700">Status History:</strong>
+                          <div className="flex flex-wrap gap-2">
+                            {Object.entries(order.AllStatus).map(([status, { color, description }]) => (
+                              <div
+                                key={status}
+                                className="status-item p-2 rounded text-white text-xs"
+                                style={{ backgroundColor: color }}
+                              >
+                                <strong>{status}:</strong> <span>{description}</span>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      ))}
-                      <div className="p-2 text-xs text-gray-600">
-                        <div>Steps: {order.completedSteps || 0}/{order.totalSteps || 0}</div>
-                        <div>Machines: {order.totalMachines || 0}</div>
-                        <div>Branch: {order.branch?.name || 'N/A'} ({order.branch?.code || 'N/A'})</div>
-                        <div>Created: {order.createdAt ? new Date(order.createdAt).toLocaleString() : 'N/A'}</div>
-                        <div>Created By: {order.createdByRole || 'N/A'}</div>
-                        {order.SealingType && <div>Sealing: {order.SealingType}</div>}
-                        {order.BottomGusset && <div>Bottom Gusset: {order.BottomGusset}</div>}
-                        {order.Flap && <div>Flap: {order.Flap}</div>}
-                        {order.AirHole && <div>Air Hole: {order.AirHole}</div>}
-                        {order.Printing && <div>Printing: Yes</div>}
-                        {order.Notes && <div>Notes: {order.Notes}</div>}
+                      )}
+
+                      {/* Customer & Order Info */}
+                      <div className="grid grid-cols-2 gap-4 mb-3 text-sm">
+                        <div>
+                          <strong className="text-gray-700">📋 Order Information</strong>
+                          <div className="mt-1 space-y-1 text-xs text-gray-600">
+                            <div><strong>Order ID:</strong> {order.orderId || 'N/A'}</div>
+                            <div><strong>Customer:</strong> {order.companyName || 'N/A'}</div>
+                            {order.customer?.contactPerson && <div><strong>Contact:</strong> {order.customer.contactPerson}</div>}
+                            {order.customer?.phoneNumber && <div><strong>Phone:</strong> {order.customer.phoneNumber}</div>}
+                            {order.orderType && order.orderType[0] && (
+                              <div><strong>Order Type:</strong> {order.orderType[0].typeName} ({order.orderType[0].typeCode})</div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div>
+                          <strong className="text-gray-700">📦 Material & Product</strong>
+                          <div className="mt-1 space-y-1 text-xs text-gray-600">
+                            {order.material?.materialName && <div><strong>Material:</strong> {order.material.materialName}</div>}
+                            {order.materialType && <div><strong>Material Type:</strong> {order.materialType}</div>}
+                            <div><strong>Weight:</strong> {order.materialWeight || 'N/A'} kg</div>
+                            {order.product?.productName && <div><strong>Product:</strong> {order.product.productName}</div>}
+                            {order.productType && <div><strong>Product Type:</strong> {order.productType}</div>}
+                            {order.Width && order.Height && (
+                              <div><strong>Dimensions:</strong> {order.Width} × {order.Height} {order.Thickness ? `× ${order.Thickness}` : ''}</div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Product Specifications */}
+                      <div className="grid grid-cols-2 gap-4 mb-3 text-sm">
+                        <div>
+                          <strong className="text-gray-700">🔧 Product Specifications</strong>
+                          <div className="mt-1 space-y-1 text-xs text-gray-600">
+                            {order.SealingType && <div><strong>Sealing:</strong> {order.SealingType}</div>}
+                            {order.BottomGusset && <div><strong>Bottom Gusset:</strong> {order.BottomGusset}</div>}
+                            {order.Flap && <div><strong>Flap:</strong> {order.Flap}</div>}
+                            {order.AirHole && <div><strong>Air Hole:</strong> {order.AirHole}</div>}
+                            {order.Printing && <div><strong>Printing:</strong> Yes</div>}
+                          </div>
+                        </div>
+
+                        <div>
+                          <strong className="text-gray-700">⚙️ Production Progress</strong>
+                          <div className="mt-1 space-y-1 text-xs text-gray-600">
+                            <div><strong>Steps:</strong> {order.completedSteps || 0}/{order.totalSteps || 0}</div>
+                            <div><strong>Machines:</strong> {order.totalMachines || 0}</div>
+                            <div><strong>Progress:</strong> {order.progressPercentage || 0}%</div>
+                            <div><strong>Branch:</strong> {order.branch?.name || 'N/A'} ({order.branch?.code || 'N/A'})</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Timestamps & Notes */}
+                      <div className="text-xs text-gray-600 border-t pt-2">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <div><strong>Created:</strong> {order.createdAt ? new Date(order.createdAt).toLocaleString() : 'N/A'}</div>
+                            <div><strong>Created By:</strong> {order.createdByRole || 'N/A'}</div>
+                          </div>
+                          {order.Notes && (
+                            <div>
+                              <strong>Notes:</strong> {order.Notes}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Double-click hint */}
+                      <div className="text-xs text-gray-400 italic mt-2 text-center">
+                        💡 Double-click order row to edit
                       </div>
                     </div>
                   )}
@@ -881,7 +1008,7 @@ export default function DayBook() {
               </button>
               <button 
                 onClick={handleDateFilter} 
-                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                className="bg-[#FF6B35] text-white px-4 py-2 rounded hover:bg-[#E55A2B]"
               >
                 Apply
               </button>

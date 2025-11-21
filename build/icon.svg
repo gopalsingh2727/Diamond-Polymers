@@ -1,0 +1,75 @@
+<svg width="180" height="180" viewBox="0 0 180 180" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="fireGradient" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#FF6B35" />
+      <stop offset="50%" stop-color="#FFA500" />
+      <stop offset="100%" stop-color="#FFD700" />
+    </linearGradient>
+  </defs>
+  <g transform="scale(-1, 1) translate(-180, 0)">
+    <!-- Eagle Head - Side Profile -->
+    <path
+      d="M50 90
+         C50 50 80 20 120 25
+         C140 28 155 40 160 60
+         C162 70 158 80 150 85
+         L140 88
+         C145 92 148 98 145 105
+         C142 112 135 115 125 112
+         L115 108
+         C110 115 100 118 90 115
+         C75 110 60 100 50 90"
+      fill="url(#fireGradient)"
+    />
+
+    <!-- White Head (Bald Eagle style) -->
+    <path
+      d="M60 85
+         C60 55 85 30 115 32
+         C135 34 150 45 154 62
+         C156 72 152 80 145 84
+         L135 86
+         C130 82 120 80 110 82
+         C95 85 75 85 60 85"
+      fill="#FFF"
+      opacity="0.9"
+    />
+
+    <!-- Fierce Eye -->
+    <circle cx="105" cy="55" r="8" fill="#000" />
+    <circle cx="103" cy="52" r="3" fill="#FFF" />
+
+    <!-- Eye ridge - Angry look -->
+    <path d="M90 45 C100 42 110 45 115 50" stroke="#8B4513" stroke-width="4" fill="none" />
+
+    <!-- Hooked Beak - Eagle Signature -->
+    <path
+      d="M145 84
+         C155 82 165 88 168 95
+         C170 100 168 108 162 112
+         C155 118 145 118 140 112
+         L135 105
+         C140 100 142 92 145 84"
+      fill="#FFD700"
+    />
+
+    <!-- Beak detail -->
+    <path
+      d="M150 95
+         C158 93 164 98 165 105
+         C166 110 162 115 155 115
+         L148 110"
+      fill="#CC8800"
+    />
+
+    <!-- Neck feathers -->
+    <path
+      d="M90 115
+         C100 120 110 118 115 108
+         L110 125
+         C100 135 85 135 75 125
+         C65 115 60 105 60 95"
+      fill="url(#fireGradient)"
+    />
+  </g>
+</svg>

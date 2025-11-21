@@ -14,7 +14,7 @@ console.log(userRole);
   const allMenuItems = [
     { name: "Create", path: "/menu/indexcreateroute" },
     { name: "Edit", path: "/menu/edit" },
-    { name: "Examples", path: "/menu/examples" }, // ✨ Edit section examples
+
     { name: "Create Orders", path: "/menu/orderform" },
     { name: "Day Book", path: "/menu/daybook" },
     { name: "Dispatch", path: "/menu/dispatch" },

@@ -2,23 +2,25 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   addMaterialCategory,
-  getMaterialCategories,
 } from "../../../../redux/create/Materials/MaterialsCategories/MaterialsCategoriesActions";
 import { RootState } from "../../../../redux/rootReducer";
 import { AppDispatch } from "../../../../../store";
-import "./materialsCategories.css";
+import { useFormDataCache } from '../../Edit/hooks/useFormDataCache';
+import "../CreateStep/createStep.css";
+import "../../CreateOders/CreateOders.css";
 
 const MaterialsCategories = () => {
   const [categoryName, setCategoryName] = useState("");
   const dispatch = useDispatch<AppDispatch>();
 
-  const { categories, loading, error, success } = useSelector(
+  // 🚀 OPTIMIZED: Get data from cached form data (no API calls!)
+  const { materialTypes: categories, loading: cacheLoading } = useFormDataCache();
+
+  const { loading, error, success } = useSelector(
     (state: RootState) => state.materialCategories
   );
 
-  useEffect(() => {
-    dispatch(getMaterialCategories());
-  }, [dispatch]);
+  // ✅ No API calls needed - data comes from useFormDataCache!
 
   const handleAddCategory = () => {
     if (!categoryName.trim()) return;
@@ -27,36 +29,33 @@ const MaterialsCategories = () => {
   };
 
   return (
-    <div className="form-grid">
-      <h2 className="input-label">Material Categories</h2>
+    <div className="create-step-container">
+      <div className="step-form-wrapper">
+        <h2 className="form-title">Material Categories</h2>
 
-      <div className="form-column">
-        <div className="form-input-group">
+        <div className="step-name-group">
+          <label className="form-label">Category Name *</label>
           <input
+            type="text"
             value={categoryName}
             onChange={(e) => setCategoryName(e.target.value)}
-            className="form-input"
+            className="createDivInput createDivInputwidth"
             placeholder="Enter category name"
           />
         </div>
+
         <button
           onClick={handleAddCategory}
           className="save-button"
           disabled={loading || !categoryName.trim()}
         >
-          {loading ? "Adding..." : "Add"}
+          {loading ? "Adding..." : "Add Category"}
         </button>
+
         {error && <div className="error-msg">{error}</div>}
         {success && <div className="success-msg">Category added!</div>}
-      </div>
 
-      <div className="form-column">
-        <h3 className="input-label">Category List</h3>
-        <ul>
-          {categories.map((cat: any) => (
-            <li key={cat._id}>{cat.materialTypeName}</li>
-          ))}
-        </ul>
+ 
       </div>
     </div>
   );

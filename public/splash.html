@@ -2,88 +2,258 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Loading App</title>
+  <title>27 Manufacturing</title>
   <style>
     body {
       margin: 0;
       padding: 0;
-      background: #fff;
+      background: #030712;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
       height: 100vh;
-      font-family: 'Pacifico', cursive;
-      color: #000;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: #fff;
+      overflow: hidden;
     }
 
-    img.logo {
+    /* Background glow */
+    .glow {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 300px;
+      height: 300px;
+      background: rgba(255, 107, 53, 0.15);
+      border-radius: 50%;
+      filter: blur(80px);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .glow-secondary {
+      width: 200px;
+      height: 200px;
+      background: rgba(255, 165, 0, 0.1);
+      animation-delay: 0.5s;
+    }
+
+    /* Eagle logo container */
+    .eagle-container {
+      position: relative;
+      z-index: 10;
+      margin-bottom: 24px;
+    }
+
+    .eagle-logo {
       width: 120px;
-      height: auto;
-      max-height: 120px;
-      margin-bottom: 30px;
-      animation: fadeIn 2s ease-out forwards;
+      height: 120px;
+      filter: drop-shadow(0 0 20px rgba(255, 107, 53, 0.8));
+      animation: eagleGlow 2.5s ease-in-out infinite;
     }
 
-    .handwrite {
-      width: 80%;
-      max-width: 600px;
-      height: auto;
-      margin: 0 auto;
+    /* Flame animations */
+    .flame {
+      animation: flameFlicker 0.5s ease-in-out infinite alternate;
     }
 
-    path {
-      fill: none;
-      stroke: #000;
-      stroke-width: 2;
-      stroke-dasharray: 1000;
-      stroke-dashoffset: 1000;
-      animation: draw 4s forwards ease-in-out;
+    .flame-1 {
+      animation-delay: 0s;
     }
 
-    .loader {
+    .flame-2 {
+      animation-delay: 0.15s;
+    }
+
+    .flame-3 {
+      animation-delay: 0.3s;
+    }
+
+    /* Brand text */
+    .brand {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .brand h1 {
       font-size: 1.5rem;
-      margin-top: 30px;
-      opacity: 0;
-      animation: fadeIn 1s 3s forwards;
+      font-weight: bold;
+      background: linear-gradient(90deg, #FF6B35, #FFA500, #FF6B35);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin: 0 0 8px 0;
     }
 
-    @keyframes draw {
-      to {
-        stroke-dashoffset: 0;
+    .brand p {
+      font-size: 0.75rem;
+      color: rgba(255, 255, 255, 0.6);
+      margin: 0;
+    }
+
+    /* Progress bar */
+    .progress-container {
+      position: relative;
+      z-index: 10;
+      width: 120px;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #FF6B35, #FFA500);
+      border-radius: 3px;
+      animation: progress 2.5s ease-out forwards;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+      50% { opacity: 0.7; transform: translate(-50%, -50%) scale(1.05); }
+    }
+
+    @keyframes eagleGlow {
+      0%, 100% {
+        filter: drop-shadow(0 0 20px rgba(255, 107, 53, 0.6));
+        transform: scaleX(-1) scale(1);
+      }
+      50% {
+        filter: drop-shadow(0 0 40px rgba(255, 107, 53, 0.9)) drop-shadow(0 0 60px rgba(255, 165, 0, 0.5));
+        transform: scaleX(-1) scale(1.02);
       }
     }
 
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
+    @keyframes flameFlicker {
+      0% {
+        opacity: 0.6;
+        transform: translateY(0) scaleY(1);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(-5px) scaleY(1.3);
+      }
+    }
+
+    @keyframes progress {
+      from { width: 0%; }
+      to { width: 100%; }
     }
   </style>
-
-  <!-- Handwritten font -->
-  <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
 </head>
 <body>
-  <!-- Logo image -->
-  <img src="./logo.png" alt="Logo" class="logo" />
+  <!-- Background glow effects -->
+  <div class="glow"></div>
+  <div class="glow glow-secondary"></div>
 
-  <!-- SVG handwriting animation (placeholder path) -->
-  <svg class="handwrite" viewBox="0 0 500 100">
-    <path d="M10,60
-      C20,20 40,20 50,60
-      S80,100 90,60
-      S120,20 130,60
-      S160,100 170,60
-      S200,20 210,60
-      S240,100 250,60
-      S280,20 290,60
-      S320,100 330,60
-      S360,20 370,60
-      S400,100 410,60
-      S440,20 450,60" />
-  </svg>
+  <!-- Eagle Logo - Same as InfinityLoader -->
+  <div class="eagle-container">
+    <svg class="eagle-logo" viewBox="0 0 180 180">
+      <defs>
+        <linearGradient id="fireGradient" x1="0%" y1="100%" x2="0%" y2="0%">
+          <stop offset="0%" stop-color="#FF6B35" />
+          <stop offset="50%" stop-color="#FFA500" />
+          <stop offset="100%" stop-color="#FFD700" />
+        </linearGradient>
+      </defs>
 
-  <!-- Launch message -->
-  <div class="loader">DIAMOND POLYMERS</div>
+      <!-- Eagle Head - Side Profile -->
+      <path
+        d="M50 90
+           C50 50 80 20 120 25
+           C140 28 155 40 160 60
+           C162 70 158 80 150 85
+           L140 88
+           C145 92 148 98 145 105
+           C142 112 135 115 125 112
+           L115 108
+           C110 115 100 118 90 115
+           C75 110 60 100 50 90"
+        fill="url(#fireGradient)"
+      />
+
+      <!-- White Head (Bald Eagle style) -->
+      <path
+        d="M60 85
+           C60 55 85 30 115 32
+           C135 34 150 45 154 62
+           C156 72 152 80 145 84
+           L135 86
+           C130 82 120 80 110 82
+           C95 85 75 85 60 85"
+        fill="#FFF"
+        opacity="0.9"
+      />
+
+      <!-- Fierce Eye -->
+      <circle cx="105" cy="55" r="8" fill="#000" />
+      <circle cx="103" cy="52" r="3" fill="#FFF" />
+
+      <!-- Eye ridge - Angry look -->
+      <path d="M90 45 C100 42 110 45 115 50" stroke="#8B4513" stroke-width="4" fill="none" />
+
+      <!-- Hooked Beak - Eagle Signature -->
+      <path
+        d="M145 84
+           C155 82 165 88 168 95
+           C170 100 168 108 162 112
+           C155 118 145 118 140 112
+           L135 105
+           C140 100 142 92 145 84"
+        fill="#FFD700"
+      />
+
+      <!-- Beak detail -->
+      <path
+        d="M150 95
+           C158 93 164 98 165 105
+           C166 110 162 115 155 115
+           L148 110"
+        fill="#CC8800"
+      />
+
+      <!-- Neck feathers -->
+      <path
+        d="M90 115
+           C100 120 110 118 115 108
+           L110 125
+           C100 135 85 135 75 125
+           C65 115 60 105 60 95"
+        fill="url(#fireGradient)"
+      />
+
+      <!-- Fire effect around -->
+      <path
+        d="M55 120 Q45 135 55 150 Q50 135 65 125 Z"
+        fill="#FF6B35"
+        class="flame flame-1"
+      />
+      <path
+        d="M75 130 Q65 148 78 158 Q70 145 85 135 Z"
+        fill="#FFA500"
+        class="flame flame-2"
+      />
+      <path
+        d="M95 128 Q88 145 98 155 Q90 140 105 132 Z"
+        fill="#FF6B35"
+        class="flame flame-3"
+      />
+    </svg>
+  </div>
+
+  <!-- Brand text -->
+  <div class="brand">
+    <h1>27 Manufacturing</h1>
+    <p>Starting Application...</p>
+  </div>
+
+  <!-- Progress bar -->
+  <div class="progress-container">
+    <div class="progress-bar"></div>
+  </div>
 </body>
 </html>

@@ -1,12 +1,11 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import "./EditMachineyType.css";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import {
-  getAllMachineTypes,
   updateMachineType,
   deleteMachineType,
 } from "../../../../redux/create/machineType/machineTypeActions";
-import { RootState } from "../../../../redux/rootReducer";
+import { useFormDataCache } from "../hooks/useFormDataCache";
 import { AppDispatch } from "../../../../../store";
 
 interface Branch {
@@ -39,9 +38,19 @@ interface MachineType {
 
 const EditMachineType: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { items: machineTypes = [], loading, error } = useSelector(
-    (state: RootState) => state.machineTypeList || {}
-  );
+
+  // 🚀 OPTIMIZED: Get data from cached form data (no API calls!)
+  const { machineTypes: cachedMachineTypes, machines: cachedMachines, loading, error } = useFormDataCache();
+
+  // Group machines by machine type
+  const machineTypes = useMemo(() => {
+    return cachedMachineTypes.map((type: any) => ({
+      ...type,
+      machines: cachedMachines.filter((machine: any) =>
+        (machine.machineType?._id === type._id || machine.machineTypeId === type._id)
+      )
+    }));
+  }, [cachedMachineTypes, cachedMachines]);
 
   const [selectedRow, setSelectedRow] = useState(0);
   const [showDetail, setShowDetail] = useState(false);
@@ -89,9 +98,7 @@ const EditMachineType: React.FC = () => {
     [filteredMachineTypes, selectedRow, showDetail]
   );
 
-  useEffect(() => {
-    dispatch(getAllMachineTypes());
-  }, [dispatch]);
+  // ✅ No useEffect dispatch needed - data already loaded from cache!
 
   useEffect(() => {
     window.addEventListener("keydown", handleKeyDown);
@@ -115,7 +122,7 @@ const EditMachineType: React.FC = () => {
       await dispatch(updateMachineType(editId, editType, editDescription));
       alert("Machine Type updated successfully!");
       setShowDetail(false);
-      dispatch(getAllMachineTypes()); // Refresh list
+      // ✅ OPTIMIZED: Cache will auto-refresh on next page load
     } catch (err) {
       alert("Failed to update Machine Type.");
     }
@@ -131,7 +138,7 @@ const EditMachineType: React.FC = () => {
       await dispatch(deleteMachineType(editId));
       alert("Deleted successfully.");
       setShowDetail(false);
-      dispatch(getAllMachineTypes());
+      // ✅ OPTIMIZED: Cache will auto-refresh on next page load
     } catch (err) {
       alert("Failed to delete.");
     }

@@ -81,10 +81,10 @@ export function OrdersReport() {
   // Status distribution data
   const statusData = [
     { name: "Completed", value: completedOrders, color: "#10b981" },
-    { name: "In Progress", value: inProgressOrders, color: "#3b82f6" },
+    { name: "In Progress", value: inProgressOrders, color: "#FF6B35" },
     { name: "Pending", value: pendingOrders, color: "#f59e0b" },
-    { name: "Dispatched", value: dispatchedOrders, color: "#8b5cf6" },
-    { name: "Wait for Approval", value: waitingApprovalOrders, color: "#6366f1" },
+    { name: "Dispatched", value: dispatchedOrders, color: "#FFA500" },
+    { name: "Wait for Approval", value: waitingApprovalOrders, color: "#FF6B35" },
     { name: "Cancelled", value: cancelledOrders, color: "#ef4444" }
   ].filter(d => d.value > 0);
 
@@ -92,17 +92,17 @@ export function OrdersReport() {
   const priorityData = [
     { name: "Urgent", value: urgentOrders, color: "#dc2626" },
     { name: "High", value: highOrders, color: "#f59e0b" },
-    { name: "Normal", value: normalOrders, color: "#3b82f6" },
+    { name: "Normal", value: normalOrders, color: "#FF6B35" },
     { name: "Low", value: lowOrders, color: "#64748b" }
   ].filter(d => d.value > 0);
 
-  const COLORS = ["#10b981", "#3b82f6", "#f59e0b", "#8b5cf6", "#6366f1", "#ef4444"];
+  const COLORS = ["#10b981", "#FF6B35", "#f59e0b", "#FFA500", "#FF6B35", "#ef4444"];
 
   // Get status badge
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { variant: "default" | "secondary" | "destructive" | "outline", icon: any, className: string }> = {
       completed: { variant: "default", icon: CheckCircle, className: "bg-green-100 text-green-800 hover:bg-green-100" },
-      in_progress: { variant: "default", icon: Clock, className: "bg-blue-100 text-blue-800 hover:bg-blue-100" },
+      in_progress: { variant: "default", icon: Clock, className: "bg-orange-100 text-orange-800 hover:bg-orange-100" },
       pending: { variant: "default", icon: AlertCircle, className: "bg-yellow-100 text-yellow-800 hover:bg-yellow-100" },
       dispatched: { variant: "default", icon: TrendingUp, className: "bg-purple-100 text-purple-800 hover:bg-purple-100" },
       cancelled: { variant: "destructive", icon: XCircle, className: "bg-red-100 text-red-800 hover:bg-red-100" },
@@ -125,7 +125,7 @@ export function OrdersReport() {
     const priorityConfig: Record<string, { className: string }> = {
       urgent: { className: "bg-red-100 text-red-800 hover:bg-red-100" },
       high: { className: "bg-orange-100 text-orange-800 hover:bg-orange-100" },
-      normal: { className: "bg-blue-100 text-blue-800 hover:bg-blue-100" },
+      normal: { className: "bg-orange-100 text-orange-800 hover:bg-orange-100" },
       low: { className: "bg-slate-100 text-slate-800 hover:bg-slate-100" }
     };
 
@@ -251,7 +251,7 @@ export function OrdersReport() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm">In Progress</CardTitle>
-            <Clock className="h-4 w-4 text-blue-600" />
+            <Clock className="h-4 w-4 text-[#FF6B35]" />
           </CardHeader>
           <CardContent>
             <div className="text-slate-900">{inProgressOrders}</div>
@@ -319,7 +319,7 @@ export function OrdersReport() {
                 <Tooltip
                   contentStyle={{ backgroundColor: '#fff', border: '1px solid #e2e8f0' }}
                 />
-                <Bar dataKey="value" fill="#3b82f6" radius={[4, 4, 0, 0]}>
+                <Bar dataKey="value" fill="#FF6B35" radius={[4, 4, 0, 0]}>
                   {priorityData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}

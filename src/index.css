@@ -1,18 +1,31 @@
+/* CRUD System Animations - Must be first */
+@import './styles/animations.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* CRUD System Animations */
-@import './styles/animations.css';
 
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
-  
-  
+  /* Orange Manufacturing Theme - Light Mode */
+  --color-primary: #FF6B35;
+  --color-primary-hover: #E55A2B;
+  --color-secondary: #FFA500;
+  --color-secondary-hover: #E69500;
+
+  --color-background: #FFFFFF;
+  --color-surface: #F9FAFB;
+  --color-text: #1F2937;
+  --color-text-muted: #6B7280;
+  --color-border: #E5E7EB;
+
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+  --color-info: #3B82F6;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -20,6 +33,16 @@
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
 }
+
+/* Dark Mode Variables */
+.dark {
+  --color-background: #030712;
+  --color-surface: #111827;
+  --color-text: #F9FAFB;
+  --color-text-muted: #9CA3AF;
+  --color-border: #374151;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -28,40 +51,31 @@
 
 html, body {
   height: auto;
-  color: #000;
-  background-color: #fff;
   width: auto;
   overflow: hidden;
-
   flex-direction: column;
   justify-content: center;
-
 }
 
 body {
-
+  color: var(--color-text);
+  background-color: var(--color-background);
   justify-content: center;
   align-items: center;
-  background-color :98F9FF;
   padding: 0;
-  color: #1a1a1a;
-  
+  margin: 0;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-
+/* Links */
 a {
   font-weight: 500;
-  color: #646cff;
+  color: var(--color-primary);
   text-decoration: inherit;
 }
+
 a:hover {
-  color: #535bf2;
-}
-
-body {
- margin: 0;
-padding: 0;
-
+  color: var(--color-primary-hover);
 }
 
 h1 {
@@ -69,25 +83,221 @@ h1 {
   line-height: 1.1;
 }
 
-
+/* Buttons - Orange Theme */
 button {
   font-family: inherit;
   font-weight: 500;
-  color: #fff;
-  background-color: #646cff;
+  color: #fff ;
+  background-color: var(--color-primary);
   border-radius: 6px;
   padding: 0.5em 1em;
   border: none;
   cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+button:hover {
+  background-color: var(--color-primary-hover);
+}
+
+/* Loading and Error States */
+.loadingAndError {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 80vh;
+  text-align: center;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-surface);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-primary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary-hover);
+}
+
+/* Selection Color */
+::selection {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+/* Focus Ring */
+*:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Gradient Text Utility */
+.text-gradient {
+  background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Card Styles */
+.card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.card:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 20px rgba(255, 107, 53, 0.1);
+}
+
+/* Input Styles - Bottom border only with bottom radius */
+
+input, select, textarea {
+   
+  color: var(--color-text);
+ 
+   
+
+
+  transition: all 0.2s ease;
+}
+
+input:focus, select:focus, textarea:focus {
+  border: none !important;
+  border-bottom: 2px solid var(--color-primary) !important;
+  color: var(--color-text);
+  outline: none;
+}
+
+/* Table Styles */
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+th {
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  font-weight: 600;
+  text-align: left;
+  padding: 12px;
+  border-bottom: 2px solid var(--color-primary);
+}
+
+td {
+  padding: 12px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+tr:hover {
+  background-color: rgba(255, 107, 53, 0.05);
+}
+
+/* Badge/Tag Styles */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25em 0.75em;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.badge-primary {
+  background-color: rgba(255, 107, 53, 0.1);
+  color: var(--color-primary);
+}
+
+.badge-success {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: var(--color-success);
+}
+
+.badge-warning {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: var(--color-warning);
+}
+
+.badge-error {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--color-error);
+}
+
+/* Orange Pulse Animation for Voice Input */
+@keyframes pulse-orange {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 107, 0, 0.7);
+    transform: scale(1.1);
+  }
+  50% {
+    box-shadow: 0 0 0 15px rgba(255, 107, 0, 0);
+    transform: scale(1.15);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 107, 0, 0);
+    transform: scale(1.1);
+  }
 }
 
 
-.loadingAndError {
-  display: flex;
-  justify-content: center; /* horizontal center */
-  align-items: center;     /* vertical center */
-  height: 80vh;           /* full screen height */
-  text-align: center;
+.createDivInputwidth{
+  width: 20rem;
+}
+
+
+
+
+
+.createDivInput{
+  margin-bottom: 1.5rem;
+}
+
+.createDivInput {
+    background-color: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-bottom: 0.5px solid #333;
+    color: #333;
+    margin-right: 10px;
+    outline: none;
+    padding: 10px;
+    box-sizing: border-box;
+    margin-top: 10px;
+    transition: all 0.2s ease;
+}
+.createDiv {
+    max-width: 52rem;
+    padding: 2rem;
+    border-radius: 1rem;
+    background: white;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.createDivOne{
+    max-width: 25rem;
+    padding: 2rem;
+    border-radius: 1rem;
+    background: white;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+.createDivSecond{
+    max-width: 60rem;
+  
+    padding: 2rem;
+    border-radius: 1rem;
+    color: #030712;
+    background: white;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
 }
 
 

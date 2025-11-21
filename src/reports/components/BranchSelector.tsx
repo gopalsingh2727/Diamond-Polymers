@@ -87,7 +87,7 @@ export function BranchSelector({
           <SelectItem key={branch.id} value={branch.id}>
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
-                <Building2 style={{ width: '1rem', height: '1rem', color: '#2563eb' }} />
+                <Building2 style={{ width: '1rem', height: '1rem', color: '#FF6B35' }} />
                 <span className="font-medium">{branch.code}</span>
                 <span className="text-slate-600">-</span>
                 <span>{branch.name}</span>
@@ -219,7 +219,7 @@ export function RegionBranchSelector({
             {branchesByRegion[region]?.map((branch) => (
               <SelectItem key={branch.id} value={branch.id}>
                 <div className="flex items-center gap-2 pl-2">
-                  <Building2 style={{ width: '0.875rem', height: '0.875rem', color: '#2563eb' }} />
+                  <Building2 style={{ width: '0.875rem', height: '0.875rem', color: '#FF6B35' }} />
                   <span>{branch.code} - {branch.name}</span>
                 </div>
               </SelectItem>

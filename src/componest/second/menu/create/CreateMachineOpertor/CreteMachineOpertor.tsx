@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { getMachines } from "../../../../redux/create/machine/MachineActions";
 import { createOperator } from "../../../../redux/create/CreateMachineOpertor/MachineOpertorActions";
 import { RootState } from "../../../../redux/rootReducer";
-
 import { AppDispatch } from "../../../../../store";
+import { useFormDataCache } from '../../Edit/hooks/useFormDataCache';
+import "../CreateStep/createStep.css";
+import "../../CreateOders/CreateOders.css";
 
 type OperatorData = {
   username: string;
@@ -27,13 +28,8 @@ const CreteMachineOpertor = () => {
 
   const [showPin, setShowPin] = useState(false);
 
-  const { machines: machineList } = useSelector(
-    (state: RootState) => state.machineList
-  );
-
-  useEffect(() => {
-    dispatch(getMachines());
-  }, [dispatch]);
+  // 🚀 OPTIMIZED: Get data from cached form data (no API calls!)
+  const { machines: machineList } = useFormDataCache();
 
   useEffect(() => {
     if (success) {
@@ -47,7 +43,6 @@ const CreteMachineOpertor = () => {
   }, [success]);
 
   const handleChange = (field: keyof OperatorData, value: string) => {
-    // For PIN fields, only allow digits and max 4 characters
     if (field === 'pin' || field === 'confirmPin') {
       if (value && (!/^\d*$/.test(value) || value.length > 4)) {
         return;
@@ -82,31 +77,29 @@ const CreteMachineOpertor = () => {
   };
 
   return (
-    <div className="form-grid">
-      {/* Row 1: Username */}
-      <div className="form-column">
-        <div className="form-input-group">
-          <label className="input-label">Username</label>
+    <div className="create-step-container">
+      <div className="step-form-wrapper">
+        <h2 className="form-title">Create Machine Operator</h2>
+
+        <div className="step-name-group">
+          <label className="form-label">Username *</label>
           <input
             type="text"
             value={formData.username}
             onChange={(e) => handleChange("username", e.target.value)}
-            className="form-input"
+            className="createDivInput createDivInputwidth"
             placeholder="Enter username"
           />
         </div>
-      </div>
 
-      {/* Row 2: PIN + Confirm PIN */}
-      <div className="form-column">
-        <div className="form-input-group">
-          <label className="input-label">PIN (4 digits)</label>
+        <div className="step-name-group">
+          <label className="form-label">PIN (4 digits) *</label>
           <div style={{ position: "relative" }}>
             <input
               type={showPin ? "text" : "password"}
               value={formData.pin}
               onChange={(e) => handleChange("pin", e.target.value)}
-              className="form-input"
+              className="createDivInput createDivInputwidth"
               placeholder="Enter 4-digit PIN"
               maxLength={4}
               inputMode="numeric"
@@ -133,39 +126,24 @@ const CreteMachineOpertor = () => {
             {formData.pin.length}/4 digits
           </small>
         </div>
-        <div className="form-input-group">
-          <label className="input-label">Confirm PIN</label>
+
+        <div className="step-name-group">
+          <label className="form-label">Confirm PIN *</label>
           <div style={{ position: "relative" }}>
             <input
               type={showPin ? "text" : "password"}
               value={formData.confirmPin}
               onChange={(e) => handleChange("confirmPin", e.target.value)}
-              className="form-input"
+              className="createDivInput createDivInputwidth"
               placeholder="Confirm 4-digit PIN"
               maxLength={4}
               inputMode="numeric"
               pattern="\d{4}"
             />
-            <button
-              type="button"
-              onClick={() => setShowPin(!showPin)}
-              style={{
-                position: "absolute",
-                right: "10px",
-                top: "50%",
-                transform: "translateY(-50%)",
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                fontSize: "1rem",
-              }}
-            >
-              {showPin ? "🙈" : "👁"}
-            </button>
           </div>
           {formData.pin && formData.confirmPin && (
-            <small 
-              style={{ 
+            <small
+              style={{
                 color: formData.pin === formData.confirmPin ? "green" : "red",
                 fontSize: "0.85rem",
                 marginTop: "4px",
@@ -176,16 +154,13 @@ const CreteMachineOpertor = () => {
             </small>
           )}
         </div>
-      </div>
 
-      {/* Row 3: Machine Name Dropdown */}
-      <div className="form-column">
-        <div className="form-input-group">
-          <label className="input-label">Machine</label>
+        <div className="step-name-group">
+          <label className="form-label">Machine *</label>
           <select
             value={formData.machineId}
             onChange={(e) => handleChange("machineId", e.target.value)}
-            className="form-input"
+            className="createDivInput createDivInputwidth machine-select"
           >
             <option value="">Select machine</option>
             {machineList.map((machine: any) => (
@@ -195,22 +170,18 @@ const CreteMachineOpertor = () => {
             ))}
           </select>
         </div>
-      </div>
 
-      {/* Submit Button */}
-      <div className="form-column">
-        <div className="form-input-group">
-          <button 
-            type="button" 
-            onClick={handleSubmit} 
-            className="save-button" 
-            disabled={loading || formData.pin.length !== 4 || formData.pin !== formData.confirmPin}
-          >
-            {loading ? "Submitting..." : "Submit"}
-          </button>
-          {success && <div className="success-msg">Operator created successfully!</div>}
-          {error && <div className="error-msg">{error}</div>}
-        </div>
+        <button
+          type="button"
+          onClick={handleSubmit}
+          className="save-button"
+          disabled={loading || formData.pin.length !== 4 || formData.pin !== formData.confirmPin}
+        >
+          {loading ? "Submitting..." : "Submit"}
+        </button>
+
+        {success && <div className="success-msg">Operator created successfully!</div>}
+        {error && <div className="error-msg">{error}</div>}
       </div>
     </div>
   );

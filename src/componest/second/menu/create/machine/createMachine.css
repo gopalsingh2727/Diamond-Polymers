@@ -17,7 +17,7 @@
   flex-direction: column;
   width: 100%;
   max-width: 1200px;
-  padding: 30px;
+  padding: 4rem;
   background-color: #ffffff;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
@@ -645,7 +645,7 @@
   align-items: center;
   gap: 10px;
   padding: 15px 30px;
-  background: linear-gradient(135deg, #3498db, #2980b9);
+  background: linear-gradient(135deg, #FF6B35, #e55a2b);
   color: white;
   border: none;
   border-radius: 8px;
@@ -658,9 +658,9 @@
 }
 
 .CreateMachineSaveButton:hover:not(:disabled) {
-  background: linear-gradient(135deg, #2980b9, #1f618d);
+  background: linear-gradient(135deg, #e55a2b, #d14a1b);
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(52, 152, 219, 0.3);
+  box-shadow: 0 6px 20px rgba(255, 107, 53, 0.3);
 }
 
 .CreateMachineSaveButton:disabled {
@@ -761,7 +761,7 @@
 }
 
 .CreateMachineTabButton.active {
-  background: #3b82f6;
+  background: #FF6B35;
   color: white;
 }
 
@@ -813,7 +813,7 @@
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  background: #8b5cf6;
+  background: #FFA500;
   color: white;
   border: none;
   border-radius: 6px;
@@ -851,7 +851,7 @@
 
 .CreateMachineEditRowBtn,
 .CreateMachineSaveRowBtn {
-  background: #3b82f6;
+  background: #FF6B35;
   color: white;
   border: none;
   border-radius: 4px;

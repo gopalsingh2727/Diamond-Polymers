@@ -138,7 +138,7 @@ export function SimpleBranchSelector({
           <SelectItem key={branch._id || branch.id} value={branch._id || branch.id}>
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
-                <Building2 style={{ width: '1rem', height: '1rem', color: '#2563eb' }} />
+                <Building2 style={{ width: '1rem', height: '1rem', color: '#FF6B35' }} />
                 <span className="font-medium">{branch.code || branch.name}</span>
                 {branch.code && (
                   <>

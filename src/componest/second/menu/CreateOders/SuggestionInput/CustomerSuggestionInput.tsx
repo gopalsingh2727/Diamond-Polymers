@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { getAccounts } from "../../../../redux/create/createNewAccount/NewAccountActions";
+import { useSelector } from "react-redux";
 import { RootState } from "../../../../redux/rootReducer";
 
 
@@ -10,22 +9,13 @@ interface Props {
 }
 
 const CustomerSuggestions: React.FC<Props> = ({ customerName, onSelect }) => {
-  const dispatch = useDispatch();
-  
-  // Fixed: Added proper fallback and error handling
-  const accountsState = useSelector((state: RootState) => state.getAccounts);
-  const accounts = accountsState?.accounts || [];
-  const isLoading = accountsState?.loading || false;
-  const error = accountsState?.error;
-  
-  const [filtered, setFiltered] = useState<any[]>([]);
+  // 🚀 OPTIMIZED: Get customers from cached form data (no extra API call)
+  const { data: formData, loading: isLoading, error } = useSelector(
+    (state: RootState) => state.orderFormData || {}
+  );
+  const accounts = formData?.customers || [];
 
-  useEffect(() => {
-    // Only dispatch if accounts are not already loaded
-    if (accounts.length === 0 && !isLoading) {
-      dispatch(getAccounts() as any);
-    }
-  }, [dispatch, accounts.length, isLoading]);
+  const [filtered, setFiltered] = useState<any[]>([]);
 
   useEffect(() => {
     if (customerName && customerName.trim().length > 0) {
@@ -53,16 +43,6 @@ const CustomerSuggestions: React.FC<Props> = ({ customerName, onSelect }) => {
     }
   }, [customerName, accounts]);
 
-  // Debug logging (remove in production)
-  useEffect(() => {
-    console.log('CustomerSuggestions Debug:', {
-      customerName,
-      accountsLength: accounts.length,
-      filteredLength: filtered.length,
-      isLoading,
-      error
-    });
-  }, [customerName, accounts, filtered, isLoading, error]);
 
   if (isLoading) {
     return <div className="suggestion-loading">Loading suggestions...</div>;

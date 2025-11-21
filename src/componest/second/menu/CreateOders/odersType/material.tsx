@@ -428,37 +428,6 @@ const MaterialInOders = forwardRef((
             </div>
           </div>
           <div>
-            <label>Total Weight (kg)</label>
-            <input
-              type="text"
-              value={totalWeight}
-              onChange={(e) => setTotalWeight(e.target.value)}
-              placeholder="Total Weight"
-              className="inputBox"
-            />
-          </div>
-          <div>
-            <label>One Piece Weight</label>
-            <input
-              type="text"
-              value={onePieceWeight}
-              onChange={(e) => setOnePieceWeight(e.target.value)}
-              placeholder="One Piece Weight"
-              className="inputBox"
-            />
-          </div>
-          <div>
-            <label>Total Pieces</label>
-            <input
-              type="text"
-              value={formState.totalPieces}
-              name="totalPieces"
-              onChange={handleFormChange}
-              placeholder="Total Pieces"
-              className="inputBox"
-            />
-          </div>
-          <div>
             <label>Mixing</label>
             <select
               value={mixing}

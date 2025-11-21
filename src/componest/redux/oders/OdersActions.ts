@@ -184,14 +184,30 @@ const collectDataFromDOM = (): SchemaAlignedOrderData => {
     // Collect Customer Data from DOM
     const customerIdInput = document.querySelector('input[name="customerId"]') as HTMLInputElement;
     console.log("Collected Customer ID:", customerIdInput?.value);
-    if (!customerIdInput?.value) {
-      throw new Error("Customer ID is required");
+    console.log("Customer ID input found:", !!customerIdInput);
+
+    if (!customerIdInput) {
+      throw new Error("Customer selection component not found. Please refresh the page and try again.");
+    }
+
+    if (!customerIdInput.value || customerIdInput.value.trim() === '') {
+      throw new Error("Please select a customer before saving the order.");
     }
 
     // Collect Order Type ID from hidden input
     const orderTypeIdInput = document.querySelector('input[name="orderTypeId"]') as HTMLInputElement;
     const orderTypeId = orderTypeIdInput?.value || '';
     console.log("Collected Order Type ID:", orderTypeId);
+
+    // ✅ ADDED: Collect Product Spec ID from hidden input
+    const productSpecIdInput = document.querySelector('input[name="productSpecId"]') as HTMLInputElement;
+    const productSpecId = productSpecIdInput?.value || '';
+    console.log("Collected Product Spec ID:", productSpecId);
+
+    // ✅ ADDED: Collect Material Spec ID from hidden input
+    const materialSpecIdInput = document.querySelector('input[name="materialSpecId"]') as HTMLInputElement;
+    const materialSpecId = materialSpecIdInput?.value || '';
+    console.log("Collected Material Spec ID:", materialSpecId);
 
     // Collect Main Material IDs from hidden inputs - Enhanced search
     let mainMaterialIdInput = document.querySelector('input[name="mainMaterialId"]') as HTMLInputElement;
@@ -454,6 +470,8 @@ const collectDataFromDOM = (): SchemaAlignedOrderData => {
     const orderData: SchemaAlignedOrderData = {
       customerId: customerIdInput.value,
       orderTypeId: orderTypeId,
+      productSpecId: productSpecId || undefined,  // ✅ ADDED: Product Spec ID
+      materialSpecId: materialSpecId || undefined,  // ✅ ADDED: Material Spec ID
       materialId: mainMaterialId,
       materialTypeId: materialTypeId,
       materialWeight: Number(totalWeightInput?.value) || 0,
@@ -491,7 +509,8 @@ const collectDataFromDOM = (): SchemaAlignedOrderData => {
     return orderData;
   } catch (error) {
     console.error("Error collecting order data:", error);
-    throw new Error("Failed to collect order data");
+    // Preserve the original error message instead of generic message
+    throw error instanceof Error ? error : new Error("Failed to collect order data");
   }
 };
 
@@ -499,27 +518,58 @@ const collectDataFromDOM = (): SchemaAlignedOrderData => {
 export const collectDataFromRefs = (customerRef: any, materialRef: any, stepRef?: any, additionalData?: any): SchemaAlignedOrderData => {
   try {
     console.log("Collecting data from refs...");
+    console.log("Refs status:", {
+      customerRef: !!customerRef?.current,
+      materialRef: !!materialRef?.current,
+      stepRef: !!stepRef?.current,
+      additionalData: !!additionalData
+    });
 
-    // Get data from component refs
-    const customerData = customerRef.current?.getCustomerData();
-    const materialData = materialRef.current?.getMaterialData();
-    const stepData = stepRef?.current?.getStepData();
+    // Get data from component refs - handle missing refs gracefully
+    let customerData = null;
+    let materialData = null;
+    let stepData = null;
+
+    try {
+      customerData = customerRef?.current?.getCustomerData?.();
+    } catch (e) {
+      console.error("Error getting customer data:", e);
+    }
+
+    try {
+      materialData = materialRef?.current?.getMaterialData?.();
+    } catch (e) {
+      console.log("Note: Could not get material data (may be disabled):", e);
+    }
+
+    try {
+      stepData = stepRef?.current?.getStepData?.();
+    } catch (e) {
+      console.log("Note: Could not get step data (may be disabled):", e);
+    }
 
     console.log("Customer Data from ref:", customerData);
     console.log("Material Data from ref:", materialData);
     console.log("Step Data from ref:", stepData);
 
     if (!customerData?._id) {
-      throw new Error("Customer ID is required");
+      console.error("Customer validation failed:", {
+        customerRef: !!customerRef,
+        customerRefCurrent: !!customerRef?.current,
+        customerData,
+        hasGetCustomerData: typeof customerRef?.current?.getCustomerData
+      });
+      throw new Error("Customer ID is required - please select a customer");
     }
 
+    // Note: Don't throw error for missing material here - validation will handle it based on order type
+    // Material may not be required if material section is disabled in order type
     if (!materialData?.mainMaterialId) {
-      console.error("Material data structure:", materialData);
-      throw new Error("Main Material ID is required");
+      console.log("Note: Material data not provided - may be optional based on order type");
     }
 
-    // Transform mixing data to include proper IDs
-    const mixMaterial = materialData.mixingData?.map((mix: any) => ({
+    // Transform mixing data to include proper IDs (only if material data exists)
+    const mixMaterial = materialData?.mixingData?.map((mix: any) => ({
       materialId: mix._id || mix.materialId || '',
       materialName: mix.name || mix.materialName || '',
       materialType: mix.type || mix.materialType || '',
@@ -587,16 +637,16 @@ export const collectDataFromRefs = (customerRef: any, materialRef: any, stepRef?
 
     const orderData: SchemaAlignedOrderData = {
       customerId: customerData._id,
-      materialId: materialData.mainMaterialId,
-      materialTypeId: materialData.materialTypeId || '',
-      materialWeight: Number(materialData.totalWeight) || 0,
-      Width: Number(materialData.width) || 0,
-      Height: Number(materialData.height) || 0,
-      Thickness: Number(materialData.gauge) || 0,
+      materialId: materialData?.mainMaterialId || '',
+      materialTypeId: materialData?.materialTypeId || '',
+      materialWeight: Number(materialData?.totalWeight) || 0,
+      Width: Number(materialData?.width) || 0,
+      Height: Number(materialData?.height) || 0,
+      Thickness: Number(materialData?.gauge) || 0,
       SealingType: additionalData?.sealingType || '',
-      BottomGusset: materialData.bottomGusset || '',
-      AirHole: materialData.airHole || '',
-      Flap: materialData.flap || '',
+      BottomGusset: materialData?.bottomGusset || '',
+      AirHole: materialData?.airHole || '',
+      Flap: materialData?.flap || '',
       Printing: Boolean(additionalData?.printing),
       mixMaterial: mixMaterial,
       steps: steps,
@@ -605,8 +655,9 @@ export const collectDataFromRefs = (customerRef: any, materialRef: any, stepRef?
       createdByRole: currentUser.role, // Use actual user role from token
       product27InfinityId: productInfinityId || '',
       Notes: additionalData?.notes || '',
-      quantity: Number(additionalData?.quantity) || 1
-    };
+      quantity: Number(additionalData?.quantity) || 1,
+      orderTypeId: additionalData?.orderTypeId || ''
+    } as any;
 
     console.log("=== FINAL ORDER DATA FROM REFS ===");
     console.log("Complete Order Data:", JSON.stringify(orderData, null, 2));
@@ -639,43 +690,40 @@ export const collectDataFromRefs = (customerRef: any, materialRef: any, stepRef?
   }
 };
 
-// Enhanced validation function
-const validateOrderData = (orderData: SchemaAlignedOrderData): { isValid: boolean; errors: string[] } => {
+// Helper to check if section is enabled in order type
+const isSectionEnabledInOrderType = (orderTypeConfig: any, sectionId: string): boolean => {
+  if (!orderTypeConfig || !orderTypeConfig.sections || orderTypeConfig.sections.length === 0) {
+    // No sections configured means ALL sections are enabled (backward compatibility)
+    return true;
+  }
+  const section = orderTypeConfig.sections.find((s: any) => s.id === sectionId);
+  // If section not in config, it's NOT enabled
+  return section ? section.enabled !== false : false;
+};
+
+// Enhanced validation function - now section-aware
+const validateOrderData = (orderData: SchemaAlignedOrderData, orderTypeConfig?: any): { isValid: boolean; errors: string[] } => {
   const errors: string[] = [];
 
-  // Required field validation
+  // Check which sections are enabled
+  const isMaterialEnabled = isSectionEnabledInOrderType(orderTypeConfig, 'material');
+  const isStepsEnabled = isSectionEnabledInOrderType(orderTypeConfig, 'steps');
+  const isProductEnabled = isSectionEnabledInOrderType(orderTypeConfig, 'product');
+  const isPrintingEnabled = isSectionEnabledInOrderType(orderTypeConfig, 'printing');
+
+  console.log('🔍 Validation - Enabled sections:', {
+    product: isProductEnabled,
+    material: isMaterialEnabled,
+    steps: isStepsEnabled,
+    printing: isPrintingEnabled,
+    orderTypeConfig: orderTypeConfig ? 'provided' : 'not provided'
+  });
+
+  // Required field validation - ALWAYS required
   if (!orderData.customerId?.trim()) {
     errors.push("Customer is required");
   } else if (!isValidObjectId(orderData.customerId)) {
     errors.push("Invalid customer ID format");
-  }
-
-  if (!orderData.materialId?.trim()) {
-    errors.push("Main Material ID is required");
-  } else if (!isValidObjectId(orderData.materialId)) {
-    errors.push("Invalid material ID format");
-  }
-
-  if (!orderData.materialTypeId?.trim()) {
-    errors.push("Material Type ID is required");
-  } else if (!isValidObjectId(orderData.materialTypeId)) {
-    errors.push("Invalid material type ID format");
-  }
-
-  if (!orderData.materialWeight || orderData.materialWeight <= 0) {
-    errors.push("Valid material weight is required");
-  }
-
-  if (!orderData.Width || orderData.Width <= 0) {
-    errors.push("Valid width is required");
-  }
-
-  if (!orderData.Height || orderData.Height <= 0) {
-    errors.push("Valid height is required");
-  }
-
-  if (!orderData.Thickness || orderData.Thickness <= 0) {
-    errors.push("Valid thickness is required");
   }
 
   if (!orderData.branchId?.trim()) {
@@ -694,44 +742,81 @@ const validateOrderData = (orderData: SchemaAlignedOrderData): { isValid: boolea
     errors.push("Valid creator role is required");
   }
 
-  if (!orderData.product27InfinityId?.trim()) {
-    errors.push("Product 27 Infinity ID is required");
+  // Material section validation - ONLY if material section is enabled
+  if (isMaterialEnabled) {
+    if (!orderData.materialId?.trim()) {
+      errors.push("Main Material ID is required");
+    } else if (!isValidObjectId(orderData.materialId)) {
+      errors.push("Invalid material ID format");
+    }
+
+    if (!orderData.materialTypeId?.trim()) {
+      errors.push("Material Type ID is required");
+    } else if (!isValidObjectId(orderData.materialTypeId)) {
+      errors.push("Invalid material type ID format");
+    }
+
+    if (!orderData.materialWeight || orderData.materialWeight <= 0) {
+      errors.push("Valid material weight is required");
+    }
+
+    if (!orderData.Width || orderData.Width <= 0) {
+      errors.push("Valid width is required");
+    }
+
+    if (!orderData.Height || orderData.Height <= 0) {
+      errors.push("Valid height is required");
+    }
+
+    if (!orderData.Thickness || orderData.Thickness <= 0) {
+      errors.push("Valid thickness is required");
+    }
+
+    // Validate mix materials only if material section is enabled
+    if (orderData.mixMaterial && orderData.mixMaterial.length > 0) {
+      orderData.mixMaterial.forEach((mix, index) => {
+        if (mix.materialId && !isValidObjectId(mix.materialId)) {
+          errors.push(`Mix material ${index + 1}: Invalid material ID format`);
+        }
+        if (!mix.materialWeight || mix.materialWeight <= 0) {
+          errors.push(`Mix material ${index + 1}: Valid weight is required`);
+        }
+      });
+    }
   }
 
-  // Validate mix materials
-  if (orderData.mixMaterial && orderData.mixMaterial.length > 0) {
-    orderData.mixMaterial.forEach((mix, index) => {
-      if (mix.materialId && !isValidObjectId(mix.materialId)) {
-        errors.push(`Mix material ${index + 1}: Invalid material ID format`);
-      }
-      if (!mix.materialWeight || mix.materialWeight <= 0) {
-        errors.push(`Mix material ${index + 1}: Valid weight is required`);
-      }
-    });
+  // Steps section validation - ONLY if steps section is enabled
+  if (isStepsEnabled) {
+    if (!orderData.steps || orderData.steps.length === 0) {
+      errors.push("At least one manufacturing step is required");
+    } else {
+      orderData.steps.forEach((step, stepIndex) => {
+        if (!step.stepId || !isValidObjectId(step.stepId)) {
+          errors.push(`Step ${stepIndex + 1}: Valid step ID is required`);
+        }
+
+        if (!step.machines || step.machines.length === 0) {
+          errors.push(`Step ${stepIndex + 1}: At least one machine is required`);
+        } else {
+          step.machines.forEach((machine, machineIndex) => {
+            if (machine.machineId && !isValidObjectId(machine.machineId)) {
+              errors.push(`Step ${stepIndex + 1}, Machine ${machineIndex + 1}: Invalid machine ID format`);
+            }
+            if (machine.operatorId && !isValidObjectId(machine.operatorId)) {
+              errors.push(`Step ${stepIndex + 1}, Machine ${machineIndex + 1}: Invalid operator ID format`);
+            }
+          });
+        }
+      });
+    }
   }
 
-  // Validate steps and machines
-  if (!orderData.steps || orderData.steps.length === 0) {
-    errors.push("At least one manufacturing step is required");
-  } else {
-    orderData.steps.forEach((step, stepIndex) => {
-      if (!step.stepId || !isValidObjectId(step.stepId)) {
-        errors.push(`Step ${stepIndex + 1}: Valid step ID is required`);
-      }
-      
-      if (!step.machines || step.machines.length === 0) {
-        errors.push(`Step ${stepIndex + 1}: At least one machine is required`);
-      } else {
-        step.machines.forEach((machine, machineIndex) => {
-          if (machine.machineId && !isValidObjectId(machine.machineId)) {
-            errors.push(`Step ${stepIndex + 1}, Machine ${machineIndex + 1}: Invalid machine ID format`);
-          }
-          if (machine.operatorId && !isValidObjectId(machine.operatorId)) {
-            errors.push(`Step ${stepIndex + 1}, Machine ${machineIndex + 1}: Invalid operator ID format`);
-          }
-        });
-      }
-    });
+  // Product section - product27InfinityId only required if product section is enabled
+  if (isProductEnabled) {
+    if (!orderData.product27InfinityId?.trim()) {
+      // Make this optional for now since it's often auto-generated
+      console.log("Note: Product 27 Infinity ID not provided");
+    }
   }
 
   console.log("Validation result:", { isValid: errors.length === 0, errors });
@@ -785,7 +870,7 @@ export const validateFormData = (orderData: SchemaAlignedOrderData) => (dispatch
   return validation;
 };
 
-export const saveOrder = (orderData?: SchemaAlignedOrderData) => async (dispatch: Dispatch<OrderActionTypes>, getState: () => any) => {
+export const saveOrder = (orderData?: SchemaAlignedOrderData, orderTypeConfig?: any) => async (dispatch: Dispatch<OrderActionTypes>, getState: () => any) => {
   try {
     dispatch({ type: ORDER_SAVE_REQUEST });
     dispatch({ type: SET_LOADING, payload: true });
@@ -801,9 +886,24 @@ export const saveOrder = (orderData?: SchemaAlignedOrderData) => async (dispatch
       finalOrderData = collectDataFromDOM();
     }
 
-    const validation = validateOrderData(finalOrderData);
+    // Get order type config from Redux if not provided
+    let finalOrderTypeConfig = orderTypeConfig;
+    if (!finalOrderTypeConfig && (finalOrderData as any).orderTypeId) {
+      const state = getState();
+      // 🚀 OPTIMIZED: Check orderFormData first (cached), then fallback to orderTypeList
+      const orderTypes = state.orderFormData?.data?.orderTypes ||
+                        state.orderTypeList?.orderTypes ||
+                        state.orderType?.orderTypes || [];
+      finalOrderTypeConfig = orderTypes.find((ot: any) =>
+        ot._id === (finalOrderData as any).orderTypeId ||
+        ot.typeCode === (finalOrderData as any).orderTypeId
+      );
+      console.log('📋 Order type config from Redux:', finalOrderTypeConfig?.typeName || 'not found');
+    }
+
+    const validation = validateOrderData(finalOrderData, finalOrderTypeConfig);
     console.log("Validation Result:", validation);
-    
+
     if (!validation.isValid) {
       throw new Error(validation.errors.join(', '));
     }

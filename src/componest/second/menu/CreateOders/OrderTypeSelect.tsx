@@ -1,27 +1,20 @@
 import { useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "../../../redux/rootReducer";
-import { AppDispatch } from "../../../../store";
-import { getOrderTypes } from "../../../redux/create/orderType/orderTypeActions";
 
 interface OrderTypeSelectProps {
   value: string;
   onChange: (value: string) => void;
   initialValue?: string;
+  orderTypes?: any[];
+  loading?: boolean;
 }
 
-const OrderTypeSelect: React.FC<OrderTypeSelectProps> = ({ value, onChange, initialValue }) => {
-  const dispatch = useDispatch<AppDispatch>();
-
-  // Get order types from Redux
-  const { orderTypes = [], loading } = useSelector(
-    (state: RootState) => state.orderTypeList || { orderTypes: [], loading: false }
-  );
-
-  // Fetch order types on component mount
-  useEffect(() => {
-    dispatch(getOrderTypes());
-  }, [dispatch]);
+const OrderTypeSelect: React.FC<OrderTypeSelectProps> = ({
+  value,
+  onChange,
+  initialValue,
+  orderTypes = [],
+  loading = false
+}) => {
 
   // Set initial value in edit mode
   useEffect(() => {

@@ -164,9 +164,9 @@ const CreateFormula = () => {
       <h2 className="text-2xl font-bold mb-4">Create Formula</h2>
 
       {/* Help Section for Non-Coders */}
-      <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded">
-        <h3 className="font-semibold text-blue-900 mb-2">📚 How to Create Formulas (No Coding Required!)</h3>
-        <div className="text-sm text-blue-800 space-y-2">
+      <div className="mb-4 p-4 bg-orange-50 border border-orange-200 rounded">
+        <h3 className="font-semibold text-orange-900 mb-2">📚 How to Create Formulas (No Coding Required!)</h3>
+        <div className="text-sm text-orange-800 space-y-2">
           <p><strong>Step 1:</strong> Click an example below to load a pre-built formula</p>
           <p><strong>Step 2:</strong> Modify the formula name and parameters to match your needs</p>
           <p><strong>Step 3:</strong> Test the formula with sample values</p>
@@ -316,7 +316,7 @@ const CreateFormula = () => {
           <div className="mb-3">
             <button
               onClick={handleAddTestParam}
-              className="text-sm bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+              className="text-sm bg-[#FF6B35] text-white px-3 py-1 rounded hover:bg-[#E55A2B]"
             >
               + Add Parameter
             </button>
@@ -366,7 +366,7 @@ const CreateFormula = () => {
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className="bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed w-full"
+            className="bg-[#FF6B35] text-white px-6 py-3 rounded hover:bg-[#E55A2B] disabled:bg-gray-400 disabled:cursor-not-allowed w-full"
           >
             {loading ? "Saving..." : "💾 Save Formula"}
           </button>

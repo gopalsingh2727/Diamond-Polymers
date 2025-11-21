@@ -149,7 +149,7 @@ export function CustomerReport() {
     percentage: totalOutput > 0 ? (c.totalWeight / totalOutput) * 100 : 0
   }));
 
-  const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'];
+  const COLORS = ['#FF6B35', '#10b981', '#f59e0b', '#8b5cf6'];
 
 
 
@@ -207,7 +207,7 @@ export function CustomerReport() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm">Total Customers</CardTitle>
-            <Users className="h-4 w-4 text-blue-600" />
+            <Users className="h-4 w-4 text-[#FF6B35]" />
           </CardHeader>
           <CardContent>
             <div className="text-slate-900">{totalCustomers}</div>
@@ -326,7 +326,7 @@ export function CustomerReport() {
                       <div className="bg-white p-3 border border-slate-200 rounded shadow-lg">
                         <p className="font-medium">{data.material}</p>
                         <p className="text-sm text-green-600">Output: {data.weight.toFixed(0)} kg</p>
-                        <p className="text-sm text-blue-600">Customers: {data.customerCount}</p>
+                        <p className="text-sm text-[#FF6B35]">Customers: {data.customerCount}</p>
                         <p className="text-sm text-slate-600">Share: {data.percentage.toFixed(1)}%</p>
                       </div>
                     );
@@ -365,7 +365,7 @@ export function CustomerReport() {
                     return (
                       <div className="bg-white p-3 border border-slate-200 rounded shadow-lg">
                         <p className="font-medium">{data.name}</p>
-                        <p className="text-sm text-blue-600">Avg Efficiency: {data.avgEfficiency.toFixed(1)}%</p>
+                        <p className="text-sm text-[#FF6B35]">Avg Efficiency: {data.avgEfficiency.toFixed(1)}%</p>
                         <p className="text-sm text-green-600">Completion: {data.completionRate.toFixed(0)}%</p>
                         <p className="text-sm text-slate-600">Orders: {data.orders}</p>
                       </div>
@@ -375,7 +375,7 @@ export function CustomerReport() {
                 }}
               />
               <Legend />
-              <Bar dataKey="avgEfficiency" fill="#3b82f6" name="Avg Efficiency %" />
+              <Bar dataKey="avgEfficiency" fill="#FF6B35" name="Avg Efficiency %" />
               <Bar dataKey="completionRate" fill="#10b981" name="Completion Rate %" />
             </BarChart>
           </ResponsiveContainer>
@@ -428,7 +428,7 @@ export function CustomerReport() {
                       <td className="p-3 text-right">
                         <span className={`px-2 py-1 rounded text-xs ${
                           wastagePercent <= 3 ? 'bg-green-100 text-green-700' :
-                          wastagePercent <= 5 ? 'bg-blue-100 text-blue-700' :
+                          wastagePercent <= 5 ? 'bg-orange-100 text-orange-700' :
                           'bg-orange-100 text-orange-700'
                         }`}>
                           {wastagePercent.toFixed(1)}%
@@ -437,7 +437,7 @@ export function CustomerReport() {
                       <td className="p-3 text-right">
                         <span className={`px-2 py-1 rounded text-xs ${
                           customer.avgEfficiency >= 95 ? 'bg-green-100 text-green-700' :
-                          customer.avgEfficiency >= 90 ? 'bg-blue-100 text-blue-700' :
+                          customer.avgEfficiency >= 90 ? 'bg-orange-100 text-orange-700' :
                           'bg-orange-100 text-orange-700'
                         }`}>
                           {customer.avgEfficiency.toFixed(1)}%

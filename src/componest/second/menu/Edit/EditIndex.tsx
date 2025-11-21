@@ -11,6 +11,8 @@ import EditMachineType from "./EditMachineType/EditMachineyType";
 import UpdataIDAndPassword from "./UpdataIDandPassword/UpdataIDAndPassword";
 import EditFormula from "./EditFormula/EditFormula";
 import EditProductSpec from "./EditProductSpec/EditProductSpec";
+import EditMaterialSpec from "./EditMaterialSpec/EditMaterialSpec";
+import EditOrderType from "./EditOrderType/EditOrderType";
 import EditProducts from "./EditProducts/EditProduct";
 import EditProductCategories from "./EditProducts/EditProductCategoris";
 import ErrorBoundary from "../../../error/error";
@@ -30,23 +32,30 @@ const EditIndex = () => {
 
   // Track which sections are expanded
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
-    "Account": true,
+    "Accounting": true,
     "Machine Management": false,
     "Products & Materials": false,
     "Device Access": false,
-    "Formulas & Calculations": true
+    "Specifications": false,
+    "Formula": false
   });
 
   const toggleSection = (sectionTitle: string) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [sectionTitle]: !prev[sectionTitle]
-    }));
+    setExpandedSections(prev => {
+      // Close all sections first, then toggle the clicked one (accordion behavior)
+      const newState: Record<string, boolean> = {};
+      Object.keys(prev).forEach(key => {
+        newState[key] = false;
+      });
+      // Toggle the clicked section (if it was closed, open it; if open, close it)
+      newState[sectionTitle] = !prev[sectionTitle];
+      return newState;
+    });
   };
   
   const menuSections = [
     {
-      title: "Account",
+      title: "Accounting",
       items: [
         { key: "account", label: "Account" }
       ]
@@ -63,7 +72,7 @@ const EditIndex = () => {
     {
       title: "Products & Materials",
       items: [
-        { key: "products", label: "Edit Products" },
+        { key: "products", label: "Products" },
         { key: "productCategories", label: "Product Categories" },
         { key: "materials", label: "Materials" },
         { key: "materialsCategories", label: "Materials Categories" }
@@ -77,10 +86,17 @@ const EditIndex = () => {
       ]
     },
     {
-      title: "Formulas & Calculations",
+      title: "Specifications",
       items: [
-        { key: "formula", label: "Edit Formula" },
-        { key: "productSpec", label: "Edit Product Spec" }
+        { key: "productSpec", label: "Product Spec" },
+        { key: "materialSpec", label: "Material Spec" }
+      ]
+    },
+    {
+      title: "Formula",
+      items: [
+        { key: "formula", label: "Formula" },
+        { key: "orderType", label: "Order Type" }
       ]
     }
   ];
@@ -109,6 +125,8 @@ const EditIndex = () => {
     materialsCategories: <ErrorBoundary> <MaterialsCategories /></ErrorBoundary>,
     formula: <ErrorBoundary> <EditFormula /> </ErrorBoundary>,
     productSpec: <ErrorBoundary> <EditProductSpec /> </ErrorBoundary>,
+    materialSpec: <ErrorBoundary> <EditMaterialSpec /> </ErrorBoundary>,
+    orderType: <ErrorBoundary> <EditOrderType /> </ErrorBoundary>,
   };
 
   const baseTitlesMap: Record<string, string> = {
@@ -119,12 +137,14 @@ const EditIndex = () => {
     machineOperator: "Machine Operator",
     DeviceAccess: "Device Access",
     Access: "Access",
-    products: "Edit Products",
+    products: "Products",
     productCategories: "Product Categories",
     materials: "Materials",
     materialsCategories: "Materials Categories",
-    formula: "Edit Formula",
-    productSpec: "Edit Product Spec"
+    productSpec: "Product Spec",
+    materialSpec: "Material Spec",
+    formula: "Formula",
+    orderType: "Order Type"
   };
 
   if (userRole === "manager") {
@@ -183,9 +203,27 @@ const EditIndex = () => {
 
                 return (
                   <div key={section.title}>
-                    {/* Section Title - Clickable if multiple items */}
+                    {/* Section Title - Clickable */}
                     <div
-                      onClick={() => hasMultipleItems && toggleSection(section.title)}
+                      onClick={() => {
+                        if (hasMultipleItems) {
+                          toggleSection(section.title);
+                        } else {
+                          // For single-item sections, select the item directly
+                          const item = section.items[0];
+                          const globalIndex = menuItems.findIndex(mi => mi.key === item.key);
+                          setActiveComponent(item.key);
+                          setSelectedIndex(globalIndex);
+                          // Close all multi-item sections
+                          setExpandedSections(prev => {
+                            const newState: Record<string, boolean> = {};
+                            Object.keys(prev).forEach(key => {
+                              newState[key] = false;
+                            });
+                            return newState;
+                          });
+                        }
+                      }}
                       style={{
                         padding: "8px 10px",
                         fontSize: "0.75rem",
@@ -194,7 +232,7 @@ const EditIndex = () => {
                         textTransform: "uppercase",
                         letterSpacing: "0.05em",
                         marginTop: sectionIndex > 0 ? "10px" : "0",
-                        cursor: hasMultipleItems ? "pointer" : "default",
+                        cursor: "pointer",
                         display: "flex",
                         justifyContent: "space-between",
                         alignItems: "center",

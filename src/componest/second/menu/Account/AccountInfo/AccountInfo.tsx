@@ -175,7 +175,7 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
   function getStatusColor(status: string): string {
     const colors: Record<string, string> = {
       'pending': '#f59e0b',
-      'in-progress': '#3b82f6',
+      'in-progress': '#FF6B35',
       'completed': '#10b981',
       'cancelled': '#ef4444',
       'on-hold': '#6b7280',
@@ -676,7 +676,7 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
         <BackButton />
         <div className="flex flex-col gap-4">
           {/* Account Information */}
-          <div className="bg-blue-50 p-4 rounded border">
+          <div className="bg-orange-50 p-4 rounded border">
             <h2 className="text-xl font-bold mb-2">Orders for {accountData.name}</h2>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
@@ -858,7 +858,7 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
                         <div className="mt-2">
                           <button 
                             onClick={() => handleOrderClick(order)}
-                            className="bg-blue-500 text-white px-3 py-1 rounded text-xs mr-2 hover:bg-blue-600"
+                            className="bg-[#FF6B35] text-white px-3 py-1 rounded text-xs mr-2 hover:bg-[#E55A2B]"
                           >
                             Edit Order
                           </button>
@@ -956,7 +956,7 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
               </button>
               <button
                 onClick={handleDateFilter}
-                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                className="bg-[#FF6B35] text-white px-4 py-2 rounded hover:bg-[#E55A2B]"
               >
                 Apply
               </button>
@@ -1007,7 +1007,7 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
               </button>
               <button
                 onClick={() => handleOrderClick(filteredOrders[expandedOrder])}
-                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                className="bg-[#FF6B35] text-white px-4 py-2 rounded hover:bg-[#E55A2B]"
               >
                 Edit Order
               </button>

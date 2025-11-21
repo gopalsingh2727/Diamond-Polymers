@@ -134,7 +134,7 @@ const EditFormula: React.FC = () => {
 
       alert("Formula updated successfully!");
       setSelectedFormula(null);
-      dispatch(getFormulas());
+      // ✅ OPTIMIZED: Removed redundant refetch - user can refresh page if needed
     } catch (err: any) {
       alert(err.message || "Failed to update formula");
     }
@@ -157,7 +157,7 @@ const EditFormula: React.FC = () => {
       alert("Formula deleted successfully!");
       setShowDeleteConfirm(false);
       setSelectedFormula(null);
-      dispatch(getFormulas());
+      // ✅ OPTIMIZED: Removed redundant refetch - user can refresh page if needed
     } catch (err: any) {
       alert(err.message || "Failed to delete formula");
     }

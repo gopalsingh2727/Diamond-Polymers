@@ -32,10 +32,10 @@ const toastConfig: Record<ToastType, {
     iconBg: 'bg-red-100'
   },
   info: {
-    icon: <InformationCircleIcon className="h-6 w-6 text-blue-600" />,
-    bg: 'bg-blue-50',
-    border: 'border-blue-500',
-    iconBg: 'bg-blue-100'
+    icon: <InformationCircleIcon className="h-6 w-6 text-[#FF6B35]" />,
+    bg: 'bg-orange-50',
+    border: 'border-[#FF6B35]',
+    iconBg: 'bg-orange-100'
   },
   warning: {
     icon: <ExclamationTriangleIcon className="h-6 w-6 text-yellow-600" />,
@@ -105,7 +105,7 @@ export const Toast: React.FC<ToastProps> = ({
             className={`h-full ${
               type === 'success' ? 'bg-green-500' :
               type === 'error' ? 'bg-red-500' :
-              type === 'info' ? 'bg-blue-500' :
+              type === 'info' ? 'bg-[#FF6B35]' :
               'bg-yellow-500'
             } animate-progress`}
             style={{ animationDuration: `${duration}ms` }}

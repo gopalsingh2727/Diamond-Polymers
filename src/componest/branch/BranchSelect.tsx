@@ -50,7 +50,7 @@ const BranchSelect = () => {
         <div className="p-6">
           {loading ? (
             <div className="flex flex-col items-center py-8">
-              <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+              <div className="w-12 h-12 border-4 border-[#FF6B35] border-t-transparent rounded-full animate-spin mb-4"></div>
               <p className="text-gray-600">Loading branches...</p>
             </div>
           ) : error ? (
@@ -76,7 +76,7 @@ const BranchSelect = () => {
                     />
                   </svg>
                   <select
-                    className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none text-gray-800"
+                    className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF6B35] focus:border-transparent appearance-none text-gray-800"
                     value={selectedBranch}
                     onChange={(e) => setSelectedBranch(e.target.value)}
                   >
@@ -103,7 +103,7 @@ const BranchSelect = () => {
                 className={`w-full py-3 px-4 rounded-lg font-medium text-white shadow-md transition-all duration-300 ${
                   !selectedBranch
                     ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-blue-600 hover:bg-blue-700 hover:shadow-lg"
+                    : "bg-[#FF6B35] hover:bg-[#E55A2B] hover:shadow-lg"
                 }`}
                 onClick={handleBranchSelect}
                 disabled={!selectedBranch}

@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "../../../../redux/rootReducer";
+import React, { useState } from "react";
+import { useDispatch } from "react-redux";
 import { AppDispatch } from "../../../../../store";
 import { createStep } from "../../../../redux/create/CreateStep/StpeActions";
-import { getMachines } from "../../../../redux/create/machine/MachineActions";
 import { ActionButton } from '../../../../../components/shared/ActionButton';
 import { ToastContainer } from '../../../../../components/shared/Toast';
 import { useCRUD } from '../../../../../hooks/useCRUD';
+import { useFormDataCache } from '../../Edit/hooks/useFormDataCache';
 import "./createStep.css";
+import "../../CreateOders/CreateOders.css";
 
 const CreateStep: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -17,13 +17,8 @@ const CreateStep: React.FC = () => {
   // 🚀 CRUD System Integration
   const { saveState, handleSave, toast } = useCRUD();
 
-  const { machines: machineList, loading } = useSelector(
-    (state: RootState) => state.machineList
-  );
-
-  useEffect(() => {
-    dispatch(getMachines());
-  }, [dispatch]);
+  // 🚀 OPTIMIZED: Get data from cached form data (no API calls!)
+  const { machines: machineList, loading } = useFormDataCache();
 
   const handleChange = (index: number, value: string) => {
     const updated = [...machines];
@@ -85,7 +80,7 @@ const CreateStep: React.FC = () => {
             type="text"
             value={stepName}
             onChange={(e) => setStepName(e.target.value)}
-            className="form-input"
+            className="createDivInput createDivInputwidth"
             placeholder="Enter Step Name"
           />
         </div>
@@ -106,7 +101,7 @@ const CreateStep: React.FC = () => {
             <div className="machine-row" key={index}>
               <div className="input-wrapper">
                 <select
-                  className="form-input machine-select"
+                  className="createDivInput createDivInputwidth machine-select"
                   value={machine.machineId}
                   onChange={(e) => handleChange(index, e.target.value)}
                 >

@@ -15,12 +15,7 @@
   font-weight: bold;
 }
 
-.form-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  width: 100%;
-}
+
 
 .form-column {
   display: flex;
@@ -57,8 +52,8 @@
 
 .form-input:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: #FF6B35;
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
 }
 
 .dimension-row {
@@ -192,7 +187,7 @@
 }
 
 .create-product-spec-container .bg-blue-500 {
-  background-color: #3b82f6;
+  background-color: #FF6B35;
 }
 
 .create-product-spec-container .text-white {
@@ -200,7 +195,7 @@
 }
 
 .create-product-spec-container .hover\:bg-blue-600:hover:not(:disabled) {
-  background-color: #2563eb;
+  background-color: #FF6B35;
 }
 
 .create-product-spec-container .bg-red-500 {

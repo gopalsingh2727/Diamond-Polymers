@@ -56,7 +56,7 @@ export function FilteredOrdersExample() {
         <BranchSelector />
       </div>
       
-      <div className="bg-blue-50 p-4 rounded">
+      <div className="bg-orange-50 p-4 rounded">
         <p>
           Showing {filteredOrders.length} orders from{' '}
           {selectedBranch ? selectedBranch.name : 'All Branches'}
@@ -199,7 +199,7 @@ export function BranchComparisonReport() {
                     <div className="flex items-center justify-end gap-2">
                       <div className="flex-1 max-w-[100px] bg-slate-200 rounded-full h-2">
                         <div 
-                          className="bg-blue-600 h-2 rounded-full"
+                          className="bg-[#FF6B35] h-2 rounded-full"
                           style={{ width: `${row.percentage}%` }}
                         />
                       </div>

@@ -166,7 +166,7 @@
   align-items: center !important;
   gap: 0.5rem !important;
   padding: 0.5rem 1rem !important;
-  background-color: #3b82f6 !important;
+  background-color: #FF6B35 !important;
   color: #ffffff !important;
   border-radius: 0.5rem !important;
   border: none !important;
@@ -177,7 +177,7 @@
 }
 
 .report-builder-scope .report-button:hover {
-  background-color: #2563eb !important;
+  background-color: #FF6B35 !important;
 }
 
 .report-builder-scope .report-button-icon {
@@ -489,7 +489,7 @@
   width: 2rem;
   height: 2rem;
   border: 4px solid #e2e8f0;
-  border-top-color: #3b82f6;
+  border-top-color: #FF6B35;
   border-radius: 50%;
   animation: report-spin 1s linear infinite;
 }
@@ -558,7 +558,7 @@
 }
 
 .report-builder-scope .report-status-dot-info {
-  background-color: #3b82f6;
+  background-color: #FF6B35;
 }
 
 /* Highlight Boxes */
@@ -587,8 +587,8 @@
 }
 
 .report-builder-scope .report-highlight-info {
-  background-color: #dbeafe;
-  border-left: 4px solid #3b82f6;
+  background-color: #fff5f0;
+  border-left: 4px solid #FF6B35;
   padding-left: 1rem;
   padding: 1rem;
   margin: 1rem 0;

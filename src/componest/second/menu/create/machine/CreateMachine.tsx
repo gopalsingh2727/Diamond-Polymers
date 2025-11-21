@@ -1,16 +1,14 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { getMachineTypes } from "../../../../redux/create/machineType/machineTypeActions";
 import { createMachine } from "../../../../redux/create/machine/MachineActions";
-import { getProductSpecs } from "../../../../redux/create/productSpec/productSpecActions";
-import { getMaterialSpecs } from "../../../../redux/create/materialSpec/materialSpecActions";
 import { RootState } from "../../../../redux/rootReducer";
 import { AppDispatch } from "../../../../../store";
 import { Plus, Trash2, Download, Settings, Calculator, Eye, Table, Edit2, Check, X } from 'lucide-react';
 import { ActionButton } from '../../../../../components/shared/ActionButton';
 import { ToastContainer } from '../../../../../components/shared/Toast';
 import { useCRUD } from '../../../../../hooks/useCRUD';
+import { useFormDataCache } from '../../Edit/hooks/useFormDataCache';
 import "./createMachine.css";
 
 type MachineSize = { x: string; y: string; z: string };
@@ -120,17 +118,8 @@ const CreateMachine: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
 
-  const { items: machineTypes, loading } = useSelector(
-    (state: RootState) => state.machineTypeList
-  );
-
-  // Get Product Specs and Material Specs from Redux
-  const { productSpecs = [] } = useSelector(
-    (state: RootState) => state.productSpecList || { productSpecs: [] }
-  );
-  const { materialSpecs = [] } = useSelector(
-    (state: RootState) => state.materialSpecList || { materialSpecs: [] }
-  );
+  // 🚀 OPTIMIZED: Get data from cached form data (no API calls!)
+  const { machineTypes, productSpecs, materialSpecs, loading } = useFormDataCache();
 
   // Predefined table templates
   const tableTemplates: { name: string; columns: TableColumn[]; formulas: Record<string, Formula>; }[] = [
@@ -209,12 +198,7 @@ const CreateMachine: React.FC = () => {
     { name: 'Custom', formula: '', description: 'Write your own formula' }
   ];
 
-  useEffect(() => {
-    dispatch(getMachineTypes());
-    // Fetch product specs and material specs for operator view configuration
-    dispatch(getProductSpecs() as any);
-    dispatch(getMaterialSpecs() as any);
-  }, [dispatch]);
+  // ✅ No API calls needed - data comes from useFormDataCache!
 
   // Extract dimensions when product spec is selected
   useEffect(() => {
@@ -857,7 +841,7 @@ const CreateMachine: React.FC = () => {
             type="text"
             value={machineName}
             onChange={(e) => setMachineName(e.target.value)}
-            className="CreateMachineFormInput"
+            className="createDivInput"
             placeholder="Enter machine name"
             aria-required="true"
           />
@@ -871,14 +855,14 @@ const CreateMachine: React.FC = () => {
             id="CreateMachineMachineType"
             value={machineType}
             onChange={(e) => setMachineType(e.target.value)}
-            className="CreateMachineMachineSelect"
+            className="createDivInput"
             aria-required="true"
           >
             <option value="">Select Machine Type</option>
             {loading ? (
               <option disabled>Loading...</option>
             ) : (
-              machineTypes.map((type: any) => (
+              Array.isArray(machineTypes) && machineTypes.map((type: any) => (
                 <option key={type._id} value={type._id}>
                   {type.type}
                 </option>
@@ -887,7 +871,7 @@ const CreateMachine: React.FC = () => {
           </select>
         </div>
 
-        <fieldset className="CreateMachineFormGroup">
+        <fieldset className="createDivInput">
           <legend className="CreateMachineFormLabel">Size (X, Y, Z) *</legend>
           <div className="CreateMachineSizeInputs">
             {(["x", "y", "z"] as const).map((axis) => (
@@ -974,7 +958,7 @@ const CreateMachine: React.FC = () => {
               </div>
 
               {/* Add New Column */}
-              <div className="CreateMachineAddColumnForm">
+              <div className="createDivInput ">
                 <div className="CreateMachineColumnInputs">
                   <input
                     type="text"
@@ -1048,7 +1032,7 @@ const CreateMachine: React.FC = () => {
               )}
 
               {/* Add New Formula */}
-              <div className="CreateMachineAddFormulaForm">
+              <div className="createDivInput">
                 <div className="CreateMachineFormulaInputs">
                   <select
                     value={selectedFormulaColumn}
@@ -1373,7 +1357,7 @@ const CreateMachine: React.FC = () => {
                   style={{ width: '100%', padding: '0.5rem 0.75rem', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '0.875rem' }}
                 >
                   <option value="">-- Select a Product Spec --</option>
-                  {productSpecs.map((spec: any) => (
+                  {Array.isArray(productSpecs) && productSpecs.map((spec: any) => (
                     <option key={spec._id} value={spec._id}>
                       {spec.specName}
                     </option>
@@ -1565,7 +1549,7 @@ const CreateMachine: React.FC = () => {
                   style={{ width: '100%', padding: '0.5rem 0.75rem', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '0.875rem' }}
                 >
                   <option value="">-- Select a Material Spec --</option>
-                  {materialSpecs.map((spec: any) => (
+                  {Array.isArray(materialSpecs) && materialSpecs.map((spec: any) => (
                     <option key={spec._id} value={spec._id}>
                       {spec.specName}
                     </option>

@@ -5,7 +5,7 @@ import {
   updateOperator,
   deleteOperator,
 } from "../../../../redux/create/CreateMachineOpertor/MachineOpertorActions";
-import { getMachines } from "../../../../redux/create/machine/MachineActions";
+import { useFormDataCache } from "../hooks/useFormDataCache";
 import { RootState } from "../../../../redux/rootReducer";
 import { AppDispatch } from "../../../../../store";
 
@@ -21,11 +21,12 @@ interface Operator {
 const EditMachineOpertor: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
 
+  // 🚀 OPTIMIZED: Get machines from cached form data (no API call!)
+  const { machines } = useFormDataCache();
+
+  // Keep operators from Redux (operators list needs separate fetch)
   const { operators = [], loading, error } = useSelector(
     (state: RootState) => state.operatorList || {}
-  );
-  const { machines = [] } = useSelector(
-    (state: RootState) => state.machineList || {}
   );
 
   const [selectedRow, setSelectedRow] = useState(0);
@@ -73,8 +74,8 @@ const EditMachineOpertor: React.FC = () => {
   );
 
   useEffect(() => {
+    // ✅ OPTIMIZED: Machines come from cache, only fetch operators
     dispatch(listOperators());
-    dispatch(getMachines());
   }, [dispatch]);
 
   useEffect(() => {
@@ -194,7 +195,7 @@ const EditMachineOpertor: React.FC = () => {
               <input
                 type="text"
                 placeholder="Search by username, machine, or branch..."
-                className="w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition-all"
+                className="w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-[#FF6B35] transition-all"
                 value={searchTerm}
                 onChange={handleSearchChange}
                 style={{
@@ -269,7 +270,7 @@ const EditMachineOpertor: React.FC = () => {
                   return (
                     <tr
                       key={operator._id}
-                      className={selectedRow === index ? "bg-blue-100" : ""}
+                      className={selectedRow === index ? "bg-orange-100" : ""}
                       onClick={() => handleRowClick(index, operator)}
                       style={{ cursor: "pointer" }}
                     >

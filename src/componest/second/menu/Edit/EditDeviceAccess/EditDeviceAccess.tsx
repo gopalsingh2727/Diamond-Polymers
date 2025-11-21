@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { getMachines } from "../../../../redux/create/machine/MachineActions";
 import {
   getDeviceAccessList,
   updateDeviceAccess,
   deleteDeviceAccess,
 } from "../../../../redux/deviceAccess/deviceAccessActions";
+import { useFormDataCache } from "../hooks/useFormDataCache";
 import { RootState } from "../../../../redux/rootReducer";
 import { AppDispatch } from "../../../../../store";
 
@@ -27,18 +27,20 @@ interface Device {
 
 const EditDeviceAccess: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
+
+  // 🚀 OPTIMIZED: Get machines from cached form data (no API call!)
+  const { machines: machineList } = useFormDataCache();
+
+  // Keep device access from Redux (not in cache)
+  const { devices: deviceList, loading, error } = useSelector(
+    (state: RootState) => state.deviceAccess
+  );
+
   const [selectedRow, setSelectedRow] = useState(0);
   const [showDetail, setShowDetail] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
   const [machineId, setMachineId] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-
-  const { machines: machineList } = useSelector(
-    (state: RootState) => state.machineList
-  );
-  const { devices: deviceList, loading, error } = useSelector(
-    (state: RootState) => state.deviceAccess
-  );
 
   // Filter devices based on search term
   const filteredDevices = deviceList.filter((device: Device) => {
@@ -79,7 +81,7 @@ const EditDeviceAccess: React.FC = () => {
   );
 
   useEffect(() => {
-    dispatch(getMachines());
+    // ✅ OPTIMIZED: Machines come from cache, only fetch device access
     dispatch(getDeviceAccessList());
   }, [dispatch]);
 
@@ -187,7 +189,7 @@ const EditDeviceAccess: React.FC = () => {
               <input
                 type="text"
                 placeholder="Search by device ID, name, branch, location, or machine..."
-                                className="w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition-all"
+                                className="w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-[#FF6B35] transition-all"
                 value={searchTerm}
                 onChange={handleSearchChange}
                 style={{
@@ -262,7 +264,7 @@ const EditDeviceAccess: React.FC = () => {
                 {filteredDevices.map((device: Device, index: number) => (
                   <tr
                     key={device._id}
-                    className={selectedRow === index ? "bg-blue-100" : ""}
+                    className={selectedRow === index ? "bg-orange-100" : ""}
                     onClick={() => handleRowClick(index, device)}
                     style={{ cursor: "pointer" }}
                   >
@@ -320,7 +322,7 @@ const EditDeviceAccess: React.FC = () => {
                 disabled={!machineId || loading}
                 style={{
                   padding: '8px 16px',
-                  background: machineId ? '#2196F3' : '#ccc',
+                  background: machineId ? '#FF6B35' : '#ccc',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',

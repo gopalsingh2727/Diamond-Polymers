@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { createDeviceAccess, resetDeviceAccessState } from "../../../../redux/deviceAccess/deviceAccessActions";
 import { AppDispatch, RootState } from "../../../../../store";
+import "../../CreateOders/CreateOders.css";
 
 const DeviceAccessCreate: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -81,7 +82,8 @@ const DeviceAccessCreate: React.FC = () => {
     showPassword && field.includes("password") ? "text" : "password";
 
   return (
-    <div className="form-grid">
+    <div className="createDiv">
+      <h2 className="form-title" style={{ gridColumn: "1 / -1", textAlign: "center", marginBottom: "1.5rem" }}>Create Device Access</h2>
       {/* Column 1: Device Name + Location */}
       <div className="form-column">
         <div className="form-input-group">
@@ -89,21 +91,19 @@ const DeviceAccessCreate: React.FC = () => {
           <input
             name="deviceName"
             type="text"
-            className="form-input"
+            className="createDivInput createDivInputwidth"
             placeholder="Enter device name"
             value={formData.deviceName}
             onChange={handleChange}
           />
-          <small style={{ color: "#666", fontSize: "0.85rem" }}>
-            Device ID will be auto-generated
-          </small>
+        
         </div>
         <div className="form-input-group">
           <label className="input-label">Device Location *</label>
           <input
             name="location"
             type="text"
-            className="form-input"
+            className="createDivInput createDivInputwidth"
             placeholder="Enter location"
             value={formData.location}
             onChange={handleChange}
@@ -119,7 +119,7 @@ const DeviceAccessCreate: React.FC = () => {
             <input
               name="password"
               type={inputType("password")}
-              className="form-input"
+              className="createDivInput createDivInputwidth"
               placeholder="Enter password (min 6 characters)"
               value={formData.password}
               onChange={handleChange}
@@ -139,7 +139,7 @@ const DeviceAccessCreate: React.FC = () => {
             <input
               name="confirmPassword"
               type={inputType("confirmPassword")}
-              className="form-input"
+              className="createDivInput createDivInputwidth"
               placeholder="Confirm password"
               value={formData.confirmPassword}
               onChange={handleChange}

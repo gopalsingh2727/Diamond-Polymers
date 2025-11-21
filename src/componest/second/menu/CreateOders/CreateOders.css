@@ -160,6 +160,22 @@
   padding: 10px;
   box-sizing: border-box; /* Makes padding not affect width */
   margin-top: 10px;
+  transition: all 0.2s ease;
+}
+
+.CurstomerInput:focus {
+  border-bottom-color: #FF6B35;
+  border-bottom-width: 2px;
+}
+
+.CurstomerAddressInput:focus {
+  border-bottom-color: #FF6B35;
+  border-bottom-width: 2px;
+}
+
+.CurstomerNameInput:focus {
+  border-bottom-color: #FF6B35;
+  border-bottom-width: 2px;
 }
 
 .CreateOrdersForm{

@@ -1,45 +1,37 @@
-import axios from "axios";
+import { Dispatch } from 'redux';
+import axios from 'axios';
 import {
   CREATE_FORMULA_REQUEST,
   CREATE_FORMULA_SUCCESS,
-  CREATE_FORMULA_FAIL,
+  CREATE_FORMULA_FAILURE,
   GET_FORMULAS_REQUEST,
   GET_FORMULAS_SUCCESS,
-  GET_FORMULAS_FAIL,
+  GET_FORMULAS_FAILURE,
   GET_FORMULA_BY_NAME_REQUEST,
   GET_FORMULA_BY_NAME_SUCCESS,
-  GET_FORMULA_BY_NAME_FAIL,
+  GET_FORMULA_BY_NAME_FAILURE,
   UPDATE_FORMULA_REQUEST,
   UPDATE_FORMULA_SUCCESS,
-  UPDATE_FORMULA_FAIL,
+  UPDATE_FORMULA_FAILURE,
   DELETE_FORMULA_REQUEST,
   DELETE_FORMULA_SUCCESS,
-  DELETE_FORMULA_FAIL,
+  DELETE_FORMULA_FAILURE,
   TEST_FORMULA_REQUEST,
   TEST_FORMULA_SUCCESS,
-  TEST_FORMULA_FAIL
-} from "./formulaConstants";
-import { Dispatch } from "redux";
-import { RootState } from "../../rootReducer";
+  TEST_FORMULA_FAILURE,
+} from './formulaConstants';
 
-// ENV
 const baseUrl = import.meta.env.VITE_API_27INFINITY_IN;
-const apiKey = import.meta.env.VITE_API_KEY || "27infinity.in_5f84c89315f74a2db149c06a93cf4820";
+const API_KEY = import.meta.env.VITE_API_KEY;
 
-// Helpers
-const getToken = (getState: () => RootState): string | null =>
-  getState().auth?.token || localStorage.getItem("authToken");
-
-// Headers builder
-const getHeaders = (
-  token?: string | null,
-  extra?: Record<string, string>
-): Record<string, string> => ({
-  "Content-Type": "application/json",
-  Authorization: token ? `Bearer ${token}` : "",
-  "x-api-key": apiKey,
-  ...(extra || {}),
-});
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('token');
+  return {
+    'x-api-key': API_KEY,
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  };
+};
 
 // Create Formula
 export const createFormula = (formulaData: {
@@ -53,23 +45,25 @@ export const createFormula = (formulaData: {
     category?: string;
     version?: string;
   };
-}) => async (dispatch: Dispatch, getState: () => RootState) => {
+}) => async (dispatch: Dispatch) => {
+  dispatch({ type: CREATE_FORMULA_REQUEST });
+
   try {
-    dispatch({ type: CREATE_FORMULA_REQUEST });
-
-    const token = getToken(getState);
-
-    const { data } = await axios.post(
-      `${baseUrl}/formula`,
+    const response = await axios.post(
+      `${baseUrl}/api/formula`,
       formulaData,
-      { headers: getHeaders(token) }
+      { headers: getAuthHeaders() }
     );
 
-    dispatch({ type: CREATE_FORMULA_SUCCESS, payload: data });
-    return data;
+    dispatch({
+      type: CREATE_FORMULA_SUCCESS,
+      payload: response.data,
+    });
+
+    return response.data;
   } catch (error: any) {
     dispatch({
-      type: CREATE_FORMULA_FAIL,
+      type: CREATE_FORMULA_FAILURE,
       payload: error.response?.data?.message || error.message,
     });
     throw error;
@@ -77,47 +71,49 @@ export const createFormula = (formulaData: {
 };
 
 // Get All Formulas
-export const getFormulas = () => async (
-  dispatch: Dispatch,
-  getState: () => RootState
-) => {
+export const getFormulas = () => async (dispatch: Dispatch) => {
+  dispatch({ type: GET_FORMULAS_REQUEST });
+
   try {
-    dispatch({ type: GET_FORMULAS_REQUEST });
+    const response = await axios.get(
+      `${baseUrl}/api/formula`,
+      { headers: getAuthHeaders() }
+    );
 
-    const token = getToken(getState);
-
-    const { data } = await axios.get(`${baseUrl}/formula`, {
-      headers: getHeaders(token),
+    dispatch({
+      type: GET_FORMULAS_SUCCESS,
+      payload: response.data.formulas || response.data,
     });
 
-    dispatch({ type: GET_FORMULAS_SUCCESS, payload: data.formulas || [] });
+    return response.data;
   } catch (error: any) {
     dispatch({
-      type: GET_FORMULAS_FAIL,
+      type: GET_FORMULAS_FAILURE,
       payload: error.response?.data?.message || error.message,
     });
+    throw error;
   }
 };
 
 // Get Formula by Name
-export const getFormulaByName = (formulaName: string) => async (
-  dispatch: Dispatch,
-  getState: () => RootState
-) => {
+export const getFormulaByName = (name: string) => async (dispatch: Dispatch) => {
+  dispatch({ type: GET_FORMULA_BY_NAME_REQUEST });
+
   try {
-    dispatch({ type: GET_FORMULA_BY_NAME_REQUEST });
+    const response = await axios.get(
+      `${baseUrl}/api/formula/${name}`,
+      { headers: getAuthHeaders() }
+    );
 
-    const token = getToken(getState);
-
-    const { data } = await axios.get(`${baseUrl}/formula/${formulaName}`, {
-      headers: getHeaders(token),
+    dispatch({
+      type: GET_FORMULA_BY_NAME_SUCCESS,
+      payload: response.data,
     });
 
-    dispatch({ type: GET_FORMULA_BY_NAME_SUCCESS, payload: data });
-    return data;
+    return response.data;
   } catch (error: any) {
     dispatch({
-      type: GET_FORMULA_BY_NAME_FAIL,
+      type: GET_FORMULA_BY_NAME_FAILURE,
       payload: error.response?.data?.message || error.message,
     });
     throw error;
@@ -125,29 +121,35 @@ export const getFormulaByName = (formulaName: string) => async (
 };
 
 // Update Formula
-export const updateFormula = (
-  formulaName: string,
-  updateData: {
-    functionBody?: string;
-    metadata?: any;
-  }
-) => async (dispatch: Dispatch, getState: () => RootState) => {
+export const updateFormula = (name: string, updateData: {
+  functionBody?: string;
+  metadata?: {
+    description?: string;
+    requiredParams?: string[];
+    optionalParams?: string[];
+    unit?: string;
+    category?: string;
+    version?: string;
+  };
+}) => async (dispatch: Dispatch) => {
+  dispatch({ type: UPDATE_FORMULA_REQUEST });
+
   try {
-    dispatch({ type: UPDATE_FORMULA_REQUEST });
-
-    const token = getToken(getState);
-
-    const { data } = await axios.put(
-      `${baseUrl}/formula/${formulaName}`,
+    const response = await axios.put(
+      `${baseUrl}/api/formula/${name}`,
       updateData,
-      { headers: getHeaders(token) }
+      { headers: getAuthHeaders() }
     );
 
-    dispatch({ type: UPDATE_FORMULA_SUCCESS, payload: data });
-    return data;
+    dispatch({
+      type: UPDATE_FORMULA_SUCCESS,
+      payload: response.data,
+    });
+
+    return response.data;
   } catch (error: any) {
     dispatch({
-      type: UPDATE_FORMULA_FAIL,
+      type: UPDATE_FORMULA_FAILURE,
       payload: error.response?.data?.message || error.message,
     });
     throw error;
@@ -155,23 +157,24 @@ export const updateFormula = (
 };
 
 // Delete Formula
-export const deleteFormula = (formulaName: string) => async (
-  dispatch: Dispatch,
-  getState: () => RootState
-) => {
+export const deleteFormula = (name: string) => async (dispatch: Dispatch) => {
+  dispatch({ type: DELETE_FORMULA_REQUEST });
+
   try {
-    dispatch({ type: DELETE_FORMULA_REQUEST });
+    const response = await axios.delete(
+      `${baseUrl}/api/formula/${name}`,
+      { headers: getAuthHeaders() }
+    );
 
-    const token = getToken(getState);
-
-    await axios.delete(`${baseUrl}/formula/${formulaName}`, {
-      headers: getHeaders(token),
+    dispatch({
+      type: DELETE_FORMULA_SUCCESS,
+      payload: name,
     });
 
-    dispatch({ type: DELETE_FORMULA_SUCCESS, payload: formulaName });
+    return response.data;
   } catch (error: any) {
     dispatch({
-      type: DELETE_FORMULA_FAIL,
+      type: DELETE_FORMULA_FAILURE,
       payload: error.response?.data?.message || error.message,
     });
     throw error;
@@ -179,26 +182,25 @@ export const deleteFormula = (formulaName: string) => async (
 };
 
 // Test Formula
-export const testFormula = (testData: {
-  functionBody: string;
-  parameters: any;
-}) => async (dispatch: Dispatch, getState: () => RootState) => {
+export const testFormula = (name: string, params: Record<string, any>) => async (dispatch: Dispatch) => {
+  dispatch({ type: TEST_FORMULA_REQUEST });
+
   try {
-    dispatch({ type: TEST_FORMULA_REQUEST });
-
-    const token = getToken(getState);
-
-    const { data } = await axios.post(
-      `${baseUrl}/formula/test`,
-      testData,
-      { headers: getHeaders(token) }
+    const response = await axios.post(
+      `${baseUrl}/api/formula/${name}/test`,
+      { params },
+      { headers: getAuthHeaders() }
     );
 
-    dispatch({ type: TEST_FORMULA_SUCCESS, payload: data });
-    return data;
+    dispatch({
+      type: TEST_FORMULA_SUCCESS,
+      payload: response.data,
+    });
+
+    return response.data;
   } catch (error: any) {
     dispatch({
-      type: TEST_FORMULA_FAIL,
+      type: TEST_FORMULA_FAILURE,
       payload: error.response?.data?.message || error.message,
     });
     throw error;

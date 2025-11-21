@@ -1,9 +1,6 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import "./EditMaterials.css";
-import { useDispatch, useSelector } from "react-redux";
-import { getAllMaterialTypesWithMaterials } from "../../../../redux/create/Materials/MaterialsCategories/MaterialsCategoriesActions";
-import { RootState } from "../../../../redux/rootReducer";
-import { AppDispatch } from "../../../../../store";
+import { useFormDataCache } from "../hooks/useFormDataCache";
 
 interface Material {
   _id: string;
@@ -26,17 +23,18 @@ interface MaterialType {
 }
 
 const EditMaterialsCategories: React.FC = () => {
-  const dispatch = useDispatch<AppDispatch>();
+  // 🚀 OPTIMIZED: Get data from cached form data (no API calls!)
+  const { materialTypes: cachedMaterialTypes, materials: cachedMaterials, loading, error } = useFormDataCache();
 
-  const {
-    categories: materialTypes = [],
-    loading,
-    error,
-  } = useSelector((state: RootState) => state.materialCategories || {}) as unknown as {
-    categories: MaterialType[];
-    loading: boolean;
-    error: string | null;
-  };
+  // Group materials by material type
+  const materialTypes = useMemo(() => {
+    return cachedMaterialTypes.map((type: any) => ({
+      ...type,
+      materials: cachedMaterials.filter((material: any) =>
+        (material.materialType?._id === type._id || material.materialTypeId === type._id)
+      )
+    }));
+  }, [cachedMaterialTypes, cachedMaterials]);
 
   const [selectedRow, setSelectedRow] = useState(0);
   const [showDetail, setShowDetail] = useState(false);
@@ -80,9 +78,7 @@ const EditMaterialsCategories: React.FC = () => {
     [filteredMaterialTypes, selectedRow, showDetail]
   );
 
-  useEffect(() => {
-    dispatch(getAllMaterialTypesWithMaterials());
-  }, [dispatch]);
+  // ✅ No useEffect dispatch needed - data already loaded from cache!
 
   useEffect(() => {
     window.addEventListener("keydown", handleKeyDown);
@@ -152,7 +148,7 @@ const EditMaterialsCategories: React.FC = () => {
               <input
                 type="text"
                 placeholder="Search by category name, description, or material..."
-                                className="w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition-all"
+                                className="w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-[#FF6B35] transition-all"
                 value={searchTerm}
                 onChange={handleSearchChange}
                 style={{
@@ -226,7 +222,7 @@ const EditMaterialsCategories: React.FC = () => {
                 {filteredMaterialTypes.map((item: MaterialType, index: number) => (
                   <tr
                     key={item._id}
-                    className={selectedRow === index ? "bg-blue-100" : ""}
+                    className={selectedRow === index ? "bg-orange-100" : ""}
                     onClick={() => handleRowClick(index, item)}
                     style={{ cursor: "pointer" }}
                   >

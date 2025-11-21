@@ -67,7 +67,7 @@ export function OverviewReport() {
   // Status distribution
   const statusData = [
     { name: "Completed", value: completedOrders, color: "#10b981" },
-    { name: "In Progress", value: inProgressOrders, color: "#3b82f6" },
+    { name: "In Progress", value: inProgressOrders, color: "#FF6B35" },
     { name: "Pending", value: pendingOrders, color: "#f59e0b" },
     { name: "Dispatched", value: filteredOrders.filter(o => o.overallStatus === "dispatched").length, color: "#8b5cf6" }
   ];
@@ -76,7 +76,7 @@ export function OverviewReport() {
   const filteredEfficiencyTrends = efficiencyTrendsData;
   const filteredProductionOutput = productionOutputData;
 
-  const COLORS = ["#10b981", "#3b82f6", "#f59e0b", "#8b5cf6"];
+  const COLORS = ["#10b981", "#FF6B35", "#f59e0b", "#8b5cf6"];
 
   // Export to Excel function
   const handleExportExcel = () => {
@@ -196,7 +196,7 @@ export function OverviewReport() {
           <CardHeader>
             <div className="flex justify-between items-center">
               <span className="text-sm font-medium text-secondary">Material Input</span>
-              <Weight style={{ width: '1rem', height: '1rem', color: '#2563eb' }} />
+              <Weight style={{ width: '1rem', height: '1rem', color: '#FF6B35' }} />
             </div>
           </CardHeader>
           <CardContent>
@@ -248,12 +248,12 @@ export function OverviewReport() {
                   contentStyle={{ backgroundColor: '#fff', border: '1px solid #e2e8f0' }}
                   labelFormatter={(value) => new Date(value).toLocaleDateString()}
                 />
-                <Line 
-                  type="monotone" 
-                  dataKey="efficiency" 
-                  stroke="#3b82f6" 
+                <Line
+                  type="monotone"
+                  dataKey="efficiency"
+                  stroke="#FF6B35"
                   strokeWidth={2}
-                  dot={{ fill: '#3b82f6', r: 4 }}
+                  dot={{ fill: '#FF6B35', r: 4 }}
                   name="Efficiency %"
                 />
               </LineChart>

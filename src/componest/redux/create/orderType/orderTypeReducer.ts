@@ -13,7 +13,13 @@ import {
   GET_ORDER_TYPES_BY_BRANCH_FAIL,
   GET_DEFAULT_ORDER_TYPE_REQUEST,
   GET_DEFAULT_ORDER_TYPE_SUCCESS,
-  GET_DEFAULT_ORDER_TYPE_FAIL
+  GET_DEFAULT_ORDER_TYPE_FAIL,
+  UPDATE_ORDER_TYPE_REQUEST,
+  UPDATE_ORDER_TYPE_SUCCESS,
+  UPDATE_ORDER_TYPE_FAIL,
+  DELETE_ORDER_TYPE_REQUEST,
+  DELETE_ORDER_TYPE_SUCCESS,
+  DELETE_ORDER_TYPE_FAIL
 } from "./orderTypeConstants";
 
 interface OrderTypeState {
@@ -123,6 +129,51 @@ export const orderTypeCreateReducer = (state = initialCreateState, action: any):
       };
     case CREATE_ORDER_TYPE_FAIL:
       return { ...state, loading: false, error: action.payload, orderType: null };
+    default:
+      return state;
+  }
+};
+
+// Update Order Type Reducer
+const initialUpdateState: OrderTypeState = {
+  loading: false,
+  error: null,
+  orderType: null,
+};
+
+export const orderTypeUpdateReducer = (state = initialUpdateState, action: any): OrderTypeState => {
+  switch (action.type) {
+    case UPDATE_ORDER_TYPE_REQUEST:
+      return { ...state, loading: true, error: null };
+    case UPDATE_ORDER_TYPE_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        orderType: action.payload.orderType || action.payload,
+        error: null
+      };
+    case UPDATE_ORDER_TYPE_FAIL:
+      return { ...state, loading: false, error: action.payload };
+    default:
+      return state;
+  }
+};
+
+// Delete Order Type Reducer
+const initialDeleteState = {
+  loading: false,
+  error: null,
+  success: false,
+};
+
+export const orderTypeDeleteReducer = (state = initialDeleteState, action: any) => {
+  switch (action.type) {
+    case DELETE_ORDER_TYPE_REQUEST:
+      return { ...state, loading: true, error: null, success: false };
+    case DELETE_ORDER_TYPE_SUCCESS:
+      return { ...state, loading: false, success: true, error: null };
+    case DELETE_ORDER_TYPE_FAIL:
+      return { ...state, loading: false, error: action.payload, success: false };
     default:
       return state;
   }

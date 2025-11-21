@@ -68,15 +68,15 @@
 
 /* Solid Variants */
 .badgeSolidStatus {
-  background-color: #3b82f6;
+  background-color: #FF6B35;
   color: #ffffff;
-  border: 1px solid #3b82f6;
+  border: 1px solid #FF6B35;
 }
 
 .badgeSolidPriority {
-  background-color: #8b5cf6;
+  background-color: #FFA500;
   color: #ffffff;
-  border: 1px solid #8b5cf6;
+  border: 1px solid #FFA500;
 }
 
 .badgeSolidSuccess {
@@ -110,13 +110,13 @@
 }
 
 .badgeOutlineStatus {
-  color: #3b82f6;
-  border-color: #3b82f6;
+  color: #FF6B35;
+  border-color: #FF6B35;
 }
 
 .badgeOutlinePriority {
-  color: #8b5cf6;
-  border-color: #8b5cf6;
+  color: #FFA500;
+  border-color: #FFA500;
 }
 
 .badgeOutlineSuccess {
@@ -160,7 +160,7 @@
 }
 
 .dotInfo {
-  background-color: #3b82f6;
+  background-color: #FF6B35;
 }
 
 .dotDefault {
@@ -421,15 +421,15 @@
   }
   
   .badgeStatus {
-    background-color: #1e3a8a;
-    color: #93c5fd;
-    border-color: #3b82f6;
+    background-color: #7c2d12;
+    color: #fed7aa;
+    border-color: #FF6B35;
   }
-  
+
   .badgePriority {
-    background-color: #581c87;
-    color: #d8b4fe;
-    border-color: #8b5cf6;
+    background-color: #7c2d12;
+    color: #fed7aa;
+    border-color: #FFA500;
   }
   
   .badgeSuccess,

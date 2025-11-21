@@ -185,8 +185,8 @@ const SaveOrders: React.FC<SaveOrdersProps> = ({
               <button
                 onClick={handlePrint}
                 style={printButtonStyle}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#2563eb'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#3b82f6'}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#E55A2B'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#FF6B35'}
               >
                 🖨️ Print Order
               </button>
@@ -282,7 +282,7 @@ const successButtonsStyle: React.CSSProperties = {
 
 const printButtonStyle: React.CSSProperties = {
   padding: "12px 24px",
-  backgroundColor: "#3b82f6",
+  backgroundColor: "#FF6B35",
   color: "white",
   border: "none",
   borderRadius: "8px",

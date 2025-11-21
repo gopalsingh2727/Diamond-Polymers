@@ -1,0 +1,499 @@
+/* ==========================================================================
+   SPEC COMPONENTS - Grid-Based Layout CSS
+   Used for: CreateProductSpec, CreateMaterialSpec
+   ========================================================================== */
+
+/* Main Container */
+.specContainer {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+  background-color: #ffffff;
+  min-height: 100vh;
+  overflow-y: auto;
+}
+
+/* Header */
+.specHeader {
+  grid-column: 1 / -1;
+  color: #1f2937;
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+/* Template Buttons Container */
+.specTemplateButtons {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.specTemplateBtn {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  background-color: #e5e7eb;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.specTemplateBtn:hover {
+  background-color: #d1d5db;
+  transform: translateY(-1px);
+}
+
+/* Form Grid - Main Layout */
+.specFormGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+/* Form Row - Side by Side Fields */
+.specFormRow {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  width: 100%;
+}
+
+/* Form Column - Vertical Layout */
+.specFormColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+/* Input Label */
+.specInputLabel {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #374151;
+  margin-bottom: 0.25rem;
+  display: block;
+}
+
+/* Form Input - Text, Select, Textarea */
+.specFormInput {
+  padding: 0.625rem 0.875rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  width: 100%;
+  background-color: #ffffff;
+  font-family: inherit;
+}
+
+.specFormInput:focus {
+  outline: none;
+  border-color: #FF6B35;
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+}
+
+.specFormInput:disabled {
+  background-color: #f3f4f6;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Textarea Specific */
+.specFormInput textarea,
+textarea.specFormInput {
+  resize: vertical;
+  min-height: 60px;
+  font-family: inherit;
+}
+
+/* Reference Box (Material/Product Spec Browser) */
+.specReferenceBox {
+  padding: 1rem;
+  background-color: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.specReferenceBox.materialRef {
+  background-color: #fef3f3;
+  border-color: #fecaca;
+}
+
+.specReferenceTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0369a1;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.specReferenceBox.materialRef .specReferenceTitle {
+  color: #dc2626;
+}
+
+.specReferenceText {
+  font-size: 0.875rem;
+  color: #075985;
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.specReferenceBox.materialRef .specReferenceText {
+  color: #991b1b;
+}
+
+.specReferenceLabel {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: #0c4a6e;
+}
+
+.specReferenceBox.materialRef .specReferenceLabel {
+  color: #7f1d1d;
+}
+
+.specDimensionTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.specDimensionTag {
+  padding: 0.25rem 0.75rem;
+  background-color: #dbeafe;
+  color: #1e40af;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  font-family: 'Courier New', monospace;
+  border: 1px solid #93c5fd;
+}
+
+.specReferenceBox.materialRef .specDimensionTag {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  border-color: #fca5a5;
+}
+
+.specReferenceHint {
+  font-size: 0.75rem;
+  color: #075985;
+  font-style: italic;
+  background-color: #e0f2fe;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  line-height: 1.5;
+}
+
+.specReferenceBox.materialRef .specReferenceHint {
+  color: #991b1b;
+  background-color: #fef2f2;
+}
+
+.specReferenceEmpty {
+  padding: 0.75rem;
+  background-color: #fef3c7;
+  border: 1px solid #fde68a;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  color: #92400e;
+}
+
+/* Dimensions Section */
+.specDimensionsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.specAddDimensionBtn {
+  background-color: #FF6B35;
+  color: white;
+  padding: 0.5rem 0.75rem;
+  border: none;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.specAddDimensionBtn:hover {
+  background-color: #E55A2B;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Dimension Row */
+.specDimensionRow {
+  background-color: #f9fafb;
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  border: 1px solid #d1d5db;
+  margin-bottom: 0.75rem;
+  animation: specSlideIn 0.2s ease-out;
+}
+
+@keyframes specSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Dimension Fields Grid */
+.specDimensionFields {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.specDimensionFields input,
+.specDimensionFields select {
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  transition: border-color 0.2s ease;
+}
+
+.specDimensionFields input:focus,
+.specDimensionFields select:focus {
+  outline: none;
+  border-color: #FF6B35;
+  box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.1);
+}
+
+.specDimensionFields input:disabled {
+  background-color: #e0f7e0;
+  color: #059669;
+  font-weight: 500;
+}
+
+/* Remove Dimension Button */
+.specRemoveDimensionBtn {
+  background-color: #ef4444;
+  color: white;
+  padding: 0.5rem;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 600;
+}
+
+.specRemoveDimensionBtn:hover {
+  background-color: #dc2626;
+  transform: scale(1.05);
+}
+
+/* Formula Row */
+.specFormulaRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.specFormulaLabel {
+  font-size: 0.75rem;
+  color: #6b7280;
+  min-width: 4rem;
+  font-weight: 500;
+}
+
+.specFormulaInput {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-family: 'Courier New', monospace;
+  transition: border-color 0.2s ease;
+}
+
+.specFormulaInput:focus {
+  outline: none;
+  border-color: #FF6B35;
+  box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.1);
+}
+
+.specFormulaBadge {
+  font-size: 0.75rem;
+  background-color: #d1fae5;
+  color: #059669;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-weight: 600;
+}
+
+/* Empty State */
+.specEmptyState {
+  color: #6b7280;
+  font-size: 0.875rem;
+  font-style: italic;
+  text-align: center;
+  padding: 1.5rem;
+  background-color: #f9fafb;
+  border-radius: 0.375rem;
+  border: 1px dashed #d1d5db;
+}
+
+/* Save Button */
+.specSaveButton {
+  background-color: #FF6B35;
+  color: white;
+  padding: 0.875rem 1.5rem;
+  border: none;
+  border-radius: 0.375rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.specSaveButton:hover:not(:disabled) {
+  background-color: #E55A2B;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.specSaveButton:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+}
+
+/* Messages */
+.specErrorMsg {
+  color: #dc2626;
+  background-color: #fee2e2;
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  border-left: 4px solid #dc2626;
+  margin-bottom: 1rem;
+}
+
+.specSuccessMsg {
+  color: #059669;
+  background-color: #d1fae5;
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  border-left: 4px solid #059669;
+  margin-bottom: 1rem;
+}
+
+/* Code/Monospace */
+.specCode {
+  font-family: 'Courier New', Courier, monospace;
+  background-color: #ffffff;
+  padding: 2px 4px;
+  border-radius: 2px;
+  font-size: 0.875rem;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .specFormRow {
+    grid-template-columns: 1fr;
+  }
+
+  .specDimensionFields {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .specContainer {
+    padding: 1rem;
+  }
+
+  .specFormRow {
+    grid-template-columns: 1fr;
+  }
+
+  .specDimensionFields {
+    grid-template-columns: 1fr;
+  }
+
+  .specHeader {
+    font-size: 1.25rem;
+  }
+
+  .specTemplateButtons {
+    flex-direction: column;
+  }
+
+  .specTemplateBtn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .specContainer {
+    padding: 0.75rem;
+  }
+
+  .specFormGrid {
+    gap: 1rem;
+  }
+
+  .specDimensionsHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .specAddDimensionBtn {
+    width: 100%;
+  }
+}
+
+/* Dark Mode Support (Optional) */
+@media (prefers-color-scheme: dark) {
+  .specContainer {
+    background-color: #1f2937;
+  }
+
+  .specHeader {
+    color: #f9fafb;
+  }
+
+  .specFormInput {
+    background-color: #374151;
+    border-color: #4b5563;
+    color: #f9fafb;
+  }
+
+  .specDimensionRow {
+    background-color: #374151;
+    border-color: #4b5563;
+  }
+}

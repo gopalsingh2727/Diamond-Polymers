@@ -86,13 +86,13 @@
 }
 
 .chartControlActive {
-  background-color: #3b82f6;
+  background-color: #FF6B35;
   color: #ffffff;
-  border-color: #3b82f6;
+  border-color: #FF6B35;
 }
 
 .chartControlActive:hover {
-  background-color: #2563eb;
+  background-color: #E55A2B;
 }
 
 /* Legend */
@@ -167,7 +167,7 @@
   width: 2.5rem;
   height: 2.5rem;
   border: 3px solid #e2e8f0;
-  border-top-color: #3b82f6;
+  border-top-color: #FF6B35;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }

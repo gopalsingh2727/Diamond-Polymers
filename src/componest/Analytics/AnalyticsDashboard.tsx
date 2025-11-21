@@ -54,7 +54,7 @@ const AnalyticsDashboard: React.FC = () => {
   const API_BASE_URL = import.meta.env.VITE_API_27INFINITY_IN;
   const API_KEY = import.meta.env.VITE_API_KEY;
 
-  const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
+  const COLORS = ['#FF6B35', '#10B981', '#F59E0B', '#EF4444', '#FFA500', '#EC4899'];
 
   useEffect(() => {
     fetchAnalytics();
@@ -108,7 +108,7 @@ const AnalyticsDashboard: React.FC = () => {
           <select
             value={days}
             onChange={(e) => setDays(Number(e.target.value))}
-            className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF6B35]"
           >
             <option value={7}>Last 7 days</option>
             <option value={30}>Last 30 days</option>
@@ -129,7 +129,7 @@ const AnalyticsDashboard: React.FC = () => {
             onClick={() => setActiveTab(tab)}
             className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
               activeTab === tab
-                ? 'bg-blue-600 text-white'
+                ? 'bg-[#FF6B35] text-white'
                 : 'text-gray-600 hover:bg-gray-100'
             }`}
           >
@@ -145,7 +145,7 @@ const AnalyticsDashboard: React.FC = () => {
           <div className="grid grid-cols-4 gap-4">
             <div className="bg-white p-6 rounded-lg shadow-md">
               <div className="text-sm text-gray-600">Total Materials</div>
-              <div className="text-3xl font-bold text-blue-600">
+              <div className="text-3xl font-bold text-[#FF6B35]">
                 {analytics.topMaterials.length}
               </div>
               <div className="text-sm text-gray-500 mt-1">Different materials used</div>
@@ -211,7 +211,7 @@ const AnalyticsDashboard: React.FC = () => {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="totalUsed" fill="#3B82F6" name="Total Used (kg)" />
+                <Bar dataKey="totalUsed" fill="#FF6B35" name="Total Used (kg)" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -248,9 +248,9 @@ const AnalyticsDashboard: React.FC = () => {
           <div className="bg-white p-6 rounded-lg shadow-md">
             <h2 className="text-2xl font-bold mb-4">Material Wastage Analysis</h2>
             <div className="grid grid-cols-3 gap-4">
-              <div className="p-4 bg-blue-50 rounded-lg">
+              <div className="p-4 bg-orange-50 rounded-lg">
                 <div className="text-gray-600">Total Planned</div>
-                <div className="text-2xl font-bold text-blue-600">
+                <div className="text-2xl font-bold text-[#FF6B35]">
                   {analytics.wastageStats.totalPlanned?.toFixed(2) || 0} kg
                 </div>
               </div>
@@ -285,7 +285,7 @@ const AnalyticsDashboard: React.FC = () => {
                 <YAxis yAxisId="right" orientation="right" />
                 <Tooltip />
                 <Legend />
-                <Bar yAxisId="left" dataKey="totalOrders" fill="#8B5CF6" name="Total Orders" />
+                <Bar yAxisId="left" dataKey="totalOrders" fill="#FFA500" name="Total Orders" />
                 <Bar yAxisId="right" dataKey="totalQuantity" fill="#F59E0B" name="Total Quantity" />
               </BarChart>
             </ResponsiveContainer>
@@ -327,7 +327,7 @@ const AnalyticsDashboard: React.FC = () => {
           <div className="grid grid-cols-3 gap-4">
             <div className="bg-white p-6 rounded-lg shadow-md">
               <div className="text-gray-600">Average Mixing Time</div>
-              <div className="text-3xl font-bold text-blue-600">
+              <div className="text-3xl font-bold text-[#FF6B35]">
                 {analytics.mixingStats.averageMixingTime?.toFixed(1) || 0}
               </div>
               <div className="text-sm text-gray-500 mt-1">minutes</div>
@@ -341,7 +341,7 @@ const AnalyticsDashboard: React.FC = () => {
             </div>
             <div className="bg-white p-6 rounded-lg shadow-md">
               <div className="text-gray-600">Orders with Mixing</div>
-              <div className="text-3xl font-bold text-purple-600">
+              <div className="text-3xl font-bold text-[#FFA500]">
                 {analytics.mixingStats.ordersWithMixing || 0}
               </div>
               <div className="text-sm text-gray-500 mt-1">orders</div>
@@ -351,10 +351,10 @@ const AnalyticsDashboard: React.FC = () => {
           <div className="bg-white p-6 rounded-lg shadow-md">
             <h2 className="text-2xl font-bold mb-4">Mixing Efficiency</h2>
             <div className="space-y-4">
-              <div className="p-4 bg-blue-50 rounded-lg">
+              <div className="p-4 bg-orange-50 rounded-lg">
                 <p className="text-gray-700">
                   On average, each order requires{' '}
-                  <span className="font-bold text-blue-600">
+                  <span className="font-bold text-[#FF6B35]">
                     {analytics.mixingStats.averageMixingTime?.toFixed(1) || 0} minutes
                   </span>{' '}
                   of mixing time.

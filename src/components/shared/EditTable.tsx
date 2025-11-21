@@ -454,7 +454,7 @@ export function EditTable<T = any>({
                           {onView && (
                             <button
                               onClick={() => onView(row, index)}
-                              style={{ padding: '0.5rem', backgroundColor: '#3b82f6', color: 'white', border: 'none', borderRadius: '0.375rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                              style={{ padding: '0.5rem', backgroundColor: '#FF6B35', color: 'white', border: 'none', borderRadius: '0.375rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                               title="View"
                             >
                               <Eye size={16} />
@@ -500,7 +500,7 @@ export function EditTable<T = any>({
               <button
                 onClick={() => setCurrentPage(currentPage - 1)}
                 disabled={currentPage === 1}
-                style={{ padding: '0.5rem', backgroundColor: currentPage === 1 ? '#e2e8f0' : '#3b82f6', color: currentPage === 1 ? '#64748b' : 'white', border: 'none', borderRadius: '0.375rem', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center' }}
+                style={{ padding: '0.5rem', backgroundColor: currentPage === 1 ? '#e2e8f0' : '#FF6B35', color: currentPage === 1 ? '#64748b' : 'white', border: 'none', borderRadius: '0.375rem', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center' }}
               >
                 <ChevronLeft size={16} />
               </button>
@@ -510,7 +510,7 @@ export function EditTable<T = any>({
               <button
                 onClick={() => setCurrentPage(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                style={{ padding: '0.5rem', backgroundColor: currentPage === totalPages ? '#e2e8f0' : '#3b82f6', color: currentPage === totalPages ? '#64748b' : 'white', border: 'none', borderRadius: '0.375rem', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center' }}
+                style={{ padding: '0.5rem', backgroundColor: currentPage === totalPages ? '#e2e8f0' : '#FF6B35', color: currentPage === totalPages ? '#64748b' : 'white', border: 'none', borderRadius: '0.375rem', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center' }}
               >
                 <ChevronRight size={16} />
               </button>

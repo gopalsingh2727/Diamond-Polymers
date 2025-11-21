@@ -1,5 +1,5 @@
 .update-modal {
-  --primary-color: rgb(224, 30, 90);
+  --primary-color: #FF6B35;
 }
 
 .update-modal__mask {
@@ -8,7 +8,7 @@
   position: fixed;
   left: 0;
   top: 0;
-  z-index: 9;
+  z-index: 999998;
   background: rgba(0, 0, 0, 0.45);
 }
 
@@ -17,13 +17,13 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  z-index: 19;
+  z-index: 999999;
 }
 
 .update-modal__content {
-  box-shadow: 0 0 10px -4px rgb(130, 86, 208);
+  box-shadow: 0 0 15px -4px rgba(255, 107, 53, 0.5);
   overflow: hidden;
-  border-radius: 4px;
+  border-radius: 8px;
 }
 
 .content__header {

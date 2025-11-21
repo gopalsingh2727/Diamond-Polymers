@@ -1,13 +1,11 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "../../../../redux/rootReducer";
+import { useDispatch } from "react-redux";
 import { AppDispatch } from "../../../../../store";
 import {
-  getSteps,
   updateStep,
   deleteStep,
 } from "../../../../redux/create/CreateStep/StpeActions";
-import { getMachines } from "../../../../redux/create/machine/MachineActions";
+import { useFormDataCache } from "../hooks/useFormDataCache";
 
 // Define interfaces for type safety
 interface Machine {
@@ -41,7 +39,10 @@ interface EditForm {
 
 const EditStep: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
-  
+
+  // 🚀 OPTIMIZED: Get data from cached form data (no API calls!)
+  const { steps, machines, loading, error } = useFormDataCache();
+
   const [selectedRow, setSelectedRow] = useState(0);
   const [showDetail, setShowDetail] = useState(false);
   const [selectedStep, setSelectedStep] = useState<Step | null>(null);
@@ -50,14 +51,6 @@ const EditStep: React.FC = () => {
     machines: [{ machineId: "" }],
   });
   const [searchTerm, setSearchTerm] = useState("");
-
-  const stepListState = useSelector((state: RootState) => state.stepList) as any;
-  const steps: Step[] = stepListState?.steps?.steps || stepListState?.steps || [];
-  const loading = stepListState?.loading;
-  const error = stepListState?.error;
-
-  const machineListState = useSelector((state: RootState) => state.machineList) as any;
-  const machines: Machine[] = machineListState?.machines || [];
 
   // Filter steps based on search term
   const filteredSteps = steps.filter((step: Step) => {
@@ -93,10 +86,7 @@ const EditStep: React.FC = () => {
     [filteredSteps, selectedRow, showDetail]
   );
   
-  useEffect(() => {
-    dispatch(getSteps());
-    dispatch(getMachines());
-  }, [dispatch]);
+  // ✅ No useEffect dispatch needed - data already loaded from cache!
 
   useEffect(() => {
     window.addEventListener("keydown", handleKeyDown);
@@ -166,7 +156,7 @@ const EditStep: React.FC = () => {
       alert("Step updated successfully!");
       setShowDetail(false);
       setSelectedStep(null);
-      dispatch(getSteps());
+      // ✅ OPTIMIZED: Cache will auto-refresh on next page load
     } catch (err) {
       alert("Failed to update step.");
     }
@@ -183,7 +173,7 @@ const EditStep: React.FC = () => {
       alert("Deleted successfully.");
       setShowDetail(false);
       setSelectedStep(null);
-      dispatch(getSteps());
+      // ✅ OPTIMIZED: Cache will auto-refresh on next page load
     } catch (err) {
       alert("Failed to delete.");
     }
@@ -221,7 +211,7 @@ const EditStep: React.FC = () => {
                 type="text"
                 placeholder="Search by step name, branch, or machine..."
                 value={searchTerm}
-                                className="w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition-all"
+                                className="w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-[#FF6B35] transition-all"
                 onChange={handleSearchChange}
                 style={{
                   width: '100%',
@@ -293,7 +283,7 @@ const EditStep: React.FC = () => {
                 {filteredSteps.map((step: Step, index: number) => (
                   <tr
                     key={step._id}
-                    className={selectedRow === index ? "bg-blue-100" : ""}
+                    className={selectedRow === index ? "bg-orange-100" : ""}
                     onClick={() => handleRowClick(index, step)}
                     style={{ cursor: "pointer" }}
                   >
@@ -389,7 +379,7 @@ const EditStep: React.FC = () => {
               style={{
                 marginTop: '10px',
                 padding: '8px 16px',
-                background: '#2196F3',
+                background: '#FF6B35',
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',

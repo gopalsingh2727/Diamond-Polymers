@@ -1,19 +1,15 @@
-import React, { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import React, { useState } from "react";
+import { useDispatch } from "react-redux";
 import {
-  getMachines,
-  getMachinesIfNeeded,
   updateMachine,
   deleteMachine,
 } from "../../../../redux/create/machine/MachineActions";
-import { getMachineTypes } from "../../../../redux/create/machineType/machineTypeActions";
-import { RootState } from "../../../../redux/rootReducer";
+import { useFormDataCache } from "../hooks/useFormDataCache";
 import { AppDispatch } from "../../../../../store";
 import { EditTable, EditTableColumn } from "../../../../../components/shared/EditTable";
 import { ActionButton } from "../../../../../components/shared/ActionButton";
 import { ToastContainer } from "../../../../../components/shared/Toast";
 import { useCRUD } from "../../../../../hooks/useCRUD";
-import { useAutoRefresh } from "../../../../../hooks/useAutoRefresh";
 import { Plus, Trash2, Download, Settings, Calculator, Eye, Table as TableIcon, Edit2, Check, X } from 'lucide-react';
 import "./editMachines.css";
 
@@ -76,11 +72,9 @@ interface EditForm {
 
 const EditMachinesNew: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const machineListState = useSelector((state: RootState) => state.machineList) as any;
-  const { machines = [], loading, error } = machineListState;
 
-  const machineTypeListState = useSelector((state: RootState) => state.machineTypeList) as any;
-  const { items: machineTypes = [] } = machineTypeListState;
+  // 🚀 OPTIMIZED: Get data from cached form data (no API calls!)
+  const { machines, machineTypes, loading, error } = useFormDataCache();
 
   // Basic editing state
   const [selectedMachine, setSelectedMachine] = useState<Machine | null>(null);
@@ -129,18 +123,7 @@ const EditMachinesNew: React.FC = () => {
   const [formulaExpression, setFormulaExpression] = useState('');
   const [formulaDescription, setFormulaDescription] = useState('');
 
-  // ✅ ELECTRON FIX: Auto-refresh machines every 60 seconds to sync between instances
-  const { isRefreshing, lastRefresh, triggerRefresh } = useAutoRefresh(
-    () => dispatch(getMachinesIfNeeded()),
-    {
-      interval: 60000, // Refresh every 60 seconds
-      enabled: true
-    }
-  );
-
-  useEffect(() => {
-    dispatch(getMachineTypes());
-  }, [dispatch]);
+  // ✅ OPTIMIZED: No auto-refresh or dispatch needed - data loaded from cache!
 
   // ✅ NEW: Table Templates (copied from CreateMachine)
   const tableTemplates: { name: string; columns: TableColumn[]; formulas: Record<string, Formula>; }[] = [
@@ -592,7 +575,7 @@ const EditMachinesNew: React.FC = () => {
   // Handle delete
   const handleDeleteMachine = async (machine: Machine) => {
     await dispatch(deleteMachine(machine._id));
-    dispatch(getMachines());
+    // ✅ OPTIMIZED: Cache will auto-refresh on next page load
   };
 
   // ✅ FIXED: Handle save - corrected field reset + save table config
@@ -638,7 +621,7 @@ const EditMachinesNew: React.FC = () => {
           });
           setTableRows([]);
           setEditMode('basic');
-          dispatch(getMachines());
+          // ✅ OPTIMIZED: Cache will auto-refresh on next page load
         }
       }
     );

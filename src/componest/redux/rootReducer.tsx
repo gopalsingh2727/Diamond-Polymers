@@ -127,6 +127,9 @@ import reportReducer from "./reports/reports/reportReducer";
 // ✅ Universal Data Cache
 import { dataCacheReducer } from "./cache/dataCacheReducer";
 
+// Chat Agent
+import chatReducer from "./chat/chatSlice";
+
 const appReducer = combineReducers({
   // Auth
   auth: authReducer,
@@ -237,6 +240,9 @@ const appReducer = combineReducers({
 
   // Reports
   reports: reportReducer,
+
+  // Chat Agent
+  chat: chatReducer,
 
 });
 

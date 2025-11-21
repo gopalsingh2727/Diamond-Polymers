@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { AppDispatch } from "../../../../../store";
-import { RootState } from "../../../../redux/rootReducer";
 import {
-  getProductSpecs,
   updateProductSpec,
   deleteProductSpec,
   activateProductSpec,
   deactivateProductSpec
 } from "../../../../redux/create/productSpec/productSpecActions";
+import { useFormDataCache } from "../hooks/useFormDataCache";
 import "./editProductSpec.css";
 
 interface Dimension {
@@ -34,11 +33,8 @@ interface ProductSpec {
 const EditProductSpec: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
 
-  // Redux state
-  const productSpecListState = useSelector((state: RootState) => state.productSpecList);
-  const productSpecs = productSpecListState?.productSpecs || [];
-  const loading = productSpecListState?.loading || false;
-  const error = productSpecListState?.error || "";
+  // 🚀 OPTIMIZED: Get product specs from cached form data (no API call!)
+  const { productSpecs, productTypes, loading, error } = useFormDataCache();
 
   const [selectedSpec, setSelectedSpec] = useState<ProductSpec | null>(null);
   const [editForm, setEditForm] = useState({
@@ -50,9 +46,7 @@ const EditProductSpec: React.FC = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteInput, setDeleteInput] = useState("");
 
-  useEffect(() => {
-    dispatch(getProductSpecs());
-  }, [dispatch]);
+  // ✅ No useEffect dispatch needed - data already loaded from cache!
 
   const openEditor = (spec: ProductSpec) => {
     setSelectedSpec(spec);
@@ -118,7 +112,7 @@ const EditProductSpec: React.FC = () => {
 
       alert("Product spec updated successfully!");
       setSelectedSpec(null);
-      dispatch(getProductSpecs());
+      // ✅ OPTIMIZED: Cache will auto-refresh on next page load
     } catch (err: any) {
       alert(err.message || "Failed to update product spec");
     }
@@ -133,7 +127,7 @@ const EditProductSpec: React.FC = () => {
         await dispatch(activateProductSpec(specId));
         alert("Product spec activated successfully!");
       }
-      dispatch(getProductSpecs());
+      // ✅ OPTIMIZED: Cache will auto-refresh on next page load
     } catch (err: any) {
       alert(err.message || "Operation failed");
     }
@@ -156,14 +150,15 @@ const EditProductSpec: React.FC = () => {
       alert("Product spec deleted successfully!");
       setShowDeleteConfirm(false);
       setSelectedSpec(null);
-      dispatch(getProductSpecs());
+      // ✅ OPTIMIZED: Cache will auto-refresh on next page load
     } catch (err: any) {
       alert(err.message || "Failed to delete product spec");
     }
   };
 
   const handleRefresh = () => {
-    dispatch(getProductSpecs());
+    // ✅ OPTIMIZED: Data loads from cache - refresh happens automatically
+    window.location.reload(); // Force full app refresh to reload cache
   };
 
   return (
@@ -173,7 +168,7 @@ const EditProductSpec: React.FC = () => {
         <button
           onClick={handleRefresh}
           disabled={loading}
-          className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 bg-[#FF6B35] text-white px-4 py-2 rounded hover:bg-[#E55A2B] disabled:bg-gray-400 disabled:cursor-not-allowed"
           title="Refresh all product specs"
         >
           <span className="text-lg">🔄</span>
@@ -200,7 +195,7 @@ const EditProductSpec: React.FC = () => {
             {productSpecs.map((spec: ProductSpec) => (
               <tr key={spec._id}>
                 <td
-                  className="p-2 border cursor-pointer hover:bg-blue-50"
+                  className="p-2 border cursor-pointer hover:bg-orange-50"
                   onClick={() => openEditor(spec)}
                 >
                   {spec.specName}
@@ -266,7 +261,7 @@ const EditProductSpec: React.FC = () => {
                 <label className="block font-semibold">Dimensions</label>
                 <button
                   onClick={addDimension}
-                  className="bg-blue-500 text-white px-3 py-1 rounded text-sm"
+                  className="bg-[#FF6B35] text-white px-3 py-1 rounded text-sm"
                 >
                   + Add
                 </button>

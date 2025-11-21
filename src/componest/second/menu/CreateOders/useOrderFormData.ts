@@ -1,7 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getOrderFormDataIfNeeded } from "../../../redux/oders/orderFormDataActions";
 import { RootState } from "../../../redux/rootReducer";
+
+// Stable empty array reference to prevent re-renders
+const EMPTY_ARRAY: any[] = [];
 
 /**
  * Custom hook to manage order form data
@@ -23,28 +26,38 @@ export const useOrderFormData = () => {
     dispatch(getOrderFormDataIfNeeded() as any);
   }, [dispatch]);
 
-  // Filter products by selected product type
-  const filteredProducts = selectedProductType && data?.products
-    ? data.products.filter(
+  // Memoize filtered products by selected product type
+  const filteredProducts = useMemo(() => {
+    if (selectedProductType && data?.products) {
+      return data.products.filter(
         (product: any) => product.productType?._id === selectedProductType
-      )
-    : data?.products || [];
+      );
+    }
+    return data?.products || EMPTY_ARRAY;
+  }, [selectedProductType, data?.products]);
 
-  // Filter product specs by selected product type
-  const filteredProductSpecs = selectedProductType && data?.productSpecs
-    ? data.productSpecs.filter(
+  // Memoize filtered product specs by selected product type
+  const filteredProductSpecs = useMemo(() => {
+    if (selectedProductType && data?.productSpecs) {
+      return data.productSpecs.filter(
         (spec: any) => spec.productTypeId?._id === selectedProductType
-      )
-    : data?.productSpecs || [];
+      );
+    }
+    return data?.productSpecs || EMPTY_ARRAY;
+  }, [selectedProductType, data?.productSpecs]);
 
-  // Filter materials by selected material type
-  const filteredMaterials = selectedMaterialType && data?.materials
-    ? data.materials.filter(
+  // Memoize filtered materials by selected material type
+  const filteredMaterials = useMemo(() => {
+    if (selectedMaterialType && data?.materials) {
+      return data.materials.filter(
         (material: any) => material.materialType?._id === selectedMaterialType
-      )
-    : data?.materials || [];
+      );
+    }
+    return data?.materials || EMPTY_ARRAY;
+  }, [selectedMaterialType, data?.materials]);
 
-  return {
+  // Memoize return object to prevent unnecessary re-renders
+  return useMemo(() => ({
     // Loading states
     loading,
     error,
@@ -53,13 +66,13 @@ export const useOrderFormData = () => {
     allData: data,
 
     // Individual data arrays
-    customers: data?.customers || [],
-    productTypes: data?.productTypes || [],
-    materialTypes: data?.materialTypes || [],
-    machineTypes: data?.machineTypes || [],
-    machines: data?.machines || [],
-    operators: data?.operators || [],
-    steps: data?.steps || [],
+    customers: data?.customers || EMPTY_ARRAY,
+    productTypes: data?.productTypes || EMPTY_ARRAY,
+    materialTypes: data?.materialTypes || EMPTY_ARRAY,
+    machineTypes: data?.machineTypes || EMPTY_ARRAY,
+    machines: data?.machines || EMPTY_ARRAY,
+    operators: data?.operators || EMPTY_ARRAY,
+    steps: data?.steps || EMPTY_ARRAY,
 
     // Filtered data based on selections
     filteredProducts,
@@ -73,5 +86,14 @@ export const useOrderFormData = () => {
     // Current selections
     selectedProductType,
     selectedMaterialType,
-  };
+  }), [
+    loading,
+    error,
+    data,
+    filteredProducts,
+    filteredProductSpecs,
+    filteredMaterials,
+    selectedProductType,
+    selectedMaterialType
+  ]);
 };

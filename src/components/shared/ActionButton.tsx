@@ -20,7 +20,7 @@ const buttonConfig: Record<ActionType, {
   error: { text: string };
 }> = {
   save: {
-    idle: { text: 'Save', bg: 'bg-blue-600', hover: 'hover:bg-blue-700' },
+    idle: { text: 'Save', bg: 'bg-[#FF6B35]', hover: 'hover:bg-[#E55A2B]' },
     loading: { text: 'Saving...' },
     success: { text: 'Saved!' },
     error: { text: 'Failed' }
@@ -38,7 +38,7 @@ const buttonConfig: Record<ActionType, {
     error: { text: 'Failed' }
   },
   submit: {
-    idle: { text: 'Submit', bg: 'bg-indigo-600', hover: 'hover:bg-indigo-700' },
+    idle: { text: 'Submit', bg: 'bg-[#FF6B35]', hover: 'hover:bg-[#E55A2B]' },
     loading: { text: 'Submitting...' },
     success: { text: 'Submitted!' },
     error: { text: 'Failed' }

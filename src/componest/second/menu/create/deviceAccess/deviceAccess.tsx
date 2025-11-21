@@ -1,28 +1,29 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { getMachines } from "../../../../redux/create/machine/MachineActions";
 import {
   getDeviceAccessList,
   updateDeviceAccess
 } from "../../../../redux/deviceAccess/deviceAccessActions";
 import { RootState } from "../../../../redux/rootReducer";
 import { AppDispatch } from "../../../../../store";
+import { useFormDataCache } from '../../Edit/hooks/useFormDataCache';
 import "./deviceaccess.css";
+import "../../CreateOders/CreateOders.css";
 
 const DeviceAccess: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const [selectedDeviceId, setSelectedDeviceId] = useState("");
   const [machineId, setMachineId] = useState("");
 
-  const { machines: machineList } = useSelector(
-    (state: RootState) => state.machineList
-  );
+  // 🚀 OPTIMIZED: Get machines from cached form data (no API call!)
+  const { machines: machineList } = useFormDataCache();
+
   const { devices: deviceList, loading} = useSelector(
     (state: RootState) => state.deviceAccess
   );
 
   useEffect(() => {
-    dispatch(getMachines());
+    // Only fetch device-specific data
     dispatch(getDeviceAccessList());
   }, [dispatch]);
 
@@ -49,15 +50,15 @@ const DeviceAccess: React.FC = () => {
 
 
   return (
-    <div className="device-access-container">
-      <h3>Assign Machine to Device</h3>
+    <div className="createDivOne">
+      <h2 className="form-title" style={{ textAlign: "center", marginBottom: "1.5rem" }}>Assign Machine to Device</h2>
       <div className="form-grid">
         <div className="form-input-group">
           <label className="input-label">Select Device</label>
           <select
             value={selectedDeviceId}
             onChange={(e) => setSelectedDeviceId(e.target.value)}
-            className="form-input"
+            className="createDivInput createDivInputwidth"
           >
             <option value="">Select device</option>
             {deviceList.map((d: any) => (
@@ -71,7 +72,7 @@ const DeviceAccess: React.FC = () => {
           <select
             value={machineId}
             onChange={(e) => setMachineId(e.target.value)}
-            className="form-input"
+            className="createDivInput createDivInputwidth"
           >
             <option value="">Select machine</option>
             {machineList.map((m: any) => (

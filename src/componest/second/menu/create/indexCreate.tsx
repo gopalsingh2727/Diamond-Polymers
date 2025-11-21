@@ -16,14 +16,11 @@ import CreateFormula from "./formula/CreateFormula";
 import CreateProductSpec from "./productSpec/CreateProductSpec";
 import CreateMaterialSpec from "./materialSpec/CreateMaterialSpec";
 import CreateOrderType from "./orderType/CreateOrderType";
-import CalculationTool from "./calculation/CalculationTool";
-import MaterialCalculator from "./calculation/MaterialCalculator";
 import './create.css';
 import '../../../main/sidebar/menu.css';
 import ErrorBoundary from '../../../error/error';
 import Products from "./products/products";
 import ProductCategories from "./products/productsCategories";
-import MaterialFormulaList from "../../../MaterialFormula/MaterialFormulaList";
 
 const Layout = () => {
   const menuSections = [
@@ -48,8 +45,7 @@ const Layout = () => {
         { key: "products", label: "Products" },
         { key: "categories", label: "Product Categories" },
         { key: "materials", label: "Create Materials" },
-        { key: "materialsCategories", label: "Materials Categories" },
-        { key: "materialFormulas", label: "Material Formulas" }
+        { key: "materialsCategories", label: "Materials Categories" }
       ]
     },
     {
@@ -70,9 +66,7 @@ const Layout = () => {
     {
       title: "Formulas & Calculations",
       items: [
-        { key: "formula", label: "Create Formula" },
-        { key: "calculation", label: "Calculation Tool" },
-        { key: "materialCalculator", label: "Material Calculator" }
+        { key: "formula", label: "Create Formula" }
       ]
     }
   ];
@@ -96,10 +90,16 @@ const Layout = () => {
   });
 
   const toggleSection = (sectionTitle: string) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [sectionTitle]: !prev[sectionTitle]
-    }));
+    setExpandedSections(prev => {
+      // Close all sections first, then toggle the clicked one (accordion behavior)
+      const newState: Record<string, boolean> = {};
+      Object.keys(prev).forEach(key => {
+        newState[key] = false;
+      });
+      // Toggle the clicked section (if it was closed, open it; if open, close it)
+      newState[sectionTitle] = !prev[sectionTitle];
+      return newState;
+    });
   };
 
   useEffect(() => {
@@ -155,8 +155,6 @@ const Layout = () => {
         return <ErrorBoundary><CreateMaterials /></ErrorBoundary>;
       case "materialsCategories":
         return <ErrorBoundary><MaterialsCategories /></ErrorBoundary>;
-      case "materialFormulas":
-        return <ErrorBoundary><MaterialFormulaList /></ErrorBoundary>;
       case "formula":
         return <ErrorBoundary><CreateFormula /></ErrorBoundary>;
       case "productSpec":
@@ -165,10 +163,6 @@ const Layout = () => {
         return <ErrorBoundary><CreateMaterialSpec /></ErrorBoundary>;
       case "orderType":
         return <ErrorBoundary><CreateOrderType /></ErrorBoundary>;
-      case "calculation":
-        return <ErrorBoundary><CalculationTool /></ErrorBoundary>;
-      case "materialCalculator":
-        return <ErrorBoundary><MaterialCalculator /></ErrorBoundary>;
       default:
         return <div>Select an option</div>;
     }
@@ -192,9 +186,27 @@ const Layout = () => {
 
                 return (
                   <div key={section.title}>
-                    {/* Section Title - Clickable if multiple items */}
+                    {/* Section Title - Clickable */}
                     <div
-                      onClick={() => hasMultipleItems && toggleSection(section.title)}
+                      onClick={() => {
+                        if (hasMultipleItems) {
+                          toggleSection(section.title);
+                        } else {
+                          // For single-item sections, select the item directly
+                          const item = section.items[0];
+                          const globalIndex = menuItems.findIndex(mi => mi.key === item.key);
+                          setActiveComponent(item.key);
+                          setSelectedIndex(globalIndex);
+                          // Close all multi-item sections
+                          setExpandedSections(prev => {
+                            const newState: Record<string, boolean> = {};
+                            Object.keys(prev).forEach(key => {
+                              newState[key] = false;
+                            });
+                            return newState;
+                          });
+                        }
+                      }}
                       style={{
                         padding: "8px 10px",
                         fontSize: "0.75rem",
@@ -203,7 +215,7 @@ const Layout = () => {
                         textTransform: "uppercase",
                         letterSpacing: "0.05em",
                         marginTop: sectionIndex > 0 ? "10px" : "0",
-                        cursor: hasMultipleItems ? "pointer" : "default",
+                        cursor: "pointer",
                         display: "flex",
                         justifyContent: "space-between",
                         alignItems: "center",

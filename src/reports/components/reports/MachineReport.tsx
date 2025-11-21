@@ -127,7 +127,7 @@ export function MachineReport() {
     maintenance: item.maintenance
   }));
 
-  const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444'];
+  const COLORS = ['#FF6B35', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444'];
 
   // Most productive machine type
   const mostProductiveType = utilizationByType[0];
@@ -231,7 +231,7 @@ export function MachineReport() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm">Machine Types</CardTitle>
-            <Layers className="h-4 w-4 text-blue-600" />
+            <Layers className="h-4 w-4 text-[#FF6B35]" />
           </CardHeader>
           <CardContent>
             <div className="text-slate-900">{machineTypeBreakdown.length}</div>
@@ -244,7 +244,7 @@ export function MachineReport() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm">Avg Utilization</CardTitle>
-            <Activity className="h-4 w-4 text-blue-600" />
+            <Activity className="h-4 w-4 text-[#FF6B35]" />
           </CardHeader>
           <CardContent>
             <div className="text-slate-900">{avgUtilization.toFixed(1)}%</div>
@@ -308,7 +308,7 @@ export function MachineReport() {
                       return (
                         <div className="bg-white p-3 border border-slate-200 rounded shadow-lg">
                           <p className="font-medium">{data.machine}</p>
-                          <p className="text-sm text-blue-600">Utilization: {data.utilization}%</p>
+                          <p className="text-sm text-[#FF6B35]">Utilization: {data.utilization}%</p>
                           <p className="text-sm text-green-600">Orders: {data.ordersProcessed}</p>
                           <p className="text-sm text-slate-600">Status: {data.status}</p>
                         </div>
@@ -318,7 +318,7 @@ export function MachineReport() {
                   }}
                 />
                 <Legend />
-                <Bar dataKey="utilization" fill="#3b82f6" name="Utilization %" />
+                <Bar dataKey="utilization" fill="#FF6B35" name="Utilization %" />
                 <Bar dataKey="ordersProcessed" fill="#10b981" name="Orders Processed" />
               </BarChart>
             </ResponsiveContainer>
@@ -396,7 +396,7 @@ export function MachineReport() {
                       return (
                         <div className="bg-white p-3 border border-slate-200 rounded shadow-lg">
                           <p className="font-medium">{data.type}</p>
-                          <p className="text-sm text-blue-600">Avg Utilization: {data.avgUtilization.toFixed(1)}%</p>
+                          <p className="text-sm text-[#FF6B35]">Avg Utilization: {data.avgUtilization.toFixed(1)}%</p>
                           <p className="text-sm text-green-600">Total Orders: {data.totalOrders}</p>
                           <p className="text-sm text-slate-600">Machines: {data.count}</p>
                         </div>
@@ -434,7 +434,7 @@ export function MachineReport() {
                       <div className="bg-white p-3 border border-slate-200 rounded shadow-lg">
                         <p className="font-medium">{data.machine}</p>
                         <p className="text-sm text-slate-600">Type: {data.machineType}</p>
-                        <p className="text-sm text-blue-600">Utilization: {data.utilization}%</p>
+                        <p className="text-sm text-[#FF6B35]">Utilization: {data.utilization}%</p>
                         <p className="text-sm text-green-600">Orders: {data.ordersProcessed}</p>
                       </div>
                     );
@@ -500,7 +500,7 @@ export function MachineReport() {
                     <h3 className="font-medium text-slate-900">{typeData.type}</h3>
                     <p className="text-sm text-slate-600">
                       {typeData.count} machines • {typeData.totalOrders} total orders • 
-                      <span className="text-blue-600 ml-1">{typeData.avgUtilization.toFixed(1)}% avg utilization</span>
+                      <span className="text-[#FF6B35] ml-1">{typeData.avgUtilization.toFixed(1)}% avg utilization</span>
                     </p>
                   </div>
                   <Badge variant={typeData.avgUtilization >= 85 ? "default" : "secondary"}>
@@ -524,7 +524,7 @@ export function MachineReport() {
                           <td className="p-2 text-right">
                             <span className={`px-2 py-1 rounded text-xs ${
                               machine.utilization >= 90 ? 'bg-green-100 text-green-700' :
-                              machine.utilization >= 80 ? 'bg-blue-100 text-blue-700' :
+                              machine.utilization >= 80 ? 'bg-orange-100 text-orange-700' :
                               machine.utilization >= 70 ? 'bg-orange-100 text-orange-700' :
                               machine.utilization > 0 ? 'bg-red-100 text-red-700' :
                               'bg-slate-100 text-slate-700'
@@ -579,7 +579,7 @@ export function MachineReport() {
                       <td className="p-3 text-right">
                         <span className={`px-2 py-1 rounded text-xs ${
                           machine.utilization >= 90 ? 'bg-green-100 text-green-700' :
-                          machine.utilization >= 80 ? 'bg-blue-100 text-blue-700' :
+                          machine.utilization >= 80 ? 'bg-orange-100 text-orange-700' :
                           machine.utilization >= 70 ? 'bg-orange-100 text-orange-700' :
                           machine.utilization > 0 ? 'bg-red-100 text-red-700' :
                           'bg-slate-100 text-slate-700'

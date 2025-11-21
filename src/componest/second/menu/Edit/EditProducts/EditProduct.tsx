@@ -1,12 +1,10 @@
-import React, { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import React, { useState } from "react";
+import { useDispatch } from "react-redux";
 import {
-  getProducts,
   updateProduct,
   deleteProduct,
 } from "../../../../redux/create/products/ProductActions";
-import { getProductCategories } from "../../../../redux/create/products/productCategories/productCategoriesActions";
-import { RootState } from "../../../../redux/rootReducer";
+import { useFormDataCache } from "../hooks/useFormDataCache";
 
 interface ProductType {
   _id: string;
@@ -30,25 +28,16 @@ interface Product {
 
 interface ProductCategory {
   _id: string;
-  name: string;
+  name?: string;
+  productTypeName?: string; // From cached data
 }
 
 const EditProducts: React.FC = () => {
   const dispatch = useDispatch();
 
-  const { products = [], loading, error } = useSelector(
-    (state: RootState) => state.productList || {}
-  );
-  const productCategoryState = useSelector(
-    (state: RootState) => state.productCategories || {}
-  );
-  const productCategories = (productCategoryState as any).items || (productCategoryState as any).categories || (productCategoryState as any).data || [];
-  const { success: updateSuccess } = useSelector(
-    (state: RootState) => state.productUpdate || {}
-  );
-  const { success: deleteSuccess } = useSelector(
-    (state: RootState) => state.productDelete || {}
-  );
+  // 🚀 OPTIMIZED: Get data from cached form data (no API calls!)
+  const { products, productTypes, loading, error } = useFormDataCache();
+  const productCategories = productTypes; // Product types are the categories
 
   const [focusedRow, setFocusedRow] = useState<number>(-1);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -63,10 +52,7 @@ const EditProducts: React.FC = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteInput, setDeleteInput] = useState("");
 
-  useEffect(() => {
-    dispatch(getProducts() as any);
-    dispatch(getProductCategories() as any);
-  }, [dispatch, updateSuccess, deleteSuccess]);
+  // ✅ No useEffect dispatch needed - data already loaded from cache!
 
   const handleKeyDown = (
     e: React.KeyboardEvent<HTMLTableRowElement>,
@@ -153,7 +139,7 @@ const EditProducts: React.FC = () => {
                 onClick={() => openEditor(product)}
                 onKeyDown={(e) => handleKeyDown(e, product)}
                 onFocus={() => setFocusedRow(index)}
-                className={focusedRow === index ? "bg-blue-100" : ""}
+                className={focusedRow === index ? "bg-orange-100" : ""}
               >
                 <td className="p-2 border">{product.productName}</td>
                 <td className="p-2 border">
@@ -189,7 +175,7 @@ const EditProducts: React.FC = () => {
             <option value="">Select Category</option>
             {productCategories.map((cat: ProductCategory) => (
               <option key={cat._id} value={cat._id}>
-                {cat.name}
+                {cat.name || cat.productTypeName}
               </option>
             ))}
           </select>

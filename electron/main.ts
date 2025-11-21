@@ -1,7 +1,9 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
-import { autoUpdater } from 'electron-updater';
+import { app, BrowserWindow, ipcMain, shell, Notification, session } from 'electron';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import fs from 'node:fs';
+import os from 'node:os';
+import { spawn } from 'node:child_process';
 import dotenv from 'dotenv';
 import log from 'electron-log';
 
@@ -19,6 +21,7 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL
 
 let win: BrowserWindow | null = null;
 let splash: BrowserWindow | null = null;
+let downloadedInstallerPath: string | null = null;
 
 function createWindow() {
   splash = new BrowserWindow({
@@ -39,6 +42,11 @@ function createWindow() {
     icon: path.join(process.env.VITE_PUBLIC!, 'electron-vite.svg'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
+      // Enable features required for speech recognition and WASM
+      webSecurity: true,
+      allowRunningInsecureContent: false,
+      contextIsolation: true,
+      nodeIntegration: false,
     },
   });
 
@@ -61,46 +69,293 @@ app.whenReady().then(() => {
   // Initialize logger
   log.transports.file.level = 'info';
   log.info('Logger initialized');
-  autoUpdater.logger = log;
-  log.log('AutoUpdater initialized', app.getVersion());
+  log.info('App version:', app.getVersion());
 
-  const win = createWindow();
-
-  autoUpdater.autoDownload = true;
-  autoUpdater.autoInstallOnAppQuit = true;
-  autoUpdater.checkForUpdatesAndNotify();
-
-  ipcMain.handle('check-update', async () => {
-    try {
-      const result = await autoUpdater.checkForUpdates();
-      return result?.updateInfo || {};
-    } catch (err: any) {
-      return { error: { message: err.message || 'Check failed' } };
+  // Set up permission handlers for microphone access (required for speech recognition)
+  session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
+    const allowedPermissions = ['media', 'microphone', 'audioCapture'];
+    if (allowedPermissions.includes(permission)) {
+      log.info(`Permission granted: ${permission}`);
+      callback(true);
+    } else {
+      log.info(`Permission denied: ${permission}`);
+      callback(false);
     }
   });
 
-  ipcMain.handle('start-download', () => {
-    autoUpdater.downloadUpdate();
+  session.defaultSession.setPermissionCheckHandler((webContents, permission) => {
+    const allowedPermissions = ['media', 'microphone', 'audioCapture'];
+    return allowedPermissions.includes(permission);
   });
 
-  ipcMain.handle('quit-and-install', () => {
-    autoUpdater.quitAndInstall();
+  const win = createWindow();
+
+  // Get download URL with platform-specific auto-download parameter
+  const getDownloadUrl = (): string => {
+    const baseUrl = 'https://27infinity.in/products';
+
+    if (process.platform === 'darwin') {
+      // macOS - check if ARM or Intel
+      if (process.arch === 'arm64') {
+        return `${baseUrl}?download=mac-arm64`;
+      } else {
+        return `${baseUrl}?download=mac-intel`;
+      }
+    } else if (process.platform === 'win32') {
+      // Windows - check if 64-bit or 32-bit
+      if (process.arch === 'x64' || process.arch === 'arm64') {
+        return `${baseUrl}?download=win64`;
+      } else {
+        return `${baseUrl}?download=win32`;
+      }
+    }
+
+    // Default - no auto-download parameter
+    return baseUrl;
+  };
+
+  // GitHub API check for updates
+  const checkForUpdatesViaGitHub = async () => {
+    try {
+      const response = await fetch(
+        'https://api.github.com/repos/gopalsingh2727/Diamond-Polymers/releases/latest'
+      );
+
+      if (!response.ok) {
+        throw new Error(`GitHub API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const latestVersion = data.tag_name.replace('v', '');
+      const currentVersion = app.getVersion();
+
+      // Compare versions
+      const isNewer = latestVersion !== currentVersion &&
+        latestVersion.localeCompare(currentVersion, undefined, { numeric: true }) > 0;
+
+      return {
+        version: currentVersion,
+        newVersion: latestVersion,
+        update: isNewer,
+        releaseNotes: data.body || ''
+      };
+    } catch (err: any) {
+      log.error('Update check failed:', err.message);
+      return {
+        error: {
+          message: err.message || 'Failed to check for updates'
+        },
+        version: app.getVersion()
+      };
+    }
+  };
+
+  // Check for updates on startup
+  setTimeout(async () => {
+    const result = await checkForUpdatesViaGitHub();
+    if (result.update) {
+      log.info('Update available:', result.newVersion);
+
+      // Show system notification
+      if (Notification.isSupported()) {
+        const notification = new Notification({
+          title: 'Update Available',
+          body: `Version ${result.newVersion} is available. Click to download.`,
+          icon: path.join(process.env.VITE_PUBLIC!, 'electron-vite.svg')
+        });
+
+        notification.on('click', () => {
+          shell.openExternal(getDownloadUrl());
+        });
+
+        notification.show();
+      }
+
+      // Also notify the renderer
+      win?.webContents.send('update-can-available', result);
+    }
+  }, 3000); // Check 3 seconds after startup
+
+  // IPC handler for manual update check
+  ipcMain.handle('check-update', async () => {
+    return await checkForUpdatesViaGitHub();
   });
 
-  autoUpdater.on('update-available', (info) => {
-    win?.webContents.send('update-can-available', info);
+  // IPC handler to open download page
+  ipcMain.handle('open-download-page', async () => {
+    try {
+      const downloadUrl = getDownloadUrl();
+      log.info('Opening download URL:', downloadUrl);
+      await shell.openExternal(downloadUrl);
+      return { success: true };
+    } catch (err: any) {
+      log.error('Failed to open download page:', err.message);
+      return { success: false, error: err.message };
+    }
   });
 
-  autoUpdater.on('download-progress', (progress) => {
-    win?.webContents.send('download-progress', progress);
+  // Get installer download URL from GitHub release
+  const getInstallerUrl = async (): Promise<{ url: string; filename: string } | null> => {
+    try {
+      const response = await fetch(
+        'https://api.github.com/repos/gopalsingh2727/Diamond-Polymers/releases/latest'
+      );
+
+      if (!response.ok) {
+        throw new Error(`GitHub API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const assets = data.assets || [];
+
+      let asset = null;
+
+      if (process.platform === 'win32') {
+        // Find Windows installer (.exe)
+        if (process.arch === 'x64' || process.arch === 'arm64') {
+          asset = assets.find((a: any) =>
+            a.name.endsWith('.exe') && !a.name.includes('ia32')
+          );
+        } else {
+          asset = assets.find((a: any) =>
+            a.name.endsWith('.exe') && a.name.includes('ia32')
+          );
+        }
+      } else if (process.platform === 'darwin') {
+        // Find macOS installer (.dmg)
+        if (process.arch === 'arm64') {
+          asset = assets.find((a: any) =>
+            a.name.includes('arm64') && a.name.endsWith('.dmg')
+          );
+        } else {
+          asset = assets.find((a: any) =>
+            a.name.includes('x64') && a.name.endsWith('.dmg')
+          ) || assets.find((a: any) =>
+            a.name.endsWith('.dmg') && !a.name.includes('arm64')
+          );
+        }
+      }
+
+      if (asset) {
+        return {
+          url: asset.browser_download_url,
+          filename: asset.name
+        };
+      }
+
+      return null;
+    } catch (err: any) {
+      log.error('Failed to get installer URL:', err.message);
+      return null;
+    }
+  };
+
+  // IPC handler to download update
+  ipcMain.handle('download-update', async () => {
+    try {
+      const installerInfo = await getInstallerUrl();
+
+      if (!installerInfo) {
+        return { success: false, error: 'No installer found for your platform' };
+      }
+
+      log.info('Downloading installer:', installerInfo.url);
+
+      // Create temp directory for download
+      const tempDir = path.join(os.tmpdir(), '27-manufacturing-update');
+      if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true });
+      }
+
+      const filePath = path.join(tempDir, installerInfo.filename);
+
+      // Download the file
+      const response = await fetch(installerInfo.url);
+
+      if (!response.ok) {
+        throw new Error(`Download failed: ${response.status}`);
+      }
+
+      const totalSize = parseInt(response.headers.get('content-length') || '0', 10);
+      let downloadedSize = 0;
+
+      const fileStream = fs.createWriteStream(filePath);
+      const reader = response.body?.getReader();
+
+      if (!reader) {
+        throw new Error('Failed to get response reader');
+      }
+
+      while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) break;
+
+        fileStream.write(value);
+        downloadedSize += value.length;
+
+        // Send progress to renderer
+        const progress = totalSize > 0 ? Math.round((downloadedSize / totalSize) * 100) : 0;
+        win?.webContents.send('download-progress', {
+          progress,
+          downloaded: downloadedSize,
+          total: totalSize
+        });
+      }
+
+      fileStream.end();
+
+      // Wait for file to finish writing
+      await new Promise((resolve) => fileStream.on('finish', resolve));
+
+      downloadedInstallerPath = filePath;
+      log.info('Download complete:', filePath);
+
+      return {
+        success: true,
+        filePath,
+        filename: installerInfo.filename
+      };
+    } catch (err: any) {
+      log.error('Download failed:', err.message);
+      return { success: false, error: err.message };
+    }
   });
 
-  autoUpdater.on('update-downloaded', () => {
-    win?.webContents.send('update-downloaded');
-  });
+  // IPC handler to install update
+  ipcMain.handle('install-update', async () => {
+    try {
+      if (!downloadedInstallerPath || !fs.existsSync(downloadedInstallerPath)) {
+        return { success: false, error: 'No downloaded installer found' };
+      }
 
-  autoUpdater.on('error', (err) => {
-    win?.webContents.send('update-error', { message: err.message });
+      log.info('Installing update from:', downloadedInstallerPath);
+
+      if (process.platform === 'win32') {
+        // Run Windows installer
+        // The /S flag runs NSIS installer silently, but we'll let user see it
+        spawn(downloadedInstallerPath, [], {
+          detached: true,
+          stdio: 'ignore'
+        }).unref();
+      } else if (process.platform === 'darwin') {
+        // Open DMG file on macOS
+        spawn('open', [downloadedInstallerPath], {
+          detached: true,
+          stdio: 'ignore'
+        }).unref();
+      }
+
+      // Quit the app to allow installation
+      setTimeout(() => {
+        app.quit();
+      }, 1000);
+
+      return { success: true };
+    } catch (err: any) {
+      log.error('Installation failed:', err.message);
+      return { success: false, error: err.message };
+    }
   });
 });
 

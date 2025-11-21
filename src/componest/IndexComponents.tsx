@@ -5,12 +5,11 @@ import { setSelectedBranchInAuth } from './redux/login/authActions';
 import type { RootState, AppDispatch } from '../store';
 
 
-import Update from '../components/update';
+import Settings from '../components/Settings';
 import './indexComponents.css';
 import Menu from './main/sidebar/menu';
 import Data from './allCompones/date';
 
-import logo from './main/header/Group1.png'; 
 import ErrorBoundary from './second/menu/CreateOders/error';
 
 function IndexComponents() {
@@ -131,20 +130,103 @@ function IndexComponents() {
     <div className="App">
       <div className={`container ${hideFooter ? "hidden-footer" : ""}`}>
         <div className="item">
-          <div 
-            className={`font-semibold text-lg ${userData?.role === "admin" ? "cursor-pointer hover:text-blue-600 transition-colors" : ""}`}
-            onClick={handleBranchClick}
-            title={userData?.role === "admin" ? "Click to change branch" : ""}
-          >
-            {branchName}
-            {userData?.role === "admin" && (
-              <svg className="inline-block ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            )}
+          {/* Left side - Logo, Brand, Branch */}
+          <div className="flex items-center gap-4">
+            {/* Fire Eagle Logo - Same as InfinityLoader */}
+            <svg
+              width="50"
+              height="50"
+              viewBox="0 0 180 180"
+              className="eagle-header-logo -scale-x-100"
+            >
+              <defs>
+                <linearGradient id="headerFireGradient" x1="0%" y1="100%" x2="0%" y2="0%">
+                  <stop offset="0%" stopColor="#FF6B35" />
+                  <stop offset="50%" stopColor="#FFA500" />
+                  <stop offset="100%" stopColor="#FFD700" />
+                </linearGradient>
+              </defs>
+              <g>
+                {/* Eagle Head - Side Profile */}
+                <path
+                  d="M50 90
+                     C50 50 80 20 120 25
+                     C140 28 155 40 160 60
+                     C162 70 158 80 150 85
+                     L140 88
+                     C145 92 148 98 145 105
+                     C142 112 135 115 125 112
+                     L115 108
+                     C110 115 100 118 90 115
+                     C75 110 60 100 50 90"
+                  fill="url(#headerFireGradient)"
+                />
+
+                {/* White Head (Bald Eagle style) */}
+                <path
+                  d="M60 85
+                     C60 55 85 30 115 32
+                     C135 34 150 45 154 62
+                     C156 72 152 80 145 84
+                     L135 86
+                     C130 82 120 80 110 82
+                     C95 85 75 85 60 85"
+                  fill="#FFF"
+                  opacity="0.9"
+                />
+
+                {/* Fierce Eye */}
+                <circle cx="105" cy="55" r="8" fill="#000" />
+                <circle cx="103" cy="52" r="3" fill="#FFF" />
+
+                {/* Eye ridge - Angry look */}
+                <path d="M90 45 C100 42 110 45 115 50" stroke="#8B4513" strokeWidth="4" fill="none" />
+
+                {/* Hooked Beak - Eagle Signature */}
+                <path
+                  d="M145 84
+                     C155 82 165 88 168 95
+                     C170 100 168 108 162 112
+                     C155 118 145 118 140 112
+                     L135 105
+                     C140 100 142 92 145 84"
+                  fill="#FFD700"
+                />
+
+                {/* Beak detail */}
+                <path
+                  d="M150 95
+                     C158 93 164 98 165 105
+                     C166 110 162 115 155 115
+                     L148 110"
+                  fill="#CC8800"
+                />
+
+                {/* Neck feathers */}
+                <path
+                  d="M90 115
+                     C100 120 110 118 115 108
+                     L110 125
+                     C100 135 85 135 75 125
+                     C65 115 60 105 60 95"
+                  fill="url(#headerFireGradient)"
+                />
+              </g>
+            </svg>
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-[#FF6B35] via-[#FFA500] to-[#FF6B35] bg-clip-text text-transparent">
+              27 Manufacturing
+            </h1>
           </div>
-          <img src={logo} className="logoHeders" alt="Application Logo" />
-          <div><ErrorBoundary><Update /></ErrorBoundary></div>
+          {/* Right side - Settings */}
+          <div>
+            <ErrorBoundary>
+              <Settings
+                branchName={branchName}
+                onBranchClick={handleBranchClick}
+                showBranchOption={userData?.role === "admin"}
+              />
+            </ErrorBoundary>
+          </div>
         </div>
         <div className="item"><ErrorBoundary><Menu/></ErrorBoundary></div>
         <div className="item">{/* Reserved for future use */}</div>
@@ -163,7 +245,7 @@ function IndexComponents() {
             <div className="p-6">
               {loading ? (
                 <div className="flex flex-col items-center py-8">
-                  <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                  <div className="w-12 h-12 border-4 border-[#FF6B35] border-t-transparent rounded-full animate-spin mb-4"></div>
                   <p className="text-gray-600">Loading branches...</p>
                 </div>
               ) : (
@@ -184,7 +266,7 @@ function IndexComponents() {
                         />
                       </svg>
                       <select
-                        className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none text-gray-800"
+                        className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF6B35] focus:border-transparent appearance-none text-gray-800"
                         value={tempSelectedBranch}
                         onChange={(e) => setTempSelectedBranch(e.target.value)}
                       >
@@ -218,7 +300,7 @@ function IndexComponents() {
                       className={`flex-1 py-3 px-4 rounded-lg font-medium text-white shadow-md transition-all duration-300 ${
                         !tempSelectedBranch
                           ? "bg-gray-400 cursor-not-allowed"
-                          : "bg-blue-600 hover:bg-blue-700 hover:shadow-lg"
+                          : "bg-[#FF6B35] hover:bg-[#E55A2B] hover:shadow-lg"
                       }`}
                       onClick={handleBranchChange}
                       disabled={!tempSelectedBranch}

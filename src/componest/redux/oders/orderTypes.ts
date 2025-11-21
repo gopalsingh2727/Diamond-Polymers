@@ -24,16 +24,24 @@ export interface OrderData {
   product27InfinityId: string;
   Notes?: string;
   quantity?: number;
-  status?: 'pending' | 'in-progress' | 'completed' | 'cancelled';
+  status?: 'pending' | 'in-progress' | 'completed' | 'cancelled' | 'approved' | 'dispatched' | 'Wait for Approval' | 'issue';
   createdAt?: Date;
   updatedAt?: Date;
-  
+
   // Additional fields from backend population
   customer?: any;
   branch?: any;
   material?: any;
   materialType?: any;
   creator?: any;
+  orderType?: {
+    _id: string;
+    typeName: string;
+    typeCode: string;
+    description?: string;
+    color?: string;
+    icon?: string;
+  };
   stepsCount?: number;
   totalMachines?: number;
   completedSteps?: number;
@@ -65,7 +73,7 @@ export interface OrderMachine {
   machineType: string;
   operatorId?: string;
   operatorName?: string;
-  status: 'pending' | 'in-progress' | 'completed' | 'failed';
+  status: 'pending' | 'in-progress' | 'completed' | 'failed' | 'paused' | 'error' | 'issue' | 'none';
   startedAt?: Date;
   completedAt?: Date;
   note?: string;

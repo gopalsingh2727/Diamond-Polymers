@@ -173,15 +173,15 @@ export default function Dispatch() {
   function getStatusColor(status: string): string {
     const colors: Record<string, string> = {
       'ready-for-dispatch': '#f59e0b',
-      'dispatched': '#3b82f6',
-      'in-transit': '#8b5cf6',
+      'dispatched': '#FF6B35',
+      'in-transit': '#FFA500',
       'delivered': '#10b981',
       'dispatch-pending': '#f59e0b',
       'completed': '#10b981',
       'cancelled': '#ef4444',
       'on-hold': '#6b7280',
       'pending': '#f59e0b',
-      'in-progress': '#3b82f6',
+      'in-progress': '#FF6B35',
       'Wait for Approval': '#f59e0b',
       'unknown': '#6b7280'
     };
@@ -927,7 +927,7 @@ export default function Dispatch() {
               </button>
               <button 
                 onClick={handleDateFilter} 
-                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                className="bg-[#FF6B35] text-white px-4 py-2 rounded hover:bg-[#E55A2B]"
               >
                 Apply
               </button>

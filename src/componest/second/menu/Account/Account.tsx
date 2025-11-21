@@ -101,7 +101,7 @@ const Account: React.FC = () => {
       <div className="min-h-screen bg-gray-50 p-6">
         <BackButton />
         <div className="max-w-4xl mx-auto text-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FF6B35] mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading accounts...</p>
         </div>
       </div>
@@ -124,7 +124,7 @@ const Account: React.FC = () => {
             onChange={e => setSearchQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Search by company, name, email, phone..."
-            className="w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition-all"
+            className="w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-[#FF6B35] transition-all"
           />
         </div>
 
@@ -137,7 +137,7 @@ const Account: React.FC = () => {
               {displayedAccounts.length} {displayedAccounts.length === 1 ? 'account' : 'accounts'}
               {searchQuery && ` found for "${searchQuery}"`}
               {displayedAccounts.length > 0 && (
-                <span className="ml-2 text-blue-600">Use ↑↓ keys to navigate, Enter to select</span>
+                <span className="ml-2 text-[#FF6B35]">Use ↑↓ keys to navigate, Enter to select</span>
               )}
             </p>
           </div>
@@ -147,8 +147,8 @@ const Account: React.FC = () => {
               <div
                 key={acc._id}
                 id={`account-${idx}`}
-                className={`px-6 py-4 hover:bg-blue-50 cursor-pointer transition-colors ${
-                  selectedIndex === idx ? 'bg-blue-100 border-l-4 border-blue-500' : ''
+                className={`px-6 py-4 hover:bg-orange-50 cursor-pointer transition-colors ${
+                  selectedIndex === idx ? 'bg-orange-100 border-l-4 border-[#FF6B35]' : ''
                 }`}
                 onClick={() => handleAccountSelect(acc)}
               >
@@ -156,7 +156,7 @@ const Account: React.FC = () => {
                   <div className="flex-1">
                     <div className="flex items-baseline">
                       <h3 className="text-lg font-semibold text-gray-800 mr-3">{acc.companyName}</h3>
-                      <span className="text-xs px-2 py-1 bg-blue-100 text-blue-600 rounded-full">{acc.state}</span>
+                      <span className="text-xs px-2 py-1 bg-orange-100 text-[#FF6B35] rounded-full">{acc.state}</span>
                     </div>
                     <p className="text-gray-600 mt-1 font-medium">{getFullName(acc)}</p>
                     <div className="mt-2 text-sm text-gray-500 space-y-1">

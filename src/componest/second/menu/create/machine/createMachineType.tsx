@@ -6,6 +6,8 @@ import { AppDispatch } from "../../../../../store";
 import { ActionButton } from '../../../../../components/shared/ActionButton';
 import { ToastContainer } from '../../../../../components/shared/Toast';
 import { useCRUD } from '../../../../../hooks/useCRUD';
+import "../CreateStep/createStep.css";
+import "../../CreateOders/CreateOders.css";
 
 const CreateMachineType: React.FC = () => {
   const [machineTypeName, setMachineTypeName] = useState("");
@@ -39,25 +41,32 @@ const CreateMachineType: React.FC = () => {
   };
 
   return (
-    <div className="form-grid">
-      <h2 className="input-label">Machine Type</h2>
-      <div className="form-column">
-        <div className="form-input-group">
+    <div className="create-step-container">
+      <div className="step-form-wrapper">
+        <h2 className="form-title">Create Machine Type</h2>
+
+        <div className="step-name-group">
+          <label className="form-label">Machine Type Name *</label>
           <input
+            type="text"
             value={machineTypeName}
             onChange={(e) => setMachineTypeName(e.target.value)}
-            className="form-input"
+            className="createDivInput createDivInputwidth"
             placeholder="Enter Machine Type"
           />
         </div>
-        <div className="form-input-group">
+
+        <div className="step-name-group">
+          <label className="form-label">Description *</label>
           <input
+            type="text"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="form-input"
+            className="createDivInput createDivInputwidth"
             placeholder="Enter Description"
           />
         </div>
+
         <ActionButton
           type="save"
           state={saveState}
@@ -67,10 +76,10 @@ const CreateMachineType: React.FC = () => {
         >
           Add Machine Type
         </ActionButton>
-      </div>
 
-      {/* Toast notifications */}
-      <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
+        {/* Toast notifications */}
+        <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
+      </div>
     </div>
   );
 };

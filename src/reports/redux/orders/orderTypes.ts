@@ -6,7 +6,7 @@ export interface MachineProgress {
   machineId?: string;
   operatorId?: string;
   operatorName?: string;
-  status: 'none' | 'pending' | 'in-progress' | 'completed' | 'paused' | 'error';
+  status: 'none' | 'pending' | 'in-progress' | 'completed' | 'paused' | 'error' | 'issue';
   startedAt?: Date | string | null;
   completedAt?: Date | string | null;
   note?: string | null;
@@ -148,7 +148,7 @@ export interface Order {
   mixMaterial: MixMaterial[];
   steps: StepProgress[];
   currentStepIndex: number;
-  overallStatus: 'pending' | 'in_progress' | 'dispatched' | 'cancelled' | 'Wait for Approval' | 'completed';
+  overallStatus: 'pending' | 'in_progress' | 'dispatched' | 'cancelled' | 'Wait for Approval' | 'completed' | 'approved' | 'issue';
   priority: 'low' | 'normal' | 'high' | 'urgent';
   scheduledStartDate?: Date | string;
   scheduledEndDate?: Date | string;
@@ -177,6 +177,14 @@ export interface Order {
   branch?: any;
   creator?: any;
   assignedManagerData?: any;
+  orderType?: {
+    _id: string;
+    typeName: string;
+    typeCode: string;
+    description?: string;
+    color?: string;
+    icon?: string;
+  };
 }
 
 // Dashboard Data Interface

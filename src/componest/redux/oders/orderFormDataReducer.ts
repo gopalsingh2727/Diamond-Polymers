@@ -15,6 +15,7 @@ interface OrderFormData {
   machines: any[];
   operators: any[];
   steps: any[];
+  orderTypes: any[];
 }
 
 interface OrderFormDataState {

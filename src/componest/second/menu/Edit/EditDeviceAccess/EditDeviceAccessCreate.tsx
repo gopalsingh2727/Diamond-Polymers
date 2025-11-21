@@ -144,7 +144,7 @@ const EditDeviceAccessCreate: React.FC = () => {
               <input
                 type="text"
                 placeholder="Search by device name or location..."
-                                className="w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition-all"
+                                className="w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-[#FF6B35] transition-all"
                 value={searchTerm}
                 onChange={handleSearchChange}
                 style={{
@@ -216,7 +216,7 @@ const EditDeviceAccessCreate: React.FC = () => {
                 {filteredDevices.map((item: DeviceAccessCreate, index: number) => (
                   <tr
                     key={item._id}
-                    className={selectedRow === index ? "bg-blue-100" : ""}
+                    className={selectedRow === index ? "bg-orange-100" : ""}
                     onClick={() => handleRowClick(index, item)}
                     style={{ cursor: "pointer" }}
                   >

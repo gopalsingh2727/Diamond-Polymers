@@ -37,8 +37,12 @@ const getToken = (getState: () => RootState): string | null =>
   getState().auth?.token || localStorage.getItem("authToken");
 
 const getBranchId = (getState: () => RootState): string | null => {
-  const selectedBranch = getState().auth?.userData?.selectedBranch;
-  if (selectedBranch) return selectedBranch;
+  const userData = getState().auth?.userData;
+  // First check selectedBranch (for admin users)
+  if (userData?.selectedBranch) return userData.selectedBranch;
+  // Then check user's own branchId (for manager users)
+  if (userData?.branchId) return userData.branchId;
+  // Finally check localStorage
   return localStorage.getItem("selectedBranch");
 };
 

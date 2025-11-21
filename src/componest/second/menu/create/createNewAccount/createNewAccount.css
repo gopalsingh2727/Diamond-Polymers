@@ -7,8 +7,8 @@
   height: 100vh;
 
 
-  
-  
+
+
 }
 
 
@@ -19,7 +19,7 @@
   text-align: center;
   top: 0;
   border-bottom: 1px solid #ccc;
- 
+
 }
 
 
@@ -44,7 +44,7 @@
 
 }
 .form-group label {
- 
+
   font-weight: 500;
   color: #374151;
   font-size: 0.875rem;
@@ -54,7 +54,7 @@
 .form-group select {
 
 
-  
+
 
   font-size: 1rem;
   color: #333;
@@ -106,9 +106,9 @@
 }
 
 .error-text {
-  color: #dc2626; /* Red color for error */
-  font-size: 0.75rem; /* Equivalent to text-xs */
-  margin-top: 0.25rem; /* Equivalent to mt-1 */
+  color: #dc2626;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
   display: block;
   font-weight: 500;
   padding-left: 4px;
@@ -146,3 +146,22 @@
   transform: none;
   box-shadow: none;
 }
+
+.globeDropdown {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background: none;
+    /* background-image: url("data:image/svg+xml,%3Csvg fill='%23334155' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); */
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px 16px;
+    padding-right: 40px;
+    padding-left: 12px;
+    border-radius: 8px;
+    font-size: 16px;
+    color: #334155;
+    border: none;
+    transition: all 0.2s ease;
+}
+

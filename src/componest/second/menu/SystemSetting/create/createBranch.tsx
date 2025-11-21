@@ -66,7 +66,7 @@ const CreateBranch: React.FC = () => {
             name="name"
             value={formData.name}
             onChange={handleChange}
-            className="mt-1 block w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-300"
+            className="mt-1 block w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-orange-300"
             placeholder="Enter branch name"
           />
           {errors.name && <p className="text-sm text-red-600 mt-1">{errors.name}</p>}
@@ -79,7 +79,7 @@ const CreateBranch: React.FC = () => {
             name="location"
             value={formData.location}
             onChange={handleChange}
-            className="mt-1 block w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-300"
+            className="mt-1 block w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-orange-300"
             placeholder="Enter location"
           />
         </div>
@@ -93,7 +93,7 @@ const CreateBranch: React.FC = () => {
             name="code"
             value={formData.code}
             onChange={handleChange}
-            className="mt-1 block w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-300"
+            className="mt-1 block w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-orange-300"
             placeholder="Enter branch code"
           />
           {errors.code && <p className="text-sm text-red-600 mt-1">{errors.code}</p>}
@@ -103,7 +103,7 @@ const CreateBranch: React.FC = () => {
           type="save"
           state={saveState}
           onClick={handleSubmit}
-          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
+          className="w-full bg-[#FF6B35] text-white py-2 rounded hover:bg-[#E55A2B] transition"
         >
           Create Branch
         </ActionButton>

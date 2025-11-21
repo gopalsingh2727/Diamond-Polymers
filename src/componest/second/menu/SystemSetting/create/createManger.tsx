@@ -86,7 +86,7 @@ const CreateManager: React.FC = () => {
 
       {/* Status Messages */}
       {branchesLoading && (
-        <p className="text-blue-500 text-sm mb-2">Loading branches...</p>
+        <p className="text-[#FF6B35] text-sm mb-2">Loading branches...</p>
       )}
       {branchesError && (
         <p className="text-red-500 text-sm mb-2">{branchesError}</p>
@@ -144,7 +144,7 @@ const CreateManager: React.FC = () => {
           type="save"
           state={saveState}
           onClick={handleSubmit}
-          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
+          className="w-full bg-[#FF6B35] text-white py-2 rounded hover:bg-[#E55A2B] transition"
         >
           Create Manager
         </ActionButton>

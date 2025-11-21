@@ -110,7 +110,7 @@
 
 /* Card Variants */
 .cardPrimary {
-  border-left: 4px solid #3b82f6;
+  border-left: 4px solid #FF6B35;
 }
 
 .cardSuccess {
@@ -194,7 +194,7 @@
 
 .progressFill {
   height: 100%;
-  background-color: #3b82f6;
+  background-color: #FF6B35;
   border-radius: 9999px;
   transition: width 0.3s ease-in-out;
 }

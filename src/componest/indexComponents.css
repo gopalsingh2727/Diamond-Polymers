@@ -17,12 +17,14 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--color-surface, rgba(255, 255, 255, 0.2));
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid var(--color-border, rgba(255, 255, 255, 0.3));
   transition: all 0.3s ease;
+  position: relative;
+  z-index: 1;
 }
 
 /* Header area (1st row, full width) */
@@ -40,19 +42,20 @@
   gap: 10px;
 }
 
-/* Buttons inside sidebar */
+/* Buttons inside sidebar - Orange Theme */
 .item:nth-child(2) button {
   padding: 10px;
   border: none;
-  background-color: #2d89ef;
+  background-color: #FF6B35;
   color: white;
   border-radius: 8px;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s ease;
 }
 
 .item:nth-child(2) button:hover {
-  background-color: #1b5fa7;
+  background-color: #E55A2B;
+  box-shadow: 0 0 15px rgba(255, 107, 53, 0.3);
 }
 
 /* Main content display area (2nd row, 1st column) */
@@ -62,19 +65,21 @@
   flex-direction: column;
   align-items: center;
   overflow-y: auto;
+  align-self: stretch;
+  min-height: 0;
 }
 
 /* Footer area (3rd row, full width) */
 .item:nth-child(4) {
   grid-column: span 2;
   justify-content: center;
-  background-color: rgba(255, 255, 255, 0.3);
+  background-color: var(--color-surface, rgba(255, 255, 255, 0.3));
 }
 
 /* Footer text style */
 .create-footer {
   font-weight: 500;
-  color: #555;
+  color: var(--color-text-muted, #555);
 }
 
 /* Hide footer layout */
@@ -93,7 +98,7 @@
 }
 
 
-  
+
   .logoHeders {
     height: 70px;
     width: auto;
@@ -101,3 +106,23 @@
     cursor: pointer;
   }
 
+/* Eagle Header Logo Styling */
+.eagle-header-logo {
+  filter: drop-shadow(0 0 8px rgba(255, 107, 53, 0.6));
+  transition: all 0.3s ease;
+}
+
+.eagle-header-logo:hover {
+  filter: drop-shadow(0 0 15px rgba(255, 107, 53, 0.8));
+  transform: scale(1.05);
+}
+
+/* Dark mode adjustments */
+.dark .item {
+  background: rgba(17, 24, 39, 0.8);
+  border-color: rgba(55, 65, 81, 0.5);
+}
+
+.dark .item:nth-child(4) {
+  background-color: rgba(17, 24, 39, 0.5);
+}

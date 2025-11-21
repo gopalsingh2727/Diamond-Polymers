@@ -1,10 +1,9 @@
 import React, { useEffect, useState, useContext, createContext } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import {
-  getAccounts,
   updateAccount,
 } from "../../../../redux/create/createNewAccount/NewAccountActions";
-import { RootState } from "../../../../redux/rootReducer";
+import { useFormDataCache } from "../hooks/useFormDataCache";
 import { AppDispatch } from "../../../../../store";
 import { indianStates } from "../../create/createNewAccount/indianStates";
 import {
@@ -46,9 +45,8 @@ const EditAccount: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const backNavContext = useContext(BackNavigationContext);
 
-  const { accounts = [], loading, error } = useSelector(
-    (state: RootState) => state.getAccounts || {}
-  );
+  // 🚀 OPTIMIZED: Get data from cached form data (no API calls!)
+  const { customers: accounts, loading, error } = useFormDataCache();
 
   const [selectedRow, setSelectedRow] = useState(0);
   const [showDetail, setShowDetail] = useState(false);
@@ -106,9 +104,7 @@ const EditAccount: React.FC = () => {
     }
   );
 
-  useEffect(() => {
-    dispatch(getAccounts());
-  }, [dispatch]);
+  // ✅ No useEffect dispatch needed - data already loaded from cache!
 
   useEffect(() => {
     setSelectedRow(0);
@@ -124,7 +120,7 @@ const EditAccount: React.FC = () => {
       await dispatch(updateAccount(form._id, form));
       alert("Account updated successfully!");
       setShowDetail(false);
-      dispatch(getAccounts());
+      // ✅ OPTIMIZED: Cache will auto-refresh on next page load
     } catch (err) {
       alert("Failed to update account.");
     }
@@ -179,7 +175,7 @@ const EditAccount: React.FC = () => {
                 {filteredAccounts.map((item, index) => (
                   <tr
                     key={item._id}
-                    className={selectedRow === index ? "bg-blue-100" : ""}
+                    className={selectedRow === index ? "bg-orange-100" : ""}
                     onClick={() => handleRowClick(index, item)}
                     style={{ cursor: "pointer" }}
                   >

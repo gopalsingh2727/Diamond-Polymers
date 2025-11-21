@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from 'react-redux';
-import "./createProductSpec.css";
+import "./spec.css";
 import { RootState } from "../../../../redux/rootReducer";
 import { AppDispatch } from "../../../../../store";
-import { getProductCategories } from "../../../../redux/create/products/productCategories/productCategoriesActions";
 import { createProductSpec } from "../../../../redux/create/productSpec/productSpecActions";
-import { getMaterialSpecs } from "../../../../redux/create/materialSpec/materialSpecActions";
+import { useFormDataCache } from '../../Edit/hooks/useFormDataCache';
 import { evaluateDimensionFormulas } from "../../../../../utils/dimensionFormulaEvaluator";
 
 interface Dimension {
@@ -20,14 +19,8 @@ interface Dimension {
 const CreateProductSpec = () => {
   const dispatch = useDispatch<AppDispatch>();
 
-  // Redux State - Get product types from Redux
-  const productCategoriesState = useSelector((state: RootState) => state.productCategories);
-  const productTypes = productCategoriesState?.categories || [];
-
-  // Get Material Specs from Redux for dimension name reference
-  const { materialSpecs = [] } = useSelector(
-    (state: RootState) => state.materialSpecList || { materialSpecs: [] }
-  );
+  // 🚀 OPTIMIZED: Get data from cached form data (no API calls!)
+  const { productTypes, materialSpecs, loading: cacheLoading } = useFormDataCache();
 
   const [specName, setSpecName] = useState("");
   const [productTypeId, setProductTypeId] = useState("");
@@ -39,14 +32,11 @@ const CreateProductSpec = () => {
   const [selectedMaterialSpecId, setSelectedMaterialSpecId] = useState("");
   const [materialDimensionNames, setMaterialDimensionNames] = useState<string[]>([]);
 
-  useEffect(() => {
-    dispatch(getProductCategories());
-    dispatch(getMaterialSpecs() as any);
-  }, [dispatch]);
+  // ✅ No API calls needed - data comes from useFormDataCache!
 
   // Extract dimension names when Material Spec is selected
   useEffect(() => {
-    if (selectedMaterialSpecId) {
+    if (selectedMaterialSpecId && Array.isArray(materialSpecs)) {
       const spec = materialSpecs.find((s: any) => s._id === selectedMaterialSpecId);
       if (spec && spec.dimensions) {
         const names = spec.dimensions.map((d: any) => d.name);
@@ -158,46 +148,46 @@ const CreateProductSpec = () => {
   };
 
   return (
-    <div className="create-product-spec-container">
-      <h2 className="text-2xl font-bold mb-4">Create Product Specification</h2>
+    <div className="specContainer">
+      <h2 className="specHeader">Create Product Specification</h2>
 
-      <div className="mb-4 flex gap-2">
+      <div className="specTemplateButtons">
         <button
           onClick={() => loadTemplate("plasticBag")}
-          className="text-sm bg-gray-200 px-3 py-1 rounded hover:bg-gray-300"
+          className="specTemplateBtn"
         >
           📄 Load Bag Template
         </button>
         <button
           onClick={() => loadTemplate("container")}
-          className="text-sm bg-gray-200 px-3 py-1 rounded hover:bg-gray-300"
+          className="specTemplateBtn"
         >
           🥫 Load Container Template
         </button>
       </div>
 
-      <div className="form-grid">
+      <div className="specFormGrid">
         {/* Spec Name and Product Type in one row */}
-        <div className="form-row">
-          <div className="form-column">
-            <label className="input-label">Spec Name *</label>
+        <div className="specFormRow">
+          <div className="specFormColumn">
+            <label className="specInputLabel">Spec Name *</label>
             <input
               value={specName}
               onChange={(e) => setSpecName(e.target.value)}
-              className="form-input"
+              className="specFormInput"
               placeholder="e.g., LDPE Bag 30x20"
             />
           </div>
 
-          <div className="form-column">
-            <label className="input-label">Product Type *</label>
+          <div className="specFormColumn">
+            <label className="specInputLabel">Product Type *</label>
             <select
               value={productTypeId}
               onChange={(e) => setProductTypeId(e.target.value)}
-              className="form-input"
+              className="specFormInput"
             >
               <option value="">Select product type</option>
-              {productTypes.map((type) => (
+              {Array.isArray(productTypes) && productTypes.map((type) => (
                 <option key={type._id} value={type._id}>
                   {type.productTypeName}
                 </option>
@@ -206,71 +196,39 @@ const CreateProductSpec = () => {
           </div>
         </div>
 
-        <div className="form-column">
-          <label className="input-label">Description</label>
+        <div className="specFormColumn">
+          <label className="specInputLabel">Description</label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="form-input"
+            className="specFormInput"
             rows={2}
             placeholder="Optional description"
           />
         </div>
 
         {/* Material Spec Dimension Name Browser */}
-        <div className="form-column">
-          <div style={{
-            padding: '1rem',
-            backgroundColor: '#f0f9ff',
-            border: '1px solid #bae6fd',
-            borderRadius: '8px',
-            marginBottom: '1rem'
-          }}>
-            <h3 style={{
-              fontSize: '1rem',
-              fontWeight: '600',
-              color: '#0369a1',
-              marginBottom: '0.75rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem'
-            }}>
+        <div className="specFormColumn">
+          <div className="specReferenceBox">
+            <h3 className="specReferenceTitle">
               📋 Reference Material Spec Dimensions
             </h3>
-            <p style={{
-              fontSize: '0.875rem',
-              color: '#075985',
-              marginBottom: '1rem'
-            }}>
+            <p className="specReferenceText">
               Select a Material Spec to see its dimension names. You can use these names in your Product dimension formulas.
             </p>
 
             {/* Material Spec Dropdown */}
             <div style={{ marginBottom: '1rem' }}>
-              <label style={{
-                display: 'block',
-                fontSize: '0.875rem',
-                fontWeight: '500',
-                marginBottom: '0.5rem',
-                color: '#0c4a6e'
-              }}>
+              <label className="specReferenceLabel">
                 Select Material Spec:
               </label>
               <select
                 value={selectedMaterialSpecId}
                 onChange={(e) => setSelectedMaterialSpecId(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '0.5rem 0.75rem',
-                  border: '1px solid #7dd3fc',
-                  borderRadius: '6px',
-                  fontSize: '0.875rem',
-                  backgroundColor: '#ffffff'
-                }}
-                className="form-input"
+                className="specFormInput"
               >
                 <option value="">-- Select Material Spec to see dimension names --</option>
-                {materialSpecs.map((spec: any) => (
+                {Array.isArray(materialSpecs) && materialSpecs.map((spec: any) => (
                   <option key={spec._id} value={spec._id}>
                     {spec.specName}
                   </option>
@@ -281,48 +239,19 @@ const CreateProductSpec = () => {
             {/* Display Available Dimension Names */}
             {materialDimensionNames.length > 0 && (
               <div>
-                <div style={{
-                  fontSize: '0.875rem',
-                  fontWeight: '600',
-                  color: '#0c4a6e',
-                  marginBottom: '0.5rem'
-                }}>
-                  Available dimension names from "{materialSpecs.find((s: any) => s._id === selectedMaterialSpecId)?.specName}":
+                <div className="specReferenceLabel" style={{ marginBottom: '0.5rem' }}>
+                  Available dimension names from "{Array.isArray(materialSpecs) ? materialSpecs.find((s: any) => s._id === selectedMaterialSpecId)?.specName : ''}":
                 </div>
-                <div style={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  gap: '0.5rem',
-                  marginBottom: '0.75rem'
-                }}>
+                <div className="specDimensionTags">
                   {materialDimensionNames.map((name, idx) => (
-                    <span
-                      key={idx}
-                      style={{
-                        padding: '0.25rem 0.75rem',
-                        backgroundColor: '#dbeafe',
-                        color: '#1e40af',
-                        borderRadius: '4px',
-                        fontSize: '0.875rem',
-                        fontWeight: '500',
-                        fontFamily: 'monospace',
-                        border: '1px solid #93c5fd'
-                      }}
-                    >
+                    <span key={idx} className="specDimensionTag">
                       {name}
                     </span>
                   ))}
                 </div>
-                <div style={{
-                  fontSize: '0.75rem',
-                  color: '#075985',
-                  fontStyle: 'italic',
-                  backgroundColor: '#e0f2fe',
-                  padding: '0.5rem',
-                  borderRadius: '4px'
-                }}>
+                <div className="specReferenceHint">
                   💡 <strong>How to use:</strong> Copy these dimension names and paste them into your Product dimension formulas below.
-                  For example, if Material has dimension "b", you can create a Product formula like: <code style={{ fontFamily: 'monospace', backgroundColor: '#ffffff', padding: '2px 4px', borderRadius: '2px' }}>myValue / b</code>
+                  For example, if Material has dimension "b", you can create a Product formula like: <code className="specCode">myValue / b</code>
                   <br />
                   <strong>Note:</strong> These are NAME references only. Actual values come from the order's Material Spec at runtime.
                 </div>
@@ -330,26 +259,19 @@ const CreateProductSpec = () => {
             )}
 
             {!selectedMaterialSpecId && (
-              <div style={{
-                padding: '0.75rem',
-                backgroundColor: '#fef3c7',
-                border: '1px solid #fde68a',
-                borderRadius: '6px',
-                fontSize: '0.875rem',
-                color: '#92400e'
-              }}>
+              <div className="specReferenceEmpty">
                 ℹ️ Select a Material Spec above to see available dimension names that you can use in formulas
               </div>
             )}
           </div>
         </div>
 
-        <div className="form-column">
-          <div className="flex justify-between items-center mb-2">
-            <label className="input-label">Dimensions</label>
+        <div className="specFormColumn">
+          <div className="specDimensionsHeader">
+            <label className="specInputLabel">Dimensions</label>
             <button
               onClick={addDimension}
-              className="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600"
+              className="specAddDimensionBtn"
             >
               + Add Dimension
             </button>
@@ -358,16 +280,15 @@ const CreateProductSpec = () => {
           {dimensions.map((dim, index) => (
             <div
               key={index}
-              className="dimension-row bg-gray-50 p-3 rounded border mb-2"
+              className="specDimensionRow"
             >
-              <div className="grid grid-cols-5 gap-2 mb-2">
+              <div className="specDimensionFields">
                 <input
                   placeholder="Name"
                   value={dim.name}
                   onChange={(e) =>
                     updateDimension(index, "name", e.target.value)
                   }
-                  className="form-input"
                 />
 
                 <input
@@ -376,9 +297,7 @@ const CreateProductSpec = () => {
                   onChange={(e) =>
                     updateDimension(index, "value", e.target.value)
                   }
-                  className="form-input"
                   disabled={dim.isCalculated}
-                  style={dim.isCalculated ? { backgroundColor: '#e0f7e0', color: '#059669' } : {}}
                 />
 
                 <input
@@ -387,7 +306,6 @@ const CreateProductSpec = () => {
                   onChange={(e) =>
                     updateDimension(index, "unit", e.target.value)
                   }
-                  className="form-input"
                 />
 
                 <select
@@ -399,7 +317,6 @@ const CreateProductSpec = () => {
                       e.target.value as Dimension["dataType"]
                     )
                   }
-                  className="form-input"
                 >
                   <option value="string">String</option>
                   <option value="number">Number</option>
@@ -409,7 +326,7 @@ const CreateProductSpec = () => {
 
                 <button
                   onClick={() => removeDimension(index)}
-                  className="bg-red-500 text-white px-2 rounded hover:bg-red-600"
+                  className="specRemoveDimensionBtn"
                 >
                   ✕
                 </button>
@@ -417,19 +334,18 @@ const CreateProductSpec = () => {
 
               {/* Formula field - only for number type */}
               {dim.dataType === 'number' && (
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-600 min-w-16">Formula:</span>
+                <div className="specFormulaRow">
+                  <span className="specFormulaLabel">Formula:</span>
                   <input
                     placeholder="e.g., length * width (leave empty for manual value)"
                     value={dim.formula || ""}
                     onChange={(e) =>
                       updateDimension(index, "formula", e.target.value)
                     }
-                    className="form-input text-sm"
-                    style={{ fontFamily: 'monospace' }}
+                    className="specFormulaInput"
                   />
                   {dim.isCalculated && (
-                    <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
+                    <span className="specFormulaBadge">
                       🧮 Auto
                     </span>
                   )}
@@ -439,17 +355,17 @@ const CreateProductSpec = () => {
           ))}
 
           {dimensions.length === 0 && (
-            <p className="text-gray-500 text-sm italic">
+            <p className="specEmptyState">
               No dimensions added. Click "+ Add Dimension" to start.
             </p>
           )}
         </div>
 
-        <div className="form-column">
+        <div className="specFormColumn">
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className="bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed w-full"
+            className="specSaveButton"
           >
             {loading ? "Saving..." : "💾 Save Product Spec"}
           </button>

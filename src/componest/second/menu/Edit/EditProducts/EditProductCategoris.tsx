@@ -1,9 +1,6 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import "./EditProductCategoris.css";
-import { useDispatch, useSelector } from "react-redux";
-import { getAllProductTypesWithProducts } from "../../../../redux/create/products/productCategories/productCategoriesActions";
-import { RootState } from "../../../../redux/rootReducer";
-import { AppDispatch } from "../../../../../store";
+import { useFormDataCache } from "../hooks/useFormDataCache";
 
 interface Product {
   _id: string;
@@ -28,13 +25,18 @@ interface ProductType {
 }
 
 const EditProductCategories: React.FC = () => {
-  const dispatch = useDispatch<AppDispatch>();
+  // 🚀 OPTIMIZED: Get data from cached form data (no API calls!)
+  const { productTypes: cachedProductTypes, products: cachedProducts, loading, error } = useFormDataCache();
 
-  const {
-    items: productTypes = [],
-    loading,
-    error,
-  } = useSelector((state: RootState) => state.productTypeWithProductsReducer || {});
+  // Group products by product type
+  const productTypes = useMemo(() => {
+    return cachedProductTypes.map((type: any) => ({
+      ...type,
+      products: cachedProducts.filter((product: any) =>
+        (product.productType?._id === type._id || product.productTypeId === type._id)
+      )
+    }));
+  }, [cachedProductTypes, cachedProducts]);
 
   const [selectedRow, setSelectedRow] = useState(0);
   const [showDetail, setShowDetail] = useState(false);
@@ -63,9 +65,7 @@ const EditProductCategories: React.FC = () => {
     [productTypes, selectedRow, showDetail]
   );
 
-  useEffect(() => {
-    dispatch(getAllProductTypesWithProducts());
-  }, [dispatch]);
+  // ✅ No useEffect dispatch needed - data already loaded from cache!
 
   useEffect(() => {
     window.addEventListener("keydown", handleKeyDown);
@@ -106,7 +106,7 @@ const EditProductCategories: React.FC = () => {
             {productTypes.map((item: ProductType, index: number) => (
               <tr
                 key={item._id}
-                className={selectedRow === index ? "bg-blue-100" : ""}
+                className={selectedRow === index ? "bg-orange-100" : ""}
               >
                 <td>{index + 1}</td>
                 <td>{item.productTypeName}</td>
@@ -115,7 +115,7 @@ const EditProductCategories: React.FC = () => {
                 <td>{new Date(item.createdAt).toLocaleString()}</td>
                 <td>{new Date(item.updatedAt).toLocaleString()}</td>
                 <td
-                  className="text-blue-600 emt-edit-text"
+                  className="text-[#FF6B35] emt-edit-text"
                   onClick={() => {
                     setSelectedRow(index);
                     setEditType(item.productTypeName);

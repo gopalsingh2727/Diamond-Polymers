@@ -1,0 +1,736 @@
+/* ==========================================================================
+   ORDER TYPE COMPONENT - Grid-Based Layout CSS
+   Used for: CreateOrderType, EditOrderType
+   ========================================================================== */
+
+/* Main Container */
+.orderTypeContainer {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 2rem;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  min-height: 100vh;
+}
+
+/* Header Section */
+.orderTypeHeader {
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e5e7eb;
+  margin-bottom: 1rem;
+}
+
+.orderTypeTitle {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 0.5rem;
+}
+
+.orderTypeSubtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* Form Grid */
+.orderTypeFormGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+/* Form Section */
+.orderTypeSection {
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 1.5rem;
+}
+
+.orderTypeSectionTitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #d1d5db;
+}
+
+/* Form Row - Side by Side Layout */
+.orderTypeFormRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.orderTypeFormRow:last-child {
+  margin-bottom: 0;
+}
+
+/* Form Column */
+.orderTypeFormColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Input Label */
+.orderTypeInputLabel {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  display: block;
+}
+
+/* Form Inputs */
+.orderTypeFormInput,
+.orderTypeFormTextarea,
+.orderTypeFormSelect {
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  color: #111827;
+  background-color: #ffffff;
+  transition: all 0.15s ease-in-out;
+  outline: none;
+  font-family: inherit;
+}
+
+.orderTypeFormInput:hover,
+.orderTypeFormTextarea:hover,
+.orderTypeFormSelect:hover {
+  border-color: #9ca3af;
+}
+
+.orderTypeFormInput:focus,
+.orderTypeFormTextarea:focus,
+.orderTypeFormSelect:focus {
+  border-color: #FF6B35;
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+}
+
+.orderTypeFormInput:disabled,
+.orderTypeFormTextarea:disabled,
+.orderTypeFormSelect:disabled {
+  background-color: #f3f4f6;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.orderTypeFormTextarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.orderTypeFormSelect {
+  cursor: pointer;
+}
+
+/* Checkbox Grid */
+.orderTypeCheckboxGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.orderTypeCheckboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #374151;
+  cursor: pointer;
+  padding: 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.375rem;
+  background-color: #ffffff;
+  transition: all 0.15s ease-in-out;
+}
+
+.orderTypeCheckboxLabel:hover {
+  border-color: #FF6B35;
+  background-color: #fff5f0;
+}
+
+.orderTypeCheckboxLabel input[type="checkbox"] {
+  width: 1.125rem;
+  height: 1.125rem;
+  cursor: pointer;
+  accent-color: #FF6B35;
+}
+
+.orderTypeCheckboxLabel span {
+  flex: 1;
+}
+
+/* Format Preview */
+.orderTypeFormatPreview {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  color: #1e40af;
+  font-family: 'Courier New', monospace;
+}
+
+.orderTypeFormatPreview strong {
+  color: #1e3a8a;
+}
+
+/* Section Configuration */
+.orderTypeSectionsConfig {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.orderTypeSectionConfigItem {
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.orderTypeSectionConfigHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background-color: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.orderTypeSectionConfigLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.orderTypeSectionConfigLeft .orderTypeCheckboxLabel {
+  padding: 0.5rem;
+  border: none;
+  background: none;
+}
+
+.orderTypeSectionConfigLeft .orderTypeCheckboxLabel:hover {
+  background: none;
+  border: none;
+}
+
+.orderTypeSectionName {
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.875rem;
+}
+
+.orderTypeSectionConfigRight {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.orderTypeSectionOrder {
+  font-size: 0.75rem;
+  color: #6b7280;
+  padding: 0.25rem 0.5rem;
+  background-color: #e5e7eb;
+  border-radius: 0.25rem;
+}
+
+.orderTypeOrderBtn,
+.orderTypeExpandBtn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #d1d5db;
+  border-radius: 0.25rem;
+  background-color: #ffffff;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: #374151;
+  transition: all 0.15s ease;
+}
+
+.orderTypeOrderBtn:hover:not(:disabled),
+.orderTypeExpandBtn:hover {
+  background-color: #f3f4f6;
+  border-color: #FF6B35;
+  color: #FF6B35;
+}
+
+.orderTypeOrderBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.orderTypeExpandBtn {
+  font-weight: bold;
+}
+
+/* Field Configuration */
+.orderTypeSectionFieldsConfig {
+  padding: 1rem;
+  background-color: #ffffff;
+}
+
+.orderTypeFieldsHeader {
+  display: grid;
+  grid-template-columns: 1fr 80px 80px;
+  gap: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+}
+
+.orderTypeFieldConfigRow {
+  display: grid;
+  grid-template-columns: 1fr 80px 80px;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.orderTypeFieldConfigRow:last-child {
+  border-bottom: none;
+}
+
+.orderTypeFieldLabel {
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+.orderTypeFieldConfigRow input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+  accent-color: #FF6B35;
+  margin: 0 auto;
+}
+
+.orderTypeFieldConfigRow input[type="checkbox"]:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Restrictions Section */
+.orderTypeRestrictionsSection {
+  margin-top: 1rem;
+}
+
+.orderTypeRestrictionItem {
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.375rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.orderTypeRestrictionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.orderTypeRestrictionTitle {
+  font-weight: 600;
+  font-size: 0.938rem;
+  color: #374151;
+}
+
+.orderTypeToggleBtn {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.813rem;
+  font-weight: 500;
+  background-color: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.orderTypeToggleBtn:hover {
+  background-color: #e5e7eb;
+  border-color: #9ca3af;
+}
+
+.orderTypeSelectedItems {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.orderTypeSelectedTag {
+  padding: 0.375rem 0.75rem;
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 0.25rem;
+  font-size: 0.813rem;
+  color: #1e40af;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.orderTypeRemoveTag {
+  cursor: pointer;
+  font-weight: bold;
+  color: #ef4444;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.orderTypeRemoveTag:hover {
+  color: #dc2626;
+}
+
+/* Form Actions */
+.orderTypeFormActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 2px solid #e5e7eb;
+}
+
+.orderTypeSaveButton {
+  min-width: 200px;
+  padding: 0.875rem 1.5rem;
+  font-size: 0.938rem;
+  font-weight: 600;
+  background-color: #FF6B35;
+  color: #ffffff;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.orderTypeSaveButton:hover:not(:disabled) {
+  background-color: #E55A2B;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transform: translateY(-1px);
+}
+
+.orderTypeSaveButton:active:not(:disabled) {
+  background-color: #E55A2B;
+  transform: translateY(0);
+}
+
+.orderTypeSaveButton:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.orderTypeCancelButton {
+  padding: 0.875rem 1.5rem;
+  font-size: 0.938rem;
+  font-weight: 600;
+  background-color: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.orderTypeCancelButton:hover {
+  background-color: #e5e7eb;
+  border-color: #9ca3af;
+}
+
+/* Loading State */
+.orderTypeLoading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 3rem;
+  color: #6b7280;
+  font-size: 0.938rem;
+}
+
+/* Empty State */
+.orderTypeEmptyState {
+  text-align: center;
+  padding: 3rem;
+  color: #6b7280;
+  font-size: 0.938rem;
+  background-color: #f9fafb;
+  border-radius: 0.5rem;
+  border: 1px dashed #d1d5db;
+}
+
+/* Helper Text */
+.orderTypeHelperText {
+  font-size: 0.813rem;
+  color: #6b7280;
+  margin-top: 0.375rem;
+  font-style: italic;
+}
+
+/* Error Message */
+.orderTypeErrorMsg {
+  color: #dc2626;
+  background-color: #fee2e2;
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  border-left: 4px solid #dc2626;
+  margin-bottom: 1rem;
+}
+
+/* Success Message */
+.orderTypeSuccessMsg {
+  color: #059669;
+  background-color: #d1fae5;
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  border-left: 4px solid #059669;
+  margin-bottom: 1rem;
+}
+
+/* Badge/Tag */
+.orderTypeBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 0.25rem;
+}
+
+.orderTypeBadge.primary {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.orderTypeBadge.success {
+  background-color: #d1fae5;
+  color: #059669;
+}
+
+.orderTypeBadge.warning {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.orderTypeBadge.danger {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .orderTypeFormRow {
+    grid-template-columns: 1fr;
+  }
+
+  .orderTypeCheckboxGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .orderTypeFieldsHeader,
+  .orderTypeFieldConfigRow {
+    grid-template-columns: 1fr 60px 60px;
+  }
+}
+
+@media (max-width: 768px) {
+  .orderTypeContainer {
+    padding: 1rem;
+  }
+
+  .orderTypeTitle {
+    font-size: 1.5rem;
+  }
+
+  .orderTypeSection {
+    padding: 1rem;
+  }
+
+  .orderTypeFormRow {
+    grid-template-columns: 1fr;
+  }
+
+  .orderTypeCheckboxGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .orderTypeFormActions {
+    flex-direction: column;
+  }
+
+  .orderTypeSaveButton,
+  .orderTypeCancelButton {
+    width: 100%;
+  }
+
+  .orderTypeSectionConfigHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .orderTypeSectionConfigRight {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 480px) {
+  .orderTypeContainer {
+    padding: 0.75rem;
+  }
+
+  .orderTypeHeader {
+    margin-bottom: 1rem;
+  }
+
+  .orderTypeFormGrid {
+    gap: 1rem;
+  }
+
+  .orderTypeFieldsHeader,
+  .orderTypeFieldConfigRow {
+    grid-template-columns: 1fr 50px 50px;
+    font-size: 0.688rem;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .orderTypeContainer {
+    background-color: #1f2937;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  .orderTypeTitle {
+    color: #f9fafb;
+  }
+
+  .orderTypeSubtitle {
+    color: #9ca3af;
+  }
+
+  .orderTypeSection {
+    background-color: #111827;
+    border-color: #374151;
+  }
+
+  .orderTypeSectionTitle {
+    color: #e5e7eb;
+    border-bottom-color: #4b5563;
+  }
+
+  .orderTypeInputLabel {
+    color: #e5e7eb;
+  }
+
+  .orderTypeFormInput,
+  .orderTypeFormTextarea,
+  .orderTypeFormSelect {
+    background-color: #1f2937;
+    border-color: #374151;
+    color: #f9fafb;
+  }
+
+  .orderTypeFormInput:hover,
+  .orderTypeFormTextarea:hover,
+  .orderTypeFormSelect:hover {
+    border-color: #4b5563;
+  }
+
+  .orderTypeFormInput:disabled,
+  .orderTypeFormTextarea:disabled,
+  .orderTypeFormSelect:disabled {
+    background-color: #111827;
+  }
+
+  .orderTypeCheckboxLabel {
+    background-color: #1f2937;
+    border-color: #374151;
+    color: #e5e7eb;
+  }
+
+  .orderTypeCheckboxLabel:hover {
+    border-color: #FF6B35;
+    background-color: #2d1f1a;
+  }
+
+  .orderTypeSectionConfigItem {
+    background-color: #1f2937;
+    border-color: #374151;
+  }
+
+  .orderTypeSectionConfigHeader {
+    background-color: #111827;
+    border-bottom-color: #374151;
+  }
+
+  .orderTypeSectionFieldsConfig {
+    background-color: #1f2937;
+  }
+
+  .orderTypeFormatPreview {
+    background-color: #1e3a8a;
+    border-color: #1e40af;
+    color: #bfdbfe;
+  }
+
+  .orderTypeFormatPreview strong {
+    color: #93c5fd;
+  }
+}
+
+/* Animation: Fade In */
+@keyframes orderTypeFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.orderTypeSection,
+.orderTypeSectionConfigItem {
+  animation: orderTypeFadeIn 0.3s ease-out;
+}
+
+/* Print Styles */
+@media print {
+  .orderTypeContainer {
+    box-shadow: none;
+    padding: 0;
+  }
+
+  .orderTypeFormActions {
+    display: none;
+  }
+
+  .orderTypeSection {
+    break-inside: avoid;
+  }
+}

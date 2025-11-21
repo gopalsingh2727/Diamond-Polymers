@@ -1,0 +1,425 @@
+/* Dynamic Form Grid System - Matches stepContainer patterns */
+
+/* ================================================
+   SECTION CONTAINERS
+   ================================================ */
+.dynamicSection {
+  margin-bottom: 15px;
+  padding: 10px 0;
+}
+
+.dynamicSection.with-border {
+  border-bottom: 1px solid #333;
+  padding-bottom: 15px;
+}
+
+.dynamicSection-title {
+  font-size: 14px;
+  font-weight: bold;
+  color: #1e293b;
+  margin-bottom: 10px;
+}
+
+/* ================================================
+   FORM ROW LAYOUTS - Flexible Grid System
+   ================================================ */
+.dynamicFormRow {
+  display: grid;
+  gap: 15px;
+  margin-bottom: 10px;
+  align-items: end;
+}
+
+/* Preset column configurations */
+.dynamicFormRow-1 { grid-template-columns: 1fr; }
+.dynamicFormRow-2 { grid-template-columns: repeat(2, 1fr); }
+.dynamicFormRow-3 { grid-template-columns: repeat(3, 1fr); }
+.dynamicFormRow-4 { grid-template-columns: repeat(4, 1fr); }
+.dynamicFormRow-5 { grid-template-columns: repeat(5, 1fr); }
+.dynamicFormRow-6 { grid-template-columns: repeat(6, 1fr); }
+
+/* Fixed width column configurations - matching stepContainer */
+.dynamicFormRow-product {
+  display: grid;
+  grid-template-columns: 180px 180px 150px;
+  gap: 15px;
+  align-items: end;
+}
+
+.dynamicFormRow-material {
+  display: grid;
+  grid-template-columns: 150px 150px 100px 100px 100px 80px;
+  gap: 10px;
+  align-items: end;
+}
+
+.dynamicFormRow-material-basic {
+  display: grid;
+  grid-template-columns: 150px 150px;
+  gap: 15px;
+  align-items: end;
+}
+
+.dynamicFormRow-material-weights {
+  display: grid;
+  grid-template-columns: 120px 120px 100px;
+  gap: 15px;
+  align-items: end;
+}
+
+.dynamicFormRow-printing {
+  display: grid;
+  grid-template-columns: 100px 100px 100px 100px 120px;
+  gap: 10px;
+  align-items: end;
+}
+
+.dynamicFormRow-dimensions {
+  display: grid;
+  grid-template-columns: 80px 80px 80px 100px;
+  gap: 10px;
+  align-items: end;
+}
+
+/* ================================================
+   FORM FIELD CONTAINERS
+   ================================================ */
+.dynamicField {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.dynamicField label {
+  font-size: 12px;
+  font-weight: bold;
+  color: #1e293b;
+  margin-bottom: 6px;
+}
+
+.dynamicField input,
+.dynamicField select {
+  background: none;
+  color: #333;
+  border: none;
+  border-bottom: 1px solid #ccc;
+  padding: 8px 4px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.dynamicField input:focus,
+.dynamicField select:focus {
+  outline: none;
+  border-bottom-color: #FF6B35;
+  border-bottom-width: 2px;
+}
+
+.dynamicField input:hover,
+.dynamicField select:hover {
+  background-color: #f0f4f8;
+}
+
+.dynamicField input[readonly] {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+}
+
+/* Select dropdown styling - matches #myDropdown */
+.dynamicField select {
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg fill='%23334155' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 14px 14px;
+  padding-right: 30px;
+}
+
+/* ================================================
+   TABLE/GRID DISPLAY - Same as stepContainer
+   ================================================ */
+.dynamicTable {
+  width: 100%;
+  margin-top: 10px;
+}
+
+.dynamicTable-header {
+  display: grid;
+  gap: 10px;
+  font-weight: bold;
+  border-bottom: 1px solid #333;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+
+.dynamicTable-row {
+  display: grid;
+  gap: 10px;
+  padding: 6px 0;
+  align-items: center;
+  font-size: 13px;
+}
+
+.dynamicTable-row:hover {
+  background-color: #e0f2fe;
+}
+
+/* Mixing table columns - matches headerRowmaterialMixpop */
+.dynamicTable-mixing .dynamicTable-header,
+.dynamicTable-mixing .dynamicTable-row {
+  grid-template-columns: 40px 150px 150px 100px 80px;
+}
+
+/* Step table columns - matches stepHeaderRow */
+.dynamicTable-steps .dynamicTable-header,
+.dynamicTable-steps .dynamicTable-row {
+  grid-template-columns: 22px 122px 112px 53px 50px 75px 125px 78px 116px 133px 100px 100px;
+  padding-left: 10px;
+}
+
+/* ================================================
+   POPUP OVERLAY - Same as stepContainer
+   ================================================ */
+.dynamicPopup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.dynamicPopup {
+  background-color: white;
+  padding: 20px;
+  border-radius: 16px;
+  min-width: 400px;
+  max-width: 90vw;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.2);
+}
+
+.dynamicPopup-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 15px;
+  color: #1e293b;
+}
+
+.dynamicPopup-content {
+  margin-bottom: 15px;
+}
+
+.dynamicPopup-buttons {
+  border-top: 1px solid #333;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  padding-top: 15px;
+  gap: 10px;
+}
+
+.dynamicPopup-btn-save {
+  padding: 8px 16px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.dynamicPopup-btn-save:hover {
+  background-color: #45a049;
+}
+
+.dynamicPopup-btn-cancel {
+  padding: 8px 16px;
+  background-color: #f44336;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.dynamicPopup-btn-cancel:hover {
+  background-color: #da190b;
+}
+
+.dynamicPopup-btn-add {
+  padding: 8px 16px;
+  background-color: #2196f3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.dynamicPopup-btn-add:hover {
+  background-color: #1976d2;
+}
+
+/* ================================================
+   SAVED DATA DISPLAY - Same as savedStepDisplay
+   ================================================ */
+.dynamicSavedDisplay {
+  display: flex;
+  flex-direction: column;
+  max-height: 150px;
+  overflow-y: auto;
+  font-size: 14px;
+  width: 100%;
+  margin-top: 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  padding: 8px;
+}
+
+.dynamicSavedDisplay::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dynamicSavedDisplay::-webkit-scrollbar-thumb {
+  background-color: #888;
+  border-radius: 4px;
+}
+
+.dynamicSavedDisplay::-webkit-scrollbar-thumb:hover {
+  background-color: #555;
+}
+
+/* ================================================
+   CONDITIONAL FIELDS
+   ================================================ */
+.dynamicField-hidden {
+  display: none;
+}
+
+.dynamicField-conditional {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ================================================
+   EMPTY STATE - Same as stepContainer
+   ================================================ */
+.dynamicEmpty {
+  padding: 10px;
+  background-color: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 4px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  color: #856404;
+}
+
+/* ================================================
+   STATUS BADGES - Same as stepContainer
+   ================================================ */
+.dynamicBadge {
+  padding: 3px 8px;
+  border-radius: 10px;
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  display: inline-block;
+}
+
+.dynamicBadge-pending { background-color: #ff9800; }
+.dynamicBadge-inprogress { background-color: #2196f3; }
+.dynamicBadge-completed { background-color: #4caf50; }
+.dynamicBadge-error { background-color: #f44336; }
+.dynamicBadge-none { background-color: #9e9e9e; }
+
+/* ================================================
+   REMOVE BUTTON - Same as mixing row
+   ================================================ */
+.dynamicBtn-remove {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #ff4444;
+  padding: 5px;
+}
+
+.dynamicBtn-remove:hover {
+  color: #cc0000;
+}
+
+/* ================================================
+   RESPONSIVE ADJUSTMENTS
+   ================================================ */
+@media (max-width: 1200px) {
+  .dynamicFormRow-product,
+  .dynamicFormRow-material,
+  .dynamicFormRow-printing {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .dynamicFormRow-2,
+  .dynamicFormRow-3,
+  .dynamicFormRow-4,
+  .dynamicFormRow-5,
+  .dynamicFormRow-6,
+  .dynamicFormRow-product,
+  .dynamicFormRow-material,
+  .dynamicFormRow-material-basic,
+  .dynamicFormRow-material-weights,
+  .dynamicFormRow-printing,
+  .dynamicFormRow-dimensions {
+    grid-template-columns: 1fr;
+  }
+
+  .dynamicPopup {
+    min-width: 90vw;
+  }
+}
+
+/* ================================================
+   INLINE FLEX LAYOUTS (for simpler rows)
+   ================================================ */
+.dynamicFlexRow {
+  display: flex;
+  flex-direction: row;
+  gap: 15px;
+  align-items: end;
+  flex-wrap: wrap;
+}
+
+.dynamicFlexRow .dynamicField {
+  flex: 1;
+  min-width: 120px;
+}
+
+/* ================================================
+   SECTION DIVIDERS
+   ================================================ */
+.dynamicDivider {
+  height: 1px;
+  background-color: #e0e0e0;
+  margin: 15px 0;
+}
+
+.dynamicDivider-thick {
+  height: 2px;
+  background-color: #333;
+}

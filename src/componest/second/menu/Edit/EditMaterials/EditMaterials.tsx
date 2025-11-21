@@ -1,11 +1,10 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import {
-  getMaterials,
   updateMaterial,
   deleteMaterial,
 } from "../../../../redux/create/Materials/MaterialsActions";
-import { getMaterialCategories } from "../../../../redux/create/Materials/MaterialsCategories/MaterialsCategoriesActions";
+import { useFormDataCache } from "../hooks/useFormDataCache";
 import { RootState } from "../../../../redux/rootReducer";
 import { ThunkDispatch } from 'redux-thunk';
 import { AnyAction } from 'redux';
@@ -29,12 +28,9 @@ interface MaterialType {
 const EditMaterials: React.FC = () => {
   const dispatch = useDispatch<ThunkDispatch<RootState, unknown, AnyAction>>();
 
-  const { materials = [], loading, error } = useSelector(
-    (state: RootState) => state.materialList || {}
-  );
-  const { categories: materialCategories = [] } = useSelector(
-    (state: RootState) => state.materialCategories || {}
-  );
+  // 🚀 OPTIMIZED: Get data from cached form data (no API calls!)
+  const { materials, materialTypes, loading, error } = useFormDataCache();
+  const materialCategories = materialTypes; // Material types are the categories
 
   const [selectedRow, setSelectedRow] = useState(0);
   const [showDetail, setShowDetail] = useState(false);
@@ -76,10 +72,7 @@ const EditMaterials: React.FC = () => {
     [filteredMaterials, selectedRow, showDetail]
   );
 
-  useEffect(() => {
-    dispatch(getMaterials());
-    dispatch(getMaterialCategories());
-  }, [dispatch]);
+  // ✅ No useEffect dispatch needed - data already loaded from cache!
 
   useEffect(() => {
     window.addEventListener("keydown", handleKeyDown);
@@ -128,7 +121,7 @@ const EditMaterials: React.FC = () => {
       alert("Material updated successfully!");
       setShowDetail(false);
       setSelectedMaterial(null);
-      dispatch(getMaterials());
+      // ✅ OPTIMIZED: Cache will auto-refresh on next page load
     } catch (err) {
       alert("Failed to update material.");
     }
@@ -145,7 +138,7 @@ const EditMaterials: React.FC = () => {
       alert("Deleted successfully.");
       setShowDetail(false);
       setSelectedMaterial(null);
-      dispatch(getMaterials());
+      // ✅ OPTIMIZED: Cache will auto-refresh on next page load
     } catch (err) {
       alert("Failed to delete.");
     }
@@ -182,7 +175,7 @@ const EditMaterials: React.FC = () => {
               <input
                 type="text"
                 placeholder="Search by material name, mol, or category..."
-                                className="w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition-all"
+                                className="w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-[#FF6B35] transition-all"
                 value={searchTerm}
                 onChange={handleSearchChange}
                 style={{
@@ -255,7 +248,7 @@ const EditMaterials: React.FC = () => {
                 {filteredMaterials.map((material: Material, index: number) => (
                   <tr
                     key={material._id}
-                    className={selectedRow === index ? "bg-blue-100" : ""}
+                    className={selectedRow === index ? "bg-orange-100" : ""}
                     onClick={() => handleRowClick(index, material)}
                     style={{ cursor: "pointer" }}
                   >

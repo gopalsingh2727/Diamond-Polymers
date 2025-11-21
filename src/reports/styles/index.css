@@ -10,15 +10,15 @@
    ============================================ */
 :root {
   /* Colors - Primary */
-  --color-primary: #2563eb;
-  --color-primary-hover: #1d4ed8;
-  --color-primary-light: #3b82f6;
-  --color-primary-dark: #1e40af;
-  
+  --color-primary: #FF6B35;
+  --color-primary-hover: #E55A2B;
+  --color-primary-light: #FF6B35;
+  --color-primary-dark: #E55A2B;
+
   /* Colors - Secondary */
   --color-secondary: #64748b;
   --color-secondary-hover: #475569;
-  
+
   /* Colors - Status */
   --color-success: #10b981;
   --color-success-hover: #059669;
@@ -26,8 +26,8 @@
   --color-warning-hover: #d97706;
   --color-danger: #ef4444;
   --color-danger-hover: #dc2626;
-  --color-info: #3b82f6;
-  --color-info-hover: #2563eb;
+  --color-info: #FF6B35;
+  --color-info-hover: #E55A2B;
   
   /* Colors - Neutral */
   --color-slate-50: #f8fafc;
@@ -58,7 +58,7 @@
   /* Border Colors */
   --border-color: #e2e8f0;
   --border-hover: #cbd5e1;
-  --border-focus: #2563eb;
+  --border-focus: #FF6B35;
   
   /* Spacing Scale */
   --spacing-0: 0;

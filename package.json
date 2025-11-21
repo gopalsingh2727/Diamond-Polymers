@@ -1,16 +1,24 @@
 {
-  "name": "electron-vite-project",
+  "name": "27-manufacturing",
   "private": true,
   "version": "1.0.11",
   "type": "module",
-  "appId": "com.27Infinity.27this",
+  "description": "Manufacturing management system for orders, machines, operators, and analytics",
+  "author": {
+    "name": "27 Infinity",
+    "email": "contact@27infinity.in",
+    "url": "https://27infinity.in"
+  },
+  "homepage": "https://27infinity.in",
+  "license": "UNLICENSED",
+  "appId": "com.27Infinity.27Manufacturing",
   "repository": {
     "type": "git",
     "url": "git@github.com:gopalsingh2727/Diamond-Polymers.git"
   },
   "scripts": {
-    "dev": "vite",
-    "build": "vite build && electron-builder",
+    "dev": "NODE_OPTIONS='--max-old-space-size=4096' vite",
+    "build": "NODE_OPTIONS='--max-old-space-size=4096' vite build && electron-builder",
     "build:check": "tsc && vite build && electron-builder",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
@@ -20,8 +28,10 @@
     "make": "electron-forge make"
   },
   "build": {
-    "appId": "com.27Infinity.27this",
-    "productName": "DiamondPolymers",
+    "appId": "com.27Infinity.27Manufacturing",
+    "productName": "27 Manufacturing",
+    "copyright": "Copyright © 2024-2025 27 Infinity (Prop. Gopal Singh). All rights reserved. GSTIN: 08AEKPZ9909F2ZP | Rajsamand, Rajasthan, India",
+    "buildVersion": "1.0.10",
     "directories": {
       "output": "release"
     },
@@ -42,6 +52,7 @@
       }
     ],
     "mac": {
+      "icon": "build/icon.icns",
       "target": [
         {
           "target": "dmg",
@@ -59,11 +70,15 @@
         }
       ],
       "category": "public.app-category.productivity",
-      "identity": null,
+      "identity": "-",
       "hardenedRuntime": false,
-      "gatekeeperAssess": false
+      "gatekeeperAssess": false,
+      "signIgnore": [
+        "node_modules"
+      ]
     },
     "win": {
+      "icon": "build/icon.ico",
       "target": [
         {
           "target": "nsis",
@@ -80,9 +95,11 @@
           ]
         }
       ],
-      "publisherName": "Diamond Polymers",
-      "legalTrademarks": "Diamond Polymers",
-      "requestedExecutionLevel": "asInvoker"
+      "publisherName": "27 Infinity (Prop. Gopal Singh)",
+      "legalTrademarks": "27 Manufacturing is a product of 27 Infinity. GSTIN: 08AEKPZ9909F2ZP",
+      "companyName": "27 Infinity",
+      "requestedExecutionLevel": "asInvoker",
+      "verifyUpdateCodeSignature": false
     },
     "nsis": {
       "oneClick": false,
@@ -91,7 +108,12 @@
       "deleteAppDataOnUninstall": false,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Diamond Polymers"
+      "shortcutName": "27 Manufacturing",
+      "uninstallDisplayName": "27 Manufacturing by 27 Infinity",
+      "menuCategory": "27 Infinity",
+      "installerHeaderIcon": "build/icon.ico",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico"
     },
     "publish": {
       "provider": "github",
@@ -165,6 +187,7 @@
     "stream": "^0.0.3",
     "stream-browserify": "^3.0.0",
     "vaul": "^1.1.2",
+    "vosk-browser": "^0.0.8",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {

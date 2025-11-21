@@ -1,11 +1,8 @@
 import { useState, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch } from "../../../../../store";
+import { useSelector } from "react-redux";
 import { RootState } from "../../../../redux/rootReducer";
-import { getMaterialSpecsByMaterialType } from "../../../../redux/create/materialSpec/materialSpecActions";
 import OrderTypeSelector from "../../../../../components/orderType/OrderTypeSelector";
 import SearchableSelect from "../../../../../components/shared/SearchableSelect";
-import FieldTooltip from "../../../../../components/shared/FieldTooltip";
 import { Parser } from "expr-eval";
 import "./createOrder.css";
 
@@ -53,65 +50,251 @@ interface MaterialType {
   name: string;
 }
 
-const CreateOrder = () => {
-  const dispatch = useDispatch<AppDispatch>();
+interface FormField {
+  name: string;
+  label: string;
+  type: string;
+  required: boolean;
+  enabled: boolean;
+}
 
+interface FormSection {
+  id: string;
+  name: string;
+  enabled: boolean;
+  order: number;
+  fields: FormField[];
+}
+
+const CreateOrder = () => {
+  // Data states
   const [productTypes, setProductTypes] = useState<ProductType[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [productSpecs, setProductSpecs] = useState<ProductSpec[]>([]);
   const [materialTypes, setMaterialTypes] = useState<MaterialType[]>([]);
   const [materialSpecs, setMaterialSpecs] = useState<MaterialSpec[]>([]);
 
-  const [selectedOrderType, setSelectedOrderType] = useState("");
-  const [selectedProductType, setSelectedProductType] = useState("");
-  const [selectedProduct, setSelectedProduct] = useState("");
-  const [selectedProductSpec, setSelectedProductSpec] = useState("");
-  const [selectedMaterialType, setSelectedMaterialType] = useState("");
-  const [selectedMaterialSpec, setSelectedMaterialSpec] = useState("");
-
+  // Form values - dynamic based on field names
+  const [formValues, setFormValues] = useState<{ [key: string]: any }>({});
   const [productSpecValues, setProductSpecValues] = useState<{ [key: string]: string | number }>({});
   const [materialSpecValues, setMaterialSpecValues] = useState<{ [key: string]: string | number }>({});
   const [calculatedDimensions, setCalculatedDimensions] = useState<{ [key: string]: number }>({});
   const [calculatedMaterialWeight, setCalculatedMaterialWeight] = useState<number>(0);
-
-  const [quantity, setQuantity] = useState("");
-  const [orderDate, setOrderDate] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [loadingMaterialSpecs, setLoadingMaterialSpecs] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // Get selected order type from Redux store
-  const { orderTypes } = useSelector((state: RootState) => state.orderTypeList);
-  const selectedOrderTypeData = orderTypes?.find((type: any) => type._id === selectedOrderType);
+  // 🚀 OPTIMIZED: Get ALL data from cached form data (no extra API calls)
+  const { data: formData } = useSelector((state: RootState) => state.orderFormData || {});
+  const orderTypes = formData?.orderTypes || [];
+  const selectedOrderType = formValues.orderType || "";
+  const selectedOrderTypeData = orderTypes.find((type: any) => type._id === selectedOrderType);
 
-  useEffect(() => {
-    fetchProductTypes();
-    fetchMaterialTypes();
-  }, []);
+  // Get cached data - no API calls needed!
+  const cachedProductTypes = formData?.productTypes || [];
+  const cachedProducts = formData?.products || [];
+  const cachedProductSpecs = formData?.productSpecs || [];
+  const cachedMaterialTypes = formData?.materialTypes || [];
+  const cachedMaterials = formData?.materials || [];
 
+  // Default sections when order type has no sections configured
+  const defaultSections: FormSection[] = [
+    {
+      id: "product",
+      name: "Product Information",
+      enabled: true,
+      order: 1,
+      fields: [
+        { name: "productType", label: "Product Type", type: "suggestions", required: true, enabled: true },
+        { name: "productName", label: "Product Name", type: "suggestions", required: true, enabled: true },
+        { name: "quantity", label: "Quantity", type: "number", required: true, enabled: true }
+      ]
+    },
+    {
+      id: "material",
+      name: "Material Information",
+      enabled: true,
+      order: 2,
+      fields: [
+        { name: "materialType", label: "Material Type", type: "suggestions", required: true, enabled: true },
+        { name: "materialName", label: "Material Specification", type: "suggestions", required: true, enabled: true },
+        { name: "mixing", label: "Mixing", type: "select", required: false, enabled: true }
+      ]
+    },
+    {
+      id: "printing",
+      name: "Printing Options",
+      enabled: true,
+      order: 3,
+      fields: [
+        { name: "printEnabled", label: "Enable Printing", type: "select", required: false, enabled: true },
+        { name: "printLength", label: "Print Length", type: "number", required: false, enabled: true },
+        { name: "printWidth", label: "Print Width", type: "number", required: false, enabled: true },
+        { name: "printType", label: "Print Type", type: "select", required: false, enabled: true },
+        { name: "printColor", label: "Print Color", type: "text", required: false, enabled: true },
+        { name: "printImage", label: "Print Image/Notes", type: "text", required: false, enabled: true }
+      ]
+    },
+    {
+      id: "steps",
+      name: "Manufacturing Steps",
+      enabled: true,
+      order: 4,
+      fields: [
+        { name: "stepName", label: "Step Name", type: "suggestions", required: false, enabled: true },
+        { name: "notes", label: "Notes", type: "text", required: false, enabled: true }
+      ]
+    }
+  ];
+
+  // Get enabled sections from order type
+  // IMPORTANT: Only use sections from database if they exist, otherwise use defaults
+  const getSections = (): FormSection[] => {
+    if (!selectedOrderTypeData) return defaultSections;
+
+    const dbSections = selectedOrderTypeData.sections;
+
+    // If order type has sections configured, use ONLY those sections
+    if (dbSections && Array.isArray(dbSections) && dbSections.length > 0) {
+      return dbSections
+        .filter((s: any) => s.enabled !== false)
+        .sort((a: any, b: any) => (a.order || 0) - (b.order || 0))
+        .map((s: any) => ({
+          id: s.id,
+          name: s.name,
+          enabled: s.enabled !== false,
+          order: s.order || 0,
+          fields: s.fields || []
+        }));
+    }
+
+    // No sections configured - use defaults
+    return defaultSections;
+  };
+
+  const sections = getSections();
+
+  // Debug: Log sections when order type changes
   useEffect(() => {
-    if (selectedProductType) {
-      fetchProductsByType(selectedProductType);
+    if (selectedOrderType && selectedOrderTypeData) {
+      console.log('=== Order Type Debug ===');
+      console.log('Selected Order Type:', selectedOrderTypeData.typeName);
+      console.log('DB Sections:', selectedOrderTypeData.sections);
+      console.log('DB Sections Count:', selectedOrderTypeData.sections?.length || 0);
+      console.log('Active Sections Count:', sections.length);
+      console.log('Section IDs:', sections.map(s => s.id).join(', '));
+      console.log('========================');
+    }
+  }, [selectedOrderType, selectedOrderTypeData, sections]);
+
+  // Helper to check if a field is enabled in the current order type
+  const isFieldEnabled = (sectionId: string, fieldName: string): boolean => {
+    const section = sections.find(s => s.id === sectionId);
+    if (!section) return false;
+
+    // If section has no fields configured, show all fields (backward compatibility)
+    if (!section.fields || section.fields.length === 0) {
+      return true;
+    }
+
+    // Find the field in section's fields
+    const field = section.fields.find(f => f.name === fieldName);
+
+    // If field not found, it's not configured for this order type
+    if (!field) return false;
+
+    return field.enabled ?? true;
+  };
+
+  // Helper to check if a field is required
+  const isFieldRequired = (sectionId: string, fieldName: string): boolean => {
+    const section = sections.find(s => s.id === sectionId);
+    if (!section) return false;
+
+    // If section has no fields configured, use default required values
+    if (!section.fields || section.fields.length === 0) {
+      // Default required fields
+      const defaultRequired = ['productType', 'productName', 'quantity', 'materialType', 'materialName'];
+      return defaultRequired.includes(fieldName);
+    }
+
+    const field = section.fields.find(f => f.name === fieldName);
+    return field?.required ?? false;
+  };
+
+  // Helper to get field label
+  const getFieldLabel = (sectionId: string, fieldName: string, defaultLabel: string): string => {
+    const section = sections.find(s => s.id === sectionId);
+    if (!section) return defaultLabel;
+
+    // If section has no fields configured, use default label
+    if (!section.fields || section.fields.length === 0) {
+      return defaultLabel;
+    }
+
+    const field = section.fields.find(f => f.name === fieldName);
+    return field?.label || defaultLabel;
+  };
+
+  // 🚀 OPTIMIZED: Load product types and material types from cache on mount
+  useEffect(() => {
+    if (cachedProductTypes.length > 0) {
+      setProductTypes(cachedProductTypes);
+    }
+    if (cachedMaterialTypes.length > 0) {
+      setMaterialTypes(cachedMaterialTypes);
+    }
+  }, [cachedProductTypes, cachedMaterialTypes]);
+
+  // Reset form when order type changes
+  useEffect(() => {
+    if (selectedOrderType) {
+      // Keep order type, reset other values
+      setFormValues(prev => ({ orderType: prev.orderType }));
+      setProducts([]);
+      setProductSpecs([]);
+      setMaterialSpecs([]);
+      setProductSpecValues({});
+      setMaterialSpecValues({});
+      setCalculatedDimensions({});
+      setCalculatedMaterialWeight(0);
+    }
+  }, [selectedOrderType]);
+
+  // 🚀 OPTIMIZED: Filter products from cache when product type changes (no API call)
+  useEffect(() => {
+    if (formValues.productType) {
+      const filteredProducts = cachedProducts.filter(
+        (product: any) => product.productType?._id === formValues.productType ||
+                          product.productTypeId === formValues.productType
+      );
+      setProducts(filteredProducts);
     } else {
       setProducts([]);
-      setSelectedProduct("");
+      setFormValues(prev => ({ ...prev, productName: "", productSpec: "" }));
     }
-  }, [selectedProductType]);
+  }, [formValues.productType, cachedProducts]);
 
+  // 🚀 OPTIMIZED: Filter product specs from cache when product changes (no API call)
   useEffect(() => {
-    if (selectedProduct) {
-      fetchProductSpecsByProduct(selectedProduct);
+    if (formValues.productName) {
+      const filteredSpecs = cachedProductSpecs.filter(
+        (spec: any) => spec.productId === formValues.productName ||
+                      spec.product?._id === formValues.productName
+      );
+      setProductSpecs(filteredSpecs);
     } else {
       setProductSpecs([]);
-      setSelectedProductSpec("");
+      setFormValues(prev => ({ ...prev, productSpec: "" }));
     }
-  }, [selectedProduct]);
+  }, [formValues.productName, cachedProductSpecs]);
 
+  // Initialize product spec values when selected
   useEffect(() => {
-    if (selectedProductSpec) {
-      const spec = productSpecs.find(s => s._id === selectedProductSpec);
+    if (formValues.productSpec) {
+      const spec = productSpecs.find(s => s._id === formValues.productSpec);
       if (spec) {
         const initialValues: { [key: string]: string | number } = {};
         spec.dimensions.forEach(dim => {
@@ -122,22 +305,28 @@ const CreateOrder = () => {
         setProductSpecValues(initialValues);
       }
     }
-  }, [selectedProductSpec, productSpecs]);
+  }, [formValues.productSpec, productSpecs]);
 
-  // Fetch Material Specs when Material Type changes
+  // 🚀 OPTIMIZED: Filter material specs from cache when material type changes (no API call)
   useEffect(() => {
-    if (selectedMaterialType) {
-      fetchMaterialSpecsByMaterialType(selectedMaterialType);
+    if (formValues.materialType) {
+      setLoadingMaterialSpecs(true);
+      const filteredSpecs = cachedMaterials.filter(
+        (material: any) => material.materialTypeId === formValues.materialType ||
+                          material.materialType?._id === formValues.materialType
+      );
+      setMaterialSpecs(filteredSpecs);
+      setLoadingMaterialSpecs(false);
     } else {
       setMaterialSpecs([]);
-      setSelectedMaterialSpec("");
+      setFormValues(prev => ({ ...prev, materialName: "" }));
     }
-  }, [selectedMaterialType]);
+  }, [formValues.materialType, cachedMaterials]);
 
-  // Initialize Material Spec values when Material Spec is selected
+  // Initialize material spec values when selected
   useEffect(() => {
-    if (selectedMaterialSpec) {
-      const spec = materialSpecs.find(s => s._id === selectedMaterialSpec);
+    if (formValues.materialName) {
+      const spec = materialSpecs.find(s => s._id === formValues.materialName);
       if (spec) {
         const initialValues: { [key: string]: string | number } = {};
         spec.dimensions.forEach(dim => {
@@ -148,168 +337,39 @@ const CreateOrder = () => {
         setMaterialSpecValues(initialValues);
       }
     }
-  }, [selectedMaterialSpec, materialSpecs]);
+  }, [formValues.materialName, materialSpecs]);
 
-  // Calculate combined dimensions whenever product/material spec values change
+  // Calculate dimensions
   useEffect(() => {
-    if (selectedProductSpec && selectedMaterialSpec) {
+    if (formValues.productSpec && formValues.materialName) {
       calculateCombinedDimensions();
     }
-  }, [selectedProductSpec, selectedMaterialSpec, productSpecValues, materialSpecValues, quantity]);
+  }, [formValues.productSpec, formValues.materialName, productSpecValues, materialSpecValues, formValues.quantity]);
 
-  const fetchProductTypes = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const apiKey = import.meta.env.VITE_API_KEY;
+  // 🚀 OPTIMIZED: All fetch functions removed - using cached data from orderFormData!
 
-      const response = await fetch(
-        `${import.meta.env.VITE_API_27INFINITY_IN}/producttype`,
-        {
-          headers: {
-            "x-api-key": apiKey || "",
-            "Authorization": `Bearer ${token}`,
-          },
-        }
-      );
-
-      const data = await response.json();
-      if (response.ok) {
-        setProductTypes(Array.isArray(data) ? data : data.productTypes || []);
-      }
-    } catch (err) {
-      console.error("Failed to fetch product types");
-    }
-  };
-
-  const fetchProductsByType = async (productTypeId: string) => {
-    try {
-      const token = localStorage.getItem("token");
-      const apiKey = import.meta.env.VITE_API_KEY;
-
-      const response = await fetch(
-        `${import.meta.env.VITE_API_27INFINITY_IN}/product?productType=${productTypeId}`,
-        {
-          headers: {
-            "x-api-key": apiKey || "",
-            "Authorization": `Bearer ${token}`,
-          },
-        }
-      );
-
-      const data = await response.json();
-      if (response.ok) {
-        setProducts(Array.isArray(data) ? data : data.products || []);
-      }
-    } catch (err) {
-      console.error("Failed to fetch products");
-    }
-  };
-
-  const fetchProductSpecsByProduct = async (productId: string) => {
-    try {
-      const token = localStorage.getItem("token");
-      const apiKey = import.meta.env.VITE_API_KEY;
-
-      const response = await fetch(
-        `${import.meta.env.VITE_API_27INFINITY_IN}/productspec?productId=${productId}`,
-        {
-          headers: {
-            "x-api-key": apiKey || "",
-            "Authorization": `Bearer ${token}`,
-          },
-        }
-      );
-
-      const data = await response.json();
-      if (response.ok) {
-        setProductSpecs(Array.isArray(data) ? data : data.productSpecs || []);
-      }
-    } catch (err) {
-      console.error("Failed to fetch product specs");
-    }
-  };
-
-  const fetchMaterialTypes = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const apiKey = import.meta.env.VITE_API_KEY;
-
-      const response = await fetch(
-        `${import.meta.env.VITE_API_27INFINITY_IN}/materialtype`,
-        {
-          headers: {
-            "x-api-key": apiKey || "",
-            "Authorization": `Bearer ${token}`,
-          },
-        }
-      );
-
-      const data = await response.json();
-      if (response.ok) {
-        setMaterialTypes(Array.isArray(data) ? data : data.materialTypes || []);
-      }
-    } catch (err) {
-      console.error("Failed to fetch material types");
-    }
-  };
-
-  const fetchMaterialSpecsByMaterialType = async (materialTypeId: string) => {
-    try {
-      setLoadingMaterialSpecs(true);
-      const token = localStorage.getItem("token");
-      const apiKey = import.meta.env.VITE_API_KEY;
-
-      const response = await fetch(
-        `${import.meta.env.VITE_API_27INFINITY_IN}/materialspec/materialtype/${materialTypeId}`,
-        {
-          headers: {
-            "x-api-key": apiKey || "",
-            "Authorization": `Bearer ${token}`,
-          },
-        }
-      );
-
-      const data = await response.json();
-      if (response.ok) {
-        setMaterialSpecs(Array.isArray(data) ? data : data.materialSpecs || []);
-      }
-    } catch (err) {
-      console.error("Failed to fetch material specs");
-    } finally {
-      setLoadingMaterialSpecs(false);
-    }
-  };
-
-  // Calculate combined dimensions from Product Spec + Material Spec formulas
   const calculateCombinedDimensions = () => {
     try {
-      const productSpec = productSpecs.find(s => s._id === selectedProductSpec);
-      const materialSpec = materialSpecs.find(s => s._id === selectedMaterialSpec);
-
+      const productSpec = productSpecs.find(s => s._id === formValues.productSpec);
+      const materialSpec = materialSpecs.find(s => s._id === formValues.materialName);
       if (!productSpec || !materialSpec) return;
 
-      // Combine all dimensions for evaluation context
       const context: { [key: string]: number } = {
-        quantity: Number(quantity) || 0,
+        quantity: Number(formValues.quantity) || 0,
         mol: materialSpec.mol || 0,
         weightPerPiece: materialSpec.weightPerPiece || 0,
         density: materialSpec.density || 0,
       };
 
-      // Add product spec values
       Object.entries(productSpecValues).forEach(([key, value]) => {
         context[key] = Number(value) || 0;
       });
-
-      // Add material spec values
       Object.entries(materialSpecValues).forEach(([key, value]) => {
         context[key] = Number(value) || 0;
       });
 
       const calculated: { [key: string]: number } = {};
       const parser = new Parser();
-
-      // Calculate dimensions with formulas from both specs
       const allDimensions = [
         ...(productSpec.dimensions || []),
         ...(materialSpec.dimensions || [])
@@ -321,7 +381,7 @@ const CreateOrder = () => {
             const expr = parser.parse(dim.formula);
             const result = expr.evaluate(context);
             calculated[dim.name] = result;
-            context[dim.name] = result; // Add to context for dependent calculations
+            context[dim.name] = result;
           } catch (err) {
             console.error(`Error calculating ${dim.name}:`, err);
           }
@@ -330,67 +390,60 @@ const CreateOrder = () => {
 
       setCalculatedDimensions(calculated);
 
-      // Calculate material weight if we have necessary dimensions
-      // Typically: materialWeight = volume * density or area * thickness * density
       let weight = 0;
       if (calculated.volume && materialSpec.density) {
-        weight = calculated.volume * materialSpec.density * Number(quantity);
+        weight = calculated.volume * materialSpec.density * Number(formValues.quantity);
       } else if (calculated.area && calculated.thickness && materialSpec.density) {
-        weight = calculated.area * calculated.thickness * materialSpec.density * Number(quantity);
+        weight = calculated.area * calculated.thickness * materialSpec.density * Number(formValues.quantity);
       } else if (materialSpec.weightPerPiece) {
-        weight = materialSpec.weightPerPiece * Number(quantity);
+        weight = materialSpec.weightPerPiece * Number(formValues.quantity);
       }
-
       setCalculatedMaterialWeight(weight);
     } catch (err) {
       console.error("Error in combined calculations:", err);
     }
   };
 
+  const handleFormValueChange = (fieldName: string, value: any) => {
+    setFormValues(prev => ({ ...prev, [fieldName]: value }));
+  };
+
   const handleProductSpecValueChange = (dimName: string, value: string) => {
-    setProductSpecValues(prev => ({
-      ...prev,
-      [dimName]: value
-    }));
+    setProductSpecValues(prev => ({ ...prev, [dimName]: value }));
   };
 
   const handleMaterialSpecValueChange = (dimName: string, value: string) => {
-    setMaterialSpecValues(prev => ({
-      ...prev,
-      [dimName]: value
-    }));
+    setMaterialSpecValues(prev => ({ ...prev, [dimName]: value }));
   };
 
   const handleSubmit = async () => {
-    // Validate required fields
-    if (!selectedProductType || !selectedProduct || !selectedMaterialType || !quantity) {
-      setError("Please fill in all required fields");
+    // Validate required fields based on enabled sections
+    const missingFields: string[] = [];
+
+    sections.forEach(section => {
+      section.fields?.filter(f => f.enabled && f.required).forEach(field => {
+        if (!formValues[field.name]) {
+          missingFields.push(field.label);
+        }
+      });
+    });
+
+    if (missingFields.length > 0) {
+      setError(`Please fill in required fields: ${missingFields.join(", ")}`);
       return;
     }
 
-    // Validate based on order type requirements
-    if (selectedOrderTypeData) {
-      if (selectedOrderTypeData.requiresProductSpec && !selectedProductSpec) {
-        setError(`Order type '${selectedOrderTypeData.typeName}' requires a product specification`);
+    // Validate quantity against order type rules
+    if (selectedOrderTypeData?.validationRules) {
+      const { minQuantity, maxQuantity } = selectedOrderTypeData.validationRules;
+      const qty = Number(formValues.quantity);
+      if (minQuantity && qty < minQuantity) {
+        setError(`Minimum quantity for ${selectedOrderTypeData.typeName} is ${minQuantity}`);
         return;
       }
-      if (selectedOrderTypeData.requiresMaterialSpec && !selectedMaterialSpec) {
-        setError(`Order type '${selectedOrderTypeData.typeName}' requires a material specification`);
+      if (maxQuantity && qty > maxQuantity) {
+        setError(`Maximum quantity for ${selectedOrderTypeData.typeName} is ${maxQuantity}`);
         return;
-      }
-
-      // Validate quantity against order type rules
-      if (selectedOrderTypeData.validationRules) {
-        const { minQuantity, maxQuantity } = selectedOrderTypeData.validationRules;
-        const qty = Number(quantity);
-        if (minQuantity && qty < minQuantity) {
-          setError(`Minimum quantity for ${selectedOrderTypeData.typeName} is ${minQuantity}`);
-          return;
-        }
-        if (maxQuantity && qty > maxQuantity) {
-          setError(`Maximum quantity for ${selectedOrderTypeData.typeName} is ${maxQuantity}`);
-          return;
-        }
       }
     }
 
@@ -403,27 +456,42 @@ const CreateOrder = () => {
       const apiKey = import.meta.env.VITE_API_KEY;
 
       const orderData: any = {
-        productTypeId: selectedProductType,
-        productId: selectedProduct,
-        materialTypeId: selectedMaterialType,
-        quantity: Number(quantity),
-        orderDate: orderDate || new Date().toISOString(),
+        orderTypeId: selectedOrderType,
       };
 
-      // Add optional fields if selected
-      if (selectedOrderType) {
-        orderData.orderTypeId = selectedOrderType;
-      }
-      if (selectedProductSpec) {
-        orderData.productSpecId = selectedProductSpec;
+      // Map form fields to order data
+      if (formValues.productType) orderData.productTypeId = formValues.productType;
+      if (formValues.productName) orderData.productId = formValues.productName;
+      if (formValues.materialType) orderData.materialTypeId = formValues.materialType;
+      if (formValues.quantity) orderData.quantity = Number(formValues.quantity);
+      if (formValues.orderDate) orderData.orderDate = formValues.orderDate;
+
+      // Product spec
+      if (formValues.productSpec) {
+        orderData.productSpecId = formValues.productSpec;
         orderData.productSpecifications = productSpecValues;
       }
-      if (selectedMaterialSpec) {
-        orderData.materialSpecId = selectedMaterialSpec;
+
+      // Material spec
+      if (formValues.materialName) {
+        orderData.materialSpecId = formValues.materialName;
         orderData.materialSpecifications = materialSpecValues;
       }
 
-      // Add calculated dimensions and material weight
+      // Printing options
+      if (formValues.printEnabled !== undefined) {
+        orderData.Printing = formValues.printEnabled === "true" || formValues.printEnabled === true;
+      }
+      if (formValues.printLength) orderData.printLength = Number(formValues.printLength);
+      if (formValues.printWidth) orderData.printWidth = Number(formValues.printWidth);
+      if (formValues.printType) orderData.printType = formValues.printType;
+      if (formValues.printColor) orderData.colors = [formValues.printColor];
+      if (formValues.printImage) orderData.designNotes = formValues.printImage;
+
+      // Mixing
+      if (formValues.mixing) orderData.mixing = formValues.mixing;
+
+      // Calculated values
       if (Object.keys(calculatedDimensions).length > 0) {
         orderData.calculatedDimensions = calculatedDimensions;
       }
@@ -445,7 +513,6 @@ const CreateOrder = () => {
       );
 
       const data = await response.json();
-
       if (!response.ok) {
         throw new Error(data.message || "Failed to create order");
       }
@@ -453,14 +520,7 @@ const CreateOrder = () => {
       setSuccess(`Order created successfully! Order ID: ${data.order?.orderId || data.orderId || ''}`);
 
       // Reset form
-      setSelectedOrderType("");
-      setSelectedProductType("");
-      setSelectedProduct("");
-      setSelectedProductSpec("");
-      setSelectedMaterialType("");
-      setSelectedMaterialSpec("");
-      setQuantity("");
-      setOrderDate("");
+      setFormValues({});
       setProductSpecValues({});
       setMaterialSpecValues({});
       setCalculatedDimensions({});
@@ -472,191 +532,98 @@ const CreateOrder = () => {
     }
   };
 
-  const selectedProductSpecData = productSpecs.find(s => s._id === selectedProductSpec);
-  const selectedMaterialSpecData = materialSpecs.find(s => s._id === selectedMaterialSpec);
+  const selectedProductSpecData = productSpecs.find(s => s._id === formValues.productSpec);
+  const selectedMaterialSpecData = materialSpecs.find(s => s._id === formValues.materialName);
 
-  return (
-    <div className="create-order-container">
-      <h2 className="text-2xl font-bold mb-4">Create Order</h2>
+  // Check if a section is enabled
+  const isSectionEnabled = (sectionId: string): boolean => {
+    return sections.some(s => s.id === sectionId);
+  };
 
+  // Render a dynamic field based on its configuration
+  const renderField = (sectionId: string, fieldName: string, defaultLabel: string, renderFn: () => JSX.Element) => {
+    if (!isFieldEnabled(sectionId, fieldName)) return null;
+
+    const label = getFieldLabel(sectionId, fieldName, defaultLabel);
+    const required = isFieldRequired(sectionId, fieldName);
+
+    return (
+      <div className="form-column" key={`${sectionId}-${fieldName}`}>
+        <label className="input-label">
+          {label} {required && <span className="required-mark">*</span>}
+        </label>
+        {renderFn()}
+      </div>
+    );
+  };
+
+  // Render Product Section
+  const renderProductSection = (section: FormSection) => (
+    <div className="form-section" key={section.id}>
+      <h3 className="section-title">{section.name}</h3>
       <div className="form-grid">
-        {/* Order Type Selection */}
-        <div className="form-column">
-          <OrderTypeSelector
-            value={selectedOrderType}
-            onChange={setSelectedOrderType}
-            label="Order Type"
-            showDescription={true}
-          />
-        </div>
-
-        {/* Product Type Selection */}
-        <div className="form-column">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-            <label className="input-label">Product Type *</label>
-            <FieldTooltip
-              content="Select the category of product you want to order (e.g., Plastic Bag, Container, Film)"
-              position="right"
-            />
-          </div>
+        {renderField("product", "productType", "Product Type", () => (
           <SearchableSelect
             options={productTypes.map(type => ({
               value: type._id,
               label: type.productTypeName
             }))}
-            value={selectedProductType}
-            onChange={setSelectedProductType}
-            placeholder="Type to search product types or * to see all"
-            required
+            value={formValues.productType || ""}
+            onChange={(value) => handleFormValueChange("productType", value)}
+            placeholder="Select product type"
+            required={isFieldRequired("product", "productType")}
           />
-        </div>
+        ))}
 
-        {/* Product Name Selection */}
-        <div className="form-column">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-            <label className="input-label">Product Name *</label>
-            <FieldTooltip
-              content="Select the specific product variant. First select a Product Type to see available products."
-              position="right"
-            />
-          </div>
+        {renderField("product", "productName", "Product Name", () => (
           <SearchableSelect
             options={products.map(product => ({
               value: product._id,
               label: product.productName
             }))}
-            value={selectedProduct}
-            onChange={setSelectedProduct}
-            placeholder={selectedProductType ? "Type to search products or * to see all" : "Select Product Type first"}
-            disabled={!selectedProductType}
-            required
+            value={formValues.productName || ""}
+            onChange={(value) => handleFormValueChange("productName", value)}
+            placeholder={formValues.productType ? "Select product" : "Select Product Type first"}
+            disabled={!formValues.productType}
+            required={isFieldRequired("product", "productName")}
           />
-        </div>
+        ))}
 
-        {/* Product Spec Selection */}
-        <div className="form-column">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-            <label className="input-label">
-              Product Specification
-              {selectedOrderTypeData?.requiresProductSpec && <span style={{ color: '#dc2626' }}> *</span>}
-            </label>
-            <FieldTooltip
-              title="Product Specification"
-              content="Define dimensions like length, width, thickness. These will be used to calculate material requirements and pricing."
-              position="right"
-            />
-          </div>
-          <SearchableSelect
-            options={productSpecs.map(spec => ({
-              value: spec._id,
-              label: spec.specName,
-              description: `${spec.dimensions.length} dimensions defined`
-            }))}
-            value={selectedProductSpec}
-            onChange={setSelectedProductSpec}
-            placeholder={selectedProduct ? "Type to search or * to see all specs" : "Select Product first"}
-            disabled={!selectedProduct}
-            required={selectedOrderTypeData?.requiresProductSpec}
-          />
-        </div>
-
-        {/* Material Type Selection */}
-        <div className="form-column">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-            <label className="input-label">Material Type *</label>
-            <FieldTooltip
-              content="Select the material category (e.g., LDPE, HDPE, PP). This determines available material specifications."
-              position="right"
-            />
-          </div>
-          <SearchableSelect
-            options={materialTypes.map(type => ({
-              value: type._id,
-              label: type.name
-            }))}
-            value={selectedMaterialType}
-            onChange={setSelectedMaterialType}
-            placeholder="Type to search material types or * to see all"
-            required
-          />
-        </div>
-
-        {/* Material Spec Selection */}
-        <div className="form-column">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-            <label className="input-label">
-              Material Specification
-              {selectedOrderTypeData?.requiresMaterialSpec && <span style={{ color: '#dc2626' }}> *</span>}
-            </label>
-            <FieldTooltip
-              title="Material Specification"
-              content="Defines material properties like density, weight per piece, and MOL. Combined with Product Spec to calculate total material weight."
-              position="right"
-            />
-          </div>
-          <SearchableSelect
-            options={materialSpecs.map(spec => ({
-              value: spec._id,
-              label: spec.specName,
-              description: spec.density ? `Density: ${spec.density} g/cm³` : undefined
-            }))}
-            value={selectedMaterialSpec}
-            onChange={setSelectedMaterialSpec}
-            placeholder={selectedMaterialType ? "Type to search or * to see all specs" : "Select Material Type first"}
-            disabled={!selectedMaterialType}
-            loading={loadingMaterialSpecs}
-            required={selectedOrderTypeData?.requiresMaterialSpec}
-          />
-        </div>
-
-        {/* Quantity */}
-        <div className="form-column">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-            <label className="input-label">Quantity *</label>
-            <FieldTooltip
-              content={
-                selectedOrderTypeData?.validationRules?.minQuantity || selectedOrderTypeData?.validationRules?.maxQuantity
-                  ? `Min: ${selectedOrderTypeData.validationRules.minQuantity || 1}, Max: ${selectedOrderTypeData.validationRules.maxQuantity || '∞'}`
-                  : "Enter the number of units to manufacture"
-              }
-              position="right"
-            />
-          </div>
+        {renderField("product", "quantity", "Quantity", () => (
           <input
             type="number"
-            value={quantity}
-            onChange={(e) => setQuantity(e.target.value)}
+            value={formValues.quantity || ""}
+            onChange={(e) => handleFormValueChange("quantity", e.target.value)}
             className="form-input"
-            placeholder={`Enter quantity${selectedOrderTypeData?.validationRules?.minQuantity ? ` (min: ${selectedOrderTypeData.validationRules.minQuantity})` : ""}`}
+            placeholder="Enter quantity"
             min={selectedOrderTypeData?.validationRules?.minQuantity || 1}
             max={selectedOrderTypeData?.validationRules?.maxQuantity}
           />
-        </div>
+        ))}
 
-        {/* Order Date */}
-        <div className="form-column">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-            <label className="input-label">Order Date</label>
-            <FieldTooltip
-              content="Leave empty to use today's date. Select a future date for scheduled orders."
-              position="right"
+        {/* Product Spec */}
+        {formValues.productName && productSpecs.length > 0 && (
+          <div className="form-column">
+            <label className="input-label">Product Specification</label>
+            <SearchableSelect
+              options={productSpecs.map(spec => ({
+                value: spec._id,
+                label: spec.specName,
+                description: `${spec.dimensions.length} dimensions`
+              }))}
+              value={formValues.productSpec || ""}
+              onChange={(value) => handleFormValueChange("productSpec", value)}
+              placeholder="Select specification"
             />
           </div>
-          <input
-            type="date"
-            value={orderDate}
-            onChange={(e) => setOrderDate(e.target.value)}
-            className="form-input"
-          />
-        </div>
+        )}
       </div>
 
       {/* Product Spec Dimensions */}
       {selectedProductSpecData && selectedProductSpecData.dimensions.length > 0 && (
-        <div className="spec-dimensions-section">
-          <h3 className="text-lg font-semibold mb-3 mt-4">Product Specifications</h3>
-
-          <div className="dimensions-grid">
+        <div className="dimensions-section">
+          <h4 className="subsection-title">Product Dimensions</h4>
+          <div className="form-grid">
             {selectedProductSpecData.dimensions
               .filter(dim => !dim.isCalculated)
               .map((dim) => (
@@ -664,83 +631,85 @@ const CreateOrder = () => {
                   <label className="input-label">
                     {dim.name} {dim.unit ? `(${dim.unit})` : ""}
                   </label>
-                  {dim.dataType === "number" ? (
-                    <input
-                      type="number"
-                      value={productSpecValues[dim.name] || ""}
-                      onChange={(e) => handleProductSpecValueChange(dim.name, e.target.value)}
-                      className="form-input"
-                      placeholder={`Enter ${dim.name}`}
-                    />
-                  ) : dim.dataType === "boolean" ? (
-                    <select
-                      value={productSpecValues[dim.name]?.toString() || ""}
-                      onChange={(e) => handleProductSpecValueChange(dim.name, e.target.value)}
-                      className="form-input"
-                    >
-                      <option value="">Select</option>
-                      <option value="true">Yes</option>
-                      <option value="false">No</option>
-                    </select>
-                  ) : (
-                    <input
-                      type="text"
-                      value={productSpecValues[dim.name] || ""}
-                      onChange={(e) => handleProductSpecValueChange(dim.name, e.target.value)}
-                      className="form-input"
-                      placeholder={`Enter ${dim.name}`}
-                    />
-                  )}
+                  <input
+                    type={dim.dataType === "number" ? "number" : "text"}
+                    value={productSpecValues[dim.name] || ""}
+                    onChange={(e) => handleProductSpecValueChange(dim.name, e.target.value)}
+                    className="form-input"
+                    placeholder={`Enter ${dim.name}`}
+                  />
                 </div>
               ))}
           </div>
         </div>
       )}
+    </div>
+  );
+
+  // Render Material Section
+  const renderMaterialSection = (section: FormSection) => (
+    <div className="form-section" key={section.id}>
+      <h3 className="section-title">{section.name}</h3>
+      <div className="form-grid">
+        {renderField("material", "materialType", "Material Type", () => (
+          <SearchableSelect
+            options={materialTypes.map(type => ({
+              value: type._id,
+              label: type.name
+            }))}
+            value={formValues.materialType || ""}
+            onChange={(value) => handleFormValueChange("materialType", value)}
+            placeholder="Select material type"
+            required={isFieldRequired("material", "materialType")}
+          />
+        ))}
+
+        {renderField("material", "materialName", "Material Specification", () => (
+          <SearchableSelect
+            options={materialSpecs.map(spec => ({
+              value: spec._id,
+              label: spec.specName,
+              description: spec.density ? `Density: ${spec.density}` : undefined
+            }))}
+            value={formValues.materialName || ""}
+            onChange={(value) => handleFormValueChange("materialName", value)}
+            placeholder={formValues.materialType ? "Select material" : "Select Material Type first"}
+            disabled={!formValues.materialType}
+            loading={loadingMaterialSpecs}
+            required={isFieldRequired("material", "materialName")}
+          />
+        ))}
+
+        {renderField("material", "mixing", "Mixing", () => (
+          <select
+            value={formValues.mixing || ""}
+            onChange={(e) => handleFormValueChange("mixing", e.target.value)}
+            className="form-input"
+          >
+            <option value="">Select</option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          </select>
+        ))}
+      </div>
 
       {/* Material Spec Dimensions */}
       {selectedMaterialSpecData && selectedMaterialSpecData.dimensions.length > 0 && (
-        <div className="spec-dimensions-section">
-          <h3 className="text-lg font-semibold mb-3 mt-4">Material Specifications</h3>
-
-          {/* Display fixed material properties */}
-          <div className="dimensions-grid mb-3">
+        <div className="dimensions-section">
+          <h4 className="subsection-title">Material Properties</h4>
+          <div className="form-grid">
             {selectedMaterialSpecData.mol !== undefined && selectedMaterialSpecData.mol > 0 && (
               <div className="form-column">
                 <label className="input-label">MOL</label>
-                <input
-                  type="text"
-                  value={selectedMaterialSpecData.mol}
-                  disabled
-                  className="form-input bg-gray-100"
-                />
+                <input type="text" value={selectedMaterialSpecData.mol} disabled className="form-input disabled-input" />
               </div>
             )}
             {selectedMaterialSpecData.density !== undefined && selectedMaterialSpecData.density > 0 && (
               <div className="form-column">
                 <label className="input-label">Density (g/cm³)</label>
-                <input
-                  type="text"
-                  value={selectedMaterialSpecData.density}
-                  disabled
-                  className="form-input bg-gray-100"
-                />
+                <input type="text" value={selectedMaterialSpecData.density} disabled className="form-input disabled-input" />
               </div>
             )}
-            {selectedMaterialSpecData.weightPerPiece !== undefined && selectedMaterialSpecData.weightPerPiece > 0 && (
-              <div className="form-column">
-                <label className="input-label">Weight Per Piece (g)</label>
-                <input
-                  type="text"
-                  value={selectedMaterialSpecData.weightPerPiece}
-                  disabled
-                  className="form-input bg-gray-100"
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Editable dimensions */}
-          <div className="dimensions-grid">
             {selectedMaterialSpecData.dimensions
               .filter(dim => !dim.isCalculated)
               .map((dim) => (
@@ -748,102 +717,236 @@ const CreateOrder = () => {
                   <label className="input-label">
                     {dim.name} {dim.unit ? `(${dim.unit})` : ""}
                   </label>
-                  {dim.dataType === "number" ? (
-                    <input
-                      type="number"
-                      value={materialSpecValues[dim.name] || ""}
-                      onChange={(e) => handleMaterialSpecValueChange(dim.name, e.target.value)}
-                      className="form-input"
-                      placeholder={`Enter ${dim.name}`}
-                    />
-                  ) : dim.dataType === "boolean" ? (
-                    <select
-                      value={materialSpecValues[dim.name]?.toString() || ""}
-                      onChange={(e) => handleMaterialSpecValueChange(dim.name, e.target.value)}
-                      className="form-input"
-                    >
-                      <option value="">Select</option>
-                      <option value="true">Yes</option>
-                      <option value="false">No</option>
-                    </select>
-                  ) : (
-                    <input
-                      type="text"
-                      value={materialSpecValues[dim.name] || ""}
-                      onChange={(e) => handleMaterialSpecValueChange(dim.name, e.target.value)}
-                      className="form-input"
-                      placeholder={`Enter ${dim.name}`}
-                    />
-                  )}
+                  <input
+                    type={dim.dataType === "number" ? "number" : "text"}
+                    value={materialSpecValues[dim.name] || ""}
+                    onChange={(e) => handleMaterialSpecValueChange(dim.name, e.target.value)}
+                    className="form-input"
+                    placeholder={`Enter ${dim.name}`}
+                  />
                 </div>
               ))}
           </div>
         </div>
       )}
+    </div>
+  );
 
-      {/* Calculated Dimensions Display */}
-      {Object.keys(calculatedDimensions).length > 0 && (
-        <div className="spec-dimensions-section">
-          <h3 className="text-lg font-semibold mb-3 mt-4">Calculated Dimensions</h3>
+  // Render Printing Section
+  const renderPrintingSection = (section: FormSection) => (
+    <div className="form-section" key={section.id}>
+      <h3 className="section-title">{section.name}</h3>
+      <div className="form-grid">
+        {renderField("printing", "printEnabled", "Enable Printing", () => (
+          <select
+            value={formValues.printEnabled || ""}
+            onChange={(e) => handleFormValueChange("printEnabled", e.target.value)}
+            className="form-input"
+          >
+            <option value="">Select</option>
+            <option value="true">Yes</option>
+            <option value="false">No</option>
+          </select>
+        ))}
 
-          <div className="dimensions-grid">
-            {Object.entries(calculatedDimensions).map(([name, value]) => {
-              // Find the dimension to get its unit
-              const allDims = [
-                ...(selectedProductSpecData?.dimensions || []),
-                ...(selectedMaterialSpecData?.dimensions || [])
-              ];
-              const dim = allDims.find(d => d.name === name);
+        {renderField("printing", "printLength", "Print Length", () => (
+          <input
+            type="number"
+            value={formValues.printLength || ""}
+            onChange={(e) => handleFormValueChange("printLength", e.target.value)}
+            className="form-input"
+            placeholder="Enter print length"
+          />
+        ))}
 
-              return (
-                <div key={name} className="form-column">
-                  <label className="input-label">
-                    {name} {dim?.unit ? `(${dim.unit})` : ""}
-                    <span className="text-blue-500 text-xs ml-1">(Calculated)</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={typeof value === 'number' ? value.toFixed(4) : value}
-                    disabled
-                    className="form-input bg-blue-50"
-                  />
-                </div>
-              );
-            })}
+        {renderField("printing", "printWidth", "Print Width", () => (
+          <input
+            type="number"
+            value={formValues.printWidth || ""}
+            onChange={(e) => handleFormValueChange("printWidth", e.target.value)}
+            className="form-input"
+            placeholder="Enter print width"
+          />
+        ))}
+
+        {renderField("printing", "printType", "Print Type", () => (
+          <select
+            value={formValues.printType || ""}
+            onChange={(e) => handleFormValueChange("printType", e.target.value)}
+            className="form-input"
+          >
+            <option value="">Select</option>
+            <option value="flexo">Flexo</option>
+            <option value="gravure">Gravure</option>
+            <option value="digital">Digital</option>
+            <option value="offset">Offset</option>
+          </select>
+        ))}
+
+        {renderField("printing", "printColor", "Print Color", () => (
+          <input
+            type="text"
+            value={formValues.printColor || ""}
+            onChange={(e) => handleFormValueChange("printColor", e.target.value)}
+            className="form-input"
+            placeholder="Enter color"
+          />
+        ))}
+
+        {renderField("printing", "printImage", "Print Image/Notes", () => (
+          <input
+            type="text"
+            value={formValues.printImage || ""}
+            onChange={(e) => handleFormValueChange("printImage", e.target.value)}
+            className="form-input"
+            placeholder="Enter image reference or notes"
+          />
+        ))}
+      </div>
+    </div>
+  );
+
+  // Render Steps Section
+  const renderStepsSection = (section: FormSection) => (
+    <div className="form-section" key={section.id}>
+      <h3 className="section-title">{section.name}</h3>
+      <div className="form-grid">
+        {renderField("steps", "stepName", "Step Name", () => (
+          <input
+            type="text"
+            value={formValues.stepName || ""}
+            onChange={(e) => handleFormValueChange("stepName", e.target.value)}
+            className="form-input"
+            placeholder="Enter step name"
+          />
+        ))}
+
+        {renderField("steps", "notes", "Notes", () => (
+          <textarea
+            value={formValues.notes || ""}
+            onChange={(e) => handleFormValueChange("notes", e.target.value)}
+            className="form-input form-textarea"
+            placeholder="Enter notes"
+            rows={3}
+          />
+        ))}
+      </div>
+    </div>
+  );
+
+  // Render section based on id
+  const renderSection = (section: FormSection) => {
+    switch (section.id) {
+      case 'product':
+        return renderProductSection(section);
+      case 'material':
+        return renderMaterialSection(section);
+      case 'printing':
+        return renderPrintingSection(section);
+      case 'steps':
+        return renderStepsSection(section);
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="create-order-container">
+      <h2 className="page-title">Create Order</h2>
+
+      {/* Order Type Selection - Always shown */}
+      <div className="form-section">
+        <div className="form-grid">
+          <div className="form-column">
+            <OrderTypeSelector
+              value={selectedOrderType}
+              onChange={(value) => handleFormValueChange("orderType", value)}
+              label="Order Type"
+              showDescription={true}
+              required
+            />
           </div>
+        </div>
+      </div>
 
-          {/* Material Weight Display */}
-          {calculatedMaterialWeight > 0 && (
-            <div className="mt-3">
-              <div className="form-column">
-                <label className="input-label">
-                  Total Material Weight (g)
-                  <span className="text-blue-500 text-xs ml-1">(Calculated)</span>
-                </label>
-                <input
-                  type="text"
-                  value={calculatedMaterialWeight.toFixed(2)}
-                  disabled
-                  className="form-input bg-blue-50 font-semibold"
-                />
+      {/* Show form only when order type is selected */}
+      {selectedOrderType ? (
+        <>
+          {/* Debug info - shows enabled sections */}
+          {selectedOrderTypeData && (
+            <div className="form-section" style={{ backgroundColor: '#f0f9ff', borderColor: '#bfdbfe' }}>
+              <p style={{ margin: 0, fontSize: '0.875rem', color: '#1e40af' }}>
+                <strong>{selectedOrderTypeData.typeName}</strong> - Sections (in order):{' '}
+                {sections.map(s => s.name).join(' → ') || 'None'}
+              </p>
+            </div>
+          )}
+
+          {/* Render sections dynamically based on order */}
+          {sections.map(section => renderSection(section))}
+
+          {/* Calculated Dimensions Display */}
+          {Object.keys(calculatedDimensions).length > 0 && (
+            <div className="form-section">
+              <h3 className="section-title">Calculated Values</h3>
+              <div className="form-grid">
+                {Object.entries(calculatedDimensions).map(([name, value]) => {
+                  const allDims = [
+                    ...(selectedProductSpecData?.dimensions || []),
+                    ...(selectedMaterialSpecData?.dimensions || [])
+                  ];
+                  const dim = allDims.find(d => d.name === name);
+                  return (
+                    <div key={name} className="form-column">
+                      <label className="input-label">
+                        {name} {dim?.unit ? `(${dim.unit})` : ""}
+                        <span className="calculated-mark">(Calculated)</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={typeof value === 'number' ? value.toFixed(4) : value}
+                        disabled
+                        className="form-input calculated-input"
+                      />
+                    </div>
+                  );
+                })}
+                {calculatedMaterialWeight > 0 && (
+                  <div className="form-column">
+                    <label className="input-label">
+                      Total Material Weight (g)
+                      <span className="calculated-mark">(Calculated)</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={calculatedMaterialWeight.toFixed(2)}
+                      disabled
+                      className="form-input calculated-input weight-input"
+                    />
+                  </div>
+                )}
               </div>
             </div>
           )}
+
+          {/* Submit Button */}
+          <button
+            onClick={handleSubmit}
+            className="submit-button"
+            disabled={loading}
+          >
+            {loading ? "Creating Order..." : "Create Order"}
+          </button>
+        </>
+      ) : (
+        <div className="select-order-type-message">
+          <p>Please select an Order Type to see the form fields.</p>
         </div>
       )}
 
-      {/* Submit Button */}
-      <button
-        onClick={handleSubmit}
-        className="save-button mt-4"
-        disabled={loading}
-      >
-        {loading ? "Creating Order..." : "Create Order"}
-      </button>
-
       {/* Messages */}
-      {error && <div className="error-msg mt-4">{error}</div>}
-      {success && <div className="success-msg mt-4">{success}</div>}
+      {error && <div className="error-message">{error}</div>}
+      {success && <div className="success-message">{success}</div>}
     </div>
   );
 };

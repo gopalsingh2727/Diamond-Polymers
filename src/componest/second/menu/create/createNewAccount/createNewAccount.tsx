@@ -211,12 +211,11 @@ const CreateNewAccount: React.FC<Props> = ({ initialData = {} }) => {
 
   return (
     <div id="CreateAccountCss">
-         <div className="CreateAccountTitelCss">
-          <h6>Create Account</h6>
-         </div>
+        
       <div className="create-account-container">
             
           <form ref={formRef} onSubmit={handleSubmit} className="form-container">
+    
         <div className="form-group">
           <label>Company Name</label>
           <input
@@ -314,9 +313,6 @@ const CreateNewAccount: React.FC<Props> = ({ initialData = {} }) => {
           </div>
         </div>
 
-        <div className="form-row">
-          
-        </div>
 
         <div className="form-group">
           <label>Address Line 1 *</label>

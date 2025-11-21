@@ -15,12 +15,7 @@
   font-weight: bold;
 }
 
-.form-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  width: 100%;
-}
+
 
 .form-column {
   display: flex;
@@ -49,12 +44,12 @@
 
 .form-input:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: #FF6B35;
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
 }
 
 .save-button {
-  background-color: #10b981;
+  background-color: #FF6B35;
   color: white;
   padding: 0.75rem 1.5rem;
   border-radius: 0.375rem;
@@ -65,7 +60,7 @@
 }
 
 .save-button:hover:not(:disabled) {
-  background-color: #059669;
+  background-color: #e55a2b;
 }
 
 .save-button:disabled {
@@ -203,7 +198,7 @@ code {
 }
 
 .create-formula-container .bg-blue-500 {
-  background-color: #3b82f6;
+  background-color: #FF6B35;
 }
 
 .create-formula-container .bg-green-100 {
@@ -316,7 +311,7 @@ code {
 }
 
 .create-formula-container .hover\:bg-blue-600:hover:not(:disabled) {
-  background-color: #2563eb;
+  background-color: #FF6B35;
 }
 
 .create-formula-container .hover\:bg-green-600:hover:not(:disabled) {
@@ -382,7 +377,7 @@ code {
 }
 
 .create-formula-container .bg-blue-600 {
-  background-color: #2563eb;
+  background-color: #FF6B35;
 }
 
 .create-formula-container .bg-gray-400 {
@@ -390,7 +385,7 @@ code {
 }
 
 .create-formula-container .hover\:bg-blue-700:hover:not(:disabled) {
-  background-color: #1d4ed8;
+  background-color: #E55A2B;
 }
 
 .create-formula-container .disabled\:bg-gray-400:disabled {

@@ -183,6 +183,14 @@ function handleConnect(store: any, payload: { url: string; token: string; platfo
     store.dispatch({ type: 'machines/machineOrderCompletedViaWS', payload: data.data });
   });
 
+  // 🔄 Listen for reference data changes (cache invalidation)
+  wsClient.on('referenceData:invalidate', (data) => {
+    console.log('📊 Reference data changed:', data.data.entityType, data.data.action);
+    console.log('🔄 Refreshing order form data cache...');
+    // Trigger cache refresh - clears localStorage and fetches fresh data
+    store.dispatch({ type: 'REFRESH_ORDER_FORM_DATA' });
+  });
+
   // Connect
   wsClient.connect().catch((error) => {
     console.error('❌ WebSocket connection error:', error);

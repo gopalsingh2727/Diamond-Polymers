@@ -41,18 +41,18 @@
 
 /* Primary Button */
 .primary {
-  background-color: #3b82f6;
+  background-color: #FF6B35;
   color: #ffffff;
 }
 
 .primary:hover:not(:disabled) {
-  background-color: #2563eb;
+  background-color: #E55A2B;
   transform: translateY(-1px);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .primary:active:not(:disabled) {
-  background-color: #1d4ed8;
+  background-color: #E55A2B;
   transform: translateY(0);
 }
 
@@ -125,8 +125,8 @@
 /* Outline Button */
 .outline {
   background-color: transparent;
-  color: #3b82f6;
-  border: 1px solid #3b82f6;
+  color: #FF6B35;
+  border: 1px solid #FF6B35;
 }
 
 .outline:hover:not(:disabled) {

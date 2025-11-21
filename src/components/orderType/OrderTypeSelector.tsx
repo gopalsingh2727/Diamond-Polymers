@@ -1,8 +1,5 @@
-import { useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { RootState } from "../../componest/redux/rootReducer";
-import { AppDispatch } from "../../store";
-import { getOrderTypes } from "../../componest/redux/create/orderType/orderTypeActions";
 
 interface OrderTypeSelectorProps {
   value: string;
@@ -23,22 +20,15 @@ const OrderTypeSelector: React.FC<OrderTypeSelectorProps> = ({
   label = "Order Type",
   showDescription = false
 }) => {
-  const dispatch = useDispatch<AppDispatch>();
-
-  // Get order types from Redux store
-  const { orderTypes, loading, error } = useSelector(
-    (state: RootState) => state.orderTypeList
+  // 🚀 OPTIMIZED: Get order types from cached form data (no extra API call)
+  const { data, loading, error } = useSelector(
+    (state: RootState) => state.orderFormData || {}
   );
 
-  // Fetch order types on mount
-  useEffect(() => {
-    if (!orderTypes || orderTypes.length === 0) {
-      dispatch(getOrderTypes());
-    }
-  }, [dispatch, orderTypes]);
+  const orderTypes = data?.orderTypes || [];
 
   // Get active order types only
-  const activeOrderTypes = orderTypes?.filter((type: any) => type.isActive) || [];
+  const activeOrderTypes = orderTypes.filter((type: any) => type.isActive !== false);
 
   // Sort: default first, then by name
   const sortedOrderTypes = [...activeOrderTypes].sort((a: any, b: any) => {
@@ -65,7 +55,7 @@ const OrderTypeSelector: React.FC<OrderTypeSelectorProps> = ({
         disabled={disabled || loading}
         className={`
           w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm
-          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+          focus:outline-none focus:ring-2 focus:ring-[#FF6B35] focus:border-[#FF6B35]
           disabled:bg-gray-100 disabled:cursor-not-allowed
           ${className}
         `}
@@ -94,30 +84,6 @@ const OrderTypeSelector: React.FC<OrderTypeSelectorProps> = ({
         </p>
       )}
 
-      {selectedOrderType && (
-        <div className="mt-2 text-xs text-gray-500">
-          {selectedOrderType.requiresProductSpec && (
-            <span className="mr-3">
-              Requires Product Spec
-            </span>
-          )}
-          {selectedOrderType.requiresMaterialSpec && (
-            <span className="mr-3">
-              Requires Material Spec
-            </span>
-          )}
-          {selectedOrderType.enablePrinting && (
-            <span className="mr-3">
-              Printing enabled
-            </span>
-          )}
-          {selectedOrderType.enableMixing && (
-            <span>
-              Mixing enabled
-            </span>
-          )}
-        </div>
-      )}
     </div>
   );
 };
