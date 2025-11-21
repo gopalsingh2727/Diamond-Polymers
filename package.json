@@ -17,8 +17,8 @@
     "url": "git@github.com:gopalsingh2727/Diamond-Polymers.git"
   },
   "scripts": {
-    "dev": "NODE_OPTIONS='--max-old-space-size=4096' vite",
-    "build": "NODE_OPTIONS='--max-old-space-size=4096' vite build && electron-builder",
+    "dev": "cross-env NODE_OPTIONS=--max-old-space-size=4096 vite",
+    "build": "cross-env NODE_OPTIONS=--max-old-space-size=4096 vite build && electron-builder",
     "build:check": "tsc && vite build && electron-builder",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
@@ -210,6 +210,7 @@
     "@typescript-eslint/parser": "^7.1.1",
     "@vitejs/plugin-react": "^4.2.1",
     "autoprefixer": "^10.4.21",
+    "cross-env": "^10.1.0",
     "dotenv-cli": "^8.0.0",
     "electron": "^30.5.1",
     "electron-builder": "^24.13.3",
