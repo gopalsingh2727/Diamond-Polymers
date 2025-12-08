@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchBranches } from './redux/Branch/BranchActions';
-import { setSelectedBranchInAuth } from './redux/login/authActions';
+import { setSelectedBranchInAuth, checkAndRefreshToken, clearSessionExpiredAndLogout } from './redux/login/authActions';
 import type { RootState, AppDispatch } from '../store';
 
 
@@ -27,11 +27,54 @@ function IndexComponents() {
   const menuItems = ["Create", "Edit", "Settings", "Contact"];
 
   const { branches, loading } = useSelector((state: RootState) => state.branches);
-  const { userData } = useSelector((state: RootState) => state.auth);
+  const { userData, sessionExpired } = useSelector((state: RootState) => state.auth);
 
   // Fetch branches on mount
   useEffect(() => {
     dispatch(fetchBranches());
+  }, [dispatch]);
+
+  // ✅ FIX: Check and refresh token when laptop wakes from sleep
+  // setTimeout stops during sleep, so we need to check on visibility change
+  useEffect(() => {
+    let lastCheckTime = Date.now();
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        const timeSinceLastCheck = Date.now() - lastCheckTime;
+
+        // If more than 1 minute has passed, check token
+        if (timeSinceLastCheck > 60 * 1000) {
+          console.log('🔄 App became visible after sleep, checking token...');
+          dispatch(checkAndRefreshToken() as any);
+        }
+        lastCheckTime = Date.now();
+      }
+    };
+
+    const handleFocus = () => {
+      const timeSinceLastCheck = Date.now() - lastCheckTime;
+
+      // If more than 1 minute has passed, check token
+      if (timeSinceLastCheck > 60 * 1000) {
+        console.log('🔄 Window focused after idle, checking token...');
+        dispatch(checkAndRefreshToken() as any);
+      }
+      lastCheckTime = Date.now();
+    };
+
+    // Listen for page visibility change (laptop sleep/wake)
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    // Listen for window focus (switching back to app)
+    window.addEventListener('focus', handleFocus);
+
+    // Initial check on mount
+    dispatch(checkAndRefreshToken() as any);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, [dispatch]);
 
   // Update branch name when branches or userData changes
@@ -77,6 +120,16 @@ function IndexComponents() {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      // Ignore keyboard shortcuts when user is typing in input fields or chatbot
+      const activeElement = document.activeElement;
+      const isTyping = activeElement?.tagName === 'INPUT' ||
+                       activeElement?.tagName === 'TEXTAREA' ||
+                       (activeElement as HTMLElement)?.contentEditable === 'true';
+
+      if (isTyping) {
+        return; // Let the input field handle the keyboard event
+      }
+
       if (event.metaKey && event.key === "n") {
         event.preventDefault();
         setHideFooter(prev => !prev);
@@ -217,13 +270,43 @@ function IndexComponents() {
               27 Manufacturing
             </h1>
           </div>
-          {/* Right side - Settings */}
-          <div>
+          {/* Right side - Branch selector + Settings */}
+          <div className="flex items-center gap-3">
+            {/* Branch Dropdown - Near Settings for admin/master_admin */}
+            {(userData?.role === "admin" || userData?.role === "master_admin") && (
+              <div className="header-branch-selector">
+                {loading ? (
+                  <span className="header-no-branch">Loading...</span>
+                ) : branches.length > 0 ? (
+                  <select
+                    className="header-branch-dropdown"
+                    value={userData?.selectedBranch?._id || userData?.selectedBranch || ''}
+                    onChange={(e) => {
+                      dispatch(setSelectedBranchInAuth(e.target.value));
+                      const foundBranch = branches.find((b: any) => b._id === e.target.value);
+                      setBranchName(foundBranch?.name || "Branch not found");
+                    }}
+                  >
+                    <option value="" disabled>Select Branch</option>
+                    {branches.map((branch: any) => (
+                      <option key={branch._id} value={branch._id}>
+                        {branch.name}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <span className="header-no-branch">No branches</span>
+                )}
+              </div>
+            )}
             <ErrorBoundary>
               <Settings
                 branchName={branchName}
                 onBranchClick={handleBranchClick}
-                showBranchOption={userData?.role === "admin"}
+                showBranchOption={false}
+                userBranches={userData?.branches || []}
+                selectedBranchId={userData?.selectedBranch || ''}
+                userRole={userData?.role}
               />
             </ErrorBoundary>
           </div>
@@ -310,6 +393,34 @@ function IndexComponents() {
                   </div>
                 </>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ✅ Session Expired Modal */}
+      {sessionExpired && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[9999]">
+          <div className="bg-white rounded-2xl shadow-xl overflow-hidden w-full max-w-md">
+            <div className="p-6 text-center">
+              {/* Warning Icon */}
+              <div className="mx-auto w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mb-4">
+                <svg className="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+
+              <h2 className="text-xl font-bold text-gray-800 mb-2">Session Expired</h2>
+              <p className="text-gray-600 mb-6">
+                Your session has expired due to inactivity. Please log in again to continue using the application.
+              </p>
+
+              <button
+                className="w-full py-3 px-4 rounded-lg font-medium text-white bg-[#FF6B35] hover:bg-[#E55A2B] transition-all duration-300"
+                onClick={() => dispatch(clearSessionExpiredAndLogout() as any)}
+              >
+                Log In Again
+              </button>
             </div>
           </div>
         </div>

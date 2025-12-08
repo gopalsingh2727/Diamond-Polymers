@@ -7,14 +7,11 @@ type StepItem = {
   MachineId: string;
   MachineType: string;
   MachineName: string;
-  SizeX: string;
-  SizeY: string;
-  SizeZ: string;
   OptereName: string;
   StartTime: string;
   EndTime: string;
   note?: string;
-  
+
   machineId?: string;
   operatorId?: string | null;
   status?: string;
@@ -132,13 +129,10 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
                 MachineId: machine.machineId || machine.MachineId || '',
                 MachineType: machine.machineTypeName || machine.MachineType || '',
                 MachineName: machine.machineName || machine.MachineName || '',
-                SizeX: machine.sizeX || machine.SizeX || '',
-                SizeY: machine.sizeY || machine.SizeY || '',
-                SizeZ: machine.sizeZ || machine.SizeZ || '',
                 OptereName: machine.operatorName || machine.OptereName || '',
                 StartTime: machine.startTime || machine.StartTime || machine.startedAt || '',
                 EndTime: machine.endTime || machine.EndTime || machine.completedAt || '',
-                
+
                 note: machine.note || '',
                 operatorId: machine.operatorId,
                 status: machine.status || (index === 0 ? 'pending' : 'none'),
@@ -146,10 +140,10 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
                 completedAt: machine.completedAt,
                 reason: machine.reason
               };
-              
+
               // Auto-update status based on current data
               mappedMachine.status = autoUpdateMachineStatus(mappedMachine);
-              
+
               return mappedMachine;
             });
           }
@@ -367,16 +361,13 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
     const handleAddRow = () => {
       try {
         if (!selectedStep) return;
-        
+
         const updated = { ...selectedStep };
         updated.steps.push({
           _Id: "",
           MachineId: "",
           MachineType: "",
           MachineName: "",
-          SizeX: "",
-          SizeY: "",
-          SizeZ: "",
           OptereName: "",
           StartTime: "",
           EndTime: "",
@@ -450,25 +441,34 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
         };
 
         if (selectedStepData.machines && Array.isArray(selectedStepData.machines)) {
+          console.log('🔍 DEBUG - Raw machines data:', selectedStepData.machines);
+
           formattedStep.steps = selectedStepData.machines.map((m: any, index: number) => {
+            console.log(`🔍 DEBUG - Machine ${index}:`, {
+              raw: m,
+              machineId: m.machineId,
+              machineIdType: typeof m.machineId,
+              machineName: m.machineId?.machineName,
+              machineType: m.machineId?.machineType
+            });
+
             const machine = {
               _Id: m._id || '',
               MachineId: m.machineId?._id || m._id || m.MachineId || '',
               MachineType: m.machineId?.machineType?.type || m.machineType || m.MachineType || '',
               MachineName: m.machineId?.machineName || m.machineName || m.MachineName || '',
-              SizeX: m.machineId?.sizeX?.toString() || m.sizeX?.toString() || m.SizeX || '',
-              SizeY: m.machineId?.sizeY?.toString() || m.sizeY?.toString() || m.SizeY || '',
-              SizeZ: m.machineId?.sizeZ?.toString() || m.sizeZ?.toString() || m.SizeZ || '',
               OptereName: m.operatorName || m.OptereName || '',
               StartTime: m.startTime || m.StartTime || '',
               EndTime: m.endTime || m.EndTime || '',
               note: m.note || '',
               status: m.status || (index === 0 ? 'pending' : 'none')
             };
-            
+
+            console.log(`🔍 DEBUG - Formatted machine ${index}:`, machine);
+
             // Auto-update status
             machine.status = autoUpdateMachineStatus(machine);
-            
+
             return machine;
           });
         }
@@ -581,21 +581,7 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
               <div className="popup-content">
                 <h3>Configure Step: {selectedStep.stepname}</h3>
                 
-                <div style={{ 
-                  padding: '10px', 
-                  backgroundColor: '#e3f2fd', 
-                  border: '1px solid #90caf9',
-                  borderRadius: '4px',
-                  marginBottom: '10px',
-                  fontSize: '13px'
-                }}>
-                  <strong>ℹ️ Auto Status Update:</strong> Status automatically changes based on operator assignment and times.
-                  <br/>
-                  • <span style={{color: getStatusColor('none')}}>●</span> None → <span style={{color: getStatusColor('pending')}}>●</span> Pending (when operator assigned) 
-                  → <span style={{color: getStatusColor('in-progress')}}>●</span> In Progress (when start time set) 
-                  → <span style={{color: getStatusColor('completed')}}>●</span> Completed (when end time set)
-                </div>
-                
+            
                 {selectedStep.steps.length === 0 && (
                   <div style={{ 
                     padding: '10px', 
@@ -612,9 +598,6 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
                   <span>Status</span>
                   <span>Machine Type</span>
                   <span>Machine Name</span>
-                  <span>Size X</span>
-                  <span>Size Y</span>
-                  <span>Size Z</span>
                   <span>Operator Name</span>
                   <span>Start Time</span>
                   <span>End Time</span>
@@ -657,24 +640,6 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
                       onChange={(e) => handleStepUpdate(index, 'MachineName', e.target.value)}
                       placeholder="Machine Name"
                       required
-                    />
-                    <input
-                      type="text"
-                      value={step.SizeX || ''}
-                      onChange={(e) => handleStepUpdate(index, 'SizeX', e.target.value)}
-                      placeholder="Size X"
-                    />
-                    <input
-                      type="text"
-                      value={step.SizeY || ''}
-                      onChange={(e) => handleStepUpdate(index, 'SizeY', e.target.value)}
-                      placeholder="Size Y"
-                    />
-                    <input
-                      type="text"
-                      value={step.SizeZ || ''}
-                      onChange={(e) => handleStepUpdate(index, 'SizeZ', e.target.value)}
-                      placeholder="Size Z"
                     />
                     <input
                       type="text"
@@ -780,9 +745,6 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
                 <strong>Status</strong>
                 <strong>Machine Type</strong>
                 <strong>Machine Name</strong>
-                <strong>Size X</strong>
-                <strong>Size Y</strong>
-                <strong>Size Z</strong>
                 <strong>Operator</strong>
                 <strong>Start Time</strong>
                 <strong>End Time</strong>
@@ -812,9 +774,6 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
                   </span>
                   <span>{step.MachineType || 'N/A'}</span>
                   <span>{step.MachineName || 'N/A'}</span>
-                  <span>{step.SizeX || 'N/A'}</span>
-                  <span>{step.SizeY || 'N/A'}</span>
-                  <span>{step.SizeZ || 'N/A'}</span>
                   <span>{step.OptereName || 'N/A'}</span>
                   <span>{step.StartTime ? new Date(step.StartTime).toLocaleString() : 'N/A'}</span>
                   <span>{step.EndTime ? new Date(step.EndTime).toLocaleString() : 'N/A'}</span>
@@ -886,7 +845,6 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
                           <>
                             <div><strong>Machine Status:</strong> {tableData.machine.status}</div>
                             <div><strong>Operator:</strong> {tableData.machine.operatorName || 'Not assigned'}</div>
-                            <div><strong>Size:</strong> {tableData.machine.sizeX} x {tableData.machine.sizeY} x {tableData.machine.sizeZ}</div>
                           </>
                         )}
                       </div>

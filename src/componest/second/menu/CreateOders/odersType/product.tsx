@@ -1,4 +1,8 @@
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from "react";
+import { useDispatch, useSelector } from "react-redux";
+
+import { RootState } from "../../../../redux/rootReducer";
+import { AppDispatch } from "../../../../../store";
 import OptimizedSuggestions from "../SuggestionInput/OptimizedSuggestions";
 import '../materialAndProduct/materialAndProduct.css';
 
@@ -7,6 +11,25 @@ interface ProductInOrdersProps {
   isEditMode?: boolean;
   sectionConfig?: any;
 }
+
+// Dimension type from backend
+type Dimension = {
+  name: string;
+  value: any;
+  unit?: string;
+  dataType: 'string' | 'number' | 'boolean' | 'date';
+  formula?: string;
+  isCalculated?: boolean;
+};
+
+// Product spec type
+type ProductSpec = {
+  _id: string;
+  specName: string;
+  productTypeId: string;
+  dimensions: Dimension[];
+  description?: string;
+};
 
 // Single product item type
 export type ProductItem = {
@@ -41,9 +64,11 @@ const createEmptyProduct = (): ProductItem => ({
 });
 
 const ProductInOrders = forwardRef((
-  { initialData, isEditMode, sectionConfig }: ProductInOrdersProps,
+  { initialData, isEditMode }: ProductInOrdersProps,
   ref: React.ForwardedRef<{ getProductData: () => ProductData }>
 ) => {
+  const dispatch = useDispatch<AppDispatch>();
+
   // Saved products list
   const [products, setProducts] = useState<ProductItem[]>([]);
 
@@ -52,6 +77,10 @@ const ProductInOrders = forwardRef((
 
   // Current product being edited in popup
   const [currentProduct, setCurrentProduct] = useState<ProductItem>(createEmptyProduct());
+
+  // Product specifications state
+  const [productSpec, setProductSpec] = useState<ProductSpec | null>(null);
+  const [loadingSpec, setLoadingSpec] = useState(false);
 
   // Suggestions state
   const [showProductTypeSuggestions, setShowProductTypeSuggestions] = useState(false);
@@ -99,6 +128,47 @@ const ProductInOrders = forwardRef((
     }
   }, [isEditMode, initialData]);
 
+  // Load product specifications when product type changes
+  useEffect(() => {
+    const loadProductSpec = async () => {
+      // Only load if productTypeId exists, not in edit mode, and specs not already loaded
+      if (currentProduct.productTypeId && !isEditMode && !productSpec) {
+        setLoadingSpec(true);
+        try {
+          const specs = await dispatch(getProductSpecsByProductType(currentProduct.productTypeId));
+          if (specs && specs.length > 0) {
+            const spec = specs[0]; // Use first spec for this product type
+            setProductSpec(spec);
+            // Update current product with spec ID
+            setCurrentProduct(prev => ({
+              ...prev,
+              productSpecId: spec._id,
+              productSpecName: spec.specName,
+              // Initialize specification values from spec dimensions
+              specificationValues: spec.dimensions.reduce((acc: any, dim: Dimension) => {
+                acc[dim.name] = dim.value || '';
+                return acc;
+              }, {})
+            }));
+            console.log('✅ Loaded product spec:', spec.specName, 'with', spec.dimensions.length, 'dimensions');
+          } else {
+            setProductSpec(null);
+            console.log('⚠️ No specification found for product type');
+          }
+        } catch (error) {
+          console.error('❌ Error loading product spec:', error);
+          setProductSpec(null);
+        } finally {
+          setLoadingSpec(false);
+        }
+      } else if (!currentProduct.productTypeId) {
+        setProductSpec(null);
+      }
+    };
+
+    loadProductSpec();
+  }, [currentProduct.productTypeId, dispatch, isEditMode, productSpec]);
+
   // Open popup
   const openPopup = () => {
     setCurrentProduct(createEmptyProduct());
@@ -144,6 +214,17 @@ const ProductInOrders = forwardRef((
   // Update current product field
   const updateCurrentProduct = (field: keyof ProductItem, value: any) => {
     setCurrentProduct(prev => ({ ...prev, [field]: value }));
+  };
+
+  // Update specification value
+  const updateSpecificationValue = (dimensionName: string, value: any) => {
+    setCurrentProduct(prev => ({
+      ...prev,
+      specificationValues: {
+        ...prev.specificationValues,
+        [dimensionName]: value
+      }
+    }));
   };
 
   // Product Type Selection Handler
@@ -298,17 +379,27 @@ const ProductInOrders = forwardRef((
       {/* Popup for adding products */}
       {showPopup && (
         <div className="popup-overlay Machine-Table">
-          <div className="popup Machine-Table" style={{ minWidth: '500px', background: 'white' }}>
+          <div className="popup Machine-Table" style={{ maxHeight: '55vh', overflowY: 'auto', minWidth: '400px', background: 'white' }}>
             <h3 style={{ marginBottom: '10px', color: '#1e293b' }}>Add Products</h3>
             <p style={{ fontSize: '11px', color: '#6b7280', marginBottom: '15px' }}>
               Press Enter to move to next field. Enter on empty row to finish.
             </p>
 
-            {/* Popup form */}
-            <div className="popupitemall">
+            {/* Horizontal scroll container with hidden scrollbar */}
+            <div style={{
+              display: 'flex',
+              flexDirection: 'row',
+              gap: '12px',
+              overflowX: 'auto',
+              overflowY: 'hidden',
+              paddingBottom: '10px',
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none'
+            }}
+            className="horizontal-scroll-container">
               {/* Product Type */}
-              <div style={{ position: 'relative' }}>
-                <label style={{ fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '4px' }}>Product Type</label>
+              <div style={{ position: 'relative', minWidth: '200px', flexShrink: 0 }}>
+                <label style={{ display: 'block' }}>Product Type</label>
                 <input
                   ref={productTypeRef}
                   type="text"
@@ -318,7 +409,7 @@ const ProductInOrders = forwardRef((
                   placeholder="Type & Enter"
                   onFocus={() => setShowProductTypeSuggestions(true)}
                   onBlur={() => setTimeout(() => setShowProductTypeSuggestions(false), 200)}
-                  style={{ width: '100%', padding: '8px', border: '1px solid #e5e7eb', borderRadius: '4px' }}
+                  className="createDivInput createDivInputwidth"
                 />
                 <OptimizedSuggestions
                   searchTerm={currentProduct.productTypeName}
@@ -329,8 +420,8 @@ const ProductInOrders = forwardRef((
               </div>
 
               {/* Product Name */}
-              <div style={{ position: 'relative' }}>
-                <label style={{ fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '4px' }}>Product Name</label>
+              <div style={{ position: 'relative', minWidth: '200px', flexShrink: 0 }}>
+                <label style={{ display: 'block' }}>Product Name</label>
                 <input
                   ref={productNameRef}
                   type="text"
@@ -340,7 +431,7 @@ const ProductInOrders = forwardRef((
                   placeholder="Name & Enter"
                   onFocus={() => setShowProductNameSuggestions(true)}
                   onBlur={() => setTimeout(() => setShowProductNameSuggestions(false), 200)}
-                  style={{ width: '100%', padding: '8px', border: '1px solid #e5e7eb', borderRadius: '4px' }}
+                  className="createDivInput createDivInputwidth"
                 />
                 <OptimizedSuggestions
                   searchTerm={currentProduct.productName}
@@ -352,8 +443,8 @@ const ProductInOrders = forwardRef((
               </div>
 
               {/* Quantity */}
-              <div>
-                <label style={{ fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '4px' }}>Quantity</label>
+              <div style={{ minWidth: '150px', flexShrink: 0 }}>
+                <label style={{ display: 'block' }}>Quantity</label>
                 <input
                   ref={quantityRef}
                   type="number"
@@ -362,10 +453,63 @@ const ProductInOrders = forwardRef((
                   onKeyDown={(e) => handleKeyDown(e, 'qty')}
                   placeholder="Qty & Enter"
                   min="1"
-                  style={{ width: '100%', padding: '8px', border: '1px solid #e5e7eb', borderRadius: '4px' }}
+                  className="createDivInput createDivInputwidth"
                 />
               </div>
+
+              {/* Specifications Section - dynamically loaded */}
+              {loadingSpec && (
+                <div style={{ padding: '10px', background: '#f0f9ff', borderRadius: '6px', textAlign: 'center', minWidth: '200px', flexShrink: 0 }}>
+                  <p style={{ fontSize: '12px', color: '#0369a1' }}>Loading specifications...</p>
+                </div>
+              )}
+
+              {productSpec && productSpec.dimensions && productSpec.dimensions.length > 0 && (
+                <>
+                  {productSpec.dimensions
+                    .filter((dim: Dimension) => !dim.isCalculated && dim.name.toLowerCase() !== 'printable')
+                    .map((dim: Dimension, index: number) => (
+                      <div key={index} style={{ minWidth: '180px', flexShrink: 0 }}>
+                        <label style={{ display: 'block' }}>
+                          {dim.name} {dim.unit ? `(${dim.unit})` : ''}
+                        </label>
+                        {dim.dataType === 'number' ? (
+                          <input
+                            type="number"
+                            value={currentProduct.specificationValues[dim.name] || ''}
+                            onChange={(e) => updateSpecificationValue(dim.name, parseFloat(e.target.value) || '')}
+                            placeholder={`Enter ${dim.name}`}
+                            className="createDivInput createDivInputwidth"
+                          />
+                        ) : dim.dataType === 'boolean' ? (
+                          <select
+                            value={currentProduct.specificationValues[dim.name]?.toString() || 'false'}
+                            onChange={(e) => updateSpecificationValue(dim.name, e.target.value === 'true')}
+                            className="createDivInput createDivInputwidth"
+                          >
+                            <option value="false">No</option>
+                            <option value="true">Yes</option>
+                          </select>
+                        ) : (
+                          <input
+                            type="text"
+                            value={currentProduct.specificationValues[dim.name] || ''}
+                            onChange={(e) => updateSpecificationValue(dim.name, e.target.value)}
+                            placeholder={`Enter ${dim.name}`}
+                            className="createDivInput createDivInputwidth"
+                          />
+                        )}
+                      </div>
+                    ))}
+                </>
+              )}
             </div>
+
+            <style>{`
+              .horizontal-scroll-container::-webkit-scrollbar {
+                display: none;
+              }
+            `}</style>
 
             {/* Products added so far in popup */}
             {products.length > 0 && (

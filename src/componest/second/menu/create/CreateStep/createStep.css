@@ -1,133 +1,201 @@
-/* Updated CSS with bordered inputs like Create Account */
+/* ====================================
+   Create Production Step - Compact Form Styles
+   All class names start with productionsstep-
+   ==================================== */
 
-.step-form-wrapper {
-
-  max-width: 52rem;
-  padding: 2rem;
-  border-radius: 1rem;
-  background: white;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-}
-
-.form-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #1e293b;
-  text-align: center;
-  margin-bottom: 1.5rem;
-}
-
-.step-name-group {
-  margin-bottom: 1.5rem;
-}
-
-.form-label {
-  display: block;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #334155;
-  margin-bottom: 0.5rem;
-}
-
-/* Input styling like Create Account */
-.form-input {
+/* Container - Centered on Screen */
+.productionsstep-container {
   width: 100%;
-  background-color: rgba(255, 255, 255, 0.1);
+  min-height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+/* Form Card */
+.productionsstep-form {
+  background: white;
+  padding: 24px 32px;
+  max-width: 500px;
+  width: 100%;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Title */
+.productionsstep-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  text-align: center;
+  margin: 0 0 20px 0;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* Form Group - Compact spacing */
+.productionsstep-group {
+  margin-bottom: 16px;
+}
+
+/* Label - Close to input */
+.productionsstep-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 4px;
+}
+
+/* Input - Underline Style */
+.productionsstep-input {
+  width: 100%;
+  padding: 8px 0;
+  font-size: 14px;
+  color: #1f2937;
+  background: transparent;
   border: none;
-  border-bottom: 0.5px solid #333;
-  color: #333;
-  padding: 10px;
+  border-bottom: 1px solid #d1d5db;
   outline: none;
   box-sizing: border-box;
-  font-size: 0.875rem;
-  transition: all 0.2s ease;
-  margin-top: 10px;
+  transition: border-color 0.2s ease;
 }
 
-.form-input:focus {
-  border-bottom-color: #FF6B35;
-  border-bottom-width: 2px;
+.productionsstep-input:focus {
+  border-bottom: 2px solid #FF6B35;
 }
 
-/* Select styling */
-.machine-select {
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  background-size: 16px;
-  padding-right: 40px;
+.productionsstep-input::placeholder {
+  color: #9ca3af;
+}
+
+/* Select - Underline Style */
+.productionsstep-select {
+  width: 100%;
+  padding: 8px 0;
+  font-size: 14px;
+  color: #1f2937;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #d1d5db;
+  outline: none;
   cursor: pointer;
+  transition: border-color 0.2s ease;
 }
 
-.machine-row {
+.productionsstep-select:focus {
+  border-bottom: 2px solid #FF6B35;
+}
+
+/* Machine Header with Add Button */
+.productionsstep-machineHeader {
   display: flex;
-  gap: 1rem;
-  margin-bottom: 1rem;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
 }
 
-.input-wrapper {
+/* Add Machine Button */
+.productionsstep-addBtn {
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: white;
+  background: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.productionsstep-addBtn:hover {
+  background: linear-gradient(135deg, #E55A2B 0%, #d44a1b 100%);
+  transform: translateY(-1px);
+}
+
+/* Machine Row */
+.productionsstep-machineRow {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+  align-items: center;
+}
+
+.productionsstep-inputWrapper {
   position: relative;
   flex: 1;
 }
 
-.enter-hint {
-  position: absolute;
-  right: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #94a3b8;
-  font-size: 0.75rem;
-  pointer-events: none;
-}
-
-.save-button {
-  width: 100%;
-  padding: 0.75rem 1.5rem;
-  background-color: #FF6B35;
-  color: white;
-  font-weight: 500;
-  border-radius: 0.5rem;
+/* Remove Machine Button */
+.productionsstep-removeBtn {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #dc2626;
+  background: #fee2e2;
   border: none;
+  border-radius: 50%;
   cursor: pointer;
   transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.save-button:hover {
-  background-color: #e55a2b;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+.productionsstep-removeBtn:hover {
+  background: #fecaca;
+  color: #b91c1c;
 }
 
-.save-button:active {
-  transform: translateY(0);
+/* Button - Full Width Orange */
+.productionsstep-button {
+  width: 100%;
+  padding: 14px 24px;
+  margin-top: 24px;
+  font-size: 15px;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.25);
 }
 
-.save-button:disabled {
-  background-color: #9ca3af;
+.productionsstep-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #E55A2B 0%, #d44a1b 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(255, 107, 53, 0.35);
+}
+
+.productionsstep-button:disabled {
+  background: #9ca3af;
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
 }
 
-.save-button span {
-  margin-left: 0.5rem;
-}
-
-.error-msg {
-  color: #dc2626;
-  background-color: #fee2e2;
-  padding: 0.5rem;
-  border-radius: 0.375rem;
-  font-size: 0.875rem;
-  margin-top: 0.5rem;
-}
-
-.success-msg {
+/* Messages */
+.productionsstep-success {
   color: #059669;
   background-color: #d1fae5;
-  padding: 0.5rem;
-  border-radius: 0.375rem;
-  font-size: 0.875rem;
-  margin-top: 0.5rem;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-top: 16px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.productionsstep-error {
+  color: #dc2626;
+  background-color: #fee2e2;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-top: 16px;
+  font-size: 14px;
+  text-align: center;
 }

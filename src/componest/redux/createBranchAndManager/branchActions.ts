@@ -14,6 +14,7 @@ import {
   BRANCH_DELETE_FAIL,
 } from "./branchConstants";
 import { AppDispatch, RootState } from "../../../store";
+import { addBranchToAuth } from "../login/authActions";
 
 // Helpers
 const getToken = (getState: () => RootState): string | null => {
@@ -32,7 +33,13 @@ const getHeaders = (token: string | null) => {
 const baseUrl = import.meta.env.VITE_API_27INFINITY_IN;
 
 // ─── CREATE ───────────────────────────────────────────────
-export const createBranch = (data: { name: string; location?: string }) => {
+export const createBranch = (data: {
+  name: string;
+  location: string;
+  code: string;
+  phone?: string;
+  email?: string;
+}) => {
   return async (dispatch: AppDispatch, getState: () => RootState) => {
     try {
       dispatch({ type: BRANCH_CREATE_REQUEST });
@@ -43,13 +50,20 @@ export const createBranch = (data: { name: string; location?: string }) => {
         throw new Error("Branch name is required and must be a string.");
       }
 
+      if (!data.code || typeof data.code !== "string" || !data.code.trim()) {
+        throw new Error("Branch code is required.");
+      }
+
       const payload = {
         name: data.name.trim(),
         location: data.location?.trim() || "",
+        code: data.code.trim(),
+        phone: data.phone?.trim() || "",
+        email: data.email?.trim() || "",
       };
 
       const response = await axios.post(
-        `${baseUrl}/dev/branch/create`,
+        `${baseUrl}/branch/create`,
         payload,
         { headers: getHeaders(token) }
       );
@@ -59,9 +73,13 @@ export const createBranch = (data: { name: string; location?: string }) => {
         payload: response.data,
       });
 
-      if (response.data?._id) {
-        localStorage.setItem("selectedBranch", response.data._id);
+      // Update user's branches in Redux state and localStorage
+      const newBranch = response.data.branch;
+      if (newBranch?._id) {
+        dispatch(addBranchToAuth(newBranch) as any);
       }
+
+      return response.data;
 
     } catch (error: any) {
       dispatch({
@@ -69,6 +87,7 @@ export const createBranch = (data: { name: string; location?: string }) => {
         payload:
           error.response?.data?.message || error.message || "Branch creation failed",
       });
+      throw error;
     }
   };
 };
@@ -81,11 +100,11 @@ export const listBranches = () => {
 
       const token = getToken(getState);
 
-      const { data } = await axios.get(`${baseUrl}/dev/branch/branches`, {
+      const { data } = await axios.get(`${baseUrl}/branch/branches`, {
         headers: getHeaders(token),
       });
 
-      dispatch({ type: BRANCH_LIST_SUCCESS, payload: data });
+      dispatch({ type: BRANCH_LIST_SUCCESS, payload: data.branches || data });
 
     } catch (error: any) {
       dispatch({
@@ -110,7 +129,7 @@ export const updateBranch = (branchId: string, data: { name?: string; location?:
       };
 
       const response = await axios.put(
-        `${baseUrl}/dev/branch/${branchId}`,
+        `${baseUrl}/branch/branches/${branchId}`,
         payload,
         { headers: getHeaders(token) }
       );
@@ -134,7 +153,7 @@ export const deleteBranch = (branchId: string) => {
 
       const token = getToken(getState);
 
-      await axios.delete(`${baseUrl}/dev/branch/${branchId}`, {
+      await axios.delete(`${baseUrl}/branch/branches/${branchId}`, {
         headers: getHeaders(token),
       });
 

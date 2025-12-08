@@ -53,7 +53,8 @@ export const Toast: React.FC<ToastProps> = ({
   duration = 3000,
   onClose
 }) => {
-  const config = toastConfig[type];
+  // Fallback to 'info' if type is invalid
+  const config = toastConfig[type] || toastConfig.info;
 
   useEffect(() => {
     if (duration > 0) {

@@ -1,0 +1,109 @@
+/* ====================================
+   Create Option - Compact Form Styles
+   All class names start with createOption-
+   ==================================== */
+
+/* Container - Centered on Screen */
+.createOption-container {
+  width: 100%;
+  min-height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+/* Form Card */
+.createOption-form {
+  background: white;
+  padding: 24px 32px;
+  max-width: 500px;
+  width: 100%;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Title */
+.createOption-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  text-align: center;
+  margin: 0 0 20px 0;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* Form Group - Compact spacing */
+.createOption-group {
+  margin-bottom: 16px;
+}
+
+/* Label - Close to input */
+.createOption-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 4px;
+}
+
+/* Select/Input - Underline Style */
+.createOption-select,
+.createOption-input {
+  width: 100%;
+  padding: 8px 0;
+  font-size: 14px;
+  color: #1f2937;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #d1d5db;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease;
+}
+
+.createOption-select:focus,
+.createOption-input:focus {
+  border-bottom: 2px solid #FF6B35;
+}
+
+.createOption-input::placeholder {
+  color: #9ca3af;
+}
+
+/* Hint text */
+.createOption-hint {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+/* Button - Full Width Orange */
+.createOption-button {
+  width: 100%;
+  padding: 14px 24px;
+  margin-top: 24px;
+  font-size: 15px;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.25);
+}
+
+.createOption-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #E55A2B 0%, #d44a1b 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(255, 107, 53, 0.35);
+}
+
+.createOption-button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}

@@ -1,0 +1,1067 @@
+/* ========== Operator View Container ========== */
+.operatorViewContainer {
+  padding: 1rem;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #f9fafb;
+}
+
+/* ========== Header ========== */
+.operatorViewHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.operatorViewHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.operatorViewBackBtn {
+  padding: 8px 16px;
+  background: #6b7280;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+.operatorViewBackBtn:hover {
+  background: #4b5563;
+}
+
+.operatorViewTitle {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.operatorViewFilters {
+  display: flex;
+  gap: 1rem;
+}
+
+.operatorViewSelect {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+  min-width: 150px;
+}
+
+/* ========== Content ========== */
+.operatorViewContent {
+  flex: 1;
+  overflow: auto;
+}
+
+.operatorViewLoading,
+.operatorViewEmpty,
+.operatorViewError,
+.operatorViewNoTemplate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  text-align: center;
+  color: #6b7280;
+}
+
+.operatorViewError {
+  color: #dc2626;
+}
+
+.operatorViewError button {
+  margin-top: 1rem;
+  padding: 8px 16px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* ========== Orders Grid ========== */
+.operatorViewOrdersGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1rem;
+}
+
+/* ========== Order Card ========== */
+.orderCard {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.orderCardClickable {
+  cursor: pointer;
+}
+
+.orderCardClickable:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.orderCardSelected {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.orderCardImage {
+  width: 100%;
+  height: 160px;
+  overflow: hidden;
+  background: #f3f4f6;
+}
+
+.orderCardImage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.orderCardContent {
+  padding: 1rem;
+}
+
+.orderCardId {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.orderCardLabel {
+  font-size: 12px;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.orderCardValue {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.orderCardAddress {
+  font-weight: 400;
+  font-size: 13px;
+  line-height: 1.4;
+  max-height: 40px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.orderCardInfo {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+}
+
+.orderCardBadge {
+  padding: 2px 8px;
+  background: #e0e7ff;
+  color: #3730a3;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.orderCardProgress {
+  margin: 1rem 0;
+}
+
+.orderCardProgressLabel {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.orderCardProgressBar {
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.orderCardProgressFill {
+  height: 100%;
+  background: #3b82f6;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.orderCardProgressFill.complete {
+  background: #22c55e;
+}
+
+.orderCardStatus {
+  text-align: right;
+}
+
+.orderCardStatusBadge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.orderCardStatusBadge.pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.orderCardStatusBadge.in-progress {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.orderCardStatusBadge.complete,
+.orderCardStatusBadge.completed {
+  background: #dcfce7;
+  color: #166534;
+}
+
+/* ========== Detail View ========== */
+.operatorViewDetail {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.operatorViewDetail .orderCard {
+  max-width: 100%;
+}
+
+/* ========== Data Table Container ========== */
+.dataTableContainer {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.dataTableSummary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.dataTableProgress {
+  flex: 1;
+  min-width: 200px;
+  max-width: 400px;
+}
+
+.dataTableProgressInfo {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  color: #374151;
+  margin-bottom: 6px;
+}
+
+.dataTableTarget {
+  font-weight: 600;
+  color: #3b82f6;
+}
+
+.dataTableProgressBar {
+  height: 10px;
+  background: #e5e7eb;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.dataTableProgressFill {
+  height: 100%;
+  background: #3b82f6;
+  border-radius: 5px;
+  transition: width 0.3s ease;
+}
+
+.dataTableProgressFill.complete {
+  background: #22c55e;
+}
+
+.dataTableCompleteBtn {
+  padding: 10px 20px;
+  background: #22c55e;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.dataTableCompleteBtn:hover {
+  background: #16a34a;
+}
+
+.dataTableCompleteBtn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.dataTableCompleteBadge {
+  padding: 10px 20px;
+  background: #dcfce7;
+  color: #166534;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* ========== Data Table ========== */
+.dataTableWrapper {
+  overflow-x: auto;
+}
+
+.dataTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.dataTableTh {
+  padding: 12px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  background: #f3f4f6;
+  border-bottom: 2px solid #e5e7eb;
+  white-space: nowrap;
+}
+
+.dataTableUnit {
+  font-weight: 400;
+  color: #6b7280;
+  margin-left: 4px;
+}
+
+.dataTableRequired {
+  color: #dc2626;
+  margin-left: 2px;
+}
+
+.dataTableTd {
+  padding: 10px 12px;
+  font-size: 14px;
+  color: #374151;
+  border-bottom: 1px solid #e5e7eb;
+  vertical-align: middle;
+}
+
+.dataTableRow:hover {
+  background: #f9fafb;
+}
+
+.dataTableRowNew {
+  background: #f0fdf4;
+}
+
+.dataTableInput {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.dataTableInput:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.dataTableCalculated {
+  color: #9ca3af;
+  font-style: italic;
+}
+
+/* OptionSpec column styles */
+.dataTableTd--optionSpec {
+  background: #f0f9ff;
+}
+
+.dataTableOptionSpecValue {
+  color: #0369a1;
+  font-weight: 500;
+}
+
+.dataTableReadOnly {
+  color: #9ca3af;
+}
+
+.dataTableActions {
+  white-space: nowrap;
+}
+
+.dataTableBtn {
+  padding: 4px 10px;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  margin-right: 4px;
+  transition: background 0.2s;
+}
+
+.dataTableBtn.add {
+  background: #3b82f6;
+  color: white;
+}
+
+.dataTableBtn.add:hover {
+  background: #2563eb;
+}
+
+.dataTableBtn.edit {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.dataTableBtn.edit:hover {
+  background: #d1d5db;
+}
+
+.dataTableBtn.save {
+  background: #22c55e;
+  color: white;
+}
+
+.dataTableBtn.save:hover {
+  background: #16a34a;
+}
+
+.dataTableBtn.cancel {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.dataTableBtn.delete {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.dataTableBtn.delete:hover {
+  background: #fecaca;
+}
+
+.dataTableBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.dataTableTotals {
+  background: #fef3c7;
+}
+
+.dataTableTotalCell {
+  color: #92400e;
+}
+
+/* ========== Responsive ========== */
+@media (max-width: 768px) {
+  .operatorViewHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .operatorViewFilters {
+    width: 100%;
+  }
+
+  .operatorViewSelect {
+    flex: 1;
+  }
+
+  .operatorViewOrdersGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .dataTableSummary {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .dataTableProgress {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+/* ========== Dark Mode ========== */
+@media (prefers-color-scheme: dark) {
+  .operatorViewContainer {
+    background: #1f2937;
+  }
+
+  .operatorViewTitle {
+    color: #f9fafb;
+  }
+
+  .operatorViewSelect {
+    background: #374151;
+    border-color: #4b5563;
+    color: #f9fafb;
+  }
+
+  .orderCard {
+    background: #374151;
+    border-color: #4b5563;
+  }
+
+  .orderCardId {
+    border-color: #4b5563;
+  }
+
+  .orderCardLabel {
+    color: #9ca3af;
+  }
+
+  .orderCardValue {
+    color: #f9fafb;
+  }
+
+  .dataTableContainer {
+    background: #374151;
+    border-color: #4b5563;
+  }
+
+  .dataTableSummary {
+    background: #1f2937;
+    border-color: #4b5563;
+  }
+
+  .dataTableTh {
+    background: #1f2937;
+    color: #f9fafb;
+    border-color: #4b5563;
+  }
+
+  .dataTableTd {
+    color: #d1d5db;
+    border-color: #4b5563;
+  }
+
+  .dataTableRow:hover {
+    background: #4b5563;
+  }
+
+  .dataTableRowNew {
+    background: #1f3a29;
+  }
+
+  .dataTableInput {
+    background: #1f2937;
+    border-color: #4b5563;
+    color: #f9fafb;
+  }
+}
+
+/* ========== Order Detail Section ========== */
+.orderDetailSection {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.orderDetailCard {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.orderDetailCardTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 0.75rem 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.orderDetailCardTitle::before {
+  content: '';
+  width: 4px;
+  height: 16px;
+  background: #3b82f6;
+  border-radius: 2px;
+}
+
+.orderDetailCalcCard .orderDetailCardTitle::before {
+  background: #f59e0b;
+}
+
+.orderDetailSpecGroup {
+  margin-bottom: 1rem;
+}
+
+.orderDetailSpecGroup:last-child {
+  margin-bottom: 0;
+}
+
+.orderDetailSpecHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.orderDetailSpecName {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.orderDetailSpecCode {
+  font-size: 11px;
+  padding: 2px 6px;
+  background: #e0e7ff;
+  color: #3730a3;
+  border-radius: 4px;
+}
+
+.orderDetailSpecQty {
+  font-size: 12px;
+  color: #6b7280;
+  margin-left: auto;
+}
+
+.orderDetailSpecValues {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.5rem;
+}
+
+.orderDetailSpecItem {
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem;
+  background: #f9fafb;
+  border-radius: 6px;
+}
+
+.orderDetailSpecLabel {
+  font-size: 11px;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 2px;
+}
+
+.orderDetailSpecValue {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.orderDetailCalcGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.75rem;
+}
+
+.orderDetailCalcItem {
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem;
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border-radius: 8px;
+  border: 1px solid #fde68a;
+}
+
+.orderDetailCalcLabel {
+  font-size: 11px;
+  color: #92400e;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.orderDetailCalcValue {
+  font-size: 18px;
+  font-weight: 700;
+  color: #78350f;
+}
+
+.orderDetailCalcDesc {
+  font-size: 10px;
+  color: #92400e;
+  margin-top: 4px;
+  font-style: italic;
+}
+
+/* Dark mode for Order Detail Section */
+@media (prefers-color-scheme: dark) {
+  .orderDetailCard {
+    background: #374151;
+    border-color: #4b5563;
+  }
+
+  .orderDetailCardTitle {
+    color: #f9fafb;
+    border-color: #4b5563;
+  }
+
+  .orderDetailSpecName {
+    color: #f9fafb;
+  }
+
+  .orderDetailSpecItem {
+    background: #1f2937;
+  }
+
+  .orderDetailSpecLabel {
+    color: #9ca3af;
+  }
+
+  .orderDetailSpecValue {
+    color: #f9fafb;
+  }
+
+  .orderDetailCalcItem {
+    background: linear-gradient(135deg, #78350f, #92400e);
+    border-color: #a16207;
+  }
+
+  .orderDetailCalcLabel {
+    color: #fde68a;
+  }
+
+  .orderDetailCalcValue {
+    color: #fef3c7;
+  }
+
+  .orderDetailCalcDesc {
+    color: #fde68a;
+  }
+}
+
+/* ========== Previous Machines Section ========== */
+.orderDetailPreviousMachines {
+  border-left: 3px solid #10b981;
+}
+
+.orderDetailPreviousMachines .orderDetailCardTitle::before {
+  background: #10b981;
+}
+
+.orderDetailMachineItem {
+  padding: 0.75rem;
+  background: #f0fdf4;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  border: 1px solid #bbf7d0;
+}
+
+.orderDetailMachineItem:last-child {
+  margin-bottom: 0;
+}
+
+.orderDetailMachineHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.orderDetailMachineName {
+  font-size: 13px;
+  font-weight: 600;
+  color: #166534;
+}
+
+.orderDetailMachineStatus {
+  font-size: 12px;
+  padding: 2px 8px;
+  background: #fef3c7;
+  color: #92400e;
+  border-radius: 12px;
+}
+
+.orderDetailMachineStatus.complete {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.orderDetailMachineTotals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.orderDetailTotalItem {
+  display: flex;
+  gap: 0.25rem;
+  font-size: 12px;
+  padding: 4px 8px;
+  background: white;
+  border-radius: 4px;
+  border: 1px solid #d1fae5;
+}
+
+.orderDetailTotalLabel {
+  color: #6b7280;
+}
+
+.orderDetailTotalValue {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+/* Order Card Options */
+.orderCardOptions {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed #e5e7eb;
+}
+
+/* ========== View Mode Tabs ========== */
+.viewModeTabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  background: #f3f4f6;
+  padding: 4px;
+  border-radius: 8px;
+  width: fit-content;
+}
+
+.viewModeTabs button {
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.viewModeTabs button:hover {
+  color: #1f2937;
+}
+
+.viewModeTabs button.active {
+  background: white;
+  color: #3b82f6;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* ========== Machine Operator Dashboard ========== */
+.machineOperatorDashboard {
+  padding: 1rem;
+  background: #f9fafb;
+  min-height: 100vh;
+}
+
+.dashboardHeader {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.dashboardHeader select {
+  padding: 0.5rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  background: white;
+  min-width: 200px;
+}
+
+.dashboardHeader select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Dark mode for Previous Machines */
+@media (prefers-color-scheme: dark) {
+  .orderDetailPreviousMachines {
+    border-left-color: #10b981;
+  }
+
+  .orderDetailMachineItem {
+    background: #1f2937;
+    border-color: #374151;
+  }
+
+  .orderDetailMachineName {
+    color: #a7f3d0;
+  }
+
+  .orderDetailMachineStatus {
+    background: #78350f;
+    color: #fde68a;
+  }
+
+  .orderDetailMachineStatus.complete {
+    background: #166534;
+    color: #dcfce7;
+  }
+
+  .orderDetailTotalItem {
+    background: #374151;
+    border-color: #4b5563;
+  }
+
+  .orderDetailTotalLabel {
+    color: #9ca3af;
+  }
+
+  .orderDetailTotalValue {
+    color: #f9fafb;
+  }
+
+  .viewModeTabs {
+    background: #374151;
+  }
+
+  .viewModeTabs button {
+    color: #9ca3af;
+  }
+
+  .viewModeTabs button:hover {
+    color: #f9fafb;
+  }
+
+  .viewModeTabs button.active {
+    background: #1f2937;
+    color: #60a5fa;
+  }
+
+  .machineOperatorDashboard {
+    background: #111827;
+  }
+
+  .dashboardHeader select {
+    background: #1f2937;
+    border-color: #374151;
+    color: #f9fafb;
+  }
+}
+
+/* ============ Dynamic Display Items Styles ============ */
+
+.orderDetailDisplayItems {
+  margin-bottom: 16px;
+}
+
+.orderDetailDisplayGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.orderDetailDisplayItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.orderDetailDisplayLabel {
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.orderDetailDisplayValue {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1f2937;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.orderDetailDisplayValue.empty {
+  color: #9ca3af;
+  font-weight: 400;
+}
+
+.orderDetailDisplayValue .unit {
+  font-size: 13px;
+  font-weight: 400;
+  color: #6b7280;
+  margin-left: 2px;
+}
+
+.orderDetailDisplayValue.boolean {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.orderDetailDisplayValue.boolean.yes {
+  color: #16a34a;
+}
+
+.orderDetailDisplayValue.boolean.no {
+  color: #dc2626;
+}
+
+.orderDetailDisplayValue.image {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.orderDetailDisplayValue.image:hover {
+  text-decoration: underline;
+}
+
+.orderDetailDisplayValue.number {
+  color: #0369a1;
+}
+
+.orderDetailDisplayValue.formula {
+  color: #7c3aed;
+  font-style: italic;
+}

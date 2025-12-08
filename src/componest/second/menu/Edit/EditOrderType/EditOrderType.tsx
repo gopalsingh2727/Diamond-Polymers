@@ -7,7 +7,8 @@ import {
   getOrderTypes,
 } from "../../../../redux/create/orderType/orderTypeActions";
 import { useFormDataCache } from "../hooks/useFormDataCache";
-import "../EditProductSpec/editProductSpec.css";
+import { formatDate } from "../../../../../utils/dateUtils";
+import "../../create/CreateStep/createStep.css";
 
 interface OrderType {
   _id: string;
@@ -230,77 +231,29 @@ const EditOrderType: React.FC = () => {
           {error}
         </p>
       ) : !selectedOrderType ? (
-        <>
+        <div className="editsectionsTable-container">
           {/* Search Bar */}
-          <div
-            style={{
-              marginBottom: "20px",
-              display: "flex",
-              gap: "10px",
-              alignItems: "center",
-            }}
-          >
-            <div style={{ position: "relative", flex: 1 }}>
+          <div className="editsectionsTable-searchWrapper">
+            <div className="editsectionsTable-searchBox">
               <input
                 type="text"
                 placeholder="Search by order type name or description..."
                 value={searchTerm}
+                className="editsectionsTable-searchInput"
                 onChange={handleSearchChange}
-                style={{
-                  width: "100%",
-                  padding: "12px 40px 12px 40px",
-                  fontSize: "15px",
-                  border: "2px solid #ddd",
-                  borderRadius: "8px",
-                  outline: "none",
-                  transition: "border-color 0.3s ease",
-                }}
-                onFocus={(e) => (e.target.style.borderColor = "#2d89ef")}
-                onBlur={(e) => (e.target.style.borderColor = "#ddd")}
               />
-              <span
-                style={{
-                  position: "absolute",
-                  left: "14px",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  fontSize: "18px",
-                  color: "#666",
-                }}
-              >
-                🔍
-              </span>
+              <span className="editsectionsTable-searchIcon">🔍</span>
               {searchTerm && (
                 <button
                   onClick={clearSearch}
-                  style={{
-                    position: "absolute",
-                    right: "10px",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    background: "none",
-                    border: "none",
-                    fontSize: "20px",
-                    cursor: "pointer",
-                    color: "#999",
-                    padding: "4px 8px",
-                  }}
+                  className="editsectionsTable-clearButton"
                   title="Clear search"
                 >
                   ✕
                 </button>
               )}
             </div>
-            <div
-              style={{
-                padding: "12px 16px",
-                background: "#f5f5f5",
-                borderRadius: "8px",
-                fontSize: "14px",
-                color: "#666",
-                whiteSpace: "nowrap",
-              }}
-            >
+            <div className="editsectionsTable-countBadge">
               {filteredOrderTypes.length} of {orderTypes.length} types
             </div>
             <button
@@ -315,73 +268,67 @@ const EditOrderType: React.FC = () => {
 
           {/* Table */}
           {filteredOrderTypes.length > 0 ? (
-            <table className="w-full border border-collapse">
-              <thead className="bg-gray-200">
-                <tr>
-                  <th className="p-2 border">No</th>
-                  <th className="p-2 border">Name</th>
-                  <th className="p-2 border">Description</th>
-                  <th className="p-2 border">Number Format</th>
-                  <th className="p-2 border">Sections</th>
-                  <th className="p-2 border">Default</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredOrderTypes.map((type: OrderType, index: number) => (
-                  <tr
-                    key={type._id}
-                    className={selectedRow === index ? "bg-orange-100" : ""}
-                    onClick={() => {
-                      setSelectedRow(index);
-                      openEditor(type);
-                    }}
-                    style={{ cursor: "pointer" }}
-                  >
-                    <td className="p-2 border">{index + 1}</td>
-                    <td className="p-2 border font-semibold">{type.name}</td>
-                    <td className="p-2 border">{type.description || "—"}</td>
-                    <td className="p-2 border">
-                      <code className="text-xs bg-gray-100 px-2 py-1 rounded">
-                        {type.orderNumberFormat || "—"}
-                      </code>
-                    </td>
-                    <td className="p-2 border text-xs">
-                      {type.sections?.showProductSection && "🔹 Product "}
-                      {type.sections?.showMaterialSection && "🔸 Material "}
-                      {type.sections?.showMachineSection && "🔧 Machine "}
-                      {type.sections?.showFormulaSection && "📐 Formula"}
-                      {!type.sections?.showProductSection &&
-                        !type.sections?.showMaterialSection &&
-                        !type.sections?.showMachineSection &&
-                        !type.sections?.showFormulaSection &&
-                        "—"}
-                    </td>
-                    <td className="p-2 border text-center">
-                      {type.isDefault ? (
-                        <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">
-                          ✓ Default
-                        </span>
-                      ) : (
-                        "—"
-                      )}
-                    </td>
+            <div className="editsectionsTable-wrapper">
+              <table className="editsectionsTable-table">
+                <thead className="editsectionsTable-thead">
+                  <tr>
+                    <th className="editsectionsTable-th">No</th>
+                    <th className="editsectionsTable-th">Name</th>
+                    <th className="editsectionsTable-th">Description</th>
+                    <th className="editsectionsTable-th">Number Format</th>
+                    <th className="editsectionsTable-th">Sections</th>
+                    <th className="editsectionsTable-th">Default</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="editsectionsTable-tbody">
+                  {filteredOrderTypes.map((type: OrderType, index: number) => (
+                    <tr
+                      key={type._id}
+                      className={`editsectionsTable-tr ${selectedRow === index ? "editsectionsTable-trSelected" : ""}`}
+                      onClick={() => {
+                        setSelectedRow(index);
+                        openEditor(type);
+                      }}
+                    >
+                      <td className="editsectionsTable-td">{index + 1}</td>
+                      <td className="editsectionsTable-td font-semibold">{type.name}</td>
+                      <td className="editsectionsTable-td">{type.description || "—"}</td>
+                      <td className="editsectionsTable-td">
+                        <code className="text-xs bg-gray-100 px-2 py-1 rounded">
+                          {type.orderNumberFormat || "—"}
+                        </code>
+                      </td>
+                      <td className="editsectionsTable-td text-xs">
+                        {type.sections?.showProductSection && "🔹 Product "}
+                        {type.sections?.showMaterialSection && "🔸 Material "}
+                        {type.sections?.showMachineSection && "🔧 Machine "}
+                        {type.sections?.showFormulaSection && "📐 Formula"}
+                        {!type.sections?.showProductSection &&
+                          !type.sections?.showMaterialSection &&
+                          !type.sections?.showMachineSection &&
+                          !type.sections?.showFormulaSection &&
+                          "—"}
+                      </td>
+                      <td className="editsectionsTable-td text-center">
+                        {type.isDefault ? (
+                          <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">
+                            ✓ Default
+                          </span>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           ) : (
-            <div
-              style={{
-                padding: "40px",
-                textAlign: "center",
-                color: "#999",
-                fontSize: "16px",
-              }}
-            >
-              No order types found matching "{searchTerm}"
+            <div className="editsectionsTable-empty">
+              No order types found matching "<span>{searchTerm}</span>"
             </div>
           )}
-        </>
+        </div>
       ) : (
         <div className="bg-white p-4 shadow-md rounded max-w-3xl">
           <h3 className="text-lg font-bold mb-4">
@@ -536,16 +483,12 @@ const EditOrderType: React.FC = () => {
             <div className="border-t pt-3 mt-4">
               <p className="text-xs text-gray-500">
                 <strong>Created:</strong>{" "}
-                {selectedOrderType.createdAt
-                  ? new Date(selectedOrderType.createdAt).toLocaleString()
-                  : "N/A"}
+                {formatDate(selectedOrderType.createdAt)}
               </p>
-              {selectedOrderType.updatedAt && (
-                <p className="text-xs text-gray-500">
-                  <strong>Updated:</strong>{" "}
-                  {new Date(selectedOrderType.updatedAt).toLocaleString()}
-                </p>
-              )}
+              <p className="text-xs text-gray-500">
+                <strong>Updated:</strong>{" "}
+                {formatDate(selectedOrderType.updatedAt)}
+              </p>
             </div>
           </div>
         </div>

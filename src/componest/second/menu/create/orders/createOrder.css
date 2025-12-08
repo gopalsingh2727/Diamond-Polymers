@@ -277,3 +277,205 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ====================================
+   Standardized Patterns (createOption.css)
+   ==================================== */
+
+/* Form Sections - Standardized Pattern */
+.formSection {
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.formSection:last-child {
+  border-bottom: none;
+}
+
+.formSection h3 {
+  margin-bottom: 15px;
+  color: #555;
+  font-size: 1.2rem;
+}
+
+.sectionDescription {
+  margin-bottom: 15px;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+/* Form Groups - Standardized Pattern */
+.formGroup {
+  margin-bottom: 15px;
+}
+
+.formGroup label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+  color: #444;
+}
+
+.formGroup input[type="text"],
+.formGroup input[type="number"],
+.formGroup input[type="date"],
+.formGroup select,
+.formGroup textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.3s;
+}
+
+.formGroup input:focus,
+.formGroup select:focus,
+.formGroup textarea:focus {
+  outline: none;
+  border-color: #4CAF50;
+}
+
+/* Form Row - Horizontal Layout */
+.formRow {
+  display: flex;
+  gap: 15px;
+  align-items: flex-end;
+}
+
+.formRow .formGroup {
+  flex: 1;
+}
+
+/* Checkbox Groups */
+.checkboxGroup label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.checkboxGroup input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+}
+
+/* Buttons - Standardized Pattern */
+.addButton,
+.submitButton,
+.resetButton,
+.removeButton {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.addButton {
+  background: #2196F3;
+  color: white;
+}
+
+.addButton:hover {
+  background: #1976D2;
+}
+
+.submitButton {
+  background: #4CAF50;
+  color: white;
+}
+
+.submitButton:hover {
+  background: #45a049;
+  box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
+}
+
+.resetButton {
+  background: #f44336;
+  color: white;
+}
+
+.resetButton:hover {
+  background: #da190b;
+}
+
+.removeButton {
+  background: #ff5722;
+  color: white;
+  font-size: 12px;
+  padding: 6px 12px;
+}
+
+.removeButton:hover {
+  background: #e64a19;
+}
+
+/* Form Actions Container */
+.formActions {
+  display: flex;
+  justify-content: flex-start;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 2px solid #eee;
+}
+
+/* Standardized Messages */
+.errorMessage {
+  color: #d32f2f;
+  background-color: #ffebee;
+  padding: 10px;
+  border-radius: 4px;
+  margin-top: 10px;
+  font-size: 14px;
+  border-left: 4px solid #d32f2f;
+}
+
+.successMessage {
+  color: #2e7d32;
+  background-color: #e8f5e9;
+  padding: 10px;
+  border-radius: 4px;
+  margin-top: 10px;
+  font-size: 14px;
+  border-left: 4px solid #2e7d32;
+}
+
+/* Dark Mode Support */
+.dark .create-order-container,
+.dark .form-section {
+  background: rgba(17, 24, 39, 0.8);
+  color: #e5e7eb;
+}
+
+.dark .formGroup label,
+.dark .input-label {
+  color: #d1d5db;
+}
+
+.dark .formGroup input,
+.dark .formGroup select,
+.dark .formGroup textarea,
+.dark .form-input {
+  background: rgba(31, 41, 55, 0.5);
+  border-color: rgba(75, 85, 99, 0.5);
+  color: #e5e7eb;
+}
+
+.dark .formSection,
+.dark .section-title {
+  border-bottom-color: rgba(75, 85, 99, 0.3);
+}
+
+.dark .page-title {
+  color: #e5e7eb;
+}
+
+.dark .dimensions-section,
+.dark .spec-dimensions-section {
+  background: rgba(31, 41, 55, 0.5);
+  border-color: rgba(75, 85, 99, 0.5);
+}

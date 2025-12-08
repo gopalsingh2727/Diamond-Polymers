@@ -1,16 +1,20 @@
-// import { ReportDashboards } from "./components/ReportDashboard";
-// import './styles/IsolatedWrapper.css';
-// import './styles/index.css';
+import React from 'react';
+import { BackButton } from '../../../allCompones/BackButton';
 
-import { BackButton } from "../../../allCompones/BackButton"
-import AnalyticsDashboard from "../../../Analytics/AnalyticsDashboard";
-
-
-export default function App() {
+const ReportDashboard: React.FC = () => {
   return (
-    <div id="report-dashboard-root" className="isolated-wrapper">
-      <BackButton/>
-      <AnalyticsDashboard />
+    <div className="report-dashboard">
+      <div className="report-dashboard-header">
+        <BackButton />
+        <h2>Report Dashboard</h2>
+      </div>
+      <div className="report-dashboard-content" style={{ padding: '20px' }}>
+        <p style={{ color: '#6b7280', textAlign: 'center', marginTop: '50px' }}>
+          Report Dashboard - Coming Soon
+        </p>
+      </div>
     </div>
   );
-}
+};
+
+export default ReportDashboard;

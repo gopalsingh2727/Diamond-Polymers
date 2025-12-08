@@ -1,0 +1,478 @@
+/* ====================================
+   Create Option Specification - Compact Form Styles
+   All class names start with createOptionSpec-
+   ==================================== */
+
+/* Container - Centered on Screen */
+.createOptionSpec-container {
+  width: 100%;
+  min-height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 20px;
+}
+
+/* Form Card */
+.createOptionSpec-form {
+  background: white;
+  padding: 24px 32px;
+  max-width: 800px;
+  width: 100%;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Title */
+.createOptionSpec-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  text-align: center;
+  margin: 0 0 20px 0;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* Template Buttons - Centered */
+.createOptionSpec-templateButtons {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.createOptionSpec-templateBtn {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(255, 107, 53, 0.2);
+}
+
+.createOptionSpec-templateBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(255, 107, 53, 0.3);
+}
+
+/* Form Grid */
+.createOptionSpec-formGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.createOptionSpec-formRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 15px;
+}
+
+.createOptionSpec-formColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Label */
+.createOptionSpec-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 4px;
+}
+
+/* Input - Underline Style */
+.createOptionSpec-input {
+  width: 100%;
+  padding: 8px 0;
+  font-size: 14px;
+  color: #1f2937;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #d1d5db;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease;
+}
+
+.createOptionSpec-input:focus {
+  border-bottom: 2px solid #FF6B35;
+}
+
+.createOptionSpec-input::placeholder {
+  color: #9ca3af;
+}
+
+/* Reference Box */
+.createOptionSpec-referenceBox {
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 8px;
+}
+
+.createOptionSpec-referenceTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 8px;
+}
+
+.createOptionSpec-referenceText {
+  font-size: 13px;
+  color: #64748b;
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+.createOptionSpec-referenceLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: #475569;
+  display: block;
+}
+
+.createOptionSpec-dimensionTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+  margin-bottom: 12px;
+}
+
+.createOptionSpec-dimensionTag {
+  display: inline-block;
+  padding: 6px 12px;
+  background: #dbeafe;
+  color: #1e40af;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: 'Courier New', monospace;
+}
+
+.createOptionSpec-referenceHint {
+  background: #fef3c7;
+  border-left: 3px solid #f59e0b;
+  padding: 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #78350f;
+  line-height: 1.6;
+}
+
+.createOptionSpec-code {
+  background: #1e293b;
+  color: #22d3ee;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+}
+
+.createOptionSpec-referenceEmpty {
+  text-align: center;
+  padding: 20px;
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+/* Dimensions Section */
+.createOptionSpec-dimensionsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.createOptionSpec-addDimensionBtn {
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.createOptionSpec-addDimensionBtn:hover {
+  background: linear-gradient(135deg, #E55A2B 0%, #d44a1b 100%);
+  transform: translateY(-1px);
+}
+
+/* Dimension Row */
+.createOptionSpec-dimensionRow {
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 10px;
+  transition: all 0.2s ease;
+}
+
+.createOptionSpec-dimensionRow:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.createOptionSpec-dimensionFields {
+  display: grid;
+  grid-template-columns: 1.5fr 1.5fr 0.8fr 1fr 40px;
+  gap: 10px;
+  align-items: center;
+}
+
+.createOptionSpec-dimensionFields input,
+.createOptionSpec-dimensionFields select {
+  padding: 8px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #1e293b;
+  background: white;
+}
+
+.createOptionSpec-dimensionFields input:focus,
+.createOptionSpec-dimensionFields select:focus {
+  outline: none;
+  border-color: #FF6B35;
+  box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.1);
+}
+
+.createOptionSpec-dimensionFields input:disabled {
+  background-color: #c8e6c9;
+  cursor: not-allowed;
+}
+
+.createOptionSpec-removeDimensionBtn {
+  width: 32px;
+  height: 32px;
+  background: #fee2e2;
+  color: #dc2626;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: bold;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.createOptionSpec-removeDimensionBtn:hover {
+  background: #fecaca;
+  transform: scale(1.05);
+}
+
+/* Formula Row */
+.createOptionSpec-formulaRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.createOptionSpec-formulaLabel {
+  font-size: 12px;
+  font-weight: 500;
+  color: #64748b;
+  min-width: 60px;
+}
+
+.createOptionSpec-formulaInput {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: 'Courier New', monospace;
+  color: #1e293b;
+  background: #f8fafc;
+}
+
+.createOptionSpec-formulaInput:focus {
+  outline: none;
+  border-color: #FF6B35;
+  background: white;
+}
+
+.createOptionSpec-formulaBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%);
+  color: white;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Empty State */
+.createOptionSpec-emptyState {
+  text-align: center;
+  padding: 40px 20px;
+  color: #94a3b8;
+  font-size: 14px;
+  background: #f8fafc;
+  border: 2px dashed #e2e8f0;
+  border-radius: 8px;
+}
+
+/* Save Button - Orange */
+.createOptionSpec-button {
+  width: 100%;
+  padding: 14px 24px;
+  margin-top: 24px;
+  font-size: 15px;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.25);
+}
+
+.createOptionSpec-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #E55A2B 0%, #d44a1b 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(255, 107, 53, 0.35);
+}
+
+.createOptionSpec-button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ============ REFERENCE POPUP MODAL ============ */
+
+/* Add Reference Item Button - Orange */
+.createOptionSpec-addReferenceBtn {
+  width: 100%;
+  padding: 14px 24px;
+  margin-top: 16px;
+  font-size: 15px;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.25);
+}
+
+.createOptionSpec-addReferenceBtn:hover {
+  background: linear-gradient(135deg, #E55A2B 0%, #d44a1b 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(255, 107, 53, 0.35);
+}
+
+/* Save References Button - Orange */
+.createOptionSpec-saveReferencesBtn {
+  padding: 12px 28px;
+  font-size: 15px;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.25);
+}
+
+.createOptionSpec-saveReferencesBtn:hover {
+  background: linear-gradient(135deg, #E55A2B 0%, #d44a1b 100%);
+  transform: translateY(-2px);
+}
+
+/* Cancel Button */
+.createOptionSpec-cancelBtn {
+  padding: 12px 28px;
+  font-size: 15px;
+  font-weight: 600;
+  color: white;
+  background: #64748b;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.createOptionSpec-cancelBtn:hover {
+  background: #475569;
+}
+
+/* Reference Popup Add Dimension Button */
+.createOptionSpec-popupAddDimensionBtn {
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: white;
+  background: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.createOptionSpec-popupAddDimensionBtn:hover {
+  background: linear-gradient(135deg, #E55A2B 0%, #d44a1b 100%);
+}
+
+/* Remove Item Button - Red */
+.createOptionSpec-removeItemBtn {
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: white;
+  background: #ef4444;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.createOptionSpec-removeItemBtn:hover {
+  background: #dc2626;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .createOptionSpec-container {
+    padding: 15px;
+  }
+
+  .createOptionSpec-formRow {
+    grid-template-columns: 1fr;
+  }
+
+  .createOptionSpec-dimensionFields {
+    grid-template-columns: 1fr;
+  }
+
+  .createOptionSpec-templateButtons {
+    flex-direction: column;
+  }
+
+  .createOptionSpec-templateBtn {
+    width: 100%;
+  }
+}

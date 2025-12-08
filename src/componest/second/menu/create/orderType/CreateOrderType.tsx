@@ -1,14 +1,15 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
-import { createOrderType, updateOrderType } from "../../../../redux/create/orderType/orderTypeActions";
+import { createOrderType, updateOrderType, deleteOrderType } from "../../../../redux/create/orderType/orderTypeActions";
+import { getOptionTypes } from "../../../../redux/option/optionTypeActions";
+import { getPrintTypes } from "../../../../redux/create/printType/printTypeActions";
 import { AppDispatch } from "../../../../../store";
 import { ActionButton } from "../../../../../components/shared/ActionButton";
 import { ToastContainer } from "../../../../../components/shared/Toast";
 import { useCRUD } from "../../../../../hooks/useCRUD";
 import FieldTooltip from "../../../../../components/shared/FieldTooltip";
-import { BackButton } from "../../../../allCompones/BackButton";
-import { useFormDataCache } from "../../Edit/hooks/useFormDataCache";
+import { useInternalBackNavigation } from "../../../../allCompones/BackButton";
 import "./orderType.css";
 
 // Section configuration types
@@ -31,46 +32,17 @@ type SectionConfig = {
 // Default section configurations
 const defaultSections: SectionConfig[] = [
   {
-    id: 'product',
-    name: 'Product Information',
+    id: 'options',
+    name: 'Options',
     enabled: true,
     order: 1,
-    fields: [
-      { name: 'productType', label: 'Product Type', type: 'suggestions', required: true, enabled: true },
-      { name: 'productName', label: 'Product Name', type: 'suggestions', required: true, enabled: true },
-      { name: 'quantity', label: 'Quantity', type: 'number', required: true, enabled: true },
-    ]
-  },
-  {
-    id: 'material',
-    name: 'Material Information',
-    enabled: true,
-    order: 2,
-    fields: [
-      { name: 'materialType', label: 'Material Type', type: 'suggestions', required: true, enabled: true },
-      { name: 'materialName', label: 'Material Name', type: 'suggestions', required: true, enabled: true },
-      { name: 'mixing', label: 'Mixing', type: 'select', required: false, enabled: true },
-    ]
-  },
-  {
-    id: 'printing',
-    name: 'Printing Options',
-    enabled: true,
-    order: 3,
-    fields: [
-      { name: 'printEnabled', label: 'Print', type: 'select', required: false, enabled: true },
-      { name: 'printLength', label: 'Print Length', type: 'number', required: false, enabled: true },
-      { name: 'printWidth', label: 'Print Width', type: 'number', required: false, enabled: true },
-      { name: 'printType', label: 'Print Type', type: 'select', required: false, enabled: true },
-      { name: 'printColor', label: 'Print Color', type: 'text', required: false, enabled: true },
-      { name: 'printImage', label: 'Print Image', type: 'text', required: false, enabled: true },
-    ]
+    fields: []
   },
   {
     id: 'steps',
     name: 'Manufacturing Steps',
     enabled: true,
-    order: 4,
+    order: 2,
     fields: [
       { name: 'stepName', label: 'Step Name', type: 'suggestions', required: true, enabled: true },
       { name: 'machines', label: 'Machines', type: 'select', required: false, enabled: true },
@@ -82,13 +54,20 @@ const defaultSections: SectionConfig[] = [
   },
 ];
 
-const CreateOrderType = () => {
+interface CreateOrderTypeProps {
+  initialData?: any;
+  onCancel?: () => void;
+  onSaveSuccess?: () => void;
+}
+
+const CreateOrderType: React.FC<CreateOrderTypeProps> = ({ initialData: propInitialData, onCancel, onSaveSuccess }) => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Edit mode detection
-  const { orderTypeData, isEdit } = location.state || {};
-  const editMode = Boolean(isEdit || (orderTypeData && orderTypeData._id));
+  // Edit mode detection - support both props and location.state
+  const { orderTypeData: locationData, isEdit } = location.state || {};
+  const orderTypeData = propInitialData || locationData;
+  const editMode = Boolean(propInitialData || isEdit || (orderTypeData && orderTypeData._id));
   const orderTypeId = orderTypeData?._id;
 
   // Basic Information
@@ -101,25 +80,56 @@ const CreateOrderType = () => {
   const [numberFormat, setNumberFormat] = useState("PREFIX-{YYYY}-{SEQ}");
   const [sequencePadding, setSequencePadding] = useState(4);
 
-  // Approval Settings
-  const [requiresApproval, setRequiresApproval] = useState(false);
-  const [autoApproveBelow, setAutoApproveBelow] = useState("");
+  // Allowed Option Types
+  const [allowedOptionTypes, setAllowedOptionTypes] = useState<string[]>([]);
 
-  // Validation Rules
-  const [minQuantity, setMinQuantity] = useState("");
-  const [maxQuantity, setMaxQuantity] = useState("");
+  // Linked Print Types
+  const [linkedPrintTypes, setLinkedPrintTypes] = useState<string[]>([]);
 
   // Global/Default Settings
   const [isGlobal, setIsGlobal] = useState(false);
   const [isDefault, setIsDefault] = useState(false);
+  const [projectBase, setProjectBase] = useState(false);
+  const [isActive, setIsActive] = useState(true);
+
+  // Delete confirmation modal
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // Section Configuration
   const [sections, setSections] = useState<SectionConfig[]>(defaultSections);
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
 
-  // Restrictions Configuration
-  const [allowedProductTypes, setAllowedProductTypes] = useState<string[]>([]);
-  const [allowedMaterialTypes, setAllowedMaterialTypes] = useState<string[]>([]);
+  const dispatch = useDispatch<AppDispatch>();
+  const { saveState, handleSave, toast} = useCRUD();
+
+  // Get user role for conditional rendering
+  const userRole = useSelector((state: any) => state.auth?.userData?.role);
+
+  // Get option types from Redux store
+  const optionTypes = useSelector((state: any) => state.optionType?.optionTypes || []);
+
+  // Get print types from Redux store
+  const printTypes = useSelector((state: any) => state.printTypeList?.printTypes || []);
+
+  // Fetch option types and print types on mount
+  useEffect(() => {
+    dispatch(getOptionTypes());
+    dispatch(getPrintTypes());
+  }, [dispatch]);
+
+  // Handle ESC key to go back to list in edit mode
+  const handleBackToList = () => {
+    if (onSaveSuccess) {
+      onSaveSuccess();
+    } else if (onCancel) {
+      onCancel();
+    } else {
+      navigate(-1);
+    }
+  };
+
+  useInternalBackNavigation(editMode && !showDeleteConfirm, handleBackToList);
 
   // Load existing data when editing
   useEffect(() => {
@@ -136,31 +146,32 @@ const CreateOrderType = () => {
       setNumberFormat(orderTypeData.numberFormat || "PREFIX-{YYYY}-{SEQ}");
       setSequencePadding(orderTypeData.sequencePadding || 4);
 
-      // Approval Settings
-      setRequiresApproval(orderTypeData.requiresApproval || false);
-      setAutoApproveBelow(orderTypeData.autoApproveBelow?.toString() || "");
+      // Allowed Option Types
+      if (orderTypeData.allowedOptionTypes && Array.isArray(orderTypeData.allowedOptionTypes)) {
+        // Extract IDs from populated objects or use IDs directly
+        const optionTypeIds = orderTypeData.allowedOptionTypes.map((ot: any) =>
+          typeof ot === 'string' ? ot : ot._id
+        );
+        setAllowedOptionTypes(optionTypeIds);
+      }
 
-      // Validation Rules
-      setMinQuantity(orderTypeData.validationRules?.minQuantity?.toString() || "");
-      setMaxQuantity(orderTypeData.validationRules?.maxQuantity?.toString() || "");
+      // Linked Print Types
+      if (orderTypeData.linkedPrintTypes && Array.isArray(orderTypeData.linkedPrintTypes)) {
+        const printTypeIds = orderTypeData.linkedPrintTypes.map((pt: any) =>
+          typeof pt === 'string' ? pt : pt._id
+        );
+        setLinkedPrintTypes(printTypeIds);
+      }
 
       // Global/Default Settings
       setIsGlobal(orderTypeData.isGlobal || false);
       setIsDefault(orderTypeData.isDefault || false);
+      setProjectBase(orderTypeData.projectBase || false);
+      setIsActive(orderTypeData.isActive !== false); // Default to true if not set
 
       // Section Configuration
       if (orderTypeData.sections && orderTypeData.sections.length > 0) {
         setSections(orderTypeData.sections);
-      }
-
-      // Restrictions Configuration
-      if (orderTypeData.restrictions) {
-        setAllowedProductTypes(orderTypeData.restrictions.allowedProductTypes?.map((id: any) =>
-          typeof id === 'object' ? id._id : id
-        ) || []);
-        setAllowedMaterialTypes(orderTypeData.restrictions.allowedMaterialTypes?.map((id: any) =>
-          typeof id === 'object' ? id._id : id
-        ) || []);
       }
     }
   }, [editMode, orderTypeData]);
@@ -221,47 +232,12 @@ const CreateOrderType = () => {
     ));
   };
 
-  const dispatch = useDispatch<AppDispatch>();
-  const { saveState, handleSave, toast } = useCRUD();
-
-  // 🚀 OPTIMIZED: Get data from cached form data (no API calls!)
-  const { productTypes: cachedProductTypes, materialTypes: cachedMaterialTypes, products: cachedProducts, materials: cachedMaterials } = useFormDataCache();
-
-  // Group products and materials by types for restrictions dropdowns
-  const productTypes = useMemo(() => {
-    return cachedProductTypes.map((type: any) => ({
-      ...type,
-      products: cachedProducts.filter((product: any) =>
-        (product.productType?._id === type._id || product.productTypeId === type._id)
-      )
-    }));
-  }, [cachedProductTypes, cachedProducts]);
-
-  const materialTypes = useMemo(() => {
-    return cachedMaterialTypes.map((type: any) => ({
-      ...type,
-      materials: cachedMaterials.filter((material: any) =>
-        (material.materialType?._id === type._id || material.materialTypeId === type._id)
-      )
-    }));
-  }, [cachedMaterialTypes, cachedMaterials]);
-
-  // Get user role for conditional rendering
-  const userRole = useSelector((state: any) => state.auth?.userData?.role);
-
-  // ✅ No useEffect dispatch needed - data already loaded from cache!
-
   const handleSubmit = () => {
     // Validation
     if (!typeName.trim() || !typeCode.trim() || !numberPrefix.trim()) {
       toast.error("Validation Error", "Please fill all required fields: Type Name, Type Code, and Number Prefix");
       return;
     }
-
-    // Build validation rules
-    const validationRules: any = {};
-    if (minQuantity) validationRules.minQuantity = Number(minQuantity);
-    if (maxQuantity) validationRules.maxQuantity = Number(maxQuantity);
 
     // Build order type data
     const dataToSave = {
@@ -271,11 +247,12 @@ const CreateOrderType = () => {
       numberPrefix,
       numberFormat,
       sequencePadding: Number(sequencePadding),
-      requiresApproval,
-      autoApproveBelow: autoApproveBelow ? Number(autoApproveBelow) : undefined,
-      validationRules: Object.keys(validationRules).length > 0 ? validationRules : undefined,
+      allowedOptionTypes,
+      linkedPrintTypes,
       isGlobal,
       isDefault,
+      projectBase,
+      isActive,
       // Section configuration for dynamic form rendering - only save enabled sections, sorted by order
       sections: sections
         .filter(section => section.enabled)
@@ -294,12 +271,7 @@ const CreateOrderType = () => {
               required: field.required,
               enabled: field.enabled
             }))
-        })),
-      // Restrictions configuration
-      restrictions: {
-        allowedProductTypes,
-        allowedMaterialTypes
-      }
+        }))
     };
 
     if (editMode && orderTypeId) {
@@ -309,8 +281,12 @@ const CreateOrderType = () => {
         {
           successMessage: "Order type updated successfully!",
           onSuccess: () => {
-            // Navigate back after successful update
-            navigate(-1);
+            // Call callback or navigate back after successful update
+            if (onSaveSuccess) {
+              onSaveSuccess();
+            } else {
+              navigate(-1);
+            }
           }
         }
       );
@@ -328,39 +304,137 @@ const CreateOrderType = () => {
             setNumberPrefix("");
             setNumberFormat("PREFIX-{YYYY}-{SEQ}");
             setSequencePadding(4);
-            setRequiresApproval(false);
-            setAutoApproveBelow("");
-            setMinQuantity("");
-            setMaxQuantity("");
+            setAllowedOptionTypes([]);
+            setLinkedPrintTypes([]);
             setIsGlobal(false);
             setIsDefault(false);
             setSections(defaultSections);
             setExpandedSection(null);
-            // Reset restrictions
-            setAllowedProductTypes([]);
-            setAllowedMaterialTypes([]);
           }
         }
       );
     }
   };
 
+  // Handle delete
+  const handleDelete = async () => {
+    if (!orderTypeId) return;
+
+    setDeleting(true);
+    try {
+      await dispatch(deleteOrderType(orderTypeId));
+      toast.success('Deleted', 'Order type deleted successfully');
+      setShowDeleteConfirm(false);
+      setTimeout(() => {
+        if (onSaveSuccess) {
+          onSaveSuccess();
+        } else {
+          navigate(-1);
+        }
+      }, 1000);
+    } catch (err) {
+      toast.error('Error', 'Failed to delete order type');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
-    <div className="orderTypeContainer">
-      <div className="orderTypeHeader">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <BackButton />
-          <div>
-            <h2 className="orderTypeTitle">
-              {editMode ? 'Edit Order Type' : 'Create Order Type'}
-            </h2>
-            <p className="orderTypeSubtitle">
-              {editMode
-                ? `Editing: ${orderTypeData?.typeName || 'Order Type'}`
-                : 'Configure a new order type for your manufacturing system'
-              }
+    <div className="orderTypeContainer CreateForm">
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: 'white',
+            padding: '24px',
+            borderRadius: '12px',
+            maxWidth: '400px',
+            width: '90%',
+            textAlign: 'center'
+          }}>
+            <div style={{ fontSize: '48px', marginBottom: '16px' }}>⚠️</div>
+            <h3 style={{ margin: '0 0 8px 0', color: '#1f2937' }}>Delete Order Type?</h3>
+            <p style={{ color: '#6b7280', marginBottom: '24px' }}>
+              Are you sure you want to delete this order type? This action cannot be undone.
             </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(false)}
+                style={{ padding: '10px 24px', background: '#e5e7eb', color: '#374151', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleting}
+                style={{ padding: '10px 24px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+              >
+                {deleting ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
           </div>
+        </div>
+      )}
+
+      <div className="orderTypeHeader">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', justifyContent: 'space-between', width: '100%' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            {editMode && onCancel && (
+              <button
+                type="button"
+                onClick={onCancel}
+                style={{ padding: '8px 16px', background: '#6b7280', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+              >
+                ← Back to List
+              </button>
+            )}
+            <div>
+              <h2 className="orderTypeTitle">
+                {editMode ? 'Edit Order Type' : 'Create Order Type'}
+              </h2>
+              <p className="orderTypeSubtitle">
+                {editMode
+                  ? `Editing: ${orderTypeData?.typeName || 'Order Type'}`
+                  : 'Configure a new order type for your manufacturing system'
+                }
+              </p>
+            </div>
+          </div>
+          {editMode && (
+            <button
+              type="button"
+              onClick={() => setShowDeleteConfirm(true)}
+              style={{
+                padding: '8px 16px',
+                background: '#ef4444',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14zM10 11v6M14 11v6"/>
+              </svg>
+              Delete
+            </button>
+          )}
         </div>
       </div>
 
@@ -492,87 +566,121 @@ const CreateOrderType = () => {
           </div>
         </div>
 
-        {/* Approval Settings Section */}
+        {/* Allowed Option Types Section */}
         <div className="orderTypeSection">
-          <h3 className="orderTypeSectionTitle">Approval Settings</h3>
+          <h3 className="orderTypeSectionTitle">
+            Allowed Option Types
+            <FieldTooltip
+              content="Select which option types can be used when creating orders of this type. Leave empty to allow all option types."
+              position="right"
+            />
+          </h3>
 
           <div className="orderTypeFormRow">
-            <div className="orderTypeFormColumn">
-              <label className="orderTypeCheckboxLabel">
-                <input
-                  type="checkbox"
-                  checked={requiresApproval}
-                  onChange={(e) => setRequiresApproval(e.target.checked)}
-                />
-                <span>Requires Approval</span>
-                <FieldTooltip
-                  content="Orders of this type need approval before processing"
-                  position="right"
-                />
-              </label>
-            </div>
-
-            {requiresApproval && (
-              <div className="orderTypeFormColumn">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                  <label className="orderTypeInputLabel">Auto-Approve Below Quantity</label>
-                  <FieldTooltip
-                    content="Automatically approve orders below this quantity (optional)"
-                    position="right"
-                  />
+            <div style={{ width: '100%' }}>
+              {optionTypes.length === 0 ? (
+                <p style={{ color: '#666', fontStyle: 'italic' }}>Loading option types...</p>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '0.5rem' }}>
+                  {optionTypes.map((optionType: any) => (
+                    <label
+                      key={optionType._id}
+                      className="orderTypeCheckboxLabel"
+                      style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', padding: '0.5rem', border: '1px solid #e0e0e0', borderRadius: '4px', cursor: 'pointer' }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={allowedOptionTypes.includes(optionType._id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setAllowedOptionTypes([...allowedOptionTypes, optionType._id]);
+                          } else {
+                            setAllowedOptionTypes(allowedOptionTypes.filter(id => id !== optionType._id));
+                          }
+                        }}
+                        style={{ marginTop: '0.25rem', flexShrink: 0 }}
+                      />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 500 }}>{optionType.name}</div>
+                        {optionType.description && (
+                          <div style={{ fontSize: '0.75rem', color: '#666', marginTop: '0.125rem' }}>
+                            {optionType.description}
+                          </div>
+                        )}
+                      </div>
+                    </label>
+                  ))}
                 </div>
-                <input
-                  type="number"
-                  value={autoApproveBelow}
-                  onChange={(e) => setAutoApproveBelow(e.target.value)}
-                  className="orderTypeFormInput"
-                  placeholder="e.g., 100"
-                  min={1}
-                />
-              </div>
-            )}
+              )}
+              {optionTypes.length > 0 && (
+                <div style={{ marginTop: '0.75rem', fontSize: '0.875rem', color: '#666' }}>
+                  {allowedOptionTypes.length === 0
+                    ? "No option types selected (all option types will be allowed)"
+                    : `${allowedOptionTypes.length} option type(s) selected`
+                  }
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Validation Rules Section */}
+        {/* Linked Print Types Section */}
         <div className="orderTypeSection">
-          <h3 className="orderTypeSectionTitle">Quantity Validation</h3>
+          <h3 className="orderTypeSectionTitle">
+            Linked Print Types
+            <FieldTooltip
+              content="Select which print types can be used when printing orders of this type. Leave empty to allow all print types."
+              position="right"
+            />
+          </h3>
 
           <div className="orderTypeFormRow">
-            <div className="orderTypeFormColumn">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                <label className="orderTypeInputLabel">Minimum Quantity</label>
-                <FieldTooltip
-                  content="Minimum allowed quantity for orders of this type (optional)"
-                  position="right"
-                />
-              </div>
-              <input
-                type="number"
-                value={minQuantity}
-                onChange={(e) => setMinQuantity(e.target.value)}
-                className="orderTypeFormInput"
-                placeholder="e.g., 100"
-                min={1}
-              />
-            </div>
-
-            <div className="orderTypeFormColumn">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                <label className="orderTypeInputLabel">Maximum Quantity</label>
-                <FieldTooltip
-                  content="Maximum allowed quantity for orders of this type (optional)"
-                  position="right"
-                />
-              </div>
-              <input
-                type="number"
-                value={maxQuantity}
-                onChange={(e) => setMaxQuantity(e.target.value)}
-                className="orderTypeFormInput"
-                placeholder="e.g., 10000"
-                min={1}
-              />
+            <div style={{ width: '100%' }}>
+              {printTypes.length === 0 ? (
+                <p style={{ color: '#666', fontStyle: 'italic' }}>No print types available. Create print types first.</p>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '0.5rem' }}>
+                  {printTypes.map((printType: any) => (
+                    <label
+                      key={printType._id}
+                      className="orderTypeCheckboxLabel"
+                      style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', padding: '0.5rem', border: '1px solid #e0e0e0', borderRadius: '4px', cursor: 'pointer' }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={linkedPrintTypes.includes(printType._id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setLinkedPrintTypes([...linkedPrintTypes, printType._id]);
+                          } else {
+                            setLinkedPrintTypes(linkedPrintTypes.filter(id => id !== printType._id));
+                          }
+                        }}
+                        style={{ marginTop: '0.25rem', flexShrink: 0 }}
+                      />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 500 }}>{printType.typeName}</div>
+                        <div style={{ fontSize: '0.75rem', color: '#666' }}>
+                          Code: {printType.typeCode} | Paper: {printType.paperSize} | {printType.orientation}
+                        </div>
+                        {printType.description && (
+                          <div style={{ fontSize: '0.75rem', color: '#888', marginTop: '0.125rem' }}>
+                            {printType.description}
+                          </div>
+                        )}
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              )}
+              {printTypes.length > 0 && (
+                <div style={{ marginTop: '0.75rem', fontSize: '0.875rem', color: '#666' }}>
+                  {linkedPrintTypes.length === 0
+                    ? "No print types selected (all print types will be allowed)"
+                    : `${linkedPrintTypes.length} print type(s) selected`
+                  }
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -609,208 +717,55 @@ const CreateOrderType = () => {
                 position="right"
               />
             </label>
-          </div>
-        </div>
 
-        {/* Restrictions Configuration Section */}
-        <div className="orderTypeSection">
-          <h3 className="orderTypeSectionTitle">
-            Restrictions
-            <FieldTooltip
-              content="Select which product types and material types can be used with this order type. If none selected, all are allowed."
-              position="right"
-            />
-          </h3>
-
-          {/* Allowed Product Types - Checkboxes */}
-          <div style={{ marginBottom: '1.5rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-              <label className="orderTypeInputLabel" style={{ margin: 0, fontWeight: 600 }}>Allowed Product Types</label>
+            <label className="orderTypeCheckboxLabel">
+              <input
+                type="checkbox"
+                checked={projectBase}
+                onChange={(e) => setProjectBase(e.target.checked)}
+              />
+              <span>Project Base</span>
               <FieldTooltip
-                content="Check the product types that can be used with this order type. Unchecked items will not be available."
+                content="Enable project-based order tracking. When enabled, orders will support project workflows. When disabled, orders follow standard manufacturing workflows."
                 position="right"
               />
-              <span style={{
-                fontSize: '0.75rem',
-                padding: '0.25rem 0.5rem',
-                backgroundColor: allowedProductTypes.length === 0 ? '#10b981' : '#3b82f6',
-                color: 'white',
-                borderRadius: '0.25rem'
-              }}>
-                {allowedProductTypes.length === 0 ? 'All Allowed' : `${allowedProductTypes.length} Selected`}
-              </span>
-              {/* Select All / Clear All buttons */}
-              <button
-                type="button"
-                onClick={() => {
-                  if (productTypes?.length > 0) {
-                    setAllowedProductTypes(productTypes.map((pt: any) => pt._id));
-                  }
-                }}
-                style={{
-                  fontSize: '0.7rem',
-                  padding: '0.2rem 0.5rem',
-                  backgroundColor: '#3b82f6',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '0.25rem',
-                  cursor: 'pointer'
-                }}
-              >
-                Select All
-              </button>
-              <button
-                type="button"
-                onClick={() => setAllowedProductTypes([])}
-                style={{
-                  fontSize: '0.7rem',
-                  padding: '0.2rem 0.5rem',
-                  backgroundColor: '#6b7280',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '0.25rem',
-                  cursor: 'pointer'
-                }}
-              >
-                Clear
-              </button>
-            </div>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-              gap: '0.5rem',
-              padding: '0.75rem',
-              backgroundColor: '#f9fafb',
-              borderRadius: '0.375rem',
-              border: '1px solid #e5e7eb',
-              maxHeight: '150px',
-              overflowY: 'auto'
-            }}>
-              {productTypes?.length > 0 ? productTypes.map((pt: any) => (
-                <label key={pt._id} style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  cursor: 'pointer',
-                  padding: '0.5rem',
-                  backgroundColor: allowedProductTypes.includes(pt._id) ? '#dbeafe' : 'white',
-                  borderRadius: '0.25rem',
-                  border: allowedProductTypes.includes(pt._id) ? '1px solid #3b82f6' : '1px solid #e5e7eb',
-                  fontSize: '0.875rem'
-                }}>
-                  <input
-                    type="checkbox"
-                    checked={allowedProductTypes.includes(pt._id)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setAllowedProductTypes([...allowedProductTypes, pt._id]);
-                      } else {
-                        setAllowedProductTypes(allowedProductTypes.filter(id => id !== pt._id));
-                      }
-                    }}
-                    style={{ accentColor: '#FF6B35' }}
-                  />
-                  {pt.productTypeName || pt.name || pt.typeName}
-                </label>
-              )) : (
-                <span style={{ color: '#6b7280', fontSize: '0.875rem' }}>No product types available</span>
-              )}
-            </div>
+            </label>
           </div>
 
-          {/* Allowed Material Types - Checkboxes */}
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-              <label className="orderTypeInputLabel" style={{ margin: 0, fontWeight: 600 }}>Allowed Material Types</label>
-              <FieldTooltip
-                content="Check the material types that can be used with this order type. Unchecked items will not be available."
-                position="right"
-              />
-              <span style={{
-                fontSize: '0.75rem',
-                padding: '0.25rem 0.5rem',
-                backgroundColor: allowedMaterialTypes.length === 0 ? '#10b981' : '#3b82f6',
-                color: 'white',
-                borderRadius: '0.25rem'
-              }}>
-                {allowedMaterialTypes.length === 0 ? 'All Allowed' : `${allowedMaterialTypes.length} Selected`}
-              </span>
-              {/* Select All / Clear All buttons */}
+          {/* Active/Inactive Status */}
+          <div style={{ marginTop: '1rem' }}>
+            <label className="orderTypeInputLabel" style={{ marginBottom: '0.5rem', display: 'block' }}>Status</label>
+            <div style={{ display: 'flex', gap: '10px' }}>
               <button
                 type="button"
-                onClick={() => {
-                  if (materialTypes?.length > 0) {
-                    setAllowedMaterialTypes(materialTypes.map((mt: any) => mt._id));
-                  }
-                }}
+                onClick={() => setIsActive(true)}
                 style={{
-                  fontSize: '0.7rem',
-                  padding: '0.2rem 0.5rem',
-                  backgroundColor: '#3b82f6',
-                  color: 'white',
+                  padding: '8px 16px',
+                  background: isActive ? '#22c55e' : '#e5e7eb',
+                  color: isActive ? 'white' : '#666',
                   border: 'none',
-                  borderRadius: '0.25rem',
-                  cursor: 'pointer'
-                }}
-              >
-                Select All
-              </button>
-              <button
-                type="button"
-                onClick={() => setAllowedMaterialTypes([])}
-                style={{
-                  fontSize: '0.7rem',
-                  padding: '0.2rem 0.5rem',
-                  backgroundColor: '#6b7280',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '0.25rem',
-                  cursor: 'pointer'
-                }}
-              >
-                Clear
-              </button>
-            </div>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-              gap: '0.5rem',
-              padding: '0.75rem',
-              backgroundColor: '#f9fafb',
-              borderRadius: '0.375rem',
-              border: '1px solid #e5e7eb',
-              maxHeight: '150px',
-              overflowY: 'auto'
-            }}>
-              {materialTypes?.length > 0 ? materialTypes.map((mt: any) => (
-                <label key={mt._id} style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
+                  borderRadius: '6px',
                   cursor: 'pointer',
-                  padding: '0.5rem',
-                  backgroundColor: allowedMaterialTypes.includes(mt._id) ? '#dbeafe' : 'white',
-                  borderRadius: '0.25rem',
-                  border: allowedMaterialTypes.includes(mt._id) ? '1px solid #3b82f6' : '1px solid #e5e7eb',
-                  fontSize: '0.875rem'
-                }}>
-                  <input
-                    type="checkbox"
-                    checked={allowedMaterialTypes.includes(mt._id)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setAllowedMaterialTypes([...allowedMaterialTypes, mt._id]);
-                      } else {
-                        setAllowedMaterialTypes(allowedMaterialTypes.filter(id => id !== mt._id));
-                      }
-                    }}
-                    style={{ accentColor: '#FF6B35' }}
-                  />
-                  {mt.materialTypeName || mt.name || mt.typeName}
-                </label>
-              )) : (
-                <span style={{ color: '#6b7280', fontSize: '0.875rem' }}>No material types available</span>
-              )}
+                  fontWeight: isActive ? '600' : '400'
+                }}
+              >
+                Active
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsActive(false)}
+                style={{
+                  padding: '8px 16px',
+                  background: !isActive ? '#ef4444' : '#e5e7eb',
+                  color: !isActive ? 'white' : '#666',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: !isActive ? '600' : '400'
+                }}
+              >
+                Inactive
+              </button>
             </div>
           </div>
         </div>

@@ -1,7 +1,7 @@
 var __defProp = Object.defineProperty;
 var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
 var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
-import require$$0$5, { app, session, Notification, shell, ipcMain, BrowserWindow } from "electron";
+import require$$0$5, { app, session, globalShortcut, Notification, shell, ipcMain, BrowserWindow } from "electron";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import fs from "node:fs";
@@ -2929,6 +2929,18 @@ app.whenReady().then(() => {
     return allowedPermissions.includes(permission);
   });
   const win2 = createWindow();
+  const refreshShortcut = process.platform === "darwin" ? "Command+R" : "Control+R";
+  const registered = globalShortcut.register(refreshShortcut, () => {
+    log.info("Refresh shortcut triggered - clearing storage and reloading");
+    if (win2 && !win2.isDestroyed()) {
+      win2.webContents.send("clear-storage-and-reload");
+    }
+  });
+  if (registered) {
+    log.info(`Refresh shortcut registered: ${refreshShortcut}`);
+  } else {
+    log.error(`Failed to register refresh shortcut: ${refreshShortcut}`);
+  }
   const getDownloadUrl = () => {
     const baseUrl = "https://27infinity.in/products";
     if (process.platform === "darwin") {
@@ -3143,6 +3155,10 @@ app.on("activate", () => {
       app.whenReady().then(createWindow);
     }
   }
+});
+app.on("will-quit", () => {
+  globalShortcut.unregisterAll();
+  log.info("All global shortcuts unregistered");
 });
 console.log(`App root: ${process.env.APP_ROOT}`);
 export {

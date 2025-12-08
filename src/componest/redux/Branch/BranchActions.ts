@@ -75,9 +75,9 @@ export const fetchBranches = () => {
       let branches: any[] = [];
       let branchId: string | null = null;
 
-      if (role === "admin") {
+      if (role === "admin" || role === "master_admin") {
         url = `${baseUrl}/branch/branches`;
-        
+
         const { data } = await axios.get(url, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -85,23 +85,23 @@ export const fetchBranches = () => {
           },
         });
 
-        console.log("Admin API Response:", data);
+        console.log(`${role} API Response:`, data);
 
         // ✅ Extract branches array from response
         branches = data.branches || data || [];
-        
+
         // ✅ Ensure branches is an array
         if (!Array.isArray(branches)) {
           console.error("❌ Invalid branches data:", branches);
           branches = [];
         }
 
-        console.log(`✅ Found ${branches.length} branches for admin`);
+        console.log(`✅ Found ${branches.length} branches for ${role}`);
 
         // Get first branch ID if available
         if (branches.length > 0) {
           branchId = branches[0]._id || branches[0].id;
-          console.log("Admin default branch ID:", branchId);
+          console.log(`${role} default branch ID:`, branchId);
         }
 
       } else if (role === "manager") {

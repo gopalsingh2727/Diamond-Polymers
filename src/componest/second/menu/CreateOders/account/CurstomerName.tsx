@@ -1,7 +1,7 @@
 import React, { useState, forwardRef, useImperativeHandle, useEffect } from "react";
 import Data from "../../../../allCompones/date";
 import OptimizedSuggestions from "../SuggestionInput/OptimizedSuggestions";
-import "../materialAndProduct/materialAndProduct.css";
+
 import './curstomerName.css';
 
 interface CustomerData {
@@ -45,7 +45,7 @@ const CustomerName = forwardRef<CustomerNameRef, CustomerNameProps>(({ initialDa
 
   const [status, setStatus] = useState<string>('Wait for Approval');
   const [showCustomerSuggestions, setShowCustomerSuggestions] = useState(false);
-  
+
   console.log('🔍 CustomerName - Initial data:', initialData);
   console.log('🔍 CustomerName - Is edit mode:', isEditMode);
 
@@ -53,25 +53,25 @@ const CustomerName = forwardRef<CustomerNameRef, CustomerNameProps>(({ initialDa
   useEffect(() => {
     if (isEditMode && initialData) {
       console.log('🔄 Loading customer data for edit:', initialData);
-      
+
       // Handle different possible data structures
       const customer = initialData.customer || initialData;
-      
+
       setCustomerData({
         _id: customer._id || initialData.customerId || '',
-        name: customer.name || 
-              customer.companyName || 
-              initialData.companyName || 
+        name: customer.name ||
+              customer.companyName ||
+              initialData.companyName ||
               (customer.firstName && customer.lastName ? `${customer.firstName} ${customer.lastName}`.trim() : '') ||
               '',
         companyName: customer.companyName || initialData.companyName || '',
-        address: customer.address || 
-                 customer.address1 || 
+        address: customer.address ||
+                 customer.address1 ||
                  (customer.address1 && customer.address2 ? `${customer.address1} ${customer.address2}`.trim() : customer.address1 || '') ||
                  '',
-        phone: customer.phone || 
-               customer.phone1 || 
-               customer.telephone || 
+        phone: customer.phone ||
+               customer.phone1 ||
+               customer.telephone ||
                initialData.customerPhone ||
                '',
         whatsapp: customer.whatsapp || '',
@@ -93,31 +93,31 @@ const CustomerName = forwardRef<CustomerNameRef, CustomerNameProps>(({ initialDa
 
 const handleCustomerSelect = (account: any) => {
   console.log('Customer selected:', account);
-  
+
   // Extract username from email as fallback for name
-  const emailUsername = account.email 
+  const emailUsername = account.email
     ? account.email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())
     : '';
-  
+
   setCustomerData({
     _id: account._id || '',
     // Handle incomplete backend data with multiple fallbacks
-    name: account.accountName || 
+    name: account.accountName ||
           (account.firstName && account.lastName ? `${account.firstName} ${account.lastName}`.trim() : '') ||
           account.firstName ||
-          account.companyName || 
+          account.companyName ||
           emailUsername ||
           `Customer ${account._id?.slice(-6) || ''}` ||
           '',
     companyName: account.companyName || account.company || "",
-    address: account.address || 
+    address: account.address ||
              (account.address1 && account.address2 ? `${account.address1} ${account.address2}`.trim() : account.address1 || '') ||
              "",
-    phone: account.phoneNumber || 
-           account.phone1 || 
-           account.phone || 
-           account.telephone || 
-           account.mobile || 
+    phone: account.phoneNumber ||
+           account.phone1 ||
+           account.phone ||
+           account.telephone ||
+           account.mobile ||
            "",
     whatsapp: account.whatsapp || "",
     email: account.email || "",
@@ -156,7 +156,7 @@ const handleCustomerSelect = (account: any) => {
     getCustomerData: () => ({ ...customerData, status }),
     resetCustomerData,
   }));
-  
+
 
   return (
     <div>
@@ -167,54 +167,38 @@ const handleCustomerSelect = (account: any) => {
               ):(
                 <p></p>
               )}</h5><h6>
-             
-            
-                   
-          
+
+
+
+
           </h6>
         </label>
         <div className="customerInputRow">
-             
+
              {isEditMode && initialData?.createdAt ? (
              <div className="createDateAndupdateDate">
                <span className="edit-order-id">{initialData.createdAt}</span>
                {/* <span className="edit-order-id">{initialData.updatedAt}</span> */}
              </div>
-             
-                   
+
+
             ) : (
               <Data  />
             )}
           <div className="customerImage">
-             
+
             <div className="customerImageDiv">
               {customerData.imageUrl && (
-                <img 
-                  src={customerData.imageUrl} 
-                  alt="Customer" 
+                <img
+                  src={customerData.imageUrl}
+                  alt="Customer"
                   onError={(e) => {
                     e.currentTarget.style.display = 'none';
                   }}
                 />
               )}
             </div>
-            <div>
-              <h6 className ="ManufacturingStepsTitel">Status:</h6>
-              <select
-                name="overallStatus"
-                id="myDropdown"
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-              >
-                <option value="Wait for Approval" className ="ManufacturingStepsTitel">Wait for Approval</option>
-                <option value="pending" className ="ManufacturingStepsTitel">Pending</option>
-                <option value="approved" className ="ManufacturingStepsTitel">Approved</option>
-                <option value="in_progress">In Progress</option>
-                <option value="completed">Completed</option>
-                <option value="dispatched">Dispatched</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
-            </div>
+         
           </div>
         </div>
       </div>
@@ -245,10 +229,10 @@ const handleCustomerSelect = (account: any) => {
         </div>
 
         <div>
-          <input 
-            type="hidden" 
-            name="customerId" 
-            value={customerData._id} 
+          <input
+            type="hidden"
+            name="customerId"
+            value={customerData._id}
           />
           <input
             name="address"

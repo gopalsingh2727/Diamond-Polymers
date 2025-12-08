@@ -17,9 +17,22 @@ import {
   CLEAR_ERROR,
   SET_SUCCESS_MESSAGE,
   CLEAR_SUCCESS_MESSAGE,
-  GET_ACCOUNT_ORDERS_REQUEST,GET_ACCOUNT_ORDERS_SUCCESS ,GET_ACCOUNT_ORDERS_FAILURE
-
-
+  GET_ACCOUNT_ORDERS_REQUEST,
+  GET_ACCOUNT_ORDERS_SUCCESS,
+  GET_ACCOUNT_ORDERS_FAILURE,
+  FETCH_ORDER_MACHINE_TABLE_REQUEST,
+  FETCH_ORDER_MACHINE_TABLE_SUCCESS,
+  FETCH_ORDER_MACHINE_TABLE_FAILURE,
+  CLEAR_ORDER_MACHINE_TABLE,
+  ADD_MACHINE_TABLE_ROW_REQUEST,
+  ADD_MACHINE_TABLE_ROW_SUCCESS,
+  ADD_MACHINE_TABLE_ROW_FAILURE,
+  UPDATE_MACHINE_TABLE_ROW_REQUEST,
+  UPDATE_MACHINE_TABLE_ROW_SUCCESS,
+  UPDATE_MACHINE_TABLE_ROW_FAILURE,
+  DELETE_MACHINE_TABLE_ROW_REQUEST,
+  DELETE_MACHINE_TABLE_ROW_SUCCESS,
+  DELETE_MACHINE_TABLE_ROW_FAILURE
 } from './OdersContants';
 import { RootState } from '../rootReducer';
 
@@ -144,21 +157,41 @@ const getCurrentUser = () => {
 
 const getCurrentBranch = () => {
   try {
+    console.log("🔍 Attempting to get branch ID...");
+
     // First try to get from user token
     const user = getCurrentUser();
+    console.log("👤 User from token:", { id: user.id, role: user.role, branchId: user.branchId || 'NOT FOUND' });
+
     if (user.branchId) {
+      console.log("✅ Branch ID found in token:", user.branchId);
       return { id: user.branchId };
     }
 
-    // Fallback to localStorage
-    const branchId = localStorage.getItem("selectedBranch");
+    // Fallback to localStorage - check multiple possible keys
+    console.log("🔍 Checking localStorage for branch ID...");
+    const branchIdFromSelectedBranch = localStorage.getItem("selectedBranch");
+    const branchIdFromBranchId = localStorage.getItem("branchId");
+    const branchIdFromCurrentBranchId = localStorage.getItem("currentBranchId");
+
+    console.log("📦 localStorage values:", {
+      selectedBranch: branchIdFromSelectedBranch || 'NOT FOUND',
+      branchId: branchIdFromBranchId || 'NOT FOUND',
+      currentBranchId: branchIdFromCurrentBranchId || 'NOT FOUND'
+    });
+
+    const branchId = branchIdFromSelectedBranch || branchIdFromBranchId || branchIdFromCurrentBranchId;
+
     if (!branchId) {
-      console.error("Branch ID not found in localStorage or token");
-      throw new Error("Branch ID not found");
+      console.error("❌ Branch ID not found in localStorage or token");
+      console.error("💡 Tip: Make sure you're logged in and your account has a branch assigned");
+      throw new Error("Branch ID not found. Please ensure you're logged in and have a branch assigned to your account.");
     }
+
+    console.log("✅ Branch ID from localStorage:", branchId);
     return { id: branchId };
   } catch (error) {
-    console.error("Error getting current branch:", error);
+    console.error("❌ Error getting current branch:", error);
     throw error;
   }
 };
@@ -181,17 +214,23 @@ const collectDataFromDOM = (): SchemaAlignedOrderData => {
   try {
     console.log("Starting enhanced DOM data collection...");
 
-    // Collect Customer Data from DOM
+    // Collect Customer Data from DOM or localStorage
     const customerIdInput = document.querySelector('input[name="customerId"]') as HTMLInputElement;
-    console.log("Collected Customer ID:", customerIdInput?.value);
-    console.log("Customer ID input found:", !!customerIdInput);
+    console.log("🔍 DEBUG - Customer ID input element found:", !!customerIdInput);
+    console.log("🔍 DEBUG - Customer ID input value:", customerIdInput?.value);
 
-    if (!customerIdInput) {
-      throw new Error("Customer selection component not found. Please refresh the page and try again.");
+    let customerId = customerIdInput?.value || '';
+
+    // Fallback to localStorage if DOM input is empty
+    if (!customerId || customerId.trim() === '') {
+      customerId = localStorage.getItem('customerId') || '';
+      console.log("✅ Customer ID from localStorage:", customerId);
+    } else {
+      console.log("✅ Customer ID from DOM input:", customerId);
     }
 
-    if (!customerIdInput.value || customerIdInput.value.trim() === '') {
-      throw new Error("Please select a customer before saving the order.");
+    if (!customerId || customerId.trim() === '') {
+      throw new Error("Please select a customer from the dropdown suggestions before saving. Don't just type a name - you must click on a customer from the list.");
     }
 
     // Collect Order Type ID from hidden input
@@ -204,109 +243,12 @@ const collectDataFromDOM = (): SchemaAlignedOrderData => {
     const productSpecId = productSpecIdInput?.value || '';
     console.log("Collected Product Spec ID:", productSpecId);
 
-    // ✅ ADDED: Collect Material Spec ID from hidden input
-    const materialSpecIdInput = document.querySelector('input[name="materialSpecId"]') as HTMLInputElement;
-    const materialSpecId = materialSpecIdInput?.value || '';
-    console.log("Collected Material Spec ID:", materialSpecId);
-
-    // Collect Main Material IDs from hidden inputs - Enhanced search
-    let mainMaterialIdInput = document.querySelector('input[name="mainMaterialId"]') as HTMLInputElement;
-    let materialTypeIdInput = document.querySelector('input[name="materialTypeId"]') as HTMLInputElement;
-
-    // Fallback: Try different selectors if hidden inputs are not found
-    if (!mainMaterialIdInput) {
-      mainMaterialIdInput = document.querySelector('input[type="hidden"][name="mainMaterialId"]') as HTMLInputElement;
-    }
-    if (!materialTypeIdInput) {
-      materialTypeIdInput = document.querySelector('input[type="hidden"][name="materialTypeId"]') as HTMLInputElement;
-    }
-
-    // If still not found, try to get from data attributes or other sources
-    let mainMaterialId = mainMaterialIdInput?.value || '';
-    let materialTypeId = materialTypeIdInput?.value || '';
-
-    // Additional fallback - try to get from window object if stored there
-    if (!mainMaterialId || !materialTypeId) {
-      console.warn("Material IDs not found in hidden inputs, trying alternative methods...");
-      const windowAny = window as any;
-      if (windowAny.currentMaterialData) {
-        mainMaterialId = mainMaterialId || windowAny.currentMaterialData.mainMaterialId || '';
-        materialTypeId = materialTypeId || windowAny.currentMaterialData.materialTypeId || '';
-        console.log("Got IDs from window object:", { mainMaterialId, materialTypeId });
-      }
-    }
-
-    // Collect Material Data from DOM
-    const widthInput = document.querySelector('input[placeholder="Enter Width"]') as HTMLInputElement;
-    const heightInput = document.querySelector('input[placeholder="Enter Height"]') as HTMLInputElement;
-    const gaugeInput = document.querySelector('input[placeholder="Enter Gauge/Micron"]') as HTMLInputElement;
-    const totalWeightInput = document.querySelector('input[placeholder="Total Weight"]') as HTMLInputElement;
-
-    // Collect optional fields
-    const bottomGussetInput = document.querySelector('input[placeholder="Enter Bottom Gusset"]') as HTMLInputElement;
-    const flapInput = document.querySelector('input[placeholder="Enter Flap"]') as HTMLInputElement;
-    const airHoleInput = document.querySelector('input[placeholder="Enter Air Hole"]') as HTMLInputElement;
-
-    // Collect Sealing Type
-    const sealingTypeInput = document.querySelector('select[name="sealingType"]') as HTMLSelectElement;
+    // ✅ REMOVED: All material-related field collection (materialId, materialTypeId, Width, Height, etc.)
 
     // Collect Notes
     const notesTextarea = document.querySelector('textarea[placeholder="Write your note here..."]') as HTMLTextAreaElement;
 
-    // Enhanced Mixing Data Collection
-    const mixMaterial: Array<{
-      materialId: string;
-      materialName: string;
-      materialType: string;
-      materialWeight: number;
-      percentage: number;
-    }> = [];
-
-    console.log("Collecting mixing materials...");
-    const mixingRows = document.querySelectorAll('.SaveMixingstepRow');
-    console.log("Found mixing rows:", mixingRows.length);
-
-    if (mixingRows.length > 0) {
-      mixingRows.forEach((row, index) => {
-        const cells = row.querySelectorAll('span');
-        console.log(`Row ${index} cells:`, cells.length);
-
-        if (cells.length >= 5) {
-          // Try multiple ways to get the material ID
-          let hiddenMaterialId = document.querySelector(`input[name="mixMaterialId_${index}"]`) as HTMLInputElement;
-
-          // Alternative selectors for hidden material ID
-          if (!hiddenMaterialId) {
-            hiddenMaterialId = document.querySelector(`input[type="hidden"][name="mixMaterialId_${index}"]`) as HTMLInputElement;
-          }
-
-          const materialName = cells[1]?.textContent?.trim() || '';
-          const materialType = cells[2]?.textContent?.trim() || '';
-          const weight = cells[3]?.textContent?.trim() || '';
-          const percentage = cells[4]?.textContent?.replace('%', '')?.trim() || '';
-
-          console.log(`Mix material ${index}:`, {
-            materialId: hiddenMaterialId?.value,
-            materialName,
-            materialType,
-            weight,
-            percentage
-          });
-
-          if (materialName && weight && !isNaN(Number(weight))) {
-            mixMaterial.push({
-              materialId: hiddenMaterialId?.value || '',
-              materialName: materialName,
-              materialType: materialType,
-              materialWeight: Number(weight),
-              percentage: Number(percentage) || 0
-            });
-          }
-        }
-      });
-    }
-
-    console.log("Final collected mix materials:", mixMaterial);
+    // ✅ REMOVED: Mix material collection
 
     // Enhanced Manufacturing Steps Collection with Multiple Methods
     const steps: Array<{
@@ -459,7 +401,11 @@ const collectDataFromDOM = (): SchemaAlignedOrderData => {
 
     // Get required system data
     const currentUser = getCurrentUser();
+    console.log("🔍 DEBUG - Current user:", currentUser);
+
     const currentBranch = getCurrentBranch();
+    console.log("🔍 DEBUG - Current branch:", currentBranch);
+
     const productInfinityId = getProductInfinityId();
 
     // Collect priority and status from form
@@ -468,22 +414,10 @@ const collectDataFromDOM = (): SchemaAlignedOrderData => {
 
     // Structure the order data
     const orderData: SchemaAlignedOrderData = {
-      customerId: customerIdInput.value,
+      customerId: customerId, // ✅ FIXED: Use variable with localStorage fallback
       orderTypeId: orderTypeId,
       productSpecId: productSpecId || undefined,  // ✅ ADDED: Product Spec ID
-      materialSpecId: materialSpecId || undefined,  // ✅ ADDED: Material Spec ID
-      materialId: mainMaterialId,
-      materialTypeId: materialTypeId,
-      materialWeight: Number(totalWeightInput?.value) || 0,
-      Width: Number(widthInput?.value) || 0,
-      Height: Number(heightInput?.value) || 0,
-      Thickness: Number(gaugeInput?.value) || 0,
-      SealingType: sealingTypeInput?.value || '',
-      BottomGusset: bottomGussetInput?.value || '',
-      AirHole: airHoleInput?.value || '',
-      Flap: flapInput?.value || '',
-      Printing: false,
-      mixMaterial: mixMaterial,
+      // ✅ REMOVED: All material fields (materialId, materialTypeId, materialWeight, Width, Height, Thickness, SealingType, BottomGusset, AirHole, Flap, Printing, mixMaterial)
       steps: steps,
       branchId: currentBranch?.id || '',
       createdBy: currentUser.id, // Use actual user ID from token
@@ -497,9 +431,6 @@ const collectDataFromDOM = (): SchemaAlignedOrderData => {
     console.log("=== FINAL ORDER DATA ===");
     console.log("Complete Order Data:", JSON.stringify(orderData, null, 2));
     console.log("Customer ID:", orderData.customerId);
-    console.log("Material ID:", orderData.materialId);
-    console.log("Material Type ID:", orderData.materialTypeId);
-    console.log("Mix Materials Count:", orderData.mixMaterial.length);
     console.log("Steps Count:", orderData.steps.length);
     console.log("Machines with IDs:", orderData.steps.flatMap(s => s.machines).filter(m => m.machineId).length);
     console.log("Created By (from token):", orderData.createdBy);
@@ -719,105 +650,34 @@ const validateOrderData = (orderData: SchemaAlignedOrderData, orderTypeConfig?: 
     orderTypeConfig: orderTypeConfig ? 'provided' : 'not provided'
   });
 
-  // Required field validation - ALWAYS required
-  if (!orderData.customerId?.trim()) {
-    errors.push("Customer is required");
+  // ✅ SIMPLIFIED: Only customerId and branchId are required
+  // Check customerId
+  if (!orderData.customerId || (typeof orderData.customerId === 'string' && orderData.customerId.trim() === '')) {
+    console.error("Validation failed: Customer ID is missing or empty", orderData.customerId);
+    errors.push("Customer is required - Please select a customer from the dropdown list (don't just type a name)");
   } else if (!isValidObjectId(orderData.customerId)) {
+    console.error("Validation failed: Invalid customer ID format", orderData.customerId);
     errors.push("Invalid customer ID format");
   }
 
-  if (!orderData.branchId?.trim()) {
-    errors.push("Branch ID is required");
+  // Check branchId
+  if (!orderData.branchId || (typeof orderData.branchId === 'string' && orderData.branchId.trim() === '')) {
+    console.error("Validation failed: Branch ID is missing or empty", orderData.branchId);
+    errors.push("Branch ID is required. Please ensure you're logged in correctly and have a branch assigned.");
   } else if (!isValidObjectId(orderData.branchId)) {
+    console.error("Validation failed: Invalid branch ID format", orderData.branchId);
     errors.push("Invalid branch ID format");
   }
 
-  if (!orderData.createdBy?.trim()) {
-    errors.push("Created by user ID is required");
-  } else if (!isValidObjectId(orderData.createdBy)) {
-    errors.push("Invalid creator user ID format");
-  }
+  // ✅ REMOVED: createdBy validation - will be set automatically by backend
+  // ✅ REMOVED: createdByRole validation - will be set automatically by backend
+  // ✅ REMOVED: All material validation (materialId, materialTypeId, materialWeight, Width, Height, Thickness)
+  // ✅ REMOVED: Mix materials validation
+  // ✅ REMOVED: Steps validation
+  // ✅ REMOVED: Product validation
 
-  if (!orderData.createdByRole || !['admin', 'manager'].includes(orderData.createdByRole)) {
-    errors.push("Valid creator role is required");
-  }
-
-  // Material section validation - ONLY if material section is enabled
-  if (isMaterialEnabled) {
-    if (!orderData.materialId?.trim()) {
-      errors.push("Main Material ID is required");
-    } else if (!isValidObjectId(orderData.materialId)) {
-      errors.push("Invalid material ID format");
-    }
-
-    if (!orderData.materialTypeId?.trim()) {
-      errors.push("Material Type ID is required");
-    } else if (!isValidObjectId(orderData.materialTypeId)) {
-      errors.push("Invalid material type ID format");
-    }
-
-    if (!orderData.materialWeight || orderData.materialWeight <= 0) {
-      errors.push("Valid material weight is required");
-    }
-
-    if (!orderData.Width || orderData.Width <= 0) {
-      errors.push("Valid width is required");
-    }
-
-    if (!orderData.Height || orderData.Height <= 0) {
-      errors.push("Valid height is required");
-    }
-
-    if (!orderData.Thickness || orderData.Thickness <= 0) {
-      errors.push("Valid thickness is required");
-    }
-
-    // Validate mix materials only if material section is enabled
-    if (orderData.mixMaterial && orderData.mixMaterial.length > 0) {
-      orderData.mixMaterial.forEach((mix, index) => {
-        if (mix.materialId && !isValidObjectId(mix.materialId)) {
-          errors.push(`Mix material ${index + 1}: Invalid material ID format`);
-        }
-        if (!mix.materialWeight || mix.materialWeight <= 0) {
-          errors.push(`Mix material ${index + 1}: Valid weight is required`);
-        }
-      });
-    }
-  }
-
-  // Steps section validation - ONLY if steps section is enabled
-  if (isStepsEnabled) {
-    if (!orderData.steps || orderData.steps.length === 0) {
-      errors.push("At least one manufacturing step is required");
-    } else {
-      orderData.steps.forEach((step, stepIndex) => {
-        if (!step.stepId || !isValidObjectId(step.stepId)) {
-          errors.push(`Step ${stepIndex + 1}: Valid step ID is required`);
-        }
-
-        if (!step.machines || step.machines.length === 0) {
-          errors.push(`Step ${stepIndex + 1}: At least one machine is required`);
-        } else {
-          step.machines.forEach((machine, machineIndex) => {
-            if (machine.machineId && !isValidObjectId(machine.machineId)) {
-              errors.push(`Step ${stepIndex + 1}, Machine ${machineIndex + 1}: Invalid machine ID format`);
-            }
-            if (machine.operatorId && !isValidObjectId(machine.operatorId)) {
-              errors.push(`Step ${stepIndex + 1}, Machine ${machineIndex + 1}: Invalid operator ID format`);
-            }
-          });
-        }
-      });
-    }
-  }
-
-  // Product section - product27InfinityId only required if product section is enabled
-  if (isProductEnabled) {
-    if (!orderData.product27InfinityId?.trim()) {
-      // Make this optional for now since it's often auto-generated
-      console.log("Note: Product 27 Infinity ID not provided");
-    }
-  }
+  // All other fields are optional and not validated on frontend
+  // No additional validation needed - backend will handle all other fields
 
   console.log("Validation result:", { isValid: errors.length === 0, errors });
   return {
@@ -881,9 +741,42 @@ export const saveOrder = (orderData?: SchemaAlignedOrderData, orderTypeConfig?: 
       throw new Error("Authentication token not found");
     }
 
-    let finalOrderData = orderData;
-    if (!finalOrderData) {
-      finalOrderData = collectDataFromDOM();
+    // Always collect from DOM (for customer, branch, user data, etc.)
+    // Then merge with provided orderData (for options, etc.)
+    let domData: SchemaAlignedOrderData | null = null;
+    try {
+      domData = collectDataFromDOM();
+      console.log("📋 DOM data collected:", {
+        customerId: domData.customerId,
+        branchId: domData.branchId,
+        createdBy: domData.createdBy
+      });
+    } catch (error) {
+      console.warn("⚠️ Could not collect all data from DOM:", error);
+      // Continue with provided orderData only
+    }
+
+    // Merge: DOM data as base, then overlay provided orderData
+    let finalOrderData: SchemaAlignedOrderData;
+    if (domData && orderData) {
+      console.log("📋 Merging provided orderData with DOM data");
+      finalOrderData = {
+        ...domData,
+        ...orderData,
+        // Ensure critical fields from DOM are not overwritten by empty values
+        customerId: orderData.customerId || domData.customerId,
+        branchId: orderData.branchId || domData.branchId,
+        createdBy: orderData.createdBy || domData.createdBy,
+        createdByRole: orderData.createdByRole || domData.createdByRole,
+      };
+    } else if (domData) {
+      console.log("📋 Using DOM data only");
+      finalOrderData = domData;
+    } else if (orderData) {
+      console.log("📋 Using provided orderData only (DOM collection failed)");
+      finalOrderData = orderData as SchemaAlignedOrderData;
+    } else {
+      throw new Error("No order data available - neither from DOM nor provided");
     }
 
     // Get order type config from Redux if not provided
@@ -900,6 +793,13 @@ export const saveOrder = (orderData?: SchemaAlignedOrderData, orderTypeConfig?: 
       );
       console.log('📋 Order type config from Redux:', finalOrderTypeConfig?.typeName || 'not found');
     }
+
+    // Debug: Show data before validation
+    console.log("🔍 DEBUG - Data before validation:");
+    console.log("  Customer ID:", finalOrderData.customerId);
+    console.log("  Branch ID:", finalOrderData.branchId);
+    console.log("  Created By:", finalOrderData.createdBy);
+    console.log("  Created By Role:", finalOrderData.createdByRole);
 
     const validation = validateOrderData(finalOrderData, finalOrderTypeConfig);
     console.log("Validation Result:", validation);
@@ -919,12 +819,104 @@ export const saveOrder = (orderData?: SchemaAlignedOrderData, orderTypeConfig?: 
     });
     console.log("======================");
 
-    // API call
-    const response = await axios.post(
-      `${baseUrl}/orders`,
-      finalOrderData,
-      { headers: getAuthHeaders(token) }
-    );
+    // Check if there are any File objects in the order data
+    let hasFiles = false;
+    const fileMap = new Map<string, File>(); // Map to store files with their field names
+
+    if (finalOrderData.options && Array.isArray(finalOrderData.options)) {
+      finalOrderData.options.forEach((option: any, optionIndex: number) => {
+        if (option.specificationValues && Array.isArray(option.specificationValues)) {
+          option.specificationValues.forEach((spec: any) => {
+            // Check if value is a File object (has lastModified, size, type, name properties)
+            if (spec.value && typeof spec.value === 'object' &&
+                'lastModified' in spec.value && 'size' in spec.value &&
+                'type' in spec.value && 'name' in spec.value) {
+              hasFiles = true;
+              const fieldName = `file_option_${optionIndex}_spec_${spec.name}`;
+              fileMap.set(fieldName, spec.value as File);
+              console.log(`📎 Found File object for option ${optionIndex}, spec "${spec.name}"`);
+            }
+          });
+        }
+      });
+    }
+
+    // API call - use FormData if files are present, otherwise JSON
+    let response;
+    if (hasFiles && fileMap.size > 0) {
+      console.log(`📤 Sending multipart/form-data with ${fileMap.size} file(s)`);
+
+      // Build FormData
+      const formData = new FormData();
+
+      // Add all non-file fields as JSON strings
+      Object.keys(finalOrderData).forEach((key) => {
+        if (key === 'options') {
+          // Handle options specially - keep as array but mark File objects for backend
+          const optionsWithoutFiles = finalOrderData.options.map((option: any, optionIndex: number) => {
+            const optionCopy = { ...option };
+
+            if (option.specificationValues && Array.isArray(option.specificationValues)) {
+              // Keep specificationValues as array, but mark File objects for backend processing
+              optionCopy.specificationValues = option.specificationValues.map((spec: any) => {
+                // Check if value is a File object
+                if (spec.value && typeof spec.value === 'object' &&
+                    'lastModified' in spec.value && 'size' in spec.value) {
+                  // Mark as file upload pending (backend will fill this in)
+                  return {
+                    name: spec.name,
+                    value: null, // Backend will replace with Firebase URL
+                    unit: spec.unit || '',
+                    dataType: spec.dataType || 'string'
+                  };
+                } else {
+                  // Keep the spec as-is
+                  return spec;
+                }
+              });
+            }
+
+            return optionCopy;
+          });
+
+          formData.append('options', JSON.stringify(optionsWithoutFiles));
+        } else if (typeof finalOrderData[key as keyof typeof finalOrderData] === 'object') {
+          formData.append(key, JSON.stringify(finalOrderData[key as keyof typeof finalOrderData]));
+        } else {
+          formData.append(key, String(finalOrderData[key as keyof typeof finalOrderData]));
+        }
+      });
+
+      // Add files
+      fileMap.forEach((file, fieldName) => {
+        formData.append(fieldName, file);
+        console.log(`📎 Added file to FormData: ${fieldName} (${file.name}, ${file.size} bytes)`);
+      });
+
+      // Send multipart/form-data
+      response = await axios.post(
+        `${baseUrl}/orders`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "x-api-key": API_KEY,
+            // Don't set Content-Type - let axios set it with boundary
+          }
+        }
+      );
+
+      console.log(`✅ Multipart request sent successfully`);
+    } else {
+      console.log(`📄 Sending JSON request (no files)`);
+
+      // Send JSON as before
+      response = await axios.post(
+        `${baseUrl}/orders`,
+        finalOrderData,
+        { headers: getAuthHeaders(token) }
+      );
+    }
 
     const result = response.data;
     console.log("API Response:", result);
@@ -1032,7 +1024,29 @@ export const clearSuccessMessage = (): OrderActionTypes => ({
 const getToken = (getState: () => RootState) =>
   getState().auth?.token || localStorage.getItem("authToken");
 
-const getBranchId = () => localStorage.getItem("selectedBranch");
+// ✅ FIXED: Get branchId from multiple sources (token, auth state, localStorage)
+const getBranchId = (getState: () => RootState) => {
+  // 1. First check auth state (for managers, branchId comes from login)
+  const authState = getState().auth as any;
+  const authBranchId = authState?.user?.branchId;
+  if (authBranchId) return authBranchId;
+
+  // 2. Try to get from JWT token
+  try {
+    const token = localStorage.getItem("authToken");
+    if (token) {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      if (payload.branchId) return payload.branchId;
+    }
+  } catch (e) {
+    console.warn("Could not decode token for branchId");
+  }
+
+  // 3. Fallback to localStorage (for admin/master admin who select branch)
+  return localStorage.getItem("selectedBranch") ||
+         localStorage.getItem("branchId") ||
+         localStorage.getItem("currentBranchId");
+};
 
 // ✅ FIXED: Made accountId optional so Daybook can filter by date only
 interface OrderFilters {
@@ -1060,9 +1074,9 @@ export const fetchOrders= (filters?: OrderFilters) =>
       
       const token = getToken(getState);
       console.log(token );
-      
-      const branchId = getBranchId();
-      const userRole = getState().auth?.user?.role;
+
+      const branchId = getBranchId(getState);
+      const userRole = (getState().auth as any)?.user?.role;
       
       console.log("🔑 Authentication details:", {
         hasToken: !!token,
@@ -1075,14 +1089,17 @@ export const fetchOrders= (filters?: OrderFilters) =>
         throw new Error("Authentication token missing. Please log in again.");
       }
       
+      // Check if user is admin type (admin or masterAdmin)
+      const isAdminRole = userRole === 'admin' || userRole === 'masterAdmin';
+
       // For non-admin users, branchId is required
-      if (userRole !== 'admin' && !branchId) {
+      if (!isAdminRole && !branchId) {
         throw new Error("Branch ID missing. Please select a branch.");
       }
 
       // Type-safe filter cleaning
       const cleanFilters: Record<string, string | number> = {};
-      
+
       if (filters) {
         Object.entries(filters).forEach(([key, value]) => {
           if (value !== undefined && value !== null && value !== '') {
@@ -1091,8 +1108,8 @@ export const fetchOrders= (filters?: OrderFilters) =>
         });
       }
 
-      // Add branchId for non-admin users
-      if (userRole !== 'admin' && !cleanFilters.branchId && branchId) {
+      // Add branchId for non-admin users (managers must filter by their branch)
+      if (!isAdminRole && !cleanFilters.branchId && branchId) {
         cleanFilters.branchId = branchId;
       }
 
@@ -1251,16 +1268,37 @@ export const updateOrder = (orderId: string, orderData: Partial<UpdatedOrderData
   return async (dispatch: Dispatch<OrderActionTypes>, getState: () => RootState) => {
     try {
       dispatch({ type: UPDATE_ORDER_REQUEST });
-      
-      const state = getState();
-      const token = state.auth.token; // Adjust path based on your auth state structure
-      
-      // Get current form data from relevant components
-      const updatedOrderData: UpdatedOrderData = {
+
+      // ✅ FIXED: Use getToken helper like other functions
+      const token = getToken(getState);
+
+      // Collect fresh data from DOM to ensure we have latest customer/branch info
+      let domData: SchemaAlignedOrderData | null = null;
+      try {
+        domData = collectDataFromDOM();
+        console.log("📋 UPDATE - DOM data collected:", {
+          customerId: domData.customerId,
+          branchId: domData.branchId
+        });
+      } catch (error) {
+        console.warn("⚠️ UPDATE - Could not collect all data from DOM:", error);
+        // Continue with provided orderData only
+      }
+
+      // Merge DOM data with provided orderData
+      const updatedOrderData: UpdatedOrderData = domData ? {
+        ...domData,
+        ...orderData,
+        // Ensure critical fields from DOM are not overwritten by empty values
+        customerId: orderData.customerId || domData.customerId,
+        branchId: orderData.branchId || domData.branchId,
+        // Add any additional fields that need to be updated
+        updatedAt: new Date().toISOString()
+      } : {
         ...orderData,
         // Add any additional fields that need to be updated
         updatedAt: new Date().toISOString()
-      };
+      } as UpdatedOrderData;
 
       const updateUrl = `${baseUrl}/orders/${orderId}`;
       console.log('🔄 UPDATE ORDER - URL:', updateUrl);
@@ -1296,14 +1334,19 @@ export const updateOrder = (orderId: string, orderData: Partial<UpdatedOrderData
       });
       
       // Optionally refresh the orders list
-      dispatch(fetchOrders());
-      
+      dispatch(fetchOrders() as any);
+
+      // ✅ FIXED: Return the updated order so caller can check success
+      return updatedOrder;
+
     } catch (error: unknown) {
       console.error('Update order error:', error);
       dispatch({
         type: UPDATE_ORDER_FAILURE,
         payload: error instanceof Error ? error.message : 'Failed to update order'
       });
+      // Return error object so caller knows it failed
+      return { error: error instanceof Error ? error.message : 'Failed to update order' };
     }
   };
 };
@@ -1321,8 +1364,8 @@ export const getAccountOrders = (accountId: string, filters?: OrderFilters) =>
       dispatch({ type: GET_ACCOUNT_ORDERS_REQUEST });
 
       const token = getToken(getState);
-      const branchId = getBranchId();
-      const role = getState().auth?.user?.role;
+      const branchId = getBranchId(getState);
+      const role = (getState().auth as any)?.user?.role;
 
       if (!accountId || accountId.trim() === '') {
         throw new Error('Customer ID is required');
@@ -1600,6 +1643,76 @@ export const deleteMachineTableRow = (orderId: string, machineId: string, rowInd
 
       dispatch({
         type: DELETE_MACHINE_TABLE_ROW_FAILURE,
+        payload: errorMessage,
+      });
+
+      throw error;
+    }
+  };
+
+// ============================================================================
+// DELETE ORDER ACTION
+// ============================================================================
+
+export const DELETE_ORDER_REQUEST = 'DELETE_ORDER_REQUEST';
+export const DELETE_ORDER_SUCCESS = 'DELETE_ORDER_SUCCESS';
+export const DELETE_ORDER_FAILURE = 'DELETE_ORDER_FAILURE';
+
+/**
+ * Delete an order by ID
+ * @param orderId - The ID of the order to delete
+ */
+export const deleteOrder = (orderId: string) =>
+  async (dispatch: Dispatch, getState: () => RootState) => {
+    try {
+      console.log('🗑️ Deleting order:', orderId);
+
+      dispatch({ type: DELETE_ORDER_REQUEST });
+
+      const token = getToken(getState);
+
+      if (!orderId) {
+        throw new Error('Order ID is required');
+      }
+
+      const response = await axios.delete(
+        `${baseUrl}/orders/${orderId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'x-api-key': API_KEY,
+          },
+        }
+      );
+
+      console.log('✅ Order deleted successfully:', response.data);
+
+      dispatch({
+        type: DELETE_ORDER_SUCCESS,
+        payload: orderId,
+      });
+
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Error deleting order:', error);
+
+      let errorMessage = 'Failed to delete order';
+
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 401) {
+          errorMessage = 'Authentication failed. Please log in again.';
+        } else if (error.response?.status === 404) {
+          errorMessage = 'Order not found';
+        } else if (error.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      dispatch({
+        type: DELETE_ORDER_FAILURE,
         payload: errorMessage,
       });
 

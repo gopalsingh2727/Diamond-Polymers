@@ -1,4 +1,5 @@
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from "react";
+import { useDispatch } from "react-redux";
 import OptimizedSuggestions from "../SuggestionInput/OptimizedSuggestions";
 import '../materialAndProduct/materialAndProduct.css';
 
@@ -15,12 +16,35 @@ type SavedMixingData = {
   loss: number;
 };
 
+// Dimension type from backend
+type Dimension = {
+  name: string;
+  value: any;
+  unit?: string;
+  dataType: 'string' | 'number' | 'boolean' | 'date';
+  formula?: string;
+  isCalculated?: boolean;
+};
+
+// Material spec type
+type MaterialSpec = {
+  _id: string;
+  specName: string;
+  materialTypeId: string;
+  mol?: number;
+  weightPerPiece?: number;
+  density?: number;
+  dimensions: Dimension[];
+  description?: string;
+};
+
 interface MaterialInOdersProps {
   initialData?: any;
   isEditMode?: boolean;
   showBottomGusset?: boolean;
   showFlap?: boolean;
   showAirHole?: boolean;
+  sectionConfig?: any;
 }
 
 type Material = {
@@ -44,7 +68,8 @@ type MixingRowProps = {
 
 export type MaterialData = {
   mainMaterialId: string;
-  materialTypeId: string; 
+  materialTypeId: string;
+  materialSpecId: string;
   materialType: string;
   materialName: string;
   totalWeight: string;
@@ -52,6 +77,7 @@ export type MaterialData = {
   totalPieces: string;
   mixing: string;
   mixingData: MixMaterial[];
+  specificationValues: { [key: string]: any };
 };
 
 const MixingRow = ({ mat, index, onMixChange, onRemove, isFirst }: MixingRowProps) => {
@@ -158,6 +184,8 @@ const MaterialInOders = forwardRef((
   { initialData, isEditMode }: MaterialInOdersProps,
   ref: React.ForwardedRef<{ getMaterialData: () => MaterialData }>
 ) => {
+  const dispatch = useDispatch<AppDispatch>();
+
   const [materialData, setMaterialData] = useState({ category: '' });
   const [materialName, setMaterialName] = useState('');
   const [totalWeight, setTotalWeight] = useState('');
@@ -181,6 +209,12 @@ const MaterialInOders = forwardRef((
   const [showNameSuggestions, setShowNameSuggestions] = useState(false);
   const [mainMaterialId, setMainMaterialId] = useState('');
   const [materialTypeId, setMaterialTypeId] = useState('');
+
+  // Material specifications state
+  const [materialSpec, setMaterialSpec] = useState<MaterialSpec | null>(null);
+  const [materialSpecId, setMaterialSpecId] = useState('');
+  const [loadingSpec, setLoadingSpec] = useState(false);
+  const [specificationValues, setSpecificationValues] = useState<{ [key: string]: any }>({});
 
   // Load initial data for edit mode
   useEffect(() => {
@@ -229,6 +263,53 @@ const MaterialInOders = forwardRef((
       }
     }
   }, [isEditMode, initialData]);
+
+  // Load material specifications when material type changes
+  useEffect(() => {
+    const loadMaterialSpec = async () => {
+      // Only load if materialTypeId exists, not in edit mode, and specs not already loaded
+      if (materialTypeId && !isEditMode && !materialSpec) {
+        setLoadingSpec(true);
+        try {
+          const specs = await dispatch(getMaterialSpecsByMaterialType(materialTypeId));
+          if (specs && specs.length > 0) {
+            const spec = specs[0]; // Use first spec for this material type
+            setMaterialSpec(spec);
+            setMaterialSpecId(spec._id);
+            // Initialize specification values from spec dimensions
+            const initialValues = spec.dimensions.reduce((acc: any, dim: Dimension) => {
+              acc[dim.name] = dim.value || '';
+              return acc;
+            }, {});
+            // Add built-in properties
+            if (spec.mol) initialValues.mol = spec.mol;
+            if (spec.weightPerPiece) initialValues.weightPerPiece = spec.weightPerPiece;
+            if (spec.density) initialValues.density = spec.density;
+            setSpecificationValues(initialValues);
+            console.log('✅ Loaded material spec:', spec.specName, 'with', spec.dimensions.length, 'dimensions');
+          } else {
+            setMaterialSpec(null);
+            setMaterialSpecId('');
+            setSpecificationValues({});
+            console.log('⚠️ No specification found for material type');
+          }
+        } catch (error) {
+          console.error('❌ Error loading material spec:', error);
+          setMaterialSpec(null);
+          setMaterialSpecId('');
+          setSpecificationValues({});
+        } finally {
+          setLoadingSpec(false);
+        }
+      } else if (!materialTypeId) {
+        setMaterialSpec(null);
+        setMaterialSpecId('');
+        setSpecificationValues({});
+      }
+    };
+
+    loadMaterialSpec();
+  }, [materialTypeId, dispatch, isEditMode, materialSpec]);
 
   // Update mixing materials when main material changes
   useEffect(() => {
@@ -349,19 +430,29 @@ const MaterialInOders = forwardRef((
     }));
   };
 
+  // Update specification value
+  const updateSpecificationValue = (dimensionName: string, value: any) => {
+    setSpecificationValues(prev => ({
+      ...prev,
+      [dimensionName]: value
+    }));
+  };
+
   const getMaterialData = () => {
     const data = {
       mainMaterialId: mainMaterialId,
       materialTypeId: materialTypeId,
+      materialSpecId: materialSpecId,
       materialType: materialData.category,
       materialName: materialName,
       totalWeight: totalWeight,
       onePieceWeight: onePieceWeight,
       totalPieces: formState.totalPieces,
       mixing: mixing,
-      mixingData: savedMixing?.data || []
+      mixingData: savedMixing?.data || [],
+      specificationValues: specificationValues
     };
-    
+
     console.log('Getting Material Data:', data);
     return data;
   };
@@ -373,73 +464,180 @@ const MaterialInOders = forwardRef((
 
   return (
     <div>
+      {/* Hidden inputs for IDs */}
+      <input type="hidden" name="materialTypeId" value={materialTypeId} />
+      <input type="hidden" name="mainMaterialId" value={mainMaterialId} />
+      {materialSpec && <input type="hidden" name="materialSpecId" value={materialSpecId} />}
+
+      {/* Horizontal scroll layout with hidden scrollbar */}
       <div className="createProductCss">
-        <div className="materialForm">
-          <div className="createProductCss">
-            <div className="materialForm">
-              {/* Hidden inputs for IDs */}
-              <input type="hidden" name="materialTypeId" value={materialTypeId} />
-              <input type="hidden" name="mainMaterialId" value={mainMaterialId} />
-              
-              <div>
-                <label>Material Type</label>
-                <input
-                  type="text"
-                  onChange={handleCategoryChange}
-                  value={materialData.category}
-                  placeholder="Material Type"
-                  className="inputBox"
-                  onFocus={() => !isEditMode && setShowTypeSuggestions(true)}
-                  onBlur={() => setTimeout(() => setShowTypeSuggestions(false), 200)}
-                  readOnly={isEditMode}
-                />
-                {!isEditMode && (
-                  <OptimizedSuggestions
-                    searchTerm={materialData.category}
-                    onSelect={handleMaterialTypeSelect}
-                    suggestionType="materialType"
-                    showSuggestions={showTypeSuggestions && materialData.category.length > 0}
-                  />
-                )}
-              </div>
-              <div>
-                <label>Material Name</label>
-                <input
-                  type="text"
-                  value={materialName}
-                  onChange={(e) => setMaterialName(e.target.value)}
-                  placeholder="Material Name"
-                  className="inputBox"
-                  onFocus={() => !isEditMode && setShowNameSuggestions(true)}
-                  onBlur={() => setTimeout(() => setShowNameSuggestions(false), 200)}
-                  readOnly={isEditMode}
-                />
-                
-                {!isEditMode && (
-                  <OptimizedSuggestions
-                    searchTerm={materialName}
-                    onSelect={handleMaterialNameSelect}
-                    suggestionType="materialName"
-                    filterBy={materialTypeId}
-                    showSuggestions={showNameSuggestions && materialName.length > 0 && materialData.category.length > 0}
-                  />
-                )}
-              </div>
-            </div>
+        <div style={{
+          display: 'flex',
+          flexDirection: 'row',
+          gap: '12px',
+          overflowX: 'auto',
+          overflowY: 'hidden',
+          paddingBottom: '10px',
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none'
+        }}
+        className="material-horizontal-scroll">
+          <div style={{ position: 'relative', minWidth: '200px', flexShrink: 0 }}>
+            <label style={{ display: 'block' }}>Material Type</label>
+            <input
+              type="text"
+              onChange={handleCategoryChange}
+              value={materialData.category}
+              placeholder="Material Type"
+              className="createDivInput createDivInputwidth"
+              onFocus={() => !isEditMode && setShowTypeSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowTypeSuggestions(false), 200)}
+              readOnly={isEditMode}
+            />
+            {!isEditMode && (
+              <OptimizedSuggestions
+                searchTerm={materialData.category}
+                onSelect={handleMaterialTypeSelect}
+                suggestionType="materialType"
+                showSuggestions={showTypeSuggestions && materialData.category.length > 0}
+              />
+            )}
           </div>
-          <div>
-            <label>Mixing</label>
+
+          <div style={{ position: 'relative', minWidth: '200px', flexShrink: 0 }}>
+            <label style={{ display: 'block' }}>Material Name</label>
+            <input
+              type="text"
+              value={materialName}
+              onChange={(e) => setMaterialName(e.target.value)}
+              placeholder="Material Name"
+              className="createDivInput createDivInputwidth"
+              onFocus={() => !isEditMode && setShowNameSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowNameSuggestions(false), 200)}
+              readOnly={isEditMode}
+            />
+            {!isEditMode && (
+              <OptimizedSuggestions
+                searchTerm={materialName}
+                onSelect={handleMaterialNameSelect}
+                suggestionType="materialName"
+                filterBy={materialTypeId}
+                showSuggestions={showNameSuggestions && materialName.length > 0 && materialData.category.length > 0}
+              />
+            )}
+          </div>
+
+          <div style={{ minWidth: '150px', flexShrink: 0 }}>
+            <label style={{ display: 'block' }}>Mixing</label>
             <select
               value={mixing}
               id="myDropdown"
               onChange={handleMixingChange}
+              className="createDivInput createDivInputwidth"
             >
               <option value="">Select</option>
               <option value="yes">Yes</option>
               <option value="no">No</option>
             </select>
           </div>
+
+          {/* Specifications Section - dynamically loaded */}
+          {loadingSpec && (
+            <div style={{ padding: '10px', background: '#f0f9ff', borderRadius: '6px', textAlign: 'center', minWidth: '200px', flexShrink: 0 }}>
+              <p style={{ fontSize: '12px', color: '#0369a1' }}>Loading material specifications...</p>
+            </div>
+          )}
+
+          {/* Material specifications - horizontal layout */}
+          {materialSpec && (
+            <>
+              {/* Built-in properties */}
+              {materialSpec.mol !== undefined && materialSpec.mol > 0 && (
+                <div style={{ minWidth: '150px', flexShrink: 0 }}>
+                  <label style={{ display: 'block' }}>MOL</label>
+                  <input
+                    type="number"
+                    value={specificationValues.mol || materialSpec.mol || ''}
+                    onChange={(e) => updateSpecificationValue('mol', parseFloat(e.target.value) || 0)}
+                    placeholder="MOL value"
+                    className="createDivInput createDivInputwidth"
+                  />
+                </div>
+              )}
+
+              {materialSpec.weightPerPiece !== undefined && materialSpec.weightPerPiece > 0 && (
+                <div style={{ minWidth: '180px', flexShrink: 0 }}>
+                  <label style={{ display: 'block' }}>Weight Per Piece (g)</label>
+                  <input
+                    type="number"
+                    value={specificationValues.weightPerPiece || materialSpec.weightPerPiece || ''}
+                    onChange={(e) => updateSpecificationValue('weightPerPiece', parseFloat(e.target.value) || 0)}
+                    placeholder="Weight per piece"
+                    className="createDivInput createDivInputwidth"
+                  />
+                </div>
+              )}
+
+              {materialSpec.density !== undefined && materialSpec.density > 0 && (
+                <div style={{ minWidth: '180px', flexShrink: 0 }}>
+                  <label style={{ display: 'block' }}>Density (g/cm³)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={specificationValues.density || materialSpec.density || ''}
+                    onChange={(e) => updateSpecificationValue('density', parseFloat(e.target.value) || 0)}
+                    placeholder="Density"
+                    className="createDivInput createDivInputwidth"
+                  />
+                </div>
+              )}
+
+              {/* Custom dimensions */}
+              {materialSpec.dimensions && materialSpec.dimensions.length > 0 &&
+                materialSpec.dimensions
+                  .filter((dim: Dimension) => !dim.isCalculated)
+                  .map((dim: Dimension, index: number) => (
+                    <div key={index} style={{ minWidth: '180px', flexShrink: 0 }}>
+                      <label style={{ display: 'block' }}>
+                        {dim.name} {dim.unit ? `(${dim.unit})` : ''}
+                      </label>
+                      {dim.dataType === 'number' ? (
+                        <input
+                          type="number"
+                          value={specificationValues[dim.name] || dim.value || ''}
+                          onChange={(e) => updateSpecificationValue(dim.name, parseFloat(e.target.value) || '')}
+                          placeholder={`Enter ${dim.name}`}
+                          className="createDivInput createDivInputwidth"
+                        />
+                      ) : dim.dataType === 'boolean' ? (
+                        <select
+                          value={specificationValues[dim.name]?.toString() || dim.value?.toString() || 'false'}
+                          onChange={(e) => updateSpecificationValue(dim.name, e.target.value === 'true')}
+                          className="createDivInput createDivInputwidth"
+                        >
+                          <option value="false">No</option>
+                          <option value="true">Yes</option>
+                        </select>
+                      ) : (
+                        <input
+                          type="text"
+                          value={specificationValues[dim.name] || dim.value || ''}
+                          onChange={(e) => updateSpecificationValue(dim.name, e.target.value)}
+                          placeholder={`Enter ${dim.name}`}
+                          className="createDivInput createDivInputwidth"
+                        />
+                      )}
+                    </div>
+                  ))}
+            </>
+          )}
         </div>
+
+        <style>{`
+          .material-horizontal-scroll::-webkit-scrollbar {
+            display: none;
+          }
+        `}</style>
       </div>
 
       {showMixingPopup && (

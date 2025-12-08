@@ -11,6 +11,13 @@
 
 type WebSocketEventHandler = (data: any) => void;
 type ConnectionStateHandler = (state: 'connecting' | 'connected' | 'disconnected' | 'reconnecting') => void;
+type RequestCallback = (response: any) => void;
+
+interface PendingRequest {
+  resolve: (value: any) => void;
+  reject: (error: any) => void;
+  timeout: NodeJS.Timeout;
+}
 
 interface WebSocketConfig {
   url: string;
@@ -34,6 +41,8 @@ class WebSocketClient {
   private messageQueue: any[] = [];
   private isConnected = false;
   private isReconnecting = false;
+  private pendingRequests: Map<string, PendingRequest> = new Map();
+  private requestCounter = 0;
 
   constructor(config: WebSocketConfig) {
     this.config = {
@@ -253,6 +262,153 @@ class WebSocketClient {
     return this.isConnected;
   }
 
+  // ============================================
+  // REQUEST-RESPONSE METHODS (Data Fetching)
+  // ============================================
+
+  /**
+   * Send a request and wait for response
+   * @param action - Action name
+   * @param data - Request data
+   * @param timeout - Timeout in milliseconds (default 10 seconds)
+   */
+  request<T = any>(action: string, data: any = {}, timeout = 10000): Promise<T> {
+    return new Promise((resolve, reject) => {
+      const requestId = `${action}_${++this.requestCounter}_${Date.now()}`;
+
+      // Set timeout
+      const timeoutId = setTimeout(() => {
+        this.pendingRequests.delete(action);
+        reject(new Error(`Request timeout: ${action}`));
+      }, timeout);
+
+      // Store pending request
+      this.pendingRequests.set(action, {
+        resolve: (response: T) => {
+          clearTimeout(timeoutId);
+          this.pendingRequests.delete(action);
+          resolve(response);
+        },
+        reject: (error: any) => {
+          clearTimeout(timeoutId);
+          this.pendingRequests.delete(action);
+          reject(error);
+        },
+        timeout: timeoutId
+      });
+
+      // Send request
+      this.send({ action, data, requestId });
+    });
+  }
+
+  /**
+   * Fetch orders via WebSocket
+   */
+  async fetchOrders(params: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    search?: string;
+    startDate?: string;
+    endDate?: string;
+    forceRefresh?: boolean;
+  } = {}): Promise<any> {
+    const response = await this.request('order:list', params);
+    if (!response.success) {
+      throw new Error(response.error || 'Failed to fetch orders');
+    }
+    return response.data;
+  }
+
+  /**
+   * Fetch single order via WebSocket
+   */
+  async fetchOrder(orderId: string, forceRefresh = false): Promise<any> {
+    const response = await this.request('order:get', { orderId, forceRefresh });
+    if (!response.success) {
+      throw new Error(response.error || 'Failed to fetch order');
+    }
+    return response.data;
+  }
+
+  /**
+   * Fetch machines via WebSocket
+   */
+  async fetchMachines(params: {
+    status?: string;
+    machineType?: string;
+    forceRefresh?: boolean;
+  } = {}): Promise<any> {
+    const response = await this.request('machine:list', params);
+    if (!response.success) {
+      throw new Error(response.error || 'Failed to fetch machines');
+    }
+    return response.data;
+  }
+
+  /**
+   * Fetch single machine via WebSocket
+   */
+  async fetchMachine(machineId: string, forceRefresh = false): Promise<any> {
+    const response = await this.request('machine:get', { machineId, forceRefresh });
+    if (!response.success) {
+      throw new Error(response.error || 'Failed to fetch machine');
+    }
+    return response.data;
+  }
+
+  /**
+   * Fetch customers via WebSocket
+   */
+  async fetchCustomers(params: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    forceRefresh?: boolean;
+  } = {}): Promise<any> {
+    const response = await this.request('customer:list', params);
+    if (!response.success) {
+      throw new Error(response.error || 'Failed to fetch customers');
+    }
+    return response.data;
+  }
+
+  /**
+   * Fetch dashboard data via WebSocket
+   */
+  async fetchDashboard(params: {
+    dateRange?: 'today' | 'week' | 'month';
+    branchId?: string;
+    forceRefresh?: boolean;
+  } = {}): Promise<any> {
+    const response = await this.request('dashboard:get', params);
+    if (!response.success) {
+      throw new Error(response.error || 'Failed to fetch dashboard data');
+    }
+    return response.data;
+  }
+
+  /**
+   * Subscribe to daybook updates (real-time order changes)
+   */
+  subscribeToDaybook(branchId?: string): void {
+    this.send({
+      action: 'subscribeToDaybook',
+      data: { branchId }
+    });
+  }
+
+  /**
+   * Subscribe to dashboard updates (real-time metrics)
+   */
+  subscribeToDashboard(branchId?: string): void {
+    this.send({
+      action: 'subscribeToDashboard',
+      data: { branchId }
+    });
+  }
+
   /**
    * Handle incoming messages
    * @private
@@ -264,6 +420,17 @@ class WebSocketClient {
     // Handle special system messages
     if (eventType === 'session:force_logout') {
       this.handleForceLogout(message.data);
+      return;
+    }
+
+    // Check if this is a response to a pending request
+    if (action && this.pendingRequests.has(action)) {
+      const pending = this.pendingRequests.get(action)!;
+      if (message.success === false || message.error) {
+        pending.reject(new Error(message.error || 'Request failed'));
+      } else {
+        pending.resolve(message);
+      }
       return;
     }
 

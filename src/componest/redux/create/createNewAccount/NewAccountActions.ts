@@ -14,6 +14,7 @@ import {
   DELETE_ACCOUNT_FAIL,
 } from "./NewAccountConstants";
 import { AppDispatch, RootState } from "../../../../store";
+import { refreshOrderFormData } from "../../oders/orderFormDataActions";
 
 const baseUrl = import.meta.env.VITE_API_27INFINITY_IN;
 const apiKey = import.meta.env.VITE_API_KEY;
@@ -62,6 +63,9 @@ export const createAccount = (data: any) => async (dispatch: AppDispatch, getSta
       type: CREATE_ACCOUNT_SUCCESS,
       payload: response.data.customer,
     });
+
+    // Refresh cached form data so the new customer appears in lists
+    dispatch(refreshOrderFormData());
   } catch (error: any) {
     dispatch({
       type: CREATE_ACCOUNT_FAIL,
@@ -113,7 +117,7 @@ export const updateAccount = (accountId: string, updateData: any) => async (disp
   try {
     dispatch({ type: UPDATE_ACCOUNT_REQUEST });
 
-    const { data } = await axios.put(`${baseUrl}/dev/customer/${accountId}`, updateData, {
+    const { data } = await axios.put(`${baseUrl}/customer/${accountId}`, updateData, {
       headers: {
         ...getAuthHeaders(getState),
         "Content-Type": "application/json",
@@ -121,6 +125,9 @@ export const updateAccount = (accountId: string, updateData: any) => async (disp
     });
 
     dispatch({ type: UPDATE_ACCOUNT_SUCCESS, payload: data });
+
+    // Refresh cached form data so the updated customer appears in lists
+    dispatch(refreshOrderFormData());
   } catch (error: any) {
     dispatch({
       type: UPDATE_ACCOUNT_FAIL,
@@ -134,11 +141,14 @@ export const deleteAccount = (accountId: string) => async (dispatch: AppDispatch
   try {
     dispatch({ type: DELETE_ACCOUNT_REQUEST });
 
-    await axios.delete(`${baseUrl}/dev/customer/${accountId}`, {
+    await axios.delete(`${baseUrl}/customer/${accountId}`, {
       headers: getAuthHeaders(getState),
     });
 
     dispatch({ type: DELETE_ACCOUNT_SUCCESS, payload: accountId });
+
+    // Refresh cached form data so the deleted customer is removed from lists
+    dispatch(refreshOrderFormData());
   } catch (error: any) {
     dispatch({
       type: DELETE_ACCOUNT_FAIL,

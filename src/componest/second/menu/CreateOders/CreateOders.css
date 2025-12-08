@@ -28,11 +28,11 @@
 
 .createOdersForm {
   position: absolute;
-  top: 68px; /* directly below header */
+  top: 68px;
   left: 0;
-  
+
   width: 90vw;
-  min-height: calc(100vh - 60px); /* fill remaining screen below header */
+  min-height: calc(100vh - 60px);
   padding: 15px;
 
   display: flex;
@@ -60,7 +60,7 @@
   align-items: stretch; /* Makes all <p> tags stretch to full width */
   gap: 8px; /* Adds spacing between items */
   padding: 20px;
-  width: 10vw;
+  width:10vw;
   height: 50vh;
 
   position: fixed;
@@ -103,9 +103,10 @@
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  align-items: center;
+  /* align-items: center; */
   gap: 20px;
-  margin-bottom: 20px;
+  margin-bottom: 0;
+ 
 }
 
 .OrderIDCreate{
@@ -118,49 +119,61 @@
   margin: 0;
 }
 
-.edit-order-id{
-  font-size: small;
-}
 .ManufacturingStepsTitel{
-  font-size: small;
+  font-size: x-small;
 }
 .checkbox-group{
   gap: 2px;
 }
+/* Unified Input Styling - Underline Only */
+
+/* Customer Name - Full Width Row */
 .CurstomerNameInput {
-  background-color: rgba(255, 255, 255, 0.1);
+   width: auto;
+  padding: 6px 8px;
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: #1f2937;
+  background: transparent;
   border: none;
-  border-bottom: 2px solid #333; /* Use thicker border for better visibility */
-  color: #333;
-  padding: 10px;
-  outline: none; /* Prevent default focus border */
-  width: 30vw;
-  box-sizing: border-box; /* Makes padding not affect width */
-}
-.CurstomerAddressInput{
-  background-color: rgba(255, 255, 255, 0.1);
-  border: none;
-  border-bottom: 0.5px solid #333; /* Use thicker border for better visibility */
-  color: #333;
-  padding: 10px;
-  outline: none; /* Prevent default focus border */
-  width: 50vw;
-  box-sizing: border-box; /* Makes padding not affect width */
-  margin-top: 10px;
+  border-bottom: 1px solid #d1d5db;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease;
 }
 
-.CurstomerInput{
-  background-color: rgba(255, 255, 255, 0.1);
+/* Address - Controlled Width */
+.CurstomerAddressInput {
+  width: auto;
+  min-width: 200px;
+  max-width: 400px;
+  padding: 6px 8px;
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: #1f2937;
+  background: transparent;
   border: none;
-  border-bottom: 0.5px solid #333; /* Use thicker border for better visibility */
-  color: #333;
-  padding: 10px;
-  margin-right: 10px;
-  outline: none; /* Prevent default focus border */
-  padding: 10px;
-  box-sizing: border-box; /* Makes padding not affect width */
-  margin-top: 10px;
-  transition: all 0.2s ease;
+  border-bottom: 1px solid #d1d5db;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease;
+}
+
+/* Other Fields - Inline with controlled width */
+.CurstomerInput {
+  width: auto;
+  min-width: 100px;
+  max-width: 150px;
+  padding: 6px 8px;
+  margin: 0 4px;
+  font-size: 14px;
+  color: #1f2937;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #d1d5db;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease;
 }
 
 .CurstomerInput:focus {
@@ -179,8 +192,37 @@
 }
 
 .CreateOrdersForm{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: flex-end;
   border-bottom: #0c214e  solid 1.2px;
   padding-bottom: 20px;
+}
+
+/* Wrapper divs for Address - Full Width Row */
+.CreateOrdersForm > div {
+  width: 100%;
+  flex-basis: 100%;
+}
+
+/* Customer Name + Company Name Row - Inline */
+.CustomerNameRow {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+  flex-basis: 100%;
+  justify-content: flex-start;
+}
+
+.CustomerNameRow > div {
+  flex: 0 0 auto;
+  width: auto;
+}
+
+.CustomerNameRow .CurstomerNameInput {
+  width: 180px;
+  min-width: 120px;
 }
 .CreateMaterialInput{
   background-color: rgba(255, 255, 255, 0.1);
@@ -236,10 +278,6 @@
 }
 
 .CreateOrdersButton {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-
   width: 150px;
   height: 40px;
   background-color: #0c214e;
@@ -250,37 +288,14 @@
   font-size: 16px;
   font-weight: bold;
   transition: background-color 0.3s ease;
-}
-
-.CreateOrdersFooter {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: 1000;
-}
-
-
-.CreateOrdersButton {
-  width: 150px;
-  height: 40px;
-  background-color: #0c214e;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 16px;
-  font-weight: bold;
-  transition: background-color 0.3s ease;
-  margin-right:50px;
-  margin-bottom:10px ;
 }
 
 .CreateOrdersFooter{
   display: flex;
-  justify-content: space ;  
+  justify-content: flex-start;
   align-items: center;
   gap: 20px;
-  margin-top: 20px; 
+  margin-top: 20px;
 }
 
 .CreateOrdersFooter {
@@ -289,11 +304,11 @@
   left: 0;
   right: 7%;
   display: flex;
-  
+  justify-content: flex-end;
   align-items: center;
+  gap: 20px;
   padding: 0 20px;
   z-index: 1000;
- 
 }
 
 .CreateOrdersFooterbuttom {
@@ -390,4 +405,32 @@
 
 .saveoderspop-btn-no:hover {
   background-color: #da190b;
+}
+
+
+.customerImage{
+  padding: auto;
+  margin: auto;
+}
+
+.ManufacturingStepsTitel{
+  padding: 0px;
+  margin: 0px;
+
+}
+
+.ordersCreateSections-Status {
+  display: flex;
+  align-items: center;
+    font-size: x-small;
+  gap: 10px;
+}
+
+.ordersCreateSections-Status select {
+  padding: 8px 12px;
+
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: x-small;
+  min-width: 150px;
 }

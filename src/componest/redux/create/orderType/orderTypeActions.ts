@@ -24,6 +24,7 @@ import {
 } from "./orderTypeConstants";
 import { Dispatch } from "redux";
 import { RootState } from "../../rootReducer";
+import { refreshOrderFormData } from "../../oders/orderFormDataActions";
 
 // ENV
 const baseUrl = import.meta.env.VITE_API_27INFINITY_IN;
@@ -71,6 +72,10 @@ export const createOrderType = (orderTypeData: any) => async (dispatch: Dispatch
     );
 
     dispatch({ type: CREATE_ORDER_TYPE_SUCCESS, payload: data });
+
+    // Refresh cached form data
+    dispatch(refreshOrderFormData() as any);
+
     return data;
   } catch (error: any) {
     const errorMessage = error.response?.data?.message || error.message || "Failed to create order type";
@@ -185,6 +190,10 @@ export const updateOrderType = (id: string, orderTypeData: any) => async (dispat
     );
 
     dispatch({ type: UPDATE_ORDER_TYPE_SUCCESS, payload: data });
+
+    // Refresh cached form data
+    dispatch(refreshOrderFormData() as any);
+
     return data;
   } catch (error: any) {
     const errorMessage = error.response?.data?.message || error.message || "Failed to update order type";
@@ -206,6 +215,10 @@ export const deleteOrderType = (id: string) => async (dispatch: Dispatch, getSta
     );
 
     dispatch({ type: DELETE_ORDER_TYPE_SUCCESS, payload: { id, ...data } });
+
+    // Refresh cached form data
+    dispatch(refreshOrderFormData() as any);
+
     return data;
   } catch (error: any) {
     const errorMessage = error.response?.data?.message || error.message || "Failed to delete order type";

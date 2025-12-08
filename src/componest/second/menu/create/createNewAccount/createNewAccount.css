@@ -27,14 +27,13 @@
 
 .create-account-container{
   display: flex;
-
-
+  flex-direction: column;
+  width: 100%;
   font-size: large;
   top: 0;
 }
 .form-container {
-
-
+  width: 100%;
   padding: 2rem;
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
@@ -78,6 +77,31 @@
   appearance: none;
 }
 
+/* Input Styles - Bordered */
+.CurstomerInput,
+.CurstomerAddressInput {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: #1f2937;
+  background-color: #fff;
+  border: 2px solid #e5e7eb;
+  border-radius: 6px;
+  outline: none;
+  box-sizing: border-box;
+  transition: all 0.2s ease-in-out;
+}
+
+.CurstomerInput:focus,
+.CurstomerAddressInput:focus,
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: #FF6B35;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.15);
+}
+
 
 
 
@@ -95,8 +119,8 @@
 }
 
 .form-group input[type="file"]:hover {
-  border-color: #3b82f6;
-  background-color: #eff6ff;
+  border-color: #FF6B35;
+  background-color: #fff7ed;
 }
 
 .form-row {
@@ -106,9 +130,9 @@
 }
 
 .error-text {
-  color: #dc2626;
-  font-size: 0.75rem;
-  margin-top: 0.25rem;
+  color: #dc2626; /* Red color for error */
+  font-size: 0.75rem; /* Equivalent to text-xs */
+  margin-top: 0.25rem; /* Equivalent to mt-1 */
   display: block;
   font-weight: 500;
   padding-left: 4px;
@@ -117,23 +141,24 @@
 
 .form-group button {
   padding: 0.875rem 2rem;
-  background-color: #3b82f6;
-  color: rgb(16, 12, 12);
+  background: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%);
+  color: white;
   border: none;
   border-radius: 6px;
   font-size: 1rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease-in-out;
   margin-top: 1rem;
+  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.25);
 }
 
 
 
 .form-group button:hover:not(:disabled) {
-  background-color: #2563eb;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  background: linear-gradient(135deg, #E55A2B 0%, #d44a1b 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(255, 107, 53, 0.35);
 }
 
 .form-group button:active:not(:disabled) {
@@ -146,22 +171,3 @@
   transform: none;
   box-shadow: none;
 }
-
-.globeDropdown {
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    background: none;
-    /* background-image: url("data:image/svg+xml,%3Csvg fill='%23334155' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); */
-    background-repeat: no-repeat;
-    background-position: right 12px center;
-    background-size: 16px 16px;
-    padding-right: 40px;
-    padding-left: 12px;
-    border-radius: 8px;
-    font-size: 16px;
-    color: #334155;
-    border: none;
-    transition: all 0.2s ease;
-}
-

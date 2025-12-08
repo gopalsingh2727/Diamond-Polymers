@@ -1,0 +1,142 @@
+/* ====================================
+   Edit Machine Operator - Form Styles
+   Pattern: Same as Create Section (Bordered inputs)
+   ==================================== */
+
+/* Detail Container */
+.EditMachineType .detail-container {
+  background: white;
+  padding: 24px 32px;
+  max-width: 500px;
+  width: 100%;
+  margin: 0 auto;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Form Sections */
+.EditMachineType .form-section {
+  margin-bottom: 16px;
+}
+
+.EditMachineType .form-section label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 6px;
+}
+
+/* Inputs - Bordered Style (matches Create section) */
+.EditMachineType .form-section input,
+.EditMachineType .form-section select,
+.EditMachineType .form-section textarea {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: #1f2937;
+  background-color: #fff;
+  border: 2px solid #e5e7eb;
+  border-radius: 6px;
+  outline: none;
+  box-sizing: border-box;
+  transition: all 0.2s ease-in-out;
+}
+
+.EditMachineType .form-section input:focus,
+.EditMachineType .form-section select:focus,
+.EditMachineType .form-section textarea:focus {
+  border-color: #FF6B35;
+  box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.15);
+}
+
+.EditMachineType .form-section input::placeholder {
+  color: #9ca3af;
+}
+
+/* Top Button Container */
+.EditMachineType .TopButtonEdit {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 12px;
+}
+
+.EditMachineType .TopButtonEdit button {
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.EditMachineType .TopButtonEdit button:first-child {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.EditMachineType .TopButtonEdit button:first-child:hover {
+  background: #e5e7eb;
+}
+
+.EditMachineType .TopButtonEdit button.Delete {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25);
+}
+
+.EditMachineType .TopButtonEdit button.Delete:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
+}
+
+/* Save Button - Orange */
+.EditMachineType .save-button {
+  width: 100%;
+  padding: 14px 24px;
+  margin-top: 20px;
+  font-size: 15px;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.25);
+}
+
+.EditMachineType .save-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #E55A2B 0%, #d44a1b 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(255, 107, 53, 0.35);
+}
+
+.EditMachineType .save-button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Info Section */
+.EditMachineType .info-section {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  padding: 12px 16px;
+  border-radius: 8px;
+  border-left: 4px solid #FF6B35;
+  margin-top: 16px;
+}
+
+.EditMachineType .info-section p {
+  margin: 4px 0;
+  color: #0c4a6e;
+  font-size: 13px;
+}
+
+.EditMachineType .info-section strong {
+  color: #1e40af;
+}

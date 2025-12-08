@@ -8,7 +8,6 @@ import { RootState } from "../../../../redux/rootReducer";
 import { AppDispatch } from "../../../../../store";
 import { useFormDataCache } from '../../Edit/hooks/useFormDataCache';
 import "./deviceaccess.css";
-import "../../CreateOders/CreateOders.css";
 
 const DeviceAccess: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -50,15 +49,16 @@ const DeviceAccess: React.FC = () => {
 
 
   return (
-    <div className="createDivOne">
-      <h2 className="form-title" style={{ textAlign: "center", marginBottom: "1.5rem" }}>Assign Machine to Device</h2>
-      <div className="form-grid">
-        <div className="form-input-group">
-          <label className="input-label">Select Device</label>
+    <div className="deviceAccess-container">
+      <div className="deviceAccess-form">
+        <h2 className="deviceAccess-title">Assign Machine to Device</h2>
+
+        <div className="deviceAccess-group">
+          <label className="deviceAccess-label">Select Device</label>
           <select
             value={selectedDeviceId}
             onChange={(e) => setSelectedDeviceId(e.target.value)}
-            className="createDivInput createDivInputwidth"
+            className="deviceAccess-select"
           >
             <option value="">Select device</option>
             {deviceList.map((d: any) => (
@@ -67,12 +67,14 @@ const DeviceAccess: React.FC = () => {
               </option>
             ))}
           </select>
+        </div>
 
-          <label className="input-label">Select Machine</label>
+        <div className="deviceAccess-group">
+          <label className="deviceAccess-label">Select Machine</label>
           <select
             value={machineId}
             onChange={(e) => setMachineId(e.target.value)}
-            className="createDivInput createDivInputwidth"
+            className="deviceAccess-select"
           >
             <option value="">Select machine</option>
             {machineList.map((m: any) => (
@@ -81,18 +83,16 @@ const DeviceAccess: React.FC = () => {
               </option>
             ))}
           </select>
-
-          <button
-            className="save-button"
-            onClick={handleAssignMachine}
-            disabled={!selectedDeviceId || !machineId || loading}
-          >
-            {loading ? "ASSIGNING..." : "ASSIGN MACHINE"}
-          </button>
         </div>
-      </div>
 
-     
+        <button
+          className="deviceAccess-button"
+          onClick={handleAssignMachine}
+          disabled={!selectedDeviceId || !machineId || loading}
+        >
+          {loading ? "ASSIGNING..." : "ASSIGN MACHINE"}
+        </button>
+      </div>
     </div>
   );
 };

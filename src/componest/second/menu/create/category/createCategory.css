@@ -1,0 +1,174 @@
+/* ====================================
+   Create Category - Compact Form Styles
+   All class names start with createCategory-
+   ==================================== */
+
+/* Container - Centered on Screen */
+.createCategory-container {
+  width: 100%;
+  min-height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+/* Form Card */
+.createCategory-form {
+  background: white;
+  padding: 24px 32px;
+  max-width: 500px;
+  width: 100%;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Title */
+.createCategory-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  text-align: center;
+  margin: 0 0 20px 0;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* Form Group - Compact spacing */
+.createCategory-group {
+  margin-bottom: 16px;
+}
+
+/* Label - Close to input */
+.createCategory-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 4px;
+}
+
+/* Input - Underline Style */
+.createCategory-input {
+  width: 100%;
+  padding: 8px 0;
+  font-size: 14px;
+  color: #1f2937;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #d1d5db;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease;
+}
+
+.createCategory-input:focus {
+  border-bottom: 2px solid #FF6B35;
+}
+
+.createCategory-input::placeholder {
+  color: #9ca3af;
+}
+
+/* Textarea */
+.createCategory-textarea {
+  width: 100%;
+  padding: 8px 0;
+  font-size: 14px;
+  color: #1f2937;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #d1d5db;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease;
+  resize: vertical;
+  min-height: 60px;
+}
+
+.createCategory-textarea:focus {
+  border-bottom: 2px solid #FF6B35;
+}
+
+.createCategory-textarea::placeholder {
+  color: #9ca3af;
+}
+
+/* Button - Full Width Orange */
+.createCategory-button {
+  width: 100%;
+  padding: 14px 24px;
+  margin-top: 24px;
+  font-size: 15px;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.25);
+}
+
+.createCategory-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #E55A2B 0%, #d44a1b 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(255, 107, 53, 0.35);
+}
+
+.createCategory-button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Reset Button */
+.createCategory-resetButton {
+  width: 100%;
+  padding: 14px 24px;
+  margin-top: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  color: white;
+  background: #64748b;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.createCategory-resetButton:hover {
+  background: #475569;
+}
+
+/* Toggle Yes/No Buttons */
+.createCategory-toggleWrapper {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.createCategory-toggleBtn {
+  flex: 1;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  border: 2px solid #d1d5db;
+  border-radius: 8px;
+  background: white;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.createCategory-toggleBtn:hover {
+  border-color: #FF6B35;
+  color: #FF6B35;
+}
+
+.createCategory-toggleBtn.active {
+  background: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%);
+  border-color: #FF6B35;
+  color: white;
+}

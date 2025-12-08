@@ -15,6 +15,7 @@ import {
 } from "./MachineOpertorConstants";
 import { Dispatch } from "redux";
 import { RootState } from "../../rootReducer";
+import { refreshOrderFormData } from "../../oders/orderFormDataActions";
 
 // ENV
 const baseUrl = import.meta.env.VITE_API_27INFINITY_IN;
@@ -55,6 +56,10 @@ export const createOperator = (operatorData: {
     });
 
     dispatch({ type: CREATE_OPERATOR_SUCCESS, payload: data });
+
+    // Refresh cached form data so the new operator appears in lists
+    dispatch(refreshOrderFormData() as any);
+
   } catch (error: any) {
     dispatch({
       type: CREATE_OPERATOR_FAIL,
@@ -114,6 +119,10 @@ export const updateOperator = (operatorId: string, updates: any) => async (
     });
 
     dispatch({ type: UPDATE_OPERATOR_SUCCESS, payload: data });
+
+    // Refresh cached form data so the updated operator appears in lists
+    dispatch(refreshOrderFormData() as any);
+
   } catch (error: any) {
     dispatch({
       type: UPDATE_OPERATOR_FAIL,
@@ -140,6 +149,10 @@ export const deleteOperator = (operatorId: string) => async (
     });
 
     dispatch({ type: DELETE_OPERATOR_SUCCESS, payload: data });
+
+    // Refresh cached form data so the deleted operator is removed from lists
+    dispatch(refreshOrderFormData() as any);
+
   } catch (error: any) {
     dispatch({
       type: DELETE_OPERATOR_FAIL,

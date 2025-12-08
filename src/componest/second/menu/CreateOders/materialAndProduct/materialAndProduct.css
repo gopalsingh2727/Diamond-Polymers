@@ -26,7 +26,7 @@
   background-size: 16px 16px;
   padding-right: 40px;
   border-radius: 8px;
-  font-size: 16px;
+  font-size: small;
   color: #334155;
   border: none;
   transition: all 0.2s ease;
@@ -212,7 +212,7 @@
 
 .headerRow{
   display: grid;
-  grid-template-columns: 111px 119px 51px 49px 50px 119px 85px 86px 166px 77px 100px 100px;
+  grid-template-columns: 113px 127px 133px 127px 115px 119px 85px 86px 166px;
 
   gap: 10px;
   font-weight: bold;
@@ -332,7 +332,8 @@
 
 
 .NotesTextarea {
-    width: 59vh !important;
+   width: 59vh !important;
+   min-width: 58vh !important;
     background-color: transparent;
     height:10px;
     color: #333;
@@ -531,12 +532,12 @@
 .SaveMixingstepRow span:nth-child(6) { width: 150px; }
 .SaveMixingstepRow span:nth-child(7) { width: 150px; }
 
-
+/* 
 .SaveMixing{
   border-top: 1px solid #000;
   padding-top: 3px;
   
-}
+} */
 
 
 .savedStepDisplay{
@@ -604,7 +605,7 @@
 .popupitemallStep{
   display: grid;
      background: none !important;
-    grid-template-columns: 111px 119px 51px 49px 50px 119px 85px 86px 166px 77px 100px 100px;
+    grid-template-columns: 113px 127px 133px 127px 115px 119px 85px 86px 166px;
     gap: 10px;
     padding-left: 10px;
     margin-bottom: 5px;

@@ -31,48 +31,13 @@ const getHeaders = (token?: string, isJson: boolean = false) => ({
   Authorization: token ? `Bearer ${token}` : "",
 });
 
-// ✅ UPDATED: Added tableConfig support
-interface TableColumn {
-  name: string;
-  dataType: 'text' | 'number' | 'formula' | 'date';
-  isRequired: boolean;
-  order: number;
-  placeholder: string;
-}
-
-interface Formula {
-  expression: string;
-  dependencies: string[];
-  description: string;
-}
-
-interface TableRow {
-  id: string;
-  data: Record<string, any>;
-}
-
-interface TableConfig {
-  columns: TableColumn[];
-  formulas: Record<string, Formula>;
-  data?: TableRow[];
-  settings?: {
-    autoCalculate: boolean;
-    autoUpdateOrders: boolean;
-    maxRows: number;
-    enableHistory: boolean;
-  };
-}
-
 interface MachineData {
   machineName: string;
   machineType: string;
-  sizeX: string;
-  sizeY: string;
-  sizeZ: string;
-  tableConfig?: TableConfig;
+  isActive?: boolean;
 }
 
-// ✅ CREATE MACHINE - Now accepts tableConfig and invalidates cache
+// ✅ CREATE MACHINE
 export const createMachine = (machineData: MachineData) =>
   async (dispatch: Dispatch, getState: () => RootState) => {
     try {
@@ -83,15 +48,11 @@ export const createMachine = (machineData: MachineData) =>
 
       if (!branchId) throw new Error("Branch ID not found");
 
-      // ✅ Include tableConfig in payload
       const payload = {
         machineName: machineData.machineName,
         machineType: machineData.machineType,
-        sizeX: machineData.sizeX,
-        sizeY: machineData.sizeY,
-        sizeZ: machineData.sizeZ,
         branchId,
-        ...(machineData.tableConfig && { tableConfig: machineData.tableConfig })
+        ...(machineData.isActive !== undefined && { isActive: machineData.isActive })
       };
       console.log(payload , "payload in create machine");
 

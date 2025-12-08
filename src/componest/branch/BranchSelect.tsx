@@ -110,6 +110,25 @@ const BranchSelect = () => {
               >
                 Continue to Dashboard
               </button>
+
+              {/* Divider */}
+              <div className="relative my-4">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-300"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-white text-gray-500">or</span>
+                </div>
+              </div>
+
+              {/* Create Branch Button */}
+              <button
+                type="button"
+                onClick={() => navigate("/create-branch")}
+                className="w-full py-3 px-4 rounded-lg font-medium text-[#FF6B35] border-2 border-[#FF6B35] hover:bg-[#FF6B35] hover:text-white transition-all duration-300"
+              >
+                + Create New Branch
+              </button>
             </>
           )}
         </div>

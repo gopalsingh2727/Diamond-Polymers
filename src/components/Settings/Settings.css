@@ -7,7 +7,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
+  width: 78px;
   height: 36px;
   border-radius: 8px;
   border: none;
@@ -383,4 +383,123 @@
 
 .dark .about-copyright {
   color: #777;
+}
+
+/* Branch Selector in Settings Dropdown */
+.settings-branch-selector {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.settings-branch-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.settings-branch-dropdown {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 8px center;
+  background-repeat: no-repeat;
+  background-size: 1.25em 1.25em;
+  padding-right: 2rem;
+  transition: all 0.2s ease;
+}
+
+.settings-branch-dropdown:hover {
+  background-color: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.settings-branch-dropdown:focus {
+  outline: none;
+  border-color: #FF6B35;
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.15);
+}
+
+.settings-branch-dropdown option {
+  padding: 8px;
+  background-color: white;
+  color: #333;
+}
+
+.settings-no-branches {
+  color: #9ca3af !important;
+  font-style: italic;
+  cursor: default !important;
+}
+
+.settings-no-branches:hover {
+  background: transparent !important;
+  color: #9ca3af !important;
+}
+
+/* Dark mode for branch selector */
+.dark .settings-branch-selector {
+  border-bottom-color: #444;
+}
+
+.dark .settings-branch-label {
+  color: #aaa;
+}
+
+.dark .settings-branch-dropdown {
+  background-color: #333;
+  border-color: #555;
+  color: #e0e0e0;
+}
+
+.dark .settings-branch-dropdown:hover {
+  background-color: #3a3a3a;
+  border-color: #666;
+}
+
+.dark .settings-branch-dropdown option {
+  background-color: #333;
+  color: #e0e0e0;
+}
+
+/* Settings Section Dividers */
+.settings-section-divider {
+  padding: 8px 16px 4px;
+  margin-top: 4px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.settings-section-divider:first-child {
+  border-top: none;
+  margin-top: 0;
+}
+
+.settings-section-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #9ca3af;
+}
+
+/* Dark mode section dividers */
+.dark .settings-section-divider {
+  border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+.dark .settings-section-label {
+  color: #6b7280;
 }

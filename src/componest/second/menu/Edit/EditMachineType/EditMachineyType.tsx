@@ -7,6 +7,7 @@ import {
 } from "../../../../redux/create/machineType/machineTypeActions";
 import { useFormDataCache } from "../hooks/useFormDataCache";
 import { AppDispatch } from "../../../../../store";
+import { formatDate } from "../../../../../utils/dateUtils";
 
 interface Branch {
   _id: string;
@@ -166,118 +167,71 @@ const EditMachineType: React.FC = () => {
       {error && <p className="loadingAndError"  style={{ color: "red" }}>{error}</p>}
 
       {!showDetail && !loading && machineTypes.length > 0 ? (
-        <>
+        <div className="editsectionsTable-container">
           {/* Search Bar */}
-          <div style={{
-            marginBottom: '20px',
-            display: 'flex',
-            gap: '10px',
-            alignItems: 'center'
-          }}>
-            <div style={{ position: 'relative', flex: 1 }}>
+          <div className="editsectionsTable-searchWrapper">
+            <div className="editsectionsTable-searchBox">
               <input
                 type="text"
                 placeholder="Search by machine type, description, branch, or machine name..."
                 value={searchTerm}
-                className="w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 transition-all"
+                className="editsectionsTable-searchInput"
                 onChange={handleSearchChange}
-                style={{
-                  width: '100%',
-                  padding: '12px 40px 12px 40px',
-                  fontSize: '15px',
-                  border: '2px solid #ddd',
-                  borderRadius: '8px',
-                  outline: 'none',
-                  transition: 'border-color 0.3s ease',
-                }}
-                onFocus={(e) => e.target.style.borderColor = '#2d89ef'}
-                onBlur={(e) => e.target.style.borderColor = '#ddd'}
               />
-              <span style={{
-                position: 'absolute',
-                left: '14px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                fontSize: '18px',
-                color: '#666',
-              }}>
-                🔍
-              </span>
+              <span className="editsectionsTable-searchIcon">🔍</span>
               {searchTerm && (
                 <button
                   onClick={clearSearch}
-                  style={{
-                    position: 'absolute',
-                    right: '10px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    fontSize: '20px',
-                    cursor: 'pointer',
-                    color: '#999',
-                    padding: '4px 8px',
-                  }}
+                  className="editsectionsTable-clearButton"
                   title="Clear search"
                 >
                   ✕
                 </button>
               )}
             </div>
-            <div style={{
-              padding: '12px 16px',
-              background: '#f5f5f5',
-              borderRadius: '8px',
-              fontSize: '14px',
-              color: '#666',
-              whiteSpace: 'nowrap',
-            }}>
+            <div className="editsectionsTable-countBadge">
               {filteredMachineTypes.length} of {machineTypes.length} types
             </div>
           </div>
 
           {/* Table */}
           {filteredMachineTypes.length > 0 ? (
-            <table>
-              <thead>
-                <tr>
-                  <th>No</th>
-                  <th>Machine Type</th>
-                  <th>Total Machines</th>
-                  <th>Branch</th>
-                  <th>Created</th>
-                  <th>Updated</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredMachineTypes.map((item: MachineType, index: number) => (
-                  <tr
-                    key={item._id}
-                    className={selectedRow === index ? "bg-blue-100" : ""}
-                    onClick={() => handleRowClick(index, item)}
-                    style={{ cursor: "pointer" }}
-                  >
-                    <td>{index + 1}</td>
-                    <td>{item.type}</td>
-                    <td>{item.machines?.length ?? 0}</td>
-                    <td>{item.branchId?.name || "N/A"}</td>
-                    <td>{new Date(item.createdAt).toLocaleString()}</td>
-                    <td>{new Date(item.updatedAt).toLocaleString()}</td>
+            <div className="editsectionsTable-wrapper">
+              <table className="editsectionsTable-table">
+                <thead className="editsectionsTable-thead">
+                  <tr>
+                    <th className="editsectionsTable-th">No</th>
+                    <th className="editsectionsTable-th">Machine Type</th>
+                    <th className="editsectionsTable-th">Total Machines</th>
+                    <th className="editsectionsTable-th">Branch</th>
+                    <th className="editsectionsTable-th">Created</th>
+                    <th className="editsectionsTable-th">Updated</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="editsectionsTable-tbody">
+                  {filteredMachineTypes.map((item: MachineType, index: number) => (
+                    <tr
+                      key={item._id}
+                      className={`editsectionsTable-tr ${selectedRow === index ? "editsectionsTable-trSelected" : ""}`}
+                      onClick={() => handleRowClick(index, item)}
+                    >
+                      <td className="editsectionsTable-td">{index + 1}</td>
+                      <td className="editsectionsTable-td">{item.type}</td>
+                      <td className="editsectionsTable-td">{item.machines?.length ?? 0}</td>
+                      <td className="editsectionsTable-td">{item.branchId?.name || "N/A"}</td>
+                      <td className="editsectionsTable-td">{formatDate(item.createdAt)}</td>
+                      <td className="editsectionsTable-td">{formatDate(item.updatedAt)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           ) : (
-            <div style={{
-              padding: '40px',
-              textAlign: 'center',
-              color: '#999',
-              fontSize: '16px',
-            }}>
-              No machine types found matching "{searchTerm}"
+            <div className="editsectionsTable-empty">
+              No machine types found matching "<span>{searchTerm}</span>"
             </div>
           )}
-        </>
+        </div>
       ) : showDetail && selectedItem ? (
         <div className="detail-container">
           <div className="TopButtonEdit">
@@ -326,11 +280,11 @@ const EditMachineType: React.FC = () => {
             </p>
             <p>
               <strong>Created At:</strong>{" "}
-              {new Date(selectedItem.createdAt).toLocaleString()}
+              {formatDate(selectedItem.createdAt)}
             </p>
             <p>
               <strong>Updated At:</strong>{" "}
-              {new Date(selectedItem.updatedAt).toLocaleString()}
+              {formatDate(selectedItem.updatedAt)}
             </p>
           </div>
 

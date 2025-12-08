@@ -1,372 +1,474 @@
-.EditMachineType{
-   width: 100%;
- 
-    height: 100vh;
-}/* EditMachineType Component Styles */
+/* ====================================
+   Edit Machine Type - Compact Form Styles
+   Pattern: Same as Create Section
+   ==================================== */
+
 .EditMachineType {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  max-width: 1200px;
-  margin: 0 auto;
-
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-
-  min-height: 500px;
-}
-
-
-.EditMachineType table {
   width: 100%;
-  border-collapse: collapse;
-
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
-  margin-top: 16px;
-}
-
-.EditMachineType thead {
-  border-bottom:  1px solid #ccc;
-  color: rgb(0, 0, 0);
-}
-
-.EditMachineType thead th {
-  padding: 16px 20px;
-  font-weight: 600;
-  text-align: left;
-  font-size: 14px;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  border: none;
-}
-
-.EditMachineType tbody td {
-  padding: 14px 20px;
-  border-bottom: 1px solid #e2e8f0;
-  color: #374151;
-  font-size: 14px;
-  transition: all 0.2s ease;
-}
-
-.EditMachineType tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.EditMachineType tbody tr {
-  transition: all 0.3s ease;
-  cursor: pointer;
-}
-
-.EditMachineType tbody tr:hover {
-  background: #f8fafc;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* Selected Row Styling */
-.EditMachineType tbody tr.bg-blue-100 {
-  background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%);
-  border-left: 4px solid #FF6B35;
-  font-weight: 600;
-  color: #9a3412;
-}
-
-.EditMachineType tbody tr.bg-blue-100:hover {
-  background: linear-gradient(135deg, #bfdbfe 0%, #93c5fd 100%);
-}
-
-/* Edit Column Styling */
-.EditMachineType .text-blue-600 {
-  color: #FF6B35;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  padding: 6px 12px;
-  border-radius: 4px;
-  display: inline-block;
-}
-
-.EditMachineType .text-blue-600:hover {
-  background: #fed7aa;
-  color: #E55A2B;
-  transform: scale(1.05);
-}
-
-/* Detail View Styles */
-.EditMachineType .detail-container {
-  animation: slideIn 0.3s ease-out;
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateX(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-/* Back Button */
-.EditMachineType button:first-child {
-  background: none;
-
-  color:black;
-  border: none;
-   border-bottom: 1px solid #000;
-  padding: 12px 20px;
-
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
- 
   display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 24px;
+  justify-content: center;
+  padding: 10px;
 }
 
-.EditMachineType button:first-child:hover {
-  border-bottom: linear-gradient(135deg, #4b5563 0%, #374151 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+.EditMachineType .edit-container {
+  background: white;
+  padding: 16px 24px;
+  max-width: 600px;
+  width: 100%;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Detail Container */
+.EditMachineType .detail-container {
+  background: white;
+  padding: 20px 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Top Button Row (Back + Delete) */
+.EditMachineType .TopButtonEdit {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.EditMachineType .TopButtonEdit button {
+  padding: 8px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: auto;
+  margin-top: 0;
+}
+
+.EditMachineType .TopButtonEdit button:first-child {
+  background: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%);
+  color: white;
+}
+
+.EditMachineType .TopButtonEdit button:first-child:hover {
+  background: linear-gradient(135deg, #E55A2B 0%, #d44a1b 100%);
+  transform: translateY(-1px);
+}
+
+.EditMachineType .TopButtonEdit .Delete {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+}
+
+.EditMachineType .TopButtonEdit .Delete:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  transform: translateY(-1px);
 }
 
 /* Form Section */
 .EditMachineType .form-section {
-  background: #f8fafc;
-  padding: 20px;
+  background: white;
+  padding: 16px 20px;
   border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  margin-bottom: 24px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
 }
 
-.EditMachineType .form-section label {
+/* Form Title */
+.EditMachineType h2,
+.EditMachineType .form-title {
+  font-size: 1.25rem;
   font-weight: 600;
+  color: #1f2937;
+  text-align: center;
+  margin-bottom: 12px;
+  margin-top: 0;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* Form Groups */
+.EditMachineType .form-group {
+  margin-bottom: 10px;
+}
+
+.EditMachineType .form-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.EditMachineType .form-row .form-group {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+/* Labels */
+.EditMachineType label {
+  font-size: 13px;
+  font-weight: 500;
   color: #374151;
-  font-size: 14px;
-  white-space: nowrap;
+  margin-bottom: 4px;
+  display: block;
 }
 
-.EditMachineType .form-section input {
-  background-color: rgba(255, 255, 255, 0.1);
-  border: none;
-  border-bottom: 0.5px solid #333;
-  padding: 10px 14px;
+/* Inputs - Underline Style */
+.EditMachineType input,
+.EditMachineType select,
+.EditMachineType textarea {
+  width: 100%;
+  padding: 8px 0;
   font-size: 14px;
-  transition: all 0.2s ease;
-  min-width: 200px;
+  color: #1f2937;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #d1d5db;
   outline: none;
-  color: #333;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease;
 }
 
-.EditMachineType .form-section input:focus {
-  border-bottom-color: #FF6B35;
-  border-bottom-width: 2px;
+.EditMachineType input:focus,
+.EditMachineType select:focus,
+.EditMachineType textarea:focus {
+  border-bottom: 2px solid #FF6B35;
 }
 
-/* Save Button */
+.EditMachineType input::placeholder {
+  color: #9ca3af;
+}
+
+/* Select dropdown */
+.EditMachineType select {
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Save button */
 .EditMachineType .save-button {
-    width: 100px;
-  background: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%);
+  width: 100%;
+  padding: 12px 24px;
+  margin-top: 16px;
+  font-size: 15px;
+  font-weight: 600;
   color: white;
+  background: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%);
   border: none;
-  padding: 10px 20px;
-  border-radius: 6px;
-  font-weight: 500;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 4px rgba(255, 107, 53, 0.2);
-}
-.Delete{
- background-color: red;
-  color: #000;
-    width: 100px;
-     padding: 10px 20px;
-  border-radius: 6px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
- 
-
+  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.25);
 }
 
-.EditMachineType .save-button:hover {
-  background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
+.EditMachineType .save-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #E55A2B 0%, #d44a1b 100%);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 16px rgba(255, 107, 53, 0.35);
+}
+
+.EditMachineType .save-button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Delete button */
+.EditMachineType .delete-button {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25);
+}
+
+.EditMachineType .delete-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.35);
 }
 
 /* Info Section */
 .EditMachineType .info-section {
   background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-  padding: 16px 20px;
+  padding: 12px 16px;
   border-radius: 8px;
-  border-left: 4px solid #0ea5e9;
-  margin-bottom: 20px;
+  border-left: 4px solid #FF6B35;
+  margin-top: 16px;
 }
 
 .EditMachineType .info-section p {
-  margin: 0;
+  margin: 4px 0;
   color: #0c4a6e;
-  font-weight: 500;
+  font-size: 13px;
 }
 
 /* Machine Details Table */
 .EditMachineType .machine-details-table {
-  margin-top: 20px;
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
 }
 
-.EditMachineType .machine-details-table thead {
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+.EditMachineType .machine-details-table th,
+.EditMachineType .machine-details-table td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 14px;
+}
+
+.EditMachineType .machine-details-table th {
+  background: #f9fafb;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 2px solid #FF6B35;
 }
 
 .EditMachineType .machine-details-table tbody tr:hover {
-  background: #ecfdf5;
+  background: #f9fafb;
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-  .EditMachineType {
-    padding: 16px;
-    margin: 10px;
-    border-radius: 8px;
-  }
-  
-  .EditMachineType table {
-    font-size: 12px;
-  }
-  
-  .EditMachineType thead th,
-  .EditMachineType tbody td {
-    padding: 10px 12px;
-  }
-  
-  .EditMachineType .form-section {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .EditMachineType .form-section input {
-    min-width: auto;
-  }
+/* Loading/Error Text */
+.EditMachineType .loadingAndError {
+  text-align: center;
+  padding: 20px;
+  font-size: 14px;
+  color: #6b7280;
 }
 
-@media (max-width: 480px) {
-  .EditMachineType {
-    padding: 12px;
-  }
-  
-  .EditMachineType table {
-    font-size: 11px;
-  }
-  
-  .EditMachineType thead th,
-  .EditMachineType tbody td {
-    padding: 8px 10px;
-  }
-}
-
-/* Loading Animation */
-.EditMachineType.loading {
-  opacity: 0.7;
-  pointer-events: none;
-}
-
-.EditMachineType.loading::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 40px;
-  height: 40px;
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #3b82f6;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  transform: translate(-50%, -50%);
-}
-
-@keyframes spin {
-  0% { transform: translate(-50%, -50%) rotate(0deg); }
-  100% { transform: translate(-50%, -50%) rotate(360deg); }
-}
-
-/* Focus Management */
-.EditMachineType:focus-within {
-  box-shadow: 0 4px 25px rgba(59, 130, 246, 0.15);
-}
-
-/* Accessibility Improvements */
-.EditMachineType button:focus,
-.EditMachineType input:focus {
-  outline: 2px solid #3b82f6;
-  outline-offset: 2px;
-}
-
-.EditMachineType tbody tr:focus {
-  outline: 2px solid #3b82f6;
-  outline-offset: -2px;
-}
-
-
-
-
-.mb-3{
-   display: flex;
-   flex-direction: column;
-   gap: 10px;
-
-}
-
-
-
-
-.TopButtonEdit{
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-}
-
-
-.emt-edit-text {
-  cursor: pointer;
-}
-
+/* List View Table */
 .EditMachineType table {
   width: 100%;
   border-collapse: collapse;
+  margin-top: 10px;
 }
 
-.EditMachineType th,
-.EditMachineType td {
-  border: 1px solid #ddd;
-  padding: 8px;
+.EditMachineType table th,
+.EditMachineType table td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 14px;
 }
 
-.bg-blue-100 {
-  background-color: #ebf8ff;
+.EditMachineType table th {
+  background: #f9fafb;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 2px solid #FF6B35;
 }
 
-.detail-container {
-  padding: 16px;
-  border: 1px solid #ccc;
-}
-
-.TopButtonEdit {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 16px;
-}
-
-.save-button,
-.Delete {
-  margin-left: 8px;
-  padding: 6px 12px;
+.EditMachineType table tbody tr {
   cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.EditMachineType table tbody tr:hover {
+  background: #fff7ed;
+}
+
+.EditMachineType table tbody tr.bg-blue-100 {
+  background: #fff7ed;
+}
+
+/* Error Messages */
+.error-text {
+  color: #dc2626;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+/* Success Messages */
+.success-text {
+  color: #059669;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+/* ====================================
+   Edit Sections Table Styles
+   Prefix: editsectionsTable-
+   ==================================== */
+
+/* Main Container */
+.editsectionsTable-container {
+  width: 100%;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Search Section */
+.editsectionsTable-searchWrapper {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.editsectionsTable-searchBox {
+  position: relative;
+  flex: 1;
+}
+
+.editsectionsTable-searchInput {
+  width: 100%;
+  padding: 12px 40px 12px 44px !important;
+  font-size: 15px !important;
+  color: #374151 !important;
+  background: #fff !important;
+  border: 2px solid #e5e7eb !important;
+  border-radius: 10px !important;
+  outline: none;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.editsectionsTable-searchInput:focus {
+  border-color: #FF6B35 !important;
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+}
+
+.editsectionsTable-searchInput::placeholder {
+  color: #9ca3af;
+}
+
+.editsectionsTable-searchIcon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 18px;
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+.editsectionsTable-clearButton {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #9ca3af;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.editsectionsTable-clearButton:hover {
+  color: #374151;
+  background: #f3f4f6;
+}
+
+.editsectionsTable-countBadge {
+  padding: 12px 18px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #6b7280;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+/* Table Wrapper */
+.editsectionsTable-wrapper {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+}
+
+/* Table */
+.editsectionsTable-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0;
+}
+
+/* Table Header */
+.editsectionsTable-thead {
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+}
+
+.editsectionsTable-th {
+  padding: 14px 16px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #FF6B35;
+}
+
+.editsectionsTable-th:first-child {
+  padding-left: 20px;
+}
+
+.editsectionsTable-th:last-child {
+  padding-right: 20px;
+}
+
+/* Table Body */
+.editsectionsTable-tbody {
+  background: #fff;
+}
+
+.editsectionsTable-tr {
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.editsectionsTable-tr:last-child {
+  border-bottom: none;
+}
+
+.editsectionsTable-tr:hover {
+  background: #fff7ed;
+}
+
+.editsectionsTable-trSelected {
+  background: #fff7ed !important;
+}
+
+.editsectionsTable-trSelected .editsectionsTable-td:first-child {
+  box-shadow: inset 3px 0 0 #FF6B35;
+}
+
+.editsectionsTable-td {
+  padding: 14px 16px;
+  font-size: 14px;
+  color: #4b5563;
+  vertical-align: middle;
+}
+
+.editsectionsTable-td:first-child {
+  padding-left: 20px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.editsectionsTable-td:last-child {
+  padding-right: 20px;
+}
+
+/* Empty State */
+.editsectionsTable-empty {
+  padding: 60px 40px;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 15px;
+  background: #fafafa;
+  border-radius: 12px;
+  border: 1px dashed #e5e7eb;
+}
+
+.editsectionsTable-empty span {
+  color: #FF6B35;
+  font-weight: 500;
 }

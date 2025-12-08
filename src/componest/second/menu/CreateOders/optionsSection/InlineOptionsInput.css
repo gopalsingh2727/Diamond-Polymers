@@ -1,0 +1,289 @@
+/* Inline Options Input Container */
+.inlineOptionsContainer {
+  margin-bottom: 20px;
+  padding: 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.inlineOptionsHeader {
+  margin-bottom: 15px;
+}
+
+.inlineOptionsHeader h3 {
+  margin: 0;
+  color: #333;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+/* Horizontal Scroll Input Row */
+.inlineOptionsInputRow {
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.horizontalScrollContainer {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 10px;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.horizontalScrollContainer::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* Input Fields */
+.createDivInput {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.3s;
+}
+
+.createDivInput:focus {
+  outline: none;
+  border-color: #FF6B35;
+}
+
+.createDivInput:disabled {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+}
+
+.createDivInput::placeholder {
+  color: #999;
+  font-style: italic;
+}
+
+.createDivInputwidth {
+  min-width: 180px;
+}
+
+/* Boolean Specification Styling - Title with Checkboxes Below */
+.booleanSpecTitle {
+  font-size: 13px;
+  font-weight: 500;
+  color: #555;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.booleanSpecOptions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  align-items: center;
+}
+
+.booleanSpecLabel {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #666;
+}
+
+.booleanSpecLabel input[type="radio"] {
+  cursor: pointer;
+  accent-color: #FF6B35;
+}
+
+.booleanSpecLabel span {
+  user-select: none;
+}
+
+/* Suggestions Dropdown (Inline) */
+.suggestionsDropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 100;
+  margin-top: 2px;
+}
+
+.suggestionItem {
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-size: 14px;
+  color: #333;
+}
+
+.suggestionItem:hover {
+  background-color: #f5f5f5;
+}
+
+/* Selected Options Table */
+.selectedOptionsTable {
+  margin-top: 20px;
+  overflow-x: auto;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+.selectedOptionsTable table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+
+.selectedOptionsTable th,
+.selectedOptionsTable td {
+  padding: 12px 10px;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 13px;
+}
+
+.selectedOptionsTable th {
+  background: #f9fafb;
+  font-weight: 600;
+  color: #555;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+}
+
+.selectedOptionsTable tbody tr:hover {
+  background: #f9fafb;
+}
+
+.selectedOptionsTable tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Quantity Input in Table */
+.qtyInputSmall {
+  width: 70px;
+  padding: 6px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  text-align: center;
+  font-size: 13px;
+}
+
+.qtyInputSmall:focus {
+  outline: none;
+  border-color: #FF6B35;
+}
+
+/* Specifications Display in Table */
+.specsDisplay {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  max-width: 300px;
+}
+
+.specChip {
+  display: inline-block;
+  padding: 3px 8px;
+  background: #e3f2fd;
+  color: #1976d2;
+  border-radius: 12px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.specMore {
+  color: #666;
+  font-size: 11px;
+  font-style: italic;
+}
+
+/* Remove Button */
+.removeBtn {
+  background: none;
+  border: none;
+  color: #dc2626;
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.removeBtn:hover {
+  background-color: #fee;
+  color: #b91c1c;
+}
+
+/* No Options Text */
+.noOptionsText {
+  padding: 30px;
+  text-align: center;
+  color: #999;
+  background: #f9fafb;
+  border-radius: 6px;
+  border: 2px dashed #e5e7eb;
+  margin-top: 15px;
+}
+
+.noOptionsText p {
+  margin: 0;
+  font-size: 14px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .inlineOptionsContainer {
+    padding: 15px;
+  }
+
+  .horizontalScrollContainer {
+    gap: 8px;
+  }
+
+  .createDivInputwidth {
+    min-width: 150px;
+  }
+
+  .selectedOptionsTable th,
+  .selectedOptionsTable td {
+    padding: 8px 6px;
+    font-size: 12px;
+  }
+
+  .specsDisplay {
+    max-width: 200px;
+  }
+}
+
+/* Animation for table rows */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.selectedOptionsTable tbody tr {
+  animation: fadeIn 0.3s ease-in-out;
+}

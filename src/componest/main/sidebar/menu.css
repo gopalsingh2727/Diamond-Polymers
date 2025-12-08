@@ -57,3 +57,56 @@
   background-color: rgba(0, 0, 0, 0.1);
   border-radius: 2px;
 }
+
+/* Branch Selector in Menu */
+.branch-selector-container {
+  padding: 10px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.menu-branch-selector {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1f2937;
+  background-color: #f9fafb;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 8px center;
+  background-repeat: no-repeat;
+  background-size: 1.25em 1.25em;
+  padding-right: 2rem;
+  transition: all 0.2s ease;
+}
+
+.menu-branch-selector:hover {
+  background-color: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.menu-branch-selector:focus {
+  outline: none;
+  border-color: #FF6B35;
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.15);
+}
+
+.menu-branch-selector option {
+  padding: 8px;
+  background-color: white;
+  color: #1f2937;
+}
+
+.no-branches-info {
+  padding: 10px;
+  text-align: center;
+  font-size: 0.875rem;
+  color: #6b7280;
+  background-color: #f9fafb;
+  border: 1px dashed #d1d5db;
+  border-radius: 8px;
+}

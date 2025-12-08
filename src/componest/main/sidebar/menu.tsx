@@ -1,28 +1,25 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { logout } from "../../redux/login/authActions";
 import type { AppDispatch } from '../../../store';
+import "./menu.css";
+
 const Menu = () => {
   const navigate = useNavigate();
 
   const dispatch = useDispatch<AppDispatch>();
-const userRole = useSelector((state: any) => state.auth.userData?.role);
-console.log(userRole);
 
-
+  // Menu items for all users
   const allMenuItems = [
     { name: "Create", path: "/menu/indexcreateroute" },
     { name: "Edit", path: "/menu/edit" },
-
     { name: "Create Orders", path: "/menu/orderform" },
     { name: "Day Book", path: "/menu/daybook" },
     { name: "Dispatch", path: "/menu/dispatch" },
-    { name: "All Orders", path: "/menu/IndexAllOders" },
+    { name: "Status", path: "/menu/IndexAllOders" },
     { name: "Account", path: "/menu/Account" },
-    // { name: "Marketing", path: "/menu/marketing" },
-    {name: "Report Dashboard", path: "/menu/reportDashboard" },
-    // { name: "Address", path: "/menu/adderss" },
+    { name: "Reports", path: "/menu/reports" },
     { name: "Logout", path: "/login" },
   ];
 

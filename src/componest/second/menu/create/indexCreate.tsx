@@ -3,24 +3,22 @@ import CreateAccount from "./createNewAccount/createNewAccount";
 import CreateMachine from "./machine/CreateMachine";
 import CreateStep from "./CreateStep/CreateStep";
 import CreteMachineOpertor from "./CreateMachineOpertor/CreteMachineOpertor";
-// import Products from "./products/products";
-// import ProductCategories from "./products/productsCategories";
-
-import CreateMaterials from "./Materials/createMaterials";
-import MaterialsCategories from "./Materials/materialsCategories";
 import CreateMachineType from "./machine/createMachineType";
 import Headers from "../../header/Headers";
 import  DeviceAccess from './deviceAccess/deviceAccess';
 import DiveceAccessCreate from "./deviceAccess/deviceAccessCreate";
-import CreateFormula from "./formula/CreateFormula";
-import CreateProductSpec from "./productSpec/CreateProductSpec";
-import CreateMaterialSpec from "./materialSpec/CreateMaterialSpec";
 import CreateOrderType from "./orderType/CreateOrderType";
+import CreatePrintType from "./printType/CreatePrintType";
+import CreateExcelExportType from "./excelExportType/CreateExcelExportType";
+import CreateOptionType from "./optionType/CreateOptionType";
+import CreateOption from "./option/CreateOption";
+import CreateOptionSpec from "./optionSpec/CreateOptionSpec";
+import CreateCategory from "./category/CreateCategory";
+import ViewTemplateWizard from "./machine/ViewTemplateWizard";
+import OperatorEntryView from "./machine/OperatorEntryView";
 import './create.css';
 import '../../../main/sidebar/menu.css';
 import ErrorBoundary from '../../../error/error';
-import Products from "./products/products";
-import ProductCategories from "./products/productsCategories";
 
 const Layout = () => {
   const menuSections = [
@@ -40,15 +38,6 @@ const Layout = () => {
       ]
     },
     {
-      title: "Products & Materials",
-      items: [
-        { key: "products", label: "Products" },
-        { key: "categories", label: "Product Categories" },
-        { key: "materials", label: "Create Materials" },
-        { key: "materialsCategories", label: "Materials Categories" }
-      ]
-    },
-    {
       title: "Device Access",
       items: [
         { key: "Create Device Access", label: "Create Device Access" },
@@ -56,17 +45,22 @@ const Layout = () => {
       ]
     },
     {
-      title: "Specifications",
+      title: "Options System",
       items: [
-        { key: "productSpec", label: "Create Product Spec" },
-        { key: "materialSpec", label: "Create Material Spec" },
-        { key: "orderType", label: "Create Order Type" }
+        { key: "category", label: "Create Category" },
+        { key: "optionType", label: "Create Option Type" },
+        { key: "optionSpec", label: "Create Option Spec" },
+        { key: "option", label: "Create Option" }
       ]
     },
     {
-      title: "Formulas & Calculations",
+      title: "Order Management",
       items: [
-        { key: "formula", label: "Create Formula" }
+        { key: "orderType", label: "Create Order Type" },
+        { key: "printType", label: "Create Print Type" },
+        { key: "excelExportType", label: "Create Excel Export Type" },
+        { key: "viewTemplate", label: "View Template" },
+        { key: "operatorEntry", label: "Operator Entry" }
       ]
     }
   ];
@@ -83,10 +77,9 @@ const Layout = () => {
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     "Account": true,
     "Machine Management": false,
-    "Products & Materials": false,
     "Device Access": false,
-    "Specifications": true,
-    "Formulas & Calculations": true
+    "Options System": true,
+    "Order Management": false
   });
 
   const toggleSection = (sectionTitle: string) => {
@@ -144,25 +137,27 @@ const Layout = () => {
       case "Create Machine Operator":
         return <ErrorBoundary><CreteMachineOpertor /></ErrorBoundary>;
       case "Create Device Access":
-        return <ErrorBoundary><DiveceAccessCreate/></ErrorBoundary> 
+        return <ErrorBoundary><DiveceAccessCreate/></ErrorBoundary>
       case "Create Access":
         return <ErrorBoundary><DeviceAccess/></ErrorBoundary>
-      case "products":
-        return <ErrorBoundary><Products /></ErrorBoundary>;
-      case "categories":
-        return <ErrorBoundary><ProductCategories/></ErrorBoundary>;
-      case "materials":
-        return <ErrorBoundary><CreateMaterials /></ErrorBoundary>;
-      case "materialsCategories":
-        return <ErrorBoundary><MaterialsCategories /></ErrorBoundary>;
-      case "formula":
-        return <ErrorBoundary><CreateFormula /></ErrorBoundary>;
-      case "productSpec":
-        return <ErrorBoundary><CreateProductSpec /></ErrorBoundary>;
-      case "materialSpec":
-        return <ErrorBoundary><CreateMaterialSpec /></ErrorBoundary>;
+      case "category":
+        return <ErrorBoundary><CreateCategory /></ErrorBoundary>;
+      case "optionType":
+        return <ErrorBoundary><CreateOptionType /></ErrorBoundary>;
+      case "optionSpec":
+        return <ErrorBoundary><CreateOptionSpec /></ErrorBoundary>;
+      case "option":
+        return <ErrorBoundary><CreateOption /></ErrorBoundary>;
       case "orderType":
-        return <ErrorBoundary><CreateOrderType /></ErrorBoundary>;
+        return <CreateOrderType />
+      case "printType":
+        return <ErrorBoundary><CreatePrintType /></ErrorBoundary>;
+      case "excelExportType":
+        return <ErrorBoundary><CreateExcelExportType /></ErrorBoundary>;
+      case "viewTemplate":
+        return <ErrorBoundary><ViewTemplateWizard /></ErrorBoundary>;
+      case "operatorEntry":
+        return <ErrorBoundary><OperatorEntryView /></ErrorBoundary>;
       default:
         return <div>Select an option</div>;
     }

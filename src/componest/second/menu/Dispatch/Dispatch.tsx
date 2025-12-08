@@ -1,12 +1,14 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { BackButton } from "../../../allCompones/BackButton"; 
+import { BackButton } from "../../../allCompones/BackButton";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import "../Dispatch/Dispatch.css";
 import { fetchOrders } from "../../../redux/oders/OdersActions";
 import { RootState } from "../../../../store";
+import { useDaybookUpdates } from "../../../../hooks/useWebSocket";  // ✅ WebSocket real-time updates
+import ExcelExportSelector from "../../../../components/shared/ExcelExportSelector";
 
 interface Order {
   _id: string;
@@ -143,6 +145,7 @@ export default function Dispatch() {
   const [statusFilter, setStatusFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [limit] = useState(50);
+  const [showExcelExportSelector, setShowExcelExportSelector] = useState(false);
 
   // Refs
   const contentRef = useRef<HTMLDivElement>(null);
@@ -168,6 +171,7 @@ export default function Dispatch() {
   // Company info - safe access with type assertion
   const companyName = (authState as any)?.user?.companyName || "ABC Company";
   const branchName = (authState as any)?.user?.branchName || "Main Branch";
+  const branchId = (authState as any)?.user?.branchId || null;  // ✅ For WebSocket subscription
 
   // Status color mapping for dispatch
   function getStatusColor(status: string): string {
@@ -460,15 +464,14 @@ export default function Dispatch() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, currentPage, limit, fromDate, toDate, searchTerm, statusFilter]);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      console.log("🚚 Dispatch auto-refresh triggered");
-      fetchOrdersData();
-    }, 30000);
-
-    return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // ✅ REPLACED: 30-second polling with WebSocket real-time subscription
+  const handleOrderUpdate = useCallback(() => {
+    console.log("📡 WebSocket: Dispatch update received - refreshing");
+    fetchOrdersData();
   }, [currentPage, limit, fromDate, toDate, searchTerm, statusFilter]);
+
+  // Subscribe to real-time daybook updates via WebSocket
+  useDaybookUpdates(branchId, handleOrderUpdate);
 
   useEffect(() => {
     if (scrollWrapperRef.current) {
@@ -739,9 +742,9 @@ export default function Dispatch() {
           >
             Print Dispatch Report
           </button>
-          <button 
-            className="ButtonINDispatch bottom-borders-menu" 
-            onClick={handleExportExcel}
+          <button
+            className="ButtonINDispatch bottom-borders-menu"
+            onClick={() => setShowExcelExportSelector(true)}
             disabled={loading}
           >
             Export to Excel
@@ -902,31 +905,31 @@ export default function Dispatch() {
             <h2 className="text-lg font-semibold mb-4">Change Date Period</h2>
             <label className="block mb-2">
               From:
-              <input 
-                type="date" 
-                value={fromDate} 
-                onChange={e => setFromDate(e.target.value)} 
-                className="border w-full p-2 rounded" 
+              <input
+                type="date"
+                value={fromDate}
+                onChange={e => setFromDate(e.target.value)}
+                className="border w-full p-2 rounded"
               />
             </label>
             <label className="block mb-4">
               To:
-              <input 
-                type="date" 
-                value={toDate} 
-                onChange={e => setToDate(e.target.value)} 
-                className="border w-full p-2 rounded" 
+              <input
+                type="date"
+                value={toDate}
+                onChange={e => setToDate(e.target.value)}
+                className="border w-full p-2 rounded"
               />
             </label>
             <div className="flex justify-end gap-2">
-              <button 
-                onClick={() => setShowPeriodModal(false)} 
+              <button
+                onClick={() => setShowPeriodModal(false)}
                 className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500"
               >
                 Cancel
               </button>
-              <button 
-                onClick={handleDateFilter} 
+              <button
+                onClick={handleDateFilter}
                 className="bg-[#FF6B35] text-white px-4 py-2 rounded hover:bg-[#E55A2B]"
               >
                 Apply
@@ -935,6 +938,17 @@ export default function Dispatch() {
           </div>
         </div>
       )}
+
+      {/* Excel Export Selector */}
+      <ExcelExportSelector
+        isOpen={showExcelExportSelector}
+        onClose={() => setShowExcelExportSelector(false)}
+        orders={filteredOrders}
+        defaultFilename={`Dispatch_${fromDate || 'all'}_to_${toDate || 'all'}`}
+        onExport={(data, filename) => {
+          console.log(`Exported ${data.length} orders to ${filename}`);
+        }}
+      />
     </div>
   );
 }

@@ -3,7 +3,8 @@ import { useCRUD } from '../../hooks/useCRUD';
 import { ToastContainer } from './Toast';
 import { ConfirmDialog } from './ConfirmDialog';
 import { Search, Filter, X, Edit2, Trash2, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
-import styles from '../../reports/styles/modules/ReportTable.module.css';
+// Inline styles for table (reports module removed)
+const styles: Record<string, string> = {};
 
 export interface EditTableColumn<T = any> {
   key: string;

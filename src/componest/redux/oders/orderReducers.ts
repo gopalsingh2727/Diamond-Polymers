@@ -1,4 +1,4 @@
-// reducers/orderReducers.ts - Fixed Version
+// reducers/orderReducers.ts - Fixed Version with WebSocket Support
 
 import { combineReducers } from 'redux';
 import {
@@ -39,6 +39,14 @@ const  GET_ACCOUNT_ORDERS_REQUEST = 'GET_ACCOUNT_ORDERS_REQUEST';
 const GET_ACCOUNT_ORDERS_SUCCESS = 'GET_ACCOUNT_ORDERS_SUCCESS';
 const GET_ACCOUNT_ORDERS_FAILURE = 'GET_ACCOUNT_ORDERS_FAILURE';
 
+// WebSocket action constants
+const ORDER_CREATED_VIA_WS = 'orders/orderCreatedViaWS';
+const ORDER_STATUS_CHANGED_VIA_WS = 'orders/orderStatusChangedViaWS';
+const ORDER_PRIORITY_CHANGED_VIA_WS = 'orders/orderPriorityChangedViaWS';
+const ORDER_UPDATED_VIA_WS = 'orders/orderUpdatedViaWS';
+const ORDER_DELETED_VIA_WS = 'orders/orderDeletedViaWS';
+const ORDER_ASSIGNMENT_CHANGED_VIA_WS = 'orders/orderAssignmentChangedViaWS';
+
 // Machine Table Constants
 const FETCH_ORDER_MACHINE_TABLE_REQUEST = 'FETCH_ORDER_MACHINE_TABLE_REQUEST';
 const FETCH_ORDER_MACHINE_TABLE_SUCCESS = 'FETCH_ORDER_MACHINE_TABLE_SUCCESS';
@@ -60,8 +68,47 @@ interface ClearOrdersAction {
   type: typeof CLEAR_ORDERS;
 }
 
+// WebSocket action interfaces
+interface WebSocketOrderCreatedAction {
+  type: typeof ORDER_CREATED_VIA_WS;
+  payload: OrderData;
+}
+
+interface WebSocketOrderStatusChangedAction {
+  type: typeof ORDER_STATUS_CHANGED_VIA_WS;
+  payload: { _id: string; status: string; updatedAt?: string };
+}
+
+interface WebSocketOrderPriorityChangedAction {
+  type: typeof ORDER_PRIORITY_CHANGED_VIA_WS;
+  payload: { _id: string; priority: string; updatedAt?: string };
+}
+
+interface WebSocketOrderUpdatedAction {
+  type: typeof ORDER_UPDATED_VIA_WS;
+  payload: OrderData;
+}
+
+interface WebSocketOrderDeletedAction {
+  type: typeof ORDER_DELETED_VIA_WS;
+  payload: { _id: string };
+}
+
+interface WebSocketOrderAssignmentChangedAction {
+  type: typeof ORDER_ASSIGNMENT_CHANGED_VIA_WS;
+  payload: { _id: string; machineId?: string; operatorId?: string; updatedAt?: string };
+}
+
+type WebSocketOrderActions =
+  | WebSocketOrderCreatedAction
+  | WebSocketOrderStatusChangedAction
+  | WebSocketOrderPriorityChangedAction
+  | WebSocketOrderUpdatedAction
+  | WebSocketOrderDeletedAction
+  | WebSocketOrderAssignmentChangedAction;
+
 // Extended action types
-type ExtendedOrderActionTypes = OrderActionTypes | ClearOrdersAction;
+type ExtendedOrderActionTypes = OrderActionTypes | ClearOrdersAction | WebSocketOrderActions;
 
 // Order List State - matching your component expectations
 interface OrderListState {
@@ -244,6 +291,98 @@ const orderListReducer = (
         ...state,
         error: null
       };
+
+    // ========================================
+    // WebSocket Real-Time Update Cases
+    // ========================================
+
+    case ORDER_CREATED_VIA_WS: {
+      console.log('📡 ORDER_CREATED_VIA_WS:', action.payload);
+      const newOrder = (action as any).payload as OrderData;
+
+      // Check if order already exists (prevent duplicates)
+      const exists = state.orders.some(order => order._id === newOrder._id);
+      if (exists) {
+        console.warn('Order already exists, skipping duplicate:', newOrder._id);
+        return state;
+      }
+
+      return {
+        ...state,
+        orders: [newOrder, ...state.orders], // Add to beginning
+      };
+    }
+
+    case ORDER_STATUS_CHANGED_VIA_WS: {
+      console.log('📡 ORDER_STATUS_CHANGED_VIA_WS:', action.payload);
+      const { _id, status, updatedAt } = (action as any).payload;
+
+      return {
+        ...state,
+        orders: state.orders.map(order =>
+          order._id === _id
+            ? { ...order, status, ...(updatedAt && { updatedAt }) }
+            : order
+        ),
+      };
+    }
+
+    case ORDER_PRIORITY_CHANGED_VIA_WS: {
+      console.log('📡 ORDER_PRIORITY_CHANGED_VIA_WS:', action.payload);
+      const { _id, priority, updatedAt } = (action as any).payload;
+
+      return {
+        ...state,
+        orders: state.orders.map(order =>
+          order._id === _id
+            ? { ...order, priority, ...(updatedAt && { updatedAt }) }
+            : order
+        ),
+      };
+    }
+
+    case ORDER_UPDATED_VIA_WS: {
+      console.log('📡 ORDER_UPDATED_VIA_WS:', action.payload);
+      const updatedOrder = (action as any).payload as OrderData;
+
+      return {
+        ...state,
+        orders: state.orders.map(order =>
+          order._id === updatedOrder._id
+            ? { ...order, ...updatedOrder }
+            : order
+        ),
+      };
+    }
+
+    case ORDER_DELETED_VIA_WS: {
+      console.log('📡 ORDER_DELETED_VIA_WS:', action.payload);
+      const { _id } = (action as any).payload;
+
+      return {
+        ...state,
+        orders: state.orders.filter(order => order._id !== _id),
+      };
+    }
+
+    case ORDER_ASSIGNMENT_CHANGED_VIA_WS: {
+      console.log('📡 ORDER_ASSIGNMENT_CHANGED_VIA_WS:', action.payload);
+      const { _id, machineId, operatorId, updatedAt } = (action as any).payload;
+
+      return {
+        ...state,
+        orders: state.orders.map(order =>
+          order._id === _id
+            ? {
+                ...order,
+                ...(machineId !== undefined && { machineId }),
+                ...(operatorId !== undefined && { operatorId }),
+                ...(updatedAt && { updatedAt })
+              }
+            : order
+        ),
+      };
+    }
 
     default:
       return state;

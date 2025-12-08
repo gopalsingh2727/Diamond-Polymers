@@ -346,3 +346,352 @@
     width: 100%;
   }
 }
+
+/* ============================================
+   UNIFIED CREATE FORM STYLES
+   Use class "CreateForm" on all Create sections
+   for consistent styling across the app
+   ============================================ */
+
+.CreateForm {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 15px;
+  background: transparent;
+}
+
+/* Inner form wrapper for centering */
+.CreateForm > div:first-child,
+.CreateForm > form:first-child {
+  width: 100%;
+  max-width: 500px;
+  background: white;
+  padding: 20px 30px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Form Title */
+.CreateForm h2,
+.CreateForm .form-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  text-align: center;
+  margin-bottom: 1rem;
+  margin-top: 0;
+}
+
+/* Form Section */
+.CreateForm .form-section {
+  background: white;
+  padding: 0;
+  margin-bottom: 10px;
+}
+
+/* Form Row - for multiple inputs in a row */
+.CreateForm .form-row {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.CreateForm .form-row > * {
+  flex: 1;
+  min-width: 180px;
+}
+
+/* Form Group */
+.CreateForm .form-group {
+  margin-bottom: 12px;
+}
+
+/* Labels */
+.CreateForm label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 4px;
+}
+
+/* ============================================
+   UNDERLINE-ONLY INPUT STYLE (Material Design)
+   Clean, minimal inputs with only bottom border
+   ============================================ */
+
+.CreateForm input[type="text"],
+.CreateForm input[type="number"],
+.CreateForm input[type="email"],
+.CreateForm input[type="password"],
+.CreateForm input[type="tel"],
+.CreateForm input[type="date"],
+.CreateForm textarea {
+  width: 100%;
+  padding: 8px 2px;
+  font-size: 14px;
+  color: #1f2937;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #d1d5db;
+  border-radius: 0;
+  outline: none;
+  transition: border-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.CreateForm input[type="text"]:focus,
+.CreateForm input[type="number"]:focus,
+.CreateForm input[type="email"]:focus,
+.CreateForm input[type="password"]:focus,
+.CreateForm input[type="tel"]:focus,
+.CreateForm input[type="date"]:focus,
+.CreateForm textarea:focus {
+  border-bottom: 2px solid #FF6B35;
+}
+
+.CreateForm input::placeholder,
+.CreateForm textarea::placeholder {
+  color: #9ca3af;
+}
+
+/* Select with underline style */
+.CreateForm select {
+  width: 100%;
+  padding: 12px 4px;
+  font-size: 15px;
+  color: #1f2937;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #d1d5db;
+  border-radius: 0;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.CreateForm select:focus {
+  border-bottom: 2px solid #FF6B35;
+}
+
+/* Textarea specific */
+.CreateForm textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+/* ============================================
+   UNIFIED BUTTON STYLES
+   Consistent buttons across all Create forms
+   ============================================ */
+
+.CreateForm button,
+.CreateForm .save-button,
+.CreateForm .submit-button,
+.CreateForm [type="submit"] {
+  padding: 12px 32px;
+  font-size: 15px;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.25);
+}
+
+.CreateForm button:hover,
+.CreateForm .save-button:hover,
+.CreateForm .submit-button:hover,
+.CreateForm [type="submit"]:hover {
+  background: linear-gradient(135deg, #E55A2B 0%, #d44a1b 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(255, 107, 53, 0.35);
+}
+
+.CreateForm button:active,
+.CreateForm .save-button:active {
+  transform: translateY(0);
+}
+
+.CreateForm button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Reset/Cancel Button */
+.CreateForm .reset-button,
+.CreateForm .cancel-button {
+  background: #f3f4f6;
+  color: #374151;
+  box-shadow: none;
+}
+
+.CreateForm .reset-button:hover,
+.CreateForm .cancel-button:hover {
+  background: #e5e7eb;
+  transform: translateY(-1px);
+}
+
+/* Button Container */
+.CreateForm .button-container,
+.CreateForm .form-actions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* ============================================
+   SUCCESS & ERROR MESSAGES
+   ============================================ */
+
+.CreateForm .success-message {
+  padding: 12px 16px;
+  background: #d1fae5;
+  color: #065f46;
+  border-radius: 8px;
+  font-size: 14px;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.CreateForm .error-message {
+  padding: 12px 16px;
+  background: #fee2e2;
+  color: #dc2626;
+  border-radius: 8px;
+  font-size: 14px;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+/* ============================================
+   LOADING STATE
+   ============================================ */
+
+.CreateForm .loading {
+  text-align: center;
+  padding: 40px;
+  color: #6b7280;
+}
+
+/* ============================================
+   DARK MODE SUPPORT
+   ============================================ */
+
+.dark .CreateForm {
+  background: rgba(17, 24, 39, 0.95);
+  color: #e5e7eb;
+}
+
+.dark .CreateForm h2,
+.dark .CreateForm .form-title {
+  color: #f3f4f6;
+}
+
+.dark .CreateForm label {
+  color: #d1d5db;
+}
+
+.dark .CreateForm input,
+.dark .CreateForm select,
+.dark .CreateForm textarea {
+  color: #e5e7eb;
+  border-bottom-color: #4b5563;
+}
+
+.dark .CreateForm input:focus,
+.dark .CreateForm select:focus,
+.dark .CreateForm textarea:focus {
+  border-bottom-color: #FF6B35;
+}
+
+.dark .CreateForm input::placeholder,
+.dark .CreateForm textarea::placeholder {
+  color: #6b7280;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+@media (max-width: 768px) {
+  .CreateForm {
+    padding: 16px;
+    margin: 8px;
+  }
+
+  .CreateForm .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .CreateForm .form-row > * {
+    min-width: 100%;
+  }
+
+  .CreateForm .button-container,
+  .CreateForm .form-actions {
+    flex-direction: column;
+  }
+
+  .CreateForm button {
+    width: 100%;
+  }
+}
+
+/* ============================================
+   CREATEFORM - Additional Input Classes
+   For components using createDivInput etc.
+   ============================================ */
+
+.CreateForm .createDivInput,
+.CreateForm .createDivInputwidth {
+  width: 100%;
+  padding: 6px 0;
+  font-size: 14px;
+  color: #1f2937;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #d1d5db;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease;
+}
+
+.CreateForm .createDivInput:focus,
+.CreateForm .createDivInputwidth:focus {
+  border-bottom: 2px solid #FF6B35;
+}
+
+/* Grid-based createDiv container */
+.CreateForm.createDiv {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 15px;
+  max-width: 900px;
+  padding: 10px 15px;
+}
+
+.CreateForm .form-column,
+.CreateForm .form-input-group {
+  margin-bottom: 8px;
+}
+
+.CreateForm .input-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 2px;
+}

@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
+import { useSelector } from "react-redux";
 import CreateBranch from "./create/createBranch";
 import CreateManager from "./create/createManger";
 import CreateAdmin from "./create/createAdmin";
@@ -11,20 +12,53 @@ import "../../../main/sidebar/menu.css";
 import ErrorBoundary from "../../../error/error";
 import { BackButton } from "../../../allCompones/BackButton";
 
+interface RootState {
+  auth: {
+    userData: {
+      role?: string;
+    } | null;
+  };
+}
+
 const SystemSetting = () => {
-  const [activeComponent, setActiveComponent] = useState("createBranch");
-  const [title, setTitle] = useState("Create Branch"); 
+  // Get user role from auth state
+  const userData = useSelector((state: RootState) => state.auth.userData);
+  const userRole = userData?.role || '';
+  const isMasterAdmin = userRole === 'master_admin';
+
+  // All possible menu items with role restrictions
+  const allMenuItems = [
+    { key: "createBranch", label: "Create Branch", masterAdminOnly: true, section: "create" },
+    { key: "createManager", label: "Create Manager", masterAdminOnly: true, section: "create" },
+    { key: "createAdmin", label: "Create Admin", masterAdminOnly: true, section: "create" },
+    { key: "editBranch", label: "Edit Branch", masterAdminOnly: false, section: "edit" },
+    { key: "editManager", label: "Edit Manager", masterAdminOnly: false, section: "edit" },
+    { key: "editAdmin", label: "Edit Admin", masterAdminOnly: false, section: "edit" },
+  ];
+
+  // Filter menu items based on user role
+  const menuItems = useMemo(() => {
+    return allMenuItems.filter(item => !item.masterAdminOnly || isMasterAdmin);
+  }, [isMasterAdmin]);
+
+  // Set default active component based on available menu items
+  const defaultComponent = menuItems.length > 0 ? menuItems[0].key : "editBranch";
+
+  const [activeComponent, setActiveComponent] = useState(defaultComponent);
+  const [title, setTitle] = useState(menuItems.length > 0 ? menuItems[0].label : "Edit Branch");
   const buttonRefs = useRef<(HTMLLIElement | null)[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  const menuItems = [
-    { key: "createBranch", label: "Create Branch" },
-    { key: "createManager", label: "Create Manager" },
-    { key: "createAdmin", label: "Create Admin" },
-    { key: "editBranch", label: "Edit Branch" },
-    { key: "editManager", label: "Edit Manager" },
-    { key: "editAdmin", label: "Edit Admin" },
-  ];
+  // Reset to first available menu item when role changes or on mount
+  useEffect(() => {
+    if (menuItems.length > 0) {
+      const currentComponentExists = menuItems.some(item => item.key === activeComponent);
+      if (!currentComponentExists) {
+        setActiveComponent(menuItems[0].key);
+        setSelectedIndex(0);
+      }
+    }
+  }, [menuItems, activeComponent]);
 
   useEffect(() => {
     const titles: Record<string, string> = {
@@ -116,12 +150,17 @@ const SystemSetting = () => {
         <div className="menu-container-create">
           <div className="menu-header-padding">
             <ul id="main-menu" style={{ listStyle: "none", padding: 0 }}>
-              {menuItems.map((item, index) => (
+              {menuItems.map((item, index) => {
+                // Add bottom border when next item is in a different section
+                const nextItem = menuItems[index + 1];
+                const showSectionBorder = nextItem && nextItem.section !== item.section;
+
+                return (
                 <div
                   key={item.key}
                   className={`menu-item-wrapper ${
                     selectedIndex === index ? "selected" : ""
-                  } ${index === 2 || index === 4 ? "bottom-borders-menu" : ""}`}
+                  } ${showSectionBorder ? "bottom-borders-menu" : ""}`}
                 >
                   <li
                     ref={(el) => (buttonRefs.current[index] = el)}
@@ -143,7 +182,8 @@ const SystemSetting = () => {
                     {item.label}
                   </li>
                 </div>
-              ))}
+              );
+              })}
             </ul>
           </div>
         </div>

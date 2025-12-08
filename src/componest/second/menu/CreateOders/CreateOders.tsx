@@ -1,22 +1,22 @@
 import { useState, useRef, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import "./CreateOders.css";
 import "./DynamicForm.css";
 import { BackButton } from "../../../allCompones/BackButton";
-import MaterialInOders from "./odersType/material";
-import ProductInOrders from "./odersType/product";
+import { deleteOrder } from "../../../redux/oders/OdersActions";
+import { ToastContainer } from "../../../../components/shared/Toast";
+import { useCRUD } from "../../../../hooks/useCRUD";
 import CustomerName, { CustomerNameRef } from "./account/CurstomerName";
 import OrderTypeSelect from "./OrderTypeSelect";
 import Notes from "./notes";
 import Priority from "./priority";
+import Status from "./status";
 import SaveOrders from "./saveTheOdes";
 import  StepContainer, { StepContainerRef } from "./stepContainer";
-import PrintImage from "./printoptions";
 import { useOrderFormData } from "./useOrderFormData";
+import InlineOptionsInput from "./optionsSection/InlineOptionsInput";
 
-import { MaterialData } from "./odersType/material";
-import { ProductData } from "./odersType/product";
 import { RootState } from "../../../redux/rootReducer";
 import { AppDispatch } from "../../../../store";
 
@@ -35,6 +35,15 @@ type SectionConfig = {
   }[];
 };
 
+// OptionType from allowedOptionTypes
+type AllowedOptionType = {
+  _id: string;
+  name: string;
+  code?: string;
+  category?: string;
+  specifications?: any[];
+};
+
 // Order type configuration type
 type OrderTypeConfig = {
   _id: string;
@@ -43,15 +52,98 @@ type OrderTypeConfig = {
   sections: SectionConfig[];
   enablePrinting: boolean;
   enableMixing: boolean;
+  allowedOptionTypes?: AllowedOptionType[];
+};
+
+// Helper function to generate unique IDs for options
+let optionIdCounter = 0;
+const generateOptionId = () => {
+  optionIdCounter++;
+  return `option-${Date.now()}-${optionIdCounter}`;
+};
+
+// Transform options from database format to component format for edit mode
+const transformOptionsForEdit = (orderData: any): any[] => {
+  console.log('🔍 transformOptionsForEdit called with:', {
+    hasOrderData: !!orderData,
+    orderDataKeys: orderData ? Object.keys(orderData) : [],
+    hasOptions: !!(orderData?.options),
+    optionsLength: orderData?.options?.length || 0,
+    options: orderData?.options
+  });
+
+  if (!orderData) {
+    console.log('❌ No orderData - returning empty array');
+    return [];
+  }
+
+  const dbOptions = orderData.options || [];
+  const optionsWithDetails = orderData.optionsWithDetails || [];
+
+  if (!Array.isArray(dbOptions) || dbOptions.length === 0) {
+    console.log('❌ No options to transform:', {
+      isArray: Array.isArray(dbOptions),
+      length: dbOptions.length,
+      dbOptions
+    });
+    return [];
+  }
+
+  console.log('🔄 Transforming options for edit mode:', {
+    dbOptions: dbOptions.length,
+    withDetails: optionsWithDetails.length
+  });
+
+  return dbOptions.map((opt: any, index: number) => {
+    // Get enriched data if available
+    const enriched = optionsWithDetails[index] || {};
+    const specDetails = enriched.specDetails || {};
+
+    // Transform specificationValues from array to object format
+    const specsObject: { [key: string]: any } = {};
+    if (Array.isArray(opt.specificationValues)) {
+      opt.specificationValues.forEach((spec: any) => {
+        specsObject[spec.name] = spec.value;
+      });
+    } else if (opt.specificationValues && typeof opt.specificationValues === 'object') {
+      // Already in object format
+      Object.assign(specsObject, opt.specificationValues);
+    }
+
+    // Build the component-expected format
+    const transformed = {
+      id: generateOptionId(),
+      optionId: opt.optionId || opt._id,
+      optionName: opt.optionName || specDetails.name || 'Unknown Option',
+      optionTypeId: opt.optionTypeId || specDetails.optionTypeId || '',
+      optionTypeName: opt.optionTypeName || opt.category || specDetails.typeName || 'product',
+      specificationValues: specsObject,
+      mixingData: opt.mixingData || undefined
+    };
+
+    console.log('✅ Transformed option:', {
+      original: opt.optionName,
+      specs: Object.keys(specsObject).length,
+      hasMixing: !!transformed.mixingData
+    });
+
+    return transformed;
+  });
 };
 
 const CreateOrders = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
+  const { toast } = useCRUD();
 
   // Enhanced edit mode detection
   const { orderData, isEdit, isEditMode } = location.state || {};
   const editMode = Boolean(isEdit || isEditMode || (orderData && orderData._id));
+
+  // Delete confirmation modal state
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // 🚀 OPTIMIZED: Single API call for all form data
   const {
@@ -71,14 +163,42 @@ const CreateOrders = () => {
   const [selectedOrderType, setSelectedOrderType] = useState("");
   const [orderTypeConfig, setOrderTypeConfig] = useState<OrderTypeConfig | null>(null);
 
+  // NEW: Unified Options data state
+  const [options, setOptions] = useState<any[]>([]);
+
+  // Track status and priority changes for edit mode
+  const [currentStatus, setCurrentStatus] = useState<string>(orderData?.overallStatus || 'Wait for Approval');
+  const [currentPriority, setCurrentPriority] = useState<string>(orderData?.priority || 'normal');
+
   // Get order types from form data (already loaded in useOrderFormData)
   const orderTypes = allData?.orderTypes || [];
 
   // Refs to access child component data
   const customerNameRef = useRef<CustomerNameRef>(null);
-  const materialRef = useRef<{ getMaterialData: () => MaterialData }>(null);
-  const productRef = useRef<{ getProductData: () => ProductData }>(null);
   const stepContainerRef = useRef<StepContainerRef>(null);
+
+  // Set order type from orderData in edit mode
+  useEffect(() => {
+    if (editMode && orderData && orderTypes.length > 0 && !selectedOrderType) {
+      // Extract order type ID - handle both string and object formats
+      let orderTypeId = '';
+
+      if (typeof orderData.orderType === 'string') {
+        orderTypeId = orderData.orderType;
+      } else if (orderData.orderType?._id) {
+        orderTypeId = orderData.orderType._id;
+      } else if (orderData.orderTypeId) {
+        orderTypeId = typeof orderData.orderTypeId === 'string'
+          ? orderData.orderTypeId
+          : orderData.orderTypeId._id || '';
+      }
+
+      if (orderTypeId) {
+        console.log('📝 Edit mode - Setting order type from orderData:', orderTypeId);
+        setSelectedOrderType(orderTypeId);
+      }
+    }
+  }, [editMode, orderData, orderTypes.length, selectedOrderType]);
 
   // Update order type config when order type changes
   useEffect(() => {
@@ -111,9 +231,17 @@ const CreateOrders = () => {
       // Default to showing all sections if no config
       return true;
     }
-    // Find section in config - if not found, it's NOT enabled for this order type
+
+    // Find section in config
     const section = orderTypeConfig.sections.find(s => s.id === sectionId);
-    // IMPORTANT: If section not in config, return FALSE (not enabled)
+
+    // BACKWARD COMPATIBILITY: Show 'options' and 'steps' sections by default if not in config
+    // This handles order types created before these sections were added
+    if ((sectionId === 'options' || sectionId === 'steps') && !section) {
+      return true;
+    }
+
+    // For other sections: if not found, it's NOT enabled
     return section ? section.enabled !== false : false;
   };
 
@@ -126,15 +254,41 @@ const CreateOrders = () => {
   // Sort sections by order
   const getSortedSections = (): SectionConfig[] => {
     if (!orderTypeConfig || !orderTypeConfig.sections || orderTypeConfig.sections.length === 0) {
-      // Return default order
+      // Return default order with new unified options section
       return [
-        { id: 'product', name: 'Product', enabled: true, order: 1, fields: [] },
-        { id: 'material', name: 'Material', enabled: true, order: 2, fields: [] },
-        { id: 'printing', name: 'Printing', enabled: true, order: 3, fields: [] },
-        { id: 'steps', name: 'Steps', enabled: true, order: 4, fields: [] }
+        { id: 'options', name: 'Options', enabled: true, order: 1, fields: [] },
+        { id: 'steps', name: 'Steps', enabled: true, order: 2, fields: [] }
       ];
     }
-    return [...orderTypeConfig.sections].sort((a, b) => a.order - b.order);
+
+    // BACKWARD COMPATIBILITY: Add 'options' and 'steps' sections if not present in config
+    const sections = [...orderTypeConfig.sections];
+    const hasOptionsSection = sections.some(s => s.id === 'options');
+    const hasStepsSection = sections.some(s => s.id === 'steps');
+
+    if (!hasOptionsSection) {
+      // Add options section with order 0 so it appears first
+      sections.push({
+        id: 'options',
+        name: 'Options',
+        enabled: true,
+        order: 0,
+        fields: []
+      });
+    }
+
+    if (!hasStepsSection) {
+      // Add steps section with high order number so it appears last
+      sections.push({
+        id: 'steps',
+        name: 'Steps',
+        enabled: true,
+        order: 999,
+        fields: []
+      });
+    }
+
+    return sections.sort((a, b) => a.order - b.order);
   };
 
   // Initialize form with order data if editing
@@ -157,6 +311,25 @@ const CreateOrders = () => {
       }
     }
   }, [orderData, editMode]);
+
+  // Handle delete order
+  const handleDelete = async () => {
+    if (!orderData?._id) return;
+
+    setDeleting(true);
+    try {
+      await dispatch(deleteOrder(orderData._id) as any);
+      toast.success('Deleted', 'Order deleted successfully');
+      setShowDeleteConfirm(false);
+      setTimeout(() => {
+        navigate(-1);
+      }, 1000);
+    } catch (err) {
+      toast.error('Error', 'Failed to delete order');
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   // Show loading state while fetching form data
   if (formDataLoading && !editMode) {
@@ -242,19 +415,95 @@ const CreateOrders = () => {
   }
 
   return (
-    <div className="CreateOrders">
+    <div className="CreateOrders CreateForm">
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: 'white',
+            padding: '24px',
+            borderRadius: '12px',
+            maxWidth: '400px',
+            width: '90%',
+            textAlign: 'center'
+          }}>
+            <div style={{ fontSize: '48px', marginBottom: '16px' }}>⚠️</div>
+            <h3 style={{ margin: '0 0 8px 0', color: '#1f2937' }}>Delete Order?</h3>
+            <p style={{ color: '#6b7280', marginBottom: '24px' }}>
+              Are you sure you want to delete this order? This action cannot be undone.
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(false)}
+                style={{ padding: '10px 24px', background: '#e5e7eb', color: '#374151', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleting}
+                style={{ padding: '10px 24px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+              >
+                {deleting ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="CrateOrdersHaders">
-        <BackButton />
-        <div className="CreateOrdersHaders1">
-          <p className="CreteOrdersTitel">
-            {editMode ? 'Edit Order' : 'Create Orders'}
-          </p>
-          {editMode && orderData && (
-            <span className="edit-order-id">
-              Order ID: {orderData.orderId || orderData._id}
-            </span>
+                      <BackButton />
+        <div className="CreateOrdersHaders1" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%' }}>
+
+          <div>
+        
+            <p className="CreteOrdersTitel">
+              {editMode ? 'Edit Order' : 'Create Orders'}
+            </p>
+            {editMode && orderData && (
+              <span className="edit-order-id">
+                Order ID: {orderData.orderId || orderData._id}
+              </span>
+            )}
+          </div>
+          {editMode && (
+            <button
+              type="button"
+              onClick={() => setShowDeleteConfirm(true)}
+              style={{
+                padding: '8px 16px',
+                background: '#ef4444',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                marginRight: '20px'
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14zM10 11v6M14 11v6"/>
+              </svg>
+              Delete
+            </button>
           )}
         </div>
+        
       </div>
 
       <div className="CreateOrdersBody">
@@ -268,7 +517,11 @@ const CreateOrders = () => {
           <OrderTypeSelect
             value={selectedOrderType}
             onChange={setSelectedOrderType}
-            initialValue={orderData?.orderType || orderData?.orderTypeId}
+            initialValue={
+              typeof orderData?.orderType === 'string'
+                ? orderData.orderType
+                : (orderData?.orderType?._id || orderData?.orderTypeId || '')
+            }
             orderTypes={orderTypes}
             loading={formDataLoading}
           />
@@ -281,56 +534,38 @@ const CreateOrders = () => {
           />
 
           {/* Dynamic sections - only render when order type is selected */}
-          {selectedOrderType && (
-            <>
-              {/* Dynamic sections - render based on order type configuration */}
-              {getSortedSections().map(section => {
-                // Check if this section should be shown
-                if (!isSectionEnabled(section.id)) return null;
+          {selectedOrderType && (() => {
+            const sections = getSortedSections();
+            console.log('🔍 Sorted sections:', sections.map(s => ({ id: s.id, enabled: isSectionEnabled(s.id) })));
+            return (
+              <>
+                {/* Dynamic sections - render based on order type configuration */}
+                {sections.map(section => {
+                  // Check if this section should be shown
+                  const isEnabled = isSectionEnabled(section.id);
+                  console.log(`🔍 Section "${section.id}" enabled:`, isEnabled);
 
-                switch (section.id) {
-                  case 'product':
-                    return (
-                      <div key="product" className="dynamicSection">
-                        <ProductInOrders
-                          ref={productRef}
-                          initialData={orderData}
-                          isEditMode={editMode}
-                          sectionConfig={getSectionConfig('product')}
-                        />
-                      </div>
-                    );
+                  if (!isEnabled) return null;
 
-                  case 'material':
-                    return (
-                      <div key="material" className="dynamicSection">
-                        <MaterialInOders
-                          ref={materialRef}
-                          showBottomGusset={showBottomGusset}
-                          showFlap={showFlap}
-                          showAirHole={showAirHole}
-                          initialData={orderData}
-                          isEditMode={editMode}
-                          sectionConfig={getSectionConfig('material')}
-                        />
-                      </div>
-                    );
-
-                  case 'printing':
-                    return (
-                      <div key="printing" className="dynamicSection">
-                        <PrintImage
-                          orderData={orderData}
-                          isEditMode={editMode}
-                          onPrintDataChange={(printData) => {
-                            console.log('Print data changed:', printData);
-                          }}
-                          sectionConfig={getSectionConfig('printing')}
+                  switch (section.id) {
+                    case 'options':
+                      console.log('🎯 Rendering options section - editMode:', editMode);
+                      console.log('🎯 allowedOptionTypes:', orderTypeConfig?.allowedOptionTypes);
+                      return (
+                        <div key="options" className="dynamicSection">
+                          <InlineOptionsInput
+                            title="Options"
+                            orderTypeId={selectedOrderType}
+                            onDataChange={setOptions}
+                            initialData={editMode ? transformOptionsForEdit(orderData) : []}
+                            isEditMode={editMode}
+                            allowedOptionTypes={orderTypeConfig?.allowedOptionTypes || []}
                         />
                       </div>
                     );
 
                   case 'steps':
+                    console.log('🎯 Rendering steps section - editMode:', editMode, 'orderData:', orderData);
                     return (
                       <div key="steps" className="dynamicSection">
                         <StepContainer
@@ -350,7 +585,8 @@ const CreateOrders = () => {
                 }
               })}
             </>
-          )}
+            );
+          })()}
             
         </div>
         
@@ -359,17 +595,31 @@ const CreateOrders = () => {
             initialNotes={orderData?.Notes || orderData?.notes}
             isEditMode={editMode}
           />
+          <Status
+            initialStatus={orderData?.overallStatus || 'Wait for Approval'}
+            isEditMode={editMode}
+            onStatusChange={(status) => {
+              console.log('Status changed:', status);
+              setCurrentStatus(status);
+            }}
+          />
           <Priority
             initialPriority={orderData?.priority}
             isEditMode={editMode}
             onPriorityChange={(priority) => {
               console.log('Priority changed:', priority);
+              setCurrentPriority(priority);
             }}
           />
           <SaveOrders
             isEditMode={editMode}
             orderId={orderData?._id}
-            orderData={orderData}
+            orderData={{
+              ...orderData,
+              overallStatus: currentStatus,
+              priority: currentPriority
+            }}
+            optionsData={options}
           />
         </div>
       </div>
@@ -382,6 +632,8 @@ const CreateOrders = () => {
           <p>Print</p>
         </div>
       </div>
+
+      <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
     </div>
   );
 };

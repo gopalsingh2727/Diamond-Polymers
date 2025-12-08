@@ -11,6 +11,7 @@ interface OrderFormData {
   productSpecs: any[];
   materialTypes: any[];
   materials: any[];
+  materialSpecs: any[];
   machineTypes: any[];
   machines: any[];
   operators: any[];

@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { BackButton } from "../../../allCompones/BackButton";
@@ -9,6 +9,7 @@ import "../Dispatch/Dispatch.css";
 import { fetchOrders } from "../../../redux/oders/OdersActions";
 import { RootState } from "../../../../store";
 import { useFormDataCache } from "../Edit/hooks/useFormDataCache";  // ✅ ADDED
+import { useDaybookUpdates } from "../../../../hooks/useWebSocket";  // ✅ WebSocket real-time updates
 
 
 interface Order {
@@ -157,16 +158,21 @@ export default function DayBook() {
   // Company info
   const companyName = authState?.user?.companyName || "ABC Company";
   const branchName = authState?.user?.branchName || "Main Branch";
+  const branchId = authState?.user?.branchId || null;  // ✅ For WebSocket subscription
 
-  // Status color mapping
+  // Status color mapping - matches backend overallStatus enum values
   function getStatusColor(status: string): string {
     const colors: Record<string, string> = {
       'pending': '#f59e0b',
-      'in-progress': '#FF6B35',
+      'in_progress': '#FF6B35',    // Backend uses underscore
+      'in-progress': '#FF6B35',    // Keep for compatibility
       'completed': '#10b981',
       'cancelled': '#ef4444',
       'on-hold': '#6b7280',
       'Wait for Approval': '#f59e0b',
+      'approved': '#3b82f6',       // Blue for approved
+      'dispatched': '#8b5cf6',     // Purple for dispatched
+      'issue': '#ef4444',          // Red for issue
       'unknown': '#6b7280'
     };
     return colors[status] || '#6b7280';
@@ -175,11 +181,15 @@ export default function DayBook() {
   function getStatusDescription(status: string): string {
     const descriptions: Record<string, string> = {
       'pending': 'Order received and awaiting processing',
-      'in-progress': 'Order is being processed',
+      'in_progress': 'Order is being processed',   // Backend uses underscore
+      'in-progress': 'Order is being processed',   // Keep for compatibility
       'completed': 'Order has been completed',
       'cancelled': 'Order has been cancelled',
       'on-hold': 'Order is temporarily on hold',
       'Wait for Approval': 'Order is waiting for approval',
+      'approved': 'Order has been approved',
+      'dispatched': 'Order has been dispatched',
+      'issue': 'Order has an issue',
       'unknown': 'Status unknown'
     };
     return descriptions[status] || 'Status unknown';
@@ -187,7 +197,11 @@ export default function DayBook() {
 
   // Transform orders for display
   const transformedOrders: Order[] = Array.isArray(reduxOrders) ? reduxOrders.map(order => {
-    const customerName = order.customer?.companyName || order.customer?.firstName || 'Unknown Customer';
+    // Handle deleted customers - show indicator
+    const isDeletedCustomer = (order.customer as any)?.isDeleted === true;
+    const customerName = isDeletedCustomer
+      ? '(Deleted Customer)'
+      : (order.customer?.companyName || order.customer?.firstName || 'Unknown Customer');
     const customerPhone = order.customer?.phone1 || '';
     const orderStatus = order.overallStatus || 'unknown';
     
@@ -310,67 +324,13 @@ export default function DayBook() {
       customerId: order.customer?._id || order.customerId || '',
       companyName: order.customer?.companyName || order.companyName || '',
       customerPhone: order.customer?.phone1 || '',
-      
-      // Material information - complete structure
-      material: {
-        _id: order.material?._id || order.materialId || '',
-        name: order.material?.materialName || '',
-        materialName: order.material?.materialName || '',
-        type: order.material?.materialType || '',
-        materialType: order.material?.materialType || '',
-        materialTypeName: order.material?.materialTypeName || '',
-        mol: order.material?.mol || 0
-      },
-      materialId: order.material?._id || order.materialId || '',
-      materialType: order.material?.materialTypeName || '',
-      materialName: order.material?.materialName || '',
 
-      // ✅ Product Spec information - ADDED
-      productSpec: (order as any).productSpec || null,
-      productSpecId: (order as any).productSpec?._id || (order as any).productSpecId || '',
-      product: (order as any).productSpec ? {
-        _id: (order as any).productSpec._id,
-        productName: (order as any).productSpec.productName,
-        productCode: (order as any).productSpec.productCode,
-        description: (order as any).productSpec.description,
-        width: (order as any).productSpec.width,
-        height: (order as any).productSpec.height,
-        thickness: (order as any).productSpec.thickness,
-        weight: (order as any).productSpec.weight,
-        category: (order as any).productSpec.category
-      } : null,
-      productName: (order as any).productSpec?.productName || '',
-      productType: (order as any).productSpec?.category || '',
-
-      // ✅ Material Spec information - ADDED
-      materialSpec: (order as any).materialSpec || null,
-      materialSpecId: (order as any).materialSpec?._id || (order as any).materialSpecId || '',
-
-      // ✅ Order Type information - ADDED
+      // ✅ Order Type information - KEPT (still needed for order type dropdown)
       orderType: (order as any).orderType || null,
       orderTypeId: (order as any).orderType?._id || (order as any).orderTypeId || '',
 
-      // Physical specifications
-      materialWeight: order.materialWeight || 0,
-      Width: order.Width || 0,
-      Height: order.Height || 0,
-      Thickness: order.Thickness || 0,
-      width: order.Width?.toString() || '',
-      height: order.Height?.toString() || '',
-      gauge: order.Thickness?.toString() || '',
-      totalWeight: order.materialWeight?.toString() || '',
-      
-      // Additional product features
-      SealingType: order.SealingType || '',
-      BottomGusset: order.BottomGusset || '',
-      Flap: order.Flap || '',
-      AirHole: order.AirHole || '',
-      Printing: order.Printing || false,
-      
-      // Mixing materials
-      mixMaterial: order.mixMaterial || [],
-      mixingData: order.mixMaterial || [],
-      mixing: (order.mixMaterial && order.mixMaterial.length > 0) ? 'yes' : 'no',
+      // ❌ REMOVED: Old material, product, mixing fields (replaced by unified options system)
+      // These fields are deprecated and replaced by the options array above
       
       // Steps and workflow
       steps: order.steps || [],
@@ -397,7 +357,11 @@ export default function DayBook() {
       // Notes and additional info
       Notes: order.Notes || '',
       notes: order.Notes || '',
-      
+
+      // ✅ ADDED: Options data (NEW UNIFIED OPTIONS SYSTEM)
+      options: (order as any).options || [],
+      optionsWithDetails: (order as any).optionsWithDetails || [],
+
       // Status tracking
       AllStatus: order.AllStatus || {
         [order.overallStatus]: {
@@ -435,14 +399,15 @@ export default function DayBook() {
     fetchOrdersData();
   }, [dispatch, currentPage, limit, fromDate, toDate, searchTerm, statusFilter, orderTypeFilter]);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      console.log("🔄 Auto-refresh triggered");
-      fetchOrdersData();
-    }, 30000);
+  // ✅ REPLACED: 30-second polling with WebSocket real-time subscription
+  // This subscribes to the daybook room and receives instant updates when orders change
+  const handleOrderUpdate = useCallback(() => {
+    console.log("📡 WebSocket: Order update received - refreshing");
+    fetchOrdersData();
+  }, [currentPage, limit, fromDate, toDate, searchTerm, statusFilter, orderTypeFilter]);
 
-    return () => clearInterval(interval);
-  }, [currentPage, limit, fromDate, toDate, searchTerm, statusFilter, orderTypeFilter]);  // ✅ ADDED orderTypeFilter
+  // Subscribe to real-time daybook updates via WebSocket
+  useDaybookUpdates(branchId, handleOrderUpdate);
 
   useEffect(() => {
     if (scrollWrapperRef.current) {
@@ -709,12 +674,14 @@ export default function DayBook() {
                 className="ml-2 px-2 py-1 border rounded"
               >
                 <option value="">All Status</option>
-                <option value="pending">Pending</option>
-                <option value="in-progress">In Progress</option>
-                <option value="completed">Completed</option>
-                <option value="cancelled">Cancelled</option>
-                <option value="on-hold">On Hold</option>
                 <option value="Wait for Approval">Wait for Approval</option>
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="in_progress">In Progress</option>
+                <option value="completed">Completed</option>
+                <option value="dispatched">Dispatched</option>
+                <option value="cancelled">Cancelled</option>
+                <option value="issue">Issue</option>
               </select>
             </label>
           </div>
@@ -871,13 +838,25 @@ export default function DayBook() {
                         </div>
 
                         <div>
-                          <strong className="text-gray-700">📦 Material & Product</strong>
+                          <strong className="text-gray-700">📦 Options & Products</strong>
                           <div className="mt-1 space-y-1 text-xs text-gray-600">
-                            {order.material?.materialName && <div><strong>Material:</strong> {order.material.materialName}</div>}
-                            {order.materialType && <div><strong>Material Type:</strong> {order.materialType}</div>}
-                            <div><strong>Weight:</strong> {order.materialWeight || 'N/A'} kg</div>
-                            {order.product?.productName && <div><strong>Product:</strong> {order.product.productName}</div>}
-                            {order.productType && <div><strong>Product Type:</strong> {order.productType}</div>}
+                            {/* New unified options display */}
+                            {order.options && order.options.length > 0 ? (
+                              order.options.map((opt: any, idx: number) => (
+                                <div key={idx}>
+                                  <strong>{opt.optionTypeName || opt.category || 'Option'}:</strong> {opt.optionName}
+                                </div>
+                              ))
+                            ) : (
+                              <>
+                                {/* Legacy fields fallback */}
+                                {order.material?.materialName && <div><strong>Material:</strong> {order.material.materialName}</div>}
+                                {order.materialType && <div><strong>Material Type:</strong> {order.materialType}</div>}
+                                <div><strong>Weight:</strong> {order.materialWeight || 'N/A'} kg</div>
+                                {order.product?.productName && <div><strong>Product:</strong> {order.product.productName}</div>}
+                                {order.productType && <div><strong>Product Type:</strong> {order.productType}</div>}
+                              </>
+                            )}
                             {order.Width && order.Height && (
                               <div><strong>Dimensions:</strong> {order.Width} × {order.Height} {order.Thickness ? `× ${order.Thickness}` : ''}</div>
                             )}

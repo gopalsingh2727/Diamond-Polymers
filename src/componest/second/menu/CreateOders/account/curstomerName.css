@@ -1,29 +1,59 @@
-.customerInputRow {
-display: flex;
-    align-items: center;
-    flex-direction: column;
-    justify-content: space-between;
-    
-    height: 10px;
-    gap: 10px;
-}
-
-.customerImageDiv {
-  width: 100px;
-  height: 100px;
-  overflow: hidden;
-  border: 1px solid #ccc;
-  margin-bottom: -5px;
-}
-.createDateAndupdateDate{
+/* Header Row - Date/Time, Image, Status */
+.createorders-customername-inputRow {
   display: flex;
-  align-items: center;
-  flex-direction: row;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.customerImageDiv img {
+/* Customer Image Thumbnail */
+.createorders-customername-imageDiv {
+  width: 60px;
+  height: 60px;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.createorders-customername-imageDiv img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  padding-bottom: -5px;
+}
+
+/* Image + Status Container */
+.createorders-customername-image {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.createorders-customername-image h6 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.createorders-customername-image select {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+/* Date Row */
+.createorders-customername-dateRow {
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+  color: #666;
+}
+
+
+.customerImageDiv{
+  width: 10px;
+  height: 10px;
+}
+
+.customerImage{
+  width: 10px;
 }

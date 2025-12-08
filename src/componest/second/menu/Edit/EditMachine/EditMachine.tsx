@@ -635,130 +635,83 @@ const EditMachines: React.FC = () => {
       {error && <p className="loadingAndError" style={{ color: "red" }}>{error}</p>}
 
       {!showDetail && !loading && machines.length > 0 ? (
-        <>
+        <div className="editsectionsTable-container">
           {/* Search Bar */}
-          <div style={{
-            marginBottom: '20px',
-            display: 'flex',
-            gap: '10px',
-            alignItems: 'center'
-          }}>
-            <div style={{ position: 'relative', flex: 1 }}>
+          <div className="editsectionsTable-searchWrapper">
+            <div className="editsectionsTable-searchBox">
               <input
                 type="text"
                 placeholder="Search by machine name, type, branch, or size..."
-                className="w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-[#FF6B35] transition-all"
+                className="editsectionsTable-searchInput"
                 value={searchTerm}
                 onChange={handleSearchChange}
-                style={{
-                  width: '100%',
-                  padding: '12px 40px 12px 40px',
-                  fontSize: '15px',
-                  border: '2px solid #ddd',
-                  borderRadius: '8px',
-                  outline: 'none',
-                  transition: 'border-color 0.3s ease',
-                }}
-                onFocus={(e) => e.target.style.borderColor = '#2d89ef'}
-                onBlur={(e) => e.target.style.borderColor = '#ddd'}
               />
-              <span style={{
-                position: 'absolute',
-                left: '14px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                fontSize: '18px',
-                color: '#666',
-              }}>
-                🔍
-              </span>
+              <span className="editsectionsTable-searchIcon">🔍</span>
               {searchTerm && (
                 <button
                   onClick={clearSearch}
-                  style={{
-                    position: 'absolute',
-                    right: '10px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    fontSize: '20px',
-                    cursor: 'pointer',
-                    color: '#999',
-                    padding: '4px 8px',
-                  }}
+                  className="editsectionsTable-clearButton"
                   title="Clear search"
                 >
                   ✕
                 </button>
               )}
             </div>
-            <div style={{
-              padding: '12px 16px',
-              background: '#f5f5f5',
-              borderRadius: '8px',
-              fontSize: '14px',
-              color: '#666',
-              whiteSpace: 'nowrap',
-            }}>
+            <div className="editsectionsTable-countBadge">
               {filteredMachines.length} of {machines.length} machines
             </div>
           </div>
 
           {/* Table */}
           {filteredMachines.length > 0 ? (
-            <table>
-              <thead>
-                <tr>
-                  <th>No</th>
-                  <th>Machine Name</th>
-                  <th>Type</th>
-                  <th>Size X</th>
-                  <th>Size Y</th>
-                  <th>Size Z</th>
-                  <th>Branch</th>
-                  <th>Table Config</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredMachines.map((machine: Machine, index: number) => (
-                  <tr
-                    key={machine._id}
-                    className={selectedRow === index ? "bg-orange-100" : ""}
-                    onClick={() => handleRowClick(index, machine)}
-                    style={{ cursor: "pointer" }}
-                  >
-                    <td>{index + 1}</td>
-                    <td>{machine.machineName}</td>
-                    <td>{machine.machineType?.type || "N/A"}</td>
-                    <td>{machine.sizeX}</td>
-                    <td>{machine.sizeY}</td>
-                    <td>{machine.sizeZ}</td>
-                    <td>{machine.branchId?.name || "N/A"}</td>
-                    <td>
-                      {machine.tableConfig ? (
-                        <span style={{ color: 'green' }}>
-                          ✅ {machine.tableConfig.columns?.length || 0} cols
-                        </span>
-                      ) : (
-                        <span style={{ color: '#999' }}>❌ No config</span>
-                      )}
-                    </td>
+            <div className="editsectionsTable-wrapper">
+              <table className="editsectionsTable-table">
+                <thead className="editsectionsTable-thead">
+                  <tr>
+                    <th className="editsectionsTable-th">No</th>
+                    <th className="editsectionsTable-th">Machine Name</th>
+                    <th className="editsectionsTable-th">Type</th>
+                    <th className="editsectionsTable-th">Size X</th>
+                    <th className="editsectionsTable-th">Size Y</th>
+                    <th className="editsectionsTable-th">Size Z</th>
+                    <th className="editsectionsTable-th">Branch</th>
+                    <th className="editsectionsTable-th">Table Config</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="editsectionsTable-tbody">
+                  {filteredMachines.map((machine: Machine, index: number) => (
+                    <tr
+                      key={machine._id}
+                      className={`editsectionsTable-tr ${selectedRow === index ? "editsectionsTable-trSelected" : ""}`}
+                      onClick={() => handleRowClick(index, machine)}
+                    >
+                      <td className="editsectionsTable-td">{index + 1}</td>
+                      <td className="editsectionsTable-td">{machine.machineName}</td>
+                      <td className="editsectionsTable-td">{machine.machineType?.type || "N/A"}</td>
+                      <td className="editsectionsTable-td">{machine.sizeX}</td>
+                      <td className="editsectionsTable-td">{machine.sizeY}</td>
+                      <td className="editsectionsTable-td">{machine.sizeZ}</td>
+                      <td className="editsectionsTable-td">{machine.branchId?.name || "N/A"}</td>
+                      <td className="editsectionsTable-td">
+                        {machine.tableConfig ? (
+                          <span style={{ color: 'green' }}>
+                            ✅ {machine.tableConfig.columns?.length || 0} cols
+                          </span>
+                        ) : (
+                          <span style={{ color: '#999' }}>❌ No config</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           ) : (
-            <div style={{
-              padding: '40px',
-              textAlign: 'center',
-              color: '#999',
-              fontSize: '16px',
-            }}>
-              No machines found matching "{searchTerm}"
+            <div className="editsectionsTable-empty">
+              No machines found matching "<span>{searchTerm}</span>"
             </div>
           )}
-        </>
+        </div>
       ) : showDetail && selectedMachine ? (
         <div className="detail-container">
           <div className="TopButtonEdit">

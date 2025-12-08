@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, shell, Notification, session } from 'electron';
+import { app, BrowserWindow, ipcMain, shell, Notification, session, globalShortcut } from 'electron';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import fs from 'node:fs';
@@ -89,6 +89,22 @@ app.whenReady().then(() => {
   });
 
   const win = createWindow();
+
+  // Register global keyboard shortcut for hard refresh (Cmd+R on macOS, Ctrl+R on Windows/Linux)
+  const refreshShortcut = process.platform === 'darwin' ? 'Command+R' : 'Control+R';
+  const registered = globalShortcut.register(refreshShortcut, () => {
+    log.info('Refresh shortcut triggered - clearing storage and reloading');
+    if (win && !win.isDestroyed()) {
+      // Send IPC message to renderer to clear localStorage
+      win.webContents.send('clear-storage-and-reload');
+    }
+  });
+
+  if (registered) {
+    log.info(`Refresh shortcut registered: ${refreshShortcut}`);
+  } else {
+    log.error(`Failed to register refresh shortcut: ${refreshShortcut}`);
+  }
 
   // Get download URL with platform-specific auto-download parameter
   const getDownloadUrl = (): string => {
@@ -374,6 +390,12 @@ app.on('activate', () => {
       app.whenReady().then(createWindow);
     }
   }
+});
+
+// Unregister all shortcuts when app is quitting
+app.on('will-quit', () => {
+  globalShortcut.unregisterAll();
+  log.info('All global shortcuts unregistered');
 });
 
 console.log(`App root: ${process.env.APP_ROOT}`);

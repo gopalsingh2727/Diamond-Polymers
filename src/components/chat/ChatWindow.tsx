@@ -47,6 +47,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [messageHistory, setMessageHistory] = useState<string[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -117,6 +119,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     if (!inputValue.trim() || isSending) return;
 
     const message = inputValue.trim();
+
+    // Add to message history
+    setMessageHistory(prev => [...prev, message]);
+    setHistoryIndex(-1);
     setInputValue('');
 
     const result = await dispatch(sendChatMessage(message) as any);
@@ -127,10 +133,54 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    // IMPORTANT: Stop propagation to prevent affecting menu and other components
+    e.stopPropagation();
+
+    // Enter key - send message
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
+      return;
+    }
+
+    // Up arrow - navigate backwards through history (older messages)
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (messageHistory.length === 0) return;
+
+      const newIndex = historyIndex === -1
+        ? messageHistory.length - 1
+        : Math.max(0, historyIndex - 1);
+
+      setHistoryIndex(newIndex);
+      setInputValue(messageHistory[newIndex]);
+      return;
+    }
+
+    // Down arrow - navigate forwards through history (newer messages)
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (historyIndex === -1) return;
+
+      const newIndex = historyIndex + 1;
+
+      if (newIndex >= messageHistory.length) {
+        setHistoryIndex(-1);
+        setInputValue('');
+      } else {
+        setHistoryIndex(newIndex);
+        setInputValue(messageHistory[newIndex]);
+      }
+      return;
+    }
+
+    // Escape key - clear input
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      setInputValue('');
+      setHistoryIndex(-1);
+      return;
     }
   };
 
@@ -313,12 +363,21 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
         {messages.length === 0 ? (
-          <div className="text-center text-gray-500 mt-10">
-            <p className="font-medium">Hello! I'm {assistantName}</p>
-            <p className="text-sm mt-2">How can I help you today?</p>
-            <p className="text-xs mt-4 text-gray-400">
-              Try: "Show pending orders" or "/help"
-            </p>
+          <div className="text-center text-gray-500 mt-8">
+            <div className="text-4xl mb-3">👋</div>
+            <p className="font-medium text-lg text-gray-700">Hi there! I'm {assistantName}</p>
+            <p className="text-sm mt-2 text-gray-500">Your friendly manufacturing assistant</p>
+            <div className="mt-6 bg-orange-50 rounded-lg p-4 mx-2">
+              <p className="text-sm font-medium text-orange-700 mb-3">What can I help you with?</p>
+              <div className="text-xs text-gray-600 space-y-2 text-left">
+                <p>💬 Just say <span className="text-orange-500 font-medium">"Hi"</span> to start chatting</p>
+                <p>📦 Type an <span className="text-orange-500 font-medium">Order ID</span> for order details</p>
+                <p>🏭 Type a <span className="text-orange-500 font-medium">Machine name</span> for status</p>
+                <p>👤 Type an <span className="text-orange-500 font-medium">Operator name</span> for activity</p>
+                <p>📊 Say <span className="text-orange-500 font-medium">"report"</span> for daily summary</p>
+              </div>
+            </div>
+            <p className="text-xs text-gray-400 mt-4">Type <span className="font-mono bg-gray-100 px-1 rounded">/help</span> for all commands</p>
           </div>
         ) : (
           messages.map((msg, index) => (
@@ -376,7 +435,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             type="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyDown}
             placeholder={isListening ? 'Listening...' : 'Type a message...'}
             disabled={isSending || isListening}
             className="flex-1 px-4 py-2 rounded-full border border-gray-200

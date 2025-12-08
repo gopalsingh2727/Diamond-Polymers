@@ -21,6 +21,7 @@ import {
 } from "./machineTypeConstants";
 import { Dispatch } from "redux";
 import { RootState } from "../../rootReducer";
+import { refreshOrderFormData } from "../../oders/orderFormDataActions";
 
 // ENV
 const baseUrl = import.meta.env.VITE_API_27INFINITY_IN;
@@ -65,26 +66,30 @@ const getHeaders = (
   ...(extra || {}),
 });
 
-export const addMachineType = (type: string, description: string) => async (
+export const addMachineType = (
+  type: string,
+  description: string,
+  isActive: boolean = true
+) => async (
   dispatch: Dispatch,
   getState: () => RootState
 ) => {
   try {
     dispatch({ type: ADD_MACHINE_TYPE_REQUEST });
-    
+
     const token = getToken(getState);
-   
+
     // Fixed: Get branch ID dynamically
     let branchId = getBranchId(getState);
      console.log(branchId , " branchid");
-     
+
     // If not found in Redux state, try userData from localStorage
     if (!branchId) {
       branchId = getBranchIdFromUserData();
     }
 
     console.log("Branch ID:", branchId);
-    
+
     if (!branchId) {
       throw new Error("Branch ID not found. Please select a branch first.");
     }
@@ -93,6 +98,7 @@ export const addMachineType = (type: string, description: string) => async (
       type,
       description,
       branchId,
+      isActive,
     };
 
     const { data } = await axios.post(
@@ -102,6 +108,9 @@ export const addMachineType = (type: string, description: string) => async (
     );
 
     dispatch({ type: ADD_MACHINE_TYPE_SUCCESS, payload: data });
+
+    // Refresh cached form data so the new machine type appears in lists
+    dispatch(refreshOrderFormData() as any);
 
   } catch (error: any) {
     dispatch({
@@ -170,9 +179,10 @@ export const getAllMachineTypes = () => async (
 
 
 export const updateMachineType = (
-  machineTypeId: string, 
-  type: string, 
-  description: string
+  machineTypeId: string,
+  type: string,
+  description: string,
+  isActive: boolean = true
 ) => async (dispatch: Dispatch, getState: () => RootState) => {
   try {
     dispatch({ type: UPDATE_MACHINE_TYPE_REQUEST });
@@ -180,13 +190,24 @@ export const updateMachineType = (
     const token = getToken(getState);
     const branchId = getBranchId(getState);
 
+    const payload = {
+      type,
+      description,
+      branchId,
+      isActive,
+    };
+
     const { data } = await axios.put(
       `${baseUrl}/machinetype/${machineTypeId}`,
-      { type, description, branchId },
+      payload,
       { headers: getHeaders(token) }
     );
 
     dispatch({ type: UPDATE_MACHINE_TYPE_SUCCESS, payload: data });
+
+    // Refresh cached form data so the updated machine type appears in lists
+    dispatch(refreshOrderFormData() as any);
+
     return data; // Return data for handling in component
   } catch (error: any) {
     dispatch({
@@ -219,6 +240,10 @@ export const deleteMachineType = (machineTypeId: string) => async (
     );
 
     dispatch({ type: DELETE_MACHINE_TYPE_SUCCESS, payload: machineTypeId });
+
+    // Refresh cached form data so the deleted machine type is removed from lists
+    dispatch(refreshOrderFormData() as any);
+
   } catch (error: any) {
     dispatch({
       type: DELETE_MACHINE_TYPE_FAIL,

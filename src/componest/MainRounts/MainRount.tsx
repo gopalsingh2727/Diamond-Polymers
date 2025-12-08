@@ -3,22 +3,46 @@ import { useSelector } from "react-redux";
 import { RootState } from "../redux/rootReducer";
 import IndexComponentes from "../IndexComponents";
 import IndexMenuRoute from "../main/sidebar/indexMenuRoute";
-import Login from "../login/login";
-import BranchSelect from "../branch/BranchSelect"; 
+import LoginForm from "../login/login";
+import UnifiedAuthPage from "../login/UnifiedAuthPage";
+import ForgotPassword from "../login/ForgotPassword";
+import BranchSelect from "../branch/BranchSelect";
+import CreateBranch from "../branch/CreateBranch";
+import SecretBranches from "../settings/SecretBranches";
+import SecretManager from "../settings/SecretManager";
+import SeeAll from "../settings/SeeAll";
+import ExternalAPIKeys from "../settings/ExternalAPIKeys";
+import BranchSettings from "../settings/BranchSettings";
+import MasterSettings from "../settings/MasterSettings";
+
+// Marketing Pages
+import { LandingPage } from "../../../../marketing/landing-page";
+import { CRMDashboard } from "../../../../marketing/crm-dashboard";
 
 const MainRount = () => {
   const { isAuthenticated, userData } = useSelector(
     (state: RootState) => state.auth
   );
 
+  // Master admin and admin need to create/select branch first
   const hasSelectedBranch =
-    userData?.role !== "admin" || !!userData?.selectedBranch;
+    (userData?.role !== "master_admin" && userData?.role !== "admin") || !!userData?.selectedBranch;
 
   return (
     <Routes>
       <Route
         path="/login"
-        element={isAuthenticated ? <Navigate to="/" /> : <Login />}
+        element={isAuthenticated ? <Navigate to="/" /> : <LoginForm />}
+      />
+
+      <Route
+        path="/signup"
+        element={isAuthenticated ? <Navigate to="/" /> : <UnifiedAuthPage />}
+      />
+
+      <Route
+        path="/forgot-password"
+        element={isAuthenticated ? <Navigate to="/" /> : <ForgotPassword />}
       />
 
       <Route
@@ -28,7 +52,7 @@ const MainRount = () => {
             hasSelectedBranch ? (
               <IndexComponentes />
             ) : (
-              <Navigate to="/select-branch" />
+              <Navigate to="/create-branch" />
             )
           ) : (
             <Navigate to="/login" />
@@ -43,7 +67,7 @@ const MainRount = () => {
             hasSelectedBranch ? (
               <IndexMenuRoute />
             ) : (
-              <Navigate to="/select-branch" />
+              <Navigate to="/create-branch" />
             )
           ) : (
             <Navigate to="/login" />
@@ -58,6 +82,99 @@ const MainRount = () => {
             <BranchSelect />
           ) : (
             <Navigate to="/" />
+          )
+        }
+      />
+
+      <Route
+        path="/create-branch"
+        element={
+          isAuthenticated && (userData?.role === "master_admin" || userData?.role === "admin") ? (
+            <CreateBranch />
+          ) : (
+            <Navigate to="/login" />
+          )
+        }
+      />
+
+      {/* Settings Pages */}
+      <Route
+        path="/settings/branches"
+        element={
+          isAuthenticated && (userData?.role === "master_admin" || userData?.role === "admin") ? (
+            <SecretBranches />
+          ) : (
+            <Navigate to="/login" />
+          )
+        }
+      />
+
+      <Route
+        path="/settings/managers"
+        element={
+          isAuthenticated && (userData?.role === "master_admin" || userData?.role === "admin") ? (
+            <SecretManager />
+          ) : (
+            <Navigate to="/login" />
+          )
+        }
+      />
+
+      <Route
+        path="/settings/all"
+        element={
+          isAuthenticated && (userData?.role === "master_admin" || userData?.role === "admin") ? (
+            <SeeAll />
+          ) : (
+            <Navigate to="/login" />
+          )
+        }
+      />
+
+      <Route
+        path="/settings/api-keys"
+        element={
+          isAuthenticated && userData?.role === "master_admin" ? (
+            <ExternalAPIKeys />
+          ) : (
+            <Navigate to="/login" />
+          )
+        }
+      />
+
+      <Route
+        path="/settings/branch-settings"
+        element={
+          isAuthenticated && userData?.role === "master_admin" ? (
+            <BranchSettings />
+          ) : (
+            <Navigate to="/login" />
+          )
+        }
+      />
+
+      <Route
+        path="/settings/master"
+        element={
+          isAuthenticated && userData?.role === "master_admin" ? (
+            <MasterSettings />
+          ) : (
+            <Navigate to="/login" />
+          )
+        }
+      />
+
+      {/* Marketing Pages - Public Access */}
+      <Route path="/landing" element={<LandingPage />} />
+
+      {/* CRM Dashboard - Admin Only */}
+      <Route
+        path="/crm"
+        element={
+          isAuthenticated && (userData?.role === "master_admin" || userData?.role === "admin") ? (
+            <CRMDashboard />
+          ) : (
+            <Navigate to="/login" />
           )
         }
       />

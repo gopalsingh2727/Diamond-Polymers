@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
+import { useLocation } from "react-router-dom";
 import { RootState } from "../../../../redux/rootReducer";
 import OrderTypeSelector from "../../../../../components/orderType/OrderTypeSelector";
 import SearchableSelect from "../../../../../components/shared/SearchableSelect";
@@ -67,6 +68,12 @@ interface FormSection {
 }
 
 const CreateOrder = () => {
+  // ✅ Get location state for edit mode
+  const location = useLocation();
+  const locationState = location.state as { isEdit?: boolean; orderData?: any } | null;
+  const isEditMode = locationState?.isEdit || false;
+  const editOrderData = locationState?.orderData;
+
   // Data states
   const [productTypes, setProductTypes] = useState<ProductType[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -75,7 +82,18 @@ const CreateOrder = () => {
   const [materialSpecs, setMaterialSpecs] = useState<MaterialSpec[]>([]);
 
   // Form values - dynamic based on field names
-  const [formValues, setFormValues] = useState<{ [key: string]: any }>({});
+  // ✅ Initialize with edit data if in edit mode
+  const [formValues, setFormValues] = useState<{ [key: string]: any }>(() => {
+    if (isEditMode && editOrderData) {
+      return {
+        overallStatus: editOrderData.overallStatus || editOrderData.status || 'Wait for Approval',
+        priority: editOrderData.priority || 'normal',
+        orderType: editOrderData.orderTypeId || editOrderData.orderType?._id || '',
+        // Add other fields as needed
+      };
+    }
+    return {};
+  });
   const [productSpecValues, setProductSpecValues] = useState<{ [key: string]: string | number }>({});
   const [materialSpecValues, setMaterialSpecValues] = useState<{ [key: string]: string | number }>({});
   const [calculatedDimensions, setCalculatedDimensions] = useState<{ [key: string]: number }>({});
@@ -417,6 +435,10 @@ const CreateOrder = () => {
   };
 
   const handleSubmit = async () => {
+    console.log("🚀 handleSubmit called");
+    console.log("📝 Form values:", formValues);
+    console.log("📋 Selected order type:", selectedOrderType);
+
     // Validate required fields based on enabled sections
     const missingFields: string[] = [];
 
@@ -428,8 +450,11 @@ const CreateOrder = () => {
       });
     });
 
+    console.log("⚠️ Missing fields:", missingFields);
+
     if (missingFields.length > 0) {
       setError(`Please fill in required fields: ${missingFields.join(", ")}`);
+      console.log("❌ Validation failed - missing required fields");
       return;
     }
 
@@ -452,12 +477,20 @@ const CreateOrder = () => {
     setSuccess("");
 
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("authToken");
       const apiKey = import.meta.env.VITE_API_KEY;
+
+      // Get branchId from localStorage (set during login)
+      const branchId = localStorage.getItem("selectedBranch") || localStorage.getItem("branchId");
 
       const orderData: any = {
         orderTypeId: selectedOrderType,
       };
+
+      // Add branchId to order data
+      if (branchId) {
+        orderData.branchId = branchId;
+      }
 
       // Map form fields to order data
       if (formValues.productType) orderData.productTypeId = formValues.productType;
@@ -499,34 +532,66 @@ const CreateOrder = () => {
         orderData.materialWeight = calculatedMaterialWeight;
       }
 
-      const response = await fetch(
-        `${import.meta.env.VITE_API_27INFINITY_IN}/order`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-api-key": apiKey || "",
-            "Authorization": `Bearer ${token}`,
-          },
-          body: JSON.stringify(orderData),
-        }
-      );
+      // ✅ Add status and priority from form
+      if (formValues.overallStatus) orderData.overallStatus = formValues.overallStatus;
+      if (formValues.priority) orderData.priority = formValues.priority;
+
+      // Debug: Log order data being sent
+      console.log(isEditMode ? "📋 Updating order with data:" : "📋 Creating order with data:", orderData);
+      console.log("🔑 Token present:", !!token);
+      console.log("🏢 BranchId:", branchId);
+
+      // ✅ Debug: Log edit data details
+      if (isEditMode) {
+        console.log("🔧 EDIT MODE DEBUG:");
+        console.log("  editOrderData._id:", editOrderData._id);
+        console.log("  editOrderData.orderId:", editOrderData.orderId);
+        console.log("  formValues.overallStatus:", formValues.overallStatus);
+        console.log("  Full editOrderData:", editOrderData);
+      }
+
+      // ✅ Handle both create and update modes
+      // Use _id if it's a valid MongoDB ObjectId, otherwise use orderId
+      const orderIdentifier = isEditMode
+        ? (editOrderData._id && editOrderData._id.length === 24 ? editOrderData._id : editOrderData.orderId)
+        : null;
+
+      const url = isEditMode
+        ? `${import.meta.env.VITE_API_27INFINITY_IN}/orders/${orderIdentifier}`
+        : `${import.meta.env.VITE_API_27INFINITY_IN}/orders`;
+
+      const method = isEditMode ? "PUT" : "POST";
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey || "",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify(orderData),
+      });
 
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.message || "Failed to create order");
+        throw new Error(data.message || `Failed to ${isEditMode ? 'update' : 'create'} order`);
       }
 
-      setSuccess(`Order created successfully! Order ID: ${data.order?.orderId || data.orderId || ''}`);
+      setSuccess(isEditMode
+        ? `Order updated successfully!`
+        : `Order created successfully! Order ID: ${data.order?.orderId || data.orderId || ''}`
+      );
 
-      // Reset form
-      setFormValues({});
-      setProductSpecValues({});
-      setMaterialSpecValues({});
-      setCalculatedDimensions({});
-      setCalculatedMaterialWeight(0);
+      // Reset form only for create mode
+      if (!isEditMode) {
+        setFormValues({});
+        setProductSpecValues({});
+        setMaterialSpecValues({});
+        setCalculatedDimensions({});
+        setCalculatedMaterialWeight(0);
+      }
     } catch (err: any) {
-      setError(err.message || "Failed to create order");
+      setError(err.message || `Failed to ${isEditMode ? 'update' : 'create'} order`);
     } finally {
       setLoading(false);
     }
@@ -852,7 +917,7 @@ const CreateOrder = () => {
 
   return (
     <div className="create-order-container">
-      <h2 className="page-title">Create Order</h2>
+      <h2 className="page-title">{isEditMode ? "Edit Order" : "Create Order"}</h2>
 
       {/* Order Type Selection - Always shown */}
       <div className="form-section">
@@ -865,6 +930,38 @@ const CreateOrder = () => {
               showDescription={true}
               required
             />
+          </div>
+          <div className="form-column">
+            <label className="input-label">Status</label>
+            <select
+              name="overallStatus"
+              value={formValues.overallStatus || "Wait for Approval"}
+              onChange={(e) => handleFormValueChange("overallStatus", e.target.value)}
+              className="form-input"
+            >
+              <option value="Wait for Approval">Wait for Approval</option>
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="in_progress">In Progress</option>
+              <option value="completed">Completed</option>
+              <option value="dispatched">Dispatched</option>
+              <option value="cancelled">Cancelled</option>
+              <option value="issue">Issue</option>
+            </select>
+          </div>
+          <div className="form-column">
+            <label className="input-label">Priority</label>
+            <select
+              name="priority"
+              value={formValues.priority || "normal"}
+              onChange={(e) => handleFormValueChange("priority", e.target.value)}
+              className="form-input"
+            >
+              <option value="low">Low</option>
+              <option value="normal">Normal</option>
+              <option value="high">High</option>
+              <option value="urgent">Urgent</option>
+            </select>
           </div>
         </div>
       </div>
@@ -935,7 +1032,9 @@ const CreateOrder = () => {
             className="submit-button"
             disabled={loading}
           >
-            {loading ? "Creating Order..." : "Create Order"}
+            {loading
+              ? (isEditMode ? "Updating Order..." : "Creating Order...")
+              : (isEditMode ? "Update Order" : "Create Order")}
           </button>
         </>
       ) : (

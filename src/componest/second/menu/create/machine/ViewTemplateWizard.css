@@ -1,0 +1,1684 @@
+/* View Template Wizard Styles */
+.viewTemplateWizard {
+  padding: 24px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.viewTemplateWizard-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.viewTemplateWizard-header h2 {
+  font-size: 1.5rem;
+  color: #1f2937;
+  margin: 0 0 8px;
+}
+
+.viewTemplateWizard-header p {
+  color: #6b7280;
+  margin: 0;
+}
+
+/* Step Indicator */
+.viewTemplateWizard-steps {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 32px;
+}
+
+.viewTemplateWizard-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.viewTemplateWizard-step:hover {
+  background: #f3f4f6;
+}
+
+.viewTemplateWizard-stepNumber {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #e5e7eb;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.viewTemplateWizard-step.active .viewTemplateWizard-stepNumber {
+  background: #FF6B35;
+  color: white;
+}
+
+.viewTemplateWizard-step.completed .viewTemplateWizard-stepNumber {
+  background: #22c55e;
+  color: white;
+}
+
+.viewTemplateWizard-stepLabel {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.viewTemplateWizard-step.active .viewTemplateWizard-stepLabel {
+  color: #FF6B35;
+  font-weight: 500;
+}
+
+/* Content */
+.viewTemplateWizard-content {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  min-height: 400px;
+}
+
+.viewTemplateWizard-stepContent h3 {
+  margin: 0 0 8px;
+  font-size: 1.25rem;
+  color: #1f2937;
+}
+
+.viewTemplateWizard-stepDesc {
+  color: #6b7280;
+  margin: 0 0 24px;
+}
+
+/* Form Groups */
+.viewTemplateWizard-formGroup {
+  margin-bottom: 16px;
+}
+
+.viewTemplateWizard-formGroup label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 6px;
+}
+
+.viewTemplateWizard-formGroup input,
+.viewTemplateWizard-formGroup select,
+.viewTemplateWizard-formGroup textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.viewTemplateWizard-formGroup input:focus,
+.viewTemplateWizard-formGroup select:focus,
+.viewTemplateWizard-formGroup textarea:focus {
+  outline: none;
+  border-color: #FF6B35;
+}
+
+.viewTemplateWizard-formRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+}
+
+.viewTemplateWizard-hint {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: 4px;
+}
+
+/* Checkbox Grid */
+.viewTemplateWizard-checkboxGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px;
+}
+
+.viewTemplateWizard-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+}
+
+.viewTemplateWizard-checkbox input {
+  width: 16px;
+  height: 16px;
+  accent-color: #FF6B35;
+}
+
+/* Sections */
+.viewTemplateWizard-section {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.viewTemplateWizard-section h4 {
+  margin: 0 0 16px;
+  font-size: 1rem;
+  color: #1f2937;
+}
+
+.viewTemplateWizard-sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+/* Buttons */
+.viewTemplateWizard-addBtn,
+.viewTemplateWizard-copyBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.viewTemplateWizard-addBtn {
+  background: #FF6B35;
+  color: white;
+}
+
+.viewTemplateWizard-addBtn:hover {
+  background: #e55a2b;
+}
+
+.viewTemplateWizard-copyBtn {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.viewTemplateWizard-copyBtn:hover {
+  background: #d1d5db;
+}
+
+.viewTemplateWizard-smallBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: #f3f4f6;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #374151;
+  cursor: pointer;
+}
+
+.viewTemplateWizard-smallBtn:hover:not(:disabled) {
+  background: #e5e7eb;
+}
+
+.viewTemplateWizard-smallBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.viewTemplateWizard-iconBtn {
+  padding: 4px;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  color: #6b7280;
+  cursor: pointer;
+}
+
+.viewTemplateWizard-iconBtn:hover {
+  background: #f3f4f6;
+}
+
+.viewTemplateWizard-iconBtn.danger:hover {
+  background: #fef2f2;
+  color: #ef4444;
+}
+
+/* Column Builder */
+.viewTemplateWizard-columnActions {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+/* Quick Add Buttons */
+.viewTemplateWizard-quickAdd {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 8px;
+}
+
+.viewTemplateWizard-quickAdd > span {
+  font-size: 13px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.viewTemplateWizard-quickBtn {
+  padding: 6px 12px;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 16px;
+  font-size: 12px;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.viewTemplateWizard-quickBtn:hover {
+  border-color: #FF6B35;
+  color: #FF6B35;
+  background: #fff7ed;
+}
+
+.viewTemplateWizard-columns {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.viewTemplateWizard-columnItem {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.viewTemplateWizard-columnHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #f9fafb;
+  cursor: pointer;
+}
+
+.viewTemplateWizard-columnHeader:hover {
+  background: #f3f4f6;
+}
+
+.viewTemplateWizard-columnName {
+  font-weight: 500;
+  color: #1f2937;
+}
+
+.viewTemplateWizard-columnMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.viewTemplateWizard-columnType {
+  font-size: 12px;
+  padding: 2px 8px;
+  background: #e5e7eb;
+  border-radius: 4px;
+  color: #6b7280;
+}
+
+.viewTemplateWizard-required {
+  font-size: 11px;
+  padding: 2px 6px;
+  background: #fef3c7;
+  border-radius: 4px;
+  color: #d97706;
+}
+
+.viewTemplateWizard-columnBody {
+  padding: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.viewTemplateWizard-flags {
+  display: flex;
+  gap: 16px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* Formula */
+.viewTemplateWizard-formulaSection {
+  margin-top: 12px;
+  padding: 12px;
+  background: #f0fdf4;
+  border-radius: 6px;
+}
+
+.viewTemplateWizard-formulaInput {
+  display: flex;
+  gap: 8px;
+}
+
+.viewTemplateWizard-formulaInput input {
+  flex: 1;
+}
+
+.viewTemplateWizard-helpBtn {
+  padding: 8px 12px;
+  background: #22c55e;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* Dropdown Section */
+.viewTemplateWizard-dropdownSection textarea {
+  font-family: monospace;
+  font-size: 13px;
+}
+
+/* Totals */
+.viewTemplateWizard-totalItem {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.viewTemplateWizard-totalItem select,
+.viewTemplateWizard-totalItem input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+}
+
+/* Modal */
+.viewTemplateWizard-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.viewTemplateWizard-modalContent {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.viewTemplateWizard-modalContent h4 {
+  margin: 0 0 16px;
+}
+
+.viewTemplateWizard-formulaList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.viewTemplateWizard-formulaItem {
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.viewTemplateWizard-formulaItem:hover {
+  border-color: #FF6B35;
+  background: #fff7ed;
+}
+
+.viewTemplateWizard-formulaItem strong {
+  display: block;
+  color: #1f2937;
+}
+
+.viewTemplateWizard-formulaItem code {
+  display: block;
+  font-size: 12px;
+  color: #6b7280;
+  margin: 4px 0;
+}
+
+.viewTemplateWizard-formulaItem span {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.viewTemplateWizard-closeBtn {
+  width: 100%;
+  margin-top: 16px;
+  padding: 10px;
+  background: #f3f4f6;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* Summary */
+.viewTemplateWizard-summary {
+  margin-top: 24px;
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 8px;
+}
+
+.viewTemplateWizard-summary h4 {
+  margin: 0 0 16px;
+}
+
+.viewTemplateWizard-summary h5 {
+  margin: 16px 0 8px;
+  font-size: 14px;
+}
+
+.viewTemplateWizard-summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.viewTemplateWizard-summaryItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.viewTemplateWizard-summaryItem span {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.viewTemplateWizard-summaryItem strong {
+  color: #1f2937;
+}
+
+/* Preview Table */
+.viewTemplateWizard-previewTable {
+  overflow-x: auto;
+  margin-top: 8px;
+}
+
+.viewTemplateWizard-previewTable table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.viewTemplateWizard-previewTable th,
+.viewTemplateWizard-previewTable td {
+  padding: 8px 12px;
+  border: 1px solid #e5e7eb;
+  text-align: left;
+}
+
+.viewTemplateWizard-previewTable th {
+  background: #f3f4f6;
+  font-weight: 500;
+}
+
+.viewTemplateWizard-previewTable .unit {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-left: 4px;
+}
+
+/* Display Items Preview */
+.viewTemplateWizard-displayPreview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  margin-bottom: 16px;
+}
+
+.viewTemplateWizard-displayPreviewItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.viewTemplateWizard-displayPreviewItem .label {
+  font-weight: 500;
+  color: #333;
+}
+
+.viewTemplateWizard-displayPreviewItem .type {
+  color: #7c3aed;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.viewTemplateWizard-displayPreviewItem .source {
+  color: #666;
+  font-size: 11px;
+}
+
+.viewTemplateWizard-displayPreviewItem .unit {
+  color: #999;
+  font-size: 11px;
+}
+
+/* Save Actions */
+.viewTemplateWizard-saveActions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.viewTemplateWizard-previewBtn,
+.viewTemplateWizard-saveBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.viewTemplateWizard-previewBtn {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.viewTemplateWizard-saveBtn {
+  background: #FF6B35;
+  color: white;
+}
+
+.viewTemplateWizard-saveBtn:hover {
+  background: #e55a2b;
+}
+
+/* Navigation */
+.viewTemplateWizard-navigation {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.viewTemplateWizard-navBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.viewTemplateWizard-navBtn.prev {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.viewTemplateWizard-navBtn.next,
+.viewTemplateWizard-navBtn.save {
+  background: #FF6B35;
+  color: white;
+}
+
+.viewTemplateWizard-navBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.viewTemplateWizard-navBtn:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+/* Loading State */
+.viewTemplateWizard-loading {
+  padding: 12px 16px;
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  border-radius: 8px;
+  color: #92400e;
+  font-size: 14px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+/* Option Types List */
+.viewTemplateWizard-optionTypesList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.viewTemplateWizard-optionTypeCard {
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 14px;
+  transition: all 0.2s;
+  background: white;
+}
+
+.viewTemplateWizard-optionTypeCard:hover {
+  border-color: #d1d5db;
+}
+
+.viewTemplateWizard-optionTypeCard.selected {
+  border-color: #FF6B35;
+  background: #fff7ed;
+}
+
+.viewTemplateWizard-optionTypeHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.viewTemplateWizard-optionTypeHeader input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #FF6B35;
+}
+
+.viewTemplateWizard-optionTypeName {
+  font-weight: 600;
+  color: #1f2937;
+  flex: 1;
+}
+
+.viewTemplateWizard-optionTypeCategory {
+  font-size: 11px;
+  padding: 3px 8px;
+  background: #e0e7ff;
+  color: #4f46e5;
+  border-radius: 12px;
+  text-transform: capitalize;
+}
+
+/* Specs Preview in Option Type Card */
+.viewTemplateWizard-specsList {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.viewTemplateWizard-specsLabel {
+  font-size: 12px;
+  color: #6b7280;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.viewTemplateWizard-specsTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.viewTemplateWizard-specTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: #f3f4f6;
+  border-radius: 14px;
+  font-size: 12px;
+  color: #374151;
+}
+
+.viewTemplateWizard-specTag small {
+  color: #9ca3af;
+}
+
+.viewTemplateWizard-specType {
+  font-size: 10px;
+  padding: 2px 5px;
+  background: #e5e7eb;
+  border-radius: 4px;
+  color: #6b7280;
+  margin-left: 4px;
+}
+
+/* Selected Summary */
+.viewTemplateWizard-selectedSummary {
+  margin-top: 16px;
+  padding: 10px 14px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #065f46;
+}
+
+/* Empty State */
+.viewTemplateWizard-emptyState {
+  padding: 32px;
+  text-align: center;
+  color: #9ca3af;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 2px dashed #e5e7eb;
+}
+
+/* Option Spec Configuration */
+.viewTemplateWizard-optionSpecConfig {
+  margin-top: 12px;
+  padding: 14px;
+  background: #eff6ff;
+  border-radius: 8px;
+  border: 1px solid #bfdbfe;
+}
+
+.viewTemplateWizard-specPreview {
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: white;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #1e40af;
+}
+
+.viewTemplateWizard-specPreview .unit {
+  color: #6b7280;
+}
+
+.viewTemplateWizard-warning {
+  font-size: 12px;
+  color: #dc2626;
+  margin-top: 4px;
+}
+
+/* Existing Template Warning Banner */
+.viewTemplateWizard-warning.existingTemplate {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 16px;
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  color: #92400e;
+  font-size: 13px;
+  margin: 16px 0;
+}
+
+.viewTemplateWizard-warning.existingTemplate svg {
+  flex-shrink: 0;
+  color: #f59e0b;
+}
+
+.viewTemplateWizard-warning.existingTemplate strong {
+  display: block;
+  color: #92400e;
+  margin-bottom: 4px;
+}
+
+.viewTemplateWizard-warning.existingTemplate p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Info Banner */
+.viewTemplateWizard-info {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 12px 16px;
+  background: #eff6ff;
+  border: 1px solid #3b82f6;
+  border-radius: 8px;
+  color: #1e40af;
+  font-size: 13px;
+  margin: 12px 0;
+}
+
+/* Formula Fields Builder */
+.viewTemplateWizard-formulaFields {
+  margin-top: 12px;
+}
+
+.viewTemplateWizard-formulaFields > label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.viewTemplateWizard-fieldsList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.viewTemplateWizard-fieldsGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.viewTemplateWizard-fieldsGroupLabel {
+  font-size: 11px;
+  color: #6b7280;
+  margin-right: 4px;
+  font-weight: 500;
+}
+
+.viewTemplateWizard-fieldBtn {
+  padding: 5px 10px;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: monospace;
+}
+
+.viewTemplateWizard-fieldBtn:hover {
+  border-color: #FF6B35;
+  background: #fff7ed;
+  color: #FF6B35;
+}
+
+.viewTemplateWizard-fieldBtn.spec {
+  background: #eff6ff;
+  border-color: #93c5fd;
+  color: #1d4ed8;
+}
+
+.viewTemplateWizard-fieldBtn.spec:hover {
+  background: #dbeafe;
+  border-color: #3b82f6;
+}
+
+.viewTemplateWizard-fieldBtn.operator {
+  background: #f3f4f6;
+  font-weight: 600;
+  min-width: 32px;
+  text-align: center;
+}
+
+.viewTemplateWizard-fieldBtn.operator:hover {
+  background: #e5e7eb;
+}
+
+.viewTemplateWizard-fieldsGroup.operators {
+  padding-top: 8px;
+  border-top: 1px dashed #e5e7eb;
+}
+
+/* Spinning animation for loader */
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* OptionSpecs List in Step 2 */
+.viewTemplateWizard-optionSpecsList {
+  margin-top: 12px;
+  padding: 12px;
+  background: #f0fdf4;
+  border-radius: 8px;
+  border: 1px solid #bbf7d0;
+}
+
+.viewTemplateWizard-optionSpecItem {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: white;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  border: 1px solid #d1fae5;
+}
+
+.viewTemplateWizard-optionSpecItem:last-child {
+  margin-bottom: 0;
+}
+
+.viewTemplateWizard-optionSpecName {
+  font-weight: 600;
+  color: #166534;
+}
+
+.viewTemplateWizard-optionSpecCode {
+  font-size: 11px;
+  padding: 2px 8px;
+  background: #dcfce7;
+  color: #15803d;
+  border-radius: 10px;
+  font-family: monospace;
+}
+
+.viewTemplateWizard-optionSpecItem .viewTemplateWizard-specsTags {
+  flex-basis: 100%;
+  margin-top: 8px;
+}
+
+/* Empty specs message */
+.viewTemplateWizard-emptySpecs {
+  margin-top: 10px;
+  padding: 12px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #991b1b;
+}
+
+/* Loading in option type card */
+.viewTemplateWizard-optionTypeCard .viewTemplateWizard-loading {
+  margin-top: 10px;
+  margin-bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* More tag for specs */
+.viewTemplateWizard-specTag.more {
+  background: #dbeafe;
+  color: #1e40af;
+  font-style: italic;
+}
+
+/* ============ Display Builder Styles ============ */
+
+.viewTemplateWizard-sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.viewTemplateWizard-sectionHeader h4 {
+  margin: 0;
+}
+
+.viewTemplateWizard-smallBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.viewTemplateWizard-smallBtn:hover:not(:disabled) {
+  background: #2563eb;
+}
+
+.viewTemplateWizard-smallBtn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.viewTemplateWizard-hint {
+  color: #6b7280;
+  font-size: 14px;
+  font-style: italic;
+  margin: 8px 0;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 6px;
+  border: 1px dashed #d1d5db;
+}
+
+/* Display Items Container */
+.viewTemplateWizard-displayItems {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Display Item Card */
+.viewTemplateWizard-displayItem {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.viewTemplateWizard-displayItemHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.viewTemplateWizard-displayItemNum {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #3b82f6;
+  color: white;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.viewTemplateWizard-displayItemLabel {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.viewTemplateWizard-displayItemLabel:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.viewTemplateWizard-displayItemBody {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.viewTemplateWizard-formRow {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.viewTemplateWizard-formGroup {
+  flex: 1;
+  min-width: 150px;
+}
+
+.viewTemplateWizard-formGroup label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.viewTemplateWizard-formGroup select,
+.viewTemplateWizard-formGroup input[type="text"] {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+}
+
+.viewTemplateWizard-formGroup select:focus,
+.viewTemplateWizard-formGroup input[type="text"]:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.viewTemplateWizard-formGroup select:disabled {
+  background: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.viewTemplateWizard-iconBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.viewTemplateWizard-iconBtn:hover {
+  background: #e5e7eb;
+}
+
+.viewTemplateWizard-iconBtn.danger {
+  color: #ef4444;
+}
+
+.viewTemplateWizard-iconBtn.danger:hover {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.viewTemplateWizard-displayItemPreview {
+  padding: 8px 12px;
+  background: #f0f9ff;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #0369a1;
+}
+
+.viewTemplateWizard-displayItemPreview .unit {
+  color: #6b7280;
+}
+
+/* Formula Builder in Display Items */
+.viewTemplateWizard-formulaBuilder {
+  margin-top: 12px;
+  padding: 12px;
+  background: #fefce8;
+  border: 1px solid #fef08a;
+  border-radius: 8px;
+}
+
+.viewTemplateWizard-formulaBuilder .viewTemplateWizard-formGroup {
+  margin-bottom: 12px;
+}
+
+.viewTemplateWizard-formulaBuilder .viewTemplateWizard-formulaInput {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 14px;
+}
+
+.viewTemplateWizard-formulaBuilder .viewTemplateWizard-formulaInput:focus {
+  outline: none;
+  border-color: #FF6B35;
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+}
+
+.viewTemplateWizard-formulaBuilder .viewTemplateWizard-formulaFields {
+  margin-top: 8px;
+}
+
+.viewTemplateWizard-formulaBuilder .viewTemplateWizard-formulaFields > label {
+  display: block;
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+.viewTemplateWizard-formulaBuilder .viewTemplateWizard-fieldsList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.viewTemplateWizard-formulaBuilder .viewTemplateWizard-fieldBtn {
+  padding: 4px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: white;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.viewTemplateWizard-formulaBuilder .viewTemplateWizard-fieldBtn:hover {
+  border-color: #FF6B35;
+  background: #fff7ed;
+}
+
+.viewTemplateWizard-formulaBuilder .viewTemplateWizard-fieldBtn.spec {
+  background: #f0f9ff;
+  border-color: #bae6fd;
+  color: #0369a1;
+}
+
+.viewTemplateWizard-formulaBuilder .viewTemplateWizard-fieldBtn.spec:hover {
+  background: #e0f2fe;
+  border-color: #0284c7;
+}
+
+.viewTemplateWizard-formulaBuilder .viewTemplateWizard-fieldBtn.spec small {
+  color: #6b7280;
+  margin-left: 2px;
+}
+
+.viewTemplateWizard-formulaBuilder .viewTemplateWizard-fieldBtn.spec {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 6px 10px;
+}
+
+.viewTemplateWizard-formulaBuilder .viewTemplateWizard-fieldType {
+  font-size: 10px;
+  color: #9ca3af;
+  font-weight: 400;
+}
+
+.viewTemplateWizard-formulaBuilder .viewTemplateWizard-fieldBtn.operator {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+  font-weight: 600;
+  min-width: 32px;
+}
+
+.viewTemplateWizard-formulaBuilder .viewTemplateWizard-fieldBtn.operator:hover {
+  background: #e5e7eb;
+}
+
+.viewTemplateWizard-formulaBuilder .viewTemplateWizard-operatorLabel {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-left: 8px;
+}
+
+/* Formula Toggle in Display Items */
+.viewTemplateWizard-formulaToggle {
+  margin: 8px 0;
+  padding: 8px 12px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 6px;
+}
+
+.viewTemplateWizard-formulaToggle .viewTemplateWizard-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #166534;
+  cursor: pointer;
+}
+
+.viewTemplateWizard-formulaToggle .viewTemplateWizard-checkbox input {
+  width: 16px;
+  height: 16px;
+  accent-color: #16a34a;
+}
+
+/* Formula Builder - Number buttons */
+.viewTemplateWizard-formulaBuilder .viewTemplateWizard-fieldBtn.number {
+  background: #fef3c7;
+  border-color: #fcd34d;
+  color: #92400e;
+  min-width: 28px;
+  font-weight: 600;
+}
+
+.viewTemplateWizard-formulaBuilder .viewTemplateWizard-fieldBtn.number:hover {
+  background: #fde68a;
+  border-color: #f59e0b;
+}
+
+/* Formula Builder - Function buttons */
+.viewTemplateWizard-formulaBuilder .viewTemplateWizard-fieldBtn.function {
+  background: #ede9fe;
+  border-color: #c4b5fd;
+  color: #6d28d9;
+  font-weight: 500;
+}
+
+.viewTemplateWizard-formulaBuilder .viewTemplateWizard-fieldBtn.function:hover {
+  background: #ddd6fe;
+  border-color: #8b5cf6;
+}
+
+/* Formula Builder - Compare buttons */
+.viewTemplateWizard-formulaBuilder .viewTemplateWizard-fieldBtn.compare {
+  background: #fce7f3;
+  border-color: #f9a8d4;
+  color: #be185d;
+}
+
+.viewTemplateWizard-formulaBuilder .viewTemplateWizard-fieldBtn.compare:hover {
+  background: #fbcfe8;
+  border-color: #ec4899;
+}
+
+/* Formula Builder - Constant buttons */
+.viewTemplateWizard-formulaBuilder .viewTemplateWizard-fieldBtn.constant {
+  background: #ecfdf5;
+  border-color: #6ee7b7;
+  color: #047857;
+  font-weight: 600;
+}
+
+.viewTemplateWizard-formulaBuilder .viewTemplateWizard-fieldBtn.constant:hover {
+  background: #d1fae5;
+  border-color: #10b981;
+}
+
+/* Formula Builder - Clear button */
+.viewTemplateWizard-formulaBuilder .viewTemplateWizard-fieldBtn.clear {
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #dc2626;
+  font-weight: 500;
+}
+
+.viewTemplateWizard-formulaBuilder .viewTemplateWizard-fieldBtn.clear:hover {
+  background: #fee2e2;
+  border-color: #ef4444;
+}
+
+/* ============ Edit Sections View Styles ============ */
+
+/* Edit Sections Button in Header */
+.viewTemplateWizard-editSectionsBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 12px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.viewTemplateWizard-editSectionsBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+/* Edit Sections View Container */
+.viewTemplateWizard-editSectionsView {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.viewTemplateWizard-editSectionsHeader {
+  margin-bottom: 16px;
+}
+
+.viewTemplateWizard-editSectionsHeader h3 {
+  margin: 0 0 8px;
+  font-size: 1.25rem;
+  color: #1f2937;
+}
+
+.viewTemplateWizard-switchModeBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  margin-top: 12px;
+  transition: all 0.2s;
+}
+
+.viewTemplateWizard-switchModeBtn:hover {
+  background: #e5e7eb;
+  border-color: #9ca3af;
+}
+
+/* Section Card */
+.viewTemplateWizard-sectionCard {
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  background: white;
+  transition: all 0.2s ease;
+}
+
+.viewTemplateWizard-sectionCard:hover {
+  border-color: #d1d5db;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.viewTemplateWizard-sectionCard.expanded {
+  border-color: #FF6B35;
+  box-shadow: 0 4px 16px rgba(255, 107, 53, 0.15);
+}
+
+/* Section Card Header */
+.viewTemplateWizard-sectionCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: #f9fafb;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.viewTemplateWizard-sectionCardHeader:hover {
+  background: #f3f4f6;
+}
+
+.viewTemplateWizard-sectionCard.expanded .viewTemplateWizard-sectionCardHeader {
+  background: #fff7ed;
+  border-bottom: 2px solid #FF6B35;
+}
+
+.viewTemplateWizard-sectionCardTitle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 15px;
+}
+
+.viewTemplateWizard-sectionCardTitle svg {
+  color: #6b7280;
+}
+
+.viewTemplateWizard-sectionCard.expanded .viewTemplateWizard-sectionCardTitle svg {
+  color: #FF6B35;
+}
+
+.viewTemplateWizard-totalsIcon {
+  font-size: 18px;
+  font-weight: 700;
+  color: #6b7280;
+}
+
+.viewTemplateWizard-sectionCard.expanded .viewTemplateWizard-totalsIcon {
+  color: #FF6B35;
+}
+
+.viewTemplateWizard-sectionBadge {
+  font-size: 12px;
+  padding: 4px 10px;
+  background: #e5e7eb;
+  color: #4b5563;
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.viewTemplateWizard-sectionCard.expanded .viewTemplateWizard-sectionBadge {
+  background: #FF6B35;
+  color: white;
+}
+
+.viewTemplateWizard-sectionCardActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.viewTemplateWizard-sectionCardActions svg {
+  color: #9ca3af;
+}
+
+/* Edit Button in Section Card */
+.viewTemplateWizard-editBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: white;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.viewTemplateWizard-editBtn:hover {
+  background: #FF6B35;
+  color: white;
+  border-color: #FF6B35;
+}
+
+/* Section Summary */
+.viewTemplateWizard-sectionSummary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 20px 16px;
+  background: white;
+}
+
+.viewTemplateWizard-summaryTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: #f3f4f6;
+  border-radius: 16px;
+  font-size: 13px;
+  color: #374151;
+}
+
+.viewTemplateWizard-summaryTag.more {
+  background: #dbeafe;
+  color: #1e40af;
+  font-style: italic;
+}
+
+.viewTemplateWizard-summaryTagType {
+  font-size: 10px;
+  padding: 2px 6px;
+  background: #e5e7eb;
+  border-radius: 4px;
+  color: #6b7280;
+  margin-left: 2px;
+}
+
+/* Section Card Body (Expanded) */
+.viewTemplateWizard-sectionCardBody {
+  padding: 20px;
+  background: white;
+  border-top: 1px solid #e5e7eb;
+}
+
+.viewTemplateWizard-sectionCardBody .viewTemplateWizard-stepContent {
+  padding: 0;
+  box-shadow: none;
+  background: transparent;
+  min-height: auto;
+}
+
+.viewTemplateWizard-sectionCardBody .viewTemplateWizard-stepContent h3 {
+  display: none;
+}
+
+.viewTemplateWizard-sectionCardBody .viewTemplateWizard-stepDesc {
+  display: none;
+}
+
+/* Section Save Row */
+.viewTemplateWizard-sectionSaveRow {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 16px;
+  margin-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.viewTemplateWizard-saveSectionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  background: #22c55e;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.viewTemplateWizard-saveSectionBtn:hover:not(:disabled) {
+  background: #16a34a;
+  transform: translateY(-1px);
+}
+
+.viewTemplateWizard-saveSectionBtn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}

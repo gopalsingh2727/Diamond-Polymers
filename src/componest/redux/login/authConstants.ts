@@ -3,11 +3,34 @@ export const LOGIN_REQUEST = "LOGIN_REQUEST";
 export const LOGIN_SUCCESS = "LOGIN_SUCCESS";
 export const LOGIN_FAIL = "LOGIN_FAIL";
 export const LOGOUT = "LOGOUT";
+export const LOGIN_REQUIRES_VERIFICATION = "LOGIN_REQUIRES_VERIFICATION";
+export const CLEAR_VERIFICATION_STATE = "CLEAR_VERIFICATION_STATE";
+
+export interface Branch {
+  _id: string;
+  name: string;
+  code?: string;
+  location?: string;
+  phone?: string;
+  email?: string;
+}
 
 export interface UserData {
   id: string;
-  name: string;
-  // add any other common user fields
+  username: string;
+  email: string;
+  fullName?: string;
+  phone?: string;
+  role: 'master_admin' | 'admin' | 'manager';
+  branchId?: string;
+  branchIds?: string[];
+  product27InfinityId?: string;
+  isSuperAdmin?: boolean;
+  permissions?: string[];
+  emailVerified?: boolean;
+  lastLogin?: string;
+  branches?: Branch[];
+  selectedBranch?: string;
 }
 
 export interface AuthState {
@@ -15,5 +38,10 @@ export interface AuthState {
   error: string | null;
   isAuthenticated: boolean;
   token: string | null;
+  refreshToken: string | null;
   userData: UserData | null;
+  requiresVerification?: boolean;
+  verificationEmail?: string;
+  verificationUserType?: 'admin' | 'manager' | 'master_admin';
+  tokenRefreshing?: boolean;
 }

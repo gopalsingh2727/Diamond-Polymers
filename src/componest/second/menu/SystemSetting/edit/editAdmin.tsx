@@ -1,158 +1,328 @@
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  getAllAdmins,
+  updateAdmin,
+  deleteAdmin,
+} from "../../../../redux/Admin/AdminActions";
+import { listBranches } from "../../../../redux/createBranchAndManager/branchActions";
+import { RootState } from "../../../../redux/rootReducer";
+import "./editStyles.css";
 
-
-
-
-
-const SeeAllAdminAndEdit= ()=>{
-    return(
-        <div>
-
-        </div>
-    )
+interface Admin {
+  _id: string;
+  username: string;
+  email?: string;
+  phone?: string;
+  fullName?: string;
+  isActive?: boolean;
+  createdAt: string;
+  branchIds?: Array<{
+    _id: string;
+    name: string;
+  }>;
 }
 
+interface Branch {
+  _id: string;
+  name: string;
+}
 
+const SeeAllAdminAndEdit: React.FC = () => {
+  const dispatch = useDispatch();
 
-export default SeeAllAdminAndEdit
+  const { admins = [], loading, error } = useSelector(
+    (state: RootState) => state.adminList || {}
+  );
+  const { branches = [] } = useSelector(
+    (state: RootState) => state.branchList || {}
+  );
 
+  const [selectedAdmin, setSelectedAdmin] = useState<Admin | null>(null);
+  const [editForm, setEditForm] = useState({
+    username: "",
+    password: "",
+    branchIds: [] as string[],
+    isActive: true,
+  });
+  const [searchTerm, setSearchTerm] = useState("");
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
-// import React, { useEffect, useState } from "react";
-// import { useDispatch, useSelector } from "react-redux";
-// import {
-//   listAdmins,
-//   updateAdmin,
-// } from "../../../../redux/create/admin/adminActions";
-// import { RootState } from "../../../../redux/rootReducer";
+  useEffect(() => {
+    dispatch(getAllAdmins() as any);
+    dispatch(listBranches() as any);
+  }, [dispatch]);
 
-// interface Admin {
-//   _id: string;
-//   username: string;
-//   createdAt: string;
-// }
+  const filteredAdmins = admins.filter((admin: Admin) =>
+    admin.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    admin.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-// const SeeAllAdminAndEdit: React.FC = () => {
-//   const dispatch = useDispatch();
+  const openEditor = (admin: Admin) => {
+    setSelectedAdmin(admin);
+    setEditForm({
+      username: admin.username || "",
+      password: "",
+      branchIds: admin.branchIds?.map(b => b._id) || [],
+      isActive: admin.isActive !== false,
+    });
+  };
 
-//   const { admins = [], loading, error } = useSelector(
-//     (state: RootState) => state.adminList || {}
-//   );
-//   const { success: updateSuccess } = useSelector(
-//     (state: RootState) => state.adminUpdate || {}
-//   );
+  const handleEditChange = (field: string, value: string | boolean | string[]) => {
+    setEditForm({ ...editForm, [field]: value });
+  };
 
-//   const [selectedAdmin, setSelectedAdmin] = useState<Admin | null>(null);
-//   const [editForm, setEditForm] = useState({
-//     username: "",
-//     password: "",
-//   });
+  const handleBranchToggle = (branchId: string) => {
+    const newBranchIds = editForm.branchIds.includes(branchId)
+      ? editForm.branchIds.filter(id => id !== branchId)
+      : [...editForm.branchIds, branchId];
+    handleEditChange("branchIds", newBranchIds);
+  };
 
-//   useEffect(() => {
-//     dispatch(listAdmins());
-//   }, [dispatch, updateSuccess]);
+  const handleUpdate = async () => {
+    if (!selectedAdmin) return;
 
-//   const openEditor = (admin: Admin) => {
-//     setSelectedAdmin(admin);
-//     setEditForm({
-//       username: admin.username,
-//       password: "",
-//     });
-//   };
+    if (!editForm.username.trim()) {
+      alert("Username is required");
+      return;
+    }
 
-//   const handleEditChange = (field: "username" | "password", value: string) => {
-//     setEditForm({ ...editForm, [field]: value });
-//   };
+    try {
+      const updateData: any = {
+        username: editForm.username.trim(),
+        isActive: editForm.isActive,
+      };
 
-//   const handleUpdate = () => {
-//     if (!selectedAdmin) return;
+      if (editForm.password.trim()) {
+        updateData.password = editForm.password.trim();
+      }
 
-//     if (!editForm.username.trim()) {
-//       alert("❌ Username required");
-//       return;
-//     }
+      if (editForm.branchIds.length > 0) {
+        updateData.branchIds = editForm.branchIds;
+      }
 
-//     dispatch(
-//       updateAdmin(selectedAdmin._id, {
-//         username: editForm.username.trim(),
-//         password: editForm.password.trim(), // may be empty
-//       })
-//     );
+      await dispatch(updateAdmin(selectedAdmin._id, updateData) as any);
+      dispatch(getAllAdmins() as any);
+      setSelectedAdmin(null);
+    } catch (err) {
+      console.error("Update failed:", err);
+    }
+  };
 
-//     setSelectedAdmin(null);
-//   };
+  const handleDelete = async (id: string) => {
+    try {
+      await dispatch(deleteAdmin(id) as any);
+      dispatch(getAllAdmins() as any);
+      setDeleteConfirm(null);
+    } catch (err) {
+      console.error("Delete failed:", err);
+    }
+  };
 
-//   return (
-//     <div className="p-4">
-//       <h2 className="text-xl font-bold mb-4">Admins</h2>
+  const handleToggleActive = async (admin: Admin) => {
+    try {
+      await dispatch(
+        updateAdmin(admin._id, {
+          username: admin.username,
+          isActive: !(admin.isActive !== false),
+        }) as any
+      );
+      dispatch(getAllAdmins() as any);
+    } catch (err) {
+      console.error("Toggle active failed:", err);
+    }
+  };
 
-//       {loading && <p>Loading...</p>}
-//       {error && <p className="text-red-600">{error}</p>}
+  if (loading) {
+    return <div className="edit-loading">Loading admins...</div>;
+  }
 
-//       {!selectedAdmin ? (
-//         <table className="w-full border">
-//           <thead className="bg-gray-100">
-//             <tr>
-//               <th className="border p-2">Username</th>
-//               <th className="border p-2">Created At</th>
-//               <th className="border p-2">Actions</th>
-//             </tr>
-//           </thead>
-//           <tbody>
-//             {admins.map((admin: Admin) => (
-//               <tr key={admin._id}>
-//                 <td className="border p-2">{admin.username}</td>
-//                 <td className="border p-2">
-//                   {new Date(admin.createdAt).toLocaleString()}
-//                 </td>
-//                 <td className="border p-2">
-//                   <button
-//                     className="bg-blue-500 text-white px-3 py-1 rounded"
-//                     onClick={() => openEditor(admin)}
-//                   >
-//                     Edit
-//                   </button>
-//                 </td>
-//               </tr>
-//             ))}
-//           </tbody>
-//         </table>
-//       ) : (
-//         <div className="bg-white p-4 rounded shadow-md max-w-md">
-//           <h3 className="text-lg font-bold mb-3">Edit Admin</h3>
+  if (error) {
+    return <div className="edit-error">Error: {error}</div>;
+  }
 
-//           <label className="block mb-1">Username</label>
-//           <input
-//             value={editForm.username}
-//             onChange={(e) => handleEditChange("username", e.target.value)}
-//             className="border p-2 w-full mb-3"
-//           />
+  return (
+    <div className="edit-container">
+      <div className="edit-header">
+        <h2>Admin Management</h2>
+        <p className="edit-subtitle">View, edit, and manage all admins</p>
+      </div>
 
-//           <label className="block mb-1">New Password</label>
-//           <input
-//             type="password"
-//             value={editForm.password}
-//             onChange={(e) => handleEditChange("password", e.target.value)}
-//             className="border p-2 w-full mb-3"
-//             placeholder="Leave empty to keep current"
-//           />
+      {!selectedAdmin ? (
+        <>
+          <div className="edit-toolbar">
+            <div className="search-box">
+              <input
+                type="text"
+                placeholder="Search admins..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="search-input"
+              />
+            </div>
+            <div className="toolbar-stats">
+              Total: {filteredAdmins.length} admins
+            </div>
+          </div>
 
-//           <div className="flex gap-3 mt-4">
-//             <button
-//               onClick={handleUpdate}
-//               className="bg-green-600 text-white px-4 py-2 rounded"
-//             >
-//               Save
-//             </button>
-//             <button
-//               onClick={() => setSelectedAdmin(null)}
-//               className="bg-gray-500 text-white px-4 py-2 rounded"
-//             >
-//               Cancel
-//             </button>
-//           </div>
-//         </div>
-//       )}
-//     </div>
-//   );
-// };
+          <div className="edit-table-wrapper">
+            <table className="edit-table">
+              <thead>
+                <tr>
+                  <th>Username</th>
+                  <th>Email</th>
+                  <th>Branches</th>
+                  <th>Created</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredAdmins.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="no-data">
+                      No admins found
+                    </td>
+                  </tr>
+                ) : (
+                  filteredAdmins.map((admin: Admin) => (
+                    <tr key={admin._id}>
+                      <td className="cell-name">{admin.username}</td>
+                      <td>{admin.email || "-"}</td>
+                      <td>
+                        {admin.branchIds?.map(b => b.name).join(", ") || "-"}
+                      </td>
+                      <td className="cell-date">
+                        {new Date(admin.createdAt).toLocaleDateString()}
+                      </td>
+                      <td>
+                        <span
+                          className={`status-badge ${
+                            admin.isActive !== false ? "active" : "inactive"
+                          }`}
+                          onClick={() => handleToggleActive(admin)}
+                        >
+                          {admin.isActive !== false ? "Active" : "Inactive"}
+                        </span>
+                      </td>
+                      <td className="cell-actions">
+                        <button
+                          className="btn-edit"
+                          onClick={() => openEditor(admin)}
+                        >
+                          Edit
+                        </button>
+                        {deleteConfirm === admin._id ? (
+                          <div className="delete-confirm">
+                            <button
+                              className="btn-confirm-delete"
+                              onClick={() => handleDelete(admin._id)}
+                            >
+                              Confirm
+                            </button>
+                            <button
+                              className="btn-cancel-delete"
+                              onClick={() => setDeleteConfirm(null)}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            className="btn-delete"
+                            onClick={() => setDeleteConfirm(admin._id)}
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </>
+      ) : (
+        <div className="edit-form-container">
+          <div className="edit-form-header">
+            <h3>Edit Admin</h3>
+            <button
+              className="btn-close"
+              onClick={() => setSelectedAdmin(null)}
+            >
+              X
+            </button>
+          </div>
 
-// export default SeeAllAdminAndEdit;
+          <div className="edit-form">
+            <div className="form-group">
+              <label>Username *</label>
+              <input
+                type="text"
+                value={editForm.username}
+                onChange={(e) => handleEditChange("username", e.target.value)}
+                placeholder="Enter username"
+              />
+            </div>
+
+            <div className="form-group">
+              <label>New Password</label>
+              <input
+                type="password"
+                value={editForm.password}
+                onChange={(e) => handleEditChange("password", e.target.value)}
+                placeholder="Leave empty to keep current"
+              />
+              <small className="form-hint">Only fill if you want to change the password</small>
+            </div>
+
+            <div className="form-group">
+              <label>Assigned Branches</label>
+              <div className="branch-checkboxes">
+                {branches.map((branch: Branch) => (
+                  <label key={branch._id} className="branch-checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={editForm.branchIds.includes(branch._id)}
+                      onChange={() => handleBranchToggle(branch._id)}
+                    />
+                    <span>{branch.name}</span>
+                  </label>
+                ))}
+              </div>
+              {branches.length === 0 && (
+                <small className="form-hint">No branches available</small>
+              )}
+            </div>
+
+            <div className="form-group checkbox-group">
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={editForm.isActive}
+                  onChange={(e) => handleEditChange("isActive", e.target.checked)}
+                />
+                <span>Active</span>
+              </label>
+            </div>
+
+            <div className="form-actions">
+              <button className="btn-save" onClick={handleUpdate}>
+                Save Changes
+              </button>
+              <button
+                className="btn-cancel"
+                onClick={() => setSelectedAdmin(null)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default SeeAllAdminAndEdit;

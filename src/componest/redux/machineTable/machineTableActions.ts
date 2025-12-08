@@ -26,7 +26,13 @@ import {
   ADD_TABLE_ROW_FAILURE,
   FETCH_MACHINE_CONFIG_REQUEST,
   FETCH_MACHINE_CONFIG_SUCCESS,
-  FETCH_MACHINE_CONFIG_FAILURE
+  FETCH_MACHINE_CONFIG_FAILURE,
+  SAVE_MACHINE_CONFIG_REQUEST,
+  SAVE_MACHINE_CONFIG_SUCCESS,
+  SAVE_MACHINE_CONFIG_FAILURE,
+  UPDATE_MACHINE_CONFIG_REQUEST,
+  UPDATE_MACHINE_CONFIG_SUCCESS,
+  UPDATE_MACHINE_CONFIG_FAILURE
 } from './machineTableConstants';
 import { RootState } from '../rootReducer';
 
@@ -342,3 +348,168 @@ export const clearMachineTableData = (): MachineTableActionTypes => ({
 export const clearMachineTableError = (): MachineTableActionTypes => ({
   type: CLEAR_MACHINE_TABLE_ERROR
 });
+
+// ============================================================================
+// CREATE MACHINE TEMPLATE (POST /machine-template)
+// ============================================================================
+
+export const createMachineTemplate = (configData: any) =>
+  async (dispatch: Dispatch, getState: () => RootState) => {
+    try {
+      console.log('💾 Creating machine template:', configData);
+
+      dispatch({ type: SAVE_MACHINE_CONFIG_REQUEST });
+
+      const token = getToken(getState);
+
+      const response = await axios.post(
+        `${baseUrl}/machine-template`,
+        configData,
+        { headers: getAuthHeaders(token) }
+      );
+
+      console.log('✅ Machine template created successfully:', response.data);
+
+      dispatch({
+        type: SAVE_MACHINE_CONFIG_SUCCESS,
+        payload: response.data.data || response.data
+      });
+      return response.data;
+
+    } catch (error: any) {
+      console.error('❌ Error creating machine template:', error);
+
+      let errorMessage = 'Failed to create machine template';
+
+      if (axios.isAxiosError(error)) {
+        if (error.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      dispatch({
+        type: SAVE_MACHINE_CONFIG_FAILURE,
+        payload: errorMessage
+      });
+
+      throw error;
+    }
+  };
+
+// ============================================================================
+// UPDATE MACHINE TEMPLATE (PUT /machine-template/{id})
+// ============================================================================
+
+export const updateMachineTemplate = (templateId: string, configData: any) =>
+  async (dispatch: Dispatch, getState: () => RootState) => {
+    try {
+      console.log('✏️ Updating machine template:', { templateId, configData });
+
+      dispatch({ type: UPDATE_MACHINE_CONFIG_REQUEST });
+
+      const token = getToken(getState);
+
+      if (!templateId) {
+        throw new Error('Template ID is required');
+      }
+
+      const response = await axios.put(
+        `${baseUrl}/machine-template/${templateId}`,
+        configData,
+        { headers: getAuthHeaders(token) }
+      );
+
+      console.log('✅ Machine template updated successfully:', response.data);
+
+      dispatch({
+        type: UPDATE_MACHINE_CONFIG_SUCCESS,
+        payload: response.data.data || response.data
+      });
+      return response.data;
+
+    } catch (error: any) {
+      console.error('❌ Error updating machine template:', error);
+
+      let errorMessage = 'Failed to update machine template';
+
+      if (axios.isAxiosError(error)) {
+        if (error.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      dispatch({
+        type: UPDATE_MACHINE_CONFIG_FAILURE,
+        payload: errorMessage
+      });
+
+      throw error;
+    }
+  };
+
+// ============================================================================
+// GET TEMPLATES BY MACHINE (GET /machine/{machineId}/templates)
+// ============================================================================
+
+export const getTemplatesByMachine = (machineId: string) =>
+  async (dispatch: Dispatch, getState: () => RootState) => {
+    try {
+      console.log('🔍 Fetching templates for machine:', machineId);
+
+      dispatch({ type: FETCH_MACHINE_CONFIG_REQUEST });
+
+      const token = getToken(getState);
+
+      if (!machineId) {
+        throw new Error('Machine ID is required');
+      }
+
+      const response = await axios.get(
+        `${baseUrl}/machine/${machineId}/templates`,
+        { headers: getAuthHeaders(token) }
+      );
+
+      console.log('✅ Machine templates fetched successfully:', response.data);
+
+      dispatch({
+        type: FETCH_MACHINE_CONFIG_SUCCESS,
+        payload: response.data.data || response.data
+      });
+      return response.data;
+
+    } catch (error: any) {
+      console.error('❌ Error fetching machine templates:', error);
+
+      let errorMessage = 'Failed to fetch machine templates';
+
+      if (axios.isAxiosError(error)) {
+        if (error.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      dispatch({
+        type: FETCH_MACHINE_CONFIG_FAILURE,
+        payload: errorMessage
+      });
+
+      throw error;
+    }
+  };
+
+// Legacy aliases for backwards compatibility
+export const saveMachineConfig = createMachineTemplate;
+export const updateMachineConfig = (machineId: string, configData: any) =>
+  updateMachineTemplate(configData._id || machineId, configData);

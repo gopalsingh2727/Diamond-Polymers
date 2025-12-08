@@ -4,7 +4,13 @@ import { createBranch } from "../../../../redux/createBranchAndManager/branchAct
 import { ActionButton } from '../../../../../components/shared/ActionButton';
 import { ToastContainer } from '../../../../../components/shared/Toast';
 import { useCRUD } from '../../../../../hooks/useCRUD';
-import type { AppDispatch} from "../../../../../store";
+import type { AppDispatch } from "../../../../../store";
+
+interface FormErrors {
+  name?: string;
+  code?: string;
+  location?: string;
+}
 
 const CreateBranch: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -13,11 +19,13 @@ const CreateBranch: React.FC = () => {
     name: "",
     location: "",
     code: "",
+    phone: "",
+    email: "",
   });
 
-  const [errors, setErrors] = useState<Partial<{ name: string; code: string }>>({});
+  const [errors, setErrors] = useState<FormErrors>({});
 
-  // 🚀 CRUD System Integration
+  // CRUD System Integration
   const { saveState, handleSave, toast } = useCRUD();
 
   const branchCreate = useSelector((state: any) => state.branchCreate);
@@ -31,9 +39,10 @@ const CreateBranch: React.FC = () => {
   const handleSubmit = (e?: React.FormEvent) => {
     e?.preventDefault();
 
-    let validationErrors: Partial<{ name: string; code: string }> = {};
+    const validationErrors: FormErrors = {};
     if (!formData.name.trim()) validationErrors.name = "Branch name is required";
     if (!formData.code.trim()) validationErrors.code = "Branch code is required";
+    if (!formData.location.trim()) validationErrors.location = "Location is required";
 
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
@@ -45,7 +54,7 @@ const CreateBranch: React.FC = () => {
       {
         successMessage: 'Branch created successfully!',
         onSuccess: () => {
-          setFormData({ name: "", location: "", code: "" });
+          setFormData({ name: "", location: "", code: "", phone: "", email: "" });
           setErrors({});
         }
       }
@@ -53,7 +62,7 @@ const CreateBranch: React.FC = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow">
+    <div className="max-w-lg mx-auto p-6 bg-white rounded-lg shadow">
       <h2 className="text-2xl font-semibold mb-4">Create New Branch</h2>
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -73,20 +82,8 @@ const CreateBranch: React.FC = () => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Location</label>
-          <input
-            type="text"
-            name="location"
-            value={formData.location}
-            onChange={handleChange}
-            className="mt-1 block w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-orange-300"
-            placeholder="Enter location"
-          />
-        </div>
-
-        <div>
           <label className="block text-sm font-medium text-gray-700">
-            Code <span className="text-red-500">*</span>
+            Branch Code <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
@@ -94,9 +91,48 @@ const CreateBranch: React.FC = () => {
             value={formData.code}
             onChange={handleChange}
             className="mt-1 block w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-orange-300"
-            placeholder="Enter branch code"
+            placeholder="Enter branch code (e.g., BR001)"
           />
           {errors.code && <p className="text-sm text-red-600 mt-1">{errors.code}</p>}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            Location <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            name="location"
+            value={formData.location}
+            onChange={handleChange}
+            className="mt-1 block w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-orange-300"
+            placeholder="Enter location/address"
+          />
+          {errors.location && <p className="text-sm text-red-600 mt-1">{errors.location}</p>}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Phone</label>
+          <input
+            type="tel"
+            name="phone"
+            value={formData.phone}
+            onChange={handleChange}
+            className="mt-1 block w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-orange-300"
+            placeholder="Enter branch phone number"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Email</label>
+          <input
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            className="mt-1 block w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-orange-300"
+            placeholder="Enter branch email"
+          />
         </div>
 
         <ActionButton

@@ -14,6 +14,7 @@ import {
   DEVICE_ACCESS_DELETE_FAIL,
 } from "./deviceAccessConstants";
 import { AppDispatch, RootState } from "../../../store";
+import { refreshOrderFormData } from "../oders/orderFormDataActions";
 
 const getToken = (getState: () => RootState): string | null => {
   return getState().auth?.token || localStorage.getItem("authToken");
@@ -76,6 +77,9 @@ export const createDeviceAccess = (data: {
         type: DEVICE_ACCESS_CREATE_SUCCESS,
         payload: deviceData,
       });
+
+      // Refresh cached form data so the new device appears in lists
+      dispatch(refreshOrderFormData());
 
       return deviceData; // Return data for component use
     } catch (error: any) {
@@ -175,6 +179,10 @@ export const updateDeviceAccess = (
         type: DEVICE_ACCESS_UPDATE_SUCCESS,
         payload: response.data,
       });
+
+      // Refresh cached form data so the updated device appears in lists
+      dispatch(refreshOrderFormData());
+
     } catch (error: any) {
       dispatch({
         type: DEVICE_ACCESS_UPDATE_FAIL,
@@ -201,6 +209,10 @@ export const deleteDeviceAccess = (id: string) => {
         type: DEVICE_ACCESS_DELETE_SUCCESS,
         payload: id,
       });
+
+      // Refresh cached form data so the deleted device is removed from lists
+      dispatch(refreshOrderFormData());
+
     } catch (error: any) {
       dispatch({
         type: DEVICE_ACCESS_DELETE_FAIL,

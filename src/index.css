@@ -275,6 +275,11 @@ tr:hover {
     margin-top: 10px;
     transition: all 0.2s ease;
 }
+
+input[type="text"].createDivInput {
+  margin-left: 9rem;
+}
+
 .createDiv {
     max-width: 52rem;
     padding: 2rem;

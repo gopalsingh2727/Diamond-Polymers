@@ -1,206 +1,277 @@
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { login } from "../redux/login/authActions";
+import { useNavigate } from "react-router-dom";
+import { login, clearVerificationState, requestPhoneOTP, verifyPhoneOTP, clearPhoneOTPState } from "../redux/login/authActions";
 import type { AppDispatch } from '../../store';
-import axios from 'axios';
 import { InfinitySpinner } from '../../components/InfinitySpinner';
+import OTPVerification from './OTPVerification';
+import '../../styles/otp-verification.css';
+
+type LoginMethod = 'email' | 'phone';
 
 const LoginForm = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
 
   const auth = useSelector((state: any) => state.auth);
+  const [loginMethod, setLoginMethod] = useState<LoginMethod>('email');
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showForgotPassword, setShowForgotPassword] = useState(false);
-  const [forgotEmail, setForgotEmail] = useState("");
-  const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
-  const [forgotPasswordMessage, setForgotPasswordMessage] = useState("");
-  const [forgotPasswordError, setForgotPasswordError] = useState("");
+  const [phone, setPhone] = useState("");
+  const [otp, setOtp] = useState("");
 
-const handleLogin = (e: React.FormEvent) => {
-  e.preventDefault();
-  dispatch(login(email, password));
-};
+  const handleEmailLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    dispatch(login(email, password));
+  };
 
-const handleForgotPassword = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setForgotPasswordLoading(true);
-  setForgotPasswordMessage("");
-  setForgotPasswordError("");
+  const handleRequestPhoneOTP = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await dispatch(requestPhoneOTP(phone));
+  };
 
-  try {
-    const baseUrl = import.meta.env.VITE_API_27INFINITY_IN || 'http://localhost:4000';
-    const apiKey = import.meta.env.VITE_API_KEY;
+  const handleVerifyPhoneOTP = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await dispatch(verifyPhoneOTP(phone, otp));
+  };
 
-    const response = await axios.post(
-      `${baseUrl}/admin/request-password-reset`,
-      { email: forgotEmail },
-      {
-        headers: {
-          'x-api-key': apiKey,
-          'Content-Type': 'application/json'
-        }
-      }
+  const handleBackFromPhoneOTP = () => {
+    dispatch(clearPhoneOTPState());
+    setOtp("");
+  };
+
+  const handleVerificationSuccess = () => {
+    dispatch(clearVerificationState());
+    setEmail("");
+    setPassword("");
+  };
+
+  const handleBackToLogin = () => {
+    dispatch(clearVerificationState());
+  };
+
+  const switchLoginMethod = (method: LoginMethod) => {
+    setLoginMethod(method);
+    dispatch(clearPhoneOTPState());
+    setOtp("");
+  };
+
+  // Show OTP verification screen if email verification is required
+  if (auth.requiresVerification && auth.verificationEmail && auth.verificationUserType) {
+    return (
+      <OTPVerification
+        email={auth.verificationEmail}
+        userType={auth.verificationUserType}
+        onVerificationSuccess={handleVerificationSuccess}
+        onBack={handleBackToLogin}
+      />
     );
-
-    setForgotPasswordMessage(response.data.message);
-    setForgotEmail("");
-
-    // Close modal after 3 seconds
-    setTimeout(() => {
-      setShowForgotPassword(false);
-      setForgotPasswordMessage("");
-    }, 3000);
-  } catch (error: any) {
-    setForgotPasswordError(
-      error.response?.data?.message || 'Failed to send reset email. Please try again.'
-    );
-  } finally {
-    setForgotPasswordLoading(false);
   }
-};
 
   return (
-    <div className="flex justify-center items-center min-h-screen ">
-      <form 
-        onSubmit={handleLogin} 
-        className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md"
-      >
-        <h2 className="text-2xl font-bold text-center text-gray-800 mb-8">
+    <div className="flex justify-center items-center min-h-screen">
+      <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
+        <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
           Welcome
         </h2>
-        
-        <div className="mb-5">
-          <label htmlFor="email" className="block text-gray-700 mb-2">
-            Email
-          </label>
-          <input
-            id="email"
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF6B35] transition"
-            type="email"
-            placeholder="Enter your email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </div>
-        
-        <div className="mb-6">
-          <label htmlFor="password" className="block text-gray-700 mb-2">
-            Password
-          </label>
-          <input
-            id="password"
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF6B35] transition"
-            type="password"
-            placeholder="Enter your password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </div>
-        
-        <button
-          type="submit"
-          className="w-full bg-gradient-to-r from-[#FF6B35] to-[#FFA500] hover:opacity-90 text-white font-medium py-3 px-4 rounded-lg transition duration-300 shadow-md hover:shadow-lg"
-          disabled={auth.loading}
-        >
-          {auth.loading ? (
-            <span className="flex items-center justify-center gap-2">
-              <InfinitySpinner size="sm" />
-              Logging in...
-            </span>
-          ) : "Login"}
-        </button>
 
-        <div className="mt-4 text-center" >
+        {/* Login Method Toggle */}
+        <div className="flex mb-6 bg-gray-100 rounded-lg p-1">
           <button
             type="button"
-            style={{color:"#fff"! }}
-            onClick={() => setShowForgotPassword(true)}
-            className="text-[#FF6B35] hover:text-[#FFA500] text-sm font-medium underline"
+            onClick={() => switchLoginMethod('email')}
+            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
+              loginMethod === 'email'
+                ? 'bg-white text-[#FF6B35] shadow-sm'
+                : 'text-gray-600 hover:text-gray-800'
+            }`}
           >
-            Forgot Password?
+            Email & Password
+          </button>
+          <button
+            type="button"
+            onClick={() => switchLoginMethod('phone')}
+            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
+              loginMethod === 'phone'
+                ? 'bg-white text-[#FF6B35] shadow-sm'
+                : 'text-gray-600 hover:text-gray-800'
+            }`}
+          >
+            Phone OTP
           </button>
         </div>
 
+        {/* Email/Password Login */}
+        {loginMethod === 'email' && (
+          <form onSubmit={handleEmailLogin}>
+            <div className="mb-5">
+              <label htmlFor="email" className="block text-gray-700 mb-2">
+                Email
+              </label>
+              <input
+                id="email"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF6B35] transition"
+                type="email"
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+
+            <div className="mb-6">
+              <label htmlFor="password" className="block text-gray-700 mb-2">
+                Password
+              </label>
+              <input
+                id="password"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF6B35] transition"
+                type="password"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="w-full bg-gradient-to-r from-[#FF6B35] to-[#FFA500] hover:opacity-90 text-white font-medium py-3 px-4 rounded-lg transition duration-300 shadow-md hover:shadow-lg"
+              disabled={auth.loading}
+            >
+              {auth.loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <InfinitySpinner size="sm" />
+                  Logging in...
+                </span>
+              ) : "Login"}
+            </button>
+
+            <div className="mt-4 text-center">
+              <button
+                type="button"
+                onClick={() => navigate("/forgot-password")}
+                className="text-[#FF6B35] hover:text-[#FFA500] text-sm font-medium underline"
+              >
+                Forgot Password?
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* Phone OTP Login */}
+        {loginMethod === 'phone' && (
+          <>
+            {!auth.phoneOtpSent ? (
+              <form onSubmit={handleRequestPhoneOTP}>
+                <div className="mb-5">
+                  <label htmlFor="phone" className="block text-gray-700 mb-2">
+                    Phone Number
+                  </label>
+                  <input
+                    id="phone"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF6B35] transition"
+                    type="tel"
+                    placeholder="Enter your phone number"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Enter 10-digit number (e.g., 9876543210)
+                  </p>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full bg-gradient-to-r from-[#FF6B35] to-[#FFA500] hover:opacity-90 text-white font-medium py-3 px-4 rounded-lg transition duration-300 shadow-md hover:shadow-lg"
+                  disabled={auth.phoneOtpSending}
+                >
+                  {auth.phoneOtpSending ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <InfinitySpinner size="sm" />
+                      Sending OTP...
+                    </span>
+                  ) : "Send OTP"}
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleVerifyPhoneOTP}>
+                <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <p className="text-green-700 text-sm">
+                    OTP sent to <strong>{auth.phoneOtpPhone}</strong>
+                  </p>
+                </div>
+
+                <div className="mb-5">
+                  <label htmlFor="otp" className="block text-gray-700 mb-2">
+                    Enter OTP
+                  </label>
+                  <input
+                    id="otp"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF6B35] transition text-center text-xl tracking-widest"
+                    type="text"
+                    placeholder="------"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    maxLength={6}
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full bg-gradient-to-r from-[#FF6B35] to-[#FFA500] hover:opacity-90 text-white font-medium py-3 px-4 rounded-lg transition duration-300 shadow-md hover:shadow-lg"
+                  disabled={auth.phoneOtpVerifying || otp.length !== 6}
+                >
+                  {auth.phoneOtpVerifying ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <InfinitySpinner size="sm" />
+                      Verifying...
+                    </span>
+                  ) : "Verify & Login"}
+                </button>
+
+                <div className="mt-4 flex justify-between items-center">
+                  <button
+                    type="button"
+                    onClick={handleBackFromPhoneOTP}
+                    className="text-gray-600 hover:text-gray-800 text-sm font-medium"
+                  >
+                    Change Number
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => dispatch(requestPhoneOTP(phone))}
+                    disabled={auth.phoneOtpSending}
+                    className="text-[#FF6B35] hover:text-[#FFA500] text-sm font-medium"
+                  >
+                    Resend OTP
+                  </button>
+                </div>
+              </form>
+            )}
+          </>
+        )}
+
+        {/* Error Messages */}
         <div className="mt-4 text-center">
-          {auth.error && (
+          {(auth.error || auth.phoneOtpError) && (
             <p className="text-red-600 bg-red-50 py-2 px-4 rounded-lg border border-red-100">
-              {auth.error}
+              {auth.error || auth.phoneOtpError}
             </p>
           )}
         </div>
-      </form>
 
-      {/* Forgot Password Modal */}
-      {showForgotPassword && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md mx-4">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-2xl font-bold text-gray-800">Reset Password</h3>
-              <button
-                onClick={() => {
-                  setShowForgotPassword(false);
-                  setForgotEmail("");
-                  setForgotPasswordMessage("");
-                  setForgotPasswordError("");
-                }}
-                className="text-gray-500 hover:text-gray-700 text-2xl"
-              >
-                &times;
-              </button>
-            </div>
-
-            <form onSubmit={handleForgotPassword}>
-              <p className="text-gray-600 mb-4">
-                Enter your email address and we'll send you a link to reset your password.
-              </p>
-
-              <div className="mb-6">
-                <label htmlFor="forgot-email" className="block text-gray-700 mb-2">
-                  Email Address
-                </label>
-                <input
-                  id="forgot-email"
-                  type="email"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF6B35] transition"
-                  placeholder="Enter your email"
-                  value={forgotEmail}
-                  onChange={(e) => setForgotEmail(e.target.value)}
-                  required
-                />
-              </div>
-
-              {forgotPasswordMessage && (
-                <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg">
-                  {forgotPasswordMessage}
-                </div>
-              )}
-
-              {forgotPasswordError && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg">
-                  {forgotPasswordError}
-                </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={forgotPasswordLoading}
-                className="w-full bg-[#FF6B35] hover:bg-[#E55A2B] text-white font-medium py-3 px-4 rounded-lg transition duration-300 shadow-md hover:shadow-lg disabled:bg-gray-400"
-              >
-                {forgotPasswordLoading ? (
-                  <span className="flex items-center justify-center">
-                    <svg className="animate-spin h-5 w-5 mr-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Sending...
-                  </span>
-                ) : "Send Reset Link"}
-              </button>
-            </form>
-          </div>
+        {/* Sign Up Link */}
+        <div className="mt-6 text-center">
+          <p className="text-gray-600 text-sm">
+            Don't have an account?{' '}
+            <a
+              href="#/signup"
+              className="text-[#FF6B35] hover:text-[#FFA500] font-medium underline"
+            >
+              Sign up
+            </a>
+          </p>
         </div>
-      )}
+      </div>
     </div>
   );
 };

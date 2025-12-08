@@ -6,6 +6,8 @@ import {
 } from "../../../../redux/deviceAccess/deviceAccessActions";
 import { RootState } from "../../../../redux/rootReducer";
 import { AppDispatch } from "../../../../../store";
+import { Copy, Check } from "lucide-react";
+import { formatDate } from "../../../../../utils/dateUtils";
 
 interface DeviceAccessCreate {
   _id: string;
@@ -31,6 +33,7 @@ const EditDeviceAccessCreate: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [copiedDeviceId, setCopiedDeviceId] = useState(false);
 
   // Filter devices based on search term
   const filteredDevices = devices.filter((device: DeviceAccessCreate) => {
@@ -54,7 +57,8 @@ const EditDeviceAccessCreate: React.FC = () => {
       } else if (e.key === "Enter") {
         const selected = filteredDevices[selectedRow];
         if (selected) {
-          setForm(selected);
+          // Clear password and pin - don't show hashed values
+          setForm({ ...selected, password: "", pin: "" });
           setShowDetail(true);
         }
       }
@@ -99,7 +103,23 @@ const EditDeviceAccessCreate: React.FC = () => {
     }
 
     try {
-      await dispatch(updateDeviceAccess(form._id, "updateDetails", form));
+      // Only include password/pin in payload if they were provided
+      const updatePayload: Partial<DeviceAccessCreate> = {
+        deviceName: form.deviceName,
+        location: form.location,
+      };
+
+      // Only send password if user entered a new one
+      if (form.password && form.password.trim()) {
+        updatePayload.password = form.password;
+      }
+
+      // Only send pin if user entered a new one
+      if (form.pin && form.pin.trim()) {
+        updatePayload.pin = form.pin;
+      }
+
+      await dispatch(updateDeviceAccess(form._id, "updateDetails", updatePayload));
       alert("Device access updated successfully!");
       setShowDetail(false);
       setConfirmPassword("");
@@ -112,7 +132,8 @@ const EditDeviceAccessCreate: React.FC = () => {
 
   const handleRowClick = (index: number, item: DeviceAccessCreate) => {
     setSelectedRow(index);
-    setForm(item);
+    // Clear password and pin - don't show hashed values
+    setForm({ ...item, password: "", pin: "" });
     setShowDetail(true);
     setConfirmPassword("");
     setConfirmPin("");
@@ -124,6 +145,18 @@ const EditDeviceAccessCreate: React.FC = () => {
 
   const clearSearch = () => {
     setSearchTerm("");
+  };
+
+  const copyDeviceId = async () => {
+    if (form._id) {
+      try {
+        await navigator.clipboard.writeText(form._id);
+        setCopiedDeviceId(true);
+        setTimeout(() => setCopiedDeviceId(false), 2000);
+      } catch (err) {
+        console.error('Failed to copy device ID:', err);
+      }
+    }
   };
 
   return (
@@ -273,6 +306,44 @@ const EditDeviceAccessCreate: React.FC = () => {
           </div>
 
           <div className="form-section">
+            <label>Device ID:</label>
+            <div style={{ position: "relative" }}>
+              <input
+                name="deviceId"
+                type="text"
+                value={form._id || ""}
+                readOnly
+                style={{
+                  paddingRight: "45px",
+                  backgroundColor: "#f5f5f5",
+                  cursor: "default"
+                }}
+              />
+              <button
+                type="button"
+                onClick={copyDeviceId}
+                style={{
+                  position: "absolute",
+                  right: "10px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: "1rem",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  padding: "4px"
+                }}
+                title="Copy Device ID"
+              >
+                {copiedDeviceId ? <Check size={18} color="#10b981" /> : <Copy size={18} />}
+              </button>
+            </div>
+          </div>
+
+          <div className="form-section">
             <label>Password (leave blank to keep current):</label>
             <div style={{ position: "relative" }}>
               <input
@@ -404,11 +475,11 @@ const EditDeviceAccessCreate: React.FC = () => {
           <div className="info-section">
             <p>
               <strong>Created:</strong>{" "}
-              {form.createdAt && new Date(form.createdAt).toLocaleString()}
+              {formatDate(form.createdAt)}
             </p>
             <p>
               <strong>Updated:</strong>{" "}
-              {form.updatedAt && new Date(form.updatedAt).toLocaleString()}
+              {formatDate(form.updatedAt)}
             </p>
           </div>
         </div>

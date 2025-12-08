@@ -1,0 +1,391 @@
+/* Universal Search Modal Styles - Fire Eagle Orange Theme */
+
+/* Backdrop */
+.universal-search-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 15vh;
+  animation: fadeIn 0.15s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Container */
+.universal-search-container {
+  width: 100%;
+  max-width: 640px;
+  background: var(--color-background, #FFFFFF);
+  border-radius: 12px;
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--color-border, #E5E7EB);
+  overflow: hidden;
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Command Root */
+.universal-search-command {
+  display: flex;
+  flex-direction: column;
+  max-height: 600px;
+  overflow: hidden;
+}
+
+/* Input Wrapper */
+.universal-search-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--color-border, #E5E7EB);
+  background: var(--color-surface, #F9FAFB);
+}
+
+.universal-search-icon {
+  color: var(--color-text-muted, #6B7280);
+  flex-shrink: 0;
+}
+
+/* Search Input */
+.universal-search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 16px;
+  color: var(--color-text, #1F2937);
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+.universal-search-input::placeholder {
+  color: var(--color-text-muted, #6B7280);
+}
+
+.universal-search-shortcut-hint {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* Keyboard Badge */
+.universal-search-kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 24px;
+  padding: 0 6px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  color: var(--color-text-muted, #6B7280);
+  background: var(--color-background, #FFFFFF);
+  border: 1px solid var(--color-border, #E5E7EB);
+  border-radius: 4px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* Results List */
+.universal-search-list {
+  max-height: 400px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px 0;
+}
+
+/* Custom Scrollbar */
+.universal-search-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.universal-search-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.universal-search-list::-webkit-scrollbar-thumb {
+  background: var(--color-border, #E5E7EB);
+  border-radius: 4px;
+}
+
+.universal-search-list::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted, #6B7280);
+}
+
+/* Empty State */
+.universal-search-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.universal-search-empty-icon {
+  color: var(--color-primary, #FF6B35);
+  opacity: 0.3;
+  margin-bottom: 16px;
+}
+
+.universal-search-empty-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text, #1F2937);
+  margin: 0 0 8px 0;
+}
+
+.universal-search-empty-subtitle {
+  font-size: 14px;
+  color: var(--color-text-muted, #6B7280);
+  margin: 0;
+}
+
+.universal-search-shortcut-badge {
+  margin-top: 16px;
+}
+
+.universal-search-shortcut-badge kbd {
+  font-size: 12px;
+  padding: 4px 8px;
+  min-width: 48px;
+}
+
+/* Group Heading */
+.universal-search-group [cmdk-group-heading] {
+  display: block;
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-muted, #6B7280);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  user-select: none;
+}
+
+/* Result Item */
+.universal-search-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  margin: 0 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.universal-search-item:hover,
+.universal-search-item[aria-selected="true"] {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 107, 53, 0.08) 0%,
+    rgba(255, 165, 0, 0.05) 100%
+  );
+  border-left: 3px solid var(--color-primary, #FF6B35);
+  padding-left: 13px; /* 16px - 3px border */
+}
+
+/* Item Icon */
+.universal-search-item-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: var(--color-surface, #F9FAFB);
+  border-radius: 8px;
+  color: var(--color-primary, #FF6B35);
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.universal-search-item:hover .universal-search-item-icon,
+.universal-search-item[aria-selected="true"] .universal-search-item-icon {
+  background: var(--color-primary, #FF6B35);
+  color: white;
+  transform: scale(1.05);
+}
+
+/* Item Content */
+.universal-search-item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.universal-search-item-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text, #1F2937);
+  margin-bottom: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.universal-search-item-subtitle {
+  font-size: 12px;
+  color: var(--color-text-muted, #6B7280);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.universal-search-item-description {
+  font-size: 11px;
+  color: var(--color-text-muted, #6B7280);
+  margin-top: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Item Arrow */
+.universal-search-item-arrow {
+  display: flex;
+  align-items: center;
+  color: var(--color-text-muted, #6B7280);
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.universal-search-item:hover .universal-search-item-arrow,
+.universal-search-item[aria-selected="true"] .universal-search-item-arrow {
+  opacity: 1;
+  transform: translateX(0);
+  color: var(--color-primary, #FF6B35);
+}
+
+/* Footer */
+.universal-search-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-top: 1px solid var(--color-border, #E5E7EB);
+  background: var(--color-surface, #F9FAFB);
+  font-size: 12px;
+}
+
+.universal-search-footer-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text-muted, #6B7280);
+}
+
+.universal-search-footer-hint .universal-search-kbd {
+  min-width: 24px;
+  height: 20px;
+  font-size: 10px;
+}
+
+.universal-search-footer-count {
+  color: var(--color-text-muted, #6B7280);
+  font-weight: 500;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .universal-search-backdrop {
+    padding-top: 10vh;
+  }
+
+  .universal-search-container {
+    max-width: calc(100vw - 32px);
+    margin: 0 16px;
+  }
+
+  .universal-search-list {
+    max-height: 300px;
+  }
+
+  .universal-search-item {
+    padding: 10px 12px;
+    margin: 0 4px;
+  }
+
+  .universal-search-footer-hint {
+    display: none;
+  }
+}
+
+/* Dark mode support (optional - can be enabled later) */
+@media (prefers-color-scheme: dark) {
+  .universal-search-container {
+    background: #1F2937;
+    border-color: #374151;
+  }
+
+  .universal-search-input-wrapper {
+    background: #111827;
+    border-color: #374151;
+  }
+
+  .universal-search-input {
+    color: #F9FAFB;
+  }
+
+  .universal-search-input::placeholder {
+    color: #9CA3AF;
+  }
+
+  .universal-search-kbd {
+    background: #374151;
+    border-color: #4B5563;
+    color: #D1D5DB;
+  }
+
+  .universal-search-item-icon {
+    background: #374151;
+  }
+
+  .universal-search-item-title {
+    color: #F9FAFB;
+  }
+
+  .universal-search-item-subtitle,
+  .universal-search-item-description {
+    color: #9CA3AF;
+  }
+
+  .universal-search-footer {
+    background: #111827;
+    border-color: #374151;
+  }
+
+  .universal-search-list::-webkit-scrollbar-thumb {
+    background: #4B5563;
+  }
+}

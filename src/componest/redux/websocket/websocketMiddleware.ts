@@ -152,18 +152,61 @@ function handleConnect(store: any, payload: { url: string; token: string; platfo
     console.log('📦 Order created:', data);
     // Dispatch to orders reducer
     store.dispatch({ type: 'orders/orderCreatedViaWS', payload: data.data });
+    // Dispatch browser event for useDaybookUpdates hook
+    window.dispatchEvent(new CustomEvent('websocket:message', {
+      detail: { type: 'order:created', data: data.data }
+    }));
   });
 
   wsClient.on('order:status_changed', (data) => {
     console.log('📦 Order status changed:', data);
     // Dispatch to orders reducer
     store.dispatch({ type: 'orders/orderStatusChangedViaWS', payload: data.data });
+    // Dispatch browser event for useDaybookUpdates hook
+    window.dispatchEvent(new CustomEvent('websocket:message', {
+      detail: { type: 'order:status_changed', data: data.data }
+    }));
   });
 
   wsClient.on('order:priority_changed', (data) => {
     console.log('📦 Order priority changed:', data);
     // Dispatch to orders reducer
     store.dispatch({ type: 'orders/orderPriorityChangedViaWS', payload: data.data });
+    // Dispatch browser event for useDaybookUpdates hook
+    window.dispatchEvent(new CustomEvent('websocket:message', {
+      detail: { type: 'order:priority_changed', data: data.data }
+    }));
+  });
+
+  // ✅ Listen for order updates (for Daybook real-time updates)
+  wsClient.on('order:updated', (data) => {
+    console.log('📦 Order updated:', data);
+    // Dispatch to orders reducer
+    store.dispatch({ type: 'orders/orderUpdatedViaWS', payload: data.data });
+    // Dispatch browser event for useDaybookUpdates hook
+    window.dispatchEvent(new CustomEvent('websocket:message', {
+      detail: { type: 'order:updated', data: data.data }
+    }));
+  });
+
+  // ✅ Listen for order deletions
+  wsClient.on('order:deleted', (data) => {
+    console.log('📦 Order deleted:', data);
+    // Dispatch to orders reducer
+    store.dispatch({ type: 'orders/orderDeletedViaWS', payload: data.data });
+    // Dispatch browser event for useDaybookUpdates hook
+    window.dispatchEvent(new CustomEvent('websocket:message', {
+      detail: { type: 'order:deleted', data: data.data }
+    }));
+  });
+
+  // ✅ Listen for daybook-specific updates
+  wsClient.on('daybook:updated', (data) => {
+    console.log('📅 Daybook updated:', data);
+    // Dispatch browser event for useDaybookUpdates hook
+    window.dispatchEvent(new CustomEvent('websocket:message', {
+      detail: { type: 'daybook:updated', data: data.data }
+    }));
   });
 
   // Listen for machine updates
@@ -185,10 +228,39 @@ function handleConnect(store: any, payload: { url: string; token: string; platfo
 
   // 🔄 Listen for reference data changes (cache invalidation)
   wsClient.on('referenceData:invalidate', (data) => {
-    console.log('📊 Reference data changed:', data.data.entityType, data.data.action);
-    console.log('🔄 Refreshing order form data cache...');
-    // Trigger cache refresh - clears localStorage and fetches fresh data
+    const entityType = data.data?.entityType || data.entityType;
+    const action = data.data?.action || data.action;
+    console.log('📊 Reference data changed:', entityType, action);
+
+    // Clear the order form data cache
     store.dispatch({ type: 'REFRESH_ORDER_FORM_DATA' });
+
+    // Also invalidate specific data cache based on entity type
+    const entityToCacheMap: Record<string, string[]> = {
+      'machine': ['machines'],
+      'machineType': ['machineTypes'],
+      'operator': ['operators'],
+      'customer': ['customers'],
+      'step': ['steps'],
+      'option': ['options'],
+      'optionType': ['optionTypes'],
+      'optionSpec': ['optionSpecs'],
+      'order': ['orders'],
+      'orderType': ['orderTypes']
+    };
+
+    const cacheKeys = entityToCacheMap[entityType];
+    if (cacheKeys) {
+      store.dispatch({ type: 'INVALIDATE_CACHE', payload: { dataTypes: cacheKeys } });
+      console.log('🗑️ Invalidated cache for:', cacheKeys);
+    }
+
+    // Emit custom event so components can react and refetch
+    window.dispatchEvent(new CustomEvent('websocket:message', {
+      detail: { type: 'referenceData:invalidate', data: data.data || data }
+    }));
+
+    console.log('🔄 Cache invalidated for', entityType, '- components will refetch on next render');
   });
 
   // Connect

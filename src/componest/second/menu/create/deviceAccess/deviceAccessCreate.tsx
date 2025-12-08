@@ -1,17 +1,32 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { createDeviceAccess, resetDeviceAccessState } from "../../../../redux/deviceAccess/deviceAccessActions";
+import { createDeviceAccess, updateDeviceAccess, deleteDeviceAccess, resetDeviceAccessState, getDeviceAccessList } from "../../../../redux/deviceAccess/deviceAccessActions";
 import { AppDispatch, RootState } from "../../../../../store";
-import "../../CreateOders/CreateOders.css";
+import { Copy, Check } from "lucide-react";
+import "./deviceaccess.css";
 
-const DeviceAccessCreate: React.FC = () => {
+interface DeviceAccessCreateProps {
+  initialData?: {
+    _id: string;
+    deviceName?: string;
+    location?: string;
+    deviceId?: string;
+  };
+  onCancel?: () => void;
+  onSaveSuccess?: () => void;
+}
+
+const DeviceAccessCreate: React.FC<DeviceAccessCreateProps> = ({ initialData, onCancel, onSaveSuccess }) => {
   const dispatch = useDispatch<AppDispatch>();
+  const isEditMode = !!initialData?._id;
+
   const { loading, success, error, createdDevice } = useSelector(
     (state: RootState) => state.deviceAccess
   );
 
   const [showPassword, setShowPassword] = useState(false);
   const [displayedDeviceId, setDisplayedDeviceId] = useState<string | null>(null);
+  const [copiedDeviceId, setCopiedDeviceId] = useState(false);
   const [formData, setFormData] = useState({
     deviceName: "",
     location: "",
@@ -19,15 +34,27 @@ const DeviceAccessCreate: React.FC = () => {
     confirmPassword: "",
   });
 
-  // Show device ID only once when device is created
+  // Load data when editing
   useEffect(() => {
-    if (success && createdDevice && !displayedDeviceId) {
+    if (initialData && initialData._id) {
+      setFormData({
+        deviceName: initialData.deviceName || "",
+        location: initialData.location || "",
+        password: "", // Don't show old password
+        confirmPassword: "",
+      });
+    }
+  }, [initialData]);
+
+  // Show device ID only once when device is created (not in edit mode)
+  useEffect(() => {
+    if (!isEditMode && success && createdDevice && !displayedDeviceId) {
       // Store the device ID from the response
       const deviceId = (createdDevice as any).deviceId || createdDevice._id;
-      
+
       if (deviceId) {
         setDisplayedDeviceId(deviceId);
-        
+
         setFormData({
           deviceName: "",
           location: "",
@@ -36,10 +63,11 @@ const DeviceAccessCreate: React.FC = () => {
         });
       }
     }
-  }, [success, createdDevice, displayedDeviceId]);
+  }, [success, createdDevice, displayedDeviceId, isEditMode]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
   };
 
   const handleCloseModal = () => {
@@ -48,7 +76,19 @@ const DeviceAccessCreate: React.FC = () => {
     dispatch(resetDeviceAccessState());
   };
 
-  const handleSubmit = () => {
+  const copyDeviceId = async () => {
+    if (initialData?._id) {
+      try {
+        await navigator.clipboard.writeText(initialData._id);
+        setCopiedDeviceId(true);
+        setTimeout(() => setCopiedDeviceId(false), 2000);
+      } catch (err) {
+        console.error('Failed to copy device ID:', err);
+      }
+    }
+  };
+
+  const handleSubmit = async () => {
     // Validation
     if (!formData.deviceName.trim()) {
       alert("Device name is required");
@@ -60,86 +100,190 @@ const DeviceAccessCreate: React.FC = () => {
       return;
     }
 
-    if (!formData.password) {
-      alert("Password is required");
-      return;
-    }
+    if (isEditMode) {
+      // Update mode - password is optional
+      if (formData.password && formData.password !== formData.confirmPassword) {
+        alert("Passwords do not match");
+        return;
+      }
 
-    if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match");
-      return;
-    }
+      // Build update payload - only include password if provided
+      const updatePayload: any = {
+        deviceName: formData.deviceName,
+        location: formData.location,
+      };
 
-    if (formData.password.length < 6) {
-      alert("Password must be at least 6 characters long");
-      return;
-    }
+      if (formData.password && formData.password.trim()) {
+        updatePayload.password = formData.password;
+      }
 
-    dispatch(createDeviceAccess(formData));
+      try {
+        await dispatch(updateDeviceAccess(initialData!._id, "updateDetails", updatePayload));
+        alert("Device access updated successfully!");
+        dispatch(getDeviceAccessList());
+        if (onSaveSuccess) onSaveSuccess();
+      } catch (err) {
+        alert("Failed to update device access.");
+      }
+    } else {
+      // Create mode - password is required
+      if (!formData.password) {
+        alert("Password is required");
+        return;
+      }
+
+      if (formData.password !== formData.confirmPassword) {
+        alert("Passwords do not match");
+        return;
+      }
+
+      if (formData.password.length < 6) {
+        alert("Password must be at least 6 characters long");
+        return;
+      }
+
+      dispatch(createDeviceAccess({
+        deviceName: formData.deviceName,
+        location: formData.location,
+        password: formData.password,
+        confirmPassword: formData.confirmPassword,
+      }));
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!isEditMode || !initialData) return;
+    if (!window.confirm(`Delete device "${initialData.deviceName}"?`)) return;
+
+    try {
+      await dispatch(deleteDeviceAccess(initialData._id));
+      alert("Device deleted successfully!");
+      dispatch(getDeviceAccessList());
+      if (onSaveSuccess) onSaveSuccess();
+    } catch (err) {
+      alert("Failed to delete device.");
+    }
   };
 
   const inputType = (field: string) =>
     showPassword && field.includes("password") ? "text" : "password";
 
   return (
-    <div className="createDiv">
-      <h2 className="form-title" style={{ gridColumn: "1 / -1", textAlign: "center", marginBottom: "1.5rem" }}>Create Device Access</h2>
-      {/* Column 1: Device Name + Location */}
-      <div className="form-column">
-        <div className="form-input-group">
-          <label className="input-label">Device Name *</label>
+    <div className="createDeviceAccess-container">
+      <div className="createDeviceAccess-form">
+        {/* Header with Back/Delete for edit mode */}
+        {isEditMode && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
+            <button
+              type="button"
+              onClick={onCancel}
+              style={{ padding: '8px 16px', background: '#6b7280', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+            >
+              ← Back to List
+            </button>
+            <button
+              type="button"
+              onClick={handleDelete}
+              style={{ padding: '8px 16px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+            >
+              Delete
+            </button>
+          </div>
+        )}
+
+        <h2 className="createDeviceAccess-title">
+          {isEditMode ? `Edit: ${initialData?.deviceName}` : 'Create Device Access'}
+        </h2>
+
+        <div className="createDeviceAccess-group">
+          <label className="createDeviceAccess-label">Device Name *</label>
           <input
             name="deviceName"
             type="text"
-            className="createDivInput createDivInputwidth"
+            className="createDeviceAccess-input"
             placeholder="Enter device name"
             value={formData.deviceName}
             onChange={handleChange}
           />
-        
         </div>
-        <div className="form-input-group">
-          <label className="input-label">Device Location *</label>
+
+        <div className="createDeviceAccess-group">
+          <label className="createDeviceAccess-label">Device Location *</label>
           <input
             name="location"
             type="text"
-            className="createDivInput createDivInputwidth"
+            className="createDeviceAccess-input"
             placeholder="Enter location"
             value={formData.location}
             onChange={handleChange}
           />
         </div>
-      </div>
 
-      {/* Column 2: Password + Confirm Password */}
-      <div className="form-column">
-        <div className="form-input-group">
-          <label className="input-label">Password *</label>
-          <div style={{ position: "relative" }}>
+        {/* Show Device ID only in edit mode */}
+        {isEditMode && initialData?._id && (
+          <div className="createDeviceAccess-group">
+            <label className="createDeviceAccess-label">Device ID</label>
+            <div style={{ position: "relative" }}>
+              <input
+                type="text"
+                className="createDeviceAccess-input"
+                value={initialData._id}
+                readOnly
+                style={{ backgroundColor: "#f5f5f5", paddingRight: "45px" }}
+              />
+              <button
+                type="button"
+                onClick={copyDeviceId}
+                style={{
+                  position: "absolute",
+                  right: "10px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  padding: "4px"
+                }}
+                title="Copy Device ID"
+              >
+                {copiedDeviceId ? <Check size={18} color="#10b981" /> : <Copy size={18} />}
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="createDeviceAccess-group">
+          <label className="createDeviceAccess-label">
+            {isEditMode ? 'Password (leave blank to keep current)' : 'Password *'}
+          </label>
+          <div className="createDeviceAccess-passwordWrapper">
             <input
               name="password"
               type={inputType("password")}
-              className="createDivInput createDivInputwidth"
-              placeholder="Enter password (min 6 characters)"
+              className="createDeviceAccess-input"
+              placeholder={isEditMode ? "Enter new password (optional)" : "Enter password (min 6 characters)"}
               value={formData.password}
               onChange={handleChange}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              style={toggleBtnStyle}
+              className="createDeviceAccess-passwordToggle"
             >
               {showPassword ? "🙈" : "👁"}
             </button>
           </div>
         </div>
-        <div className="form-input-group">
-          <label className="input-label">Confirm Password *</label>
-          <div style={{ position: "relative" }}>
+
+        <div className="createDeviceAccess-group">
+          <label className="createDeviceAccess-label">Confirm Password</label>
+          <div className="createDeviceAccess-passwordWrapper">
             <input
               name="confirmPassword"
               type={inputType("confirmPassword")}
-              className="createDivInput createDivInputwidth"
+              className="createDeviceAccess-input"
               placeholder="Confirm password"
               value={formData.confirmPassword}
               onChange={handleChange}
@@ -147,27 +291,23 @@ const DeviceAccessCreate: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              style={toggleBtnStyle}
+              className="createDeviceAccess-passwordToggle"
             >
               {showPassword ? "🙈" : "👁"}
             </button>
           </div>
         </div>
-      </div>
 
-      {/* Column 3: Submit + Feedback */}
-      <div className="form-column">
-        <div className="form-input-group">
-          <button
-            type="button"
-            onClick={handleSubmit}
-            className="save-button"
-            disabled={loading}
-          >
-            {loading ? "Creating Device..." : "Create Device"}
-          </button>
-          {/* Success Modal Popup */}
-          {displayedDeviceId && (
+        <button
+          type="button"
+          onClick={handleSubmit}
+          className="createDeviceAccess-button"
+          disabled={loading}
+        >
+          {loading ? "Saving..." : (isEditMode ? "Update Device" : "Create Device")}
+        </button>
+          {/* Success Modal Popup - only for create mode */}
+          {!isEditMode && displayedDeviceId && (
             <>
               {/* Backdrop */}
               <div style={{
@@ -273,22 +413,10 @@ const DeviceAccessCreate: React.FC = () => {
               </div>
             </>
           )}
-          {error && <div className="error-msg">{error}</div>}
-        </div>
+        {error && <div className="createDeviceAccess-error">{error}</div>}
       </div>
     </div>
   );
-};
-
-const toggleBtnStyle: React.CSSProperties = {
-  position: "absolute",
-  right: "10px",
-  top: "50%",
-  transform: "translateY(-50%)",
-  background: "none",
-  border: "none",
-  cursor: "pointer",
-  fontSize: "1rem",
 };
 
 export default DeviceAccessCreate;

@@ -13,7 +13,12 @@ import { branchCreateReducer } from "./createBranchAndManager/branchReducer";
 
 
 // Admin & Manager
-import { adminCreateReducer } from "./Admin/adminReducer";
+import {
+  adminCreateReducer,
+  adminListReducer,
+  adminUpdateReducer,
+  adminDeleteReducer,
+} from "./Admin/adminReducer";
 import {
   managerCreateReducer,
   managerDeleteReducer,
@@ -52,21 +57,6 @@ import {
   operatorUpdateReducer,
 } from "./create/CreateMachineOpertor/MachineOpertorReducer";
 
-// Products
-import {
-  productCategoryReducer,
-  productTypeWithProductsReducer,
-} from "./create/products/productCategories/productCategoriesReducer";
-
-// Materials
-import { materialCategoryReducer } from "./create/Materials/MaterialsCategories/MaterialsCategoriesReducer";
-import {
-  materialCreateReducer,
-  materialDeleteReducer,
-  materialListReducer,
-  materialUpdateReducer,
-} from "./create/Materials/MaterialReducer";
-
 // Steps
 import {
   stepCreateReducer,
@@ -76,36 +66,14 @@ import {
   // If you have a delete reducer, import and include it
   // stepDeleteReducer,
 } from "./create/CreateStep/StepReducer";
-import { createProduct } from "./create/products/ProductActions";
-import { productDeleteReducer, productListReducer, productUpdateReducer } from "./create/products/ProductReducer";
 
-// Formula
-import {
-  formulaCreateReducer,
-  formulaListReducer,
-  formulaDetailReducer,
-  formulaUpdateReducer,
-  formulaDeleteReducer,
-  formulaTestReducer
-} from "./create/formula/formulaReducer";
+// NEW: Option System (replaces Product/Material/Printing)
+import optionTypeReducer from "./option/optionTypeReducer";
+import optionReducer from "./option/optionReducer";
+import optionSpecReducer from "./create/optionSpec/optionSpecReducer";
 
-// Product Spec
-import {
-  productSpecCreateReducer,
-  productSpecListReducer,
-  productSpecDetailReducer,
-  productSpecUpdateReducer,
-  productSpecDeleteReducer
-} from "./create/productSpec/productSpecReducer";
-
-// Material Spec
-import {
-  materialSpecCreateReducer,
-  materialSpecListReducer,
-  materialSpecDetailReducer,
-  materialSpecUpdateReducer,
-  materialSpecDeleteReducer
-} from "./create/materialSpec/materialSpecReducer";
+// Category
+import categoryReducer from "./category/categoryReducer";
 
 // Order Type
 import {
@@ -115,20 +83,46 @@ import {
   orderTypeCreateReducer
 } from "./create/orderType/orderTypeReducer";
 
+// Print Type
+import {
+  printTypeListReducer,
+  printTypeDetailReducer,
+  defaultPrintTypeReducer,
+  printTypeCreateReducer
+} from "./create/printType/printTypeReducer";
+
+// Excel Export Type
+import {
+  excelExportTypeListReducer,
+  excelExportTypeDetailReducer,
+  defaultExcelExportTypeReducer,
+  excelExportTypeCreateReducer
+} from "./create/excelExportType/excelExportTypeReducer";
+
+// Machine Template
+import machineTemplateReducer from "./machineTemplate/machineTemplateReducer";
+
+// Operator View
+import operatorViewReducer from "./operatorView/operatorViewReducer";
+
 import deviceAccessReducer from "./deviceAccess/deviceAccessReducers";
 import orderReducer, { accountOrdersReducer } from "./oders/orderReducers";
 import orderFormDataReducer from "./oders/orderFormDataReducer";
 import machineTableReducer from "./machineTable/machineTableReducer";
 // import { getMaterialCategoriesReducer } from "./create/Materials/MaterialsCategories/MaterialsCategoriesActions";
 
-// Reports
-import reportReducer from "./reports/reports/reportReducer";
-
 // ✅ Universal Data Cache
 import { dataCacheReducer } from "./cache/dataCacheReducer";
 
 // Chat Agent
 import chatReducer from "./chat/chatSlice";
+
+// WebSocket
+import websocketReducer from "./websocket/websocketSlice";
+
+// Reports Dashboard
+import reportReducer from "./reports/reportReducer";
+import reportGroupReducer from "./reportGroups/reportGroupReducer";
 
 const appReducer = combineReducers({
   // Auth
@@ -150,6 +144,9 @@ const appReducer = combineReducers({
 
   // Admin & Manager
   adminCreate: adminCreateReducer,
+  adminList: adminListReducer,
+  adminUpdate: adminUpdateReducer,
+  adminDelete: adminDeleteReducer,
   managerCreate: managerCreateReducer,
   managerList: managerListReducer,
   managerUpdate: managerUpdateReducer,
@@ -174,58 +171,43 @@ const appReducer = combineReducers({
   operatorUpdate: operatorUpdateReducer,
   operatorDelete: operatorDeleteReducer,
 
-  // Product Categories and Types
-  productCategories: productCategoryReducer,
-  productTypeWithProductsReducer: productTypeWithProductsReducer,
-
-  // Materials
-  materialCategories: materialCategoryReducer,
-  materialCreate: materialCreateReducer,
-  materialList: materialListReducer,
-  materialUpdate: materialUpdateReducer,
-  materialDelete: materialDeleteReducer,
-  // materialCategoriesList: getMaterialCategoriesReducer,
-  
   // Steps
   stepCreate: stepCreateReducer,
   stepList: stepListReducer,
   stepUpdate: stepUpdateReducer,
-  stepDelete: stepDeleteReducer, 
+  stepDelete: stepDeleteReducer,
 
+  // NEW: Option System (unified product/material/printing)
+  optionType: optionTypeReducer,
+  option: optionReducer,
+  optionSpec: optionSpecReducer,
 
-  // product
-  createProduct:createProduct,
-  productList:productListReducer,
-  productUpdate:productUpdateReducer,
-  productDelete:productDeleteReducer,
-
-  // Formula
-  formulaCreate: formulaCreateReducer,
-  formulaList: formulaListReducer,
-  formulaDetail: formulaDetailReducer,
-  formulaUpdate: formulaUpdateReducer,
-  formulaDelete: formulaDeleteReducer,
-  formulaTest: formulaTestReducer,
-
-  // Product Spec
-  productSpecCreate: productSpecCreateReducer,
-  productSpecList: productSpecListReducer,
-  productSpecDetail: productSpecDetailReducer,
-  productSpecUpdate: productSpecUpdateReducer,
-  productSpecDelete: productSpecDeleteReducer,
-
-  // Material Spec
-  materialSpecCreate: materialSpecCreateReducer,
-  materialSpecList: materialSpecListReducer,
-  materialSpecDetail: materialSpecDetailReducer,
-  materialSpecUpdate: materialSpecUpdateReducer,
-  materialSpecDelete: materialSpecDeleteReducer,
+  // Category
+  category: categoryReducer,
 
   // Order Type
   orderTypeList: orderTypeListReducer,
   orderTypeDetail: orderTypeDetailReducer,
   defaultOrderType: defaultOrderTypeReducer,
   orderTypeCreate: orderTypeCreateReducer,
+
+  // Print Type
+  printTypeList: printTypeListReducer,
+  printTypeDetail: printTypeDetailReducer,
+  defaultPrintType: defaultPrintTypeReducer,
+  printTypeCreate: printTypeCreateReducer,
+
+  // Excel Export Type
+  excelExportTypeList: excelExportTypeListReducer,
+  excelExportTypeDetail: excelExportTypeDetailReducer,
+  defaultExcelExportType: defaultExcelExportTypeReducer,
+  excelExportTypeCreate: excelExportTypeCreateReducer,
+
+  // Machine Template
+  machineTemplate: machineTemplateReducer,
+
+  // Operator View
+  operatorView: operatorViewReducer,
 
   //machineTable
   machineTable: machineTableReducer,
@@ -238,11 +220,15 @@ const appReducer = combineReducers({
   //device Access create
   deviceAccess: deviceAccessReducer,
 
-  // Reports
-  reports: reportReducer,
-
   // Chat Agent
   chat: chatReducer,
+
+  // WebSocket
+  websocket: websocketReducer,
+
+  // Reports Dashboard
+  reports: reportReducer,
+  reportGroups: reportGroupReducer,
 
 });
 

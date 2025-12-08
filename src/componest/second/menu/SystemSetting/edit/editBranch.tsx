@@ -1,171 +1,315 @@
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  listBranches,
+  updateBranch,
+  deleteBranch,
+} from "../../../../redux/createBranchAndManager/branchActions";
+import { RootState } from "../../../../redux/rootReducer";
+import "./editStyles.css";
 
-
-
-
-
-const SeeAllBranchAndEdit =()=>{
-    return(
-        <div>heloo</div>
-    )
+interface Branch {
+  _id: string;
+  name: string;
+  code: string;
+  location: string;
+  phone?: string;
+  email?: string;
+  isActive?: boolean;
+  createdAt: string;
 }
 
+const SeeAllBranchAndEdit: React.FC = () => {
+  const dispatch = useDispatch();
 
+  const { branches = [], loading, error } = useSelector(
+    (state: RootState) => state.branchList || {}
+  );
 
-export default SeeAllBranchAndEdit
+  const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
+  const [editForm, setEditForm] = useState({
+    name: "",
+    code: "",
+    location: "",
+    phone: "",
+    email: "",
+    isActive: true,
+  });
+  const [searchTerm, setSearchTerm] = useState("");
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
+  useEffect(() => {
+    dispatch(listBranches() as any);
+  }, [dispatch]);
 
+  const filteredBranches = branches.filter((branch: Branch) =>
+    branch.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    branch.code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    branch.location?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-// import React, { useEffect, useState } from "react";
-// import { useDispatch, useSelector } from "react-redux";
-// import {
-//   listBranches,
-//   updateBranch,
-// } from "../../../../redux/create/branch/branchActions";
-// import { RootState } from "../../../../redux/rootReducer";
+  const openEditor = (branch: Branch) => {
+    setSelectedBranch(branch);
+    setEditForm({
+      name: branch.name || "",
+      code: branch.code || "",
+      location: branch.location || "",
+      phone: branch.phone || "",
+      email: branch.email || "",
+      isActive: branch.isActive !== false,
+    });
+  };
 
-// interface Branch {
-//   _id: string;
-//   name: string;
-//   code: string;
-//   location: string;
-//   createdAt: string;
-// }
+  const handleEditChange = (field: keyof typeof editForm, value: string | boolean) => {
+    setEditForm({ ...editForm, [field]: value });
+  };
 
-// const AllSeeBranchAndEdit: React.FC = () => {
-//   const dispatch = useDispatch();
+  const handleUpdate = async () => {
+    if (!selectedBranch) return;
 
-//   const { branches = [], loading, error } = useSelector(
-//     (state: RootState) => state.branchList || {}
-//   );
-//   const { success: updateSuccess } = useSelector(
-//     (state: RootState) => state.branchUpdate || {}
-//   );
+    if (!editForm.name.trim()) {
+      alert("Branch name is required");
+      return;
+    }
 
-//   const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
-//   const [editForm, setEditForm] = useState({
-//     name: "",
-//     code: "",
-//     location: "",
-//   });
+    try {
+      await dispatch(
+        updateBranch(selectedBranch._id, {
+          name: editForm.name.trim(),
+          location: editForm.location.trim(),
+        }) as any
+      );
+      dispatch(listBranches() as any);
+      setSelectedBranch(null);
+    } catch (err) {
+      console.error("Update failed:", err);
+    }
+  };
 
-//   useEffect(() => {
-//     dispatch(listBranches());
-//   }, [dispatch, updateSuccess]);
+  const handleDelete = async (id: string) => {
+    try {
+      await dispatch(deleteBranch(id) as any);
+      dispatch(listBranches() as any);
+      setDeleteConfirm(null);
+    } catch (err) {
+      console.error("Delete failed:", err);
+    }
+  };
 
-//   const openEditor = (branch: Branch) => {
-//     setSelectedBranch(branch);
-//     setEditForm({
-//       name: branch.name,
-//       code: branch.code,
-//       location: branch.location,
-//     });
-//   };
+  const handleToggleActive = async (branch: Branch) => {
+    try {
+      await dispatch(
+        updateBranch(branch._id, {
+          name: branch.name,
+          location: branch.location,
+        }) as any
+      );
+      dispatch(listBranches() as any);
+    } catch (err) {
+      console.error("Toggle active failed:", err);
+    }
+  };
 
-//   const handleEditChange = (field: keyof typeof editForm, value: string) => {
-//     setEditForm({ ...editForm, [field]: value });
-//   };
+  if (loading) {
+    return <div className="edit-loading">Loading branches...</div>;
+  }
 
-//   const handleUpdate = () => {
-//     if (!selectedBranch) return;
+  if (error) {
+    return <div className="edit-error">Error: {error}</div>;
+  }
 
-//     if (!editForm.name.trim() || !editForm.code.trim() || !editForm.location.trim()) {
-//       alert("❌ All fields are required");
-//       return;
-//     }
+  return (
+    <div className="edit-container">
+      <div className="edit-header">
+        <h2>Branch Management</h2>
+        <p className="edit-subtitle">View, edit, and manage all branches</p>
+      </div>
 
-//     dispatch(
-//       updateBranch(selectedBranch._id, {
-//         name: editForm.name.trim(),
-//         code: editForm.code.trim(),
-//         location: editForm.location.trim(),
-//       })
-//     );
+      {!selectedBranch ? (
+        <>
+          <div className="edit-toolbar">
+            <div className="search-box">
+              <input
+                type="text"
+                placeholder="Search branches..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="search-input"
+              />
+            </div>
+            <div className="toolbar-stats">
+              Total: {filteredBranches.length} branches
+            </div>
+          </div>
 
-//     setSelectedBranch(null);
-//   };
+          <div className="edit-table-wrapper">
+            <table className="edit-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Code</th>
+                  <th>Location</th>
+                  <th>Created</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredBranches.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="no-data">
+                      No branches found
+                    </td>
+                  </tr>
+                ) : (
+                  filteredBranches.map((branch: Branch) => (
+                    <tr key={branch._id}>
+                      <td className="cell-name">{branch.name}</td>
+                      <td className="cell-code">{branch.code}</td>
+                      <td>{branch.location || "-"}</td>
+                      <td className="cell-date">
+                        {new Date(branch.createdAt).toLocaleDateString()}
+                      </td>
+                      <td>
+                        <span
+                          className={`status-badge ${
+                            branch.isActive !== false ? "active" : "inactive"
+                          }`}
+                          onClick={() => handleToggleActive(branch)}
+                        >
+                          {branch.isActive !== false ? "Active" : "Inactive"}
+                        </span>
+                      </td>
+                      <td className="cell-actions">
+                        <button
+                          className="btn-edit"
+                          onClick={() => openEditor(branch)}
+                        >
+                          Edit
+                        </button>
+                        {deleteConfirm === branch._id ? (
+                          <div className="delete-confirm">
+                            <button
+                              className="btn-confirm-delete"
+                              onClick={() => handleDelete(branch._id)}
+                            >
+                              Confirm
+                            </button>
+                            <button
+                              className="btn-cancel-delete"
+                              onClick={() => setDeleteConfirm(null)}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            className="btn-delete"
+                            onClick={() => setDeleteConfirm(branch._id)}
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </>
+      ) : (
+        <div className="edit-form-container">
+          <div className="edit-form-header">
+            <h3>Edit Branch</h3>
+            <button
+              className="btn-close"
+              onClick={() => setSelectedBranch(null)}
+            >
+              X
+            </button>
+          </div>
 
-//   return (
-//     <div className="p-4">
-//       <h2 className="text-xl font-bold mb-4">Branch List</h2>
+          <div className="edit-form">
+            <div className="form-group">
+              <label>Branch Name *</label>
+              <input
+                type="text"
+                value={editForm.name}
+                onChange={(e) => handleEditChange("name", e.target.value)}
+                placeholder="Enter branch name"
+              />
+            </div>
 
-//       {loading && <p>Loading...</p>}
-//       {error && <p className="text-red-600">{error}</p>}
+            <div className="form-group">
+              <label>Branch Code</label>
+              <input
+                type="text"
+                value={editForm.code}
+                onChange={(e) => handleEditChange("code", e.target.value)}
+                placeholder="Enter branch code"
+                disabled
+              />
+              <small className="form-hint">Code cannot be changed</small>
+            </div>
 
-//       {!selectedBranch ? (
-//         <table className="w-full border">
-//           <thead className="bg-gray-100">
-//             <tr>
-//               <th className="border p-2">Name</th>
-//               <th className="border p-2">Code</th>
-//               <th className="border p-2">Location</th>
-//               <th className="border p-2">Created At</th>
-//               <th className="border p-2">Actions</th>
-//             </tr>
-//           </thead>
-//           <tbody>
-//             {branches.map((branch: Branch) => (
-//               <tr key={branch._id}>
-//                 <td className="border p-2">{branch.name}</td>
-//                 <td className="border p-2">{branch.code}</td>
-//                 <td className="border p-2">{branch.location}</td>
-//                 <td className="border p-2">
-//                   {new Date(branch.createdAt).toLocaleString()}
-//                 </td>
-//                 <td className="border p-2">
-//                   <button
-//                     className="bg-blue-500 text-white px-3 py-1 rounded"
-//                     onClick={() => openEditor(branch)}
-//                   >
-//                     Edit
-//                   </button>
-//                 </td>
-//               </tr>
-//             ))}
-//           </tbody>
-//         </table>
-//       ) : (
-//         <div className="bg-white p-4 rounded shadow-md max-w-md">
-//           <h3 className="text-lg font-bold mb-3">Edit Branch</h3>
+            <div className="form-group">
+              <label>Location</label>
+              <input
+                type="text"
+                value={editForm.location}
+                onChange={(e) => handleEditChange("location", e.target.value)}
+                placeholder="Enter location"
+              />
+            </div>
 
-//           <label className="block mb-1">Branch Name</label>
-//           <input
-//             value={editForm.name}
-//             onChange={(e) => handleEditChange("name", e.target.value)}
-//             className="border p-2 w-full mb-3"
-//           />
+            <div className="form-group">
+              <label>Phone</label>
+              <input
+                type="text"
+                value={editForm.phone}
+                onChange={(e) => handleEditChange("phone", e.target.value)}
+                placeholder="Enter phone number"
+              />
+            </div>
 
-//           <label className="block mb-1">Branch Code</label>
-//           <input
-//             value={editForm.code}
-//             onChange={(e) => handleEditChange("code", e.target.value)}
-//             className="border p-2 w-full mb-3"
-//           />
+            <div className="form-group">
+              <label>Email</label>
+              <input
+                type="email"
+                value={editForm.email}
+                onChange={(e) => handleEditChange("email", e.target.value)}
+                placeholder="Enter email"
+              />
+            </div>
 
-//           <label className="block mb-1">Location</label>
-//           <input
-//             value={editForm.location}
-//             onChange={(e) => handleEditChange("location", e.target.value)}
-//             className="border p-2 w-full mb-3"
-//           />
+            <div className="form-group checkbox-group">
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={editForm.isActive}
+                  onChange={(e) => handleEditChange("isActive", e.target.checked)}
+                />
+                <span>Active</span>
+              </label>
+            </div>
 
-//           <div className="flex gap-3 mt-4">
-//             <button
-//               onClick={handleUpdate}
-//               className="bg-green-600 text-white px-4 py-2 rounded"
-//             >
-//               Save
-//             </button>
-//             <button
-//               onClick={() => setSelectedBranch(null)}
-//               className="bg-gray-500 text-white px-4 py-2 rounded"
-//             >
-//               Cancel
-//             </button>
-//           </div>
-//         </div>
-//       )}
-//     </div>
-//   );
-// };
+            <div className="form-actions">
+              <button className="btn-save" onClick={handleUpdate}>
+                Save Changes
+              </button>
+              <button
+                className="btn-cancel"
+                onClick={() => setSelectedBranch(null)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
-// export default AllSeeBranchAndEdit;
+export default SeeAllBranchAndEdit;

@@ -1,443 +1,337 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { BackButton } from "../../../allCompones/BackButton";
 import "./indexAllOders.css";
-import { Download, Printer } from "lucide-react";
+import { Download, Printer, X, ChevronDown } from "lucide-react";
 
 // Import Redux actions
 import { fetchOrders } from "../../../redux/oders/OdersActions";
+import { getOrderFormDataIfNeeded } from "../../../redux/oders/orderFormDataActions";
 import { RootState } from "../../../redux/rootReducer";
 import { AppDispatch } from "../../../../store";
 
-
-
-
-// Define interfaces
-interface MachineType {
-  _id: string;
-  type: string;
-  description?: string;
-  machines?: Machine[];
-  branchId?: {
-    _id: string;
-    name: string;
-  };
-}
-
-interface Machine {
-  _id: string;
-  machineName: string;
-  sizeX: string;
-  sizeY: string;
-  sizeZ: string;
-  machineType: {
-    _id: string;
-    type: string;
-    description?: string;
-  };
-  branchId: {
-    _id: string;
-    name: string;
-  };
-}
-
-interface Order {
-  _id: string;
-  orderId: string;
-  customer?: {
-    _id?: string;
-    companyName?: string;
-    name?: string;
-  };
-  createdAt: string;
-  updatedAt: string;
-  overallStatus: string;
-  priority?: 'low' | 'normal' | 'high' | 'urgent';
-  materialWeight?: number;
-  Width?: number;
-  Height?: number;
-  Thickness?: number;
-  Notes?: string;
-  notes?: Array<{
-    message: string;
-    createdBy: string;
-    createdAt: Date;
-    noteType: 'general' | 'production' | 'quality' | 'delivery' | 'customer';
-  }>;
-  branch?: {
-    _id?: string;
-    name: string;
-    code: string;
-  };
-  material?: {
-    _id?: string;
-    name?: string;
-    type?: string;
-  };
-  steps?: any[];
-  stepsCount?: number;
-  totalMachines?: number;
-  completedSteps?: number;
-  currentStepIndex?: number;
-
-  // For machine assignment (if available)
-  assignedMachine?: string; // Machine ID or name
-  assignedMachineType?: string; // Machine Type ID or name
-  operator?: string;
-  assignedOperator?: string;
-}
-
-// Define order data structure for display
-interface DisplayOrder {
-  orderID: string;
-  date: string;
-  time: string;
-  datetime: Date;
-  companyName: string;
-  operator: string;
-  status: "Complete" | "Pending" | "Cancelled" | "Dispatched" | "In-Progress" | "Approved" | "Wait for Approval" | "Unknown";
-  priority: 'low' | 'normal' | 'high' | 'urgent';
-  machineName: string;
-  machineType: string;
-  machineStatus: "Start" | "Stop" | "Pending" | "Unknown";
-  materialWeight?: number;
-  dimensions?: string;
-  branch?: string;
-  completionProgress?: string;
-  notes?: string;
-  allNotes?: Array<{
-    message: string;
-    createdBy: string;
-    createdAt: Date;
-    noteType: 'general' | 'production' | 'quality' | 'delivery' | 'customer';
-  }>;
+interface OrderFilters {
+  status: string;
+  priority: string;
+  machineTypeIds: string[];
+  machineNames: string[];
+  operatorIds: string[];
+  search: string;
 }
 
 const IndexAllOders = () => {
   const dispatch = useDispatch<AppDispatch>();
-  
-  // ✅ OPTIMIZED: Use cached data from orderFormData
+
+  // Redux state
   const orderFormData = useSelector((state: RootState) => state.orderFormData);
   const machineTypes = orderFormData?.data?.machineTypes || [];
   const machines = orderFormData?.data?.machines || [];
-  const machineTypesLoading = orderFormData?.loading || false;
-  const machinesLoading = orderFormData?.loading || false;
 
-  // Redux selectors for orders (still needed)
   const ordersState = useSelector((state: RootState) => state.orders as any);
-  const { orders = [], loading: ordersLoading } = ordersState || {};
+  const orders = ordersState?.orders || [];
+  const ordersLoading = ordersState?.loading || false;
 
-  // Component state
-  const [searchText, setSearchText] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string[]>([]);
-  const [priorityFilter, setPriorityFilter] = useState<string[]>([]);
-  const [machineTypeFilter, setMachineTypeFilter] = useState<string[]>([]);
-  const [machineNameFilter, setMachineNameFilter] = useState<string[]>([]);
-  const [operatorFilter, setOperatorFilter] = useState<string[]>([]);
+  // Debug logging
+  useEffect(() => {
+    console.log('📊 Orders State:', ordersState);
+    console.log('📊 Orders Array:', orders);
+    console.log('📊 Machine Types:', machineTypes);
+  }, [ordersState, orders, machineTypes]);
+
+  // Local state for filters
+  const [filters, setFilters] = useState<OrderFilters>({
+    status: '',
+    priority: '',
+    machineTypeIds: [],
+    machineNames: [],
+    operatorIds: [],
+    search: ''
+  });
+
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
-  const [sortBy, setSortBy] = useState("date-desc");
-  const [showGlobalAll, setShowGlobalAll] = useState(true);
 
-  // Load orders on component mount (machines/types already cached!)
+  // Dropdown open states
+  const [machineTypeDropdownOpen, setMachineTypeDropdownOpen] = useState(false);
+  const [machineNameDropdownOpen, setMachineNameDropdownOpen] = useState(false);
+  const [operatorDropdownOpen, setOperatorDropdownOpen] = useState(false);
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(20);
+
+  // Status and Priority options
+  const statusOptions = [
+    { value: '', label: 'All Status' },
+    { value: 'Wait for Approval', label: 'Wait for Approval' },
+    { value: 'pending', label: 'Pending' },
+    { value: 'approved', label: 'Approved' },
+    { value: 'in_progress', label: 'In Progress' },
+    { value: 'completed', label: 'Completed' },
+    { value: 'dispatched', label: 'Dispatched' },
+    { value: 'issue', label: 'Issue' },
+    { value: 'cancelled', label: 'Cancelled' },
+  ];
+
+  const priorityOptions = [
+    { value: '', label: 'All Priority' },
+    { value: 'urgent', label: 'Urgent' },
+    { value: 'high', label: 'High' },
+    { value: 'normal', label: 'Normal' },
+    { value: 'low', label: 'Low' },
+  ];
+
+  // Load orders and form data on component mount
   useEffect(() => {
-    // Get accountId from localStorage, Redux state, or your auth provider
-    const accountId = localStorage.getItem('accountId') || '';
-    if (accountId) {
-      dispatch(fetchOrders({ accountId }));
-    }
+    // fetchOrders automatically uses branchId from localStorage for non-admin users
+    dispatch(fetchOrders({}));
+    // Also load machine types and machines
+    dispatch(getOrderFormDataIfNeeded());
   }, [dispatch]);
 
-  // Get unique values from cached data
-  const uniqueMachineTypes = Array.from(new Set((machineTypes as any[]).map((mt: any) => mt.type || '')));
-  const uniqueMachineNames = Array.from(new Set((machines as any[]).map((m: any) => m.machineName || '')));
-  const uniqueOperators = Array.from(new Set((orders as any[]).map((o: any) => o.operator || o.assignedOperator || "Unassigned")));
+  // Get machines for selected machine types (multiple)
+  const machinesForSelectedTypes = useMemo(() => {
+    if (filters.machineTypeIds.length === 0) return machines;
 
-  // Helper function to map order status to display status
-  const mapOrderStatus = (status: string): DisplayOrder['status'] => {
-    const statusLower = status?.toLowerCase() || '';
-    if (statusLower === 'completed') return 'Complete';
-    if (statusLower === 'pending') return 'Pending';
-    if (statusLower === 'cancelled') return 'Cancelled';
-    if (statusLower === 'dispatched') return 'Dispatched';
-    if (statusLower === 'in_progress') return 'In-Progress';
-    if (statusLower === 'approved') return 'Approved';
-    if (statusLower === 'wait for approval') return 'Wait for Approval';
-    return 'Unknown';
+    const filteredMachines: any[] = [];
+    filters.machineTypeIds.forEach(typeId => {
+      const selectedType = machineTypes.find((mt: any) => mt._id === typeId);
+      if (selectedType?.machines) {
+        filteredMachines.push(...selectedType.machines);
+      } else {
+        const typeMachines = machines.filter((m: any) => m.machineType?._id === typeId);
+        filteredMachines.push(...typeMachines);
+      }
+    });
+    return filteredMachines;
+  }, [filters.machineTypeIds, machineTypes, machines]);
+
+  // Get unique operators from orders (based on selected machines)
+  const availableOperators = useMemo(() => {
+    const operatorSet = new Set<string>();
+    const operatorMap = new Map<string, { id: string; name: string }>();
+
+    orders.forEach((order: any) => {
+      // Get operator from order
+      const operatorName = order.operator || order.assignedOperator || order.operatorName;
+      const operatorId = order.operatorId || order.assignedOperatorId || operatorName;
+
+      if (operatorName && !operatorSet.has(operatorName)) {
+        operatorSet.add(operatorName);
+        operatorMap.set(operatorId, { id: operatorId, name: operatorName });
+      }
+
+      // Also check steps for operators
+      order.steps?.forEach((step: any) => {
+        step.machines?.forEach((machine: any) => {
+          const machineOperator = machine.operator || machine.operatorName;
+          const machineOperatorId = machine.operatorId || machineOperator;
+
+          if (machineOperator && !operatorSet.has(machineOperator)) {
+            operatorSet.add(machineOperator);
+            operatorMap.set(machineOperatorId, { id: machineOperatorId, name: machineOperator });
+          }
+        });
+      });
+    });
+
+    return Array.from(operatorMap.values());
+  }, [orders]);
+
+  // Filter orders based on filters
+  const filteredOrders = useMemo(() => {
+    if (!orders || !Array.isArray(orders)) return [];
+
+    return orders.filter((order: any) => {
+      // Status filter
+      if (filters.status && order.overallStatus !== filters.status) return false;
+
+      // Priority filter
+      if (filters.priority && order.priority !== filters.priority) return false;
+
+      // Machine Type filter (multiple)
+      if (filters.machineTypeIds.length > 0) {
+        const orderMachines = order.steps?.flatMap((step: any) => step.machines || []) || [];
+        const hasMachineType = orderMachines.some((m: any) =>
+          filters.machineTypeIds.includes(m.machineType) ||
+          filters.machineTypeIds.some(typeId =>
+            machineTypes.find((mt: any) => mt._id === typeId)?.type === m.machineType
+          )
+        );
+        if (!hasMachineType) return false;
+      }
+
+      // Machine Name filter (multiple)
+      if (filters.machineNames.length > 0) {
+        const orderMachines = order.steps?.flatMap((step: any) => step.machines || []) || [];
+        const hasMachine = orderMachines.some((m: any) =>
+          filters.machineNames.includes(m.machineId) ||
+          filters.machineNames.includes(m.machineName) ||
+          filters.machineNames.includes(m._id)
+        );
+        if (!hasMachine) return false;
+      }
+
+      // Operator filter (multiple)
+      if (filters.operatorIds.length > 0) {
+        const orderOperator = order.operator || order.assignedOperator || order.operatorName || order.operatorId;
+        const stepOperators = order.steps?.flatMap((step: any) =>
+          step.machines?.map((m: any) => m.operator || m.operatorName || m.operatorId) || []
+        ) || [];
+
+        const allOperators = [orderOperator, ...stepOperators].filter(Boolean);
+        const hasOperator = allOperators.some(op => filters.operatorIds.includes(op));
+        if (!hasOperator) return false;
+      }
+
+      // Date range filter
+      if (fromDate) {
+        const orderDate = new Date(order.createdAt).toISOString().split('T')[0];
+        if (orderDate < fromDate) return false;
+      }
+      if (toDate) {
+        const orderDate = new Date(order.createdAt).toISOString().split('T')[0];
+        if (orderDate > toDate) return false;
+      }
+
+      // Search filter
+      if (filters.search) {
+        const searchLower = filters.search.toLowerCase();
+        const matchesOrderNumber = order.orderNumber?.toLowerCase().includes(searchLower) ||
+          order.orderId?.toLowerCase().includes(searchLower);
+        const matchesCompany = order.customer?.companyName?.toLowerCase().includes(searchLower) ||
+          order.customerId?.companyName?.toLowerCase().includes(searchLower);
+        const matchesId = order._id?.toLowerCase().includes(searchLower);
+        if (!matchesOrderNumber && !matchesCompany && !matchesId) return false;
+      }
+
+      return true;
+    });
+  }, [orders, filters, machineTypes, fromDate, toDate]);
+
+  // Paginated orders
+  const paginatedOrders = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredOrders.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredOrders, currentPage, itemsPerPage]);
+
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+
+  // Handle multi-select toggle for Machine Type
+  const toggleMachineType = (typeId: string) => {
+    setFilters(prev => {
+      const newTypes = prev.machineTypeIds.includes(typeId)
+        ? prev.machineTypeIds.filter(id => id !== typeId)
+        : [...prev.machineTypeIds, typeId];
+      return { ...prev, machineTypeIds: newTypes, machineNames: [] }; // Reset machine names when type changes
+    });
+    setCurrentPage(1);
   };
 
-  // Helper function to determine machine status based on order progress
-  const getMachineStatus = (order: Order): DisplayOrder['machineStatus'] => {
-    if (!order.stepsCount || order.stepsCount === 0) return 'Unknown';
-    
-    const progress = (order.completedSteps || 0) / order.stepsCount;
-    
-    if (progress === 1) return 'Stop'; // Completed
-    if (progress > 0) return 'Start'; // In progress
-    return 'Pending'; // Not started
+  // Handle multi-select toggle for Machine Name
+  const toggleMachineName = (machineId: string) => {
+    setFilters(prev => {
+      const newMachines = prev.machineNames.includes(machineId)
+        ? prev.machineNames.filter(id => id !== machineId)
+        : [...prev.machineNames, machineId];
+      return { ...prev, machineNames: newMachines };
+    });
+    setCurrentPage(1);
   };
 
-  // Helper function to find assigned machine info
-  const getAssignedMachineInfo = (order: Order) => {
-    // Try to find machine assignment from order data
-    // This depends on how machine assignment is stored in your orders
-    
-    // Option 1: If machine ID is stored in order
-    if (order.assignedMachine) {
-      const machine = machines.find((m: Machine) => 
-        m._id === order.assignedMachine || m.machineName === order.assignedMachine
-      );
-      if (machine) {
-        return {
-          machineName: machine.machineName,
-          machineType: machine.machineType.type
-        };
-      }
-    }
+  // Handle multi-select toggle for Operator
+  const toggleOperator = (operatorId: string) => {
+    setFilters(prev => {
+      const newOperators = prev.operatorIds.includes(operatorId)
+        ? prev.operatorIds.filter(id => id !== operatorId)
+        : [...prev.operatorIds, operatorId];
+      return { ...prev, operatorIds: newOperators };
+    });
+    setCurrentPage(1);
+  };
 
-    // Option 2: If machine type is stored in order
-    if (order.assignedMachineType) {
-      const machineType = machineTypes.find((mt: MachineType) => 
-        mt._id === order.assignedMachineType || mt.type === order.assignedMachineType
-      );
-      if (machineType) {
-        // Get first available machine of this type
-        const machine = machines.find((m: Machine) => m.machineType._id === machineType._id);
-        return {
-          machineName: machine?.machineName || 'Unassigned',
-          machineType: machineType.type
-        };
-      }
-    }
+  // Handle single select filter change
+  const handleFilterChange = (field: 'status' | 'priority', value: string) => {
+    setFilters(prev => ({ ...prev, [field]: value }));
+    setCurrentPage(1);
+  };
 
-    // Option 3: Assign based on material type or other criteria
-    // This is a fallback - you might want to implement specific logic here
-    if (order.material?.type) {
-      // Simple mapping example - customize based on your business logic
-      const suggestedMachineType = machineTypes.find((mt: MachineType) => 
-        mt.type.toLowerCase().includes(order.material?.type?.toLowerCase() || '')
-      );
-      
-      if (suggestedMachineType) {
-        const machine = machines.find((m: Machine) => m.machineType._id === suggestedMachineType._id);
-        return {
-          machineName: machine?.machineName || 'Auto-assigned',
-          machineType: suggestedMachineType.type
-        };
-      }
-    }
+  // Reset filters
+  const handleResetFilters = () => {
+    setFilters({
+      status: '',
+      priority: '',
+      machineTypeIds: [],
+      machineNames: [],
+      operatorIds: [],
+      search: ''
+    });
+    setFromDate('');
+    setToDate('');
+    setCurrentPage(1);
+  };
 
-    // Default fallback
-    return {
-      machineName: 'Unassigned',
-      machineType: 'Not specified'
+  // Get status color
+  const getStatusColor = (status: string): string => {
+    const colors: Record<string, string> = {
+      'completed': '#22c55e',
+      'pending': '#eab308',
+      'in_progress': '#3b82f6',
+      'issue': '#ef4444',
+      'cancelled': '#94a3b8',
+      'dispatched': '#10b981',
+      'approved': '#6366f1',
+      'Wait for Approval': '#f97316',
     };
+    return colors[status] || '#94a3b8';
   };
 
-  // Transform orders to display format
-  const transformOrdersToDisplay = (): DisplayOrder[] => {
-    return orders.map((order: Order) => {
-      const machineInfo = getAssignedMachineInfo(order);
-      const createdDate = new Date(order.createdAt);
-
-      return {
-        orderID: order.orderId || order._id,
-        date: createdDate.toLocaleDateString(),
-        time: createdDate.toLocaleTimeString(),
-        datetime: createdDate,
-        companyName: order.customer?.companyName || order.customer?.name || 'Unknown Customer',
-        operator: order.operator || order.assignedOperator || 'Unassigned',
-        status: mapOrderStatus(order.overallStatus),
-        priority: order.priority || 'normal',
-        machineName: machineInfo.machineName,
-        machineType: machineInfo.machineType,
-        machineStatus: getMachineStatus(order),
-        materialWeight: order.materialWeight,
-        dimensions: order.Width && order.Height && order.Thickness
-          ? `${order.Width}×${order.Height}×${order.Thickness}`
-          : undefined,
-        branch: order.branch?.name,
-        completionProgress: order.stepsCount
-          ? `${order.completedSteps || 0}/${order.stepsCount}`
-          : undefined,
-        notes: order.Notes,
-        allNotes: order.notes
-      };
-    });
+  // Get priority color
+  const getPriorityColor = (priority: string): string => {
+    const colors: Record<string, string> = {
+      'urgent': '#ef4444',
+      'high': '#f97316',
+      'normal': '#3b82f6',
+      'low': '#94a3b8',
+    };
+    return colors[priority] || '#94a3b8';
   };
 
-  const displayOrders = transformOrdersToDisplay();
-
-  // Event handlers
-  const handleGlobalAllSelect = () => {
-    setShowGlobalAll(true);
-    setStatusFilter([]);
-    setPriorityFilter([]);
-    setMachineTypeFilter([]);
-    setMachineNameFilter([]);
-    setOperatorFilter([]);
-    setFromDate("");
-    setToDate("");
-    setSearchText("");
-    setSortBy("date-desc");
+  // Get machine names for display
+  const getMachineNames = (order: any): string => {
+    const orderMachines = order.steps?.flatMap((step: any) => step.machines || []) || [];
+    if (orderMachines.length === 0) return '-';
+    return orderMachines.map((m: any) => m.machineName).filter(Boolean).join(', ') || '-';
   };
 
-  const handleStatusFilter = (status: string) => {
-    setStatusFilter(prev => {
-      if (prev.includes(status)) {
-        return prev.filter(s => s !== status);
-      } else {
-        return [...prev, status];
-      }
-    });
-    setShowGlobalAll(true);
-  };
+  // Get operator name for display
+  const getOperatorName = (order: any): string => {
+    const operator = order.operator || order.assignedOperator || order.operatorName;
+    if (operator) return operator;
 
-  const handleMachineTypeFilter = (machineType: string) => {
-    setMachineTypeFilter(prev => {
-      if (prev.includes(machineType)) {
-        return prev.filter(t => t !== machineType);
-      } else {
-        return [...prev, machineType];
-      }
-    });
-    setShowGlobalAll(true);
-  };
+    // Check steps for operator
+    const stepOperators = order.steps?.flatMap((step: any) =>
+      step.machines?.map((m: any) => m.operator || m.operatorName).filter(Boolean) || []
+    ) || [];
 
-  const handleMachineNameFilter = (machineName: string) => {
-    setMachineNameFilter(prev => {
-      if (prev.includes(machineName)) {
-        return prev.filter(m => m !== machineName);
-      } else {
-        return [...prev, machineName];
-      }
-    });
-    setShowGlobalAll(true);
-  };
-
-  const handleOperatorFilter = (operator: string) => {
-    setOperatorFilter(prev => {
-      if (prev.includes(operator)) {
-        return prev.filter(o => o !== operator);
-      } else {
-        return [...prev, operator];
-      }
-    });
-    setShowGlobalAll(true);
-  };
-
-  const handlePriorityFilter = (priority: string) => {
-    setPriorityFilter(prev => {
-      if (prev.includes(priority)) {
-        return prev.filter(p => p !== priority);
-      } else {
-        return [...prev, priority];
-      }
-    });
-    setShowGlobalAll(true);
-  };
-
-  const resetAllFilters = () => {
-    setStatusFilter([]);
-    setPriorityFilter([]);
-    setMachineTypeFilter([]);
-    setMachineNameFilter([]);
-    setOperatorFilter([]);
-    setFromDate("");
-    setToDate("");
-    setSearchText("");
-    setSortBy("date-desc");
-    setShowGlobalAll(true);
-  };
-
-  // Filter orders based on search and all filters
-  const getFilteredOrders = () => {
-    let filtered = displayOrders;
-
-    // Filter by search text
-    if (searchText) {
-      filtered = filtered.filter(order =>
-        order.orderID.toLowerCase().includes(searchText.toLowerCase()) ||
-        order.companyName.toLowerCase().includes(searchText.toLowerCase()) ||
-        order.machineName.toLowerCase().includes(searchText.toLowerCase()) ||
-        order.machineType.toLowerCase().includes(searchText.toLowerCase()) ||
-        order.operator.toLowerCase().includes(searchText.toLowerCase()) ||
-        (order.notes && order.notes.toLowerCase().includes(searchText.toLowerCase()))
-      );
-    }
-
-    // Filter by status (multiple selection)
-    if (statusFilter.length > 0) {
-      filtered = filtered.filter(order => statusFilter.includes(order.status));
-    }
-
-    // Filter by priority (multiple selection)
-    if (priorityFilter.length > 0) {
-      filtered = filtered.filter(order => priorityFilter.includes(order.priority));
-    }
-
-    // Filter by machine type (multiple selection)
-    if (machineTypeFilter.length > 0) {
-      filtered = filtered.filter(order => machineTypeFilter.includes(order.machineType));
-    }
-
-    // Filter by machine name (multiple selection)
-    if (machineNameFilter.length > 0) {
-      filtered = filtered.filter(order => machineNameFilter.includes(order.machineName));
-    }
-
-    // Filter by operator (multiple selection)
-    if (operatorFilter.length > 0) {
-      filtered = filtered.filter(order => operatorFilter.includes(order.operator));
-    }
-
-    // Filter by date range
-    if (fromDate) {
-      filtered = filtered.filter(order => order.date >= fromDate);
-    }
-    if (toDate) {
-      filtered = filtered.filter(order => order.date <= toDate);
-    }
-
-    // Sorting
-    filtered.sort((a, b) => {
-      switch (sortBy) {
-        case "date-desc":
-          return b.datetime.getTime() - a.datetime.getTime();
-        case "date-asc":
-          return a.datetime.getTime() - b.datetime.getTime();
-        case "order-asc":
-          return a.orderID.localeCompare(b.orderID);
-        case "order-desc":
-          return b.orderID.localeCompare(a.orderID);
-        default:
-          return 0;
-      }
-    });
-
-    return filtered;
+    return stepOperators[0] || '-';
   };
 
   // Export to Excel
   const exportToExcel = () => {
-    const data = getFilteredOrders();
+    const data = filteredOrders;
     const csv = [
-      ["Order ID", "Date", "Time", "Company", "Operator", "Machine", "Type", "Status", "Priority", "Machine Status", "Weight", "Dimensions", "Progress", "Notes"],
-      ...data.map((o) => [
-        o.orderID,
-        o.date,
-        o.time,
-        o.companyName,
-        o.operator,
-        o.machineName,
-        o.machineType,
-        o.status,
-        o.priority.toUpperCase(),
-        o.machineStatus,
-        o.materialWeight || "-",
-        o.dimensions || "-",
-        o.completionProgress || "-",
-        o.notes || "-",
+      ["No", "Order ID", "Company", "Status", "Priority", "Machine(s)", "Operator", "Quantity", "Date"],
+      ...data.map((order: any, index: number) => [
+        index + 1,
+        order.orderNumber || order.orderId || order._id?.slice(-8),
+        order.customer?.companyName || order.customerId?.companyName || 'Unknown',
+        order.overallStatus || 'Unknown',
+        order.priority || 'normal',
+        getMachineNames(order),
+        getOperatorName(order),
+        order.totalQuantity || order.quantity || 0,
+        new Date(order.createdAt).toLocaleDateString(),
       ]),
     ]
       .map((row) => row.map((cell) => `"${cell}"`).join(","))
@@ -459,615 +353,411 @@ const IndexAllOders = () => {
     window.print();
   };
 
-  const renderOrderCard = (order: DisplayOrder) => (
-    <div
-      key={order.orderID}
-      className="order-card"
-      style={{
-        border: "1px solid #ddd",
-        borderRadius: "8px",
-        padding: "15px",
-        margin: "10px 0",
-        backgroundColor: "#f9f9f9",
-      }}
-    >
-      <table style={{ width: "100%", fontSize: "14px", borderCollapse: "collapse" }}>
-        <thead>
-          <tr style={{ backgroundColor: "#ecf0f1", textAlign: "left" }}>
-            <th style={{ padding: "8px" }}>Order ID</th>
-            <th style={{ padding: "8px" }}>Date & Time</th>
-            <th style={{ padding: "8px" }}>Operator</th>
-            <th style={{ padding: "8px" }}>Machine</th>
-            <th style={{ padding: "8px" }}>Type</th>
-            <th style={{ padding: "8px" }}>Machine Status</th>
-            <th style={{ padding: "8px" }}>Status</th>
-            <th style={{ padding: "8px" }}>Priority</th>
-            <th style={{ padding: "8px" }}>Weight</th>
-            <th style={{ padding: "8px" }}>Dimensions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr style={{ backgroundColor: "#f9f9f9", borderBottom: "1px solid #ddd" }}>
-            <td style={{ padding: "8px" }}>{order.orderID}</td>
-            <td style={{ padding: "8px" }}>{order.date} {order.time}</td>
-            <td style={{ padding: "8px" }}>{order.operator}</td>
-            <td style={{ padding: "8px" }}>{order.machineName}</td>
-            <td style={{ padding: "8px" }}>{order.machineType}</td>
-            <td style={{ padding: "8px" }}>
-              <span style={{
-                padding: "2px 6px",
-                borderRadius: "3px",
-                fontSize: "12px",
-                color: "white",
-                backgroundColor:
-                  order.machineStatus === "Start" ? "#27ae60" :
-                  order.machineStatus === "Stop" ? "#e74c3c" :
-                  order.machineStatus === "Pending" ? "#f39c12" :
-                  "#95a5a6"
-              }}>
-                {order.machineStatus}
-              </span>
-            </td>
-            <td style={{ padding: "8px" }}>
-              <span style={{
-                padding: "4px 8px",
-                borderRadius: "4px",
-                fontSize: "12px",
-                fontWeight: "bold",
-                color: "white",
-                backgroundColor:
-                  order.status === "Complete" ? "#27ae60" :
-                  order.status === "Pending" ? "#f39c12" :
-                  order.status === "Dispatched" ? "#3498db" :
-                  order.status === "In-Progress" ? "#9b59b6" :
-                  order.status === "Approved" ? "#1abc9c" :
-                  order.status === "Wait for Approval" ? "#ffc107" :
-                  order.status === "Cancelled" ? "#e74c3c" :
-                  "#95a5a6"
-              }}>
-                {order.status}
-              </span>
-            </td>
-            <td style={{ padding: "8px" }}>
-              <span style={{
-                padding: "4px 8px",
-                borderRadius: "4px",
-                fontSize: "12px",
-                fontWeight: "bold",
-                color: "white",
-                backgroundColor:
-                  order.priority === "urgent" ? "#dc3545" :
-                  order.priority === "high" ? "#fd7e14" :
-                  order.priority === "normal" ? "#ffc107" :
-                  order.priority === "low" ? "#28a745" :
-                  "#6c757d"
-              }}>
-                {order.priority === "urgent" ? "🔴 " : order.priority === "high" ? "🟠 " : order.priority === "normal" ? "🟡 " : "🟢 "}
-                {order.priority.toUpperCase()}
-              </span>
-            </td>
-            <td style={{ padding: "8px" }}>{order.materialWeight || "-"}</td>
-            <td style={{ padding: "8px" }}>{order.dimensions || "-"}</td>
-          </tr>
-        </tbody>
-      </table>
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.multi-select-dropdown')) {
+        setMachineTypeDropdownOpen(false);
+        setMachineNameDropdownOpen(false);
+        setOperatorDropdownOpen(false);
+      }
+    };
 
-      {/* Optional fields below the table */}
-      <div style={{ marginTop: "10px" }}>
-        {order.branch && (
-          <div>
-            <strong>Branch:</strong> {order.branch}
-          </div>
-        )}
-        {order.completionProgress && (
-          <div>
-            <strong>Progress:</strong> {order.completionProgress}
-          </div>
-        )}
-        {order.notes && (
-          <div style={{ marginTop: "5px" }}>
-            <strong>Notes:</strong>{" "}
-            <span style={{ fontSize: "12px", color: "#666" }}>{order.notes}</span>
-          </div>
-        )}
-      </div>
-    </div>
-  );
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
-  const isLoading = machineTypesLoading || machinesLoading || ordersLoading;
-  const filteredOrders = getFilteredOrders();
+  // Get selected labels for display
+  const getSelectedMachineTypesLabel = () => {
+    if (filters.machineTypeIds.length === 0) return 'All Machine Types';
+    if (filters.machineTypeIds.length === 1) {
+      const type = machineTypes.find((mt: any) => mt._id === filters.machineTypeIds[0]);
+      return type?.type || '1 selected';
+    }
+    return `${filters.machineTypeIds.length} selected`;
+  };
+
+  const getSelectedMachineNamesLabel = () => {
+    if (filters.machineNames.length === 0) return 'All Machines';
+    if (filters.machineNames.length === 1) {
+      const machine = machinesForSelectedTypes.find((m: any) => m._id === filters.machineNames[0] || m.machineName === filters.machineNames[0]);
+      return machine?.machineName || '1 selected';
+    }
+    return `${filters.machineNames.length} selected`;
+  };
+
+  const getSelectedOperatorsLabel = () => {
+    if (filters.operatorIds.length === 0) return 'All Operators';
+    if (filters.operatorIds.length === 1) {
+      const operator = availableOperators.find(op => op.id === filters.operatorIds[0]);
+      return operator?.name || '1 selected';
+    }
+    return `${filters.operatorIds.length} selected`;
+  };
 
   return (
-    <div className="container">
-      <div className="item">
-        <BackButton />
-        {/* Export/Print Buttons */}
-        <div style={{ 
-          display: "flex", 
-          justifyContent: "flex-end", 
-          gap: "10px",
-          marginTop: "10px"
-        }}>
-          <button
-            onClick={exportToExcel}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "5px",
-              padding: "8px 15px",
-              backgroundColor: "#27ae60",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-              fontSize: "13px",
-              fontWeight: "500"
-            }}
-            title="Download as CSV"
-          >
-            <Download size={16} /> Excel
+    <div className="all-orders-page">
+      {/* Header */}
+      <div className="all-orders-header">
+        <div className="all-orders-header__left">
+          <BackButton />
+          <h1 className="all-orders-title">All Orders</h1>
+        </div>
+        <div className="all-orders-header__actions">
+          <button className="action-btn action-btn--export" onClick={exportToExcel}>
+            <Download size={16} /> Export
           </button>
-          <button
-            onClick={handlePrint}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "5px",
-              padding: "8px 15px",
-              backgroundColor: "#3498db",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-              fontSize: "13px",
-              fontWeight: "500"
-            }}
-            title="Print orders"
-          >
+          <button className="action-btn action-btn--print" onClick={handlePrint}>
             <Printer size={16} /> Print
           </button>
         </div>
       </div>
-      
-      <div className="item">
-        <div className="sidebarGroup">
-          <h3 onClick={handleGlobalAllSelect} style={{ cursor: "pointer" }}>Show All Orders</h3>
-        </div>
-        
-        {/* Status Filter Buttons */}
-        <div className="sidebarGroup">
-          <h3>Filter by Status <span style={{fontSize: "12px", color: "#666"}}>({statusFilter.length} selected)</span></h3>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "5px", marginTop: "10px" }}>
-            {["Complete", "Pending", "Cancelled", "Dispatched", "In-Progress", "Approved", "Wait for Approval"].map((status) => (
-              <button
-                key={status}
-                onClick={() => handleStatusFilter(status)}
-                style={{
-                  padding: "5px 10px",
-                  border: "1px solid #ddd",
-                  borderRadius: "4px",
-                  backgroundColor: statusFilter.includes(status) ? "#007bff" : "white",
-                  color: statusFilter.includes(status) ? "white" : "black",
-                  cursor: "pointer",
-                  fontSize: "12px",
-                  fontWeight: statusFilter.includes(status) ? "bold" : "normal"
-                }}
-              >
-                {statusFilter.includes(status) ? "✓ " : ""}{status}
-              </button>
-            ))}
-            <button
-              onClick={() => setStatusFilter([])}
-              style={{
-                padding: "5px 10px",
-                border: "1px solid #ddd",
-                borderRadius: "4px",
-                backgroundColor: statusFilter.length === 0 ? "#007bff" : "white",
-                color: statusFilter.length === 0 ? "white" : "black",
-                cursor: "pointer",
-                fontSize: "12px"
-              }}
+
+      {/* Filters */}
+      <div className="all-orders-filters">
+        <div className="filter-row">
+          <div className="filter-group">
+            <label>Search</label>
+            <input
+              type="text"
+              placeholder="Order ID, Company..."
+              value={filters.search}
+              onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+              className="filter-input"
+            />
+          </div>
+
+          <div className="filter-group">
+            <label>Status</label>
+            <select
+              value={filters.status}
+              onChange={(e) => handleFilterChange('status', e.target.value)}
+              className="filter-select"
             >
-              Clear Status
-            </button>
+              {statusOptions.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
           </div>
-        </div>
 
-        {/* Priority Filter Buttons */}
-        <div className="sidebarGroup">
-          <h3>Filter by Priority <span style={{fontSize: "12px", color: "#666"}}>({priorityFilter.length} selected)</span></h3>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "5px", marginTop: "10px" }}>
-            {[
-              { value: "urgent", label: "🔴 Urgent", color: "#dc3545" },
-              { value: "high", label: "🟠 High", color: "#fd7e14" },
-              { value: "normal", label: "🟡 Normal", color: "#ffc107" },
-              { value: "low", label: "🟢 Low", color: "#28a745" }
-            ].map(({ value, label, color }) => (
-              <button
-                key={value}
-                onClick={() => handlePriorityFilter(value)}
-                style={{
-                  padding: "5px 10px",
-                  border: "1px solid #ddd",
-                  borderRadius: "4px",
-                  backgroundColor: priorityFilter.includes(value) ? color : "white",
-                  color: priorityFilter.includes(value) ? "white" : "black",
-                  cursor: "pointer",
-                  fontSize: "12px",
-                  fontWeight: priorityFilter.includes(value) ? "bold" : "normal"
-                }}
-              >
-                {priorityFilter.includes(value) ? "✓ " : ""}{label}
-              </button>
-            ))}
-            <button
-              onClick={() => setPriorityFilter([])}
-              style={{
-                padding: "5px 10px",
-                border: "1px solid #ddd",
-                borderRadius: "4px",
-                backgroundColor: priorityFilter.length === 0 ? "#6c757d" : "white",
-                color: priorityFilter.length === 0 ? "white" : "black",
-                cursor: "pointer",
-                fontSize: "12px"
-              }}
+          <div className="filter-group">
+            <label>Priority</label>
+            <select
+              value={filters.priority}
+              onChange={(e) => handleFilterChange('priority', e.target.value)}
+              className="filter-select"
             >
-              Clear Priority
-            </button>
+              {priorityOptions.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
           </div>
-        </div>
 
-        {/* Machine Type Filter */}
-        <div className="sidebarGroup">
-          <h3>Filter by Machine Type <span style={{fontSize: "12px", color: "#666"}}>({machineTypeFilter.length} selected)</span></h3>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "5px", marginTop: "10px" }}>
-            {uniqueMachineTypes.map((machineType: string) => (
-              <button
-                key={machineType}
-                onClick={() => handleMachineTypeFilter(machineType)}
-                style={{
-                  padding: "5px 10px",
-                  border: "1px solid #ddd",
-                  borderRadius: "4px",
-                  backgroundColor: machineTypeFilter.includes(machineType) ? "#28a745" : "white",
-                  color: machineTypeFilter.includes(machineType) ? "white" : "black",
-                  cursor: "pointer",
-                  fontSize: "12px",
-                  fontWeight: machineTypeFilter.includes(machineType) ? "bold" : "normal"
-                }}
-              >
-                {machineTypeFilter.includes(machineType) ? "✓ " : ""}{machineType}
-              </button>
-            ))}
-            <button
-              onClick={() => setMachineTypeFilter([])}
-              style={{
-                padding: "5px 10px",
-                border: "1px solid #ddd",
-                borderRadius: "4px",
-                backgroundColor: machineTypeFilter.length === 0 ? "#28a745" : "white",
-                color: machineTypeFilter.length === 0 ? "white" : "black",
-                cursor: "pointer",
-                fontSize: "12px"
-              }}
-            >
-              Clear Types
-            </button>
-          </div>
-        </div>
-
-        {/* Machine Name Filter */}
-        <div className="sidebarGroup">
-          <h3>Filter by Machine Name <span style={{fontSize: "12px", color: "#666"}}>({machineNameFilter.length} selected)</span></h3>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "5px", marginTop: "10px" }}>
-            {uniqueMachineNames.map((machineName: string) => (
-              <button
-                key={machineName}
-                onClick={() => handleMachineNameFilter(machineName)}
-                style={{
-                  padding: "5px 10px",
-                  border: "1px solid #ddd",
-                  borderRadius: "4px",
-                  backgroundColor: machineNameFilter.includes(machineName) ? "#dc3545" : "white",
-                  color: machineNameFilter.includes(machineName) ? "white" : "black",
-                  cursor: "pointer",
-                  fontSize: "12px",
-                  fontWeight: machineNameFilter.includes(machineName) ? "bold" : "normal"
-                }}
-              >
-                {machineNameFilter.includes(machineName) ? "✓ " : ""}{machineName}
-              </button>
-            ))}
-            <button
-              onClick={() => setMachineNameFilter([])}
-              style={{
-                padding: "5px 10px",
-                border: "1px solid #ddd",
-                borderRadius: "4px",
-                backgroundColor: machineNameFilter.length === 0 ? "#dc3545" : "white",
-                color: machineNameFilter.length === 0 ? "white" : "black",
-                cursor: "pointer",
-                fontSize: "12px"
-              }}
-            >
-              Clear Machines
-            </button>
-          </div>
-        </div>
-
-        {/* Operator Filter */}
-        <div className="sidebarGroup">
-          <h3>Filter by Operator <span style={{fontSize: "12px", color: "#666"}}>({operatorFilter.length} selected)</span></h3>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "5px", marginTop: "10px" }}>
-            {uniqueOperators.map((operator: string) => (
-              <button
-                key={operator}
-                onClick={() => handleOperatorFilter(operator)}
-                style={{
-                  padding: "5px 10px",
-                  border: "1px solid #ddd",
-                  borderRadius: "4px",
-                  backgroundColor: operatorFilter.includes(operator) ? "#9b59b6" : "white",
-                  color: operatorFilter.includes(operator) ? "white" : "black",
-                  cursor: "pointer",
-                  fontSize: "12px",
-                  fontWeight: operatorFilter.includes(operator) ? "bold" : "normal"
-                }}
-              >
-                {operatorFilter.includes(operator) ? "✓ " : ""}{operator}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Date Range Filter */}
-        <div className="sidebarGroup">
-          <h3>Filter by Date Range</h3>
-          <div style={{ marginBottom: "10px" }}>
-            <label style={{ fontSize: "12px", color: "#666", display: "block", marginBottom: "5px" }}>From Date:</label>
+          <div className="filter-group">
+            <label>From</label>
             <input
               type="date"
               value={fromDate}
-              onChange={(e) => setFromDate(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "8px",
-                border: "1px solid #ddd",
-                borderRadius: "4px",
-                fontSize: "12px",
-                boxSizing: "border-box"
-              }}
+              onChange={(e) => { setFromDate(e.target.value); setCurrentPage(1); }}
+              className="filter-input"
             />
           </div>
-          <div>
-            <label style={{ fontSize: "12px", color: "#666", display: "block", marginBottom: "5px" }}>To Date:</label>
+
+          <div className="filter-group">
+            <label>To</label>
             <input
               type="date"
               value={toDate}
-              onChange={(e) => setToDate(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "8px",
-                border: "1px solid #ddd",
-                borderRadius: "4px",
-                fontSize: "12px",
-                boxSizing: "border-box"
-              }}
+              onChange={(e) => { setToDate(e.target.value); setCurrentPage(1); }}
+              className="filter-input"
             />
           </div>
         </div>
 
-        {/* Sort By */}
-        <div className="sidebarGroup">
-          <h3>Sort By</h3>
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "8px",
-              border: "1px solid #ddd",
-              borderRadius: "4px",
-              fontSize: "12px",
-              boxSizing: "border-box"
-            }}
-          >
-            <option value="date-desc">Latest First</option>
-            <option value="date-asc">Oldest First</option>
-            <option value="order-asc">Order ID (A-Z)</option>
-            <option value="order-desc">Order ID (Z-A)</option>
-          </select>
-        </div>
-
-        {/* Reset All Filters Button */}
-        <div className="sidebarGroup">
-          <button
-            onClick={resetAllFilters}
-            style={{
-              padding: "8px 15px",
-              border: "2px solid #6c757d",
-              borderRadius: "6px",
-              backgroundColor: "#6c757d",
-              color: "white",
-              cursor: "pointer",
-              fontSize: "14px",
-              fontWeight: "bold",
-              width: "100%"
-            }}
-          >
-            🔄 Reset All Filters
-          </button>
-        </div>
-
-        {/* Loading and Data Summary */}
-        <div className="sidebarGroup" style={{ fontSize: "12px", color: "#666" }}>
-          <div>📊 Data Summary:</div>
-          <div>• Machine Types: {machineTypes.length}</div>
-          <div>• Machines: {machines.length}</div>
-          <div>• Orders: {orders.length}</div>
-          <div>• Filtered: {filteredOrders.length}</div>
-          {isLoading && <div style={{ color: "#f39c12", marginTop: "5px" }}>⏳ Loading...</div>}
-        </div>
-      </div>
-
-      <div className="item">
-        <div className="inputBoxAllodersSrearchbox">
-          <input 
-            type="text" 
-            placeholder="Search orders, company, machine name, machine type, operator, or notes..." 
-            className="input"
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-          />
-        </div>
-        
-        {/* Active Filters Display */}
-        {(statusFilter.length > 0 || priorityFilter.length > 0 || machineTypeFilter.length > 0 || machineNameFilter.length > 0 || operatorFilter.length > 0 || fromDate || toDate || searchText) && (
-          <div style={{
-            backgroundColor: "#f8f9fa",
-            padding: "10px",
-            borderRadius: "6px",
-            margin: "10px 0",
-            border: "1px solid #dee2e6"
-          }}>
-            <strong>Active Filters:</strong>
-            <div style={{ marginTop: "5px", display: "flex", flexWrap: "wrap", gap: "5px" }}>
-              {statusFilter.length > 0 && (
-                <span style={{
-                  backgroundColor: "#007bff",
-                  color: "white",
-                  padding: "2px 6px",
-                  borderRadius: "3px",
-                  fontSize: "12px"
-                }}>
-                  Status: {statusFilter.join(", ")}
-                </span>
-              )}
-              {priorityFilter.length > 0 && (
-                <span style={{
-                  backgroundColor: "#fd7e14",
-                  color: "white",
-                  padding: "2px 6px",
-                  borderRadius: "3px",
-                  fontSize: "12px"
-                }}>
-                  Priority: {priorityFilter.map(p => p.toUpperCase()).join(", ")}
-                </span>
-              )}
-              {machineTypeFilter.length > 0 && (
-                <span style={{
-                  backgroundColor: "#28a745",
-                  color: "white",
-                  padding: "2px 6px",
-                  borderRadius: "3px",
-                  fontSize: "12px"
-                }}>
-                  Types: {machineTypeFilter.join(", ")}
-                </span>
-              )}
-              {machineNameFilter.length > 0 && (
-                <span style={{ 
-                  backgroundColor: "#dc3545", 
-                  color: "white", 
-                  padding: "2px 6px", 
-                  borderRadius: "3px", 
-                  fontSize: "12px" 
-                }}>
-                  Machines: {machineNameFilter.join(", ")}
-                </span>
-              )}
-              {operatorFilter.length > 0 && (
-                <span style={{ 
-                  backgroundColor: "#9b59b6", 
-                  color: "white", 
-                  padding: "2px 6px", 
-                  borderRadius: "3px", 
-                  fontSize: "12px" 
-                }}>
-                  Operators: {operatorFilter.join(", ")}
-                </span>
-              )}
-              {(fromDate || toDate) && (
-                <span style={{ 
-                  backgroundColor: "#16a085", 
-                  color: "white", 
-                  padding: "2px 6px", 
-                  borderRadius: "3px", 
-                  fontSize: "12px" 
-                }}>
-                  {fromDate && toDate ? `Date: ${fromDate} to ${toDate}` : fromDate ? `From: ${fromDate}` : `To: ${toDate}`}
-                </span>
-              )}
-              {searchText && (
-                <span style={{ 
-                  backgroundColor: "#6c757d", 
-                  color: "white", 
-                  padding: "2px 6px", 
-                  borderRadius: "3px", 
-                  fontSize: "12px" 
-                }}>
-                  Search: "{searchText}"
-                </span>
-              )}
-            </div>
-          </div>
-        )}
-        
-        <div className="AllInputOders">
-          {isLoading && (
-            <div style={{ textAlign: "center", padding: "20px" }}>
-              <p>Loading machine types, machines, and orders...</p>
-            </div>
-          )}
-
-          {!isLoading && showGlobalAll && (
-            <div>
-              <h3>
-                {statusFilter.length === 0 && machineTypeFilter.length === 0 && machineNameFilter.length === 0 && operatorFilter.length === 0 && !fromDate && !toDate
-                  ? "All Orders" 
-                  : "Filtered Orders"
-                }
-                <span style={{ fontSize: "14px", marginLeft: "10px", color: "#666" }}>
-                  ({filteredOrders.length} orders)
-                </span>
-              </h3>
-              {filteredOrders.length > 0 ? (
-                filteredOrders.map(renderOrderCard)
-              ) : (
-                <div style={{ textAlign: "center", color: "#666", padding: "20px" }}>
-                  <p>No orders found matching your criteria.</p>
-                  <button
-                    onClick={resetAllFilters}
-                    style={{
-                      padding: "8px 15px",
-                      border: "1px solid #007bff",
-                      borderRadius: "4px",
-                      backgroundColor: "#007bff",
-                      color: "white",
-                      cursor: "pointer",
-                      marginTop: "10px"
-                    }}
-                  >
-                    Clear All Filters
-                  </button>
+        <div className="filter-row">
+          {/* Machine Type Multi-Select */}
+          <div className="filter-group">
+            <label>Machine Type</label>
+            <div className="multi-select-dropdown">
+              <button
+                className="multi-select-trigger"
+                onClick={() => {
+                  setMachineTypeDropdownOpen(!machineTypeDropdownOpen);
+                  setMachineNameDropdownOpen(false);
+                  setOperatorDropdownOpen(false);
+                }}
+              >
+                <span>{getSelectedMachineTypesLabel()}</span>
+                <ChevronDown size={16} />
+              </button>
+              {machineTypeDropdownOpen && (
+                <div className="multi-select-menu">
+                  {machineTypes?.map((mt: any) => (
+                    <label key={mt._id} className="multi-select-option">
+                      <input
+                        type="checkbox"
+                        checked={filters.machineTypeIds.includes(mt._id)}
+                        onChange={() => toggleMachineType(mt._id)}
+                      />
+                      <span>{mt.type}</span>
+                    </label>
+                  ))}
+                  {machineTypes?.length === 0 && (
+                    <div className="multi-select-empty">No machine types available</div>
+                  )}
                 </div>
               )}
             </div>
-          )}
+            {filters.machineTypeIds.length > 0 && (
+              <div className="selected-tags">
+                {filters.machineTypeIds.map(typeId => {
+                  const type = machineTypes.find((mt: any) => mt._id === typeId);
+                  return (
+                    <span key={typeId} className="selected-tag">
+                      {type?.type}
+                      <X size={12} onClick={() => toggleMachineType(typeId)} />
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Machine Name Multi-Select */}
+          <div className="filter-group">
+            <label>Machine Name</label>
+            <div className="multi-select-dropdown">
+              <button
+                className="multi-select-trigger"
+                onClick={() => {
+                  setMachineNameDropdownOpen(!machineNameDropdownOpen);
+                  setMachineTypeDropdownOpen(false);
+                  setOperatorDropdownOpen(false);
+                }}
+              >
+                <span>{getSelectedMachineNamesLabel()}</span>
+                <ChevronDown size={16} />
+              </button>
+              {machineNameDropdownOpen && (
+                <div className="multi-select-menu">
+                  {machinesForSelectedTypes?.map((m: any) => (
+                    <label key={m._id} className="multi-select-option">
+                      <input
+                        type="checkbox"
+                        checked={filters.machineNames.includes(m._id) || filters.machineNames.includes(m.machineName)}
+                        onChange={() => toggleMachineName(m._id)}
+                      />
+                      <span>{m.machineName}</span>
+                    </label>
+                  ))}
+                  {machinesForSelectedTypes?.length === 0 && (
+                    <div className="multi-select-empty">No machines available</div>
+                  )}
+                </div>
+              )}
+            </div>
+            {filters.machineNames.length > 0 && (
+              <div className="selected-tags">
+                {filters.machineNames.map(machineId => {
+                  const machine = machinesForSelectedTypes.find((m: any) => m._id === machineId || m.machineName === machineId);
+                  return (
+                    <span key={machineId} className="selected-tag">
+                      {machine?.machineName || machineId}
+                      <X size={12} onClick={() => toggleMachineName(machineId)} />
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Operator Multi-Select */}
+          <div className="filter-group">
+            <label>Operator</label>
+            <div className="multi-select-dropdown">
+              <button
+                className="multi-select-trigger"
+                onClick={() => {
+                  setOperatorDropdownOpen(!operatorDropdownOpen);
+                  setMachineTypeDropdownOpen(false);
+                  setMachineNameDropdownOpen(false);
+                }}
+              >
+                <span>{getSelectedOperatorsLabel()}</span>
+                <ChevronDown size={16} />
+              </button>
+              {operatorDropdownOpen && (
+                <div className="multi-select-menu">
+                  {availableOperators.map((op) => (
+                    <label key={op.id} className="multi-select-option">
+                      <input
+                        type="checkbox"
+                        checked={filters.operatorIds.includes(op.id)}
+                        onChange={() => toggleOperator(op.id)}
+                      />
+                      <span>{op.name}</span>
+                    </label>
+                  ))}
+                  {availableOperators.length === 0 && (
+                    <div className="multi-select-empty">No operators available</div>
+                  )}
+                </div>
+              )}
+            </div>
+            {filters.operatorIds.length > 0 && (
+              <div className="selected-tags">
+                {filters.operatorIds.map(opId => {
+                  const operator = availableOperators.find(op => op.id === opId);
+                  return (
+                    <span key={opId} className="selected-tag">
+                      {operator?.name || opId}
+                      <X size={12} onClick={() => toggleOperator(opId)} />
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <button className="filter-reset-btn" onClick={handleResetFilters}>
+            Reset Filters
+          </button>
         </div>
       </div>
+
+      {/* Summary Cards */}
+      <div className="summary-cards">
+        <div className="summary-card">
+          <div className="summary-card__value">{filteredOrders.length}</div>
+          <div className="summary-card__label">Total Orders</div>
+        </div>
+        <div className="summary-card summary-card--completed">
+          <div className="summary-card__value">
+            {filteredOrders.filter((o: any) => o.overallStatus === 'completed').length}
+          </div>
+          <div className="summary-card__label">Completed</div>
+        </div>
+        <div className="summary-card summary-card--pending">
+          <div className="summary-card__value">
+            {filteredOrders.filter((o: any) => o.overallStatus === 'pending' || o.overallStatus === 'Wait for Approval').length}
+          </div>
+          <div className="summary-card__label">Pending</div>
+        </div>
+        <div className="summary-card summary-card--progress">
+          <div className="summary-card__value">
+            {filteredOrders.filter((o: any) => o.overallStatus === 'in_progress').length}
+          </div>
+          <div className="summary-card__label">In Progress</div>
+        </div>
+      </div>
+
+      {/* Orders Table */}
+      {ordersLoading ? (
+        <div className="loading-state">Loading orders...</div>
+      ) : filteredOrders.length === 0 ? (
+        <div className="empty-state">
+          <p>No orders found matching the filters</p>
+          <button className="filter-reset-btn" onClick={handleResetFilters}>
+            Clear Filters
+          </button>
+        </div>
+      ) : (
+        <>
+          <div className="orders-table-container">
+            <table className="orders-table">
+              <thead>
+                <tr>
+                  <th>No</th>
+                  <th>Order ID</th>
+                  <th>Company</th>
+                  <th>Status</th>
+                  <th>Priority</th>
+                  <th>Machine(s)</th>
+                  <th>Operator</th>
+                  <th>Quantity</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedOrders.map((order: any, index: number) => (
+                  <tr key={order._id}>
+                    <td>{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                    <td>{order.orderNumber || order.orderId || order._id?.slice(-8)}</td>
+                    <td>{order.customer?.companyName || order.customerId?.companyName || 'Unknown'}</td>
+                    <td>
+                      <span
+                        className="status-badge"
+                        style={{ backgroundColor: getStatusColor(order.overallStatus) }}
+                      >
+                        {order.overallStatus || 'Unknown'}
+                      </span>
+                    </td>
+                    <td>
+                      <span
+                        className="priority-badge"
+                        style={{ backgroundColor: getPriorityColor(order.priority) }}
+                      >
+                        {order.priority || 'normal'}
+                      </span>
+                    </td>
+                    <td className="machine-cell">{getMachineNames(order)}</td>
+                    <td>{getOperatorName(order)}</td>
+                    <td>{order.totalQuantity || order.quantity || 0}</td>
+                    <td>{new Date(order.createdAt).toLocaleDateString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="pagination">
+              <button
+                className="pagination-btn"
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+              >
+                First
+              </button>
+              <button
+                className="pagination-btn"
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+              >
+                Prev
+              </button>
+              <span className="pagination-info">
+                Page {currentPage} of {totalPages} ({filteredOrders.length} orders)
+              </span>
+              <button
+                className="pagination-btn"
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </button>
+              <button
+                className="pagination-btn"
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+              >
+                Last
+              </button>
+            </div>
+          )}
+        </>
+      )}
 
       {/* Print Styles */}
       <style>{`
         @media print {
-          button, input[type="text"], input[type="date"], select { display: none !important; }
-          .sidebarGroup { display: none !important; }
-          .item:first-child { display: none !important; }
-          [style*="display: flex"] { display: none !important; }
-          table { border: 1px solid #000; width: 100%; }
-          th, td { border: 1px solid #000 !important; padding: 8px; }
-          th { background-color: #ecf0f1 !important; }
-          .order-card { page-break-inside: avoid; }
+          .all-orders-header__actions,
+          .all-orders-filters,
+          .pagination { display: none !important; }
+          .orders-table { border: 1px solid #000; }
+          .orders-table th, .orders-table td { border: 1px solid #000 !important; }
         }
       `}</style>
     </div>

@@ -1,0 +1,1858 @@
+.optionsSectionContainer {
+  margin-bottom: 30px;
+  padding: 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.optionsSectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.optionsSectionHeader h3 {
+  margin: 0;
+  color: #333;
+  font-size: 1.3rem;
+}
+
+.addOptionButton {
+  padding: 10px 20px;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.3s;
+}
+
+.addOptionButton:hover {
+  background: #45a049;
+}
+
+/* Selected Options Table */
+.selectedOptionsList {
+  overflow-x: auto;
+}
+
+.selectedOptionsList table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+
+.selectedOptionsList th,
+.selectedOptionsList td {
+  padding: 12px;
+  text-align: left;
+  border: 1px solid #ddd;
+}
+
+.selectedOptionsList th {
+  background: #f5f5f5;
+  font-weight: 600;
+  color: #555;
+}
+
+.selectedOptionsList tr:hover {
+  background: #f9f9f9;
+}
+
+.quantityInput {
+  width: 80px;
+  padding: 6px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  text-align: center;
+}
+
+/* Editable Fields */
+.editableCell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.editableText {
+  flex: 1;
+  padding: 4px 8px;
+  border-radius: 3px;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+
+.editableText:hover {
+  background: #f0f0f0;
+  text-decoration: underline;
+}
+
+.editIconButton {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s;
+  opacity: 0.6;
+}
+
+.editIconButton:hover {
+  background: #f0f0f0;
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.editableInput {
+  width: 100%;
+  padding: 6px 8px;
+  border: 2px solid #4CAF50;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+}
+
+.specificationsList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  max-width: 300px;
+}
+
+.specChip {
+  display: inline-block;
+  padding: 4px 8px;
+  background: #e3f2fd;
+  color: #1976d2;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.specMore {
+  color: #666;
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+.mixingBadge {
+  display: inline-block;
+  padding: 4px 10px;
+  background: #fff3e0;
+  color: #f57c00;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.noMixing {
+  color: #999;
+}
+
+.removeButton {
+  padding: 6px 12px;
+  background: #f44336;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.3s;
+}
+
+.removeButton:hover {
+  background: #da190b;
+}
+
+/* Popup Styles - Same as materialAndProduct.css */
+.popupOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 9999;
+}
+
+.popupContent {
+  background: white;
+  border-radius: 10px;
+  padding: 25px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.popupHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.popupHeader h3 {
+  margin: 0;
+  color: #333;
+  font-size: 1.1rem;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #999;
+  transition: color 0.3s;
+}
+
+.closeButton:hover {
+  color: #333;
+}
+
+.popupBody {
+  padding: 16px 20px;
+}
+
+/* Search Box */
+.searchBox {
+  margin-bottom: 16px;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.95rem;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: #4CAF50;
+}
+
+/* Option Selection */
+.optionSelection {
+  margin-bottom: 16px;
+}
+
+.optionSelection label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #444;
+}
+
+.optionSelect {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.optionSelect:focus {
+  outline: none;
+  border-color: #4CAF50;
+}
+
+/* Option Preview */
+.optionPreview {
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #f9f9f9;
+  border-radius: 4px;
+  border-left: 4px solid #4CAF50;
+}
+
+.previewCard h4 {
+  margin: 0 0 8px 0;
+  color: #333;
+  font-size: 1rem;
+}
+
+.optionCode {
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 15px;
+}
+
+.previewSection {
+  margin-bottom: 12px;
+}
+
+.previewSection:last-child {
+  margin-bottom: 0;
+}
+
+.previewSection strong {
+  display: block;
+  margin-bottom: 6px;
+  color: #555;
+}
+
+.specGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px;
+}
+
+.specItem {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 8px;
+  background: white;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  font-size: 0.9rem;
+}
+
+.specName {
+  font-weight: 500;
+  color: #555;
+}
+
+.specValue {
+  color: #333;
+}
+
+.calcBadge {
+  margin-left: 5px;
+  font-size: 0.8rem;
+}
+
+.mixComponentsList,
+.filesList,
+.linksList {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.mixComponentsList li,
+.filesList li,
+.linksList li {
+  margin-bottom: 5px;
+  color: #555;
+}
+
+.linksList a {
+  color: #2196F3;
+  text-decoration: none;
+}
+
+.linksList a:hover {
+  text-decoration: underline;
+}
+
+/* Quantity Section */
+.quantitySection {
+  margin-bottom: 16px;
+}
+
+.quantitySection label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: #444;
+}
+
+/* Popup Actions - Same as materialAndProduct.css popupButtons */
+.popupActions {
+  border-top: #333 1px solid;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  padding: 1rem;
+  gap: 10px;
+}
+
+.addButton,
+.cancelButton {
+  padding: 8px 18px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;
+  transition: background 0.3s;
+}
+
+.addButton {
+  background: #4CAF50;
+  color: white;
+}
+
+.addButton:hover {
+  background: #45a049;
+}
+
+.cancelButton {
+  background: #f5f5f5;
+  color: #333;
+}
+
+.cancelButton:hover {
+  background: #e0e0e0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .popupContent {
+    width: 92%;
+    max-width: 500px;
+    max-height: 90vh;
+  }
+
+  .specGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .selectedOptionsList {
+    font-size: 0.9rem;
+  }
+
+  .selectedOptionsList th,
+  .selectedOptionsList td {
+    padding: 8px;
+  }
+}
+
+/* ====================================
+   Standardized Form Patterns
+   Pattern: Based on createOption.css
+   Added for consistency across forms
+   Preserves unique popup and option features above
+   ==================================== */
+
+/* Form Sections - Standardized Pattern */
+.formSection {
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.formSection:last-child {
+  border-bottom: none;
+}
+
+.formSection h3 {
+  margin-bottom: 15px;
+  color: #555;
+  font-size: 1.2rem;
+}
+
+.sectionDescription {
+  margin-bottom: 15px;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+/* Form Groups - Standardized Pattern */
+.formGroup {
+  margin-bottom: 15px;
+}
+
+.formGroup label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+  color: #444;
+}
+
+.formGroup input[type="text"],
+.formGroup input[type="number"],
+.formGroup input[type="email"],
+.formGroup select,
+.formGroup textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.formGroup input:focus,
+.formGroup select:focus,
+.formGroup textarea:focus {
+  outline: none;
+  border-color: #4CAF50;
+}
+
+/* Form Row - Horizontal Layout */
+.formRow {
+  display: flex;
+  gap: 15px;
+  align-items: flex-end;
+}
+
+.formRow .formGroup {
+  flex: 1;
+}
+
+/* Standardized Buttons - Additional Pattern */
+.submitButton,
+.resetButton {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.submitButton {
+  background: #4CAF50;
+  color: white;
+}
+
+.submitButton:hover {
+  background: #45a049;
+  box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
+}
+
+.resetButton {
+  background: #f44336;
+  color: white;
+}
+
+.resetButton:hover {
+  background: #da190b;
+}
+
+/* Form Actions Container */
+.formActions {
+  display: flex;
+  justify-content: flex-start;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 2px solid #eee;
+}
+
+/* Standardized Messages */
+.errorMessage {
+  color: #d32f2f;
+  background-color: #ffebee;
+  padding: 10px;
+  border-radius: 4px;
+  margin-top: 10px;
+  font-size: 14px;
+  border-left: 4px solid #d32f2f;
+}
+
+.successMessage {
+  color: #2e7d32;
+  background-color: #e8f5e9;
+  padding: 10px;
+  border-radius: 4px;
+  margin-top: 10px;
+  font-size: 14px;
+  border-left: 4px solid #2e7d32;
+}
+
+/* ================================================
+   GRID ROW STYLES - Same as materialAndProduct.css
+   ================================================ */
+.optionsHeaderRow {
+  display: grid;
+  grid-template-columns: 132px 116px 160px 49px;
+  gap: 10px;
+  font-weight: bold;
+  border-bottom: 1px solid #333;
+  margin-bottom: 10px;
+}
+
+.optionsItemRow {
+  display: grid;
+  grid-template-columns: 132px 116px 160px 49px 25px;
+  gap: 10px;
+  padding-left: 10px;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.optionsItemRow input {
+  background: none;
+  color: black;
+  border: none;
+}
+
+/* Popup Input Styles - Same as materialAndProduct.css */
+.popupContent input {
+  background: none;
+  border: none;
+  color: black;
+  transition: background-color 0.3s ease;
+}
+
+.popupContent input:hover {
+  background-color: #f0f4f8;
+}
+
+/* ================================================
+   SAVED DISPLAY - Same as materialAndProduct.css
+   ================================================ */
+.savedOptionsDisplay {
+  display: flex;
+  flex-direction: column;
+  height: 100px;
+  overflow-y: auto;
+  font-size: 14px;
+  width: 100%;
+}
+
+.savedOptionsDisplay::-webkit-scrollbar {
+  width: 6px;
+}
+
+.savedOptionsDisplay::-webkit-scrollbar-thumb {
+  background-color: #888;
+  border-radius: 4px;
+}
+
+.savedOptionsDisplay::-webkit-scrollbar-thumb:hover {
+  background-color: #555;
+}
+
+/* ================================================
+   STEP ROW STYLES - Same as materialAndProduct.css
+   ================================================ */
+.optionsStepHeaderRow {
+  display: grid;
+  grid-template-columns: 22px 122px 112px 53px 50px 75px 125px 78px 116px 133px 100px 100px;
+  gap: 10px;
+  padding-left: 10px;
+  font-weight: bold;
+}
+
+.optionsStepRow {
+  display: grid;
+  grid-template-columns: 22px 122px 112px 53px 50px 75px 125px 78px 116px 133px 100px 100px;
+  gap: 10px;
+  padding-left: 10px;
+  align-items: center;
+}
+
+.optionsStepRow:hover {
+  background-color: #e0f2fe;
+}
+
+.optionsStepRow span,
+.optionsStepHeaderRow strong {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ================================================
+   MIXING DISPLAY - Same as materialAndProduct.css
+   ================================================ */
+.optionsMixingDisplay {
+  display: flex;
+  flex-direction: column;
+  height: 100px;
+  overflow-y: auto;
+  font-size: 14px;
+  width: 100%;
+}
+
+.optionsMixingHeaderRow {
+  gap: 10px;
+  font-weight: bold;
+  padding-left: 10px;
+  border: 1px solid #000;
+}
+
+.optionsMixingHeaderRow strong {
+  display: inline-block;
+}
+
+.optionsMixingHeaderRow strong:nth-child(1) { width: 40px; }
+.optionsMixingHeaderRow strong:nth-child(2) { width: 150px; }
+.optionsMixingHeaderRow strong:nth-child(3) { width: 150px; }
+.optionsMixingHeaderRow strong:nth-child(4) { width: 150px; }
+
+.optionsMixingRow {
+  display: flex;
+}
+
+.optionsMixingRow span {
+  padding-left: 10px;
+}
+
+.optionsMixingRow span:nth-child(1) { width: 40px; }
+.optionsMixingRow span:nth-child(2) { width: 150px; }
+.optionsMixingRow span:nth-child(3) { width: 150px; }
+.optionsMixingRow span:nth-child(4) { width: 150px; }
+
+/* ================================================
+   SECTION DIVIDERS - Same as materialAndProduct.css
+   ================================================ */
+.optionsSection-divider {
+  border-top: 1px solid #333;
+  padding-top: 3px;
+}
+
+.optionsSection-border {
+  border-bottom: 1px solid #333;
+  border-top: 1px solid #333;
+}
+
+/* ================================================
+   BUTTON STYLES - Same as materialAndProduct.css
+   ================================================ */
+.optionsBtn-remove {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #ff4444;
+  padding: 5px;
+}
+
+.optionsBtn-remove:hover {
+  color: #cc0000;
+}
+
+.optionsBtn-note {
+  border: none;
+  color: #000;
+  background: none !important;
+}
+
+/* ================================================
+   POPUP STYLES - Same as materialAndProduct.css
+   ================================================ */
+.options-popup-item {
+  display: flex;
+  flex-direction: row;
+  color: #0c214e;
+}
+
+.options-popup {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.options-popup-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Machine Table Popup - Same as materialAndProduct.css */
+.popupOverlay.Machine-Table {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 9999;
+}
+
+.popupContent.Machine-Table {
+  border-radius: 10px;
+  padding: 25px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Popup Item All - Grid Layout */
+.options-popupitemall {
+  display: grid;
+  grid-template-columns: 132px 116px 160px 49px 25px;
+  gap: 10px;
+  padding-left: 10px;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.options-popupitemall input {
+  background: none;
+  color: black;
+  border: none;
+}
+
+/* Popup Item Step - 12 Column Grid */
+.options-popupitemallStep {
+  display: grid;
+  background: none !important;
+  grid-template-columns: 111px 119px 51px 49px 50px 119px 85px 86px 166px 77px 100px 100px;
+  gap: 10px;
+  padding-left: 10px;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+/* Header Row - Material Mix Popup */
+.options-headerRowmaterialMixpop {
+  display: grid;
+  grid-template-columns: 132px 116px 160px 49px;
+  gap: 10px;
+  font-weight: bold;
+  border-bottom: 1px solid #333;
+  margin-bottom: 10px;
+}
+
+/* Select Dropdown Styling */
+.options-select {
+  -webkit-appearance: none;
+  appearance: none;
+  background: none;
+  background-image: url("data:image/svg+xml;utf8,<svg fill='%23334155' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px 16px;
+  padding-right: 40px;
+  border-radius: 8px;
+  font-size: small;
+  color: #334155;
+  border: none;
+  transition: all 0.2s ease;
+  padding-left: 12px;
+}
+
+.options-select:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* ================================================
+   FORM STYLES - Same as materialAndProduct.css
+   ================================================ */
+.options-materialForm {
+  display: flex;
+  gap: 20px;
+  max-width: 400px;
+}
+
+.options-materialForm > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.options-materialForm label {
+  margin-bottom: 8px;
+  font-size: small;
+  font-weight: bold;
+  color: #1e293b;
+}
+
+.options-materialForm .inputBox {
+  background: none;
+  color: black;
+  border: none;
+  font-size: 16px;
+  transition: background-color 0.3s ease;
+}
+
+.options-materialForm .inputBox:hover {
+  background-color: #f0f4f8;
+}
+
+/* ================================================
+   PRINT FORM - Same as materialAndProduct.css
+   ================================================ */
+.options-printForm {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  border-top: 1px solid #333;
+  padding: 5px;
+  border-bottom: 1px solid #333;
+}
+
+/* ================================================
+   DIMENSION & GUSSET INPUTS
+   ================================================ */
+.options-dimensionInputs {
+  display: flex;
+  flex-direction: row;
+}
+
+.options-gussetInputs {
+  display: flex;
+  flex-direction: row;
+}
+
+.options-bagWeightInput {
+  display: flex;
+  flex-direction: row;
+}
+
+.options-bagWeightInput .inputBox {
+  background: none;
+  color: black;
+  border: none;
+  font-size: 16px;
+}
+
+.options-bottomGussetSelect {
+  display: flex;
+  align-items: flex-end;
+  padding-left: 10px;
+  gap: 18px;
+  flex-direction: row;
+}
+
+/* ================================================
+   CONFIGURED STEP - Same as materialAndProduct.css
+   ================================================ */
+.options-ConfiguredStep {
+  display: flex;
+  flex-direction: row;
+  border-bottom: 1px solid #333;
+  border-top: 1px solid #333;
+  justify-content: end;
+  gap: 12px;
+}
+
+/* ================================================
+   NOTES TEXTAREA - Same as materialAndProduct.css
+   ================================================ */
+.options-NotesTextarea {
+  width: 59vh !important;
+  background-color: transparent;
+  color: #333;
+  height: 50px !important;
+  padding: 4px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  resize: vertical;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.options-NotesTextarea:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 5px rgba(79, 70, 229, 0.5);
+  background-color: #fff;
+}
+
+/* ================================================
+   MULTI-PRODUCT TABLE - Same as materialAndProduct.css
+   ================================================ */
+.options-multiProductContainer {
+  width: 100%;
+}
+
+.options-multiProductHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+  margin-bottom: 6px;
+}
+
+.options-productCountBadge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #3b82f6;
+  background-color: #dbeafe;
+  padding: 3px 8px;
+  border-radius: 10px;
+}
+
+.options-addProductBtn {
+  background-color: #10b981;
+  color: white;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.options-addProductBtn:hover {
+  background-color: #059669;
+}
+
+/* Product Table Layout */
+.options-productTable {
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.options-productTableHeader {
+  display: grid;
+  grid-template-columns: 30px 1fr 1fr 70px 30px;
+  gap: 8px;
+  padding: 8px 10px;
+  background-color: #f3f4f6;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 11px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.options-productTableRow {
+  display: grid;
+  grid-template-columns: 30px 1fr 1fr 70px 30px;
+  gap: 8px;
+  padding: 6px 10px;
+  align-items: center;
+  border-bottom: 1px solid #f3f4f6;
+  transition: background-color 0.15s ease;
+}
+
+.options-productTableRow:last-child {
+  border-bottom: none;
+}
+
+.options-productTableRow:hover {
+  background-color: #f9fafb;
+}
+
+/* Table Input */
+.options-tableInput {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  font-size: 13px;
+  background-color: white;
+  transition: border-color 0.15s ease;
+}
+
+.options-tableInput:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.options-tableInput:hover {
+  border-color: #d1d5db;
+}
+
+/* Remove Row Button */
+.options-removeRowBtn {
+  background-color: #fee2e2;
+  color: #dc2626;
+  border: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  line-height: 1;
+}
+
+.options-removeRowBtn:hover {
+  background-color: #dc2626;
+  color: white;
+}
+
+/* Dark Mode Support */
+.dark .optionsSectionContainer {
+  background: rgba(17, 24, 39, 0.8);
+  color: #e5e7eb;
+}
+
+.dark .optionsSectionHeader h3 {
+  color: #e5e7eb;
+}
+
+.dark .selectedOptionsList table {
+  background: rgba(17, 24, 39, 0.8);
+}
+
+.dark .selectedOptionsList th {
+  background: rgba(31, 41, 55, 0.8);
+  color: #d1d5db;
+  border-color: rgba(75, 85, 99, 0.5);
+}
+
+.dark .selectedOptionsList td {
+  color: #e5e7eb;
+  border-color: rgba(75, 85, 99, 0.3);
+}
+
+.dark .selectedOptionsList tr:hover {
+  background: rgba(31, 41, 55, 0.5);
+}
+
+.dark .quantityInput {
+  background: rgba(31, 41, 55, 0.5);
+  border-color: rgba(75, 85, 99, 0.5);
+  color: #e5e7eb;
+}
+
+.dark .editableText {
+  color: #e5e7eb;
+}
+
+.dark .editableText:hover {
+  background: rgba(31, 41, 55, 0.5);
+  color: #e5e7eb;
+}
+
+/* ================================================
+   CREATEORDERSTARTSECTIONS- PREFIX STYLES
+   Mirror of materialAndProduct.css styles
+   ================================================ */
+
+/* Popup Overlay & Content */
+.createorderstartsections-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 9999;
+}
+
+.createorderstartsections-popup {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.createorderstartsections-popup-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: white;
+  border-radius: 10px;
+  padding: 25px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.createorderstartsections-popup-item {
+  display: flex;
+  flex-direction: row;
+  color: #0c214e;
+}
+
+/* Header Row Styles */
+.createorderstartsections-headerRow {
+  display: grid;
+  grid-template-columns: 111px 119px 51px 49px 50px 119px 85px 86px 166px 77px 100px 100px;
+  gap: 10px;
+  font-weight: bold;
+  border-bottom: 1px solid #333;
+  margin-bottom: 10px;
+}
+
+.createorderstartsections-headerRowmaterialMixpop {
+  display: grid;
+  grid-template-columns: 132px 116px 160px 49px;
+  gap: 10px;
+  font-weight: bold;
+  border-bottom: 1px solid #333;
+  margin-bottom: 10px;
+}
+
+/* Popup Item Row Styles */
+.createorderstartsections-popupitemall {
+  display: grid;
+  grid-template-columns: 132px 116px 160px 49px 25px;
+  gap: 10px;
+  padding-left: 10px;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.createorderstartsections-popupitemall input {
+  background: none;
+  color: black;
+  border: none;
+}
+
+.createorderstartsections-popupitemallStep {
+  display: grid;
+  background: none !important;
+  grid-template-columns: 111px 119px 51px 49px 50px 119px 85px 86px 166px 77px 100px 100px;
+  gap: 10px;
+  padding-left: 10px;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+/* Saved Display Styles */
+.createorderstartsections-savedStepDisplay {
+  display: flex;
+  flex-direction: column;
+  height: 100px;
+  overflow-y: auto;
+  font-size: 14px;
+  width: 100%;
+}
+
+.createorderstartsections-savedStepDisplay::-webkit-scrollbar {
+  width: 6px;
+  flex-direction: row;
+}
+
+.createorderstartsections-savedStepDisplay::-webkit-scrollbar-thumb {
+  background-color: #888;
+  border-radius: 4px;
+}
+
+.createorderstartsections-savedStepDisplay::-webkit-scrollbar-thumb:hover {
+  background-color: #555;
+}
+
+/* Step Header & Row Styles */
+.createorderstartsections-stepHeaderRow {
+  display: grid;
+  grid-template-columns: 22px 122px 112px 53px 50px 75px 125px 78px 116px 133px 100px 100px;
+  gap: 10px;
+  padding-left: 10px;
+  font-weight: bold;
+}
+
+.createorderstartsections-stepRow {
+  display: grid;
+  grid-template-columns: 22px 122px 112px 53px 50px 75px 125px 78px 116px 133px 100px 100px;
+  gap: 10px;
+  padding-left: 10px;
+  align-items: center;
+}
+
+.createorderstartsections-stepRow:hover {
+  background-color: #e0f2fe;
+}
+
+.createorderstartsections-stepRow span,
+.createorderstartsections-stepHeaderRow strong {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Button Styles */
+.createorderstartsections-popupButtons {
+  border-top: #333 1px solid;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  padding: 1rem;
+  gap: 10px;
+}
+
+.createorderstartsections-buttonStepRowNote {
+  border: none;
+  color: #000;
+  background: none !important;
+}
+
+/* Section Styles */
+.createorderstartsections-section {
+  display: flex;
+  flex-direction: row;
+  margin: 5px;
+}
+
+.createorderstartsections-section .inputBox {
+  background: none;
+  color: black;
+  margin-left: 100px;
+  margin-right: 100px;
+  border: none;
+  font-size: 16px;
+}
+
+.createorderstartsections-section-result {
+  margin-top: 4px;
+}
+
+.createorderstartsections-ConfiguredStep {
+  display: flex;
+  flex-direction: row;
+  border-bottom: 1px solid #333;
+  border-top: 1px solid #333;
+  justify-content: end;
+  gap: 12px;
+}
+
+/* Input Box Styles */
+.createorderstartsections-inputBox {
+  background: none;
+  color: black;
+  border: none;
+  font-size: 16px;
+  transition: background-color 0.3s ease;
+}
+
+.createorderstartsections-inputBox:hover {
+  background-color: #f0f4f8;
+}
+
+/* Form Styles */
+.createorderstartsections-materialForm {
+  display: flex;
+  gap: 20px;
+  max-width: 400px;
+}
+
+.createorderstartsections-materialForm > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.createorderstartsections-materialForm label {
+  margin-bottom: 8px;
+  font-size: small;
+  font-weight: bold;
+  color: #1e293b;
+}
+
+.createorderstartsections-materialForm .inputBox {
+  background: none;
+  color: black;
+  border: none;
+  font-size: 16px;
+  transition: background-color 0.3s ease;
+}
+
+.createorderstartsections-materialForm .inputBox:hover {
+  background-color: #f0f4f8;
+}
+
+/* Print Form */
+.createorderstartsections-printForm {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  border-top: 1px solid #333;
+  padding: 5px;
+  border-bottom: 1px solid #333;
+}
+
+/* Notes Textarea */
+.createorderstartsections-NotesTextarea {
+  width: 59vh !important;
+  background-color: transparent;
+  color: #333;
+  height: 50px !important;
+  padding: 4px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  resize: vertical;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.createorderstartsections-NotesTextarea:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 5px rgba(79, 70, 229, 0.5);
+  background-color: #fff;
+}
+
+/* Dimension & Gusset Inputs */
+.createorderstartsections-dimensionInputs {
+  display: flex;
+  flex-direction: row;
+}
+
+.createorderstartsections-gussetInputs {
+  display: flex;
+  flex-direction: row;
+}
+
+.createorderstartsections-bagWeightInput {
+  display: flex;
+  flex-direction: row;
+}
+
+.createorderstartsections-bagWeightInput .inputBox {
+  background: none;
+  color: black;
+  border: none;
+  font-size: 16px;
+}
+
+.createorderstartsections-bottomGussetSelect {
+  display: flex;
+  align-items: flex-end;
+  padding-left: 10px;
+  gap: 18px;
+  flex-direction: row;
+}
+
+/* Select Dropdown Styling */
+.createorderstartsections-select {
+  -webkit-appearance: none;
+  appearance: none;
+  background: none;
+  background-image: url("data:image/svg+xml;utf8,<svg fill='%23334155' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px 16px;
+  padding-right: 40px;
+  border-radius: 8px;
+  font-size: small;
+  color: #334155;
+  border: none;
+  transition: all 0.2s ease;
+  padding-left: 12px;
+}
+
+.createorderstartsections-select:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Mixing Display Styles */
+.createorderstartsections-SaveMixingDisplay {
+  display: flex;
+  flex-direction: column;
+  height: 100px;
+  overflow-y: auto;
+  font-size: 14px;
+  width: 100%;
+}
+
+.createorderstartsections-SaveMixingDisplay::-webkit-scrollbar {
+  width: 6px;
+  flex-direction: row;
+}
+
+.createorderstartsections-SaveMixingDisplay::-webkit-scrollbar-thumb {
+  background-color: #888;
+  border-radius: 4px;
+}
+
+.createorderstartsections-SaveMixingDisplay::-webkit-scrollbar-thumb:hover {
+  background-color: #555;
+}
+
+.createorderstartsections-SaveMixingHeaderRow {
+  gap: 10px;
+  font-weight: bold;
+  padding-left: 10px;
+  border: 1px solid #000;
+}
+
+.createorderstartsections-SaveMixingHeaderRow strong {
+  display: inline-block;
+}
+
+.createorderstartsections-SaveMixingHeaderRow strong:nth-child(1) { width: 40px; }
+.createorderstartsections-SaveMixingHeaderRow strong:nth-child(2) { width: 150px; }
+.createorderstartsections-SaveMixingHeaderRow strong:nth-child(3) { width: 150px; }
+.createorderstartsections-SaveMixingHeaderRow strong:nth-child(4) { width: 150px; }
+.createorderstartsections-SaveMixingHeaderRow strong:nth-child(6) { width: 150px; }
+.createorderstartsections-SaveMixingstepRow strong:nth-child(7) { width: 150px; }
+
+.createorderstartsections-SaveMixingstepRow {
+  display: flex;
+}
+
+.createorderstartsections-SaveMixingstepRow span {
+  padding-left: 10px;
+}
+
+.createorderstartsections-SaveMixingstepRow span:nth-child(1) { width: 40px; }
+.createorderstartsections-SaveMixingstepRow span:nth-child(2) { width: 150px; }
+.createorderstartsections-SaveMixingstepRow span:nth-child(3) { width: 150px; }
+.createorderstartsections-SaveMixingstepRow span:nth-child(4) { width: 150px; }
+.createorderstartsections-SaveMixingstepRow span:nth-child(5) { width: 150px; }
+.createorderstartsections-SaveMixingstepRow span:nth-child(6) { width: 150px; }
+.createorderstartsections-SaveMixingstepRow span:nth-child(7) { width: 150px; }
+
+.createorderstartsections-SaveMixing {
+  border-top: 1px solid #000;
+  padding-top: 3px;
+}
+
+/* Multi-Product Table Styles */
+.createorderstartsections-multiProductContainer {
+  width: 100%;
+}
+
+.createorderstartsections-multiProductHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+  margin-bottom: 6px;
+}
+
+.createorderstartsections-productCountBadge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #3b82f6;
+  background-color: #dbeafe;
+  padding: 3px 8px;
+  border-radius: 10px;
+}
+
+.createorderstartsections-addProductBtn {
+  background-color: #10b981;
+  color: white;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.createorderstartsections-addProductBtn:hover {
+  background-color: #059669;
+}
+
+.createorderstartsections-productTable {
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.createorderstartsections-productTableHeader {
+  display: grid;
+  grid-template-columns: 30px 1fr 1fr 70px 30px;
+  gap: 8px;
+  padding: 8px 10px;
+  background-color: #f3f4f6;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 11px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.createorderstartsections-productTableRow {
+  display: grid;
+  grid-template-columns: 30px 1fr 1fr 70px 30px;
+  gap: 8px;
+  padding: 6px 10px;
+  align-items: center;
+  border-bottom: 1px solid #f3f4f6;
+  transition: background-color 0.15s ease;
+}
+
+.createorderstartsections-productTableRow:last-child {
+  border-bottom: none;
+}
+
+.createorderstartsections-productTableRow:hover {
+  background-color: #f9fafb;
+}
+
+.createorderstartsections-tableInput {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  font-size: 13px;
+  background-color: white;
+  transition: border-color 0.15s ease;
+}
+
+.createorderstartsections-tableInput:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.createorderstartsections-tableInput:hover {
+  border-color: #d1d5db;
+}
+
+.createorderstartsections-removeRowBtn {
+  background-color: #fee2e2;
+  color: #dc2626;
+  border: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  line-height: 1;
+}
+
+.createorderstartsections-removeRowBtn:hover {
+  background-color: #dc2626;
+  color: white;
+}
+
+/* Machine Table Popup */
+.createorderstartsections-popup-overlay.Machine-Table {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 9999;
+}
+
+.createorderstartsections-popup.Machine-Table {
+  border-radius: 10px;
+  padding: 25px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Section Dividers */
+.createorderstartsections-divider {
+  border-top: 1px solid #333;
+  padding-top: 3px;
+}
+
+.createorderstartsections-border {
+  border-bottom: 1px solid #333;
+  border-top: 1px solid #333;
+}
+
+/* Remove Button */
+.createorderstartsections-btn-remove {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #ff4444;
+  padding: 5px;
+}
+
+.createorderstartsections-btn-remove:hover {
+  color: #cc0000;
+}
+
+/* Suggestion List */
+.createorderstartsections-suggestion-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  max-height: 250px;
+  overflow-y: auto;
+  z-index: 1000;
+  width: 100%;
+  margin-top: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.createorderstartsections-suggestionItem {
+  padding: 10px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 14px;
+  color: #333;
+  transition: background-color 0.15s ease;
+}
+
+.createorderstartsections-suggestionItem:last-child {
+  border-bottom: none;
+}
+
+.createorderstartsections-suggestionItem:hover {
+  background-color: #f5f7fa;
+  color: #FF6B35;
+}
+
+/* Bottom Gusset */
+.createorderstartsections-BottomGusset {
+  display: flex;
+  flex-direction: row;
+  border-bottom: 1px solid #000;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .createorderstartsections-productTableHeader,
+  .createorderstartsections-productTableRow {
+    grid-template-columns: 25px 1fr 1fr 60px 25px;
+    gap: 4px;
+    padding: 6px;
+  }
+
+  .createorderstartsections-tableInput {
+    padding: 4px 6px;
+    font-size: 12px;
+  }
+}
+
+.dark .editIconButton:hover {
+  background: rgba(31, 41, 55, 0.5);
+}
+
+.dark .editableInput {
+  background: rgba(31, 41, 55, 0.5);
+  border-color: #4CAF50;
+  color: #e5e7eb;
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+}
+
+.dark .specChip {
+  background: rgba(30, 64, 175, 0.3);
+  color: #93c5fd;
+}
+
+.dark .mixingBadge {
+  background: rgba(180, 83, 9, 0.3);
+  color: #fdba74;
+}
+
+.dark .popupOverlay {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.dark .popupContent {
+  background: rgba(17, 24, 39, 0.95);
+}
+
+.dark .popupHeader {
+  border-bottom-color: rgba(75, 85, 99, 0.5);
+}
+
+.dark .popupHeader h3 {
+  color: #e5e7eb;
+}
+
+.dark .closeButton {
+  color: #9ca3af;
+}
+
+.dark .closeButton:hover {
+  color: #d1d5db;
+}
+
+.dark .searchInput,
+.dark .optionSelect {
+  background: rgba(31, 41, 55, 0.5);
+  border-color: rgba(75, 85, 99, 0.5);
+  color: #e5e7eb;
+}
+
+.dark .optionPreview {
+  background: rgba(31, 41, 55, 0.5);
+  border-left-color: #4CAF50;
+}
+
+.dark .previewCard h4 {
+  color: #e5e7eb;
+}
+
+.dark .optionCode,
+.dark .specMore {
+  color: #9ca3af;
+}
+
+.dark .previewSection strong {
+  color: #d1d5db;
+}
+
+.dark .specItem {
+  background: rgba(31, 41, 55, 0.5);
+  border-color: rgba(75, 85, 99, 0.5);
+}
+
+.dark .specName {
+  color: #d1d5db;
+}
+
+.dark .specValue {
+  color: #e5e7eb;
+}
+
+.dark .mixComponentsList li,
+.dark .filesList li,
+.dark .linksList li {
+  color: #d1d5db;
+}
+
+.dark .linksList a {
+  color: #60a5fa;
+}
+
+.dark .optionSelection label,
+.dark .quantitySection label {
+  color: #d1d5db;
+}
+
+.dark .popupActions {
+  border-top-color: rgba(75, 85, 99, 0.5);
+}
+
+.dark .cancelButton {
+  background: rgba(31, 41, 55, 0.8);
+  color: #d1d5db;
+}
+
+.dark .cancelButton:hover {
+  background: rgba(31, 41, 55, 1);
+}
+
+.dark .formGroup label {
+  color: #d1d5db;
+}
+
+.dark .formGroup input,
+.dark .formGroup select,
+.dark .formGroup textarea {
+  background: rgba(31, 41, 55, 0.5);
+  border-color: rgba(75, 85, 99, 0.5);
+  color: #e5e7eb;
+}
+
+.dark .formSection {
+  border-bottom-color: rgba(75, 85, 99, 0.3);
+}
+
+.dark .formSection h3 {
+  color: #d1d5db;
+}
+
+.dark .sectionDescription {
+  color: #9ca3af;
+}

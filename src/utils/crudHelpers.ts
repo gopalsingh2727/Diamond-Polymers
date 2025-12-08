@@ -4,6 +4,22 @@ const API_BASE_URL = import.meta.env.VITE_API_27INFINITY_IN || 'http://localhost
 const API_KEY = import.meta.env.VITE_API_KEY || '27infinity.in_5f84c89315f74a2db149c06a93cf4820';
 
 /**
+ * Get selected branch from localStorage (userData.selectedBranch)
+ */
+const getSelectedBranch = (): string | null => {
+  try {
+    const userData = localStorage.getItem('userData');
+    if (userData) {
+      const parsed = JSON.parse(userData);
+      return parsed.selectedBranch || null;
+    }
+  } catch {
+    // Ignore parse errors
+  }
+  return null;
+};
+
+/**
  * Create axios instance with default configuration
  */
 const createAPIClient = (token?: string) => {
@@ -14,6 +30,12 @@ const createAPIClient = (token?: string) => {
 
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  // Add selected branch header for data isolation
+  const selectedBranch = getSelectedBranch();
+  if (selectedBranch) {
+    headers['x-selected-branch'] = selectedBranch;
   }
 
   return axios.create({
@@ -35,7 +57,7 @@ export const crudAPI = {
     data: any,
     config?: AxiosRequestConfig
   ): Promise<T> => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken') || localStorage.getItem('token');
     const client = createAPIClient(token || undefined);
 
     try {
@@ -53,7 +75,7 @@ export const crudAPI = {
     endpoint: string,
     config?: AxiosRequestConfig
   ): Promise<T> => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken') || localStorage.getItem('token');
     const client = createAPIClient(token || undefined);
 
     try {
@@ -72,7 +94,7 @@ export const crudAPI = {
     data: any,
     config?: AxiosRequestConfig
   ): Promise<T> => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken') || localStorage.getItem('token');
     const client = createAPIClient(token || undefined);
 
     try {
@@ -91,7 +113,7 @@ export const crudAPI = {
     data: any,
     config?: AxiosRequestConfig
   ): Promise<T> => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken') || localStorage.getItem('token');
     const client = createAPIClient(token || undefined);
 
     try {
@@ -109,7 +131,7 @@ export const crudAPI = {
     endpoint: string,
     config?: AxiosRequestConfig
   ): Promise<T> => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken') || localStorage.getItem('token');
     const client = createAPIClient(token || undefined);
 
     try {
@@ -197,6 +219,26 @@ export const materialAPI = {
   getById: (id: string) => crudAPI.read(`/material/material/${id}`),
   update: (id: string, data: any) => crudAPI.update(`/material/material/${id}`, data),
   delete: (id: string) => crudAPI.delete(`/material/material/${id}`)
+};
+
+// External API Key CRUD (Master Admin only)
+export const externalAPIKeyAPI = {
+  create: (data: any) => crudAPI.create('/external-api-keys', data),
+  getAll: () => crudAPI.read('/external-api-keys'),
+  getById: (id: string) => crudAPI.read(`/external-api-keys/${id}`),
+  update: (id: string, data: any) => crudAPI.update(`/external-api-keys/${id}`, data),
+  delete: (id: string) => crudAPI.delete(`/external-api-keys/${id}`),
+  regenerateSecret: (id: string) => crudAPI.create(`/external-api-keys/${id}/regenerate-secret`, {}),
+  getUsage: (id: string) => crudAPI.read(`/external-api-keys/${id}/usage`)
+};
+
+// Branch Settings CRUD (Master Admin only)
+export const branchSettingsAPI = {
+  getAll: () => crudAPI.read('/branch-settings'),
+  getByBranch: (branchId: string) => crudAPI.read(`/branch-settings/${branchId}`),
+  update: (branchId: string, data: any) => crudAPI.update(`/branch-settings/${branchId}`, data),
+  testEmail: (branchId: string, email: string) => crudAPI.create(`/branch-settings/${branchId}/test-email`, { email }),
+  testWhatsApp: (branchId: string, phone: string) => crudAPI.create(`/branch-settings/${branchId}/test-whatsapp`, { phone })
 };
 
 /**

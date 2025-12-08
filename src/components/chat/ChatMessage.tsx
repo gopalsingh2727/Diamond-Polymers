@@ -23,10 +23,24 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     minute: '2-digit'
   });
 
+  // Decode only safe display entities (not security-critical ones like < >)
+  const decodeSafeEntities = (text: string) => {
+    return text
+      .replace(/&#x27;/g, "'")      // Apostrophe
+      .replace(/&#x2F;/g, '/')      // Forward slash
+      .replace(/&#x60;/g, '`')      // Backtick
+      .replace(/&#x3D;/g, '=')      // Equals
+      .replace(/&quot;/g, '"')      // Quote (safe in text content)
+      // Keep &lt; and &gt; encoded for security (prevent XSS)
+  };
+
   // Format message content with markdown-like syntax
   const formatContent = (text: string) => {
+    // First decode safe HTML entities (like &#x27; -> ')
+    let formatted = decodeSafeEntities(text);
+
     // Bold: **text**
-    let formatted = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    formatted = formatted.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
     // Inline code: `text`
     formatted = formatted.replace(/`(.+?)`/g, '<code class="bg-gray-100 px-1 rounded text-sm">$1</code>');
     // Line breaks

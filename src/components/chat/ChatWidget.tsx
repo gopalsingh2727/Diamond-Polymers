@@ -10,7 +10,8 @@ import {
   closeChat,
   minimizeChat,
   maximizeChat,
-  setPosition
+  setPosition,
+  setDueReminders
 } from '../../componest/redux/chat/chatSlice';
 import {
   loadChatSettings,
@@ -93,6 +94,14 @@ const ChatWidget: React.FC = () => {
       Notification.requestPermission();
     }
   }, []);
+
+  // Clear notifications when chat is opened
+  useEffect(() => {
+    if (isOpen) {
+      // Clear the notification badge when user opens the chat
+      dispatch(setDueReminders([]));
+    }
+  }, [isOpen, dispatch]);
 
   // Dragging handlers
   const handleMouseDown = useCallback((e: React.MouseEvent) => {

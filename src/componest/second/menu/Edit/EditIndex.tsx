@@ -1,164 +1,202 @@
 import React, { useState, useEffect, useRef } from "react";
-import EditNewAccount from "./EditNewAccount/EditNewAccount";
-import EditMaterials from "./EditMaterials/EditMaterials";
-import EditStep from "./EditCreateStep/EditStep";
-import EditDeviceAccess from "./EditDeviceAccess/EditDeviceAccess";
-import EditAccess from "./EditDeviceAccess/EditDeviceAccessCreate";
-import EditMachine from "./EditMachine/EditMachine";
-import MaterialsCategories from "./EditMaterials/MaterialsCategories";
-import EditMachineOpertor from "./EditMachineOpertor/EditMachineOPertor";
-import EditMachineType from "./EditMachineType/EditMachineyType";
-import UpdataIDAndPassword from "./UpdataIDandPassword/UpdataIDAndPassword";
-import EditFormula from "./EditFormula/EditFormula";
-import EditProductSpec from "./EditProductSpec/EditProductSpec";
-import EditMaterialSpec from "./EditMaterialSpec/EditMaterialSpec";
-import EditOrderType from "./EditOrderType/EditOrderType";
-import EditProducts from "./EditProducts/EditProduct";
-import EditProductCategories from "./EditProducts/EditProductCategoris";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 import ErrorBoundary from "../../../error/error";
 import Headers from "../../header/Headers";
 import "../create/create.css";
 import "../../../main/sidebar/menu.css";
-import { useSelector } from "react-redux";
+
+// ========== LIST ONLY Components (for showing lists) ==========
+import EditNewAccount from "./EditNewAccount/EditNewAccount";
+import EditMachineList from "./EditMachine/EditMachineList";
+import EditMachineTypeList from "./EditMachineType/EditMachineTypeList";
+import EditMachineOperatorList from "./EditMachineOpertor/EditMachineOperatorList";
+import EditStepList from "./EditCreateStep/EditStepList";
+import EditDeviceAccess from "./EditDeviceAccess/EditDeviceAccess";
+import EditAccessListOnly from "./EditDeviceAccess/EditAccessListOnly";
+import EditCategoryListOnly from "./EditCategory/EditCategoryListOnly";
+import EditOptionTypeListOnly from "./EditOptionType/EditOptionTypeListOnly";
+import EditOptionListOnly from "./EditOption/EditOptionListOnly";
+import EditOptionSpecList from "./EditOptionSpec/EditOptionSpecList";
+import EditOrderTypeList from "./EditOrderType/EditOrderTypeList";
+import EditMachineTemplateList from "./EditMachineTemplate/EditMachineTemplateList";
+import EditPrintTypeList from "./EditPrintType/EditPrintTypeList";
+import EditExcelExportTypeList from "./EditExcelExportType/EditExcelExportTypeList";
+import UpdataIDAndPassword from "./UpdataIDandPassword/UpdataIDAndPassword";
+
+// ========== CREATE Components (reused for both Create & Edit) ==========
+import CreateNewAccount from "../create/createNewAccount/createNewAccount";
+import CreateMachine from "../create/machine/CreateMachine";
+import CreateMachineType from "../create/machine/createMachineType";
+import CreateMachineOperator from "../create/CreateMachineOpertor/CreteMachineOpertor";
+import CreateStep from "../create/CreateStep/CreateStep";
+import CreateCategory from "../create/category/CreateCategory";
+import CreateOptionType from "../create/optionType/CreateOptionType";
+import CreateOption from "../create/option/CreateOption";
+import CreateOrderType from "../create/orderType/CreateOrderType";
+import CreatePrintType from "../create/printType/CreatePrintType";
+import CreateExcelExportType from "../create/excelExportType/CreateExcelExportType";
+import CreateMachineTemplate from "../create/machineTemplate/CreateMachineTemplate";
+import DeviceAccessCreate from "../create/deviceAccess/deviceAccessCreate";
+
+interface LocationStateType {
+  editMode?: boolean;
+  editData?: any;
+  editType?: string;
+  activeComponent?: string;
+}
+
+interface EditState {
+  editMode: boolean;
+  editData: any;
+  editType: string;
+}
 
 const EditIndex = () => {
-  const [activeComponent, setActiveComponent] = useState("account");
+  const location = useLocation();
+  const navigate = useNavigate();
+  const locationState = location.state as LocationStateType | null;
 
+  const [activeComponent, setActiveComponent] = useState("account");
+  const [editState, setEditState] = useState<EditState | null>(null);
   const buttonRefs = useRef<(HTMLLIElement | null)[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
-  // const [backHandlerRef, setBackHandlerRef] = useState<(() => void) | null>(null);
- 
   const userRole = useSelector((state: any) => state.auth.userData?.role);
 
-  // Track which sections are expanded
+  useEffect(() => {
+    if (locationState?.editMode && locationState?.editData) {
+      setEditState({
+        editMode: true,
+        editData: locationState.editData,
+        editType: locationState.editType || activeComponent
+      });
+      if (locationState.editType) {
+        setActiveComponent(locationState.editType);
+      }
+      navigate(location.pathname, { replace: true, state: null });
+    } else if (locationState?.activeComponent) {
+      setEditState(null);
+      setActiveComponent(locationState.activeComponent);
+      navigate(location.pathname, { replace: true, state: null });
+    }
+  }, [locationState]);
+
+  const clearEditState = () => {
+    setEditState(null);
+  };
+
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     "Accounting": true,
     "Machine Management": false,
-    "Products & Materials": false,
     "Device Access": false,
-    "Specifications": false,
-    "Formula": false
+    "Options System": false,
+    "Order Management": false
   });
 
   const toggleSection = (sectionTitle: string) => {
     setExpandedSections(prev => {
-      // Close all sections first, then toggle the clicked one (accordion behavior)
       const newState: Record<string, boolean> = {};
-      Object.keys(prev).forEach(key => {
-        newState[key] = false;
-      });
-      // Toggle the clicked section (if it was closed, open it; if open, close it)
+      Object.keys(prev).forEach(key => { newState[key] = false; });
       newState[sectionTitle] = !prev[sectionTitle];
       return newState;
     });
   };
-  
+
   const menuSections = [
-    {
-      title: "Accounting",
-      items: [
-        { key: "account", label: "Account" }
-      ]
-    },
-    {
-      title: "Machine Management",
-      items: [
-        { key: "machineType", label: "Machine Type" },
-        { key: "machine", label: "Machine" },
-        { key: "step", label: "Step" },
-        { key: "machineOperator", label: "Machine Operator" }
-      ]
-    },
-    {
-      title: "Products & Materials",
-      items: [
-        { key: "products", label: "Products" },
-        { key: "productCategories", label: "Product Categories" },
-        { key: "materials", label: "Materials" },
-        { key: "materialsCategories", label: "Materials Categories" }
-      ]
-    },
-    {
-      title: "Device Access",
-      items: [
-        { key: "DeviceAccess", label: "Device Access" },
-        { key: "Access", label: "Access" }
-      ]
-    },
-    {
-      title: "Specifications",
-      items: [
-        { key: "productSpec", label: "Product Spec" },
-        { key: "materialSpec", label: "Material Spec" }
-      ]
-    },
-    {
-      title: "Formula",
-      items: [
-        { key: "formula", label: "Formula" },
-        { key: "orderType", label: "Order Type" }
-      ]
-    }
+    { title: "Accounting", items: [{ key: "account", label: "Account" }] },
+    { title: "Machine Management", items: [
+      { key: "machineType", label: "Machine Type" },
+      { key: "machine", label: "Machine" },
+      { key: "machineTemplate", label: "Machine Template" },
+      { key: "step", label: "Step" },
+      { key: "machineOperator", label: "Machine Operator" }
+    ]},
+    { title: "Device Access", items: [
+      { key: "DeviceAccess", label: "Device Access" },
+      { key: "Access", label: "Access" }
+    ]},
+    { title: "Options System", items: [
+      { key: "category", label: "Category" },
+      { key: "optionType", label: "Option Type" },
+      { key: "option", label: "Option" },
+      { key: "optionSpec", label: "Option Spec" }
+    ]},
+    { title: "Order Management", items: [
+      { key: "orderType", label: "Order Type" },
+      { key: "printType", label: "Print Type" },
+      { key: "excelExportType", label: "Excel Export Type" }
+    ]}
   ];
 
-  // Add manager-only option
   if (userRole === "manager") {
-    menuSections.push({
-      title: "Settings",
-      items: [
-        { key: "updatePassword", label: "Update ID & Password" }
-      ]
-    });
+    menuSections.push({ title: "Settings", items: [{ key: "updatePassword", label: "Update ID & Password" }] });
   }
 
-  const baseComponentsMap: Record<string, JSX.Element> = {
-    account: <ErrorBoundary> <EditNewAccount /> </ErrorBoundary>,
-    machineType: <ErrorBoundary> <EditMachineType  /> </ErrorBoundary>,
-    machine: <ErrorBoundary> <EditMachine /> </ErrorBoundary>,
-    step: <ErrorBoundary> <EditStep /> </ErrorBoundary>,
-    machineOperator: <ErrorBoundary> <EditMachineOpertor /> </ErrorBoundary>,
-    DeviceAccess: <ErrorBoundary> <EditDeviceAccess/></ErrorBoundary>,
-    Access: <ErrorBoundary> <EditAccess /></ErrorBoundary>,
-    products: <ErrorBoundary> <EditProducts /> </ErrorBoundary>,
-    productCategories: <ErrorBoundary> <EditProductCategories /> </ErrorBoundary>,
-    materials: <ErrorBoundary> <EditMaterials  /> </ErrorBoundary>,
-    materialsCategories: <ErrorBoundary> <MaterialsCategories /></ErrorBoundary>,
-    formula: <ErrorBoundary> <EditFormula /> </ErrorBoundary>,
-    productSpec: <ErrorBoundary> <EditProductSpec /> </ErrorBoundary>,
-    materialSpec: <ErrorBoundary> <EditMaterialSpec /> </ErrorBoundary>,
-    orderType: <ErrorBoundary> <EditOrderType /> </ErrorBoundary>,
+  // ========== RENDER: Edit mode shows Create component, otherwise shows List ==========
+  const renderComponent = (key: string) => {
+    // If in edit mode, show the CREATE component with initialData
+    if (editState?.editMode && editState?.editType === key) {
+      switch (key) {
+        case 'account':
+          return <ErrorBoundary><CreateNewAccount initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
+        case 'machine':
+          return <ErrorBoundary><CreateMachine initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
+        case 'machineType':
+          return <ErrorBoundary><CreateMachineType initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
+        case 'machineOperator':
+          return <ErrorBoundary><CreateMachineOperator initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
+        case 'step':
+          return <ErrorBoundary><CreateStep initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
+        case 'category':
+          return <ErrorBoundary><CreateCategory initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
+        case 'optionType':
+          return <ErrorBoundary><CreateOptionType initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
+        case 'option':
+          return <ErrorBoundary><CreateOption initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
+        case 'orderType':
+          return <ErrorBoundary><CreateOrderType initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
+        case 'printType':
+          return <ErrorBoundary><CreatePrintType initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
+        case 'excelExportType':
+          return <ErrorBoundary><CreateExcelExportType initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
+        case 'machineTemplate':
+          return <ErrorBoundary><CreateMachineTemplate initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
+        case 'Access':
+          return <ErrorBoundary><DeviceAccessCreate initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
+        default:
+          break;
+      }
+    }
+
+    // Default: show LIST view with onEdit callback
+    const setEdit = (type: string) => (data: any) => setEditState({ editMode: true, editData: data, editType: type });
+
+    const baseComponentsMap: Record<string, JSX.Element> = {
+      account: <ErrorBoundary><EditNewAccount onEdit={setEdit('account')} /></ErrorBoundary>,
+      machineType: <ErrorBoundary><EditMachineTypeList onEdit={setEdit('machineType')} /></ErrorBoundary>,
+      machine: <ErrorBoundary><EditMachineList onEdit={setEdit('machine')} /></ErrorBoundary>,
+      step: <ErrorBoundary><EditStepList onEdit={setEdit('step')} /></ErrorBoundary>,
+      machineOperator: <ErrorBoundary><EditMachineOperatorList onEdit={setEdit('machineOperator')} /></ErrorBoundary>,
+      DeviceAccess: <ErrorBoundary><EditDeviceAccess /></ErrorBoundary>,
+      Access: <ErrorBoundary><EditAccessListOnly onEdit={setEdit('Access')} /></ErrorBoundary>,
+      category: <ErrorBoundary><EditCategoryListOnly onEdit={setEdit('category')} /></ErrorBoundary>,
+      optionType: <ErrorBoundary><EditOptionTypeListOnly onEdit={setEdit('optionType')} /></ErrorBoundary>,
+      option: <ErrorBoundary><EditOptionListOnly onEdit={setEdit('option')} /></ErrorBoundary>,
+      optionSpec: <ErrorBoundary><EditOptionSpecList /></ErrorBoundary>,
+      orderType: <ErrorBoundary><EditOrderTypeList onEdit={setEdit('orderType')} /></ErrorBoundary>,
+      printType: <ErrorBoundary><EditPrintTypeList /></ErrorBoundary>,
+      excelExportType: <ErrorBoundary><EditExcelExportTypeList /></ErrorBoundary>,
+      machineTemplate: <ErrorBoundary><EditMachineTemplateList onEdit={setEdit('machineTemplate')} /></ErrorBoundary>
+    };
+
+    if (userRole === "manager") {
+      baseComponentsMap["updatePassword"] = <UpdataIDAndPassword />;
+    }
+
+    return baseComponentsMap[key] || <div>Select an option</div>;
   };
 
-  const baseTitlesMap: Record<string, string> = {
-    account: "Account",
-    machineType: "Machine Type",
-    machine: "Machine",
-    step: "Step",
-    machineOperator: "Machine Operator",
-    DeviceAccess: "Device Access",
-    Access: "Access",
-    products: "Products",
-    productCategories: "Product Categories",
-    materials: "Materials",
-    materialsCategories: "Materials Categories",
-    productSpec: "Product Spec",
-    materialSpec: "Material Spec",
-    formula: "Formula",
-    orderType: "Order Type"
-  };
-
-  if (userRole === "manager") {
-    baseComponentsMap["updatePassword"] = <UpdataIDAndPassword />;
-    baseTitlesMap["updatePassword"] = "Update ID & Password";
-  }
-
-  const componentsMap = baseComponentsMap;
-
-
-  // Flatten all items for navigation
   const menuItems = menuSections.flatMap(section => section.items);
-
- 
 
   useEffect(() => {
     buttonRefs.current[selectedIndex]?.focus();
@@ -175,24 +213,16 @@ const EditIndex = () => {
     } else if (e.key === "Enter") {
       e.preventDefault();
       setActiveComponent(menuItems[index].key);
+      clearEditState();
     }
   };
 
-
-
-
   return (
     <div className="container" style={{ marginTop: 0 }}>
-      {/* Header with conditional back button */}
       <div className="item menu-header" style={{ gridColumn: "1 / -1" }}>
-       <Headers 
-  // title={title}
-  // showBackButton={true}
-  // onBackClick={handleBackFromChild}
-/>
+        <Headers />
       </div>
 
-      {/* Sidebar */}
       <div className="item">
         <div className="menu-container-create">
           <div className="menu-header-padding">
@@ -203,23 +233,18 @@ const EditIndex = () => {
 
                 return (
                   <div key={section.title}>
-                    {/* Section Title - Clickable */}
                     <div
                       onClick={() => {
                         if (hasMultipleItems) {
                           toggleSection(section.title);
                         } else {
-                          // For single-item sections, select the item directly
                           const item = section.items[0];
                           const globalIndex = menuItems.findIndex(mi => mi.key === item.key);
                           setActiveComponent(item.key);
                           setSelectedIndex(globalIndex);
-                          // Close all multi-item sections
                           setExpandedSections(prev => {
                             const newState: Record<string, boolean> = {};
-                            Object.keys(prev).forEach(key => {
-                              newState[key] = false;
-                            });
+                            Object.keys(prev).forEach(key => { newState[key] = false; });
                             return newState;
                           });
                         }
@@ -251,7 +276,6 @@ const EditIndex = () => {
                       )}
                     </div>
 
-                    {/* Section Items - Collapsible */}
                     <div style={{
                       maxHeight: isExpanded ? "1000px" : "0",
                       overflow: "hidden",
@@ -270,6 +294,7 @@ const EditIndex = () => {
                               onClick={() => {
                                 setActiveComponent(item.key);
                                 setSelectedIndex(globalIndex);
+                                clearEditState();
                               }}
                               onKeyDown={(e) => handleKeyDown(e, globalIndex)}
                               style={{
@@ -287,13 +312,8 @@ const EditIndex = () => {
                       })}
                     </div>
 
-                    {/* Section Divider */}
                     {sectionIndex < menuSections.length - 1 && (
-                      <div style={{
-                        height: "1px",
-                        background: "#e5e7eb",
-                        margin: "8px 10px"
-                      }} />
+                      <div style={{ height: "1px", background: "#e5e7eb", margin: "8px 10px" }} />
                     )}
                   </div>
                 );
@@ -303,12 +323,10 @@ const EditIndex = () => {
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="item menu-content">
-        {componentsMap[activeComponent]}
+        {renderComponent(activeComponent)}
       </div>
 
-      {/* Footer */}
       <div className="item menu-footer" style={{ gridColumn: "1 / -1" }}>
         © 2024 Your Company Name. All rights reserved.
       </div>

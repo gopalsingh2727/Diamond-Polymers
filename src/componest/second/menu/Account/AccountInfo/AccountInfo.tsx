@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
@@ -7,6 +7,7 @@ import { RootState } from "../../../../redux/rootReducer";
 
 import { BackButton } from "../../../../allCompones/BackButton";
 import { getAccountOrders } from "../../../../redux/oders/OdersActions";
+import { useDaybookUpdates } from "../../../../../hooks/useWebSocket";  // ✅ WebSocket real-time updates
 
 // Define Order interface
 interface Order {
@@ -73,6 +74,11 @@ interface Order {
     lastName?: string;
   };
   AllStatus?: Record<string, { color: string; description: string }>;
+  // Order type and options - for edit mode
+  orderType?: any;
+  orderTypeId?: string;
+  options?: any[];
+  optionsWithDetails?: any[];
 }
 
 interface AccountInfoProps {
@@ -111,7 +117,27 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
   const dispatch = useDispatch();
   const location = useLocation();
   const navigate = useNavigate();
-  const accountData = location.state?.accountData;
+
+  // Get accountData from location.state or sessionStorage (for persistence when navigating back)
+  const getAccountData = () => {
+    if (location.state?.accountData) {
+      // Store in sessionStorage for persistence
+      sessionStorage.setItem('currentAccountData', JSON.stringify(location.state.accountData));
+      return location.state.accountData;
+    }
+    // Try to get from sessionStorage if location.state is empty
+    const storedData = sessionStorage.getItem('currentAccountData');
+    if (storedData) {
+      try {
+        return JSON.parse(storedData);
+      } catch (e) {
+        console.error('Failed to parse stored account data:', e);
+      }
+    }
+    return null;
+  };
+
+  const accountData = getAccountData();
 
   // IMPORTANT: ALL useState hooks must be declared FIRST
   const [expandedOrder, setExpandedOrder] = useState<number | null>(null);
@@ -157,6 +183,7 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
   // Company info with safe access
   const companyName = (authState as any)?.user?.companyName || "ABC Company";
   const branchName = (authState as any)?.user?.branchName || "Main Branch";
+  const branchId = (authState as any)?.user?.branchId || null;  // ✅ For WebSocket subscription
 
   // Check if accountData exists
   if (!accountData) {
@@ -295,16 +322,14 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, accountData?._id, currentPage, limit, fromDate, toDate, searchTerm, statusFilter]);
 
-  // Auto-refresh every 30 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      console.log("🔄 Account Orders Auto-refresh triggered");
-      fetchAccountOrdersData();
-    }, 30000);
-
-    return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // ✅ REPLACED: 30-second polling with WebSocket real-time subscription
+  const handleOrderUpdate = useCallback(() => {
+    console.log("📡 WebSocket: Account orders update received - refreshing");
+    fetchAccountOrdersData();
   }, [accountData?._id, currentPage, limit, fromDate, toDate, searchTerm, statusFilter]);
+
+  // Subscribe to real-time daybook updates via WebSocket
+  useDaybookUpdates(branchId, handleOrderUpdate);
 
   // Focus scroll wrapper on mount
   useEffect(() => {
@@ -338,6 +363,14 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
     const orderDataForEdit = {
       _id: order._id,
       orderId: order.orderId,
+
+      // Order type information - CRITICAL for showing options
+      orderType: order.orderType,
+      orderTypeId: order.orderTypeId || order.orderType?._id || order.orderType,
+
+      // Options data - CRITICAL for edit mode
+      options: order.options || [],
+      optionsWithDetails: order.optionsWithDetails || [],
 
       // Customer information - use accountData as primary source
       customer: {
@@ -676,18 +709,17 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
         <BackButton />
         <div className="flex flex-col gap-4">
           {/* Account Information */}
-          <div className="bg-orange-50 p-4 rounded border">
-            <h2 className="text-xl font-bold mb-2">Orders for {accountData.name}</h2>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
+          <div className="flex gap-4 items-center flex-wrap">
+            
+
+              
                 <p><strong>Phone:</strong> {accountData.phone || 'N/A'}</p>
                 <p><strong>Name:</strong> {accountData.firstName} {accountData.lastName}</p>
-              </div>
-              <div>
+             
                 <p><strong>Company:</strong> {accountData.companyName || 'N/A'}</p>
                 <p><strong>Email:</strong> {accountData.email || 'N/A'}</p>
-              </div>
-            </div>
+      
+
           </div>
 
           {/* Filters */}
