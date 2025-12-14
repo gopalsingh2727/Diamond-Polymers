@@ -106,6 +106,12 @@ export const login = (email: string, password: string) => {
         localStorage.setItem("userData", JSON.stringify(userData));
         localStorage.setItem("userRole", userType);
 
+        // ✅ CRITICAL: Store selectedBranch in localStorage for API calls
+        // This is required by getHeaders() and crudHelpers for x-selected-branch header
+        if (userData.selectedBranch) {
+          localStorage.setItem("selectedBranch", userData.selectedBranch);
+        }
+
         if (import.meta.env.DEV) {
           console.log('✅ Unified login successful for role:', userType, 'branches:', branches?.length || 0);
         }
@@ -209,6 +215,11 @@ export const login = (email: string, password: string) => {
           localStorage.setItem("tokenExpiresAt", String(Date.now() + (expiresIn || 900) * 1000));
           localStorage.setItem("userData", JSON.stringify(userData));
           localStorage.setItem("userRole", endpoint.role);
+
+          // ✅ CRITICAL: Store selectedBranch in localStorage for API calls
+          if (userData.selectedBranch) {
+            localStorage.setItem("selectedBranch", userData.selectedBranch);
+          }
 
           if (import.meta.env.DEV) {
             console.log('✅ Login successful for role:', endpoint.role);
@@ -443,6 +454,10 @@ export const setSelectedBranchInAuth = (branchId: string) => {
     // Save the updated userData back to localStorage
     localStorage.setItem("userData", JSON.stringify(updatedUserData));
 
+    // ✅ CRITICAL: Also store directly in localStorage for API calls
+    // This is required by getHeaders() and crudHelpers for x-selected-branch header
+    localStorage.setItem("selectedBranch", branchId);
+
     // Dispatch the action to update Redux store
     dispatch({
       type: SET_SELECTED_BRANCH_IN_AUTH,
@@ -637,6 +652,11 @@ export const verifyPhoneOTP = (phone: string, otp: string) => {
       localStorage.setItem("tokenExpiresAt", String(Date.now() + (expiresIn || 900) * 1000));
       localStorage.setItem("userData", JSON.stringify(userData));
       localStorage.setItem("userRole", userType);
+
+      // ✅ CRITICAL: Store selectedBranch in localStorage for API calls
+      if (userData.selectedBranch) {
+        localStorage.setItem("selectedBranch", userData.selectedBranch);
+      }
 
       if (import.meta.env.DEV) {
         console.log('✅ Phone OTP login successful for role:', userType, 'branches:', branches?.length || 0);

@@ -2,15 +2,20 @@ import React, { useRef, useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
 import { createAccount, updateAccount, deleteAccount } from "../../../../redux/create/createNewAccount/NewAccountActions";
+import { getCustomerCategories } from "../../../../redux/create/customerCategory/CustomerCategoryActions";
+import { getCustomerParentCompanies } from "../../../../redux/create/customerParentCompany/CustomerParentCompanyActions";
 import { RootState, AppDispatch } from "../../../../../store";
 import { indianStates } from "./indianStates";
 import { useInternalBackNavigation } from "../../../../allCompones/BackButton";
 import "./createNewAccount.css";
-// import imageCompression from 'browser-image-compression';
+
 type AccountFormData = {
-  companyName?: string;
-  firstName: string;
-  lastName: string;
+  companyName: string;
+  gstNumber?: string;
+  categoryId?: string;
+  parentCompanyId?: string;
+  firstName?: string;
+  lastName?: string;
   email?: string;
   phone1: string;
   phone2?: string;
@@ -40,6 +45,18 @@ interface Props {
   onSaveSuccess?: () => void;
 }
 
+interface CustomerCategory {
+  _id: string;
+  name: string;
+  description?: string;
+}
+
+interface CustomerParentCompany {
+  _id: string;
+  name: string;
+  description?: string;
+}
+
 type ValidationErrors = Partial<Record<keyof AccountFormData, string>>;
 
 const CreateNewAccount: React.FC<Props> = ({ initialData: propInitialData = {}, onCancel, onSaveSuccess }) => {
@@ -59,8 +76,19 @@ const CreateNewAccount: React.FC<Props> = ({ initialData: propInitialData = {}, 
     (state: RootState) => state.createAccount
   );
 
+  // Get categories and parent companies from Redux store
+  const { categories = [] } = useSelector(
+    (state: RootState) => state.getCustomerCategories || { categories: [] }
+  );
+  const { parentCompanies = [] } = useSelector(
+    (state: RootState) => state.getCustomerParentCompanies || { parentCompanies: [] }
+  );
+
   const [formValues, setFormValues] = useState<AccountFormData>({
     companyName: initialData.companyName || "",
+    gstNumber: initialData.gstNumber || "",
+    categoryId: initialData.categoryId || "",
+    parentCompanyId: initialData.parentCompanyId || "",
     firstName: initialData.firstName || "",
     lastName: initialData.lastName || "",
     email: initialData.email || "",
@@ -80,6 +108,19 @@ const CreateNewAccount: React.FC<Props> = ({ initialData: propInitialData = {}, 
   const [deleting, setDeleting] = useState(false);
   const existingImageUrl = initialData?.imageUrl;
 
+  // Fetch categories and parent companies on component mount
+  useEffect(() => {
+    console.log("Fetching categories and parent companies...");
+    dispatch(getCustomerCategories());
+    dispatch(getCustomerParentCompanies());
+  }, [dispatch]);
+
+  // Debug log to check if data is loaded
+  useEffect(() => {
+    console.log("Categories loaded:", categories);
+    console.log("Parent Companies loaded:", parentCompanies);
+  }, [categories, parentCompanies]);
+
   // Handle ESC key to go back to list in edit mode
   const handleBackToList = () => {
     if (onSaveSuccess) {
@@ -98,6 +139,9 @@ const CreateNewAccount: React.FC<Props> = ({ initialData: propInitialData = {}, 
     if (initialData && initialData._id) {
       setFormValues({
         companyName: initialData.companyName || "",
+        gstNumber: initialData.gstNumber || "",
+        categoryId: initialData.categoryId || "",
+        parentCompanyId: initialData.parentCompanyId || "",
         firstName: initialData.firstName || "",
         lastName: initialData.lastName || "",
         email: initialData.email || "",
@@ -120,6 +164,9 @@ const CreateNewAccount: React.FC<Props> = ({ initialData: propInitialData = {}, 
       formRef.current.reset();
       setFormValues({
         companyName: "",
+        gstNumber: "",
+        categoryId: "",
+        parentCompanyId: "",
         firstName: "",
         lastName: "",
         email: "",
@@ -145,81 +192,35 @@ const CreateNewAccount: React.FC<Props> = ({ initialData: propInitialData = {}, 
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    setFormValues((prev) => ({ ...prev, [name]: value }));
+    // Auto-convert GST to uppercase
+    const processedValue = name === 'gstNumber' ? value.toUpperCase() : value;
+    setFormValues((prev) => ({ ...prev, [name]: processedValue }));
     setValidationErrors((prev) => ({ ...prev, [name]: undefined }));
   };
-
-// const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
-// const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif'];
-
-
-// const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-
-// const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-//   const file = e.target.files?.[0] || null;
-
-//   if (!file) return;
-
-//   if (!ALLOWED_MIME_TYPES.includes(file.type)) {
-//     setValidationErrors({ image: 'Only JPG, PNG, or GIF images are allowed' });
-//     return;
-//   }
-
-//   try {
-//     let imageFile = file;
-
-//     if (file.size > MAX_IMAGE_SIZE) {
-//       const compressedFile = await imageCompression(file, {
-//         maxSizeMB: 1,
-//         maxWidthOrHeight: 1920,
-//         useWebWorker: false,
-//       });
-
-//       imageFile = compressedFile;
-//       console.log('Image compressed from', file.size, 'to', compressedFile.size);
-//     }
-
-//     setValidationErrors(prev => ({ ...prev, image: undefined }));
-//     setFormValues(prev => ({ ...prev, image: imageFile }));
-
-//     const reader = new FileReader();
-//     reader.onload = () => setPreviewUrl(reader.result as string);
-//     reader.readAsDataURL(imageFile);
-//   } catch (err) {
-//     console.error('Image compression error:', err);
-//     setValidationErrors({ image: 'Image compression failed. Try another image.' });
-//   }
-// };
-
 
   const validate = (): boolean => {
     const errors: ValidationErrors = {};
 
-
-
-    if (!formValues.firstName.trim()) {
-      errors.firstName = "First Name is required";
-    }
-    if (!formValues.lastName.trim()) {
-      errors.lastName = "Last Name is required";
+    // Only Company Name and State are required
+    if (!formValues.companyName.trim()) {
+      errors.companyName = "Company Name is required";
     }
 
-    if (formValues.email && !/\S+@\S+\.\S+/.test(formValues.email)) {
-      errors.email = "Invalid email format";
-    }
-    if (!formValues.phone1.trim()) {
-      errors.phone1 = "Phone 1 is required";
-    }
-    if (!formValues.address1.trim()) {
-      errors.address1 = "Address Line 1 is required";
-    }
-    if (!formValues.state.trim()) {
+    if (!formValues.state?.trim()) {
       errors.state = "State is required";
     }
-    if (!formValues.pinCode.trim()) {
-      errors.pinCode = "Pin Code is required";
-    } else if (!/^\d{6}$/.test(formValues.pinCode)) {
+
+    // Optional validation: Pin Code format (only if provided)
+    if (formValues.pinCode?.trim() && !/^\d{6}$/.test(formValues.pinCode)) {
       errors.pinCode = "Pin Code must be exactly 6 digits";
+    }
+
+    // Validate GST if provided - simple validation: 2 digits + 13 alphanumeric = 15 chars
+    if (formValues.gstNumber && formValues.gstNumber.trim()) {
+      const gst = formValues.gstNumber.trim().toUpperCase();
+      if (gst.length !== 15 || !/^[0-9]{2}[A-Z0-9]{13}$/.test(gst)) {
+        errors.gstNumber = "GST must be 15 characters: 2 digits + 13 alphanumeric";
+      }
     }
 
     setValidationErrors(errors);
@@ -238,6 +239,9 @@ const CreateNewAccount: React.FC<Props> = ({ initialData: propInitialData = {}, 
       // Update existing account
       const updateData = {
         companyName: formValues.companyName,
+        gstNumber: formValues.gstNumber,
+        categoryId: formValues.categoryId || null,
+        parentCompanyId: formValues.parentCompanyId || null,
         firstName: formValues.firstName,
         lastName: formValues.lastName,
         email: formValues.email,
@@ -301,7 +305,7 @@ const CreateNewAccount: React.FC<Props> = ({ initialData: propInitialData = {}, 
           <h6>{editMode ? 'Edit Account' : 'Create Account'}</h6>
          </div>
       <div className="create-account-container">
-          {/* Back button and Delete button for edit mode */}
+
           {editMode && (
             <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               {onCancel && (
@@ -310,7 +314,7 @@ const CreateNewAccount: React.FC<Props> = ({ initialData: propInitialData = {}, 
                   onClick={onCancel}
                   style={{ padding: '8px 16px', background: '#6b7280', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
                 >
-                  ← Back to List
+                  Back to List
                 </button>
               )}
               <button
@@ -358,7 +362,7 @@ const CreateNewAccount: React.FC<Props> = ({ initialData: propInitialData = {}, 
                 width: '90%',
                 textAlign: 'center'
               }}>
-                <div style={{ fontSize: '48px', marginBottom: '16px' }}>⚠️</div>
+                <div style={{ fontSize: '48px', marginBottom: '16px' }}>Warning</div>
                 <h3 style={{ margin: '0 0 8px 0', color: '#1f2937' }}>Delete Account?</h3>
                 <p style={{ color: '#6b7280', marginBottom: '24px' }}>
                   Are you sure you want to delete this account? This action cannot be undone.
@@ -399,54 +403,105 @@ const CreateNewAccount: React.FC<Props> = ({ initialData: propInitialData = {}, 
           )}
 
           <form ref={formRef} onSubmit={handleSubmit} className="form-container">
-        <div className="form-group">
-          <label>Company Name</label>
+        {/* Company Name - Required */}
+        <div className="form-group-createAccount">
+          <label>Company Name *</label>
           <input
           className="CurstomerAddressInput"
             name="companyName"
             value={formValues.companyName}
             onChange={handleChange}
+            placeholder="e.g., Kalyan Jewellers - MG Road"
           />
           {validationErrors.companyName && (
             <small className="error-text">{validationErrors.companyName}</small>
           )}
         </div>
 
-        <div className="form-row ">
-          <div className="form-group ">
-            <label>First Name *</label>
-            <input
-              className="CurstomerInput"
-              name="firstName"
-              value={formValues.firstName}
-              onChange={handleChange}
-            />
-            {validationErrors.firstName && (
-              <small className="error-text">{validationErrors.firstName}</small>
-            )}
-          </div>
-          <div className="form-group">
-            <label>Last Name *</label>
+        {/* GST Number */}
+        <div className="form-group-createAccount">
+          <label>GST Number</label>
+          <input
+            className="CurstomerAddressInput"
+            name="gstNumber"
+            value={formValues.gstNumber || ""}
+            onChange={handleChange}
+            placeholder="e.g., 27AABCU9603R1ZM"
+            style={{ textTransform: 'uppercase' }}
+          />
+          {validationErrors.gstNumber && (
+            <small className="error-text">{validationErrors.gstNumber}</small>
+          )}
+        </div>
 
-            <input
-            className="CurstomerInput"
-              name="lastName"
-              value={formValues.lastName}
+        {/* Category and Parent Company Selection */}
+        <div className="form-row">
+          <div className="form-group-createAccount">
+            <label>Customer Category</label>
+            <select
+              name="categoryId"
+              value={formValues.categoryId || ""}
               onChange={handleChange}
-            />
-            {validationErrors.lastName && (
-              <small className="error-text">{validationErrors.lastName}</small>
-            )}
+            >
+              <option value="">
+                {categories.length === 0 ? "No categories - Create first" : "Select Category"}
+              </option>
+              {(categories as CustomerCategory[]).map((cat) => (
+                <option key={cat._id} value={cat._id}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-group-createAccount">
+            <label>Parent Company</label>
+            <select
+              name="parentCompanyId"
+              value={formValues.parentCompanyId || ""}
+              onChange={handleChange}
+            >
+              <option value="">
+                {parentCompanies.length === 0 ? "No companies - Create first" : "Select Parent Company"}
+              </option>
+              {(parentCompanies as CustomerParentCompany[]).map((company) => (
+                <option key={company._id} value={company._id}>
+                  {company.name}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 
-        <div className="form-group">
+        {/* Contact Person Name (Optional) */}
+        <div className="form-row">
+          <div className="form-group ">
+            <label>Contact First Name</label>
+            <input
+              className="CurstomerInput"
+              name="firstName"
+              value={formValues.firstName || ""}
+              onChange={handleChange}
+            />
+          </div>
+          <div className="form-group">
+            <label>Contact Last Name</label>
+            <input
+            className="CurstomerInput"
+              name="lastName"
+              value={formValues.lastName || ""}
+              onChange={handleChange}
+            />
+          </div>
+        </div>
+
+        <div className="form-group-createAccount">
           <label>Email</label>
           <input
           className="CurstomerAddressInput"
             type="email"
             name="email"
-            value={formValues.email}
+            value={formValues.email || ""}
             onChange={handleChange}
           />
           {validationErrors.email && (
@@ -455,7 +510,7 @@ const CreateNewAccount: React.FC<Props> = ({ initialData: propInitialData = {}, 
         </div>
 
         <div className="form-row">
-          <div className="form-group">
+          <div className="form-group-createAccount">
             <label>Phone 1 *</label>
             <input
             className="CurstomerInput"
@@ -467,7 +522,7 @@ const CreateNewAccount: React.FC<Props> = ({ initialData: propInitialData = {}, 
               <small className="error-text">{validationErrors.phone1}</small>
             )}
           </div>
-          <div className="form-group">
+          <div className="form-group-createAccount">
             <label>Phone 2</label>
             <input
             className="CurstomerInput"
@@ -476,7 +531,7 @@ const CreateNewAccount: React.FC<Props> = ({ initialData: propInitialData = {}, 
               onChange={handleChange}
             />
           </div>
-          <div className="form-group">
+          <div className="form-group-createAccount">
             <label>WhatsApp</label>
             <input
             className="CurstomerInput"
@@ -485,7 +540,7 @@ const CreateNewAccount: React.FC<Props> = ({ initialData: propInitialData = {}, 
               onChange={handleChange}
             />
           </div>
-          <div className="form-group">
+          <div className="form-group-createAccount">
             <label>Telephone</label>
             <input
             className="CurstomerInput"
@@ -496,11 +551,7 @@ const CreateNewAccount: React.FC<Props> = ({ initialData: propInitialData = {}, 
           </div>
         </div>
 
-        <div className="form-row">
-
-        </div>
-
-        <div className="form-group">
+        <div className="fform-group-createAccount">
           <label>Address Line 1 *</label>
           <input
             name="address1"
@@ -513,7 +564,7 @@ const CreateNewAccount: React.FC<Props> = ({ initialData: propInitialData = {}, 
           )}
         </div>
 
-        <div className="form-group">
+        <div className="form-group-createAccount">
           <label>Address Line 2</label>
           <input
             name="address2"
@@ -524,7 +575,7 @@ const CreateNewAccount: React.FC<Props> = ({ initialData: propInitialData = {}, 
         </div>
 
         <div className="form-row">
-          <div className="form-group">
+          <div className="form-group-createAccount">
             <label>State *</label>
             <select
               name="state"
@@ -543,7 +594,7 @@ const CreateNewAccount: React.FC<Props> = ({ initialData: propInitialData = {}, 
             )}
           </div>
 
-          <div className="form-group">
+          <div className="form-group-createAccount">
             <label>Pin Code *</label>
             <input
               name="pinCode"

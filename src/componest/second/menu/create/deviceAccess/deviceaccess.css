@@ -244,3 +244,25 @@
   transform: none;
   box-shadow: none;
 }
+
+/* Messages */
+.deviceAccess-message {
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  text-align: center;
+  font-weight: 500;
+}
+
+.deviceAccess-message.success {
+  color: #059669;
+  background-color: #d1fae5;
+  border: 1px solid #10b981;
+}
+
+.deviceAccess-message.error {
+  color: #dc2626;
+  background-color: #fee2e2;
+  border: 1px solid #ef4444;
+}

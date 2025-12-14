@@ -27,6 +27,21 @@ const getAuthHeaders = (getState: () => RootState) => {
   };
 };
 
+// Helper function to convert File to base64
+const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      const result = reader.result as string;
+      // Remove data URL prefix (e.g., "data:image/png;base64,")
+      const base64 = result.split(',')[1];
+      resolve(base64);
+    };
+    reader.onerror = error => reject(error);
+  });
+};
+
 export const createAccount = (data: any) => async (dispatch: AppDispatch, getState: () => RootState) => {
   try {
     dispatch({ type: CREATE_ACCOUNT_REQUEST });
@@ -34,30 +49,46 @@ export const createAccount = (data: any) => async (dispatch: AppDispatch, getSta
     const branchId = localStorage.getItem("selectedBranch");
     if (!branchId) throw new Error("Branch ID missing");
 
-    let headers: any = {
+    const headers: any = {
       ...getAuthHeaders(getState),
       "Content-Type": "application/json",
     };
 
-    let payload = data;
-
+    // Always convert to JSON - more reliable than multipart
+    const jsonData: Record<string, any> = {};
 
     if (data instanceof FormData) {
-      data.append("branchId", branchId);
-      payload = data;
-      headers["Content-Type"] = "multipart/form-data";
-    } else {
-      payload = { ...data, branchId };
-    }
+      // Check if FormData contains an actual image file
+      const imageFile = data.get("image");
+      const hasImage = imageFile instanceof File && imageFile.size > 0;
 
-    // Debug log to inspect payload
-    if (payload instanceof FormData) {
-      for (let pair of payload.entries()) {
-        console.log(`${pair[0]}: ${pair[1]}`);
+      // Extract all form fields
+      data.forEach((value, key) => {
+        if (key !== "image" && typeof value === 'string') {
+          jsonData[key] = value;
+        }
+      });
+
+      // Convert image to base64 if present
+      if (hasImage && imageFile instanceof File) {
+        try {
+          const base64 = await fileToBase64(imageFile);
+          jsonData.imageBase64 = base64;
+          jsonData.imageName = imageFile.name;
+          console.log("Sending with base64 image:", imageFile.name);
+        } catch (err) {
+          console.error("Failed to convert image to base64:", err);
+        }
       }
+    } else {
+      // Already JSON object
+      Object.assign(jsonData, data);
     }
 
-    const response = await axios.post(`${baseUrl}/customer`, payload, { headers });
+    jsonData.branchId = branchId;
+    console.log("Sending as JSON:", Object.keys(jsonData));
+
+    const response = await axios.post(`${baseUrl}/customer`, jsonData, { headers });
     console.log("Account created successfully:", response.data);
     dispatch({
       type: CREATE_ACCOUNT_SUCCESS,
@@ -100,10 +131,11 @@ export const getAccounts = () => async (
     const { data } = await axios.get(`${baseUrl}/customer`, {
       headers: getAuthHeaders(getState),
     });
-    console.log(data,"customer");
-    
 
-    dispatch({ type: GET_ACCOUNTS_SUCCESS, payload: data });
+    // Backend returns { data: customers, count, user } - extract array
+    const accounts = data.data || data.customers || data || [];
+
+    dispatch({ type: GET_ACCOUNTS_SUCCESS, payload: accounts });
   } catch (error: any) {
     dispatch({
       type: GET_ACCOUNTS_FAIL,

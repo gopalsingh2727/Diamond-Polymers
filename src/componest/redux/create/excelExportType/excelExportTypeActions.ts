@@ -102,8 +102,11 @@ export const getExcelExportTypes = () => async (dispatch: Dispatch, getState: ()
       headers: getHeaders(token)
     });
 
-    dispatch({ type: GET_EXCEL_EXPORT_TYPES_SUCCESS, payload: data });
-    return data;
+    // Backend may return { data: [...] } or array directly
+    const excelTypes = Array.isArray(data) ? data : (data.data || data.excelExportTypes || []);
+
+    dispatch({ type: GET_EXCEL_EXPORT_TYPES_SUCCESS, payload: excelTypes });
+    return excelTypes;
   } catch (error: any) {
     const errorMessage = error.response?.data?.message || error.message || "Failed to fetch excel export types";
     dispatch({ type: GET_EXCEL_EXPORT_TYPES_FAIL, payload: errorMessage });

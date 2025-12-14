@@ -119,7 +119,9 @@ function handleConnect(store: any, payload: { url: string; token: string; platfo
       case 'Connected':
       case 'connected':
         // Initial connection response
+        console.log('🔌 [WS] Connected message received:', message);
         if (message.connectionId && message.rooms) {
+          console.log('✅ [WS] Dispatching connected action with rooms:', message.rooms);
           store.dispatch(connected({
             connectionId: message.connectionId,
             rooms: message.rooms
@@ -159,10 +161,11 @@ function handleConnect(store: any, payload: { url: string; token: string; platfo
   });
 
   wsClient.on('order:status_changed', (data) => {
-    console.log('📦 Order status changed:', data);
+    console.log('📦 [WS] Order status changed received:', data);
     // Dispatch to orders reducer
     store.dispatch({ type: 'orders/orderStatusChangedViaWS', payload: data.data });
     // Dispatch browser event for useDaybookUpdates hook
+    console.log('📡 [WS] Dispatching browser event websocket:message for order:status_changed');
     window.dispatchEvent(new CustomEvent('websocket:message', {
       detail: { type: 'order:status_changed', data: data.data }
     }));
@@ -180,10 +183,11 @@ function handleConnect(store: any, payload: { url: string; token: string; platfo
 
   // ✅ Listen for order updates (for Daybook real-time updates)
   wsClient.on('order:updated', (data) => {
-    console.log('📦 Order updated:', data);
+    console.log('📦 [WS] Order updated received:', data);
     // Dispatch to orders reducer
     store.dispatch({ type: 'orders/orderUpdatedViaWS', payload: data.data });
     // Dispatch browser event for useDaybookUpdates hook
+    console.log('📡 [WS] Dispatching browser event websocket:message for order:updated');
     window.dispatchEvent(new CustomEvent('websocket:message', {
       detail: { type: 'order:updated', data: data.data }
     }));

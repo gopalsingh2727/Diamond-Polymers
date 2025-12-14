@@ -27,7 +27,7 @@ export const createCategory = (categoryData: any) => async (dispatch: Dispatch) 
   dispatch({ type: CREATE_CATEGORY_REQUEST });
 
   try {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     const response = await axios.post(`${baseUrl}/category`, categoryData, {
       headers: {
         'x-api-key': API_KEY,
@@ -57,7 +57,7 @@ export const getCategories = (params?: { branchId?: string; isActive?: boolean }
   dispatch({ type: GET_CATEGORIES_REQUEST });
 
   try {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     const queryParams = new URLSearchParams(params as any).toString();
     const url = `${baseUrl}/category${queryParams ? `?${queryParams}` : ''}`;
 
@@ -87,7 +87,7 @@ export const updateCategory = (id: string, categoryData: any) => async (dispatch
   dispatch({ type: UPDATE_CATEGORY_REQUEST });
 
   try {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     const response = await axios.put(`${baseUrl}/category/${id}`, categoryData, {
       headers: {
         'x-api-key': API_KEY,
@@ -117,7 +117,7 @@ export const deleteCategory = (id: string) => async (dispatch: Dispatch) => {
   dispatch({ type: DELETE_CATEGORY_REQUEST });
 
   try {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     await axios.delete(`${baseUrl}/category/${id}`, {
       headers: {
         'x-api-key': API_KEY,

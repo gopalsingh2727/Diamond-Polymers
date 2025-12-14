@@ -1,436 +1,1704 @@
+/* ================================================
+   CREATE ORDERS (CO) - MODERN DESIGN SYSTEM
+   All classes prefixed with 'co-' for CreateOrders
+   ================================================ */
+
+/* ================================================
+   CSS VARIABLES - DESIGN TOKENS
+   ================================================ */
+:root {
+  /* Colors */
+  --co-primary: #0f172a;
+  --co-primary-light: #1e293b;
+  --co-accent: #3b82f6;
+  --co-accent-hover: #2563eb;
+  --co-success: #10b981;
+  --co-warning: #f59e0b;
+  --co-danger: #ef4444;
+  --co-text: #1f2937;
+  --co-text-secondary: #6b7280;
+  --co-text-light: #9ca3af;
+  --co-border: #e5e7eb;
+  --co-border-dark: #d1d5db;
+  --co-bg: #ffffff;
+  --co-bg-secondary: #f9fafb;
+  --co-bg-tertiary: #f3f4f6;
+
+  /* Spacing */
+  --co-space-xs: 4px;
+  --co-space-sm: 8px;
+  --co-space-md: 12px;
+  --co-space-lg: 16px;
+  --co-space-xl: 24px;
+  --co-space-2xl: 32px;
+
+  /* Border Radius */
+  --co-radius-sm: 4px;
+  --co-radius-md: 8px;
+  --co-radius-lg: 12px;
+  --co-radius-xl: 16px;
+
+  /* Shadows */
+  --co-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --co-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --co-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+
+  /* Typography */
+  --co-font-xs: 11px;
+  --co-font-sm: 12px;
+  --co-font-base: 13px;
+  --co-font-md: 14px;
+  --co-font-lg: 16px;
+  --co-font-xl: 18px;
+  --co-font-2xl: 20px;
+}
+
+/* ================================================
+   CO-CONTAINER - MAIN LAYOUT
+   ================================================ */
+.co-container,
+.CreateOrders {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+  background: var(--co-bg-secondary);
+}
+
+/* ================================================
+   CO-HEADER
+   ================================================ */
+.co-header,
 .CrateOrdersHaders {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--co-space-lg);
+  padding: 0 var(--co-space-xl);
+  height: 56px;
+  background: var(--co-bg);
+  border-bottom: 1px solid var(--co-border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.co-header-center,
+.CreateOrdersHaders1 {
+  justify-self: center;
   display: flex;
   align-items: center;
-  justify-content: space-between; 
-  margin: 2px;
-  position: relative;
-  height: 60px;
-  border-bottom: 1px solid #333;
-}
-.CreateOrdersHaders1 {
-  position: absolute;
-  left:  50%;
-  transform: translateX(-50%);
+  gap: 12px;
 }
 
+.co-title,
 .CreteOrdersTitel {
-  font-size: 24px;
-  font-weight: bold;
-  color: #333;
-  text-align: center;
+  font-size: var(--co-font-lg);
+  font-weight: 600;
+  color: var(--co-primary);
   margin: 0;
+  letter-spacing: -0.01em;
 }
 
+/* Header Order ID badge */
+.HeaderOrderID {
+  font-size: 12px;
+  font-weight: 600;
+  color: #d97706;
+  background: #fef3c7;
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid #f59e0b;
+}
+
+/* Header Delete Button - positioned on right */
+.HeaderDeleteButton {
+  padding: 8px;
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.HeaderDeleteButton:hover {
+  background: #dc2626;
+  color: white;
+  border-color: #dc2626;
+}
+
+/* ================================================
+   CO-BODY - MAIN LAYOUT
+   ================================================ */
+.co-body,
 .CreateOrdersBody {
-  display: flex;
-  flex-direction: row;
+  display: grid;
+  grid-template-columns: 1fr 200px;
+  gap: 0;
+  flex: 1;
+  height: calc(100vh - 56px);
+  overflow: hidden;
 }
 
+/* ================================================
+   CO-FORM - MAIN CONTENT AREA
+   ================================================ */
+.co-form,
 .createOdersForm {
-  position: absolute;
-  top: 68px;
-  left: 0;
-
-  width: 90vw;
-  min-height: calc(100vh - 60px);
-  padding: 15px;
-
   display: flex;
   flex-direction: column;
-  gap: 10px;
-
-  border-left: #333 solid 1px;
-  border-radius: 16px;
-
-  background-color: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(0, 0, 0, 0.3);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-
-  font-size: 16px;
-  font-weight: bold;
-  transition: all 0.3s ease;
+  gap: var(--co-space-lg);
+  padding: var(--co-space-xl);
+  padding-bottom: 120px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: var(--co-bg);
+  border-right: 1px solid var(--co-border);
+  height: 100%;
+  max-height: calc(100vh - 56px);
+  -ms-overflow-style: none;  /* Hide scrollbar IE/Edge */
+  scrollbar-width: none;  /* Hide scrollbar Firefox */
 }
+
+/* Hide scrollbar for Chrome, Safari, Opera */
+.co-form::-webkit-scrollbar,
+.createOdersForm::-webkit-scrollbar {
+  display: none;
+}
+
+/* ================================================
+   CO-SIDEBAR - NAVIGATION
+   ================================================ */
+.co-sidebar,
 .sideMenu {
-
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
-  align-items: stretch; /* Makes all <p> tags stretch to full width */
-  gap: 8px; /* Adds spacing between items */
-  padding: 20px;
-  width:10vw;
-  height: 50vh;
-
-  position: fixed;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  
-  border-left: #333 solid 1px;
-  border-radius: 16px 0 0 16px;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(0, 0, 0, 0.3);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  font-size: 16px;
-  font-weight: bold;
-  transition: all 0.3s ease;
-  background-color: rgba(255, 255, 255, 0.1); 
+  gap: var(--co-space-sm);
+  padding: var(--co-space-lg);
+  background: var(--co-bg);
+  position: sticky;
+  top: 56px;
+  height: calc(100vh - 56px);
+  overflow-y: auto;
 }
+
+.co-sidebar-item,
 .sideMenu p {
- 
-  padding: 10px 10px;
+  padding: var(--co-space-sm) var(--co-space-md);
   margin: 0;
-  width: 100%;
-  text-align: left;
-  font-size: clamp(12px, 1.5vw, 16px); 
-  border-radius: 8px;
+  font-size: var(--co-font-sm);
+  font-weight: 500;
+  color: var(--co-text-secondary);
+  border-radius: var(--co-radius-md);
+  cursor: pointer;
+  transition: all 0.15s ease;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  cursor: pointer;
-  transition: background 0.3s ease;
 }
 
+.co-sidebar-item:hover,
 .sideMenu p:hover {
-  background-color: rgba(255, 255, 255, 0.15); /* subtle hover effect */
+  background: var(--co-bg-tertiary);
+  color: var(--co-text);
 }
 
+.co-sidebar-item.active,
+.sideMenu p.active {
+  background: var(--co-accent);
+  color: white;
+}
 
-.OrderIDanddata{
+/* ================================================
+   CO-CUSTOMER-STICKY - Wrapper for sticky customer section
+   ================================================ */
+.CustomerStickySection {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--co-bg);
+  margin: 0 calc(-1 * var(--co-space-xl));
+  padding: var(--co-space-xs) var(--co-space-xl);
+  width: calc(100% + 2 * var(--co-space-xl));
+  border-bottom: 1px solid var(--co-border);
+  box-shadow: none;
+}
+
+/* ================================================
+   CO-ORDER-INFO - ID & Date Row
+   ================================================ */
+.co-order-info,
+.OrderIDanddata {
   display: flex;
-  flex-direction: row;
+  align-items: center;
   justify-content: space-between;
-  /* align-items: center; */
-  gap: 20px;
-  margin-bottom: 0;
- 
-}
-
-.OrderIDCreate{
-  display: flex;
-  gap: 7px;
-  font-weight: 900;
-  padding-top: 10px;
-  color:#333;
-  text-align: center;
+  gap: var(--co-space-sm);
+  padding: 0;
   margin: 0;
+  background: var(--co-bg);
 }
 
-.ManufacturingStepsTitel{
-  font-size: x-small;
-}
-.checkbox-group{
-  gap: 2px;
-}
-/* Unified Input Styling - Underline Only */
-
-/* Customer Name - Full Width Row */
-.CurstomerNameInput {
-   width: auto;
-  padding: 6px 8px;
-  margin: 0 0 8px 0;
-  font-size: 14px;
-  color: #1f2937;
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid #d1d5db;
-  outline: none;
-  box-sizing: border-box;
-  transition: border-color 0.2s ease;
-}
-
-/* Address - Controlled Width */
-.CurstomerAddressInput {
-  width: auto;
-  min-width: 200px;
-  max-width: 400px;
-  padding: 6px 8px;
-  margin: 0 0 8px 0;
-  font-size: 14px;
-  color: #1f2937;
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid #d1d5db;
-  outline: none;
-  box-sizing: border-box;
-  transition: border-color 0.2s ease;
-}
-
-/* Other Fields - Inline with controlled width */
-.CurstomerInput {
-  width: auto;
-  min-width: 100px;
-  max-width: 150px;
-  padding: 6px 8px;
-  margin: 0 4px;
-  font-size: 14px;
-  color: #1f2937;
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid #d1d5db;
-  outline: none;
-  box-sizing: border-box;
-  transition: border-color 0.2s ease;
-}
-
-.CurstomerInput:focus {
-  border-bottom-color: #FF6B35;
-  border-bottom-width: 2px;
-}
-
-.CurstomerAddressInput:focus {
-  border-bottom-color: #FF6B35;
-  border-bottom-width: 2px;
-}
-
-.CurstomerNameInput:focus {
-  border-bottom-color: #FF6B35;
-  border-bottom-width: 2px;
-}
-
-.CreateOrdersForm{
+.co-order-id,
+.OrderIDCreate {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: flex-end;
-  border-bottom: #0c214e  solid 1.2px;
-  padding-bottom: 20px;
+  align-items: center;
+  gap: var(--co-space-sm);
+  font-size: var(--co-font-sm);
+  font-weight: 600;
+  color: var(--co-primary);
+  margin: 0;
+  padding: 0;
 }
 
-/* Wrapper divs for Address - Full Width Row */
-.CreateOrdersForm > div {
-  width: 100%;
-  flex-basis: 100%;
+.OrderIDCreate h5,
+.OrderIDCreate h6 {
+  margin: 0;
+  padding: 0;
+  font-size: var(--co-font-sm);
+  font-weight: 600;
 }
 
-/* Customer Name + Company Name Row - Inline */
+.co-order-badge,
+.edit-order-id {
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--co-font-xs);
+  font-weight: 500;
+  background: #dbeafe;
+  color: #1d4ed8;
+  padding: 2px 8px;
+  border-radius: var(--co-radius-sm);
+}
+
+/* ================================================
+   CO-CUSTOMER-FORM - Customer Details
+   ================================================ */
+.co-customer-form,
+.CreateOrdersForm {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--co-space-sm);
+  padding: 0;
+  margin: 0;
+  background: var(--co-bg);
+}
+
+.co-customer-row,
 .CustomerNameRow {
-  display: flex;
-  gap: 16px;
-  width: 100%;
-  flex-basis: 100%;
-  justify-content: flex-start;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--co-space-lg);
+  grid-column: 1 / -1;
 }
 
-.CustomerNameRow > div {
-  flex: 0 0 auto;
-  width: auto;
-}
-
-.CustomerNameRow .CurstomerNameInput {
-  width: 180px;
-  min-width: 120px;
-}
-.CreateMaterialInput{
-  background-color: rgba(255, 255, 255, 0.1);
-  border: none;
-  
-  color: #333;
-  padding: 10px;
-  outline: none; /* Prevent default focus border */
- 
-  box-sizing: border-box; /* Makes padding not affect width */
-}
-.CreateMaterialandProduct{
-
-  width: 100%;
-
-  align-items: center;
-  gap: 20px;
-}
-
-.popup {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.3); /* overlay */
+/* ================================================
+   CO-ORDER-TYPE - Order Type Select (Sticky)
+   ================================================ */
+.co-order-type,
+.SeleteType {
   display: flex;
   align-items: center;
-  justify-content: center;
-  z-index: 999;
+  gap: var(--co-space-sm);
+  padding: var(--co-space-xs) var(--co-space-xl);
+  background: var(--co-bg);
+  border-bottom: 1px solid var(--co-border);
+  margin: 0 calc(-1 * var(--co-space-xl));
+  width: calc(100% + 2 * var(--co-space-xl));
+  position: sticky;
+  top: 60px;
+  z-index: 48;
+  box-shadow: none;
 }
 
-.popup-content {
-  background-color: white;
-  padding: 20px;
-  border-radius: 16px;
-  min-width: 300px;
-  box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.2);
-}
-.CreateMaterialinput {
-  display: flex; 
-  justify-content: space-between;
-  align-items: center; /* Optional: vertically align input and label */
-  gap: 100px; /* Space between input and label */
-  margin-right: 10px;
+.SeleteType label {
+  font-size: var(--co-font-xs);
+  font-weight: 600;
+  color: var(--co-text);
+  white-space: nowrap;
 }
 
+.SeleteType select {
+  min-width: 150px;
+  padding: var(--co-space-xs) var(--co-space-sm);
+  font-size: var(--co-font-xs);
+  border: 1px solid var(--co-border-dark);
+  border-radius: var(--co-radius-sm);
+  background: var(--co-bg);
+  height: 28px;
+}
 
-.ButtonWrapper {
-  position: relative;
+/* ================================================
+   CO-INPUT - Form Inputs (Underline Style)
+   ================================================ */
+.co-input,
+.co-input-name,
+.co-input-address,
+.CurstomerInput,
+.CurstomerNameInput,
+.CurstomerAddressInput {
   width: 100%;
-  height: 100%;
+  padding: var(--co-space-xs) var(--co-space-xs);
+  font-size: var(--co-font-sm);
+  color: var(--co-text);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--co-border-dark);
+  outline: none;
+  transition: all 0.2s ease;
 }
 
-.CreateOrdersButton {
-  width: 150px;
-  height: 40px;
-  background-color: #0c214e;
-  color: white;
-  border: none;
-  border-radius: 8px;
+.co-input:focus,
+.co-input-name:focus,
+.co-input-address:focus,
+.CurstomerInput:focus,
+.CurstomerNameInput:focus,
+.CurstomerAddressInput:focus {
+  border-bottom-color: var(--co-accent);
+  border-bottom-width: 2px;
+}
+
+.co-input:hover,
+.co-input-name:hover,
+.co-input-address:hover,
+.CurstomerInput:hover,
+.CurstomerNameInput:hover,
+.CurstomerAddressInput:hover {
+  background: var(--co-bg-tertiary);
+}
+
+.co-input::placeholder,
+.CurstomerInput::placeholder,
+.CurstomerNameInput::placeholder,
+.CurstomerAddressInput::placeholder {
+  color: var(--co-text-light);
+}
+
+/* ================================================
+   CO-LABEL - Form Labels
+   ================================================ */
+.co-label,
+.CreateOrdersForm label,
+.CustomerNameRow label {
+  display: block;
+  font-size: var(--co-font-xs);
+  font-weight: 600;
+  color: var(--co-text-secondary);
+  margin-bottom: var(--co-space-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ================================================
+   CO-SELECT - Dropdown Selects
+   ================================================ */
+.co-select,
+#myDropdown,
+#printSelect,
+.ordersCreateSections-Status select {
+  appearance: none;
+  width: 100%;
+  padding: var(--co-space-sm) var(--co-space-md);
+  padding-right: 36px;
+  font-size: var(--co-font-md);
+  color: var(--co-text);
+  background: var(--co-bg);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  border: 1px solid var(--co-border-dark);
+  border-radius: var(--co-radius-md);
   cursor: pointer;
-  font-size: 16px;
-  font-weight: bold;
-  transition: background-color 0.3s ease;
+  transition: all 0.15s ease;
 }
 
-.CreateOrdersFooter{
+.co-select:focus,
+#myDropdown:focus,
+#printSelect:focus,
+.ordersCreateSections-Status select:focus {
+  outline: none;
+  border-color: var(--co-accent);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.co-select:hover,
+#myDropdown:hover,
+#printSelect:hover,
+.ordersCreateSections-Status select:hover {
+  border-color: var(--co-accent);
+}
+
+/* ================================================
+   CO-SECTION - Card Sections
+   ================================================ */
+.co-section,
+.dynamicSection {
+  background: var(--co-bg);
+  border: 1px solid var(--co-border);
+  border-radius: var(--co-radius-lg);
+  padding: var(--co-space-lg);
+  margin-bottom: var(--co-space-md);
+}
+
+.co-section-title,
+.dynamicSection-title {
   display: flex;
-  justify-content: flex-start;
   align-items: center;
-  gap: 20px;
-  margin-top: 20px;
+  gap: var(--co-space-sm);
+  font-size: var(--co-font-md);
+  font-weight: 600;
+  color: var(--co-primary);
+  margin-bottom: var(--co-space-md);
+  padding-bottom: var(--co-space-sm);
+  border-bottom: 1px solid var(--co-border);
 }
 
-.CreateOrdersFooter {
-  position: fixed;
-  bottom: 20px;
-  left: 0;
-  right: 7%;
+/* ================================================
+   CO-CALC-SECTION - Dynamic Calculations
+   ================================================ */
+.co-calc-section,
+.dynamicColumnsSection {
+  background: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%);
+  border: 1px solid #fbbf24;
+}
+
+.co-calc-section .co-section-title,
+.dynamicColumnsSection .dynamicSection-title {
+  color: #92400e;
+  border-bottom-color: #fbbf24;
+}
+
+.co-calc-count,
+.dynamicSection-count {
+  font-size: var(--co-font-xs);
+  font-weight: 500;
+  background: #f59e0b;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.co-calc-grid,
+.dynamicColumnsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--co-space-md);
+}
+
+.co-calc-item,
+.dynamicColumnItem {
   display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 20px;
-  padding: 0 20px;
-  z-index: 1000;
-}
-
-.CreateOrdersFooterbuttom {
-  position: fixed;
-  bottom: 20px;
-  left: 0;
-  right: 0;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end; /* Align content to the right */
-  padding: 0 20px;
-  z-index: 1000;
-}
-
-
-.sideMenu p {
-   font-size: 12px;
-}
-
-
-.sideMenuPtag{
-  margin-top: 100px;
-}
-
-
-
-/* Add these styles to your CreateOders.css file */
-
-.saveoderspop-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.saveoderspop-content {
+  flex-direction: column;
+  gap: var(--co-space-xs);
   background: white;
-  padding: 30px;
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  text-align: center;
-  min-width: 300px;
-  max-width: 400px;
+  padding: var(--co-space-md);
+  border-radius: var(--co-radius-md);
+  border: 1px solid #fde68a;
+  position: relative;
+  transition: all 0.15s ease;
 }
 
-.saveoderspop-content h3 {
-  margin: 0 0 15px 0;
-  font-size: 20px;
-  color: #333;
+.co-calc-item:hover,
+.dynamicColumnItem:hover {
+  border-color: #f59e0b;
+  box-shadow: var(--co-shadow-sm);
 }
 
-.saveoderspop-content p {
-  margin: 0 0 25px 0;
-  font-size: 16px;
-  color: #666;
+.co-calc-item.highlight,
+.dynamicColumnItem.dynamicColumn-highlight {
+  background: linear-gradient(135deg, #fef3c7, white);
+  border-color: #f59e0b;
 }
 
-.saveoderspop-buttons {
-  display: flex;
-  gap: 15px;
-  justify-content: center;
+.co-calc-item.summary,
+.dynamicColumnItem.dynamicColumn-summary {
+  background: linear-gradient(135deg, #d1fae5, white);
+  border-color: #10b981;
 }
 
-.saveoderspop-btn-yes,
-.saveoderspop-btn-no {
-  padding: 10px 25px;
+.co-calc-label,
+.dynamicColumnLabel {
+  font-size: var(--co-font-xs);
+  font-weight: 600;
+  color: #78350f;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.co-calc-unit,
+.dynamicColumnUnit {
+  font-weight: 400;
+  color: #a16207;
+  text-transform: none;
+}
+
+.co-calc-input,
+.dynamicColumnInput {
+  background: transparent;
   border: none;
-  border-radius: 5px;
-  font-size: 16px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  min-width: 80px;
+  border-bottom: 1.5px solid #d4d4d4;
+  padding: var(--co-space-sm) 0;
+  font-size: var(--co-font-md);
+  font-weight: 500;
+  color: var(--co-text);
+  transition: all 0.2s ease;
 }
 
-.saveoderspop-btn-yes {
-  background-color: #4CAF50;
-  color: white;
+.co-calc-input:focus,
+.dynamicColumnInput:focus {
+  outline: none;
+  border-bottom-color: #f59e0b;
 }
 
-.saveoderspop-btn-yes:hover {
-  background-color: #45a049;
+.co-calc-input.auto,
+.dynamicColumnInput.auto-calculated {
+  background: #fef9c3;
+  color: #92400e;
+  font-weight: 600;
+  cursor: not-allowed;
+  border-radius: var(--co-radius-sm);
+  padding: var(--co-space-sm);
 }
 
-.saveoderspop-btn-no {
-  background-color: #f44336;
-  color: white;
+.co-calc-rule,
+.dynamicColumnRule {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: var(--co-font-sm);
+  cursor: help;
 }
 
-.saveoderspop-btn-no:hover {
-  background-color: #da190b;
-}
-
-
-.customerImage{
-  padding: auto;
-  margin: auto;
-}
-
-.ManufacturingStepsTitel{
-  padding: 0px;
-  margin: 0px;
-
-}
-
+/* ================================================
+   CO-STATUS - Status & Priority
+   ================================================ */
+.co-status,
 .ordersCreateSections-Status {
   display: flex;
   align-items: center;
-    font-size: x-small;
-  gap: 10px;
+  gap: var(--co-space-md);
+  font-size: var(--co-font-sm);
+  font-weight: 500;
+  color: var(--co-text-secondary);
 }
 
+.co-status select,
 .ordersCreateSections-Status select {
-  padding: 8px 12px;
-
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: x-small;
-  min-width: 150px;
+  min-width: 140px;
+  font-size: var(--co-font-sm);
 }
+
+/* ================================================
+   CO-MANUFACTURING-STEPS - Container and Title
+   ================================================ */
+.container12 {
+  background: var(--co-bg);
+  border: 1px solid var(--co-border);
+  border-radius: var(--co-radius-lg);
+  padding: var(--co-space-lg);
+  margin: 0;
+}
+
+.container12 .section.search {
+  display: flex;
+  align-items: center;
+  gap: var(--co-space-md);
+  padding: var(--co-space-sm) 0;
+}
+
+.container12 .inputBox {
+  flex: 1;
+  padding: var(--co-space-sm) var(--co-space-md);
+  font-size: var(--co-font-sm);
+  border: 1px solid var(--co-border-dark);
+  border-radius: var(--co-radius-md);
+  background: var(--co-bg);
+}
+
+.container12 .section-result {
+  margin-top: var(--co-space-md);
+}
+
+/* ================================================
+   CO-STEP-TABLE - Step Container
+   ================================================ */
+.co-step-container,
+.stepContainer {
+  background: var(--co-bg);
+  border: 1px solid var(--co-border);
+  border-radius: var(--co-radius-lg);
+  overflow: hidden;
+}
+
+.co-step-header,
+.stepHeaderRow {
+  display: grid;
+  grid-template-columns: 30px 70px 110px 110px 80px 130px 130px 60px 50px;
+  gap: var(--co-space-md);
+  padding: var(--co-space-sm) var(--co-space-lg);
+  background: var(--co-bg-tertiary);
+  font-size: var(--co-font-xs);
+  font-weight: 600;
+  color: var(--co-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  border-bottom: 1px solid var(--co-border);
+  border-radius: var(--co-radius-md) var(--co-radius-md) 0 0;
+  white-space: nowrap;
+}
+
+.co-step-row,
+.stepRow {
+  display: grid;
+  grid-template-columns: 30px 70px 110px 110px 80px 130px 130px 60px 50px;
+  gap: var(--co-space-md);
+  padding: var(--co-space-sm) var(--co-space-lg);
+  align-items: center;
+  font-size: var(--co-font-xs);
+  color: var(--co-text);
+  border-bottom: 1px solid var(--co-border);
+  transition: background 0.1s ease;
+}
+
+.co-step-row:hover,
+.stepRow:hover {
+  background: #f0f9ff;
+}
+
+.co-step-row:last-child,
+.stepRow:last-child {
+  border-bottom: none;
+}
+
+/* ================================================
+   CO-SAVED-DISPLAY - Saved Data
+   ================================================ */
+.co-saved-display,
+.savedStepDisplay {
+  display: flex;
+  flex-direction: column;
+  max-height: 300px;
+  overflow-y: auto;
+  font-size: var(--co-font-sm);
+  border: 1px solid var(--co-border);
+  border-radius: var(--co-radius-md);
+}
+
+.co-saved-display::-webkit-scrollbar,
+.savedStepDisplay::-webkit-scrollbar {
+  width: 6px;
+}
+
+.co-saved-display::-webkit-scrollbar-thumb,
+.savedStepDisplay::-webkit-scrollbar-thumb {
+  background: var(--co-border-dark);
+  border-radius: 3px;
+}
+
+/* ================================================
+   CO-MIXING - Mixing Data Display
+   ================================================ */
+.co-mixing-display,
+.SaveMixingDisplay {
+  display: flex;
+  flex-direction: column;
+  max-height: 150px;
+  overflow-y: auto;
+  font-size: var(--co-font-sm);
+  border: 1px solid var(--co-border);
+  border-radius: var(--co-radius-md);
+}
+
+.co-mixing-header,
+.SaveMixingHeaderRow {
+  display: grid;
+  grid-template-columns: 40px 140px 140px 100px 80px;
+  gap: var(--co-space-sm);
+  padding: var(--co-space-sm) var(--co-space-md);
+  background: var(--co-bg-tertiary);
+  font-size: var(--co-font-xs);
+  font-weight: 600;
+  color: var(--co-text-secondary);
+  border-bottom: 1px solid var(--co-border);
+}
+
+.co-mixing-row,
+.SaveMixingstepRow {
+  display: grid;
+  grid-template-columns: 40px 140px 140px 100px 80px;
+  gap: var(--co-space-sm);
+  padding: var(--co-space-sm) var(--co-space-md);
+  font-size: var(--co-font-sm);
+  border-bottom: 1px solid var(--co-border);
+}
+
+.co-mixing-row:last-child,
+.SaveMixingstepRow:last-child {
+  border-bottom: none;
+}
+
+/* ================================================
+   CO-POPUP - Modal Overlay
+   ================================================ */
+.co-popup-overlay,
+.popup,
+.popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  backdrop-filter: blur(2px);
+}
+
+.co-popup,
+.popup-content {
+  background: var(--co-bg);
+  border-radius: var(--co-radius-xl);
+  padding: var(--co-space-xl);
+  min-width: 400px;
+  max-width: 95vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--co-shadow-lg);
+}
+
+/* Configure Step popup header row */
+.popup-content .headerRow {
+  display: grid;
+  grid-template-columns: 80px 110px 110px 100px 130px 130px 70px 50px;
+  gap: var(--co-space-sm);
+  padding: var(--co-space-sm) var(--co-space-md);
+  background: var(--co-bg-tertiary);
+  font-size: var(--co-font-xs);
+  font-weight: 600;
+  color: var(--co-text-secondary);
+  text-transform: uppercase;
+  border-radius: var(--co-radius-md);
+  margin-bottom: var(--co-space-sm);
+}
+
+/* Configure Step popup item row */
+.popupitemallStep,
+.popupitemallStep.popupitemall {
+  display: grid;
+  grid-template-columns: 80px 110px 110px 100px 130px 130px 70px 50px;
+  gap: var(--co-space-sm);
+  padding: var(--co-space-sm) var(--co-space-md);
+  align-items: center;
+  font-size: var(--co-font-sm);
+  border-bottom: 1px solid var(--co-border);
+  background: var(--co-bg);
+}
+
+.popupitemallStep input[type="text"],
+.popupitemallStep input[type="datetime-local"] {
+  width: 100%;
+  padding: var(--co-space-xs) var(--co-space-sm);
+  font-size: var(--co-font-xs);
+  border: 1px solid var(--co-border-dark);
+  border-radius: var(--co-radius-sm);
+  background: var(--co-bg);
+}
+
+.popupitemallStep input:focus {
+  outline: none;
+  border-color: var(--co-accent);
+}
+
+.co-popup-title,
+.popup-content h3,
+.popup-content .popup-title {
+  font-size: var(--co-font-lg);
+  font-weight: 600;
+  color: var(--co-primary);
+  margin: 0 0 var(--co-space-lg) 0;
+  padding-bottom: var(--co-space-md);
+  border-bottom: 1px solid var(--co-border);
+}
+
+.co-popup-actions,
+.popupButtons {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--co-space-md);
+  padding-top: var(--co-space-lg);
+  margin-top: var(--co-space-lg);
+  border-top: 1px solid var(--co-border);
+}
+
+/* Popup Save Button */
+.saveButton {
+  padding: var(--co-space-sm) var(--co-space-xl);
+  font-size: var(--co-font-sm);
+  font-weight: 600;
+  background: var(--co-success);
+  color: white;
+  border: none;
+  border-radius: var(--co-radius-md);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.saveButton:hover {
+  background: #059669;
+  transform: translateY(-1px);
+}
+
+/* Popup Cancel Button */
+.cancelButton {
+  padding: var(--co-space-sm) var(--co-space-xl);
+  font-size: var(--co-font-sm);
+  font-weight: 600;
+  background: var(--co-bg-tertiary);
+  color: var(--co-text);
+  border: 1px solid var(--co-border-dark);
+  border-radius: var(--co-radius-md);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.cancelButton:hover {
+  background: var(--co-border);
+}
+
+/* ================================================
+   CO-TABLE - Popup Tables
+   ================================================ */
+.co-table-header,
+.headerRowmaterialMixpop {
+  display: grid;
+  grid-template-columns: 140px 120px 150px 60px;
+  gap: var(--co-space-sm);
+  padding: var(--co-space-sm) var(--co-space-md);
+  background: var(--co-bg-tertiary);
+  font-size: var(--co-font-xs);
+  font-weight: 600;
+  color: var(--co-text-secondary);
+  border-bottom: 1px solid var(--co-border);
+  border-radius: var(--co-radius-md) var(--co-radius-md) 0 0;
+}
+
+.co-table-row,
+.popupitemall {
+  display: grid;
+  grid-template-columns: 140px 120px 150px 60px 30px;
+  gap: var(--co-space-sm);
+  padding: var(--co-space-sm) var(--co-space-md);
+  align-items: center;
+  font-size: var(--co-font-sm);
+  border-bottom: 1px solid var(--co-border);
+}
+
+.co-table-row input,
+.popupitemall input {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--co-border-dark);
+  padding: var(--co-space-xs) 0;
+  font-size: var(--co-font-sm);
+  color: var(--co-text);
+}
+
+.co-table-row input:focus,
+.popupitemall input:focus {
+  outline: none;
+  border-bottom-color: var(--co-accent);
+}
+
+/* ================================================
+   CO-MACHINE-POPUP - Machine Table
+   ================================================ */
+.popup-overlay.Machine-Table {
+  position: fixed !important;
+  inset: 0 !important;
+  background: rgba(0, 0, 0, 0.5) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 10000 !important;
+}
+
+.popup.Machine-Table {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.popup-content.Machine-Table {
+  background: var(--co-bg);
+  border-radius: var(--co-radius-xl);
+  padding: var(--co-space-xl);
+  min-width: 600px;
+  max-width: 90vw;
+  width: 80vw;
+  height: 80vh;
+  overflow-y: auto;
+  box-shadow: var(--co-shadow-lg);
+}
+
+/* ================================================
+   CO-CONFIG-STEP - Configured Step Section
+   ================================================ */
+.co-config-step,
+.Configured-Step {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--co-space-md);
+  padding: var(--co-space-md) 0;
+  border-top: 1px solid var(--co-border);
+  border-bottom: 1px solid var(--co-border);
+}
+
+/* ================================================
+   CO-TEXTAREA - Notes Textarea
+   ================================================ */
+.co-textarea,
+.NotesTextarea {
+  width: 100%;
+  min-height: 60px;
+  padding: var(--co-space-md);
+  font-size: var(--co-font-md);
+  color: var(--co-text);
+  background: var(--co-bg);
+  border: 1px solid var(--co-border-dark);
+  border-radius: var(--co-radius-md);
+  resize: vertical;
+  transition: all 0.15s ease;
+}
+
+.co-textarea:focus,
+.NotesTextarea:focus {
+  outline: none;
+  border-color: var(--co-accent);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* ================================================
+   CO-BTN - Buttons
+   ================================================ */
+.co-btn,
+.co-btn-primary,
+.CreateOrdersButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--co-space-sm);
+  padding: var(--co-space-md) var(--co-space-xl);
+  font-size: var(--co-font-md);
+  font-weight: 600;
+  color: white;
+  background: var(--co-primary);
+  border: none;
+  border-radius: var(--co-radius-md);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.co-btn:hover,
+.co-btn-primary:hover,
+.CreateOrdersButton:hover {
+  background: var(--co-primary-light);
+  transform: translateY(-1px);
+  box-shadow: var(--co-shadow-md);
+}
+
+.co-btn:active,
+.CreateOrdersButton:active {
+  transform: translateY(0);
+}
+
+.co-btn-icon,
+.buttonStepRowNote {
+  background: transparent;
+  border: none;
+  padding: var(--co-space-xs);
+  cursor: pointer;
+  color: var(--co-text-secondary);
+  transition: color 0.15s ease;
+}
+
+.co-btn-icon:hover,
+.buttonStepRowNote:hover {
+  color: var(--co-accent);
+}
+
+/* ================================================
+   CO-FOOTER - Fixed Action Bar with Notes/Status/Priority
+   ================================================ */
+.co-footer,
+.CreateOrdersFooter {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  height: 50px !important;
+  min-height: 50px !important;
+  max-height: 50px !important;
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: var(--co-space-lg);
+  padding: 0 var(--co-space-xl) !important;
+  margin: 0 !important;
+  background: var(--co-bg) !important;
+  border-top: 1px solid var(--co-border);
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+  z-index: 9999 !important;
+}
+
+/* Notes section in footer */
+.co-footer-notes,
+.CreateOrdersFooter .NotesSection,
+.NotesSection {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--co-space-sm);
+  flex: 1;
+}
+
+.co-footer-notes label,
+.NotesSection label {
+  font-size: var(--co-font-xs);
+  font-weight: 600;
+  color: var(--co-text);
+  white-space: nowrap;
+}
+
+.co-footer-notes textarea,
+.NotesSection textarea,
+.CreateOrdersFooter .NotesTextarea {
+  flex: 1;
+  min-width: 150px;
+  max-width: 300px;
+  height: 28px !important;
+  min-height: 28px !important;
+  max-height: 28px !important;
+  padding: 4px 10px !important;
+  font-size: var(--co-font-xs);
+  border: 1px solid var(--co-border-dark);
+  border-radius: var(--co-radius-sm);
+  resize: none !important;
+  line-height: 1.5;
+  overflow: hidden;
+}
+
+/* Status section in footer */
+.co-footer-status,
+.CreateOrdersFooter .ordersCreateSections-Status,
+.ordersCreateSections-Status {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--co-space-sm);
+}
+
+.co-footer-status label,
+.ordersCreateSections-Status label {
+  font-size: var(--co-font-xs);
+  font-weight: 600;
+  color: var(--co-text);
+  white-space: nowrap;
+}
+
+.co-footer-status select,
+.ordersCreateSections-Status select {
+  min-width: 120px;
+  height: 32px;
+  font-size: var(--co-font-xs);
+  padding: 4px 8px;
+}
+
+/* Priority section in footer */
+.co-footer-priority,
+.CreateOrdersFooter .PrioritySection,
+.PrioritySection {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--co-space-sm);
+}
+
+.co-footer-priority label,
+.PrioritySection label {
+  font-size: var(--co-font-xs);
+  font-weight: 600;
+  color: var(--co-text);
+  white-space: nowrap;
+}
+
+.co-footer-priority select,
+.PrioritySection select {
+  min-width: 110px;
+  height: 32px;
+  appearance: none;
+  padding: 4px 28px 4px 8px;
+  font-size: var(--co-font-xs);
+  color: var(--co-text);
+  background: var(--co-bg);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  border: 1px solid var(--co-border-dark);
+  border-radius: var(--co-radius-sm);
+  cursor: pointer;
+}
+
+/* Save button in footer */
+.co-footer-save,
+.CreateOrdersButton {
+  height: 32px;
+  padding: 0 var(--co-space-lg);
+  font-size: var(--co-font-xs);
+  font-weight: 600;
+  background: #f59e0b;
+  color: white;
+  border: none;
+  border-radius: var(--co-radius-sm);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.co-footer-save:hover,
+.CreateOrdersButton:hover {
+  background: #d97706;
+}
+
+/* ================================================
+   CO-SAVE-POPUP - Save Confirmation
+   ================================================ */
+.co-save-overlay,
+.saveoderspop-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+}
+
+.co-save-popup,
+.saveoderspop-content {
+  background: var(--co-bg);
+  border-radius: var(--co-radius-xl);
+  padding: var(--co-space-2xl);
+  text-align: center;
+  min-width: 320px;
+  max-width: 400px;
+  box-shadow: var(--co-shadow-lg);
+}
+
+.co-save-popup h3,
+.saveoderspop-content h3 {
+  font-size: var(--co-font-xl);
+  font-weight: 600;
+  color: var(--co-primary);
+  margin: 0 0 var(--co-space-md) 0;
+}
+
+.co-save-popup p,
+.saveoderspop-content p {
+  font-size: var(--co-font-md);
+  color: var(--co-text-secondary);
+  margin: 0 0 var(--co-space-xl) 0;
+}
+
+.co-save-actions,
+.saveoderspop-buttons {
+  display: flex;
+  gap: var(--co-space-md);
+  justify-content: center;
+}
+
+.co-btn-success,
+.saveoderspop-btn-yes {
+  padding: var(--co-space-md) var(--co-space-xl);
+  font-size: var(--co-font-md);
+  font-weight: 600;
+  border: none;
+  border-radius: var(--co-radius-md);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  background: var(--co-success);
+  color: white;
+}
+
+.co-btn-success:hover,
+.saveoderspop-btn-yes:hover {
+  background: #059669;
+}
+
+.co-btn-danger,
+.saveoderspop-btn-no {
+  padding: var(--co-space-md) var(--co-space-xl);
+  font-size: var(--co-font-md);
+  font-weight: 600;
+  border: none;
+  border-radius: var(--co-radius-md);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  background: var(--co-danger);
+  color: white;
+}
+
+.co-btn-danger:hover,
+.saveoderspop-btn-no:hover {
+  background: #dc2626;
+}
+
+/* ================================================
+   CO-SUGGESTIONS - Dropdown Suggestions
+   ================================================ */
+.co-suggestions,
+.suggestionsListContainer,
+.suggestion-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  background: var(--co-bg);
+  border: 1px solid var(--co-border);
+  border-top: none;
+  border-radius: 0 0 var(--co-radius-md) var(--co-radius-md);
+  box-shadow: var(--co-shadow-lg);
+  z-index: 500;
+}
+
+/* Make sure parent containers allow suggestions to show */
+.co-customer-row,
+.CustomerNameRow {
+  position: relative;
+  overflow: visible;
+}
+
+/* Customer input wrapper for suggestions */
+.co-customer-form > div,
+.CreateOrdersForm > div {
+  position: relative;
+}
+
+.co-suggestion-item,
+.suggestionItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--co-space-md);
+  font-size: var(--co-font-sm);
+  cursor: pointer;
+  border-bottom: 1px solid var(--co-border);
+  transition: background 0.1s ease;
+}
+
+.co-suggestion-item:hover,
+.suggestionItem:hover {
+  background: #f0f9ff;
+}
+
+.co-suggestion-item:last-child,
+.suggestionItem:last-child {
+  border-bottom: none;
+}
+
+.co-suggestion-name,
+.suggestionItem-name {
+  font-weight: 500;
+  color: var(--co-text);
+}
+
+.co-suggestion-meta,
+.suggestionItem-meta {
+  font-size: var(--co-font-xs);
+  color: var(--co-text-light);
+}
+
+.co-suggestions-empty,
+.suggestionsListEmpty {
+  padding: var(--co-space-lg);
+  text-align: center;
+  color: var(--co-text-light);
+  font-size: var(--co-font-sm);
+}
+
+/* Scrollbar for suggestions */
+.co-suggestions::-webkit-scrollbar,
+.suggestionsListContainer::-webkit-scrollbar,
+.suggestion-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.co-suggestions::-webkit-scrollbar-thumb,
+.suggestionsListContainer::-webkit-scrollbar-thumb,
+.suggestion-list::-webkit-scrollbar-thumb {
+  background: var(--co-border-dark);
+  border-radius: 3px;
+}
+
+/* ================================================
+   CO-FULLSCREEN - Full Screen Mode
+   ================================================ */
+.co-container.fullscreen .co-body,
+.CreateOrders.fullScreen .CreateOrdersBody,
+.CreateOrders .CreateOrdersBody {
+  grid-template-columns: 1fr;
+}
+
+.co-container.fullscreen .co-sidebar,
+.CreateOrders.fullScreen .sideMenu,
+.CreateOrders .sideMenu {
+  display: none;
+}
+
+/* Full screen form optimization */
+.co-container.fullscreen .co-form,
+.CreateOrders.fullScreen .createOdersForm,
+.CreateOrders .createOdersForm {
+  max-width: 100%;
+  width: 100%;
+  margin: 0;
+  padding: var(--co-space-xl);
+  padding-bottom: 80px;
+}
+
+/* ================================================
+   CO-UTILITIES
+   ================================================ */
+.co-checkbox-group,
+.checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--co-space-md);
+}
+
+.co-step-title,
+.ManufacturingStepsTitel {
+  font-size: var(--co-font-xs);
+  font-weight: 600;
+  color: var(--co-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
+}
+
+.co-image,
+.customerImage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ================================================
+   RESPONSIVE - 14" SCREENS (1920px)
+   ================================================ */
+@media screen and (max-width: 1920px) {
+  .co-body,
+  .CreateOrdersBody {
+    grid-template-columns: 1fr 180px;
+  }
+
+  .co-calc-grid,
+  .dynamicColumnsGrid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  }
+
+  /* Footer inherits main styles with !important */
+}
+
+/* ================================================
+   RESPONSIVE - 13" SCREENS (1440px)
+   ================================================ */
+@media screen and (max-width: 1440px) {
+  :root {
+    --co-font-base: 12px;
+    --co-font-md: 13px;
+    --co-space-lg: 14px;
+    --co-space-xl: 20px;
+  }
+
+  .co-header,
+  .CrateOrdersHaders {
+    height: 50px;
+  }
+
+  .co-title,
+  .CreteOrdersTitel {
+    font-size: var(--co-font-lg);
+  }
+
+  .co-body,
+  .CreateOrdersBody {
+    grid-template-columns: 1fr 160px;
+  }
+
+  .co-form,
+  .createOdersForm {
+    padding: var(--co-space-lg);
+  }
+
+  .co-customer-form,
+  .CreateOrdersForm {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .co-customer-row,
+  .CustomerNameRow {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .co-sidebar-item,
+  .sideMenu p {
+    font-size: var(--co-font-xs);
+    padding: var(--co-space-xs) var(--co-space-sm);
+  }
+
+  .co-step-header,
+  .co-step-row,
+  .stepHeaderRow,
+  .stepRow {
+    grid-template-columns: 25px 65px 100px 100px 75px 110px 110px 55px 45px;
+    gap: var(--co-space-sm);
+    font-size: var(--co-font-xs);
+  }
+
+  .co-calc-grid,
+  .dynamicColumnsGrid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: var(--co-space-sm);
+  }
+
+  /* Footer inherits main styles with !important */
+}
+
+/* ================================================
+   RESPONSIVE - SMALL LAPTOPS (1280px)
+   ================================================ */
+@media screen and (max-width: 1280px) {
+  .co-body,
+  .CreateOrdersBody {
+    grid-template-columns: 1fr 140px;
+  }
+
+  .co-customer-form,
+  .CreateOrdersForm {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .co-customer-row,
+  .CustomerNameRow {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .co-sidebar,
+  .sideMenu {
+    padding: var(--co-space-sm);
+  }
+
+  .co-sidebar-item,
+  .sideMenu p {
+    font-size: 10px;
+  }
+
+  .co-calc-grid,
+  .dynamicColumnsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .co-step-header,
+  .co-step-row,
+  .stepHeaderRow,
+  .stepRow {
+    grid-template-columns: 25px 60px 90px 90px 65px 100px 100px 50px 40px;
+    gap: var(--co-space-xs);
+    padding: var(--co-space-xs) var(--co-space-sm);
+  }
+
+  /* Footer inherits main styles with !important */
+}
+
+/* ================================================
+   RESPONSIVE - TABLETS (1024px)
+   ================================================ */
+@media screen and (max-width: 1024px) {
+  .co-body,
+  .CreateOrdersBody {
+    grid-template-columns: 1fr;
+  }
+
+  .co-sidebar,
+  .sideMenu {
+    display: none;
+  }
+
+  .co-form,
+  .createOdersForm {
+    border-right: none;
+    padding-bottom: 80px;
+  }
+
+  .co-customer-form,
+  .CreateOrdersForm {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .co-customer-row,
+  .CustomerNameRow {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .co-header,
+  .CrateOrdersHaders {
+    height: 48px;
+    padding: 0 var(--co-space-lg);
+  }
+
+  .co-title,
+  .CreteOrdersTitel {
+    font-size: var(--co-font-md);
+  }
+
+  .co-calc-grid,
+  .dynamicColumnsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .co-step-header,
+  .co-step-row,
+  .stepHeaderRow,
+  .stepRow {
+    grid-template-columns: 20px 55px 70px 70px 60px 80px 80px 45px 35px;
+    font-size: 10px;
+    gap: 3px;
+    padding: var(--co-space-xs) var(--co-space-sm);
+  }
+
+  .co-footer-notes textarea,
+  .NotesSection textarea,
+  .NotesTextarea {
+    min-width: 150px;
+    max-width: 300px;
+  }
+
+  .co-footer-status select,
+  .ordersCreateSections-Status select,
+  .co-footer-priority select,
+  .PrioritySection select {
+    min-width: 120px;
+  }
+
+  /* Footer inherits main styles with !important */
+
+  .co-popup,
+  .popup-content {
+    min-width: 90vw;
+    padding: var(--co-space-lg);
+  }
+}
+
+/* ================================================
+   RESPONSIVE - MOBILE (768px)
+   ================================================ */
+@media screen and (max-width: 768px) {
+  .co-header,
+  .CrateOrdersHaders {
+    height: 44px;
+    grid-template-columns: auto 1fr;
+  }
+
+  .co-header-center,
+  .CreateOrdersHaders1 {
+    justify-self: start;
+  }
+
+  .co-title,
+  .CreteOrdersTitel {
+    font-size: var(--co-font-sm);
+  }
+
+  .co-form,
+  .createOdersForm {
+    padding: var(--co-space-md);
+  }
+
+  .co-customer-form,
+  .CreateOrdersForm {
+    grid-template-columns: 1fr;
+  }
+
+  .co-customer-row,
+  .CustomerNameRow {
+    grid-template-columns: 1fr;
+  }
+
+  .co-calc-grid,
+  .dynamicColumnsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .co-calc-item,
+  .dynamicColumnItem {
+    padding: var(--co-space-sm);
+  }
+
+  .co-step-header,
+  .co-step-row,
+  .stepHeaderRow,
+  .stepRow {
+    grid-template-columns: repeat(6, 1fr);
+    font-size: 9px;
+  }
+
+  .co-step-header strong:nth-child(n+7),
+  .co-step-row span:nth-child(n+7),
+  .stepHeaderRow strong:nth-child(n+7),
+  .stepRow span:nth-child(n+7) {
+    display: none;
+  }
+
+  /* Footer inherits main styles with !important - stays fixed at 50px height */
+
+  .co-form,
+  .createOdersForm {
+    padding-bottom: 100px;
+  }
+}
+
+/* ================================================
+   ANIMATIONS
+   ================================================ */
+@keyframes co-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes co-fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.co-fadeIn,
+.fadeIn {
+  animation: co-fadeIn 0.2s ease;
+}
+
+.co-spin {
+  animation: co-spin 1s linear infinite;
+}
+
+/* ================================================
+   CO-SCROLLBAR - Hidden for Clean Look
+   ================================================ */
+/* Scrollbar is hidden but scrolling works - see .co-form styles above */

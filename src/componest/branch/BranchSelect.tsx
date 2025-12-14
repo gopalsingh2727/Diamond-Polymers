@@ -14,8 +14,12 @@ const BranchSelect = () => {
 
   const [selectedBranch, setSelectedBranch] = useState("");
 
+  // ✅ Fetch branches for both admin and master_admin if no branch selected
   useEffect(() => {
-    if (isAuthenticated && userData?.role === "admin" && !userData?.selectedBranch) {
+    const role = userData?.role;
+    const needsBranchSelection = (role === "admin" || role === "master_admin") && !userData?.selectedBranch;
+
+    if (isAuthenticated && needsBranchSelection) {
       dispatch(fetchBranches());
     }
   }, [isAuthenticated, userData?.role, userData?.selectedBranch, dispatch]);
@@ -35,7 +39,11 @@ const BranchSelect = () => {
     navigate("/");
   };
 
-  if (!isAuthenticated || userData?.role !== "admin" || userData?.selectedBranch) {
+  // ✅ Show branch selection for admin and master_admin only if no branch selected
+  const role = userData?.role;
+  const needsBranchSelection = (role === "admin" || role === "master_admin") && !userData?.selectedBranch;
+
+  if (!isAuthenticated || !needsBranchSelection) {
     return null;
   }
 
@@ -111,24 +119,27 @@ const BranchSelect = () => {
                 Continue to Dashboard
               </button>
 
-              {/* Divider */}
-              <div className="relative my-4">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">or</span>
-                </div>
-              </div>
+              {/* Create Branch Button - Only for master_admin */}
+              {role === "master_admin" && (
+                <>
+                  <div className="relative my-4">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-gray-300"></div>
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                      <span className="px-2 bg-white text-gray-500">or</span>
+                    </div>
+                  </div>
 
-              {/* Create Branch Button */}
-              <button
-                type="button"
-                onClick={() => navigate("/create-branch")}
-                className="w-full py-3 px-4 rounded-lg font-medium text-[#FF6B35] border-2 border-[#FF6B35] hover:bg-[#FF6B35] hover:text-white transition-all duration-300"
-              >
-                + Create New Branch
-              </button>
+                  <button
+                    type="button"
+                    onClick={() => navigate("/create-branch")}
+                    className="w-full py-3 px-4 rounded-lg font-medium text-[#FF6B35] border-2 border-[#FF6B35] hover:bg-[#FF6B35] hover:text-white transition-all duration-300"
+                  >
+                    + Create New Branch
+                  </button>
+                </>
+              )}
             </>
           )}
         </div>

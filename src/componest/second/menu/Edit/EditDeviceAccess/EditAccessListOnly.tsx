@@ -13,6 +13,8 @@ interface DeviceAccess {
   deviceName?: string;
   location?: string;
   deviceId?: string;
+  branchId?: { _id: string; branchName: string };
+  machines?: any[];
   createdAt?: string;
   updatedAt?: string;
 }
@@ -92,8 +94,11 @@ const EditAccessListOnly: React.FC<Props> = ({ onEdit }) => {
               <thead className="editsectionsTable-thead">
                 <tr>
                   <th className="editsectionsTable-th">No</th>
+                  <th className="editsectionsTable-th">Device ID</th>
                   <th className="editsectionsTable-th">Device Name</th>
+                  <th className="editsectionsTable-th">Branch</th>
                   <th className="editsectionsTable-th">Location</th>
+                  <th className="editsectionsTable-th">Machines</th>
                 </tr>
               </thead>
               <tbody className="editsectionsTable-tbody">
@@ -104,8 +109,11 @@ const EditAccessListOnly: React.FC<Props> = ({ onEdit }) => {
                     onClick={() => { setSelectedRow(index); onEdit(item); }}
                   >
                     <td className="editsectionsTable-td">{index + 1}</td>
+                    <td className="editsectionsTable-td" style={{ fontFamily: 'monospace', fontWeight: '600' }}>{item.deviceId || "N/A"}</td>
                     <td className="editsectionsTable-td">{item.deviceName || "N/A"}</td>
+                    <td className="editsectionsTable-td">{item.branchId?.branchName || "N/A"}</td>
                     <td className="editsectionsTable-td">{item.location || "N/A"}</td>
+                    <td className="editsectionsTable-td">{item.machines?.length || 0}</td>
                   </tr>
                 ))}
               </tbody>

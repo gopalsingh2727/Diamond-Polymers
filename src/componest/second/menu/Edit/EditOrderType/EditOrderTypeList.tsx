@@ -15,6 +15,7 @@ interface OrderType {
   typeCode?: string;
   description?: string;
   category?: { _id: string; name: string };
+  branchId?: { _id: string; name: string };
 }
 
 interface Props {
@@ -94,6 +95,7 @@ const EditOrderTypeList: React.FC<Props> = ({ onEdit }) => {
                   <th className="editsectionsTable-th">Type Name</th>
                   <th className="editsectionsTable-th">Code</th>
                   <th className="editsectionsTable-th">Description</th>
+                  <th className="editsectionsTable-th">Branch</th>
                 </tr>
               </thead>
               <tbody className="editsectionsTable-tbody">
@@ -107,6 +109,7 @@ const EditOrderTypeList: React.FC<Props> = ({ onEdit }) => {
                     <td className="editsectionsTable-td">{item.typeName || item.name || "N/A"}</td>
                     <td className="editsectionsTable-td">{item.typeCode || "N/A"}</td>
                     <td className="editsectionsTable-td">{item.description || "N/A"}</td>
+                    <td className="editsectionsTable-td">{item.branchId?.name || "N/A"}</td>
                   </tr>
                 ))}
               </tbody>

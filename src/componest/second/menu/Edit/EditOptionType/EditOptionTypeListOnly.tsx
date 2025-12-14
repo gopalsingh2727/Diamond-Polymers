@@ -13,6 +13,7 @@ interface OptionType {
   name: string;
   description?: string;
   category?: { _id: string; name: string };
+  branchId?: { _id: string; name: string };
 }
 
 interface Props {
@@ -90,6 +91,7 @@ const EditOptionTypeListOnly: React.FC<Props> = ({ onEdit }) => {
                   <th className="editsectionsTable-th">No</th>
                   <th className="editsectionsTable-th">Name</th>
                   <th className="editsectionsTable-th">Category</th>
+                  <th className="editsectionsTable-th">Branch</th>
                 </tr>
               </thead>
               <tbody className="editsectionsTable-tbody">
@@ -102,6 +104,7 @@ const EditOptionTypeListOnly: React.FC<Props> = ({ onEdit }) => {
                     <td className="editsectionsTable-td">{index + 1}</td>
                     <td className="editsectionsTable-td">{item.name}</td>
                     <td className="editsectionsTable-td">{item.category?.name || "N/A"}</td>
+                    <td className="editsectionsTable-td">{item.branchId?.name || "N/A"}</td>
                   </tr>
                 ))}
               </tbody>

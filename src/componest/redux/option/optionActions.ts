@@ -35,7 +35,7 @@ export const createOption = (optionData: any) => async (dispatch: Dispatch) => {
   dispatch({ type: CREATE_OPTION_REQUEST });
 
   try {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     const response = await axios.post(`${baseUrl}/option`, optionData, {
       headers: {
         'x-api-key': API_KEY,
@@ -71,7 +71,7 @@ export const getOptions = (params?: {
   dispatch({ type: GET_OPTIONS_REQUEST });
 
   try {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     const queryParams = new URLSearchParams(params as any).toString();
     const url = `${baseUrl}/option${queryParams ? `?${queryParams}` : ''}`;
 
@@ -111,7 +111,7 @@ export const updateOption = (id: string, optionData: any) => async (dispatch: Di
   dispatch({ type: UPDATE_OPTION_REQUEST });
 
   try {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     const response = await axios.put(`${baseUrl}/option/${id}`, optionData, {
       headers: {
         'x-api-key': API_KEY,
@@ -141,7 +141,7 @@ export const deleteOption = (id: string) => async (dispatch: Dispatch) => {
   dispatch({ type: DELETE_OPTION_REQUEST });
 
   try {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     await axios.delete(`${baseUrl}/option/${id}`, {
       headers: {
         'x-api-key': API_KEY,
@@ -171,7 +171,7 @@ export const uploadOptionFiles = (id: string, files: any[]) => async (dispatch: 
   dispatch({ type: UPLOAD_OPTION_FILES_REQUEST });
 
   try {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     const response = await axios.post(`${baseUrl}/option/${id}/files`, { files }, {
       headers: {
         'x-api-key': API_KEY,
@@ -198,7 +198,7 @@ export const addOptionLink = (id: string, link: any) => async (dispatch: Dispatc
   dispatch({ type: ADD_OPTION_LINK_REQUEST });
 
   try {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     const response = await axios.post(`${baseUrl}/option/${id}/links`, link, {
       headers: {
         'x-api-key': API_KEY,

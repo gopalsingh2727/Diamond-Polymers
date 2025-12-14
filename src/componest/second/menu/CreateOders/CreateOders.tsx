@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useSelector, useDispatch } from "react-redux";
+import { useDispatch } from "react-redux";
 import "./CreateOders.css";
 import "./DynamicForm.css";
 import { BackButton } from "../../../allCompones/BackButton";
@@ -13,11 +13,9 @@ import Notes from "./notes";
 import Priority from "./priority";
 import Status from "./status";
 import SaveOrders from "./saveTheOdes";
-import  StepContainer, { StepContainerRef } from "./stepContainer";
+import StepContainer, { StepContainerRef } from "./stepContainer";
 import { useOrderFormData } from "./useOrderFormData";
 import InlineOptionsInput from "./optionsSection/InlineOptionsInput";
-
-import { RootState } from "../../../redux/rootReducer";
 import { AppDispatch } from "../../../../store";
 
 // Section configuration type
@@ -26,13 +24,34 @@ type SectionConfig = {
   name: string;
   enabled: boolean;
   order: number;
+  showInOrder?: boolean;
+  columnFormat?: 'standard' | 'highlight' | 'summary' | 'hidden';
   fields: {
     name: string;
     label: string;
     type: string;
     required: boolean;
     enabled: boolean;
+    showInOrder?: boolean;
+    columnFormat?: 'standard' | 'highlight' | 'summary' | 'hidden';
   }[];
+};
+
+// Dynamic Calculation type
+type DynamicCalculationConfig = {
+  name: string;
+  formula: string;
+  unit?: string;
+  enabled: boolean;
+  order: number;
+  showInOrder: boolean;
+  autoPopulate: boolean;
+  columnFormat: 'standard' | 'highlight' | 'summary' | 'hidden';
+  rule?: {
+    type: 'always' | 'conditional' | 'manual';
+    condition?: string;
+    triggerOnOptionType?: string;
+  };
 };
 
 // OptionType from allowedOptionTypes
@@ -50,6 +69,14 @@ type OrderTypeConfig = {
   typeName: string;
   typeCode: string;
   sections: SectionConfig[];
+  dynamicCalculations?: DynamicCalculationConfig[];
+  selectedSpecs?: {
+    optionTypeId: string;
+    optionTypeName: string;
+    specName: string;
+    unit?: string;
+    varName: string;
+  }[];
   enablePrinting: boolean;
   enableMixing: boolean;
   allowedOptionTypes?: AllowedOptionType[];
@@ -157,14 +184,14 @@ const CreateOrders = () => {
   console.log('🔍 CreateOrders - Order data:', orderData);
   console.log('✅ Form data loaded:', allData ? 'Yes' : 'Loading...');
 
-  const [showBottomGusset, setShowBottomGusset] = useState(false);
-  const [showFlap, setShowFlap] = useState(false);
-  const [showAirHole, setShowAirHole] = useState(false);
   const [selectedOrderType, setSelectedOrderType] = useState("");
   const [orderTypeConfig, setOrderTypeConfig] = useState<OrderTypeConfig | null>(null);
 
-  // NEW: Unified Options data state
+  // Unified Options data state
   const [options, setOptions] = useState<any[]>([]);
+
+  // Dynamic calculation values
+  const [calculatedValues, setCalculatedValues] = useState<{ [key: string]: number | string }>({});
 
   // Track status and priority changes for edit mode
   const [currentStatus, setCurrentStatus] = useState<string>(orderData?.overallStatus || 'Wait for Approval');
@@ -199,6 +226,34 @@ const CreateOrders = () => {
       }
     }
   }, [editMode, orderData, orderTypes.length, selectedOrderType]);
+
+  // Track if order type has been selected before (to detect changes vs initial selection)
+  const [hasOrderTypeBeenSelected, setHasOrderTypeBeenSelected] = useState<boolean>(false);
+
+  // Handle order type change - clear options when order type changes
+  const handleOrderTypeChange = (newOrderTypeId: string) => {
+    console.log('📝 handleOrderTypeChange called:', {
+      newOrderTypeId,
+      currentSelectedOrderType: selectedOrderType,
+      hasOrderTypeBeenSelected,
+      editMode
+    });
+
+    // If this is not the first selection and order type is different, clear options
+    if (hasOrderTypeBeenSelected && selectedOrderType !== newOrderTypeId && !editMode) {
+      console.log('⚠️ Order type changed from', selectedOrderType, 'to', newOrderTypeId);
+      console.log('🗑️ Clearing options data...');
+      setOptions([]);
+      setCalculatedValues({});
+    }
+
+    // Mark that an order type has been selected
+    if (newOrderTypeId) {
+      setHasOrderTypeBeenSelected(true);
+    }
+
+    setSelectedOrderType(newOrderTypeId);
+  };
 
   // Update order type config when order type changes
   useEffect(() => {
@@ -245,25 +300,21 @@ const CreateOrders = () => {
     return section ? section.enabled !== false : false;
   };
 
-  // Helper function to get section config
-  const getSectionConfig = (sectionId: string): SectionConfig | undefined => {
-    if (!orderTypeConfig || !orderTypeConfig.sections) return undefined;
-    return orderTypeConfig.sections.find(s => s.id === sectionId);
-  };
-
   // Sort sections by order
   const getSortedSections = (): SectionConfig[] => {
     if (!orderTypeConfig || !orderTypeConfig.sections || orderTypeConfig.sections.length === 0) {
       // Return default order with new unified options section
       return [
         { id: 'options', name: 'Options', enabled: true, order: 1, fields: [] },
-        { id: 'steps', name: 'Steps', enabled: true, order: 2, fields: [] }
+        { id: 'dynamicColumns', name: 'Dynamic Columns', enabled: true, order: 2, fields: [] },
+        { id: 'steps', name: 'Steps', enabled: true, order: 3, fields: [] }
       ];
     }
 
-    // BACKWARD COMPATIBILITY: Add 'options' and 'steps' sections if not present in config
+    // BACKWARD COMPATIBILITY: Add 'options', 'dynamicColumns' and 'steps' sections if not present in config
     const sections = [...orderTypeConfig.sections];
     const hasOptionsSection = sections.some(s => s.id === 'options');
+    const hasDynamicColumnsSection = sections.some(s => s.id === 'dynamicColumns');
     const hasStepsSection = sections.some(s => s.id === 'steps');
 
     if (!hasOptionsSection) {
@@ -273,6 +324,17 @@ const CreateOrders = () => {
         name: 'Options',
         enabled: true,
         order: 0,
+        fields: []
+      });
+    }
+
+    if (!hasDynamicColumnsSection && orderTypeConfig.dynamicCalculations && orderTypeConfig.dynamicCalculations.length > 0) {
+      // Add dynamic columns section
+      sections.push({
+        id: 'dynamicColumns',
+        name: 'Dynamic Columns',
+        enabled: true,
+        order: 500,
         fields: []
       });
     }
@@ -291,26 +353,68 @@ const CreateOrders = () => {
     return sections.sort((a, b) => a.order - b.order);
   };
 
-  // Initialize form with order data if editing
-  useEffect(() => {
-    if (orderData && editMode) {
-      console.log('📝 Edit mode - Loading order data:', orderData);
-      
-      // Set additional fields based on order data
-      if (orderData.BottomGusset || orderData.bottomGusset) {
-        console.log('✅ Setting bottom gusset');
-        setShowBottomGusset(true);
+  // Calculate dynamic values from formula
+  const calculateDynamicValue = (formula: string, specValues: { [key: string]: any }): number | string => {
+    if (!formula) return '';
+
+    try {
+      // Replace spec variable names with actual values
+      let evalFormula = formula;
+      Object.keys(specValues).forEach(key => {
+        const value = specValues[key];
+        if (typeof value === 'number' || !isNaN(Number(value))) {
+          evalFormula = evalFormula.replace(new RegExp(key, 'g'), String(Number(value)));
+        }
+      });
+
+      // Only evaluate if all variables are replaced with numbers
+      if (/^[\d\s+\-*/().]+$/.test(evalFormula)) {
+        // eslint-disable-next-line no-eval
+        const result = eval(evalFormula);
+        return typeof result === 'number' ? Math.round(result * 100) / 100 : result;
       }
-      if (orderData.Flap || orderData.flap) {
-        console.log('✅ Setting flap');
-        setShowFlap(true);
-      }
-      if (orderData.AirHole || orderData.airHole) {
-        console.log('✅ Setting air hole');
-        setShowAirHole(true);
-      }
+      return '';
+    } catch (e) {
+      console.error('Error calculating formula:', formula, e);
+      return '';
     }
-  }, [orderData, editMode]);
+  };
+
+  // Get all spec values from options for calculations
+  const getSpecValuesFromOptions = (): { [key: string]: any } => {
+    const specValues: { [key: string]: any } = {};
+
+    options.forEach(opt => {
+      if (opt.specificationValues) {
+        Object.entries(opt.specificationValues).forEach(([key, value]) => {
+          // Create variable name like "OptionTypeName_SpecName"
+          const varName = `${opt.optionTypeName?.replace(/\s+/g, '_') || 'Option'}_${key.replace(/\s+/g, '_')}`;
+          specValues[varName] = value;
+        });
+      }
+    });
+
+    return specValues;
+  };
+
+  // Auto-calculate dynamic values when options change
+  useEffect(() => {
+    if (orderTypeConfig?.dynamicCalculations && options.length > 0) {
+      const specValues = getSpecValuesFromOptions();
+      const newCalculatedValues: { [key: string]: number | string } = {};
+
+      orderTypeConfig.dynamicCalculations
+        .filter(calc => calc.enabled && calc.autoPopulate)
+        .forEach(calc => {
+          const value = calculateDynamicValue(calc.formula, specValues);
+          if (value !== '') {
+            newCalculatedValues[calc.name] = value;
+          }
+        });
+
+      setCalculatedValues(newCalculatedValues);
+    }
+  }, [options, orderTypeConfig?.dynamicCalculations]);
 
   // Handle delete order
   const handleDelete = async () => {
@@ -465,45 +569,26 @@ const CreateOrders = () => {
       )}
 
       <div className="CrateOrdersHaders">
-                      <BackButton />
-        <div className="CreateOrdersHaders1" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%' }}>
-
-          <div>
-        
-            <p className="CreteOrdersTitel">
-              {editMode ? 'Edit Order' : 'Create Orders'}
-            </p>
-            {editMode && orderData && (
-              <span className="edit-order-id">
-                Order ID: {orderData.orderId || orderData._id}
-              </span>
-            )}
-          </div>
-          {editMode && (
-            <button
-              type="button"
-              onClick={() => setShowDeleteConfirm(true)}
-              style={{
-                padding: '8px 16px',
-                background: '#ef4444',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                marginRight: '20px'
-              }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14zM10 11v6M14 11v6"/>
-              </svg>
-              Delete
-            </button>
+        <BackButton />
+        <div className="CreateOrdersHaders1">
+          <p className="CreteOrdersTitel">
+            {editMode ? 'Edit' : 'Create Orders'}
+          </p>
+          {editMode && orderData?.orderId && (
+            <span className="HeaderOrderID">{orderData.orderId}</span>
           )}
         </div>
-        
+        {editMode && (
+          <button
+            type="button"
+            onClick={() => setShowDeleteConfirm(true)}
+            className="HeaderDeleteButton"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14zM10 11v6M14 11v6"/>
+            </svg>
+          </button>
+        )}
       </div>
 
       <div className="CreateOrdersBody">
@@ -516,7 +601,7 @@ const CreateOrders = () => {
 
           <OrderTypeSelect
             value={selectedOrderType}
-            onChange={setSelectedOrderType}
+            onChange={handleOrderTypeChange}
             initialValue={
               typeof orderData?.orderType === 'string'
                 ? orderData.orderType
@@ -554,13 +639,80 @@ const CreateOrders = () => {
                       return (
                         <div key="options" className="dynamicSection">
                           <InlineOptionsInput
+                            key={`options-${selectedOrderType}`}
                             title="Options"
                             orderTypeId={selectedOrderType}
                             onDataChange={setOptions}
-                            initialData={editMode ? transformOptionsForEdit(orderData) : []}
+                            initialData={editMode ? transformOptionsForEdit(orderData) : options}
                             isEditMode={editMode}
                             allowedOptionTypes={orderTypeConfig?.allowedOptionTypes || []}
+                            orderId={editMode ? orderData?.orderId : undefined}
+                            customerInfo={editMode && orderData?.customer ? {
+                              name: orderData.customer.companyName || orderData.customer.name,
+                              companyName: orderData.customer.companyName,
+                              address: orderData.customer.address || orderData.customer.address1,
+                              phone: orderData.customer.phone || orderData.customer.phone1,
+                              whatsapp: orderData.customer.whatsapp
+                            } : undefined}
                         />
+                      </div>
+                    );
+
+                  case 'dynamicColumns':
+                    // Only show if there are dynamic calculations configured
+                    const calculations = orderTypeConfig?.dynamicCalculations?.filter(c => c.enabled) || [];
+                    if (calculations.length === 0) return null;
+
+                    return (
+                      <div key="dynamicColumns" className="dynamicSection dynamicColumnsSection">
+                        <div className="dynamicSection-title">
+                          Dynamic Calculations
+                          <span className="dynamicSection-count">({calculations.length})</span>
+                        </div>
+                        <div className="dynamicColumnsGrid">
+                          {calculations
+                            .sort((a, b) => (a.order || 0) - (b.order || 0))
+                            .map((calc, idx) => {
+                              const value = calculatedValues[calc.name] || '';
+                              const formatClass = calc.columnFormat === 'highlight' ? 'dynamicColumn-highlight' :
+                                                  calc.columnFormat === 'summary' ? 'dynamicColumn-summary' :
+                                                  calc.columnFormat === 'hidden' ? 'dynamicColumn-hidden' : '';
+
+                              return (
+                                <div
+                                  key={idx}
+                                  className={`dynamicColumnItem ${formatClass}`}
+                                  style={{ display: calc.columnFormat === 'hidden' ? 'none' : 'flex' }}
+                                >
+                                  <label className="dynamicColumnLabel">
+                                    {calc.name}
+                                    {calc.unit && <span className="dynamicColumnUnit">({calc.unit})</span>}
+                                  </label>
+                                  <input
+                                    type="text"
+                                    name={`calc_${calc.name.replace(/\s+/g, '_')}`}
+                                    value={value}
+                                    readOnly={calc.autoPopulate}
+                                    onChange={(e) => {
+                                      if (!calc.autoPopulate) {
+                                        setCalculatedValues(prev => ({
+                                          ...prev,
+                                          [calc.name]: e.target.value
+                                        }));
+                                      }
+                                    }}
+                                    className={`dynamicColumnInput ${calc.autoPopulate ? 'auto-calculated' : ''}`}
+                                    placeholder={calc.autoPopulate ? 'Auto-calculated' : 'Enter value'}
+                                  />
+                                  {calc.rule?.type === 'conditional' && (
+                                    <span className="dynamicColumnRule" title={calc.rule.condition}>
+                                      ⚡
+                                    </span>
+                                  )}
+                                </div>
+                              );
+                            })}
+                        </div>
                       </div>
                     );
 
@@ -575,7 +727,14 @@ const CreateOrders = () => {
                           onStepsChange={(steps) => {
                             console.log('Steps changed:', steps);
                           }}
-                          sectionConfig={getSectionConfig('steps')}
+                          orderId={editMode ? orderData?.orderId : undefined}
+                          customerInfo={editMode && orderData?.customer ? {
+                            name: orderData.customer.companyName || orderData.customer.name,
+                            companyName: orderData.customer.companyName,
+                            address: orderData.customer.address || orderData.customer.address1,
+                            phone: orderData.customer.phone || orderData.customer.phone1,
+                            whatsapp: orderData.customer.whatsapp
+                          } : undefined}
                         />
                       </div>
                     );

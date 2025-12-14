@@ -17,12 +17,7 @@ interface SaveOrdersProps {
   isEditMode?: boolean;
   orderId?: string;
   orderData?: any;
-  optionsData?: {
-    product: any[];
-    material: any[];
-    printing: any[];
-    packaging: any[];
-  };
+  optionsData?: any[]; // Unified options array format
 }
 
 // PrintType interface
@@ -89,72 +84,59 @@ const SaveOrders: React.FC<SaveOrdersProps> = ({
     const saveFunction = async () => {
       let result;
 
-      // Handle options data (supports both array and object formats)
-      let allOptions = [];
-      if (Array.isArray(optionsData)) {
-        // New format: unified options array - transform to backend format
-        allOptions = optionsData.map(option => {
-          // Find the full option data from Redux to get specifications
-          const fullOptionData = optionsFromRedux.find((opt: any) => opt._id === option.optionId);
+      // Handle unified options array format
+      const allOptions = (optionsData || []).map(option => {
+        // Find the full option data from Redux to get specifications
+        const fullOptionData = optionsFromRedux.find((opt: any) => opt._id === option.optionId);
 
-          // Get specifications from either optionSpecId or optionTypeId
-          const specs = fullOptionData?.optionSpecId?.specifications ||
-                       fullOptionData?.optionTypeId?.specifications || [];
+        // Get specifications from either optionSpecId or optionTypeId
+        const specs = fullOptionData?.optionSpecId?.specifications ||
+                     fullOptionData?.optionTypeId?.specifications || [];
 
-          return {
-            optionId: option.optionId,
-            optionName: option.optionName,
-            optionCode: option.optionId, // Use optionId as code for now
-            optionTypeId: option.optionTypeId || undefined, // Include option type ID (undefined if empty)
-            optionTypeName: option.optionTypeName || undefined, // Include option type name (undefined if empty)
-            category: 'product', // Keep as valid enum value (actual type stored in optionTypeName)
-            quantity: 1, // Default quantity
-            // Transform specificationValues from object to array with proper type conversion
-            specificationValues: Object.entries(option.specificationValues || {}).map(([name, value]) => {
-              // Find the specification template to get dataType
-              const specTemplate = specs.find((s: any) => s.name === name);
+        return {
+          optionId: option.optionId,
+          optionName: option.optionName,
+          optionCode: option.optionId, // Use optionId as code for now
+          optionTypeId: option.optionTypeId || undefined, // Include option type ID
+          optionTypeName: option.optionTypeName || undefined, // Include option type name
+          category: 'product', // Keep as valid enum value (actual type stored in optionTypeName)
+          quantity: 1, // Default quantity
+          // Transform specificationValues from object to array with proper type conversion
+          specificationValues: Object.entries(option.specificationValues || {}).map(([name, value]) => {
+            // Find the specification template to get dataType
+            const specTemplate = specs.find((s: any) => s.name === name);
 
-              // Log file uploads
-              if (specTemplate?.dataType === 'file') {
-                console.log(`📎 File field "${name}":`, value);
+            // Log file uploads
+            if (specTemplate?.dataType === 'file') {
+              console.log(`📎 File field "${name}":`, value);
+            }
+
+            // Convert value based on dataType
+            let convertedValue = value;
+            if (specTemplate) {
+              if (specTemplate.dataType === 'number') {
+                // Convert to number
+                convertedValue = typeof value === 'number' ? value : parseFloat(value as string) || 0;
+              } else if (specTemplate.dataType === 'boolean') {
+                // Convert to boolean
+                convertedValue = typeof value === 'boolean' ? value : value === 'true' || value === true;
+              } else if (specTemplate.dataType === 'file') {
+                // Keep file object structure intact (Firebase URL, metadata)
+                convertedValue = typeof value === 'object' ? value : { fileName: String(value) };
               }
+              // string and other types remain as-is
+            }
 
-              // Convert value based on dataType
-              let convertedValue = value;
-              if (specTemplate) {
-                if (specTemplate.dataType === 'number') {
-                  // Convert to number
-                  convertedValue = typeof value === 'number' ? value : parseFloat(value) || 0;
-                } else if (specTemplate.dataType === 'boolean') {
-                  // Convert to boolean
-                  convertedValue = typeof value === 'boolean' ? value : value === 'true' || value === true;
-                } else if (specTemplate.dataType === 'file') {
-                  // Keep file object structure intact (Firebase URL, metadata)
-                  // File value should be: { fileName, fileSize, fileType, fileUrl, originalSize, compressed }
-                  convertedValue = typeof value === 'object' ? value : { fileName: String(value) };
-                }
-                // string and other types remain as-is
-              }
-
-              return {
-                name,
-                value: convertedValue,
-                unit: specTemplate?.unit || '',
-                dataType: specTemplate?.dataType || 'string' // Include dataType for backend
-              };
-            }),
-            mixingData: option.mixingData || undefined
-          };
-        });
-      } else if (optionsData && typeof optionsData === 'object') {
-        // Old format: categorized options object
-        allOptions = [
-          ...(optionsData?.product || []),
-          ...(optionsData?.material || []),
-          ...(optionsData?.printing || []),
-          ...(optionsData?.packaging || []),
-        ];
-      }
+            return {
+              name,
+              value: convertedValue,
+              unit: specTemplate?.unit || '',
+              dataType: specTemplate?.dataType || 'string' // Include dataType for backend
+            };
+          }),
+          mixingData: option.mixingData || undefined
+        };
+      });
 
       const orderDataWithOptions = {
         ...(orderData || {}),

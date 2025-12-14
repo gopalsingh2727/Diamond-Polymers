@@ -27,7 +27,7 @@ export const createOptionType = (optionTypeData: any) => async (dispatch: Dispat
   dispatch({ type: CREATE_OPTION_TYPE_REQUEST });
 
   try {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     const response = await axios.post(`${baseUrl}/option-type`, optionTypeData, {
       headers: {
         'x-api-key': API_KEY,
@@ -57,7 +57,7 @@ export const getOptionTypes = (params?: { category?: string; isGlobal?: boolean 
   dispatch({ type: GET_OPTION_TYPES_REQUEST });
 
   try {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     const queryParams = new URLSearchParams(params as any).toString();
     const url = `${baseUrl}/option-type${queryParams ? `?${queryParams}` : ''}`;
 
@@ -87,7 +87,7 @@ export const updateOptionType = (id: string, optionTypeData: any) => async (disp
   dispatch({ type: UPDATE_OPTION_TYPE_REQUEST });
 
   try {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     const response = await axios.put(`${baseUrl}/option-type/${id}`, optionTypeData, {
       headers: {
         'x-api-key': API_KEY,
@@ -117,7 +117,7 @@ export const deleteOptionType = (id: string) => async (dispatch: Dispatch) => {
   dispatch({ type: DELETE_OPTION_TYPE_REQUEST });
 
   try {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     await axios.delete(`${baseUrl}/option-type/${id}`, {
       headers: {
         'x-api-key': API_KEY,

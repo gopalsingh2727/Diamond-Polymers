@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams, useNavigate } from 'react-router-dom';
 import "../productSpec/spec.css";
-import "../../CreateOders/materialAndProduct/materialAndProduct.css";
+
 import { RootState } from "../../../../redux/rootReducer";
 import { AppDispatch } from "../../../../../store";
 import { updateOptionSpec, getOptionSpecById, getOptionSpecs } from "../../../../redux/create/optionSpec/optionSpecActions";

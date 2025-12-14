@@ -23,6 +23,16 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     minute: '2-digit'
   });
 
+  // Security: Escape HTML to prevent XSS attacks
+  const escapeHtml = (text: string) => {
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#x27;');
+  };
+
   // Decode only safe display entities (not security-critical ones like < >)
   const decodeSafeEntities = (text: string) => {
     return text
@@ -36,8 +46,11 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
 
   // Format message content with markdown-like syntax
   const formatContent = (text: string) => {
-    // First decode safe HTML entities (like &#x27; -> ')
-    let formatted = decodeSafeEntities(text);
+    // SECURITY: First escape any raw HTML to prevent XSS
+    let formatted = escapeHtml(text);
+
+    // Then decode safe HTML entities (like &#x27; -> ')
+    formatted = decodeSafeEntities(formatted);
 
     // Bold: **text**
     formatted = formatted.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');

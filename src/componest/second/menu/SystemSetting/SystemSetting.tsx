@@ -194,7 +194,7 @@ const SystemSetting = () => {
 
       {/* Footer */}
       <div className="item menu-footer" style={{ gridColumn: "1 / -1" }}>
-        © 2024 Your Company Name. All rights reserved.
+        © 2025 27infinity. All rights reserved.
       </div>
     </div>
   );

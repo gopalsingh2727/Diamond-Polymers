@@ -100,8 +100,11 @@ export const getOrderTypes = () => async (dispatch: Dispatch, getState: () => Ro
       headers: getHeaders(token)
     });
 
-    dispatch({ type: GET_ORDER_TYPES_SUCCESS, payload: data });
-    return data;
+    // Backend may return { data: [...] } or array directly
+    const orderTypes = Array.isArray(data) ? data : (data.data || data.orderTypes || []);
+
+    dispatch({ type: GET_ORDER_TYPES_SUCCESS, payload: orderTypes });
+    return orderTypes;
   } catch (error: any) {
     const errorMessage = error.response?.data?.message || error.message || "Failed to fetch order types";
     dispatch({ type: GET_ORDER_TYPES_FAIL, payload: errorMessage });

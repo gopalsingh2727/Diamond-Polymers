@@ -55,7 +55,7 @@ export const getDashboard = (filters?: ReportFilters) => async (dispatch: Dispat
   dispatch({ type: GET_DASHBOARD_REQUEST });
 
   try {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     const queryParams = new URLSearchParams(filters as any).toString();
     const url = `${baseUrl}/reports/dashboard${queryParams ? `?${queryParams}` : ''}`;
 
@@ -85,7 +85,7 @@ export const getStatusReport = (filters?: ReportFilters) => async (dispatch: Dis
   dispatch({ type: GET_STATUS_REPORT_REQUEST });
 
   try {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     const queryParams = new URLSearchParams(filters as any).toString();
     const url = `${baseUrl}/reports/by-status${queryParams ? `?${queryParams}` : ''}`;
 
@@ -115,7 +115,7 @@ export const getOrderTypeReport = (filters?: ReportFilters) => async (dispatch: 
   dispatch({ type: GET_ORDER_TYPE_REPORT_REQUEST });
 
   try {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     const queryParams = new URLSearchParams(filters as any).toString();
     const url = `${baseUrl}/reports/by-order-type${queryParams ? `?${queryParams}` : ''}`;
 
@@ -145,7 +145,7 @@ export const getCategoryReport = (filters?: ReportFilters) => async (dispatch: D
   dispatch({ type: GET_CATEGORY_REPORT_REQUEST });
 
   try {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     const queryParams = new URLSearchParams(filters as any).toString();
     const url = `${baseUrl}/reports/by-category${queryParams ? `?${queryParams}` : ''}`;
 
@@ -175,7 +175,7 @@ export const getOptionTypeReport = (filters?: ReportFilters) => async (dispatch:
   dispatch({ type: GET_OPTION_TYPE_REPORT_REQUEST });
 
   try {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     const queryParams = new URLSearchParams(filters as any).toString();
     const url = `${baseUrl}/reports/by-option-type${queryParams ? `?${queryParams}` : ''}`;
 
@@ -205,7 +205,7 @@ export const getOptionsByType = (optionTypeId: string, filters?: ReportFilters) 
   dispatch({ type: GET_OPTIONS_BY_TYPE_REQUEST });
 
   try {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     const queryParams = new URLSearchParams(filters as any).toString();
     const url = `${baseUrl}/reports/option-types/${optionTypeId}/options${queryParams ? `?${queryParams}` : ''}`;
 
@@ -235,7 +235,7 @@ export const getCompanyReport = (filters?: ReportFilters) => async (dispatch: Di
   dispatch({ type: GET_COMPANY_REPORT_REQUEST });
 
   try {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     const queryParams = new URLSearchParams(filters as any).toString();
     const url = `${baseUrl}/reports/by-company${queryParams ? `?${queryParams}` : ''}`;
 
@@ -272,7 +272,7 @@ export const exportExcel = (exportData: {
   dispatch({ type: EXPORT_EXCEL_REQUEST });
 
   try {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     const response = await axios.post(`${baseUrl}/reports/export/excel`, exportData, {
       headers: {
         'x-api-key': API_KEY,

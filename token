@@ -36,3 +36,6 @@ that uses axios to POST to an API. The API URL should come from VITE_API_27INFIN
  
 
 
+git add .
+git commit -m "Update app"
+git push origin main

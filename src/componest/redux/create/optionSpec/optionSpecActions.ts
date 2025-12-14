@@ -35,7 +35,7 @@ export const createOptionSpec = (optionSpecData: any) => async (dispatch: Dispat
   dispatch({ type: CREATE_OPTION_SPEC_REQUEST });
 
   try {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     const response = await axios.post(`${baseUrl}/option-spec`, optionSpecData, {
       headers: {
         'x-api-key': API_KEY,
@@ -73,7 +73,7 @@ export const getOptionSpecs = (params?: {
   dispatch({ type: GET_OPTION_SPECS_REQUEST });
 
   try {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     const queryParams = new URLSearchParams(params as any).toString();
     const url = `${baseUrl}/option-spec${queryParams ? `?${queryParams}` : ''}`;
 
@@ -106,7 +106,7 @@ export const getOptionSpecById = (id: string) => async (dispatch: Dispatch) => {
   dispatch({ type: GET_OPTION_SPEC_BY_ID_REQUEST });
 
   try {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     const response = await axios.get(`${baseUrl}/option-spec/${id}`, {
       headers: {
         'x-api-key': API_KEY,
@@ -136,7 +136,7 @@ export const updateOptionSpec = (id: string, optionSpecData: any) => async (disp
   dispatch({ type: UPDATE_OPTION_SPEC_REQUEST });
 
   try {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     const response = await axios.put(`${baseUrl}/option-spec/${id}`, optionSpecData, {
       headers: {
         'x-api-key': API_KEY,
@@ -169,7 +169,7 @@ export const deleteOptionSpec = (id: string) => async (dispatch: Dispatch) => {
   dispatch({ type: DELETE_OPTION_SPEC_REQUEST });
 
   try {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     await axios.delete(`${baseUrl}/option-spec/${id}`, {
       headers: {
         'x-api-key': API_KEY,

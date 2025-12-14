@@ -4,9 +4,17 @@ const API_BASE_URL = import.meta.env.VITE_API_27INFINITY_IN || 'http://localhost
 const API_KEY = import.meta.env.VITE_API_KEY || '27infinity.in_5f84c89315f74a2db149c06a93cf4820';
 
 /**
- * Get selected branch from localStorage (userData.selectedBranch)
+ * Get selected branch from localStorage
+ * Checks both 'selectedBranch' key and userData.selectedBranch for compatibility
  */
 const getSelectedBranch = (): string | null => {
+  // First check direct localStorage key
+  const directBranch = localStorage.getItem('selectedBranch');
+  if (directBranch) {
+    return directBranch;
+  }
+
+  // Fallback: check userData.selectedBranch
   try {
     const userData = localStorage.getItem('userData');
     if (userData) {

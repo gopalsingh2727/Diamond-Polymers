@@ -11,6 +11,7 @@ interface Step {
   stepOrder: number;
   description?: string;
   machineType?: { _id: string; type: string };
+  branchId?: { _id: string; name: string };
 }
 
 interface Props {
@@ -18,7 +19,15 @@ interface Props {
 }
 
 const EditStepList: React.FC<Props> = ({ onEdit }) => {
-  const { steps = [], loading, error } = useFormDataCache();
+  const { steps = [], machines = [], loading, error } = useFormDataCache();
+
+  // Count machines by machine type
+  const getMachineCount = (machineTypeId?: string) => {
+    if (!machineTypeId) return 0;
+    return machines.filter((m: any) =>
+      m.machineType?._id === machineTypeId || m.machineTypeId === machineTypeId
+    ).length;
+  };
 
   const [selectedRow, setSelectedRow] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
@@ -81,8 +90,8 @@ const EditStepList: React.FC<Props> = ({ onEdit }) => {
                 <tr>
                   <th className="editsectionsTable-th">No</th>
                   <th className="editsectionsTable-th">Step Name</th>
-                  <th className="editsectionsTable-th">Order</th>
-                  <th className="editsectionsTable-th">Machine Type</th>
+                  <th className="editsectionsTable-th">Total Machines</th>
+                  <th className="editsectionsTable-th">Branch</th>
                 </tr>
               </thead>
               <tbody className="editsectionsTable-tbody">
@@ -94,8 +103,8 @@ const EditStepList: React.FC<Props> = ({ onEdit }) => {
                   >
                     <td className="editsectionsTable-td">{index + 1}</td>
                     <td className="editsectionsTable-td">{item.stepName}</td>
-                    <td className="editsectionsTable-td">{item.stepOrder}</td>
-                    <td className="editsectionsTable-td">{item.machineType?.type || "N/A"}</td>
+                    <td className="editsectionsTable-td">{getMachineCount(item.machineType?._id)}</td>
+                    <td className="editsectionsTable-td">{item.branchId?.name || "N/A"}</td>
                   </tr>
                 ))}
               </tbody>

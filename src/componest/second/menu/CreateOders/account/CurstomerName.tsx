@@ -16,6 +16,7 @@ interface CustomerData {
   pinCode: string;
   state: string;
   imageUrl: string;
+  gstNumber: string;
 }
 
 export interface CustomerNameRef {
@@ -41,10 +42,12 @@ const CustomerName = forwardRef<CustomerNameRef, CustomerNameProps>(({ initialDa
     pinCode: '',
     state: '',
     imageUrl: '',
+    gstNumber: '',
   });
 
   const [status, setStatus] = useState<string>('Wait for Approval');
   const [showCustomerSuggestions, setShowCustomerSuggestions] = useState(false);
+  const [showCustomerDetails, setShowCustomerDetails] = useState(false);
 
   console.log('🔍 CustomerName - Initial data:', initialData);
   console.log('🔍 CustomerName - Is edit mode:', isEditMode);
@@ -80,6 +83,7 @@ const CustomerName = forwardRef<CustomerNameRef, CustomerNameProps>(({ initialDa
         pinCode: customer.pinCode || '',
         state: customer.state || '',
         imageUrl: customer.imageUrl || '',
+        gstNumber: customer.gstNumber || '',
       });
 
       // Set status from initial data
@@ -125,6 +129,7 @@ const handleCustomerSelect = (account: any) => {
     pinCode: account.pinCode || "",
     state: account.state || "",
     imageUrl: account.imageUrl || "",
+    gstNumber: account.gstNumber || "",
   });
   setShowCustomerSuggestions(false);
 };
@@ -148,6 +153,7 @@ const handleCustomerSelect = (account: any) => {
       pinCode: '',
       state: '',
       imageUrl: '',
+      gstNumber: '',
     });
     setStatus('Wait for Approval');
   };
@@ -159,36 +165,27 @@ const handleCustomerSelect = (account: any) => {
 
 
   return (
-    <div>
+    <div className="CustomerStickySection">
       <div className="OrderIDanddata">
-        <label className="OrderIDCreate">
-          <h5 className ="ManufacturingStepsTitel">Order ID:  {isEditMode && initialData?.orderId ? (
-                <span className="edit-order-id">{initialData.orderId}</span>
-              ):(
-                <p></p>
-              )}</h5><h6>
+        {/* Left side: Order ID (only in edit mode) */}
+        <div className="OrderIDCreate">
+          {isEditMode && initialData?.orderId && (
+            <span className="OrderIDBadge">{initialData.orderId}</span>
+          )}
+        </div>
 
-
-
-
-          </h6>
-        </label>
+        {/* Right side: Date and Customer Image */}
         <div className="customerInputRow">
-
-             {isEditMode && initialData?.createdAt ? (
-             <div className="createDateAndupdateDate">
-               <span className="edit-order-id">{initialData.createdAt}</span>
-               {/* <span className="edit-order-id">{initialData.updatedAt}</span> */}
-             </div>
-
-
-            ) : (
-              <Data  />
-            )}
-          <div className="customerImage">
-
-            <div className="customerImageDiv">
-              {customerData.imageUrl && (
+          {isEditMode && initialData?.createdAt ? (
+            <div className="createDateAndupdateDate">
+              <span>{initialData.createdAt}</span>
+            </div>
+          ) : (
+            <Data />
+          )}
+          {customerData.imageUrl && (
+            <div className="customerImage">
+              <div className="customerImageDiv">
                 <img
                   src={customerData.imageUrl}
                   alt="Customer"
@@ -196,10 +193,9 @@ const handleCustomerSelect = (account: any) => {
                     e.currentTarget.style.display = 'none';
                   }}
                 />
-              )}
+              </div>
             </div>
-         
-          </div>
+          )}
         </div>
       </div>
 
@@ -212,11 +208,14 @@ const handleCustomerSelect = (account: any) => {
             onChange={handleCustomerChange}
             onFocus={() => !isEditMode && setShowCustomerSuggestions(true)}
             onBlur={() => setTimeout(() => setShowCustomerSuggestions(false), 200)}
+            onDoubleClick={() => customerData._id && setShowCustomerDetails(true)}
             type="text"
             placeholder="Enter Customer Name"
             autoComplete="off"
             required
             readOnly={isEditMode}
+            style={{ cursor: customerData._id ? 'pointer' : 'text' }}
+            title={customerData._id ? 'Double-click to view customer details' : ''}
           />
           {!isEditMode && (
             <OptimizedSuggestions
@@ -243,16 +242,6 @@ const handleCustomerSelect = (account: any) => {
             placeholder="Enter Customer Address"
           />
         </div>
-
-        <input
-          name="phone"
-          className="CurstomerInput"
-          value={customerData.phone}
-          onChange={handleCustomerChange}
-          type="tel"
-          placeholder="Phone Number"
-          pattern="[0-9\-\+\s\(\)]+"
-        />
 
         <input
           name="whatsapp"
@@ -283,6 +272,16 @@ const handleCustomerSelect = (account: any) => {
         />
 
         <input
+          name="gstNumber"
+          className="CurstomerInput"
+          value={customerData.gstNumber}
+          onChange={handleCustomerChange}
+          type="text"
+          placeholder="GST Number"
+          pattern="^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$"
+        />
+
+        <input
           name="pinCode"
           className="CurstomerInput"
           value={customerData.pinCode}
@@ -301,6 +300,91 @@ const handleCustomerSelect = (account: any) => {
           placeholder="State"
         />
       </div>
+
+      {/* Customer Details Popup */}
+      {showCustomerDetails && customerData._id && (
+        <div className="customer-details-overlay" onClick={() => setShowCustomerDetails(false)}>
+          <div className="customer-details-popup" onClick={(e) => e.stopPropagation()}>
+            <div className="customer-details-header">
+              <h3>Customer Details</h3>
+              <button
+                className="customer-details-close"
+                onClick={() => setShowCustomerDetails(false)}
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="customer-details-content">
+              {/* Customer Image */}
+              {customerData.imageUrl && (
+                <div className="customer-details-image">
+                  <img
+                    src={customerData.imageUrl}
+                    alt="Customer"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* Customer Info Grid */}
+              <div className="customer-details-grid">
+                <div className="customer-detail-item full-width">
+                  <label>Company Name</label>
+                  <span>{customerData.companyName || '-'}</span>
+                </div>
+
+                <div className="customer-detail-item">
+                  <label>First Name</label>
+                  <span>{customerData.name || '-'}</span>
+                </div>
+
+                <div className="customer-detail-item">
+                  <label>GST Number</label>
+                  <span>{customerData.gstNumber || '-'}</span>
+                </div>
+
+                <div className="customer-detail-item">
+                  <label>Phone 1</label>
+                  <span>{customerData.phone || '-'}</span>
+                </div>
+
+                <div className="customer-detail-item">
+                  <label>Phone 2</label>
+                  <span>{customerData.phone2 || '-'}</span>
+                </div>
+
+                <div className="customer-detail-item">
+                  <label>WhatsApp</label>
+                  <span>{customerData.whatsapp || '-'}</span>
+                </div>
+
+                <div className="customer-detail-item">
+                  <label>Email</label>
+                  <span>{customerData.email || '-'}</span>
+                </div>
+
+                <div className="customer-detail-item full-width">
+                  <label>Address</label>
+                  <span>{customerData.address || '-'}</span>
+                </div>
+
+                <div className="customer-detail-item">
+                  <label>State</label>
+                  <span>{customerData.state || '-'}</span>
+                </div>
+
+                <div className="customer-detail-item">
+                  <label>Pin Code</label>
+                  <span>{customerData.pinCode || '-'}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 });

@@ -4,11 +4,10 @@ export default {
     './index.html',
     './src/**/*.{js,ts,jsx,tsx}',
   ],
-  darkMode: 'class',
   theme: {
     extend: {
       colors: {
-        // Primary Orange Palette
+        // Primary Orange Palette (Light Mode)
         primary: {
           DEFAULT: '#FF6B35',
           50: '#FFF5F0',
@@ -38,27 +37,20 @@ export default {
         },
         // Background colors
         background: {
-          light: '#FFFFFF',
-          dark: '#030712',
+          DEFAULT: '#FFFFFF',
         },
         // Surface colors for cards, etc.
         surface: {
-          light: '#F9FAFB',
-          dark: '#111827',
+          DEFAULT: '#F9FAFB',
         },
         // Text colors
         text: {
-          light: '#1F2937',
-          dark: '#F9FAFB',
-          muted: {
-            light: '#6B7280',
-            dark: '#9CA3AF',
-          },
+          DEFAULT: '#1F2937',
+          muted: '#6B7280',
         },
         // Border colors
         border: {
-          light: '#E5E7EB',
-          dark: '#374151',
+          DEFAULT: '#E5E7EB',
         },
       },
       boxShadow: {

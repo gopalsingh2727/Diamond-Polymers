@@ -84,10 +84,11 @@ export const getSteps = () => async (
     };
     
     const { data } = await axios.get(`${baseUrl}/step`, config);
-     console.log(data , "this step");
-     
-     
-    dispatch({ type: GET_STEPS_SUCCESS, payload: data });
+
+    // Backend may return { data: steps } or array directly
+    const steps = Array.isArray(data) ? data : (data.data || data.steps || []);
+
+    dispatch({ type: GET_STEPS_SUCCESS, payload: steps });
   } catch (error: any) {
     dispatch({
       type: GET_STEPS_FAIL,

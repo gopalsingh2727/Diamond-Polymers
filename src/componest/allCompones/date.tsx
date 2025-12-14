@@ -29,10 +29,10 @@ const Data = () => {
     const formattedTime = currentTime.toLocaleString("en-US", timeOptions);
 
     return (
-        <div>
-             <p className="ManufacturingStepsTitel">{formattedTime}</p>
-            <p className="ManufacturingStepsTitel">{formattedDate}</p>
-           
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: '#6b7280' }}>
+            <span>{formattedDate}</span>
+            <span>|</span>
+            <span>{formattedTime}</span>
         </div>
     );
 };

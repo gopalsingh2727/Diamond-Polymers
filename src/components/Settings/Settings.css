@@ -59,12 +59,6 @@
   border-radius: 0 0 12px 12px;
 }
 
-/* Dark mode for dropdown */
-.dark .settings-dropdown-menu {
-  background: #2a2a2a;
-  border-color: #444;
-}
-
 /* Settings Popup Modal */
 .settings-popup-overlay {
   position: fixed;
@@ -301,90 +295,6 @@
   margin: 0;
 }
 
-/* Dark mode support */
-.dark .settings-icon-btn {
-  color: #aaa;
-}
-
-.dark .settings-icon-btn:hover {
-  background: rgba(255, 107, 53, 0.2);
-  color: #FF6B35;
-}
-
-.dark .settings-popup {
-  background: #2a2a2a;
-}
-
-.dark .settings-popup-header {
-  border-bottom-color: #444;
-}
-
-.dark .settings-popup-header h3 {
-  color: #e0e0e0;
-}
-
-.dark .settings-popup-close {
-  color: #aaa;
-}
-
-.dark .settings-popup-close:hover {
-  background: #3a3a3a;
-  color: #e0e0e0;
-}
-
-.dark .settings-menu-item {
-  color: #e0e0e0;
-}
-
-.dark .settings-menu-item:hover {
-  background: rgba(255, 107, 53, 0.15);
-}
-
-.dark .about-modal {
-  background: #2a2a2a;
-}
-
-.dark .about-header {
-  border-bottom-color: #444;
-}
-
-.dark .about-header h2 {
-  color: #e0e0e0;
-}
-
-.dark .about-close-btn {
-  color: #aaa;
-}
-
-.dark .about-close-btn:hover {
-  background: #3a3a3a;
-  color: #e0e0e0;
-}
-
-.dark .about-version {
-  color: #aaa;
-}
-
-.dark .about-description {
-  color: #ccc;
-}
-
-.dark .about-info {
-  background: #333;
-}
-
-.dark .about-info p {
-  color: #ccc;
-}
-
-.dark .about-info strong {
-  color: #e0e0e0;
-}
-
-.dark .about-copyright {
-  color: #777;
-}
-
 /* Branch Selector in Settings Dropdown */
 .settings-branch-selector {
   padding: 12px 16px;
@@ -450,31 +360,6 @@
   color: #9ca3af !important;
 }
 
-/* Dark mode for branch selector */
-.dark .settings-branch-selector {
-  border-bottom-color: #444;
-}
-
-.dark .settings-branch-label {
-  color: #aaa;
-}
-
-.dark .settings-branch-dropdown {
-  background-color: #333;
-  border-color: #555;
-  color: #e0e0e0;
-}
-
-.dark .settings-branch-dropdown:hover {
-  background-color: #3a3a3a;
-  border-color: #666;
-}
-
-.dark .settings-branch-dropdown option {
-  background-color: #333;
-  color: #e0e0e0;
-}
-
 /* Settings Section Dividers */
 .settings-section-divider {
   padding: 8px 16px 4px;
@@ -495,11 +380,3 @@
   color: #9ca3af;
 }
 
-/* Dark mode section dividers */
-.dark .settings-section-divider {
-  border-top-color: rgba(255, 255, 255, 0.1);
-}
-
-.dark .settings-section-label {
-  color: #6b7280;
-}

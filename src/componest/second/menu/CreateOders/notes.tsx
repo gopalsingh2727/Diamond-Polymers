@@ -28,20 +28,15 @@ const Notes = ({ onNotesChange, initialNotes }: NotesProps) => {
   };
 
   return (
-    <div >
-      <div className="Notes">
-        <h3>Notes</h3>
-        <textarea
-          placeholder="Write your note here..."
-          value={note}
-          onChange={handleNoteChange}
-          className="NotesTextarea"
-          rows={4}
-        />
-
-
-      </div>
-
+    <div className="NotesSection">
+      <label>Notes:</label>
+      <textarea
+        placeholder="Write your note here..."
+        value={note}
+        onChange={handleNoteChange}
+        className="NotesTextarea"
+        name="notes"
+      />
     </div>
   );
 };

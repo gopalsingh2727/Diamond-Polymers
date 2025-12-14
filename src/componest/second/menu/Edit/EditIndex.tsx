@@ -36,7 +36,7 @@ import CreateOption from "../create/option/CreateOption";
 import CreateOrderType from "../create/orderType/CreateOrderType";
 import CreatePrintType from "../create/printType/CreatePrintType";
 import CreateExcelExportType from "../create/excelExportType/CreateExcelExportType";
-import CreateMachineTemplate from "../create/machineTemplate/CreateMachineTemplate";
+import ViewTemplateWizard from "../create/machine/ViewTemplateWizard";
 import DeviceAccessCreate from "../create/deviceAccess/deviceAccessCreate";
 
 interface LocationStateType {
@@ -160,7 +160,7 @@ const EditIndex = () => {
         case 'excelExportType':
           return <ErrorBoundary><CreateExcelExportType initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
         case 'machineTemplate':
-          return <ErrorBoundary><CreateMachineTemplate initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
+          return <ErrorBoundary><ViewTemplateWizard initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
         case 'Access':
           return <ErrorBoundary><DeviceAccessCreate initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
         default:
@@ -328,7 +328,7 @@ const EditIndex = () => {
       </div>
 
       <div className="item menu-footer" style={{ gridColumn: "1 / -1" }}>
-        © 2024 Your Company Name. All rights reserved.
+        © 2025 27infinity. All rights reserved.
       </div>
     </div>
   );

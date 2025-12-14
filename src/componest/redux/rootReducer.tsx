@@ -34,6 +34,22 @@ import {
   updateAccountReducer,
 } from "./create/createNewAccount/NewAccountReducer";
 
+// Customer Category
+import {
+  createCustomerCategoryReducer,
+  getCustomerCategoriesReducer,
+  updateCustomerCategoryReducer,
+  deleteCustomerCategoryReducer,
+} from "./create/customerCategory/CustomerCategoryReducer";
+
+// Customer Parent Company
+import {
+  createCustomerParentCompanyReducer,
+  getCustomerParentCompaniesReducer,
+  updateCustomerParentCompanyReducer,
+  deleteCustomerParentCompanyReducer,
+} from "./create/customerParentCompany/CustomerParentCompanyReducer";
+
 // Machine Types & Machines
 import {
   machineTypeCreateReducer,
@@ -99,6 +115,17 @@ import {
   excelExportTypeCreateReducer
 } from "./create/excelExportType/excelExportTypeReducer";
 
+// Report Type
+import {
+  reportTypeListReducer,
+  reportTypeDetailReducer,
+  defaultReportTypeReducer,
+  reportTypeCreateReducer,
+  reportTypeUpdateReducer,
+  reportTypeDeleteReducer,
+  generatedReportReducer
+} from "./create/reportType/reportTypeReducer";
+
 // Machine Template
 import machineTemplateReducer from "./machineTemplate/machineTemplateReducer";
 
@@ -141,6 +168,18 @@ const appReducer = combineReducers({
   getAccounts: getAccountsReducer,
   updateAccount: updateAccountReducer,
   deleteAccount: deleteAccountReducer,
+
+  // Customer Category
+  createCustomerCategory: createCustomerCategoryReducer,
+  getCustomerCategories: getCustomerCategoriesReducer,
+  updateCustomerCategory: updateCustomerCategoryReducer,
+  deleteCustomerCategory: deleteCustomerCategoryReducer,
+
+  // Customer Parent Company
+  createCustomerParentCompany: createCustomerParentCompanyReducer,
+  getCustomerParentCompanies: getCustomerParentCompaniesReducer,
+  updateCustomerParentCompany: updateCustomerParentCompanyReducer,
+  deleteCustomerParentCompany: deleteCustomerParentCompanyReducer,
 
   // Admin & Manager
   adminCreate: adminCreateReducer,
@@ -202,6 +241,15 @@ const appReducer = combineReducers({
   excelExportTypeDetail: excelExportTypeDetailReducer,
   defaultExcelExportType: defaultExcelExportTypeReducer,
   excelExportTypeCreate: excelExportTypeCreateReducer,
+
+  // Report Type (Report Builder)
+  reportTypeList: reportTypeListReducer,
+  reportTypeDetail: reportTypeDetailReducer,
+  defaultReportType: defaultReportTypeReducer,
+  reportTypeCreate: reportTypeCreateReducer,
+  reportTypeUpdate: reportTypeUpdateReducer,
+  reportTypeDelete: reportTypeDeleteReducer,
+  generatedReport: generatedReportReducer,
 
   // Machine Template
   machineTemplate: machineTemplateReducer,

@@ -26,4 +26,49 @@ export default defineConfig({
         : {},
     }),
   ],
+  build: {
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+        pure_funcs: ['console.log', 'console.info', 'console.debug'],
+      },
+      mangle: true,
+    },
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Core React vendor chunk
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          // Redux chunk
+          'vendor-redux': ['@reduxjs/toolkit', 'react-redux', 'redux'],
+          // Charts chunk
+          'vendor-charts': ['recharts'],
+          // UI components chunk
+          'vendor-radix': [
+            '@radix-ui/react-dialog',
+            '@radix-ui/react-select',
+            '@radix-ui/react-dropdown-menu',
+            '@radix-ui/react-popover',
+            '@radix-ui/react-tabs',
+            '@radix-ui/react-tooltip',
+            '@radix-ui/react-checkbox',
+            '@radix-ui/react-switch',
+            '@radix-ui/react-scroll-area',
+          ],
+          // Excel handling
+          'vendor-xlsx': ['xlsx'],
+          // Icons - lucide-react only (tree-shakes unused icons)
+          'vendor-icons': ['lucide-react'],
+        },
+      },
+      treeshake: {
+        moduleSideEffects: false,
+        propertyReadSideEffects: false,
+      },
+    },
+    chunkSizeWarningLimit: 1000,
+  },
 })

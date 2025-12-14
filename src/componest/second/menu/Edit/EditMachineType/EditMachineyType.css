@@ -298,6 +298,17 @@
   gap: 20px;
 }
 
+/* Page Title */
+.editsectionsTable-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1f2937;
+  text-align: center;
+  margin: 0 0 10px 0;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #FF6B35;
+}
+
 /* Search Section */
 .editsectionsTable-searchWrapper {
   display: flex;

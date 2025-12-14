@@ -160,3 +160,222 @@
   color: #0c4a6e;
   font-size: 13px;
 }
+
+/* ====================================
+   EditOptionSpec List View Styles
+   ==================================== */
+
+.EditOptionSpec {
+  width: 100%;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+/* Search Bar Container */
+.EditOptionSpec .search-container {
+  margin-bottom: 20px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* Table Styles */
+.EditOptionSpec table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.EditOptionSpec table thead {
+  background: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%);
+}
+
+.EditOptionSpec table thead tr th {
+  padding: 14px 16px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 13px;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: none;
+}
+
+.EditOptionSpec table tbody tr {
+  border-bottom: 1px solid #e5e7eb;
+  transition: background-color 0.2s ease;
+}
+
+.EditOptionSpec table tbody tr:hover {
+  background-color: #fff7ed;
+}
+
+.EditOptionSpec table tbody tr.bg-blue-100 {
+  background-color: #dbeafe;
+}
+
+.EditOptionSpec table tbody tr td {
+  padding: 12px 16px;
+  font-size: 14px;
+  color: #374151;
+  border: none;
+}
+
+.EditOptionSpec table tbody tr:last-child {
+  border-bottom: none;
+}
+
+/* Detail Container */
+.EditOptionSpec .detail-container {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* Top Button Edit */
+.EditOptionSpec .TopButtonEdit {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.EditOptionSpec .TopButtonEdit button {
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.EditOptionSpec .TopButtonEdit button:first-child {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.EditOptionSpec .TopButtonEdit button:first-child:hover {
+  background: #e2e8f0;
+}
+
+.EditOptionSpec .TopButtonEdit button.Delete {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+}
+
+.EditOptionSpec .TopButtonEdit button.Delete:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+}
+
+/* Form Section */
+.EditOptionSpec .form-section {
+  margin-bottom: 16px;
+}
+
+.EditOptionSpec .form-section label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.EditOptionSpec .form-section input,
+.EditOptionSpec .form-section textarea {
+  width: 100%;
+  padding: 12px;
+  font-size: 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f9fafb;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.EditOptionSpec .form-section input:focus,
+.EditOptionSpec .form-section textarea:focus {
+  outline: none;
+  border-color: #FF6B35;
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+  background: white;
+}
+
+/* Save Button */
+.EditOptionSpec .save-button {
+  width: 100%;
+  padding: 14px 24px;
+  font-size: 15px;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.25);
+  margin-top: 16px;
+}
+
+.EditOptionSpec .save-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #E55A2B 0%, #d44a1b 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(255, 107, 53, 0.35);
+}
+
+.EditOptionSpec .save-button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Info Section */
+.EditOptionSpec .info-section {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  padding: 16px 20px;
+  border-radius: 8px;
+  border-left: 4px solid #FF6B35;
+  margin-top: 20px;
+}
+
+.EditOptionSpec .info-section p {
+  margin: 6px 0;
+  color: #0c4a6e;
+  font-size: 14px;
+}
+
+/* Specs Details Table */
+.EditOptionSpec .specs-details-table {
+  margin-top: 20px;
+  width: 100%;
+  border-collapse: collapse;
+  background: #f9fafb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.EditOptionSpec .specs-details-table thead {
+  background: #e5e7eb;
+}
+
+.EditOptionSpec .specs-details-table thead th {
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 12px;
+  color: #374151;
+  text-transform: uppercase;
+}
+
+.EditOptionSpec .specs-details-table tbody td {
+  padding: 10px 16px;
+  font-size: 13px;
+  color: #4b5563;
+  border-bottom: 1px solid #e5e7eb;
+}

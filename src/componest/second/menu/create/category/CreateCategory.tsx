@@ -20,6 +20,7 @@ const CreateCategory: React.FC<CreateCategoryProps> = ({ initialData, onCancel, 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
   useEffect(() => {
     if (initialData) {
@@ -31,7 +32,8 @@ const CreateCategory: React.FC<CreateCategoryProps> = ({ initialData, onCancel, 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name) {
-      alert('Category Name is required');
+      setMessage({ type: 'error', text: 'Category Name is required' });
+      setTimeout(() => setMessage(null), 3000);
       return;
     }
 
@@ -43,15 +45,17 @@ const CreateCategory: React.FC<CreateCategoryProps> = ({ initialData, onCancel, 
     try {
       if (isEditMode) {
         await dispatch(updateCategory(initialData!._id, categoryData) as any);
-        alert('Category updated!');
+        setMessage({ type: 'success', text: 'Category updated successfully!' });
       } else {
         await dispatch(createCategory(categoryData) as any);
-        alert('Category created!');
+        setMessage({ type: 'success', text: 'Category created successfully!' });
       }
+      setTimeout(() => setMessage(null), 3000);
       handleReset();
       if (onSaveSuccess) onSaveSuccess();
     } catch (error) {
-      alert('Failed to save Category');
+      setMessage({ type: 'error', text: 'Failed to save Category' });
+      setTimeout(() => setMessage(null), 5000);
     } finally {
       setLoading(false);
     }
@@ -62,10 +66,12 @@ const CreateCategory: React.FC<CreateCategoryProps> = ({ initialData, onCancel, 
     if (!window.confirm("Delete this category?")) return;
     try {
       await dispatch(deleteCategory(initialData._id) as any);
-      alert('Category deleted');
+      setMessage({ type: 'success', text: 'Category deleted successfully!' });
+      setTimeout(() => setMessage(null), 3000);
       if (onSaveSuccess) onSaveSuccess();
     } catch {
-      alert('Failed to delete');
+      setMessage({ type: 'error', text: 'Failed to delete category' });
+      setTimeout(() => setMessage(null), 5000);
     }
   };
 
@@ -89,6 +95,12 @@ const CreateCategory: React.FC<CreateCategoryProps> = ({ initialData, onCancel, 
         )}
 
         <h2 className="createCategory-title">{isEditMode ? `Edit: ${initialData?.name}` : 'Create Category'}</h2>
+
+        {message && (
+          <div className={`createCategory-message ${message.type}`}>
+            {message.text}
+          </div>
+        )}
 
         <div className="createCategory-group">
           <label className="createCategory-label">Category Name *</label>

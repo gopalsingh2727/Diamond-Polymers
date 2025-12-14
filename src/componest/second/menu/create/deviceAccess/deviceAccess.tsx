@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   getDeviceAccessList,
-  updateDeviceAccess
+  updateDeviceAccess,
+  resetDeviceAccessState
 } from "../../../../redux/deviceAccess/deviceAccessActions";
 import { RootState } from "../../../../redux/rootReducer";
 import { AppDispatch } from "../../../../../store";
@@ -13,11 +14,12 @@ const DeviceAccess: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const [selectedDeviceId, setSelectedDeviceId] = useState("");
   const [machineId, setMachineId] = useState("");
+  const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
   // 🚀 OPTIMIZED: Get machines from cached form data (no API call!)
   const { machines: machineList } = useFormDataCache();
 
-  const { devices: deviceList, loading} = useSelector(
+  const { devices: deviceList, loading, success, error } = useSelector(
     (state: RootState) => state.deviceAccess
   );
 
@@ -25,6 +27,20 @@ const DeviceAccess: React.FC = () => {
     // Only fetch device-specific data
     dispatch(getDeviceAccessList());
   }, [dispatch]);
+
+  // Show success/error messages
+  useEffect(() => {
+    if (success) {
+      setMessage({ type: 'success', text: 'Machine assigned successfully!' });
+      dispatch(resetDeviceAccessState());
+      setTimeout(() => setMessage(null), 3000);
+    }
+    if (error) {
+      setMessage({ type: 'error', text: error });
+      dispatch(resetDeviceAccessState());
+      setTimeout(() => setMessage(null), 5000);
+    }
+  }, [success, error, dispatch]);
 
   // ✅ Assign machine
   const handleAssignMachine = () => {
@@ -52,6 +68,12 @@ const DeviceAccess: React.FC = () => {
     <div className="deviceAccess-container">
       <div className="deviceAccess-form">
         <h2 className="deviceAccess-title">Assign Machine to Device</h2>
+
+        {message && (
+          <div className={`deviceAccess-message ${message.type}`}>
+            {message.text}
+          </div>
+        )}
 
         <div className="deviceAccess-group">
           <label className="deviceAccess-label">Select Device</label>

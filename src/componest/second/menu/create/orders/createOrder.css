@@ -444,38 +444,3 @@
   border-left: 4px solid #2e7d32;
 }
 
-/* Dark Mode Support */
-.dark .create-order-container,
-.dark .form-section {
-  background: rgba(17, 24, 39, 0.8);
-  color: #e5e7eb;
-}
-
-.dark .formGroup label,
-.dark .input-label {
-  color: #d1d5db;
-}
-
-.dark .formGroup input,
-.dark .formGroup select,
-.dark .formGroup textarea,
-.dark .form-input {
-  background: rgba(31, 41, 55, 0.5);
-  border-color: rgba(75, 85, 99, 0.5);
-  color: #e5e7eb;
-}
-
-.dark .formSection,
-.dark .section-title {
-  border-bottom-color: rgba(75, 85, 99, 0.3);
-}
-
-.dark .page-title {
-  color: #e5e7eb;
-}
-
-.dark .dimensions-section,
-.dark .spec-dimensions-section {
-  background: rgba(31, 41, 55, 0.5);
-  border-color: rgba(75, 85, 99, 0.5);
-}

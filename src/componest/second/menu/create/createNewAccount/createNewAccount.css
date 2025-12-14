@@ -4,17 +4,25 @@
   padding: 0;
   flex-direction: column;
   width: 100%;
-  height: 100vh;
+  height: auto;
+  min-height: 100%;
+  overflow-y: auto;
+  
 
 
 
 
+
+}
+#CreateMachineMachineNamemargin-left{
+  margin-left: 0rem !important;
 }
 
 
 .CreateAccountTitelCss h6 {
   margin-top: 0;
   margin-bottom: 10px;
+  
   font-size: large;
   text-align: center;
   top: 0;
@@ -170,4 +178,50 @@
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
+}
+
+/* Form group for create account */
+.form-group-createAccount {
+  margin-bottom: 1rem;
+  width: 100%;
+}
+
+.form-group-createAccount label {
+  display: block;
+  font-weight: 500;
+  color: #374151;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+}
+
+.form-group-createAccount select {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: #1f2937;
+  background-color: #fff;
+  border: 2px solid #e5e7eb;
+  border-radius: 6px;
+  outline: none;
+  box-sizing: border-box;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 12px center;
+  background-repeat: no-repeat;
+  background-size: 16px;
+  padding-right: 40px;
+  appearance: none;
+}
+
+.form-group-createAccount select:focus {
+  border-color: #FF6B35;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.15);
+}
+
+/* Fix for form row items */
+.form-row .form-group-createAccount {
+  flex: 1;
+  min-width: 150px;
 }

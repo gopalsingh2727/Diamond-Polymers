@@ -274,49 +274,6 @@
   }
 }
 
-/* Dark Mode Support */
-.dark .otp-card {
-  background-color: #1f2937;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-}
-
-.dark .otp-input {
-  background-color: #111827;
-  border-color: #374151;
-  color: #f9fafb;
-}
-
-.dark .otp-input:focus {
-  border-color: #FF6B35;
-  background-color: #1f2937;
-}
-
-.dark .otp-security-notice {
-  background-color: #111827;
-}
-
-.dark .otp-security-notice-text {
-  color: #9ca3af;
-}
-
-.dark .otp-message-error {
-  background-color: #7f1d1d;
-  border-color: #991b1b;
-  color: #fecaca;
-}
-
-.dark .otp-message-success {
-  background-color: #14532d;
-  border-color: #166534;
-  color: #bbf7d0;
-}
-
-.dark .otp-message-info {
-  background-color: #1e3a8a;
-  border-color: #1e40af;
-  color: #bfdbfe;
-}
-
 /* Phone Verification Specific */
 .phone-input-group {
   display: flex;
@@ -348,18 +305,6 @@
   outline: none;
   border-color: #FF6B35;
   box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
-}
-
-.dark .phone-prefix {
-  background-color: #374151;
-  border-color: #4b5563;
-  color: #f9fafb;
-}
-
-.dark .phone-input {
-  background-color: #111827;
-  border-color: #4b5563;
-  color: #f9fafb;
 }
 
 /* Accessibility */

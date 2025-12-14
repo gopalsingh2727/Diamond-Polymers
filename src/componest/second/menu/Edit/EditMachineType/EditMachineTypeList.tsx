@@ -4,7 +4,6 @@
  */
 import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { useFormDataCache } from "../hooks/useFormDataCache";
-import { formatDate } from "../../../../../utils/dateUtils";
 import "./EditMachineyType.css";
 
 interface MachineType {
@@ -110,7 +109,6 @@ const EditMachineTypeList: React.FC<EditMachineTypeListProps> = ({ onEdit }) => 
                   <th className="editsectionsTable-th">Description</th>
                   <th className="editsectionsTable-th">Machines</th>
                   <th className="editsectionsTable-th">Branch</th>
-                  <th className="editsectionsTable-th">Created</th>
                 </tr>
               </thead>
               <tbody className="editsectionsTable-tbody">
@@ -125,7 +123,6 @@ const EditMachineTypeList: React.FC<EditMachineTypeListProps> = ({ onEdit }) => 
                     <td className="editsectionsTable-td">{item.description}</td>
                     <td className="editsectionsTable-td">{item.machines?.length || 0}</td>
                     <td className="editsectionsTable-td">{item.branchId?.name || "N/A"}</td>
-                    <td className="editsectionsTable-td">{formatDate(item.createdAt)}</td>
                   </tr>
                 ))}
               </tbody>

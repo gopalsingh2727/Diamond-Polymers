@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { getOptions } from '../../../../redux/option/optionActions';
-import { Eye } from 'lucide-react';
-import '../materialAndProduct/materialAndProduct.css';
+import { getOptionSpecs } from '../../../../redux/create/optionSpec/optionSpecActions';
+import { Eye, Printer, FileSpreadsheet } from 'lucide-react';
+
 import './optionsSection.css';
 
 // OptionType specification template from backend
@@ -39,6 +40,14 @@ interface AllowedOptionType {
   specifications?: SpecificationTemplate[];
 }
 
+interface CustomerInfo {
+  name?: string;
+  address?: string;
+  phone?: string;
+  whatsapp?: string;
+  companyName?: string;
+}
+
 interface InlineOptionsInputProps {
   orderTypeId?: string;
   title: string;
@@ -46,6 +55,8 @@ interface InlineOptionsInputProps {
   initialData?: OptionItem[];
   isEditMode?: boolean;
   allowedOptionTypes?: AllowedOptionType[];
+  orderId?: string;
+  customerInfo?: CustomerInfo;
 }
 
 // Generate unique ID for option items
@@ -191,9 +202,12 @@ const InlineOptionsInput: React.FC<InlineOptionsInputProps> = ({
   initialData = [],
   isEditMode = false,
   allowedOptionTypes = [],
+  orderId,
+  customerInfo,
 }) => {
   const dispatch = useDispatch();
   const { options } = useSelector((state: any) => state.option || { options: [] });
+  const { optionSpecs } = useSelector((state: any) => state.optionSpec || { optionSpecs: [] });
 
   // Saved options list
   const [selectedOptions, setSelectedOptions] = useState<OptionItem[]>([]);
@@ -214,6 +228,18 @@ const InlineOptionsInput: React.FC<InlineOptionsInputProps> = ({
   // File preview modal state
   const [filePreview, setFilePreview] = useState<{ url: string; name: string; type: string } | null>(null);
 
+  // Option type view popup state
+  const [viewOptionTypePopup, setViewOptionTypePopup] = useState<{
+    show: boolean;
+    typeId: string;
+    typeName: string;
+    options: OptionItem[];
+    specKeys: string[];
+  } | null>(null);
+
+  // View All Options popup state
+  const [showAllOptionsPopup, setShowAllOptionsPopup] = useState(false);
+
   // Refs for Enter key navigation
   const typeRef = useRef<HTMLInputElement>(null);
   const nameRef = useRef<HTMLInputElement>(null);
@@ -227,6 +253,12 @@ const InlineOptionsInput: React.FC<InlineOptionsInputProps> = ({
     const branchId = localStorage.getItem('branchId') || '';
     dispatch(getOptions({ orderTypeId, branchId }) as any);
   }, [dispatch, orderTypeId]);
+
+  // Fetch optionSpecs for fallback lookup
+  useEffect(() => {
+    const branchId = localStorage.getItem('branchId') || '';
+    dispatch(getOptionSpecs({ branchId }) as any);
+  }, [dispatch]);
 
   // Debug: Log options data
   useEffect(() => {
@@ -383,31 +415,68 @@ const InlineOptionsInput: React.FC<InlineOptionsInputProps> = ({
     console.log('🎯 Option name:', selectedOption.name);
     console.log('🎯 Option optionTypeId:', selectedOption.optionTypeId);
     console.log('🎯 Option optionSpecId:', selectedOption.optionSpecId);
+    console.log('🎯 Option dimensions:', selectedOption.dimensions);
+    console.log('🎯 Available optionSpecs:', optionSpecs);
 
     const optName = selectedOption.name || selectedOption.optionName || '';
     const optId = selectedOption._id || selectedOption.optionId || '';
     const typeId = selectedOption.optionTypeId?._id || selectedOption.optionTypeId || currentOption.optionTypeId || '';
     const typeName = selectedOption.optionTypeId?.name || currentOption.optionTypeName || '';
 
-    // PRIORITY: Load specifications template from OptionSpec if exists, otherwise fall back to OptionType
-    // This allows each Option to have its own specific template via OptionSpec
-    let specs = [];
-    if (selectedOption.optionSpecId?.specifications && selectedOption.optionSpecId.specifications.length > 0) {
-      // Use OptionSpec template (specific to this Option)
-      specs = selectedOption.optionSpecId.specifications;
-      console.log('🎯 Using OptionSpec template:', specs);
-    } else if (selectedOption.optionTypeId?.specifications && selectedOption.optionTypeId.specifications.length > 0) {
-      // Fallback to OptionType template (generic for all options of this type)
-      specs = selectedOption.optionTypeId.specifications;
-      console.log('🎯 Using OptionType template (fallback):', specs);
-    } else {
-      console.log('⚠️ No specifications template found');
-    }
-    console.log('🎯 Specs length:', specs.length);
+    // MERGE STRATEGY: Combine specs from all sources
+    // 1. Start with Option's dimensions (if any)
+    // 2. ADD OptionSpec specifications (linked or by OptionType match)
+    // 3. ADD OptionType template specs (if not already present)
+    let specs: any[] = [];
+    const specNames = new Set<string>(); // Track which spec names we've added
 
-    // Initialize spec values from template (use defaultValue from template, or value from OptionSpec)
+    // Helper to add specs without duplicates
+    const addSpecs = (newSpecs: any[], source: string) => {
+      if (!newSpecs || !Array.isArray(newSpecs)) return;
+      newSpecs.forEach((spec: any) => {
+        if (!specNames.has(spec.name)) {
+          specs.push(spec);
+          specNames.add(spec.name);
+          console.log(`🎯 Added spec "${spec.name}" from ${source}`);
+        }
+      });
+    };
+
+    // 1. Add Option's own dimensions first (has actual values)
+    if (selectedOption.dimensions && selectedOption.dimensions.length > 0) {
+      addSpecs(selectedOption.dimensions, 'Option dimensions');
+    }
+
+    // 2. Add linked OptionSpec specifications
+    if (selectedOption.optionSpecId?.specifications && selectedOption.optionSpecId.specifications.length > 0) {
+      addSpecs(selectedOption.optionSpecId.specifications, 'Linked OptionSpec');
+    }
+
+    // 3. Add OptionSpec matching the same OptionType
+    const matchingOptionSpec = Array.isArray(optionSpecs)
+      ? optionSpecs.find((spec: any) => {
+          const specTypeId = spec.optionTypeId?._id || spec.optionTypeId;
+          return specTypeId === typeId;
+        })
+      : null;
+
+    if (matchingOptionSpec?.specifications && matchingOptionSpec.specifications.length > 0) {
+      addSpecs(matchingOptionSpec.specifications, `OptionSpec "${matchingOptionSpec.name}"`);
+    }
+
+    // 4. Add OptionType template specs (fallback)
+    if (selectedOption.optionTypeId?.specifications && selectedOption.optionTypeId.specifications.length > 0) {
+      addSpecs(selectedOption.optionTypeId.specifications, 'OptionType template');
+    }
+
+    console.log('🎯 Final merged specs:', specs.length, 'specs from', specNames.size, 'unique names');
+
+    // Initialize spec values from template or dimensions
+    // For dimensions: use 'value' field directly
+    // For OptionSpec: use 'value' field if exists, otherwise use 'defaultValue'
+    // For OptionType: use 'defaultValue' (template)
     const specValues = specs.reduce((acc: any, spec: any) => {
-      // Use 'value' field if it exists (from OptionSpec), otherwise use 'defaultValue' (from template)
+      // Use 'value' field if it exists (from dimensions or OptionSpec), otherwise use 'defaultValue' (from template)
       acc[spec.name] = spec.value !== undefined ? spec.value : (spec.defaultValue || '');
       return acc;
     }, {});
@@ -440,6 +509,305 @@ const InlineOptionsInput: React.FC<InlineOptionsInputProps> = ({
     if (!isEditMode) {
       openPopup();
     }
+  };
+
+  // Handle print for option type view using iframe (no popup blocker issues)
+  const handlePrintOptionType = (typeName: string, optionsToPrint: OptionItem[], specKeys: string[]) => {
+    const currentDate = new Date().toLocaleString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>${typeName} - Print</title>
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            font-size: 12px;
+          }
+          .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #333;
+          }
+          .header-left h1 {
+            font-size: 18px;
+            margin-bottom: 5px;
+            color: #1e293b;
+          }
+          .header-left .date {
+            font-size: 11px;
+            color: #666;
+          }
+          .customer-info {
+            text-align: right;
+            font-size: 11px;
+            line-height: 1.5;
+          }
+          .customer-info strong {
+            color: #1e293b;
+          }
+          .order-badge {
+            display: inline-block;
+            background: #fef3c7;
+            color: #d97706;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 12px;
+            margin-bottom: 10px;
+            border: 1px solid #f59e0b;
+          }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+          }
+          th, td {
+            border: 1px solid #ddd;
+            padding: 8px 10px;
+            text-align: left;
+            font-size: 11px;
+          }
+          th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: #475569;
+          }
+          tr:nth-child(even) {
+            background: #fafafa;
+          }
+          @media print {
+            body { padding: 10px; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="header-left">
+            ${orderId ? `<div class="order-badge">${orderId}</div>` : ''}
+            <h1>${typeName}</h1>
+            <div class="date">${currentDate}</div>
+          </div>
+          ${customerInfo ? `
+            <div class="customer-info">
+              ${customerInfo.name ? `<div><strong>${customerInfo.name}</strong></div>` : ''}
+              ${customerInfo.companyName ? `<div>${customerInfo.companyName}</div>` : ''}
+              ${customerInfo.address ? `<div>${customerInfo.address}</div>` : ''}
+              ${customerInfo.phone || customerInfo.whatsapp ? `<div>Ph: ${customerInfo.phone || customerInfo.whatsapp}</div>` : ''}
+            </div>
+          ` : ''}
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 30px">#</th>
+              <th>Option Name</th>
+              ${specKeys.map(key => `<th>${key}</th>`).join('')}
+            </tr>
+          </thead>
+          <tbody>
+            ${optionsToPrint.map((opt, idx) => `
+              <tr>
+                <td>${idx + 1}</td>
+                <td><strong>${opt.optionName}</strong></td>
+                ${specKeys.map(key => {
+                  const value = opt.specificationValues?.[key];
+                  const displayValue = isFileValue(value) ? '📎 File' : renderSpecValue(value);
+                  return `<td>${displayValue}</td>`;
+                }).join('')}
+              </tr>
+            `).join('')}
+          </tbody>
+          ${(() => {
+            // Calculate totals for print
+            const firstOpt = optionsToPrint[0];
+            const backendOpt = options.find((o: any) => o._id === firstOpt?.optionId);
+            const specDefs: Record<string, any> = {};
+            backendOpt?.dimensions?.forEach((d: any) => { if (!specDefs[d.name]) specDefs[d.name] = { ...d }; });
+            backendOpt?.optionSpecId?.specifications?.forEach((s: any) => {
+              if (specDefs[s.name]) { specDefs[s.name].includeInTotal = s.includeInTotal; specDefs[s.name].dataType = s.dataType; }
+              else specDefs[s.name] = { ...s };
+            });
+            const tId = backendOpt?.optionTypeId?._id || backendOpt?.optionTypeId || firstOpt?.optionTypeId;
+            const mSpec = Array.isArray(optionSpecs) ? optionSpecs.find((s: any) => (s.optionTypeId?._id || s.optionTypeId) === tId) : null;
+            mSpec?.specifications?.forEach((s: any) => {
+              if (specDefs[s.name] && specDefs[s.name].includeInTotal === undefined) specDefs[s.name].includeInTotal = s.includeInTotal;
+              if (!specDefs[s.name]) specDefs[s.name] = { ...s };
+            });
+
+            const hasTotal = specKeys.some(k => {
+              const sp = specDefs[k];
+              const isNum = sp?.dataType === 'number' || (!sp?.dataType && !isNaN(parseFloat(optionsToPrint[0]?.specificationValues?.[k])));
+              return isNum && sp?.includeInTotal !== false;
+            });
+            if (!hasTotal) return '';
+
+            const totals: Record<string, number> = {};
+            const showT: Record<string, boolean> = {};
+            specKeys.forEach(k => {
+              const sp = specDefs[k];
+              const isNum = sp?.dataType === 'number' || (!sp?.dataType && !isNaN(parseFloat(optionsToPrint[0]?.specificationValues?.[k])));
+              if (isNum && sp?.includeInTotal !== false) {
+                showT[k] = true;
+                totals[k] = optionsToPrint.reduce((sum, o) => sum + (parseFloat(o.specificationValues?.[k]) || 0), 0);
+              }
+            });
+
+            return `<tfoot><tr style="background:#fef3c7;border-top:2px solid #f59e0b;font-weight:700;color:#92400e;">
+              <td></td><td>Total</td>
+              ${specKeys.map(k => `<td>${showT[k] ? (totals[k]?.toLocaleString() || '0') : '-'}</td>`).join('')}
+            </tr></tfoot>`;
+          })()}
+        </table>
+      </body>
+      </html>
+    `;
+
+    // Create hidden iframe for printing (Electron compatible)
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.width = '100%';
+    iframe.style.height = '100%';
+    iframe.style.border = 'none';
+    iframe.style.left = '-9999px';
+    iframe.style.top = '0';
+    iframe.style.zIndex = '-1';
+    document.body.appendChild(iframe);
+
+    const iframeDoc = iframe.contentWindow?.document;
+    if (iframeDoc) {
+      iframeDoc.open();
+      iframeDoc.write(printContent);
+      iframeDoc.close();
+
+      // For Electron: trigger print after a short delay
+      setTimeout(() => {
+        try {
+          iframe.contentWindow?.focus();
+          iframe.contentWindow?.print();
+        } catch (e) {
+          console.error('Print error:', e);
+          // Fallback: open in new window
+          const printWin = window.open('', '_blank');
+          if (printWin) {
+            printWin.document.write(printContent);
+            printWin.document.close();
+            printWin.focus();
+            printWin.print();
+          }
+        }
+        // Remove iframe after printing
+        setTimeout(() => {
+          if (iframe.parentNode) {
+            document.body.removeChild(iframe);
+          }
+        }, 1000);
+      }, 500);
+    }
+  };
+
+  // Handle Excel export for option type
+  const handleExportExcelOptionType = (typeName: string, optionsToExport: OptionItem[], specKeys: string[]) => {
+    // Create CSV content
+    const headers = ['#', 'Option Name', ...specKeys];
+    const rows = optionsToExport.map((opt, idx) => [
+      idx + 1,
+      opt.optionName,
+      ...specKeys.map(key => {
+        const value = opt.specificationValues?.[key];
+        if (isFileValue(value)) return '📎 File';
+        return renderSpecValue(value);
+      })
+    ]);
+
+    // Calculate Total row
+    const firstOpt = optionsToExport[0];
+    const backendOpt = options.find((o: any) => o._id === firstOpt?.optionId);
+    const specDefs: Record<string, any> = {};
+    backendOpt?.dimensions?.forEach((d: any) => { if (!specDefs[d.name]) specDefs[d.name] = { ...d }; });
+    backendOpt?.optionSpecId?.specifications?.forEach((s: any) => {
+      if (specDefs[s.name]) { specDefs[s.name].includeInTotal = s.includeInTotal; specDefs[s.name].dataType = s.dataType; }
+      else specDefs[s.name] = { ...s };
+    });
+    const tId = backendOpt?.optionTypeId?._id || backendOpt?.optionTypeId || firstOpt?.optionTypeId;
+    const mSpec = Array.isArray(optionSpecs) ? optionSpecs.find((s: any) => (s.optionTypeId?._id || s.optionTypeId) === tId) : null;
+    mSpec?.specifications?.forEach((s: any) => {
+      if (specDefs[s.name] && specDefs[s.name].includeInTotal === undefined) specDefs[s.name].includeInTotal = s.includeInTotal;
+      if (!specDefs[s.name]) specDefs[s.name] = { ...s };
+    });
+
+    const hasTotal = specKeys.some(k => {
+      const sp = specDefs[k];
+      const isNum = sp?.dataType === 'number' || (!sp?.dataType && !isNaN(parseFloat(optionsToExport[0]?.specificationValues?.[k])));
+      return isNum && sp?.includeInTotal !== false;
+    });
+
+    let totalRow: (string | number)[] = [];
+    if (hasTotal) {
+      const totals: Record<string, number> = {};
+      const showT: Record<string, boolean> = {};
+      specKeys.forEach(k => {
+        const sp = specDefs[k];
+        const isNum = sp?.dataType === 'number' || (!sp?.dataType && !isNaN(parseFloat(optionsToExport[0]?.specificationValues?.[k])));
+        if (isNum && sp?.includeInTotal !== false) {
+          showT[k] = true;
+          totals[k] = optionsToExport.reduce((sum, o) => sum + (parseFloat(o.specificationValues?.[k]) || 0), 0);
+        }
+      });
+      totalRow = ['', 'TOTAL', ...specKeys.map(k => showT[k] ? String(totals[k] || 0) : '-')];
+    }
+
+    // Add header info
+    const headerInfo = [
+      [`${typeName} - Options Export`],
+      [''],
+      orderId ? ['Order ID:', orderId] : [],
+      customerInfo?.name ? ['Customer:', customerInfo.name] : [],
+      customerInfo?.companyName ? ['Company:', customerInfo.companyName] : [],
+      customerInfo?.address ? ['Address:', customerInfo.address] : [],
+      ['Generated:', new Date().toLocaleString()],
+      [''],
+      headers,
+      ...rows,
+      ...(totalRow.length > 0 ? [totalRow] : [])
+    ].filter(row => row.length > 0);
+
+    // Convert to CSV
+    const csvContent = headerInfo.map(row =>
+      row.map(cell => {
+        const cellStr = String(cell);
+        if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
+          return `"${cellStr.replace(/"/g, '""')}"`;
+        }
+        return cellStr;
+      }).join(',')
+    ).join('\n');
+
+    // Create and download file
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const filename = `Options_${typeName}_${orderId || 'new'}_${new Date().toISOString().slice(0, 10)}.csv`;
+
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
   };
 
   // Handle file preview
@@ -522,6 +890,57 @@ For old files, you need to re-upload them.
 
         return (
           <div onDoubleClick={handleListDoubleClick} style={{ cursor: isEditMode ? 'default' : 'pointer' }}>
+            {/* View All Options Header */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '6px 8px',
+              marginBottom: '8px',
+              background: '#fef3c7',
+              borderRadius: '6px',
+              border: '1px solid #fcd34d'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontWeight: '600', fontSize: '13px', color: '#92400e' }}>
+                  All Options
+                </span>
+                <span style={{
+                  background: '#fbbf24',
+                  color: '#78350f',
+                  padding: '2px 8px',
+                  borderRadius: '10px',
+                  fontSize: '11px',
+                  fontWeight: '500'
+                }}>
+                  {selectedOptions.length} total • {Object.keys(groupedOptions).length} types
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowAllOptionsPopup(true);
+                }}
+                style={{
+                  background: '#f59e0b',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  color: 'white',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: '4px 10px',
+                  fontSize: '11px',
+                  fontWeight: '500'
+                }}
+                title="View all options details"
+              >
+                <Eye size={14} />
+                View All
+              </button>
+            </div>
             {Object.entries(groupedOptions).map(([typeId, optionsInGroup], groupIndex) => {
               // Get unique specification keys for THIS group only
               const groupSpecKeys = Array.from(
@@ -538,32 +957,94 @@ For old files, you need to re-upload them.
                   key={typeId}
                   className="SaveMixing"
                   style={{
-                    marginBottom: groupIndex < Object.keys(groupedOptions).length - 1 ? '20px' : '0',
-                    overflowX: 'auto'
+                    marginBottom: groupIndex < Object.keys(groupedOptions).length - 1 ? '12px' : '0',
+                    overflowX: 'auto',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '6px',
+                    padding: '0'
                   }}
                 >
                   {/* Option Type Header */}
                   <div style={{
-                    color: '#000',
-                    fontWeight: '600',
-                    fontSize: '14px',
-                    padding: '5px 0'
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '4px 8px',
+                    background: '#f8fafc',
+                    borderRadius: '4px',
+                    marginBottom: '4px'
                   }}>
-                    {optionTypeName}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}>
+                      <span style={{
+                        color: '#1e293b',
+                        fontWeight: '600',
+                        fontSize: '13px'
+                      }}>
+                        {optionTypeName}
+                      </span>
+                      <span style={{
+                        background: '#dbeafe',
+                        color: '#1d4ed8',
+                        padding: '2px 8px',
+                        borderRadius: '10px',
+                        fontSize: '11px',
+                        fontWeight: '500'
+                      }}>
+                        {optionsInGroup.length} item{optionsInGroup.length > 1 ? 's' : ''} • {groupSpecKeys.length} specs
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setViewOptionTypePopup({
+                          show: true,
+                          typeId,
+                          typeName: optionTypeName,
+                          options: optionsInGroup,
+                          specKeys: groupSpecKeys
+                        });
+                      }}
+                      style={{
+                        background: '#f59e0b',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        color: 'white',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        padding: '4px 8px',
+                        fontSize: '11px',
+                        fontWeight: '500'
+                      }}
+                      title={`View ${optionTypeName} specifications`}
+                    >
+                      <Eye size={14} />
+                      View
+                    </button>
                   </div>
 
-                  <div className="SaveMixingDisplay">
+                  <div className="SaveMixingDisplay" style={{ border: 'none' }}>
                     {/* Table Header */}
                     <div className="SaveMixingHeaderRow" style={{
                       display: 'grid',
-                      gridTemplateColumns: `50px 150px 150px ${groupSpecKeys.map(() => '120px').join(' ')} ${!isEditMode ? '50px' : ''}`,
-                      gap: '8px'
+                      gridTemplateColumns: `30px 100px 100px ${groupSpecKeys.map(() => '90px').join(' ')} ${!isEditMode ? '30px' : ''}`,
+                      gap: '4px',
+                      padding: '6px 8px',
+                      background: '#f8fafc',
+                      borderRadius: '4px 4px 0 0',
+                      fontSize: '11px'
                     }}>
                       <strong>#</strong>
                       <strong>Type</strong>
                       <strong>Name</strong>
                       {groupSpecKeys.map(key => (
-                        <strong key={key}>{key}</strong>
+                        <strong key={key} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{key}</strong>
                       ))}
                       {!isEditMode && <strong></strong>}
                     </div>
@@ -575,8 +1056,11 @@ For old files, you need to re-upload them.
                       return (
                         <div key={option.id} className="SaveMixingstepRow" style={{
                           display: 'grid',
-                          gridTemplateColumns: `50px 150px 150px ${groupSpecKeys.map(() => '120px').join(' ')} ${!isEditMode ? '50px' : ''}`,
-                          gap: '8px'
+                          gridTemplateColumns: `30px 100px 100px ${groupSpecKeys.map(() => '90px').join(' ')} ${!isEditMode ? '30px' : ''}`,
+                          gap: '4px',
+                          padding: '4px 8px',
+                          fontSize: '12px',
+                          borderBottom: '1px solid #f1f5f9'
                         }}>
                           <span>{groupRowIndex + 1}</span>
                           <span>{option.optionTypeName}</span>
@@ -620,15 +1104,29 @@ For old files, you need to re-upload them.
                             );
                           })}
                           {!isEditMode && (
-                            <span>
+                            <span style={{ display: 'flex', justifyContent: 'flex-end' }}>
                               <button
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   handleRemoveOption(originalIndex);
                                 }}
-                                className="buttonStepRowNote"
-                                style={{ color: '#dc2626', fontSize: '14px', fontWeight: 'bold' }}
+                                style={{
+                                  background: '#fee2e2',
+                                  border: '1px solid #fecaca',
+                                  borderRadius: '4px',
+                                  cursor: 'pointer',
+                                  color: '#dc2626',
+                                  fontSize: '14px',
+                                  fontWeight: 'bold',
+                                  width: '24px',
+                                  height: '24px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  padding: 0
+                                }}
+                                title="Remove"
                               >
                                 ×
                               </button>
@@ -637,6 +1135,136 @@ For old files, you need to re-upload them.
                         </div>
                       );
                     })}
+
+                    {/* Total Row - Calculate totals for number specs with includeInTotal */}
+                    {(() => {
+                      // Get spec definitions from backend option data (not selectedOptions which only has values)
+                      const firstSelectedOption = optionsInGroup[0];
+                      // Look up the actual backend option using optionId
+                      const backendOption = options.find((opt: any) => opt._id === firstSelectedOption?.optionId);
+
+                      const getSpecDefinitions = () => {
+                        const specDefs: Record<string, any> = {};
+
+                        // IMPORTANT: Get includeInTotal from OptionSpec (has the checkbox setting)
+                        // Priority: OptionSpec > OptionType template > Option dimensions (dimensions don't have includeInTotal)
+
+                        // 1. First collect all spec NAMES from Option's dimensions (for dataType detection)
+                        backendOption?.dimensions?.forEach((dim: any) => {
+                          if (!specDefs[dim.name]) {
+                            specDefs[dim.name] = { ...dim };
+                          }
+                        });
+
+                        // 2. From linked OptionSpec - MERGE includeInTotal and totalFormula
+                        backendOption?.optionSpecId?.specifications?.forEach((spec: any) => {
+                          if (specDefs[spec.name]) {
+                            // Merge: OptionSpec has includeInTotal setting, copy it
+                            specDefs[spec.name].includeInTotal = spec.includeInTotal;
+                            specDefs[spec.name].totalFormula = spec.totalFormula;
+                            if (spec.dataType) specDefs[spec.name].dataType = spec.dataType;
+                          } else {
+                            specDefs[spec.name] = { ...spec };
+                          }
+                        });
+
+                        // 3. From OptionSpec by OptionType match - MERGE includeInTotal
+                        const typeId = backendOption?.optionTypeId?._id || backendOption?.optionTypeId || firstSelectedOption?.optionTypeId;
+                        const matchingSpec = Array.isArray(optionSpecs)
+                          ? optionSpecs.find((spec: any) => (spec.optionTypeId?._id || spec.optionTypeId) === typeId)
+                          : null;
+                        matchingSpec?.specifications?.forEach((spec: any) => {
+                          if (specDefs[spec.name]) {
+                            // Merge: OptionSpec has includeInTotal setting, copy it if not already set
+                            if (specDefs[spec.name].includeInTotal === undefined) {
+                              specDefs[spec.name].includeInTotal = spec.includeInTotal;
+                            }
+                            if (specDefs[spec.name].totalFormula === undefined) {
+                              specDefs[spec.name].totalFormula = spec.totalFormula;
+                            }
+                            if (!specDefs[spec.name].dataType && spec.dataType) {
+                              specDefs[spec.name].dataType = spec.dataType;
+                            }
+                          } else {
+                            specDefs[spec.name] = { ...spec };
+                          }
+                        });
+
+                        // 4. From OptionType template - fallback only
+                        backendOption?.optionTypeId?.specifications?.forEach((spec: any) => {
+                          if (!specDefs[spec.name]) {
+                            specDefs[spec.name] = { ...spec };
+                          }
+                        });
+
+                        return specDefs;
+                      };
+
+                      const specDefs = getSpecDefinitions();
+                      console.log('📊 Total Row - specDefs (with includeInTotal):', specDefs);
+                      console.log('📊 Total Row - groupSpecKeys:', groupSpecKeys);
+
+                      // Check if any spec should show total (number type with includeInTotal !== false)
+                      // includeInTotal: true = show total, false = hide total, undefined = default to true
+                      const hasAnyTotal = groupSpecKeys.some(key => {
+                        const spec = specDefs[key];
+                        // For specs without dataType defined, check if value looks numeric
+                        const isNumeric = spec?.dataType === 'number' ||
+                          (spec?.dataType === undefined && !isNaN(parseFloat(optionsInGroup[0]?.specificationValues?.[key])));
+                        // Only show total if includeInTotal is true or undefined (default true), NOT if false
+                        const shouldInclude = spec?.includeInTotal !== false;
+                        console.log(`📊 Spec "${key}": dataType=${spec?.dataType}, isNumeric=${isNumeric}, includeInTotal=${spec?.includeInTotal} (${typeof spec?.includeInTotal}), shouldShow=${isNumeric && shouldInclude}`);
+                        return isNumeric && shouldInclude;
+                      });
+
+                      console.log('📊 hasAnyTotal:', hasAnyTotal, 'optionsCount:', optionsInGroup.length);
+                      if (!hasAnyTotal) return null;
+
+                      // Calculate totals - track which specs should show totals
+                      const totals: Record<string, number> = {};
+                      const showTotalFor: Record<string, boolean> = {};
+
+                      groupSpecKeys.forEach(key => {
+                        const spec = specDefs[key];
+                        // Same logic as hasAnyTotal check
+                        const isNumeric = spec?.dataType === 'number' ||
+                          (spec?.dataType === undefined && !isNaN(parseFloat(optionsInGroup[0]?.specificationValues?.[key])));
+                        const shouldInclude = spec?.includeInTotal !== false;
+
+                        if (isNumeric && shouldInclude) {
+                          showTotalFor[key] = true;
+                          totals[key] = optionsInGroup.reduce((sum, opt) => {
+                            const val = parseFloat(opt.specificationValues?.[key]) || 0;
+                            return sum + val;
+                          }, 0);
+                        }
+                      });
+
+                      console.log('📊 Totals calculated:', totals);
+
+                      return (
+                        <div className="SaveMixingstepRow" style={{
+                          display: 'grid',
+                          gridTemplateColumns: `30px 100px 100px ${groupSpecKeys.map(() => '90px').join(' ')} ${!isEditMode ? '30px' : ''}`,
+                          gap: '4px',
+                          padding: '6px 8px',
+                          fontSize: '12px',
+                          background: '#fef3c7',
+                          borderTop: '2px solid #f59e0b',
+                          fontWeight: '600'
+                        }}>
+                          <span></span>
+                          <span></span>
+                          <span style={{ color: '#92400e' }}>Total</span>
+                          {groupSpecKeys.map(key => (
+                            <span key={key} style={{ color: '#92400e' }}>
+                              {showTotalFor[key] ? totals[key]?.toLocaleString() || '0' : '-'}
+                            </span>
+                          ))}
+                          {!isEditMode && <span></span>}
+                        </div>
+                      );
+                    })()}
 
                   </div>
                 </div>
@@ -846,15 +1474,75 @@ For old files, you need to re-upload them.
                 </div>
 
                 {/* Specifications Section - dynamically loaded */}
+                {/* MERGE: Option dimensions + OptionSpec specs + OptionType specs */}
                 <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
                   {selectedBackendOption && (() => {
-                    const specs = selectedBackendOption.optionSpecId?.specifications || selectedBackendOption.optionTypeId?.specifications;
-                    return specs && Array.isArray(specs) && specs.length > 0;
+                    // Merge specs from all sources (same logic as handleNameSelect)
+                    const getMergedSpecs = () => {
+                      const specs: any[] = [];
+                      const specNames = new Set<string>();
+
+                      const addSpecs = (newSpecs: any[]) => {
+                        if (!newSpecs || !Array.isArray(newSpecs)) return;
+                        newSpecs.forEach((spec: any) => {
+                          if (!specNames.has(spec.name)) {
+                            specs.push(spec);
+                            specNames.add(spec.name);
+                          }
+                        });
+                      };
+
+                      // 1. Add Option's dimensions
+                      addSpecs(selectedBackendOption.dimensions);
+
+                      // 2. Add linked OptionSpec specs
+                      addSpecs(selectedBackendOption.optionSpecId?.specifications);
+
+                      // 3. Add OptionSpec by OptionType match
+                      const typeId = selectedBackendOption.optionTypeId?._id || selectedBackendOption.optionTypeId;
+                      const matchingSpec = Array.isArray(optionSpecs)
+                        ? optionSpecs.find((spec: any) => (spec.optionTypeId?._id || spec.optionTypeId) === typeId)
+                        : null;
+                      addSpecs(matchingSpec?.specifications);
+
+                      // 4. Add OptionType template specs
+                      addSpecs(selectedBackendOption.optionTypeId?.specifications);
+
+                      return specs;
+                    };
+                    const specs = getMergedSpecs();
+                    return specs && specs.length > 0;
                   })() && (
                     <>
                       {(() => {
-                        const specs = selectedBackendOption.optionSpecId?.specifications || selectedBackendOption.optionTypeId?.specifications;
-                        return specs || [];
+                        // Same merge logic for rendering
+                        const getMergedSpecs = () => {
+                          const specs: any[] = [];
+                          const specNames = new Set<string>();
+
+                          const addSpecs = (newSpecs: any[]) => {
+                            if (!newSpecs || !Array.isArray(newSpecs)) return;
+                            newSpecs.forEach((spec: any) => {
+                              if (!specNames.has(spec.name)) {
+                                specs.push(spec);
+                                specNames.add(spec.name);
+                              }
+                            });
+                          };
+
+                          addSpecs(selectedBackendOption.dimensions);
+                          addSpecs(selectedBackendOption.optionSpecId?.specifications);
+
+                          const typeId = selectedBackendOption.optionTypeId?._id || selectedBackendOption.optionTypeId;
+                          const matchingSpec = Array.isArray(optionSpecs)
+                            ? optionSpecs.find((spec: any) => (spec.optionTypeId?._id || spec.optionTypeId) === typeId)
+                            : null;
+                          addSpecs(matchingSpec?.specifications);
+                          addSpecs(selectedBackendOption.optionTypeId?.specifications);
+
+                          return specs;
+                        };
+                        return getMergedSpecs();
                       })().map((spec: SpecificationTemplate, index: number) => (
                         <div key={index} style={{ minWidth: '120px', flex: '1' }}>
                           <label style={{ display: 'block', fontSize: '11px', fontWeight: '600', marginBottom: '4px', color: '#374151' }}>
@@ -940,8 +1628,10 @@ For old files, you need to re-upload them.
                               className="createorderstartsections-tableInput"
                             >
                               <option value="">Select</option>
-                              {spec.dropdownOptions?.map((option, idx) => (
-                                <option key={idx} value={option}>{option}</option>
+                              {spec.dropdownOptions?.map((option: any, idx: number) => (
+                                <option key={idx} value={typeof option === 'object' ? option.value : option}>
+                                  {typeof option === 'object' ? option.label : option}
+                                </option>
                               ))}
                             </select>
                           ) : (
@@ -978,6 +1668,246 @@ For old files, you need to re-upload them.
                 + Add Option
               </button>
 
+          </div>
+        </div>
+      )}
+
+      {/* Option Type View Popup */}
+      {viewOptionTypePopup?.show && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000,
+            padding: '20px'
+          }}
+          onClick={() => setViewOptionTypePopup(null)}
+        >
+          <div
+            style={{
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              maxWidth: '95vw',
+              maxHeight: '85vh',
+              overflow: 'hidden',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              display: 'flex',
+              flexDirection: 'column'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div
+              style={{
+                padding: '16px 20px',
+                borderBottom: '1px solid #e5e7eb',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                backgroundColor: '#f8fafc'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <h3 style={{ margin: 0, fontSize: '16px', color: '#1e293b', fontWeight: '600' }}>
+                  {viewOptionTypePopup.typeName}
+                </h3>
+                <span style={{
+                  background: '#dbeafe',
+                  color: '#1d4ed8',
+                  padding: '4px 10px',
+                  borderRadius: '12px',
+                  fontSize: '12px',
+                  fontWeight: '500'
+                }}>
+                  {viewOptionTypePopup.options.length} item{viewOptionTypePopup.options.length > 1 ? 's' : ''} • {viewOptionTypePopup.specKeys.length} specifications
+                </span>
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  onClick={() => handlePrintOptionType(
+                    viewOptionTypePopup.typeName,
+                    viewOptionTypePopup.options,
+                    viewOptionTypePopup.specKeys
+                  )}
+                  style={{
+                    background: '#f59e0b',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    padding: '6px 12px',
+                    fontSize: '14px',
+                    color: 'white',
+                    fontWeight: '500',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                  title="Print this table"
+                >
+                  <Printer size={16} />
+                  Print
+                </button>
+                <button
+                  onClick={() => handleExportExcelOptionType(
+                    viewOptionTypePopup.typeName,
+                    viewOptionTypePopup.options,
+                    viewOptionTypePopup.specKeys
+                  )}
+                  style={{
+                    background: '#10b981',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    padding: '6px 12px',
+                    fontSize: '14px',
+                    color: 'white',
+                    fontWeight: '500',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                  title="Export to Excel (CSV)"
+                >
+                  <FileSpreadsheet size={16} />
+                  Excel
+                </button>
+                <button
+                  onClick={() => setViewOptionTypePopup(null)}
+                  style={{
+                    background: '#f1f5f9',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    padding: '6px 12px',
+                    fontSize: '14px',
+                    color: '#64748b',
+                    fontWeight: '500'
+                  }}
+                >
+                  ✕ Close
+                </button>
+              </div>
+            </div>
+
+            {/* Table Content */}
+            <div style={{ padding: '16px', overflowX: 'auto', overflowY: 'auto', maxHeight: 'calc(85vh - 70px)' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <thead>
+                  <tr style={{ backgroundColor: '#f1f5f9' }}>
+                    <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: '600', color: '#475569', borderBottom: '2px solid #e2e8f0' }}>#</th>
+                    <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: '600', color: '#475569', borderBottom: '2px solid #e2e8f0' }}>Name</th>
+                    {viewOptionTypePopup.specKeys.map(key => (
+                      <th key={key} style={{ padding: '10px 12px', textAlign: 'left', fontWeight: '600', color: '#475569', borderBottom: '2px solid #e2e8f0', whiteSpace: 'nowrap' }}>
+                        {key}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {viewOptionTypePopup.options.map((option, index) => (
+                    <tr key={option.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                      <td style={{ padding: '10px 12px', color: '#64748b' }}>{index + 1}</td>
+                      <td style={{ padding: '10px 12px', fontWeight: '500', color: '#1e293b' }}>{option.optionName}</td>
+                      {viewOptionTypePopup.specKeys.map(key => {
+                        const value = option.specificationValues?.[key];
+                        const isFile = isFileValue(value);
+                        return (
+                          <td key={key} style={{ padding: '10px 12px', color: '#334155' }}>
+                            {isFile ? (
+                              <button
+                                type="button"
+                                onClick={() => handleViewFile(value)}
+                                style={{
+                                  background: '#eff6ff',
+                                  border: '1px solid #bfdbfe',
+                                  borderRadius: '4px',
+                                  cursor: 'pointer',
+                                  color: '#2563eb',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  padding: '4px 8px',
+                                  fontSize: '12px'
+                                }}
+                              >
+                                <Eye size={14} /> View
+                              </button>
+                            ) : (
+                              renderSpecValue(value)
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+                {/* Total Row for viewOptionTypePopup */}
+                {(() => {
+                  const popupOptions = viewOptionTypePopup.options;
+                  const popupSpecKeys = viewOptionTypePopup.specKeys;
+                  const firstOpt = popupOptions[0];
+                  const backendOpt = options.find((opt: any) => opt._id === firstOpt?.optionId);
+
+                  // Get spec definitions with includeInTotal
+                  const specDefs: Record<string, any> = {};
+                  backendOpt?.dimensions?.forEach((dim: any) => { if (!specDefs[dim.name]) specDefs[dim.name] = { ...dim }; });
+                  backendOpt?.optionSpecId?.specifications?.forEach((spec: any) => {
+                    if (specDefs[spec.name]) {
+                      specDefs[spec.name].includeInTotal = spec.includeInTotal;
+                      specDefs[spec.name].dataType = spec.dataType;
+                    } else specDefs[spec.name] = { ...spec };
+                  });
+                  const typeId = backendOpt?.optionTypeId?._id || backendOpt?.optionTypeId || firstOpt?.optionTypeId;
+                  const matchingSpec = Array.isArray(optionSpecs) ? optionSpecs.find((s: any) => (s.optionTypeId?._id || s.optionTypeId) === typeId) : null;
+                  matchingSpec?.specifications?.forEach((spec: any) => {
+                    if (specDefs[spec.name] && specDefs[spec.name].includeInTotal === undefined) specDefs[spec.name].includeInTotal = spec.includeInTotal;
+                    if (!specDefs[spec.name]) specDefs[spec.name] = { ...spec };
+                  });
+
+                  // Check if any totals
+                  const hasTotal = popupSpecKeys.some(key => {
+                    const spec = specDefs[key];
+                    const isNumeric = spec?.dataType === 'number' || (!spec?.dataType && !isNaN(parseFloat(popupOptions[0]?.specificationValues?.[key])));
+                    return isNumeric && spec?.includeInTotal !== false;
+                  });
+
+                  if (!hasTotal) return null;
+
+                  // Calculate totals
+                  const totals: Record<string, number> = {};
+                  const showTotal: Record<string, boolean> = {};
+                  popupSpecKeys.forEach(key => {
+                    const spec = specDefs[key];
+                    const isNumeric = spec?.dataType === 'number' || (!spec?.dataType && !isNaN(parseFloat(popupOptions[0]?.specificationValues?.[key])));
+                    if (isNumeric && spec?.includeInTotal !== false) {
+                      showTotal[key] = true;
+                      totals[key] = popupOptions.reduce((sum, opt) => sum + (parseFloat(opt.specificationValues?.[key]) || 0), 0);
+                    }
+                  });
+
+                  return (
+                    <tfoot>
+                      <tr style={{ backgroundColor: '#fef3c7', borderTop: '2px solid #f59e0b' }}>
+                        <td style={{ padding: '10px 12px', fontWeight: '700', color: '#92400e' }}></td>
+                        <td style={{ padding: '10px 12px', fontWeight: '700', color: '#92400e' }}>Total</td>
+                        {popupSpecKeys.map(key => (
+                          <td key={key} style={{ padding: '10px 12px', fontWeight: '700', color: '#92400e' }}>
+                            {showTotal[key] ? totals[key]?.toLocaleString() || '0' : '-'}
+                          </td>
+                        ))}
+                      </tr>
+                    </tfoot>
+                  );
+                })()}
+              </table>
+            </div>
           </div>
         </div>
       )}
@@ -1136,6 +2066,537 @@ For old files, you need to re-upload them.
           </div>
         </div>
       )}
+
+      {/* View All Options Popup */}
+      {showAllOptionsPopup && selectedOptions.length > 0 && (() => {
+        // Group options by optionTypeId for the popup
+        const groupedOptions: Record<string, OptionItem[]> = {};
+        selectedOptions.forEach(option => {
+          const typeKey = option.optionTypeId;
+          if (!groupedOptions[typeKey]) {
+            groupedOptions[typeKey] = [];
+          }
+          groupedOptions[typeKey].push(option);
+        });
+
+        return (
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 10000,
+              padding: '20px'
+            }}
+            onClick={() => setShowAllOptionsPopup(false)}
+          >
+            <div
+              style={{
+                backgroundColor: 'white',
+                borderRadius: '12px',
+                maxWidth: '95vw',
+                maxHeight: '90vh',
+                overflow: 'hidden',
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                display: 'flex',
+                flexDirection: 'column',
+                minWidth: '600px'
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div
+                style={{
+                  padding: '16px 20px',
+                  borderBottom: '1px solid #e5e7eb',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  backgroundColor: '#fef3c7'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  {orderId && (
+                    <span style={{
+                      background: '#f59e0b',
+                      color: 'white',
+                      padding: '4px 10px',
+                      borderRadius: '4px',
+                      fontSize: '12px',
+                      fontWeight: '600'
+                    }}>
+                      {orderId}
+                    </span>
+                  )}
+                  <h3 style={{ margin: 0, fontSize: '16px', color: '#92400e', fontWeight: '600' }}>
+                    All Options Summary
+                  </h3>
+                  <span style={{
+                    background: '#fbbf24',
+                    color: '#78350f',
+                    padding: '4px 10px',
+                    borderRadius: '12px',
+                    fontSize: '12px',
+                    fontWeight: '500'
+                  }}>
+                    {selectedOptions.length} options • {Object.keys(groupedOptions).length} types
+                  </span>
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    onClick={() => {
+                      // Print all options
+                      const printContent = `
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                          <title>All Options - Print</title>
+                          <style>
+                            * { margin: 0; padding: 0; box-sizing: border-box; }
+                            body { font-family: Arial, sans-serif; padding: 20px; font-size: 12px; }
+                            .header { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #333; }
+                            .header h1 { font-size: 18px; margin-bottom: 5px; }
+                            .order-badge { display: inline-block; background: #fef3c7; color: #d97706; padding: 4px 10px; border-radius: 4px; font-weight: 600; font-size: 12px; margin-bottom: 10px; border: 1px solid #f59e0b; }
+                            .customer-info { font-size: 11px; margin-top: 10px; }
+                            .type-section { margin-bottom: 20px; }
+                            .type-header { background: #f0f9ff; padding: 8px 12px; border-radius: 4px; margin-bottom: 8px; font-weight: 600; color: #0369a1; }
+                            table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+                            th, td { border: 1px solid #ddd; padding: 6px 8px; text-align: left; font-size: 11px; }
+                            th { background: #f8fafc; font-weight: 600; }
+                            @media print { body { padding: 10px; } }
+                          </style>
+                        </head>
+                        <body>
+                          <div class="header">
+                            ${orderId ? `<div class="order-badge">${orderId}</div>` : ''}
+                            <h1>All Options Summary</h1>
+                            ${customerInfo ? `
+                              <div class="customer-info">
+                                ${customerInfo.name ? `<strong>${customerInfo.name}</strong>` : ''}
+                                ${customerInfo.companyName ? ` - ${customerInfo.companyName}` : ''}
+                                ${customerInfo.address ? `<br/>${customerInfo.address}` : ''}
+                                ${customerInfo.phone || customerInfo.whatsapp ? `<br/>Ph: ${customerInfo.phone || customerInfo.whatsapp}` : ''}
+                              </div>
+                            ` : ''}
+                          </div>
+                          ${Object.entries(groupedOptions).map(([typeId, opts]) => {
+                            const typeName = opts[0]?.optionTypeName || 'Unknown';
+                            const specKeys = Array.from(new Set(opts.flatMap(o => Object.keys(o.specificationValues || {}))));
+                            return `
+                              <div class="type-section">
+                                <div class="type-header">${typeName} (${opts.length} items)</div>
+                                <table>
+                                  <thead>
+                                    <tr>
+                                      <th>#</th>
+                                      <th>Option Name</th>
+                                      ${specKeys.map(k => `<th>${k}</th>`).join('')}
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    ${opts.map((opt, idx) => `
+                                      <tr>
+                                        <td>${idx + 1}</td>
+                                        <td><strong>${opt.optionName}</strong></td>
+                                        ${specKeys.map(k => {
+                                          const val = opt.specificationValues?.[k];
+                                          return `<td>${isFileValue(val) ? '📎 File' : renderSpecValue(val)}</td>`;
+                                        }).join('')}
+                                      </tr>
+                                    `).join('')}
+                                  </tbody>
+                                  ${(() => {
+                                    // Calculate totals for print
+                                    const firstOpt = opts[0];
+                                    const backendOpt = options.find((o: any) => o._id === firstOpt?.optionId);
+                                    const specDefs: Record<string, any> = {};
+                                    backendOpt?.dimensions?.forEach((d: any) => { if (!specDefs[d.name]) specDefs[d.name] = { ...d }; });
+                                    backendOpt?.optionSpecId?.specifications?.forEach((s: any) => {
+                                      if (specDefs[s.name]) { specDefs[s.name].includeInTotal = s.includeInTotal; specDefs[s.name].dataType = s.dataType; }
+                                      else specDefs[s.name] = { ...s };
+                                    });
+                                    const tId = backendOpt?.optionTypeId?._id || backendOpt?.optionTypeId || firstOpt?.optionTypeId;
+                                    const mSpec = Array.isArray(optionSpecs) ? optionSpecs.find((s: any) => (s.optionTypeId?._id || s.optionTypeId) === tId) : null;
+                                    mSpec?.specifications?.forEach((s: any) => {
+                                      if (specDefs[s.name] && specDefs[s.name].includeInTotal === undefined) specDefs[s.name].includeInTotal = s.includeInTotal;
+                                      if (!specDefs[s.name]) specDefs[s.name] = { ...s };
+                                    });
+
+                                    const hasTotal = specKeys.some(k => {
+                                      const sp = specDefs[k];
+                                      const isNum = sp?.dataType === 'number' || (!sp?.dataType && !isNaN(parseFloat(opts[0]?.specificationValues?.[k])));
+                                      return isNum && sp?.includeInTotal !== false;
+                                    });
+                                    if (!hasTotal) return '';
+
+                                    const totals: Record<string, number> = {};
+                                    const showT: Record<string, boolean> = {};
+                                    specKeys.forEach(k => {
+                                      const sp = specDefs[k];
+                                      const isNum = sp?.dataType === 'number' || (!sp?.dataType && !isNaN(parseFloat(opts[0]?.specificationValues?.[k])));
+                                      if (isNum && sp?.includeInTotal !== false) {
+                                        showT[k] = true;
+                                        totals[k] = opts.reduce((sum, o) => sum + (parseFloat(o.specificationValues?.[k]) || 0), 0);
+                                      }
+                                    });
+
+                                    return `<tfoot><tr style="background:#fef3c7;border-top:2px solid #f59e0b;font-weight:700;color:#92400e;">
+                                      <td></td><td>Total</td>
+                                      ${specKeys.map(k => `<td>${showT[k] ? (totals[k]?.toLocaleString() || '0') : '-'}</td>`).join('')}
+                                    </tr></tfoot>`;
+                                  })()}
+                                </table>
+                              </div>
+                            `;
+                          }).join('')}
+                        </body>
+                        </html>
+                      `;
+
+                      const iframe = document.createElement('iframe');
+                      iframe.style.cssText = 'position:fixed;width:100%;height:100%;border:none;left:-9999px;top:0;z-index:-1';
+                      document.body.appendChild(iframe);
+                      const doc = iframe.contentWindow?.document;
+                      if (doc) {
+                        doc.open();
+                        doc.write(printContent);
+                        doc.close();
+                        setTimeout(() => {
+                          iframe.contentWindow?.focus();
+                          iframe.contentWindow?.print();
+                          setTimeout(() => document.body.removeChild(iframe), 1000);
+                        }, 500);
+                      }
+                    }}
+                    style={{
+                      background: '#f59e0b',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      padding: '6px 12px',
+                      fontSize: '13px',
+                      color: 'white',
+                      fontWeight: '500',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    <Printer size={14} />
+                    Print All
+                  </button>
+                  <button
+                    onClick={() => {
+                      // Export all options to Excel
+                      const csvRows: string[][] = [
+                        ['All Options Export'],
+                        [''],
+                        orderId ? ['Order ID:', orderId] : [],
+                        customerInfo?.name ? ['Customer:', customerInfo.name] : [],
+                        customerInfo?.companyName ? ['Company:', customerInfo.companyName] : [],
+                        ['Generated:', new Date().toLocaleString()],
+                        ['']
+                      ].filter(r => r.length > 0);
+
+                      Object.entries(groupedOptions).forEach(([typeId, opts]) => {
+                        const typeName = opts[0]?.optionTypeName || 'Unknown';
+                        const specKeys = Array.from(new Set(opts.flatMap(o => Object.keys(o.specificationValues || {}))));
+
+                        csvRows.push([`--- ${typeName} (${opts.length} items) ---`]);
+                        csvRows.push(['#', 'Option Name', ...specKeys]);
+
+                        opts.forEach((opt, idx) => {
+                          csvRows.push([
+                            String(idx + 1),
+                            opt.optionName,
+                            ...specKeys.map(k => {
+                              const val = opt.specificationValues?.[k];
+                              return isFileValue(val) ? 'File' : renderSpecValue(val);
+                            })
+                          ]);
+                        });
+
+                        // Add Total row to Excel
+                        const firstOpt = opts[0];
+                        const backendOpt = options.find((o: any) => o._id === firstOpt?.optionId);
+                        const specDefs: Record<string, any> = {};
+                        backendOpt?.dimensions?.forEach((d: any) => { if (!specDefs[d.name]) specDefs[d.name] = { ...d }; });
+                        backendOpt?.optionSpecId?.specifications?.forEach((s: any) => {
+                          if (specDefs[s.name]) { specDefs[s.name].includeInTotal = s.includeInTotal; specDefs[s.name].dataType = s.dataType; }
+                          else specDefs[s.name] = { ...s };
+                        });
+                        const tId = backendOpt?.optionTypeId?._id || backendOpt?.optionTypeId || firstOpt?.optionTypeId;
+                        const mSpec = Array.isArray(optionSpecs) ? optionSpecs.find((s: any) => (s.optionTypeId?._id || s.optionTypeId) === tId) : null;
+                        mSpec?.specifications?.forEach((s: any) => {
+                          if (specDefs[s.name] && specDefs[s.name].includeInTotal === undefined) specDefs[s.name].includeInTotal = s.includeInTotal;
+                          if (!specDefs[s.name]) specDefs[s.name] = { ...s };
+                        });
+
+                        const hasTotal = specKeys.some(k => {
+                          const sp = specDefs[k];
+                          const isNum = sp?.dataType === 'number' || (!sp?.dataType && !isNaN(parseFloat(opts[0]?.specificationValues?.[k])));
+                          return isNum && sp?.includeInTotal !== false;
+                        });
+
+                        if (hasTotal) {
+                          const totals: Record<string, number> = {};
+                          const showT: Record<string, boolean> = {};
+                          specKeys.forEach(k => {
+                            const sp = specDefs[k];
+                            const isNum = sp?.dataType === 'number' || (!sp?.dataType && !isNaN(parseFloat(opts[0]?.specificationValues?.[k])));
+                            if (isNum && sp?.includeInTotal !== false) {
+                              showT[k] = true;
+                              totals[k] = opts.reduce((sum, o) => sum + (parseFloat(o.specificationValues?.[k]) || 0), 0);
+                            }
+                          });
+
+                          csvRows.push([
+                            '',
+                            'TOTAL',
+                            ...specKeys.map(k => showT[k] ? String(totals[k] || 0) : '-')
+                          ]);
+                        }
+
+                        csvRows.push(['']);
+                      });
+
+                      const csvContent = csvRows.map(row =>
+                        row.map(cell => {
+                          const s = String(cell);
+                          return s.includes(',') || s.includes('"') || s.includes('\n')
+                            ? `"${s.replace(/"/g, '""')}"`
+                            : s;
+                        }).join(',')
+                      ).join('\n');
+
+                      const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+                      const link = document.createElement('a');
+                      link.href = URL.createObjectURL(blob);
+                      link.download = `All_Options_${orderId || 'new'}_${new Date().toISOString().slice(0, 10)}.csv`;
+                      link.click();
+                      URL.revokeObjectURL(link.href);
+                    }}
+                    style={{
+                      background: '#10b981',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      padding: '6px 12px',
+                      fontSize: '13px',
+                      color: 'white',
+                      fontWeight: '500',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    <FileSpreadsheet size={14} />
+                    Excel All
+                  </button>
+                  <button
+                    onClick={() => setShowAllOptionsPopup(false)}
+                    style={{
+                      background: '#f1f5f9',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      padding: '6px 12px',
+                      fontSize: '13px',
+                      color: '#64748b',
+                      fontWeight: '500'
+                    }}
+                  >
+                    ✕ Close
+                  </button>
+                </div>
+              </div>
+
+              {/* Content - Grouped by Type */}
+              <div style={{ padding: '16px', overflowY: 'auto', maxHeight: 'calc(90vh - 80px)' }}>
+                {/* Customer Info Card */}
+                {customerInfo && (
+                  <div style={{
+                    background: '#f0f9ff',
+                    border: '1px solid #bae6fd',
+                    borderRadius: '8px',
+                    padding: '12px 16px',
+                    marginBottom: '16px'
+                  }}>
+                    <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+                      {customerInfo.name && (
+                        <div>
+                          <div style={{ fontSize: '10px', color: '#0369a1', fontWeight: '600', textTransform: 'uppercase' }}>Customer</div>
+                          <div style={{ fontSize: '13px', color: '#0c4a6e', fontWeight: '500' }}>{customerInfo.name}</div>
+                        </div>
+                      )}
+                      {customerInfo.companyName && (
+                        <div>
+                          <div style={{ fontSize: '10px', color: '#0369a1', fontWeight: '600', textTransform: 'uppercase' }}>Company</div>
+                          <div style={{ fontSize: '13px', color: '#0c4a6e' }}>{customerInfo.companyName}</div>
+                        </div>
+                      )}
+                      {customerInfo.address && (
+                        <div>
+                          <div style={{ fontSize: '10px', color: '#0369a1', fontWeight: '600', textTransform: 'uppercase' }}>Address</div>
+                          <div style={{ fontSize: '13px', color: '#0c4a6e' }}>{customerInfo.address}</div>
+                        </div>
+                      )}
+                      {(customerInfo.phone || customerInfo.whatsapp) && (
+                        <div>
+                          <div style={{ fontSize: '10px', color: '#0369a1', fontWeight: '600', textTransform: 'uppercase' }}>Phone</div>
+                          <div style={{ fontSize: '13px', color: '#0c4a6e' }}>{customerInfo.phone || customerInfo.whatsapp}</div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Options by Type */}
+                {Object.entries(groupedOptions).map(([typeId, opts], groupIdx) => {
+                  const typeName = opts[0]?.optionTypeName || 'Unknown';
+                  const specKeys = Array.from(new Set(opts.flatMap(o => Object.keys(o.specificationValues || {}))));
+
+                  return (
+                    <div key={typeId} style={{ marginBottom: groupIdx < Object.keys(groupedOptions).length - 1 ? '20px' : 0 }}>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        marginBottom: '8px',
+                        padding: '8px 12px',
+                        background: '#f0f9ff',
+                        borderRadius: '6px'
+                      }}>
+                        <span style={{ fontWeight: '600', color: '#0369a1', fontSize: '14px' }}>{typeName}</span>
+                        <span style={{
+                          background: '#0ea5e9',
+                          color: 'white',
+                          padding: '2px 8px',
+                          borderRadius: '10px',
+                          fontSize: '11px'
+                        }}>
+                          {opts.length} item{opts.length > 1 ? 's' : ''}
+                        </span>
+                      </div>
+
+                      <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                          <thead>
+                            <tr style={{ backgroundColor: '#f8fafc' }}>
+                              <th style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '600', color: '#475569', borderBottom: '2px solid #e2e8f0' }}>#</th>
+                              <th style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '600', color: '#475569', borderBottom: '2px solid #e2e8f0' }}>Name</th>
+                              {specKeys.map(key => (
+                                <th key={key} style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '600', color: '#475569', borderBottom: '2px solid #e2e8f0', whiteSpace: 'nowrap' }}>
+                                  {key}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {opts.map((opt, idx) => (
+                              <tr key={opt.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                <td style={{ padding: '8px 10px', color: '#64748b' }}>{idx + 1}</td>
+                                <td style={{ padding: '8px 10px', fontWeight: '500', color: '#1e293b' }}>{opt.optionName}</td>
+                                {specKeys.map(key => {
+                                  const value = opt.specificationValues?.[key];
+                                  const isFile = isFileValue(value);
+                                  return (
+                                    <td key={key} style={{ padding: '8px 10px', color: '#334155' }}>
+                                      {isFile ? (
+                                        <button
+                                          type="button"
+                                          onClick={() => handleViewFile(value)}
+                                          style={{
+                                            background: '#eff6ff',
+                                            border: '1px solid #bfdbfe',
+                                            borderRadius: '4px',
+                                            cursor: 'pointer',
+                                            color: '#2563eb',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '4px',
+                                            padding: '3px 6px',
+                                            fontSize: '11px'
+                                          }}
+                                        >
+                                          <Eye size={12} /> View
+                                        </button>
+                                      ) : (
+                                        renderSpecValue(value)
+                                      )}
+                                    </td>
+                                  );
+                                })}
+                              </tr>
+                            ))}
+                          </tbody>
+                          {/* Total Row for showAllOptionsPopup */}
+                          {(() => {
+                            const firstOpt = opts[0];
+                            const backendOpt = options.find((o: any) => o._id === firstOpt?.optionId);
+
+                            // Get spec definitions
+                            const specDefs: Record<string, any> = {};
+                            backendOpt?.dimensions?.forEach((d: any) => { if (!specDefs[d.name]) specDefs[d.name] = { ...d }; });
+                            backendOpt?.optionSpecId?.specifications?.forEach((s: any) => {
+                              if (specDefs[s.name]) { specDefs[s.name].includeInTotal = s.includeInTotal; specDefs[s.name].dataType = s.dataType; }
+                              else specDefs[s.name] = { ...s };
+                            });
+                            const tId = backendOpt?.optionTypeId?._id || backendOpt?.optionTypeId || firstOpt?.optionTypeId;
+                            const mSpec = Array.isArray(optionSpecs) ? optionSpecs.find((s: any) => (s.optionTypeId?._id || s.optionTypeId) === tId) : null;
+                            mSpec?.specifications?.forEach((s: any) => {
+                              if (specDefs[s.name] && specDefs[s.name].includeInTotal === undefined) specDefs[s.name].includeInTotal = s.includeInTotal;
+                              if (!specDefs[s.name]) specDefs[s.name] = { ...s };
+                            });
+
+                            const hasTotal = specKeys.some(k => {
+                              const sp = specDefs[k];
+                              const isNum = sp?.dataType === 'number' || (!sp?.dataType && !isNaN(parseFloat(opts[0]?.specificationValues?.[k])));
+                              return isNum && sp?.includeInTotal !== false;
+                            });
+                            if (!hasTotal) return null;
+
+                            const totals: Record<string, number> = {};
+                            const showT: Record<string, boolean> = {};
+                            specKeys.forEach(k => {
+                              const sp = specDefs[k];
+                              const isNum = sp?.dataType === 'number' || (!sp?.dataType && !isNaN(parseFloat(opts[0]?.specificationValues?.[k])));
+                              if (isNum && sp?.includeInTotal !== false) {
+                                showT[k] = true;
+                                totals[k] = opts.reduce((sum, o) => sum + (parseFloat(o.specificationValues?.[k]) || 0), 0);
+                              }
+                            });
+
+                            return (
+                              <tfoot>
+                                <tr style={{ backgroundColor: '#fef3c7', borderTop: '2px solid #f59e0b' }}>
+                                  <td style={{ padding: '8px 10px', fontWeight: '700', color: '#92400e' }}></td>
+                                  <td style={{ padding: '8px 10px', fontWeight: '700', color: '#92400e' }}>Total</td>
+                                  {specKeys.map(k => (
+                                    <td key={k} style={{ padding: '8px 10px', fontWeight: '700', color: '#92400e' }}>
+                                      {showT[k] ? totals[k]?.toLocaleString() || '0' : '-'}
+                                    </td>
+                                  ))}
+                                </tr>
+                              </tfoot>
+                            );
+                          })()}
+                        </table>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 };

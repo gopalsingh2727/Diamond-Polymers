@@ -8,6 +8,8 @@ import { RootState } from "../../../../redux/rootReducer";
 import { BackButton } from "../../../../allCompones/BackButton";
 import { getAccountOrders } from "../../../../redux/oders/OdersActions";
 import { useDaybookUpdates } from "../../../../../hooks/useWebSocket";  // ✅ WebSocket real-time updates
+import "../../Oders/indexAllOders.css";  // ✅ Import All Orders styling
+import { Download, Printer, RefreshCw } from "lucide-react";  // ✅ Icons
 
 // Define Order interface
 interface Order {
@@ -77,6 +79,9 @@ interface Order {
   // Order type and options - for edit mode
   orderType?: any;
   orderTypeId?: string;
+  orderTypeName?: string;
+  orderTypeCode?: string;
+  priority?: string;
   options?: any[];
   optionsWithDetails?: any[];
 }
@@ -140,15 +145,12 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
   const accountData = getAccountData();
 
   // IMPORTANT: ALL useState hooks must be declared FIRST
-  const [expandedOrder, setExpandedOrder] = useState<number | null>(null);
   const [selectedOrderIndex, setSelectedOrderIndex] = useState(0);
+  const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set()); // Multi-select for printing
   const [fromDate, setFromDate] = useState(propFromDate || "");
   const [toDate, setToDate] = useState(propToDate || "");
-  const [showPeriodModal, setShowPeriodModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [limit] = useState(50); // Removed setLimit since it's not used
 
   // Refs - must be declared before useEffect
   const scrollWrapperRef = useRef<HTMLDivElement>(null);
@@ -202,11 +204,15 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
   function getStatusColor(status: string): string {
     const colors: Record<string, string> = {
       'pending': '#f59e0b',
-      'in-progress': '#FF6B35',
+      'in_progress': '#3b82f6',
+      'in-progress': '#3b82f6',
       'completed': '#10b981',
-      'cancelled': '#ef4444',
+      'cancelled': '#6b7280',
       'on-hold': '#6b7280',
       'Wait for Approval': '#f59e0b',
+      'approved': '#8b5cf6',
+      'dispatched': '#06b6d4',
+      'issue': '#ef4444',
       'unknown': '#6b7280'
     };
     return colors[status] || '#6b7280';
@@ -215,14 +221,29 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
   function getStatusDescription(status: string): string {
     const descriptions: Record<string, string> = {
       'pending': 'Order received and awaiting processing',
+      'in_progress': 'Order is being processed',
       'in-progress': 'Order is being processed',
       'completed': 'Order has been completed',
       'cancelled': 'Order has been cancelled',
       'on-hold': 'Order is temporarily on hold',
       'Wait for Approval': 'Order is waiting for approval',
+      'approved': 'Order has been approved',
+      'dispatched': 'Order has been dispatched',
+      'issue': 'Order has an issue',
       'unknown': 'Status unknown'
     };
     return descriptions[status] || 'Status unknown';
+  }
+
+  // Priority badge color function
+  function getPriorityBadgeColor(priority: string): string {
+    const colors: Record<string, string> = {
+      'urgent': '#ef4444',
+      'high': '#f97316',
+      'normal': '#3b82f6',
+      'low': '#6b7280'
+    };
+    return colors[priority] || '#3b82f6';
   }
 
   // Transform orders to match component needs
@@ -230,6 +251,12 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
     const customerName = order.customer?.companyName || order.customer?.name || accountData.name || 'Unknown Customer';
     const customerPhone = order.customer?.phone1 || order.customer?.phone || accountData.phone || '';
     const orderStatus = order.overallStatus || order.status || 'unknown';
+
+    // Get order type - could be populated object or ID
+    const orderType = order.orderType || order.orderTypeId;
+    const orderTypeName = orderType?.typeName || orderType?.name || '';
+    const orderTypeCode = orderType?.typeCode || orderType?.code || '';
+    const priority = order.priority || 'normal';
 
     return {
       ...order,
@@ -240,6 +267,10 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
       phone1: customerPhone,
       status: orderStatus,
       overallStatus: orderStatus,
+      priority: priority,
+      orderType: orderType,
+      orderTypeName: orderTypeName,
+      orderTypeCode: orderTypeCode,
       date: new Date(order.createdAt).toISOString().split('T')[0],
       productName: order.material?.name || order.material?.materialName || 'N/A',
       materialName: order.material?.name || order.material?.materialName || 'N/A',
@@ -289,9 +320,9 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
   // Helper function to create filters
   const createFilters = (): OrderFilters => {
     const filters: OrderFilters = {
-      accountId: accountData._id, // Added required accountId
-      page: currentPage,
-      limit,
+      accountId: accountData._id,
+      page: 1,
+      limit: 100,
       sortBy: 'createdAt',
       sortOrder: 'desc'
     };
@@ -320,23 +351,23 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
     console.log("🔄 AccountInfo useEffect triggered - fetching account orders");
     fetchAccountOrdersData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dispatch, accountData?._id, currentPage, limit, fromDate, toDate, searchTerm, statusFilter]);
+  }, [dispatch, accountData?._id, fromDate, toDate, searchTerm, statusFilter]);
 
   // ✅ REPLACED: 30-second polling with WebSocket real-time subscription
   const handleOrderUpdate = useCallback(() => {
     console.log("📡 WebSocket: Account orders update received - refreshing");
     fetchAccountOrdersData();
-  }, [accountData?._id, currentPage, limit, fromDate, toDate, searchTerm, statusFilter]);
+  }, [accountData?._id, fromDate, toDate, searchTerm, statusFilter]);
 
   // Subscribe to real-time daybook updates via WebSocket
   useDaybookUpdates(branchId, handleOrderUpdate);
 
-  // Focus scroll wrapper on mount
+  // Focus content container when orders are loaded for keyboard navigation
   useEffect(() => {
-    if (scrollWrapperRef.current) {
-      scrollWrapperRef.current.focus();
+    if (contentRef.current && filteredOrders.length > 0) {
+      contentRef.current.focus();
     }
-  }, []);
+  }, [filteredOrders.length]);
 
   // Scroll to selected order
   useEffect(() => {
@@ -488,19 +519,12 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
   };
 
   // Event handlers
-  const handleDateFilter = () => {
-    setCurrentPage(1);
-    setShowPeriodModal(false);
-  };
-
   const handleSearch = (value: string) => {
     setSearchTerm(value);
-    setCurrentPage(1);
   };
 
   const handleStatusFilter = (status: string) => {
     setStatusFilter(status);
-    setCurrentPage(1);
   };
 
   const handleRefresh = () => {
@@ -513,15 +537,6 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
     setToDate('');
     setSearchTerm('');
     setStatusFilter('');
-    setCurrentPage(1);
-  };
-
-  const handleDelete = () => {
-    const orderToDelete = filteredOrders[selectedOrderIndex];
-    console.log("🗑️ Delete order requested:", orderToDelete);
-    // dispatch(deleteOrder(orderToDelete.id)); // Implement if needed
-    setExpandedOrder(null);
-    setSelectedOrderIndex(0);
   };
 
   // Print functionality
@@ -689,368 +704,434 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
         setSelectedOrderIndex(prev => Math.max(prev - 1, 0));
         break;
       case "ArrowDown":
-        event.preventDefault();
-        setSelectedOrderIndex(prev => Math.min(prev + 1, filteredOrders.length - 1));
-        break;
-      case "Enter":
-        if (event.shiftKey) {
-          setExpandedOrder(prev => (prev === selectedOrderIndex ? null : selectedOrderIndex));
-        } else {
-          handleOrderClick(filteredOrders[selectedOrderIndex]);
+      case "Tab":
+        if (!event.shiftKey) {
+          event.preventDefault();
+          setSelectedOrderIndex(prev => Math.min(prev + 1, filteredOrders.length - 1));
         }
         break;
+      case "Enter":
+        handleOrderClick(filteredOrders[selectedOrderIndex]);
+        break;
+      case " ": // Space key - toggle selection
+        event.preventDefault();
+        const currentOrder = filteredOrders[selectedOrderIndex];
+        if (currentOrder?._id) {
+          setSelectedOrders(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(currentOrder._id)) {
+              newSet.delete(currentOrder._id);
+            } else {
+              newSet.add(currentOrder._id);
+            }
+            return newSet;
+          });
+        }
+        break;
+      case "Escape":
+        setSelectedOrders(new Set());
+        break;
+    }
+
+    if (event.key === "Tab" && event.shiftKey) {
+      event.preventDefault();
+      setSelectedOrderIndex(prev => Math.max(prev - 1, 0));
     }
   };
 
+  // Toggle order selection
+  const toggleOrderSelection = (orderId: string) => {
+    setSelectedOrders(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(orderId)) {
+        newSet.delete(orderId);
+      } else {
+        newSet.add(orderId);
+      }
+      return newSet;
+    });
+  };
+
+  // Select all orders
+  const selectAllOrders = () => {
+    const allIds = filteredOrders.map(o => o._id);
+    setSelectedOrders(new Set(allIds));
+  };
+
+  // Clear all selections
+  const clearSelections = () => {
+    setSelectedOrders(new Set());
+  };
+
+  // Print labels for selected orders (using iframe - no new window)
+  const handlePrintSelectedLabels = () => {
+    if (selectedOrders.size === 0) {
+      alert('Please select orders to print labels');
+      return;
+    }
+
+    const ordersToPrint = filteredOrders.filter(o => selectedOrders.has(o._id));
+
+    const labelContent = ordersToPrint.map(order => `
+      <div class="label" style="page-break-after: always; padding: 20px; border: 2px solid #000; margin: 10px; min-height: 200px;">
+        <div style="font-size: 18px; font-weight: bold; margin-bottom: 10px; border-bottom: 2px solid #000; padding-bottom: 5px;">
+          ${companyName}
+        </div>
+        <div style="font-size: 14px; margin-bottom: 5px;">
+          <strong>Order ID:</strong> ${order.orderId || 'N/A'}
+        </div>
+        <div style="font-size: 16px; font-weight: bold; margin: 10px 0;">
+          ${order.customer?.companyName || order.companyName || 'N/A'}
+        </div>
+        <div style="font-size: 14px; margin-bottom: 5px;">
+          ${order.customer?.firstName || ''} ${order.customer?.lastName || ''}
+        </div>
+        <div style="font-size: 14px; margin-bottom: 5px;">
+          ${order.customer?.address1 || ''} ${order.customer?.address2 || ''}
+        </div>
+        <div style="font-size: 14px; margin-bottom: 5px;">
+          ${order.customer?.state || ''} - ${order.customer?.pinCode || ''}
+        </div>
+        <div style="font-size: 14px; margin-bottom: 5px;">
+          <strong>Phone:</strong> ${order.customer?.phone1 || order.customer?.telephone || 'N/A'}
+        </div>
+        <div style="font-size: 12px; margin-top: 10px; color: #666;">
+          Date: ${order.createdAt ? new Date(order.createdAt as string).toLocaleDateString() : 'N/A'}
+        </div>
+      </div>
+    `).join('');
+
+    const printContent = `
+      <html>
+        <head>
+          <title>Print Labels - ${selectedOrders.size} Orders</title>
+          <style>
+            @media print {
+              .label { page-break-after: always; }
+              .label:last-child { page-break-after: auto; }
+            }
+            body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+          </style>
+        </head>
+        <body>
+          ${labelContent}
+        </body>
+      </html>
+    `;
+
+    // Use iframe instead of new window
+    const printFrame = document.createElement("iframe");
+    printFrame.style.display = "none";
+    document.body.appendChild(printFrame);
+
+    const contentWindow = printFrame.contentWindow;
+    if (!contentWindow) {
+      console.error("Failed to access print frame content window.");
+      document.body.removeChild(printFrame);
+      return;
+    }
+
+    const printDocument = contentWindow.document;
+    printDocument.open();
+    printDocument.write(printContent);
+    printDocument.close();
+
+    printFrame.onload = () => {
+      if (printFrame.contentWindow) {
+        printFrame.contentWindow.print();
+      }
+      setTimeout(() => {
+        document.body.removeChild(printFrame);
+      }, 1000);
+    };
+  };
+
   return (
-    <div className="container">
-      {/* Header with account info and filters */}
-      <div className="item">
-        <BackButton />
-        <div className="flex flex-col gap-4">
-          {/* Account Information */}
-          <div className="flex gap-4 items-center flex-wrap">
-            
-
-              
-                <p><strong>Phone:</strong> {accountData.phone || 'N/A'}</p>
-                <p><strong>Name:</strong> {accountData.firstName} {accountData.lastName}</p>
-             
-                <p><strong>Company:</strong> {accountData.companyName || 'N/A'}</p>
-                <p><strong>Email:</strong> {accountData.email || 'N/A'}</p>
-      
-
-          </div>
-
-          {/* Filters */}
-          <div className="flex gap-4 items-center flex-wrap">
-            <div>
-              <label>From:
-                <input
-                  type="date"
-                  value={fromDate}
-                  onChange={e => setFromDate(e.target.value)}
-                />
-              </label>
-              <label className="ml-4">To:
-                <input
-                  type="date"
-                  value={toDate}
-                  onChange={e => setToDate(e.target.value)}
-                />
-              </label>
-            </div>
-
-            <div>
-              <label>Search:
-                <input
-                  type="text"
-                  placeholder="Order ID, Product, Status, Notes..."
-                  value={searchTerm}
-                  onChange={e => handleSearch(e.target.value)}
-                  className="ml-2 px-2 py-1 border rounded"
-                />
-              </label>
-            </div>
-
-            <div>
-              <label>Status:
-                <select
-                  value={statusFilter}
-                  onChange={e => handleStatusFilter(e.target.value)}
-                  className="ml-2 px-2 py-1 border rounded"
-                >
-                  <option value="">All Status</option>
-                  <option value="pending">Pending</option>
-                  <option value="in-progress">In Progress</option>
-                  <option value="completed">Completed</option>
-                  <option value="cancelled">Cancelled</option>
-                  <option value="on-hold">On Hold</option>
-                  <option value="Wait for Approval">Wait for Approval</option>
-                </select>
-              </label>
-            </div>
-          </div>
+    <div className="all-orders-page">
+      {/* Header */}
+      <div className="all-orders-header">
+        <div className="all-orders-header__left">
+          <BackButton />
+          <h1 className="all-orders-title">Account Orders</h1>
+          <span className="all-orders-subtitle">
+            {accountData.companyName || accountData.firstName + ' ' + accountData.lastName}
+          </span>
         </div>
-      </div>
-
-      {/* Action buttons */}
-      <div className="item item-2">
-        <div className="ButtonInDispatchDiv">
-          <button
-            className="ButtonINDispatch bottom-borders-menu"
-            onClick={() => setShowPeriodModal(true)}
-          >
-            Change Period
+        <div className="all-orders-header__actions">
+          <button className="action-btn action-btn--export" onClick={handleExportExcel} disabled={loading}>
+            <Download size={16} /> Export
           </button>
-          <button
-            className="ButtonINDispatch"
-            onClick={handlePrint}
-            disabled={loading}
-          >
-            Print
+          <button className="action-btn action-btn--print" onClick={handlePrint} disabled={loading}>
+            <Printer size={16} /> Print
           </button>
-          <button
-            className="ButtonINDispatch bottom-borders-menu"
-            onClick={handleExportExcel}
-            disabled={loading}
-          >
-            Export to Excel
-          </button>
-          <button
-            className="ButtonINDispatch"
-            onClick={handleRefresh}
-            disabled={loading}
-          >
-            {loading ? 'Refreshing...' : 'Refresh'}
-          </button>
-          <button
-            className="ButtonINDispatch"
-            onClick={handleClearFilters}
-          >
-            Clear Filters
+          <button className="action-btn" onClick={handleRefresh} disabled={loading}>
+            <RefreshCw size={16} className={loading ? 'spin' : ''} /> {loading ? 'Refreshing...' : 'Refresh'}
           </button>
         </div>
       </div>
 
-      {/* Orders table */}
-      <div className="item item-3" ref={contentRef}>
-        {loading && <div className="text-center py-4">Loading orders...</div>}
-        {error && <div className="text-red-500 text-center py-4">Error: {error}</div>}
-
-        {!loading && filteredOrders.length === 0 && (
-          <div className="text-center py-8 text-gray-500">
-            No orders found for this account with the selected criteria.
-          </div>
-        )}
-
-        {!loading && filteredOrders.length > 0 && (
-          <div className="DispatchTabale">
-            <div className="ordersHeaderDispatch">
-              <span>Date</span>
-              <span>Order ID</span>
-              <span>Product/Material</span>
-              <span>Quantity</span>
-              <span>Status</span>
-              <span>Created By</span>
-            </div>
-
-            <div
-              className="orders-scroll-wrapper"
-              ref={scrollWrapperRef}
-              tabIndex={0}
-              onKeyDown={handleKeyNavigation}
-            >
-              {filteredOrders.map((order, index) => (
-                <div key={`${order._id}-${index}`}>
-                  <div
-                    ref={el => ordersRef.current[index] = el}
-                    className={`orderItem ordersTable ${selectedOrderIndex === index ? "selected" : ""}`}
-                    onClick={() => setSelectedOrderIndex(index)}
-                    onDoubleClick={() => handleOrderClick(order)}
-                    style={{ cursor: "pointer" }}
-                  >
-                    <span>{order.date || 'N/A'}</span>
-                    <span>{order.orderId || 'N/A'}</span>
-                    <span>{order.productName || order.materialName || 'N/A'}</span>
-                    <span>{order.quantity || 'N/A'}</span>
-                    <span>{order.status || 'Unknown'}</span>
-                    <span>{order.createdBy || 'N/A'}</span>
-                  </div>
-
-                  {expandedOrder === index && (
-                    <div className="status-list">
-                      {order.AllStatus && Object.entries(order.AllStatus).map(([status, statusData]) => (
-                        <div
-                          key={status}
-                          className="status-item p-2 m-1 rounded text-white text-sm"
-                          style={{ backgroundColor: statusData.color }}
-                        >
-                          <strong>{status}:</strong> <span>{statusData.description}</span>
-                        </div>
-                      ))}
-                      <div className="p-2 text-xs text-gray-600">
-                        <div>Order ID: {order.orderId}</div>
-                        <div>Material Weight: {order.materialWeight || 'N/A'}</div>
-                        <div>Dimensions: {order.Width && order.Height && order.Thickness
-                          ? `${order.Width}×${order.Height}×${order.Thickness}`
-                          : 'N/A'
-                        }</div>
-                        <div>Steps: {order.completedSteps || 0}/{order.stepsCount || 0}</div>
-                        <div>Machines: {order.totalMachines || 0}</div>
-                        <div>Branch: {order.branch?.name || 'N/A'} ({order.branch?.code || 'N/A'})</div>
-                        <div>Created: {order.createdAt ? new Date(order.createdAt).toLocaleString() : 'N/A'}</div>
-                        <div>Updated: {order.updatedAt ? new Date(order.updatedAt).toLocaleString() : 'N/A'}</div>
-                        {order.SealingType && <div>Sealing: {order.SealingType}</div>}
-                        {order.BottomGusset && <div>Bottom Gusset: {order.BottomGusset}</div>}
-                        {order.Flap && <div>Flap: {order.Flap}</div>}
-                        {order.AirHole && <div>Air Hole: {order.AirHole}</div>}
-                        {order.Printing && <div>Printing: Yes</div>}
-                        {order.Notes && <div>Notes: {order.Notes}</div>}
-                        <div className="mt-2">
-                          <button 
-                            onClick={() => handleOrderClick(order)}
-                            className="bg-[#FF6B35] text-white px-3 py-1 rounded text-xs mr-2 hover:bg-[#E55A2B]"
-                          >
-                            Edit Order
-                          </button>
-                          <button 
-                            onClick={handleDelete}
-                            className="bg-red-500 text-white px-3 py-1 rounded text-xs hover:bg-red-600"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            {/* Pagination */}
-            {pagination && pagination.totalPages > 1 && (
-              <div className="flex justify-center items-center gap-2 mt-4">
-                <button
-                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                  disabled={currentPage === 1 || loading}
-                  className="px-3 py-1 border rounded disabled:opacity-50"
-                >
-                  Previous
-                </button>
-                <span className="px-3 py-1">
-                  Page {currentPage} of {pagination.totalPages}
-                </span>
-                <button
-                  onClick={() => setCurrentPage(prev => Math.min(pagination.totalPages, prev + 1))}
-                  disabled={currentPage === pagination.totalPages || loading}
-                  className="px-3 py-1 border rounded disabled:opacity-50"
-                >
-                  Next
-                </button>
-              </div>
-            )}
-          </div>
-        )}
+      {/* Account Info Banner */}
+      <div className="account-info-banner" style={{
+        background: '#f8fafc',
+        padding: '12px 16px',
+        borderRadius: '8px',
+        marginBottom: '16px',
+        display: 'flex',
+        gap: '24px',
+        flexWrap: 'wrap',
+        fontSize: '14px'
+      }}>
+        <span><strong>Company:</strong> {accountData.companyName || 'N/A'}</span>
+        <span><strong>Name:</strong> {accountData.firstName} {accountData.lastName}</span>
+        <span><strong>Phone:</strong> {accountData.phone || accountData.phone1 || 'N/A'}</span>
+        <span><strong>Email:</strong> {accountData.email || 'N/A'}</span>
       </div>
 
-      {/* Summary */}
-      <div className="item">
-        {summary && (
-          <div className="item bg-gray-100 p-4 rounded">
-            <div className="flex gap-6 text-sm">
-              <span><strong>Total Orders:</strong> {summary.totalOrders}</span>
-              <span><strong>Total Weight:</strong> {summary.totalWeight?.toFixed(2) || 'N/A'}</span>
-              <span><strong>Avg Weight:</strong> {summary.avgWeight?.toFixed(2) || 'N/A'}</span>
-              {statusCounts && Object.entries(statusCounts).map(([status, count]) => (
-                <span key={status}><strong>{status}:</strong> {String(count)}</span>
-              ))}
-            </div>
-          </div>
-        )}
-        
-        {/* Orders count info */}
-        <div className="mt-2 text-sm text-gray-600">
-          Showing {filteredOrders.length} orders for {accountData.name}
-          {fromDate && toDate && ` from ${new Date(fromDate).toLocaleDateString()} to ${new Date(toDate).toLocaleDateString()}`}
-        </div>
-      </div>
-
-      {/* Period Modal */}
-      {showPeriodModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded shadow-lg w-80">
-            <h2 className="text-lg font-semibold mb-4">Change Date Period</h2>
-            <label className="block mb-2">
-              From:
-              <input
-                type="date"
-                value={fromDate}
-                onChange={e => setFromDate(e.target.value)}
-                className="border w-full p-2 rounded"
-              />
-            </label>
-            <label className="block mb-4">
-              To:
-              <input
-                type="date"
-                value={toDate}
-                onChange={e => setToDate(e.target.value)}
-                className="border w-full p-2 rounded"
-              />
-            </label>
-            <div className="flex justify-end gap-2">
+      {/* Selection Controls */}
+      {filteredOrders.length > 0 && (
+        <div className="selection-controls" style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          marginBottom: '16px',
+          padding: '10px 16px',
+          background: selectedOrders.size > 0 ? '#fef3c7' : '#f1f5f9',
+          borderRadius: '8px',
+          transition: 'background 0.2s'
+        }}>
+          <span style={{ fontSize: '14px', color: '#475569' }}>
+            {selectedOrders.size > 0
+              ? `${selectedOrders.size} order${selectedOrders.size > 1 ? 's' : ''} selected`
+              : 'Use Tab/Arrow keys to navigate, Space to select'}
+          </span>
+          <div style={{ flex: 1 }}></div>
+          <button
+            onClick={selectAllOrders}
+            className="action-btn"
+            style={{ padding: '6px 12px', fontSize: '13px' }}
+          >
+            Select All ({filteredOrders.length})
+          </button>
+          {selectedOrders.size > 0 && (
+            <>
               <button
-                onClick={() => setShowPeriodModal(false)}
-                className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500"
+                onClick={handlePrintSelectedLabels}
+                className="action-btn action-btn--print"
+                style={{ padding: '6px 12px', fontSize: '13px' }}
               >
-                Cancel
+                <Printer size={14} /> Print Labels ({selectedOrders.size})
               </button>
               <button
-                onClick={handleDateFilter}
-                className="bg-[#FF6B35] text-white px-4 py-2 rounded hover:bg-[#E55A2B]"
+                onClick={clearSelections}
+                className="action-btn"
+                style={{ padding: '6px 12px', fontSize: '13px', background: '#ef4444', color: 'white' }}
               >
-                Apply
+                Clear
               </button>
-            </div>
-          </div>
+            </>
+          )}
         </div>
       )}
 
-      {/* Legacy expanded order details popup (if needed for compatibility) */}
-      {expandedOrder !== null && expandedOrder >= 0 && filteredOrders[expandedOrder] && (
-        <div className="order-details-popup fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded shadow-lg max-w-2xl w-full max-h-96 overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold">Order Details</h3>
-              <button
-                onClick={() => setExpandedOrder(null)}
-                className="text-gray-500 hover:text-gray-700 text-xl"
-              >
-                ×
-              </button>
-            </div>
-            
-            <div className="space-y-2 text-sm">
-              <p><strong>Order ID:</strong> {filteredOrders[expandedOrder].orderId}</p>
-              <p><strong>Product:</strong> {filteredOrders[expandedOrder].productName || filteredOrders[expandedOrder].materialName}</p>
-              <p><strong>Date:</strong> {filteredOrders[expandedOrder].date}</p>
-              <p><strong>Quantity:</strong> {filteredOrders[expandedOrder].quantity}</p>
-              <p><strong>Total Amount:</strong> {filteredOrders[expandedOrder].totalAmount}</p>
-              <p><strong>Status:</strong> {filteredOrders[expandedOrder].status}</p>
-              <p><strong>Created By:</strong> {filteredOrders[expandedOrder].createdBy}</p>
-              <p><strong>Material Weight:</strong> {filteredOrders[expandedOrder].materialWeight || 'N/A'}</p>
-              <p><strong>Dimensions:</strong> {
-                filteredOrders[expandedOrder].Width && filteredOrders[expandedOrder].Height && filteredOrders[expandedOrder].Thickness
-                  ? `${filteredOrders[expandedOrder].Width}×${filteredOrders[expandedOrder].Height}×${filteredOrders[expandedOrder].Thickness}`
-                  : 'N/A'
-              }</p>
-              {filteredOrders[expandedOrder].Notes && (
-                <p><strong>Notes:</strong> {filteredOrders[expandedOrder].Notes}</p>
-              )}
-            </div>
-            
-            <div className="flex justify-end gap-2 mt-6">
-              <button
-                onClick={() => setExpandedOrder(null)}
-                className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
-              >
-                Close
-              </button>
-              <button
-                onClick={() => handleOrderClick(filteredOrders[expandedOrder])}
-                className="bg-[#FF6B35] text-white px-4 py-2 rounded hover:bg-[#E55A2B]"
-              >
-                Edit Order
-              </button>
-              <button
-                onClick={handleDelete}
-                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-              >
-                Delete
-              </button>
-            </div>
+      {/* Filters */}
+      <div className="all-orders-filters">
+        <div className="filter-row">
+          <div className="filter-group">
+            <label>Search</label>
+            <input
+              type="text"
+              className="filter-input"
+              placeholder="Order ID, Customer, Phone..."
+              value={searchTerm}
+              onChange={e => handleSearch(e.target.value)}
+            />
           </div>
+
+          <div className="filter-group">
+            <label>Status</label>
+            <select
+              className="filter-select"
+              value={statusFilter}
+              onChange={e => handleStatusFilter(e.target.value)}
+            >
+              <option value="">All Status</option>
+              <option value="Wait for Approval">Wait for Approval</option>
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="in_progress">In Progress</option>
+              <option value="completed">Completed</option>
+              <option value="dispatched">Dispatched</option>
+              <option value="cancelled">Cancelled</option>
+              <option value="issue">Issue</option>
+            </select>
+          </div>
+
+          <div className="filter-group">
+            <label>From Date</label>
+            <input
+              type="date"
+              className="filter-input"
+              value={fromDate}
+              onChange={e => setFromDate(e.target.value)}
+            />
+          </div>
+
+          <div className="filter-group">
+            <label>To Date</label>
+            <input
+              type="date"
+              className="filter-input"
+              value={toDate}
+              onChange={e => setToDate(e.target.value)}
+            />
+          </div>
+
+          <button className="filter-reset-btn" onClick={handleClearFilters}>
+            Reset Filters
+          </button>
+        </div>
+      </div>
+
+      {/* Status Summary Cards */}
+      {statusCounts && (
+        <div className="summary-cards summary-cards--compact">
+          <div className="summary-card summary-card--mini">
+            <div className="summary-card__value">{summary?.totalOrders || filteredOrders.length}</div>
+            <div className="summary-card__label">Total</div>
+          </div>
+          {Object.entries(statusCounts).map(([status, count]) => {
+            const statusClassMap: Record<string, string> = {
+              'Wait for Approval': 'waiting',
+              'pending': 'pending',
+              'approved': 'approved',
+              'in_progress': 'progress',
+              'completed': 'completed',
+              'dispatched': 'dispatched',
+              'issue': 'issue',
+              'cancelled': 'cancelled'
+            };
+            const statusClass = statusClassMap[status] || '';
+            return (
+              <div key={status} className={`summary-card summary-card--mini summary-card--${statusClass}`}>
+                <div className="summary-card__value">{count as number}</div>
+                <div className="summary-card__label">{status.replace(/_/g, ' ')}</div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Loading & Error States */}
+      {loading && (
+        <div className="orders-loading">
+          <div className="loading-spinner"></div>
+          <p>Loading orders...</p>
+        </div>
+      )}
+      {error && <div className="orders-error">Error: {error}</div>}
+
+      {/* Orders Table */}
+      {!loading && filteredOrders.length === 0 && (
+        <div className="orders-empty">
+          <p>No orders found for this account with the selected criteria.</p>
+        </div>
+      )}
+
+      {!loading && filteredOrders.length > 0 && (
+        <div
+          className="orders-table-container"
+          ref={contentRef}
+          tabIndex={0}
+          onKeyDown={handleKeyNavigation}
+          onClick={() => contentRef.current?.focus()}
+          style={{ outline: 'none' }}
+        >
+          <table className="orders-table">
+            <thead>
+              <tr>
+                <th style={{ width: '40px', textAlign: 'center' }}>
+                  <input
+                    type="checkbox"
+                    checked={selectedOrders.size === filteredOrders.length && filteredOrders.length > 0}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        selectAllOrders();
+                      } else {
+                        clearSelections();
+                      }
+                    }}
+                    style={{ cursor: 'pointer', width: '16px', height: '16px' }}
+                  />
+                </th>
+                <th style={{ width: '50px' }}>No</th>
+                <th style={{ width: '100px' }}>Created</th>
+                <th style={{ width: '120px' }}>Order ID</th>
+                <th>Company</th>
+                <th style={{ width: '140px' }}>Order Status</th>
+                <th style={{ width: '100px' }}>Priority</th>
+                <th style={{ width: '150px' }}>Order Type</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredOrders.map((order, index) => (
+                <tr
+                  key={order._id || index}
+                  ref={el => ordersRef.current[index] = el as any}
+                  className={`clickable-row ${selectedOrderIndex === index ? 'row-expanded' : ''} ${selectedOrders.has(order._id) ? 'row-selected' : ''}`}
+                  onClick={() => handleOrderClick(order)}
+                  style={selectedOrders.has(order._id) ? { backgroundColor: '#fef3c7' } : {}}
+                >
+                  <td style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      checked={selectedOrders.has(order._id)}
+                      onChange={() => toggleOrderSelection(order._id)}
+                      style={{ cursor: 'pointer', width: '16px', height: '16px' }}
+                    />
+                  </td>
+                  <td style={{ textAlign: 'center', fontWeight: 500 }}>{index + 1}</td>
+                  <td className="date-cell">
+                    {order.createdAt ? new Date(order.createdAt as string).toLocaleDateString('en-IN', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: '2-digit'
+                    }) : 'N/A'}
+                  </td>
+                  <td className="order-id-cell">{order.orderId || 'N/A'}</td>
+                  <td style={{ fontWeight: 500 }}>{order.companyName || 'N/A'}</td>
+                  <td>
+                    <span
+                      className="status-badge"
+                      style={{ backgroundColor: getStatusColor(order.status || '') }}
+                    >
+                      {order.status?.replace(/_/g, ' ') || 'Unknown'}
+                    </span>
+                  </td>
+                  <td>
+                    <span
+                      className="priority-badge"
+                      style={{ backgroundColor: getPriorityBadgeColor(order.priority || 'normal') }}
+                    >
+                      {order.priority || 'normal'}
+                    </span>
+                  </td>
+                  <td>
+                    {order.orderTypeName ? (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}>
+                        <span style={{ fontWeight: 500 }}>{order.orderTypeName}</span>
+                        {order.orderTypeCode && (
+                          <span style={{ color: '#94a3b8', fontSize: '11px' }}>({order.orderTypeCode})</span>
+                        )}
+                      </span>
+                    ) : (
+                      <span style={{ color: '#94a3b8', fontSize: '12px' }}>-</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
         </div>
       )}
     </div>

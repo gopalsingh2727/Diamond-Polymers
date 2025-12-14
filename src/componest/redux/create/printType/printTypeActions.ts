@@ -99,8 +99,11 @@ export const getPrintTypes = () => async (dispatch: Dispatch, getState: () => Ro
       headers: getHeaders(token)
     });
 
-    dispatch({ type: GET_PRINT_TYPES_SUCCESS, payload: data });
-    return data;
+    // Backend may return { data: [...] } or array directly
+    const printTypes = Array.isArray(data) ? data : (data.data || data.printTypes || []);
+
+    dispatch({ type: GET_PRINT_TYPES_SUCCESS, payload: printTypes });
+    return printTypes;
   } catch (error: any) {
     const errorMessage = error.response?.data?.message || error.message || "Failed to fetch print types";
     dispatch({ type: GET_PRINT_TYPES_FAIL, payload: errorMessage });

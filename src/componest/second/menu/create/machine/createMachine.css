@@ -15,7 +15,7 @@
 .CreateMachineForm {
   display: flex;
   flex-direction: column;
-  width: 100%;
+  width: 45%;
   max-width: 1200px;
   padding: 4rem;
   background-color: #ffffff;
@@ -1044,117 +1044,6 @@
   margin-top: 10px;
   font-size: 14px;
   border-left: 4px solid #2e7d32;
-}
-
-/* Dark Mode Support */
-.dark .createMachineCss,
-.dark .CreateMachineForm {
-  background: rgba(17, 24, 39, 0.8);
-  color: #e5e7eb;
-}
-
-.dark .CreateMachineFormTitle {
-  color: #e5e7eb;
-  border-bottom-color: rgba(52, 152, 219, 0.5);
-}
-
-.dark .CreateMachineFormLabel,
-.dark .CreateMachineSectionTitle,
-.dark .CreateMachineSubsectionTitle {
-  color: #d1d5db;
-}
-
-.dark .CreateMachineFormInput,
-.dark .CreateMachineMachineSelect,
-.dark .CreateMachineSizeInput,
-.dark .CreateMachineColumnNameInput,
-.dark .CreateMachineColumnTypeSelect,
-.dark .CreateMachineFormulaColumnSelect,
-.dark .CreateMachineFormulaExpressionInput,
-.dark .CreateMachineFormulaDescriptionInput {
-  background: rgba(31, 41, 55, 0.5);
-  border-color: rgba(75, 85, 99, 0.5);
-  color: #e5e7eb;
-}
-
-.dark .CreateMachineTableConfigurationSection,
-.dark .CreateMachineAddColumnForm,
-.dark .CreateMachineAddFormulaForm {
-  background: rgba(31, 41, 55, 0.5);
-  border-color: rgba(75, 85, 99, 0.5);
-}
-
-.dark .CreateMachineColumnItem,
-.dark .CreateMachineFormulaItem {
-  background: rgba(31, 41, 55, 0.5);
-  border-color: rgba(75, 85, 99, 0.5);
-}
-
-.dark .CreateMachineColumnName,
-.dark .CreateMachineFormulaColumnName {
-  color: #e5e7eb;
-}
-
-.dark .CreateMachineColumnType,
-.dark .CreateMachineColumnTypeIcon {
-  color: #9ca3af;
-}
-
-.dark .CreateMachinePreviewTableWrapper,
-.dark .CreateMachinePreviewTable {
-  background: rgba(17, 24, 39, 0.8);
-  border-color: rgba(75, 85, 99, 0.5);
-}
-
-.dark .CreateMachinePreviewHeader {
-  background-color: rgba(52, 73, 94, 0.8);
-  border-bottom-color: rgba(44, 62, 80, 0.8);
-}
-
-.dark .CreateMachinePreviewCell {
-  color: #e5e7eb;
-  border-bottom-color: rgba(75, 85, 99, 0.3);
-}
-
-.dark .CreateMachinePreviewRow:hover {
-  background-color: rgba(31, 41, 55, 0.5);
-}
-
-.dark .CreateMachineFormulaHelp {
-  background: rgba(31, 41, 55, 0.5);
-  border-color: rgba(75, 85, 99, 0.5);
-}
-
-.dark .CreateMachineFormulaHelp p {
-  color: #9ca3af;
-}
-
-.dark .CreateMachineFormulaHelp strong {
-  color: #d1d5db;
-}
-
-.dark .formGroup label {
-  color: #d1d5db;
-}
-
-.dark .formGroup input,
-.dark .formGroup select,
-.dark .formGroup textarea {
-  background: rgba(31, 41, 55, 0.5);
-  border-color: rgba(75, 85, 99, 0.5);
-  color: #e5e7eb;
-}
-
-.dark .formSection {
-  border-bottom-color: rgba(75, 85, 99, 0.3);
-}
-
-.dark .formSection h3 {
-  color: #d1d5db;
-}
-
-.dark .sectionDescription {
-  color: #9ca3af;
 }
 
 /* ========== Machine Template Section Styles ========== */

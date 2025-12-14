@@ -16,7 +16,7 @@ interface Device {
   location: string;
   branchId?: {
     _id: string;
-    branchName: string;
+    name: string;
   };
   machines?: Array<{
     machineId: string;
@@ -47,7 +47,7 @@ const EditDeviceAccess: React.FC = () => {
     if (!searchTerm) return true;
     
     const search = searchTerm.toLowerCase();
-    const branchName = typeof device.branchId === 'object' ? device.branchId?.branchName : '';
+    const branchName = typeof device.branchId === 'object' ? device.branchId?.name : '';
     
     return (
       device.deviceId?.toLowerCase().includes(search) ||
@@ -165,8 +165,8 @@ const EditDeviceAccess: React.FC = () => {
   };
 
   const getBranchName = (branchId: any) => {
-    if (typeof branchId === 'object' && branchId?.branchName) {
-      return branchId.branchName;
+    if (typeof branchId === 'object' && branchId?.name) {
+      return branchId.name;
     }
     return "N/A";
   };

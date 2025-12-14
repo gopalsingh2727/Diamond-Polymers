@@ -376,28 +376,3 @@
   border-left: 4px solid #2e7d32;
 }
 
-/* Dark Mode */
-.dark .account-container {
-  background-color: #111827;
-}
-
-.dark .results-section {
-  background-color: rgba(17, 24, 39, 0.8);
-  border-color: rgba(75, 85, 99, 0.5);
-}
-
-.dark .formGroup label {
-  color: #d1d5db;
-}
-
-.dark .formGroup input,
-.dark .formGroup select,
-.dark .formGroup textarea {
-  background: rgba(31, 41, 55, 0.5);
-  border-color: rgba(75, 85, 99, 0.5);
-  color: #e5e7eb;
-}
-
-.dark .formSection {
-  border-bottom-color: rgba(75, 85, 99, 0.3);
-}

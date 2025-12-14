@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
 import { createExcelExportType, updateExcelExportType, deleteExcelExportType } from "../../../../redux/create/excelExportType/excelExportTypeActions";
 import { getOptionTypes } from "../../../../redux/option/optionTypeActions";
+import { getOptionSpecs } from "../../../../redux/create/optionSpec/optionSpecActions";
 import { AppDispatch } from "../../../../../store";
 import { ActionButton } from "../../../../../components/shared/ActionButton";
 import { ToastContainer } from "../../../../../components/shared/Toast";
@@ -131,10 +132,57 @@ const CreateExcelExportType: React.FC<CreateExcelExportTypeProps> = ({ initialDa
   // Get option types from Redux store
   const optionTypes = useSelector((state: any) => state.optionType?.optionTypes || []);
 
-  // Fetch option types on mount
+  // Get option specs from Redux store (contains actual specifications with values)
+  const optionSpecs = useSelector((state: any) => state.optionSpec?.optionSpecs || []);
+
+  // Fetch option types and option specs on mount
   useEffect(() => {
     dispatch(getOptionTypes());
+    dispatch(getOptionSpecs());
   }, [dispatch]);
+
+  // Get all specifications from linked option types (from OptionSpecs)
+  const getLinkedOptionTypesSpecs = () => {
+    const allSpecs: { optionTypeName: string; optionTypeId: string; specs: any[] }[] = [];
+
+    linkedOptionTypes.forEach((optionTypeId) => {
+      const optionType = optionTypes.find((ot: any) => ot._id === optionTypeId);
+      if (optionType) {
+        // Get all OptionSpecs that belong to this OptionType
+        const relatedSpecs = optionSpecs.filter((spec: any) =>
+          spec.optionTypeId === optionTypeId ||
+          (spec.optionTypeId && spec.optionTypeId._id === optionTypeId)
+        );
+
+        // Collect all unique specifications from these OptionSpecs
+        const allSpecsFromOptionSpecs: any[] = [];
+        relatedSpecs.forEach((optionSpec: any) => {
+          if (optionSpec.specifications && Array.isArray(optionSpec.specifications)) {
+            optionSpec.specifications.forEach((spec: any) => {
+              // Check if we already have this spec name (avoid duplicates)
+              if (!allSpecsFromOptionSpecs.some(existing => existing.name === spec.name)) {
+                allSpecsFromOptionSpecs.push({
+                  ...spec,
+                  fromOptionSpec: optionSpec.name,
+                  fromOptionSpecCode: optionSpec.code
+                });
+              }
+            });
+          }
+        });
+
+        if (allSpecsFromOptionSpecs.length > 0) {
+          allSpecs.push({
+            optionTypeName: optionType.name,
+            optionTypeId: optionType._id,
+            specs: allSpecsFromOptionSpecs,
+          });
+        }
+      }
+    });
+
+    return allSpecs;
+  };
 
   // Handle ESC key to go back to list in edit mode
   const handleBackToList = () => {
@@ -676,6 +724,96 @@ const CreateExcelExportType: React.FC<CreateExcelExportTypeProps> = ({ initialDa
             </div>
           </div>
         </div>
+
+        {/* Available Specifications from Linked Option Types */}
+        {linkedOptionTypes.length > 0 && (
+          <div className="orderTypeSection">
+            <h3 className="orderTypeSectionTitle">
+              Available Specifications
+              <FieldTooltip
+                content="These are the specifications available from the linked option types. They can be included in your export."
+                position="right"
+              />
+            </h3>
+
+            {getLinkedOptionTypesSpecs().length === 0 ? (
+              <p style={{ color: '#6b7280', fontSize: '13px', textAlign: 'center', padding: '24px', background: '#fef3c7', borderRadius: '8px', border: '1px solid #fbbf24' }}>
+                No specifications found in the linked option types.
+              </p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {getLinkedOptionTypesSpecs().map((typeGroup, groupIndex) => {
+                  const numberSpecs = typeGroup.specs.filter((s: any) => s.dataType === 'number');
+                  const otherSpecs = typeGroup.specs.filter((s: any) => s.dataType !== 'number');
+                  return (
+                    <div key={groupIndex} style={{ background: '#f0f9ff', padding: '12px', borderRadius: '8px', border: '1px solid #0ea5e9' }}>
+                      <div style={{ fontSize: '13px', fontWeight: 600, color: '#0369a1', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ background: '#0ea5e9', color: 'white', padding: '2px 8px', borderRadius: '4px', fontSize: '11px' }}>
+                          {typeGroup.optionTypeName}
+                        </span>
+                        <span style={{ fontSize: '11px', color: '#64748b' }}>
+                          ({typeGroup.specs.length} specs)
+                        </span>
+                      </div>
+
+                      {/* Number specifications */}
+                      {numberSpecs.length > 0 && (
+                        <div style={{ marginBottom: '8px' }}>
+                          <div style={{ fontSize: '11px', color: '#059669', marginBottom: '4px', fontWeight: 500 }}>
+                            Number Specifications:
+                          </div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                            {numberSpecs.map((spec: any, specIndex: number) => (
+                              <span
+                                key={specIndex}
+                                style={{
+                                  padding: '4px 10px',
+                                  background: '#d1fae5',
+                                  border: '1px solid #10b981',
+                                  borderRadius: '4px',
+                                  fontSize: '11px',
+                                  color: '#065f46'
+                                }}
+                              >
+                                {spec.name} {spec.unit && <span style={{ opacity: 0.7 }}>({spec.unit})</span>}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Other specifications */}
+                      {otherSpecs.length > 0 && (
+                        <div>
+                          <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px' }}>
+                            Other Specifications:
+                          </div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                            {otherSpecs.map((spec: any, specIndex: number) => (
+                              <span
+                                key={specIndex}
+                                style={{
+                                  padding: '4px 8px',
+                                  background: '#f3f4f6',
+                                  border: '1px solid #d1d5db',
+                                  borderRadius: '4px',
+                                  fontSize: '11px',
+                                  color: '#6b7280'
+                                }}
+                              >
+                                {spec.name} <span style={{ opacity: 0.6 }}>({spec.dataType})</span>
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Global/Default Settings Section */}
         <div className="orderTypeSection">

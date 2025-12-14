@@ -73,7 +73,8 @@ class WebSocketClient {
           url.searchParams.set('deviceId', this.config.deviceId);
         }
 
-        console.log('🔌 Connecting to WebSocket:', url.origin + url.pathname);
+        console.log('🔌 Connecting to WebSocket:', url.toString());
+        console.log('🔍 [WS] Full URL with params:', { origin: url.origin, pathname: url.pathname, search: url.search });
 
         this.ws = new WebSocket(url.toString());
 
@@ -96,6 +97,8 @@ class WebSocketClient {
         this.ws.onmessage = (event) => {
           try {
             const message = JSON.parse(event.data);
+            // 🔍 DEBUG: Log ALL incoming WebSocket messages
+            console.log('📨 [WS] Message received:', message.type || message.action, message);
             this.handleMessage(message);
           } catch (error) {
             console.error('❌ Error parsing WebSocket message:', error);

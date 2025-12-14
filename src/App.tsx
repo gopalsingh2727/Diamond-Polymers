@@ -20,7 +20,7 @@ const WebSocketManager = () => {
   const dispatch = useDispatch();
   const isAuthenticated = useSelector((state: any) => state.auth?.isAuthenticated);
   const token = useSelector((state: any) => state.auth?.token);
-  const { isConnected } = useSelector((state: any) => state.websocket || {});
+  const isConnected = useSelector((state: any) => state.websocket?.isConnected);
 
   useEffect(() => {
     if (isAuthenticated && token && !isConnected) {
@@ -50,7 +50,7 @@ function App() {
     return (
       <InfinityLoader
         onLoadComplete={() => setIsLoading(false)}
-        minDuration={2500}
+        minDuration={500}
       />
     );
   }

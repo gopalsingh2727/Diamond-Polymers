@@ -136,10 +136,11 @@ export const getMachineTypes = () => async (
     const { data } = await axios.get(`${baseUrl}/machinetype`, {
       headers: getHeaders(token) ,  params: { branchId },
     });
-    
-    
 
-    dispatch({ type: GET_MACHINE_TYPES_SUCCESS, payload: data });
+    // Backend may return array directly or { data: [...] }
+    const machineTypes = Array.isArray(data) ? data : (data.data || data.machineTypes || []);
+
+    dispatch({ type: GET_MACHINE_TYPES_SUCCESS, payload: machineTypes });
   } catch (error: any) {
     dispatch({
       type: GET_MACHINE_TYPES_FAIL,

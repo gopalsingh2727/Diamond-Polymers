@@ -9,6 +9,18 @@ import log from 'electron-log';
 
 dotenv.config();
 
+// Security: Content Security Policy
+const CSP_POLICY = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // Required for Vite dev mode
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' https://fonts.gstatic.com data:",
+  "img-src 'self' data: blob: https:",
+  "connect-src 'self' http://localhost:* ws://localhost:* wss://* https://api.github.com https://*.27infinity.in https://*.execute-api.ap-south-1.amazonaws.com",
+  "media-src 'self' blob:",
+  "worker-src 'self' blob:",
+].join('; ');
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 process.env.APP_ROOT = path.join(__dirname, '..');
 
@@ -70,6 +82,43 @@ app.whenReady().then(() => {
   log.transports.file.level = 'info';
   log.info('Logger initialized');
   log.info('App version:', app.getVersion());
+
+  // Security: Apply Content Security Policy headers
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        'Content-Security-Policy': [CSP_POLICY],
+        'X-Content-Type-Options': ['nosniff'],
+        'X-Frame-Options': ['DENY'],
+        'X-XSS-Protection': ['1; mode=block'],
+      }
+    });
+  });
+
+  // Security: Block navigation to external URLs (prevent phishing)
+  app.on('web-contents-created', (event, contents) => {
+    contents.on('will-navigate', (event, navigationUrl) => {
+      const parsedUrl = new URL(navigationUrl);
+      // Allow localhost and the app's own URLs
+      if (parsedUrl.hostname !== 'localhost' && !parsedUrl.hostname.endsWith('27infinity.in')) {
+        log.warn(`Blocked navigation to: ${navigationUrl}`);
+        event.preventDefault();
+      }
+    });
+
+    // Security: Block new window creation to untrusted URLs
+    contents.setWindowOpenHandler(({ url }) => {
+      const parsedUrl = new URL(url);
+      // Only allow opening trusted URLs in external browser
+      if (parsedUrl.hostname.endsWith('27infinity.in') || parsedUrl.hostname === 'github.com') {
+        shell.openExternal(url);
+      } else {
+        log.warn(`Blocked popup to: ${url}`);
+      }
+      return { action: 'deny' };
+    });
+  });
 
   // Set up permission handlers for microphone access (required for speech recognition)
   session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {

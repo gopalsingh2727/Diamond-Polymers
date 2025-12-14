@@ -34,15 +34,6 @@
   -webkit-text-size-adjust: 100%;
 }
 
-/* Dark Mode Variables */
-.dark {
-  --color-background: #030712;
-  --color-surface: #111827;
-  --color-text: #F9FAFB;
-  --color-text-muted: #9CA3AF;
-  --color-border: #374151;
-}
-
 * {
   margin: 0;
   padding: 0;

@@ -6,6 +6,7 @@ import { AppDispatch } from '../../../../../store';
 import { getOptionSpecs, deleteOptionSpec, updateOptionSpec } from '../../../../redux/create/optionSpec/optionSpecActions';
 import { getOptionTypes } from '../../../../redux/option/optionTypeActions';
 import './EditOptionSpecList.css';
+import '../EditMachineType/EditMachineyType.css';
 
 const EditOptionSpecList: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -26,11 +27,22 @@ const EditOptionSpecList: React.FC = () => {
     dispatch(getOptionTypes({}));
   }, [dispatch]);
 
-  // Get option type name by ID
-  const getOptionTypeName = (optionTypeId: string) => {
-    if (!optionTypeId || !Array.isArray(optionTypes)) return 'N/A';
-    const type = optionTypes.find((t: any) => t._id === optionTypeId);
-    return type?.name || 'N/A';
+  // Get option type name - handles both populated object and string ID
+  const getOptionTypeName = (optionTypeId: any) => {
+    if (!optionTypeId) return 'N/A';
+
+    // If optionTypeId is already populated (object with name)
+    if (typeof optionTypeId === 'object' && optionTypeId.name) {
+      return optionTypeId.name;
+    }
+
+    // If optionTypeId is a string, look up from optionTypes array
+    if (typeof optionTypeId === 'string' && Array.isArray(optionTypes)) {
+      const type = optionTypes.find((t: any) => t._id === optionTypeId);
+      return type?.name || 'N/A';
+    }
+
+    return 'N/A';
   };
 
   // Filter option specs based on search
@@ -116,119 +128,74 @@ const EditOptionSpecList: React.FC = () => {
   return (
     <div className="EditOptionSpec EditMachineType">
       {!showDetail && !loading && optionSpecs.length > 0 ? (
-        <>
+        <div className="editsectionsTable-container">
+          {/* Page Title */}
+          <h2 className="editsectionsTable-title">Option Specifications</h2>
+
           {/* Search Bar */}
-          <div style={{
-            marginBottom: '20px',
-            display: 'flex',
-            gap: '10px',
-            alignItems: 'center'
-          }}>
-            <div style={{ position: 'relative', flex: 1 }}>
+          <div className="editsectionsTable-searchWrapper">
+            <div className="editsectionsTable-searchBox">
               <input
                 type="text"
                 placeholder="Search by name, code, description, or option type..."
                 value={searchTerm}
+                className="editsectionsTable-searchInput"
                 onChange={handleSearchChange}
-                style={{
-                  width: '100%',
-                  padding: '12px 40px 12px 40px',
-                  fontSize: '15px',
-                  border: '2px solid #ddd',
-                  borderRadius: '8px',
-                  outline: 'none',
-                  transition: 'border-color 0.3s ease',
-                }}
-                onFocus={(e) => e.target.style.borderColor = '#2d89ef'}
-                onBlur={(e) => e.target.style.borderColor = '#ddd'}
               />
-              <span style={{
-                position: 'absolute',
-                left: '14px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                fontSize: '18px',
-                color: '#666',
-              }}>
-                🔍
-              </span>
+              <span className="editsectionsTable-searchIcon">🔍</span>
               {searchTerm && (
                 <button
                   onClick={clearSearch}
-                  style={{
-                    position: 'absolute',
-                    right: '10px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    fontSize: '20px',
-                    cursor: 'pointer',
-                    color: '#999',
-                    padding: '4px 8px',
-                  }}
+                  className="editsectionsTable-clearButton"
                   title="Clear search"
                 >
                   ✕
                 </button>
               )}
             </div>
-            <div style={{
-              padding: '12px 16px',
-              background: '#f5f5f5',
-              borderRadius: '8px',
-              fontSize: '14px',
-              color: '#666',
-              whiteSpace: 'nowrap',
-            }}>
+            <div className="editsectionsTable-countBadge">
               {filteredSpecs.length} of {optionSpecs.length} specs
             </div>
           </div>
 
           {/* Table */}
           {filteredSpecs.length > 0 ? (
-            <table>
-              <thead>
-                <tr>
-                  <th>No</th>
-                  <th>Option Spec</th>
-                  <th>Code</th>
-                  <th>Option Type</th>
-                  <th>Dimensions</th>
-                  <th>Created</th>
-                  <th>Updated</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredSpecs.map((item: any, index: number) => (
-                  <tr
-                    key={item._id}
-                    className={selectedRow === index ? "bg-blue-100" : ""}
-                    onClick={() => handleRowClick(index, item)}
-                    style={{ cursor: "pointer" }}
-                  >
-                    <td>{index + 1}</td>
-                    <td>{item.name}</td>
-                    <td>{item.code || 'N/A'}</td>
-                    <td>{getOptionTypeName(item.optionTypeId)}</td>
-                    <td>{item.specifications?.length || 0}</td>
-                    <td>{item.createdAt ? new Date(item.createdAt).toLocaleString() : 'N/A'}</td>
-                    <td>{item.updatedAt ? new Date(item.updatedAt).toLocaleString() : 'N/A'}</td>
+            <div className="editsectionsTable-wrapper">
+              <table className="editsectionsTable-table">
+                <thead className="editsectionsTable-thead">
+                  <tr>
+                    <th className="editsectionsTable-th">No</th>
+                    <th className="editsectionsTable-th">Option Spec</th>
+                    <th className="editsectionsTable-th">Code</th>
+                    <th className="editsectionsTable-th">Option Type</th>
+                    <th className="editsectionsTable-th">Dimensions</th>
+                    <th className="editsectionsTable-th">Branch</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="editsectionsTable-tbody">
+                  {filteredSpecs.map((item: any, index: number) => (
+                    <tr
+                      key={item._id}
+                      className={`editsectionsTable-tr ${selectedRow === index ? "editsectionsTable-trSelected" : ""}`}
+                      onClick={() => handleRowClick(index, item)}
+                    >
+                      <td className="editsectionsTable-td">{index + 1}</td>
+                      <td className="editsectionsTable-td">{item.name}</td>
+                      <td className="editsectionsTable-td">{item.code || 'N/A'}</td>
+                      <td className="editsectionsTable-td">{getOptionTypeName(item.optionTypeId)}</td>
+                      <td className="editsectionsTable-td">{item.specifications?.length || 0}</td>
+                      <td className="editsectionsTable-td">{item.branchId?.name || 'N/A'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           ) : (
-            <div style={{
-              padding: '40px',
-              textAlign: 'center',
-              color: '#999',
-              fontSize: '16px',
-            }}>
-              No option specs found matching "{searchTerm}"
+            <div className="editsectionsTable-empty">
+              No option specs found matching "<span>{searchTerm}</span>"
             </div>
           )}
-        </>
+        </div>
       ) : showDetail && selectedItem ? (
         <div className="detail-container">
           <div className="TopButtonEdit">

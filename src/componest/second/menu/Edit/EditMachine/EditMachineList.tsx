@@ -121,11 +121,7 @@ const EditMachineList: React.FC<EditMachineListProps> = ({ onEdit }) => {
                   <th className="editsectionsTable-th">No</th>
                   <th className="editsectionsTable-th">Machine Name</th>
                   <th className="editsectionsTable-th">Type</th>
-                  <th className="editsectionsTable-th">Size X</th>
-                  <th className="editsectionsTable-th">Size Y</th>
-                  <th className="editsectionsTable-th">Size Z</th>
                   <th className="editsectionsTable-th">Branch</th>
-                  <th className="editsectionsTable-th">Table Config</th>
                 </tr>
               </thead>
               <tbody className="editsectionsTable-tbody">
@@ -141,19 +137,7 @@ const EditMachineList: React.FC<EditMachineListProps> = ({ onEdit }) => {
                     <td className="editsectionsTable-td">{index + 1}</td>
                     <td className="editsectionsTable-td">{machine.machineName}</td>
                     <td className="editsectionsTable-td">{machine.machineType?.type || "N/A"}</td>
-                    <td className="editsectionsTable-td">{machine.sizeX}</td>
-                    <td className="editsectionsTable-td">{machine.sizeY}</td>
-                    <td className="editsectionsTable-td">{machine.sizeZ}</td>
                     <td className="editsectionsTable-td">{machine.branchId?.name || "N/A"}</td>
-                    <td className="editsectionsTable-td">
-                      {machine.tableConfig ? (
-                        <span style={{ color: 'green' }}>
-                          ✅ {machine.tableConfig.columns?.length || 0} cols
-                        </span>
-                      ) : (
-                        <span style={{ color: '#999' }}>❌ No config</span>
-                      )}
-                    </td>
                   </tr>
                 ))}
               </tbody>

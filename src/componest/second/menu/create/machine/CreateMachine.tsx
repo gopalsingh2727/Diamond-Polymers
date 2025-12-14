@@ -196,7 +196,7 @@ const CreateMachine: React.FC<CreateMachineProps> = ({ initialData, onCancel, on
             Machine Name *
           </label>
           <input
-            id="CreateMachineMachineName"
+            id="CreateMachineMachineNamemargin-left"
             type="text"
             value={machineName}
             onChange={(e) => setMachineName(e.target.value)}

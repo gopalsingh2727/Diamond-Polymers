@@ -126,11 +126,37 @@ export interface SettingsConfig {
   allowImageUpload?: boolean;
 }
 
+// Calculation Rule - for same option type calculations
+export interface CalculationRule {
+  id: string;
+  name: string;
+  description?: string;
+  optionTypeId: string;
+  optionTypeName?: string;
+  specField: string;
+  calculationType: 'DIFFERENCE' | 'PERCENTAGE_DIFF' | 'SUM' | 'AVERAGE' | 'MIN' | 'MAX' | 'MULTIPLY';
+  multipleOccurrence: 'FIRST_MINUS_SECOND' | 'SECOND_MINUS_FIRST' | 'ALL_SUM' | 'AVERAGE_ALL' | 'MULTIPLY_ALL';
+  resultLabel?: string;
+  resultUnit?: string;
+  showInSummary: boolean;
+  isActive: boolean;
+}
+
+// Selected Specification Config
+export interface SelectedSpecificationConfig {
+  optionSpecId: string;
+  fields: string[];
+  showYesNo: boolean;
+}
+
 export interface MachineTemplateData {
   machineId: string;
   machineTypeId?: string;
   orderTypeId: string;
   optionTypeIds?: string[];
+  optionSpecIds?: string[];
+  selectedSpecifications?: SelectedSpecificationConfig[];
+  calculationRules?: CalculationRule[];
   templateName: string;
   description?: string;
   columns: ColumnConfig[];

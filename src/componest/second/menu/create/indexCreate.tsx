@@ -10,12 +10,15 @@ import DiveceAccessCreate from "./deviceAccess/deviceAccessCreate";
 import CreateOrderType from "./orderType/CreateOrderType";
 import CreatePrintType from "./printType/CreatePrintType";
 import CreateExcelExportType from "./excelExportType/CreateExcelExportType";
+import CreateReportType from "./reportType/CreateReportType";
 import CreateOptionType from "./optionType/CreateOptionType";
 import CreateOption from "./option/CreateOption";
 import CreateOptionSpec from "./optionSpec/CreateOptionSpec";
 import CreateCategory from "./category/CreateCategory";
 import ViewTemplateWizard from "./machine/ViewTemplateWizard";
 import OperatorEntryView from "./machine/OperatorEntryView";
+import CustomerCategory from "./customerCategory/CustomerCategory";
+import CustomerParentCompany from "./customerParentCompany/CustomerParentCompany";
 import './create.css';
 import '../../../main/sidebar/menu.css';
 import ErrorBoundary from '../../../error/error';
@@ -25,7 +28,9 @@ const Layout = () => {
     {
       title: "Account",
       items: [
-        { key: "account", label: "Create Account" }
+        { key: "account", label: "Create Account" },
+        { key: "customerCategory", label: "Customer Category" },
+        { key: "customerParentCompany", label: "Parent Company" }
       ]
     },
     {
@@ -59,8 +64,9 @@ const Layout = () => {
         { key: "orderType", label: "Create Order Type" },
         { key: "printType", label: "Create Print Type" },
         { key: "excelExportType", label: "Create Excel Export Type" },
+        { key: "reportType", label: "Create Report Type" },
         { key: "viewTemplate", label: "View Template" },
-        { key: "operatorEntry", label: "Operator Entry" }
+
       ]
     }
   ];
@@ -128,6 +134,10 @@ const Layout = () => {
     switch (activeComponent) {
       case "account":
         return <ErrorBoundary><CreateAccount /></ErrorBoundary>;
+      case "customerCategory":
+        return <ErrorBoundary><CustomerCategory /></ErrorBoundary>;
+      case "customerParentCompany":
+        return <ErrorBoundary><CustomerParentCompany /></ErrorBoundary>;
       case "machineType":
         return <ErrorBoundary><CreateMachineType /></ErrorBoundary>;
       case "machine":
@@ -154,10 +164,11 @@ const Layout = () => {
         return <ErrorBoundary><CreatePrintType /></ErrorBoundary>;
       case "excelExportType":
         return <ErrorBoundary><CreateExcelExportType /></ErrorBoundary>;
+      case "reportType":
+        return <ErrorBoundary><CreateReportType /></ErrorBoundary>;
       case "viewTemplate":
         return <ErrorBoundary><ViewTemplateWizard /></ErrorBoundary>;
-      case "operatorEntry":
-        return <ErrorBoundary><OperatorEntryView /></ErrorBoundary>;
+ 
       default:
         return <div>Select an option</div>;
     }
@@ -289,7 +300,7 @@ const Layout = () => {
 
       {/* Footer */}
       <div className="item menu-footer" style={{ gridColumn: "1 / -1" }}>
-        © 2024 Your Company Name. All rights reserved.
+        © 2025 27infinity. All rights reserved.
       </div>
     </div>
   );

@@ -196,6 +196,7 @@ const deviceAccessReducer = (
       return {
         ...state,
         loading: false,
+        success: true,
         devices: state.devices.map((device) =>
           device._id === action.payload._id ? action.payload : device
         ),

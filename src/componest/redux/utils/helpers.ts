@@ -25,9 +25,11 @@ export const getUserData = (getState: () => RootState): any => {
 };
 
 /**
- * Returns headers with token, api key, and optional x-branch-id if Admin.
+ * Returns headers with token, api key, and selected branch.
+ * IMPORTANT: x-selected-branch is ALWAYS included for proper branch-based data filtering
+ * If branchId is not provided, it's automatically fetched from localStorage
  */
-export const getHeaders = (token?: string, branchId?: string, role?: string): Record<string, string> => {
+export const getHeaders = (token?: string, branchId?: string | boolean, role?: string): Record<string, string> => {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     "x-api-key": API_KEY,
@@ -37,9 +39,16 @@ export const getHeaders = (token?: string, branchId?: string, role?: string): Re
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  // Only include x-branch-id if user is an admin and branchId is available
-  if (role === "admin" && branchId) {
-    headers["x-branch-id"] = branchId;
+  // Auto-fetch branchId from localStorage if not provided
+  // Handle legacy calls where second param might be boolean
+  const selectedBranch = typeof branchId === 'string'
+    ? branchId
+    : getBranchId();
+
+  // Include x-selected-branch for ALL authenticated users
+  // Backend uses this to filter data by branch
+  if (selectedBranch) {
+    headers["x-selected-branch"] = selectedBranch;
   }
 
   return headers;

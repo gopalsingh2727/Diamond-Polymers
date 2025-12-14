@@ -45,38 +45,22 @@ const Priority = ({ onPriorityChange, initialPriority }: PriorityProps) => {
 
 
   return (
-    <div>
-      <div className="Notes" style={{ marginTop: '15px' }}>
-        <h3 className="ManufacturingStepsTitel" >Priority</h3>
-        <div className="ManufacturingStepsTitel" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-     
-          <select
-            name="priority"
-            value={priority}
-            onChange={handlePriorityChange}
-            style={{
-              padding: '10px',
-              fontSize: '14px',
-              borderRadius: '4px',
-              border: `2px solid ${getPriorityColor()}`,
-              backgroundColor: 'white',
-              color: getPriorityColor(),
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              flex: 1,
-              maxWidth: '300px'
-            }}
-          >
-            <option value="low">Low Priority</option>
-            <option value="normal">Normal Priority</option>
-            <option value="high">High Priority</option>
-            <option value="urgent">Urgent Priority</option>
-          </select>
-        </div>
-      
-        
-
-      </div>
+    <div className="PrioritySection">
+      <label>Priority:</label>
+      <select
+        name="priority"
+        value={priority}
+        onChange={handlePriorityChange}
+        style={{
+          borderColor: getPriorityColor(),
+          color: getPriorityColor()
+        }}
+      >
+        <option value="low">Low</option>
+        <option value="normal">Normal</option>
+        <option value="high">High</option>
+        <option value="urgent">Urgent</option>
+      </select>
     </div>
   );
 };

@@ -1,7 +1,7 @@
 var __defProp = Object.defineProperty;
 var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
 var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
-import require$$0$5, { app, session, globalShortcut, Notification, shell, ipcMain, BrowserWindow } from "electron";
+import require$$0$5, { app, session, shell, globalShortcut, Notification, ipcMain, BrowserWindow } from "electron";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import fs from "node:fs";
@@ -2865,6 +2865,17 @@ function requireSrc() {
 var srcExports = requireSrc();
 const log = /* @__PURE__ */ getDefaultExportFromCjs(srcExports);
 dotenv.config();
+const CSP_POLICY = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+  // Required for Vite dev mode
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' https://fonts.gstatic.com data:",
+  "img-src 'self' data: blob: https:",
+  "connect-src 'self' http://localhost:* ws://localhost:* wss://* https://api.github.com https://*.27infinity.in https://*.execute-api.ap-south-1.amazonaws.com",
+  "media-src 'self' blob:",
+  "worker-src 'self' blob:"
+].join("; ");
 const __dirname$1 = path.dirname(fileURLToPath(import.meta.url));
 process.env.APP_ROOT = path.join(__dirname$1, "..");
 const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
@@ -2914,6 +2925,35 @@ app.whenReady().then(() => {
   log.transports.file.level = "info";
   log.info("Logger initialized");
   log.info("App version:", app.getVersion());
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        "Content-Security-Policy": [CSP_POLICY],
+        "X-Content-Type-Options": ["nosniff"],
+        "X-Frame-Options": ["DENY"],
+        "X-XSS-Protection": ["1; mode=block"]
+      }
+    });
+  });
+  app.on("web-contents-created", (event, contents) => {
+    contents.on("will-navigate", (event2, navigationUrl) => {
+      const parsedUrl = new URL(navigationUrl);
+      if (parsedUrl.hostname !== "localhost" && !parsedUrl.hostname.endsWith("27infinity.in")) {
+        log.warn(`Blocked navigation to: ${navigationUrl}`);
+        event2.preventDefault();
+      }
+    });
+    contents.setWindowOpenHandler(({ url }) => {
+      const parsedUrl = new URL(url);
+      if (parsedUrl.hostname.endsWith("27infinity.in") || parsedUrl.hostname === "github.com") {
+        shell.openExternal(url);
+      } else {
+        log.warn(`Blocked popup to: ${url}`);
+      }
+      return { action: "deny" };
+    });
+  });
   session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
     const allowedPermissions = ["media", "microphone", "audioCapture"];
     if (allowedPermissions.includes(permission)) {

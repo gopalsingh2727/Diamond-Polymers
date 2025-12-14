@@ -1,12 +1,32 @@
 /**
  * EditMachineTemplateList - LIST ONLY
- * Click → Goes to CreateMachineTemplate for editing
+ * Click → Goes to ViewTemplateWizard for editing
  */
 import React, { useState, useCallback, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getMachineTemplates, activateMachineTemplate, deactivateMachineTemplate, deleteMachineTemplate } from "../../../../redux/machineTemplate/machineTemplateActions";
 import { RootState } from "../../../../redux/rootReducer";
 import { AppDispatch } from "../../../../../store";
+
+interface CalculationRule {
+  id: string;
+  name: string;
+  optionTypeId: string;
+  optionTypeName?: string;
+  specField: string;
+  calculationType: string;
+  multipleOccurrence: string;
+  resultLabel?: string;
+  resultUnit?: string;
+  showInSummary: boolean;
+  isActive: boolean;
+}
+
+interface SelectedSpecification {
+  optionSpecId: string;
+  fields: string[];
+  showYesNo: boolean;
+}
 
 interface MachineTemplate {
   _id: string;
@@ -16,8 +36,15 @@ interface MachineTemplate {
   orderTypeId: string | { _id: string; typeName: string };
   isActive: boolean;
   columns?: any[];
+  displayItems?: any[];
+  totalsConfig?: any[];
+  optionTypeIds?: string[];
+  optionSpecIds?: string[];
+  selectedSpecifications?: SelectedSpecification[];
+  calculationRules?: CalculationRule[];
   machine?: { _id: string; machineName: string };
   orderType?: { _id: string; typeName: string };
+  branchId?: { _id: string; name: string };
 }
 
 interface Props {
@@ -189,7 +216,11 @@ const EditMachineTemplateList: React.FC<Props> = ({ onEdit }) => {
                   <th className="editsectionsTable-th">Template Name</th>
                   <th className="editsectionsTable-th">Machine</th>
                   <th className="editsectionsTable-th">Order Type</th>
+                  <th className="editsectionsTable-th">Branch</th>
                   <th className="editsectionsTable-th">Columns</th>
+                  <th className="editsectionsTable-th">Display</th>
+                  <th className="editsectionsTable-th">Totals</th>
+                  <th className="editsectionsTable-th">Calc Rules</th>
                   <th className="editsectionsTable-th">Status</th>
                   <th className="editsectionsTable-th">Actions</th>
                 </tr>
@@ -205,7 +236,51 @@ const EditMachineTemplateList: React.FC<Props> = ({ onEdit }) => {
                     <td className="editsectionsTable-td">{item.templateName || "N/A"}</td>
                     <td className="editsectionsTable-td">{getMachineName(item)}</td>
                     <td className="editsectionsTable-td">{getOrderTypeName(item)}</td>
-                    <td className="editsectionsTable-td">{item.columns?.length || 0}</td>
+                    <td className="editsectionsTable-td">{item.branchId?.name || "N/A"}</td>
+                    <td className="editsectionsTable-td">
+                      <span style={{
+                        padding: '2px 6px',
+                        borderRadius: '4px',
+                        fontSize: '11px',
+                        background: '#e0f2fe',
+                        color: '#0369a1'
+                      }}>
+                        {item.columns?.length || 0}
+                      </span>
+                    </td>
+                    <td className="editsectionsTable-td">
+                      <span style={{
+                        padding: '2px 6px',
+                        borderRadius: '4px',
+                        fontSize: '11px',
+                        background: '#fef3c7',
+                        color: '#92400e'
+                      }}>
+                        {item.displayItems?.length || 0}
+                      </span>
+                    </td>
+                    <td className="editsectionsTable-td">
+                      <span style={{
+                        padding: '2px 6px',
+                        borderRadius: '4px',
+                        fontSize: '11px',
+                        background: '#dcfce7',
+                        color: '#166534'
+                      }}>
+                        {item.totalsConfig?.length || 0}
+                      </span>
+                    </td>
+                    <td className="editsectionsTable-td">
+                      <span style={{
+                        padding: '2px 6px',
+                        borderRadius: '4px',
+                        fontSize: '11px',
+                        background: item.calculationRules?.length ? '#d1fae5' : '#f3f4f6',
+                        color: item.calculationRules?.length ? '#065f46' : '#6b7280'
+                      }}>
+                        {item.calculationRules?.length || 0}
+                      </span>
+                    </td>
                     <td className="editsectionsTable-td">
                       <span style={{
                         padding: '4px 8px',

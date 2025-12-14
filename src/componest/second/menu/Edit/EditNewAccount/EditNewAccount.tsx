@@ -17,6 +17,7 @@ interface Account {
   state?: string;
   pinCode?: string;
   imageUrl?: string;
+  branchId?: { _id: string; name: string };
   createdAt?: string;
   updatedAt?: string;
 }
@@ -119,6 +120,7 @@ const EditAccount: React.FC<EditAccountProps> = ({ onEdit }) => {
                     <th className="editsectionsTable-th">Name</th>
                     <th className="editsectionsTable-th">Phone</th>
                     <th className="editsectionsTable-th">State</th>
+                    <th className="editsectionsTable-th">Branch</th>
                   </tr>
                 </thead>
                 <tbody className="editsectionsTable-tbody">
@@ -136,6 +138,7 @@ const EditAccount: React.FC<EditAccountProps> = ({ onEdit }) => {
                       </td>
                       <td className="editsectionsTable-td">{item.phone1 || "N/A"}</td>
                       <td className="editsectionsTable-td">{item.state || "N/A"}</td>
+                      <td className="editsectionsTable-td">{item.branchId?.name || "N/A"}</td>
                     </tr>
                   ))}
                 </tbody>

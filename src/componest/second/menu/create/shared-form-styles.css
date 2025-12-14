@@ -586,42 +586,6 @@
 }
 
 /* ============================================
-   DARK MODE SUPPORT
-   ============================================ */
-
-.dark .CreateForm {
-  background: rgba(17, 24, 39, 0.95);
-  color: #e5e7eb;
-}
-
-.dark .CreateForm h2,
-.dark .CreateForm .form-title {
-  color: #f3f4f6;
-}
-
-.dark .CreateForm label {
-  color: #d1d5db;
-}
-
-.dark .CreateForm input,
-.dark .CreateForm select,
-.dark .CreateForm textarea {
-  color: #e5e7eb;
-  border-bottom-color: #4b5563;
-}
-
-.dark .CreateForm input:focus,
-.dark .CreateForm select:focus,
-.dark .CreateForm textarea:focus {
-  border-bottom-color: #FF6B35;
-}
-
-.dark .CreateForm input::placeholder,
-.dark .CreateForm textarea::placeholder {
-  color: #6b7280;
-}
-
-/* ============================================
    RESPONSIVE DESIGN
    ============================================ */
 
