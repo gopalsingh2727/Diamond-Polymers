@@ -1,1 +1,99 @@
-"use strict";const n=require("electron"),c=["main-process-message","update-can-available","download-progress","clear-storage-and-reload"],d=["check-update","open-download-page","download-update","install-update"],t=["check-update","open-download-page","download-update","install-update"];try{n.contextBridge.exposeInMainWorld("ipcRenderer",{on:(e,o)=>{if(!c.includes(e)){console.warn(`Blocked IPC receive on unauthorized channel: ${e}`);return}try{n.ipcRenderer.on(e,o)}catch(r){console.error("ipcRenderer.on error:",r)}},off:(e,o)=>{if(c.includes(e))try{n.ipcRenderer.off(e,o)}catch(r){console.error("ipcRenderer.off error:",r)}},send:(e,...o)=>{if(!d.includes(e)){console.warn(`Blocked IPC send on unauthorized channel: ${e}`);return}try{n.ipcRenderer.send(e,...o)}catch(r){console.error("ipcRenderer.send error:",r)}},invoke:(e,...o)=>{if(!t.includes(e))return console.warn(`Blocked IPC invoke on unauthorized channel: ${e}`),Promise.reject(new Error(`Unauthorized channel: ${e}`));try{return n.ipcRenderer.invoke(e,...o)}catch(r){return console.error("ipcRenderer.invoke error:",r),Promise.reject(r)}},once:(e,o)=>{if(!c.includes(e)){console.warn(`Blocked IPC once on unauthorized channel: ${e}`);return}try{n.ipcRenderer.once(e,o)}catch(r){console.error("ipcRenderer.once error:",r)}}})}catch(e){console.error("contextBridge expose error:",e)}process.on("uncaughtException",e=>{console.error("Uncaught Exception in preload:",e)});
+"use strict";
+const electron = require("electron");
+const ALLOWED_RECEIVE_CHANNELS = [
+  "main-process-message",
+  "update-can-available",
+  "download-progress",
+  "clear-storage-and-reload"
+];
+const ALLOWED_SEND_CHANNELS = [
+  "check-update",
+  "open-download-page",
+  "download-update",
+  "install-update"
+];
+const ALLOWED_INVOKE_CHANNELS = [
+  "check-update",
+  "open-download-page",
+  "download-update",
+  "install-update"
+];
+try {
+  electron.contextBridge.exposeInMainWorld("ipcRenderer", {
+    /**
+     * Listen for events from main process (whitelisted channels only)
+     */
+    on: (channel, listener) => {
+      if (!ALLOWED_RECEIVE_CHANNELS.includes(channel)) {
+        console.warn(`Blocked IPC receive on unauthorized channel: ${channel}`);
+        return;
+      }
+      try {
+        electron.ipcRenderer.on(channel, listener);
+      } catch (err) {
+        console.error("ipcRenderer.on error:", err);
+      }
+    },
+    /**
+     * Remove event listener
+     */
+    off: (channel, listener) => {
+      if (!ALLOWED_RECEIVE_CHANNELS.includes(channel)) {
+        return;
+      }
+      try {
+        electron.ipcRenderer.off(channel, listener);
+      } catch (err) {
+        console.error("ipcRenderer.off error:", err);
+      }
+    },
+    /**
+     * Send message to main process (whitelisted channels only)
+     */
+    send: (channel, ...args) => {
+      if (!ALLOWED_SEND_CHANNELS.includes(channel)) {
+        console.warn(`Blocked IPC send on unauthorized channel: ${channel}`);
+        return;
+      }
+      try {
+        electron.ipcRenderer.send(channel, ...args);
+      } catch (err) {
+        console.error("ipcRenderer.send error:", err);
+      }
+    },
+    /**
+     * Invoke method in main process (whitelisted channels only)
+     */
+    invoke: (channel, ...args) => {
+      if (!ALLOWED_INVOKE_CHANNELS.includes(channel)) {
+        console.warn(`Blocked IPC invoke on unauthorized channel: ${channel}`);
+        return Promise.reject(new Error(`Unauthorized channel: ${channel}`));
+      }
+      try {
+        return electron.ipcRenderer.invoke(channel, ...args);
+      } catch (err) {
+        console.error("ipcRenderer.invoke error:", err);
+        return Promise.reject(err);
+      }
+    },
+    /**
+     * Listen once for event from main process (whitelisted channels only)
+     */
+    once: (channel, listener) => {
+      if (!ALLOWED_RECEIVE_CHANNELS.includes(channel)) {
+        console.warn(`Blocked IPC once on unauthorized channel: ${channel}`);
+        return;
+      }
+      try {
+        electron.ipcRenderer.once(channel, listener);
+      } catch (err) {
+        console.error("ipcRenderer.once error:", err);
+      }
+    }
+  });
+} catch (e) {
+  console.error("contextBridge expose error:", e);
+}
+process.on("uncaughtException", (error) => {
+  console.error("Uncaught Exception in preload:", error);
+});
