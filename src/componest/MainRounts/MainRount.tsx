@@ -17,7 +17,7 @@ import MasterSettings from "../settings/MasterSettings";
 
 // Marketing Pages
 
-import { CRMDashboard } from "../../../../marketing/crm-dashboard";
+
 
 const MainRount = () => {
   const { isAuthenticated, userData } = useSelector(
@@ -167,17 +167,7 @@ const MainRount = () => {
       {/* Marketing Pages - Public Access */}
       {/* <Route path="/landing" element={<LandingPage />} /> */}
 
-      {/* CRM Dashboard - Admin Only */}
-      <Route
-        path="/crm"
-        element={
-          isAuthenticated && (userData?.role === "master_admin" || userData?.role === "admin") ? (
-            <CRMDashboard />
-          ) : (
-            <Navigate to="/login" />
-          )
-        }
-      />
+  
     </Routes>
   );
 };
