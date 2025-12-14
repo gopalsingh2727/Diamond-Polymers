@@ -16,7 +16,7 @@ import BranchSettings from "../settings/BranchSettings";
 import MasterSettings from "../settings/MasterSettings";
 
 // Marketing Pages
-import { LandingPage } from "../../../../marketing/landing-page";
+// import { LandingPage } from "../../../../marketing/landing-page";
 import { CRMDashboard } from "../../../../marketing/crm-dashboard";
 
 const MainRount = () => {
@@ -165,7 +165,7 @@ const MainRount = () => {
       />
 
       {/* Marketing Pages - Public Access */}
-      <Route path="/landing" element={<LandingPage />} />
+      {/* <Route path="/landing" element={<LandingPage />} /> */}
 
       {/* CRM Dashboard - Admin Only */}
       <Route
