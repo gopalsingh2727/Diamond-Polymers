@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, shell, Notification, session, globalShortcut } from 'electron';
+import { app, BrowserWindow, ipcMain, shell, Notification, session, globalShortcut, Menu } from 'electron';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import fs from 'node:fs';
@@ -52,6 +52,7 @@ function createWindow() {
     width: 1200,
     height: 800,
     icon: path.join(process.env.VITE_PUBLIC!, 'electron-vite.svg'),
+    autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
       // Enable features required for speech recognition and WASM
@@ -78,6 +79,9 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  // Remove menu bar for all platforms
+  Menu.setApplicationMenu(null);
+
   // Initialize logger
   log.transports.file.level = 'info';
   log.info('Logger initialized');

@@ -6,7 +6,7 @@
   width: 100%;
   height: auto;
   min-height: 100%;
-  overflow-y: auto;
+  overflow: hidden;
   
 
 
@@ -21,13 +21,12 @@
 
 .CreateAccountTitelCss h6 {
   margin-top: 0;
-  margin-bottom: 10px;
-  
-  font-size: large;
+  margin-bottom: 8px;
+  font-size: 1.1rem;
   text-align: center;
   top: 0;
   border-bottom: 1px solid #ccc;
-
+  padding-bottom: 6px;
 }
 
 
@@ -42,34 +41,34 @@
 }
 .form-container {
   width: 100%;
-  padding: 2rem;
+  padding: 0.5rem 1.5rem 8rem 1.5rem;
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  height: calc(100vh - 90px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
 }
 .form-group {
   height: fit-content;
 
 }
 .form-group label {
-
   font-weight: 500;
   color: #374151;
   font-size: 0.875rem;
-
 }
 
 .form-group select {
-
-
-
-
-  font-size: 1rem;
+  padding: 8px 12px;
+  font-size: 14px;
   color: #333;
   background-color: #fff;
   border: 2px solid #e5e7eb;
   border-radius: 6px;
   outline: none;
   transition: all 0.2s ease-in-out;
+  min-height: 36px;
 }
 
 
@@ -89,7 +88,7 @@
 .CurstomerInput,
 .CurstomerAddressInput {
   width: 100%;
-  padding: 10px 12px;
+  padding: 8px 12px;
   font-size: 14px;
   color: #1f2937;
   background-color: #fff;
@@ -98,6 +97,7 @@
   outline: none;
   box-sizing: border-box;
   transition: all 0.2s ease-in-out;
+  min-height: 36px;
 }
 
 .CurstomerInput:focus,
@@ -133,8 +133,9 @@
 
 .form-row {
   display: flex;
-  padding: 10px;
-  gap: 1rem;
+  padding: 2px 8px;
+  gap: 0.5rem;
+  margin-bottom: 0.3rem;
 }
 
 .error-text {
@@ -148,17 +149,26 @@
 
 
 .form-group button {
-  padding: 0.875rem 2rem;
+  padding: 0.75rem 1.5rem;
   background: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%);
   color: white;
   border: none;
   border-radius: 6px;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease-in-out;
-  margin-top: 1rem;
+  margin-top: 2rem;
+  margin-bottom: 6rem;
   box-shadow: 0 2px 8px rgba(255, 107, 53, 0.25);
+  width: 100%;
+  max-width: 350px;
+  min-height: 44px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  position: relative;
+  z-index: 10;
 }
 
 
@@ -182,7 +192,7 @@
 
 /* Form group for create account */
 .form-group-createAccount {
-  margin-bottom: 1rem;
+  margin-bottom: 0.3rem;
   width: 100%;
 }
 
@@ -191,12 +201,12 @@
   font-weight: 500;
   color: #374151;
   font-size: 0.875rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
 }
 
 .form-group-createAccount select {
   width: 100%;
-  padding: 10px 12px;
+  padding: 8px 12px;
   font-size: 14px;
   color: #1f2937;
   background-color: #fff;
@@ -207,11 +217,12 @@
   transition: all 0.2s ease-in-out;
   cursor: pointer;
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
-  background-position: right 12px center;
+  background-position: right 8px center;
   background-repeat: no-repeat;
-  background-size: 16px;
-  padding-right: 40px;
+  background-size: 14px;
+  padding-right: 32px;
   appearance: none;
+  min-height: 36px;
 }
 
 .form-group-createAccount select:focus {
@@ -223,5 +234,167 @@
 /* Fix for form row items */
 .form-row .form-group-createAccount {
   flex: 1;
-  min-width: 150px;
+  min-width: 0;
+}
+
+/* Ensure inputs inside form-row take full width */
+.form-row .form-group-createAccount input,
+.form-row .form-group-createAccount select {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN FOR MULTIPLE SCREEN SIZES
+   ============================================ */
+
+/* Large screens (1920px+) */
+@media (min-width: 1920px) {
+  .form-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 1.5rem 3rem;
+  }
+
+  .CurstomerInput,
+  .CurstomerAddressInput,
+  .form-group-createAccount select {
+    padding: 16px 18px;
+    font-size: 17px;
+    min-height: 52px;
+  }
+}
+
+/* Medium-large screens (1440px - 1920px) */
+@media (min-width: 1440px) and (max-width: 1919px) {
+  .form-container {
+    padding: 1rem 2.5rem;
+  }
+
+  .form-row {
+    gap: 1rem;
+  }
+}
+
+/* MacBook Air and Standard screens (1280px - 1440px) */
+@media (min-width: 1280px) and (max-width: 1439px) {
+  .form-container {
+    padding: 0.5rem 1.5rem 8rem 1.5rem;
+    height: calc(100vh - 85px);
+  }
+
+  .form-row {
+    padding: 2px 8px;
+    gap: 0.5rem;
+  }
+
+  .form-group-createAccount {
+    margin-bottom: 0.3rem;
+  }
+
+  .form-group button {
+    max-width: 300px;
+    margin-top: 1rem;
+    margin-bottom: 6rem;
+  }
+}
+
+/* Smaller laptop screens (1024px - 1280px) */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .form-container {
+    padding: 0.5rem 1.5rem 8rem 1.5rem;
+    max-height: calc(100vh - 80px);
+  }
+
+  .form-row {
+    padding: 2px 8px;
+    gap: 0.5rem;
+  }
+
+  .form-group-createAccount {
+    margin-bottom: 0.3rem;
+  }
+
+  .form-group-createAccount label {
+    margin-bottom: 0.2rem;
+    font-size: 0.8rem;
+  }
+
+  .CurstomerInput,
+  .CurstomerAddressInput,
+  .form-group-createAccount select {
+    padding: 12px 14px;
+    font-size: 15px;
+    min-height: 44px;
+  }
+}
+
+/* Tablet screens (768px - 1024px) */
+@media (max-width: 1023px) {
+  .form-container {
+    padding: 0.5rem 1rem 8rem 1rem;
+    height: calc(100vh - 70px);
+  }
+
+  .form-row {
+    flex-direction: row;
+    padding: 2px 8px;
+    gap: 0.5rem;
+  }
+
+  .form-row .form-group-createAccount {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .form-group-createAccount {
+    margin-bottom: 0.3rem;
+  }
+
+  .CurstomerInput,
+  .CurstomerAddressInput,
+  .form-group-createAccount select {
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+
+  .form-group button {
+    margin-bottom: 6rem;
+  }
+}
+
+/* Mobile screens (max 768px) */
+@media (max-width: 767px) {
+  .form-container {
+    padding: 0.5rem 0.75rem 8rem 0.75rem;
+    height: calc(100vh - 60px);
+  }
+
+  .form-row {
+    flex-direction: column;
+    padding: 0px 5px;
+    gap: 0.3rem;
+  }
+
+  .form-row .form-group-createAccount {
+    min-width: 100%;
+  }
+
+  .form-group-createAccount label {
+    font-size: 0.8rem;
+  }
+
+  .CurstomerInput,
+  .CurstomerAddressInput,
+  .form-group-createAccount select {
+    padding: 8px 10px;
+    font-size: 13px;
+    min-height: 36px;
+  }
+
+  .form-group button {
+    max-width: 100%;
+    margin-top: 1rem;
+    margin-bottom: 6rem;
+  }
 }

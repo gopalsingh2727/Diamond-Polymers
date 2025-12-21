@@ -24,16 +24,21 @@ const WebSocketManager = () => {
 
   useEffect(() => {
     if (isAuthenticated && token && !isConnected) {
-      const wsUrl = import.meta.env.VITE_WEBSOCKET_URL || 'wss://zg3qlhwg88.execute-api.ap-south-1.amazonaws.com/dev';
+      const wsUrl = import.meta.env.VITE_WEBSOCKET_URL || 'wss://dsv0otzkrg.execute-api.ap-south-1.amazonaws.com';
 
       console.log('🔌 Connecting to WebSocket:', wsUrl);
+      console.log('📌 Token present:', !!token);
 
       dispatch({
         type: 'websocket/connect',
         payload: {
           url: wsUrl,
           token,
-          platform: 'electron'
+          platform: 'electron',
+          autoReconnect: true,
+          reconnectInterval: 3000,
+          maxReconnectAttempts: 10,
+          heartbeatInterval: 30000
         }
       });
     }

@@ -106,6 +106,8 @@ const CreateNewAccount: React.FC<Props> = ({ initialData: propInitialData = {}, 
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [showImagePreview, setShowImagePreview] = useState(false);
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const existingImageUrl = initialData?.imageUrl;
 
   // Fetch categories and parent companies on component mount
@@ -301,44 +303,69 @@ const CreateNewAccount: React.FC<Props> = ({ initialData: propInitialData = {}, 
 
   return (
     <div id="CreateAccountCss">
-         <div className="CreateAccountTitelCss">
-          <h6>{editMode ? 'Edit Account' : 'Create Account'}</h6>
-         </div>
-      <div className="create-account-container">
-
-          {editMode && (
-            <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              {onCancel && (
-                <button
-                  type="button"
-                  onClick={onCancel}
-                  style={{ padding: '8px 16px', background: '#6b7280', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
-                >
-                  Back to List
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={() => setShowDeleteConfirm(true)}
-                style={{
-                  padding: '8px 16px',
-                  background: '#ef4444',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px'
-                }}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14zM10 11v6M14 11v6"/>
-                </svg>
-                Delete
-              </button>
-            </div>
+      {editMode ? (
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '0 1.5rem',
+          marginBottom: '8px',
+          borderBottom: '1px solid #ccc',
+          paddingBottom: '6px'
+        }}>
+          {onCancel && (
+            <button
+              type="button"
+              onClick={onCancel}
+              style={{
+                padding: '8px 16px',
+                background: '#6b7280',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px'
+              }}
+            >
+              Back to List
+            </button>
           )}
+          <h6 style={{
+            margin: 0,
+            fontSize: '1.1rem',
+            textAlign: 'center',
+            flex: 1
+          }}>
+            Edit Account
+          </h6>
+          <button
+            type="button"
+            onClick={() => setShowDeleteConfirm(true)}
+            style={{
+              padding: '8px 16px',
+              background: '#ef4444',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontSize: '14px'
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14zM10 11v6M14 11v6"/>
+            </svg>
+            Delete
+          </button>
+        </div>
+      ) : (
+        <div className="CreateAccountTitelCss">
+          <h6>Create Account</h6>
+        </div>
+      )}
+      <div className="create-account-container">
 
           {/* Delete Confirmation Modal */}
           {showDeleteConfirm && (
@@ -388,50 +415,100 @@ const CreateNewAccount: React.FC<Props> = ({ initialData: propInitialData = {}, 
             </div>
           )}
 
-          {/* Existing Image Preview */}
-          {editMode && existingImageUrl && (
-            <div style={{ marginBottom: '16px', padding: '12px', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: 500, color: '#374151' }}>
-                Current Image
-              </label>
-              <img
-                src={existingImageUrl}
-                alt="Account"
-                style={{ maxWidth: '150px', maxHeight: '150px', borderRadius: '8px', objectFit: 'cover' }}
-              />
-            </div>
-          )}
-
           <form ref={formRef} onSubmit={handleSubmit} className="form-container">
-        {/* Company Name - Required */}
-        <div className="form-group-createAccount">
-          <label>Company Name *</label>
-          <input
-          className="CurstomerAddressInput"
-            name="companyName"
-            value={formValues.companyName}
-            onChange={handleChange}
-            placeholder="e.g., Kalyan Jewellers - MG Road"
-          />
-          {validationErrors.companyName && (
-            <small className="error-text">{validationErrors.companyName}</small>
-          )}
+        {/* Company Name, GST Number, and Image Preview - One Row */}
+        <div className="form-row">
+          <div className="form-group-createAccount">
+            <label>Company Name *</label>
+            <input
+              className="CurstomerAddressInput"
+              name="companyName"
+              value={formValues.companyName}
+              onChange={handleChange}
+              placeholder="e.g., Kalyan Jewellers - MG Road"
+            />
+            {validationErrors.companyName && (
+              <small className="error-text">{validationErrors.companyName}</small>
+            )}
+          </div>
+
+          <div className="form-group-createAccount">
+            <label>GST Number</label>
+            <input
+              className="CurstomerAddressInput"
+              name="gstNumber"
+              value={formValues.gstNumber || ""}
+              onChange={handleChange}
+              placeholder="e.g., 27AABCU9603R1ZM"
+              style={{ textTransform: 'uppercase' }}
+            />
+            {validationErrors.gstNumber && (
+              <small className="error-text">{validationErrors.gstNumber}</small>
+            )}
+          </div>
+
+          <div className="form-group-createAccount">
+            <label>Image Preview</label>
+            {(formValues.image || existingImageUrl) ? (
+              <img
+                src={formValues.image ? URL.createObjectURL(formValues.image) : existingImageUrl}
+                alt="Preview"
+                style={{
+                  width: '50px',
+                  height: '50px',
+                  objectFit: 'cover',
+                  borderRadius: '50%',
+                  border: '2px solid #e5e7eb',
+                  cursor: 'pointer'
+                }}
+                onClick={() => {
+                  const imageUrl = formValues.image
+                    ? URL.createObjectURL(formValues.image)
+                    : existingImageUrl;
+                  if (imageUrl) {
+                    setPreviewImageUrl(imageUrl);
+                    setShowImagePreview(true);
+                  }
+                }}
+              />
+            ) : (
+              <div style={{
+                width: '50px',
+                height: '50px',
+                borderRadius: '50%',
+                border: '2px dashed #e5e7eb',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#9ca3af',
+                fontSize: '10px'
+              }}>
+                No
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* GST Number */}
-        <div className="form-group-createAccount">
-          <label>GST Number</label>
-          <input
-            className="CurstomerAddressInput"
-            name="gstNumber"
-            value={formValues.gstNumber || ""}
-            onChange={handleChange}
-            placeholder="e.g., 27AABCU9603R1ZM"
-            style={{ textTransform: 'uppercase' }}
-          />
-          {validationErrors.gstNumber && (
-            <small className="error-text">{validationErrors.gstNumber}</small>
-          )}
+        {/* Contact Person Name (Optional) */}
+        <div className="form-row">
+          <div className="form-group-createAccount">
+            <label>Contact First Name</label>
+            <input
+              className="CurstomerInput"
+              name="firstName"
+              value={formValues.firstName || ""}
+              onChange={handleChange}
+            />
+          </div>
+          <div className="form-group-createAccount">
+            <label>Contact Last Name</label>
+            <input
+              className="CurstomerInput"
+              name="lastName"
+              value={formValues.lastName || ""}
+              onChange={handleChange}
+            />
+          </div>
         </div>
 
         {/* Category and Parent Company Selection */}
@@ -473,28 +550,7 @@ const CreateNewAccount: React.FC<Props> = ({ initialData: propInitialData = {}, 
           </div>
         </div>
 
-        {/* Contact Person Name (Optional) */}
-        <div className="form-row">
-          <div className="form-group ">
-            <label>Contact First Name</label>
-            <input
-              className="CurstomerInput"
-              name="firstName"
-              value={formValues.firstName || ""}
-              onChange={handleChange}
-            />
-          </div>
-          <div className="form-group">
-            <label>Contact Last Name</label>
-            <input
-            className="CurstomerInput"
-              name="lastName"
-              value={formValues.lastName || ""}
-              onChange={handleChange}
-            />
-          </div>
-        </div>
-
+        {/* Email */}
         <div className="form-group-createAccount">
           <label>Email</label>
           <input
@@ -551,29 +607,33 @@ const CreateNewAccount: React.FC<Props> = ({ initialData: propInitialData = {}, 
           </div>
         </div>
 
-        <div className="fform-group-createAccount">
-          <label>Address Line 1 *</label>
-          <input
-            name="address1"
-            className="CurstomerAddressInput"
-            value={formValues.address1}
-            onChange={handleChange}
-          />
-          {validationErrors.address1 && (
-            <small className="error-text">{validationErrors.address1}</small>
-          )}
+        {/* Address Line 1 and 2 - One Row */}
+        <div className="form-row">
+          <div className="form-group-createAccount">
+            <label>Address Line 1 *</label>
+            <input
+              name="address1"
+              className="CurstomerAddressInput"
+              value={formValues.address1}
+              onChange={handleChange}
+            />
+            {validationErrors.address1 && (
+              <small className="error-text">{validationErrors.address1}</small>
+            )}
+          </div>
+
+          <div className="form-group-createAccount">
+            <label>Address Line 2</label>
+            <input
+              name="address2"
+              className="CurstomerAddressInput"
+              value={formValues.address2 || ""}
+              onChange={handleChange}
+            />
+          </div>
         </div>
 
-        <div className="form-group-createAccount">
-          <label>Address Line 2</label>
-          <input
-            name="address2"
-            className="CurstomerAddressInput"
-            value={formValues.address2 || ""}
-            onChange={handleChange}
-          />
-        </div>
-
+        {/* State, Pin Code, and Upload Image - One Row */}
         <div className="form-row">
           <div className="form-group-createAccount">
             <label>State *</label>
@@ -606,19 +666,104 @@ const CreateNewAccount: React.FC<Props> = ({ initialData: propInitialData = {}, 
               <small className="error-text">{validationErrors.pinCode}</small>
             )}
           </div>
+
+          <div className="form-group-createAccount">
+            <label>Upload Image</label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  setFormValues({
+                    ...formValues,
+                    image: file,
+                  });
+                }
+              }}
+              style={{ fontSize: '13px', minHeight: '36px' }}
+            />
+          </div>
         </div>
 
-       <input
-  ref={fileInputRef}
-  type="file"
-  accept="image/*"
-  onChange={(e) =>
-    setFormValues({
-      ...formValues,
-      image: e.target.files?.[0],
-    })
-  }
-/>
+        {/* Image Preview Modal */}
+        {showImagePreview && previewImageUrl && (
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'rgba(0,0,0,0.85)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 2000,
+              padding: '20px'
+            }}
+            onClick={() => {
+              setShowImagePreview(false);
+              setPreviewImageUrl(null);
+            }}
+          >
+            <div
+              style={{
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'white',
+                borderRadius: '8px',
+                padding: '8px',
+                boxShadow: '0 20px 60px rgba(0,0,0,0.4)',
+                width: '20vw',
+                height: '20vw'
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  setShowImagePreview(false);
+                  setPreviewImageUrl(null);
+                }}
+                style={{
+                  position: 'absolute',
+                  top: '-12px',
+                  right: '-12px',
+                  background: '#ef4444',
+                  color: 'white',
+                  border: '2px solid white',
+                  borderRadius: '50%',
+                  width: '36px',
+                  height: '36px',
+                  cursor: 'pointer',
+                  fontSize: '22px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  zIndex: 10,
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
+                }}
+              >
+                ×
+              </button>
+              <img
+                src={previewImageUrl}
+                alt="Preview"
+                style={{
+                  display: 'block',
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain',
+                  borderRadius: '4px'
+                }}
+              />
+            </div>
+          </div>
+        )}
 
 
         {/* Show redux error from API call */}

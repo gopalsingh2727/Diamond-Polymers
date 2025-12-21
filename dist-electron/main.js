@@ -1,7 +1,7 @@
 var __defProp = Object.defineProperty;
 var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
 var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
-import require$$0$5, { app, session, shell, globalShortcut, Notification, ipcMain, BrowserWindow } from "electron";
+import require$$0$5, { app, Menu, session, shell, globalShortcut, Notification, ipcMain, BrowserWindow } from "electron";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import fs from "node:fs";
@@ -2900,6 +2900,7 @@ function createWindow() {
     width: 1200,
     height: 800,
     icon: path.join(process.env.VITE_PUBLIC, "electron-vite.svg"),
+    autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname$1, "preload.mjs"),
       // Enable features required for speech recognition and WASM
@@ -2922,6 +2923,7 @@ function createWindow() {
   return win;
 }
 app.whenReady().then(() => {
+  Menu.setApplicationMenu(null);
   log.transports.file.level = "info";
   log.info("Logger initialized");
   log.info("App version:", app.getVersion());

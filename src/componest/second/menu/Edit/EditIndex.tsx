@@ -23,6 +23,8 @@ import EditMachineTemplateList from "./EditMachineTemplate/EditMachineTemplateLi
 import EditPrintTypeList from "./EditPrintType/EditPrintTypeList";
 import EditExcelExportTypeList from "./EditExcelExportType/EditExcelExportTypeList";
 import UpdataIDAndPassword from "./UpdataIDandPassword/UpdataIDAndPassword";
+import EditCustomerCategoryList from "./EditCustomerCategory/EditCustomerCategoryList";
+import EditParentCompanyList from "./EditParentCompany/EditParentCompanyList";
 
 // ========== CREATE Components (reused for both Create & Edit) ==========
 import CreateNewAccount from "../create/createNewAccount/createNewAccount";
@@ -38,6 +40,8 @@ import CreatePrintType from "../create/printType/CreatePrintType";
 import CreateExcelExportType from "../create/excelExportType/CreateExcelExportType";
 import ViewTemplateWizard from "../create/machine/ViewTemplateWizard";
 import DeviceAccessCreate from "../create/deviceAccess/deviceAccessCreate";
+import CustomerCategory from "../create/customerCategory/CustomerCategory";
+import CustomerParentCompany from "../create/customerParentCompany/CustomerParentCompany";
 
 interface LocationStateType {
   editMode?: boolean;
@@ -103,7 +107,11 @@ const EditIndex = () => {
   };
 
   const menuSections = [
-    { title: "Accounting", items: [{ key: "account", label: "Account" }] },
+    { title: "Accounting", items: [
+      { key: "account", label: "Account" },
+      { key: "customerCategory", label: "Customer Category" },
+      { key: "parentCompany", label: "Parent Company" }
+    ]},
     { title: "Machine Management", items: [
       { key: "machineType", label: "Machine Type" },
       { key: "machine", label: "Machine" },
@@ -139,6 +147,10 @@ const EditIndex = () => {
       switch (key) {
         case 'account':
           return <ErrorBoundary><CreateNewAccount initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
+        case 'customerCategory':
+          return <ErrorBoundary><CustomerCategory initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
+        case 'parentCompany':
+          return <ErrorBoundary><CustomerParentCompany initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
         case 'machine':
           return <ErrorBoundary><CreateMachine initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
         case 'machineType':
@@ -173,6 +185,8 @@ const EditIndex = () => {
 
     const baseComponentsMap: Record<string, JSX.Element> = {
       account: <ErrorBoundary><EditNewAccount onEdit={setEdit('account')} /></ErrorBoundary>,
+      customerCategory: <ErrorBoundary><EditCustomerCategoryList onEdit={setEdit('customerCategory')} /></ErrorBoundary>,
+      parentCompany: <ErrorBoundary><EditParentCompanyList onEdit={setEdit('parentCompany')} /></ErrorBoundary>,
       machineType: <ErrorBoundary><EditMachineTypeList onEdit={setEdit('machineType')} /></ErrorBoundary>,
       machine: <ErrorBoundary><EditMachineList onEdit={setEdit('machine')} /></ErrorBoundary>,
       step: <ErrorBoundary><EditStepList onEdit={setEdit('step')} /></ErrorBoundary>,

@@ -9,7 +9,7 @@ import {
 } from "../../../../redux/create/customerCategory/CustomerCategoryActions";
 import { RootState, AppDispatch } from "../../../../../store";
 import { useInternalBackNavigation } from "../../../../allCompones/BackButton";
-import "../createNewAccount/createNewAccount.css";
+import "./CustomerCategory.css";
 
 type CategoryFormData = {
   name: string;
@@ -169,65 +169,8 @@ const CustomerCategory: React.FC<Props> = ({
   };
 
   return (
-    <div id="CreateAccountCss">
-      <div className="CreateAccountTitelCss">
-        <h6>{editMode ? "Edit Customer Category" : "Create Customer Category"}</h6>
-      </div>
-      <div className="create-account-container">
-        {editMode && (
-          <div
-            style={{
-              marginBottom: "16px",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            {onCancel && (
-              <button
-                type="button"
-                onClick={onCancel}
-                style={{
-                  padding: "8px 16px",
-                  background: "#6b7280",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                }}
-              >
-                Back to List
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={() => setShowDeleteConfirm(true)}
-              style={{
-                padding: "8px 16px",
-                background: "#ef4444",
-                color: "white",
-                border: "none",
-                borderRadius: "6px",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-              }}
-            >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14zM10 11v6M14 11v6" />
-              </svg>
-              Delete
-            </button>
-          </div>
-        )}
+    <div className="customerCategory-container">
+      <div className="customerCategory-form">
 
         {/* Delete Confirmation Modal */}
         {showDeleteConfirm && (
@@ -295,45 +238,83 @@ const CustomerCategory: React.FC<Props> = ({
           </div>
         )}
 
-        <form ref={formRef} onSubmit={handleSubmit} className="form-container">
-          <div className="form-group-createAccount">
-            <label>Category Name *</label>
+        {editMode && (
+          <div className="customerCategory-header">
+            {onCancel && (
+              <button
+                type="button"
+                onClick={onCancel}
+                style={{
+                  padding: "8px 16px",
+                  background: "#6b7280",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  fontSize: "14px"
+                }}
+              >
+                Back to List
+              </button>
+            )}
+            <h2 className="customerCategory-header-title">Edit Customer Category</h2>
+            <button
+              type="button"
+              onClick={() => setShowDeleteConfirm(true)}
+              style={{
+                padding: "8px 16px",
+                background: "#ef4444",
+                color: "white",
+                border: "none",
+                borderRadius: "6px",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                fontSize: "14px"
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14zM10 11v6M14 11v6" />
+              </svg>
+              Delete
+            </button>
+          </div>
+        )}
+
+        {!editMode && <h2 className="customerCategory-title">Create Customer Category</h2>}
+
+        <form ref={formRef} onSubmit={handleSubmit}>
+          <div className="customerCategory-group">
+            <label className="customerCategory-label">Category Name *</label>
             <input
-              className="CurstomerAddressInput"
+              className="customerCategory-input"
               name="name"
               value={formValues.name}
               onChange={handleChange}
               placeholder="e.g., Premium, Corporate, Non-Premium"
             />
             {validationErrors.name && (
-              <small className="error-text">{validationErrors.name}</small>
+              <small className="customerCategory-error">{validationErrors.name}</small>
             )}
           </div>
 
-          <div className="form-group-createAccount">
-            <label>Description</label>
+          <div className="customerCategory-group">
+            <label className="customerCategory-label">Description</label>
             <textarea
-              className="CurstomerAddressInput"
+              className="customerCategory-textarea"
               name="description"
               value={formValues.description}
               onChange={handleChange}
               placeholder="Enter category description..."
-              rows={3}
-              style={{ resize: "vertical", minHeight: "80px" }}
             />
           </div>
 
-          {reduxError && <div className="error-text">{reduxError}</div>}
+          {reduxError && <div className="customerCategory-error">{reduxError}</div>}
 
-          <div className="form-group">
-            <button type="submit" disabled={loading}>
-              {loading
-                ? "Saving..."
-                : editMode
-                ? "Update Category"
-                : "Create Category"}
-            </button>
-          </div>
+          <button className="customerCategory-button" type="submit" disabled={loading}>
+            {loading ? "Saving..." : editMode ? "Update Category" : "Create Category"}
+          </button>
         </form>
       </div>
     </div>
