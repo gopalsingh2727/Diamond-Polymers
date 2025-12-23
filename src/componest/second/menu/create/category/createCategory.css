@@ -51,18 +51,25 @@
 /* Input - Underline Style */
 .createCategory-input {
   width: 100%;
-  padding: 8px 0;
+  padding: 10px 0;
   font-size: 14px;
   color: #1f2937;
-  background: transparent;
+  background-color: rgba(255, 255, 255, 0.1);
   border: none;
-  border-bottom: 1px solid #d1d5db;
+  border-bottom: 0.5px solid #333;
+  border-radius: 0;
   outline: none;
   box-sizing: border-box;
+  -webkit-transition: border-color 0.2s ease;
   transition: border-color 0.2s ease;
+  /* Cross-browser fixes */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
 }
 
 .createCategory-input:focus {
+  border: none;
   border-bottom: 2px solid #FF6B35;
 }
 
@@ -73,20 +80,27 @@
 /* Textarea */
 .createCategory-textarea {
   width: 100%;
-  padding: 8px 0;
+  padding: 10px 0;
   font-size: 14px;
   color: #1f2937;
-  background: transparent;
+  background-color: rgba(255, 255, 255, 0.1);
   border: none;
-  border-bottom: 1px solid #d1d5db;
+  border-bottom: 0.5px solid #333;
+  border-radius: 0;
   outline: none;
   box-sizing: border-box;
+  -webkit-transition: border-color 0.2s ease;
   transition: border-color 0.2s ease;
   resize: vertical;
   min-height: 60px;
+  /* Cross-browser fixes */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
 }
 
 .createCategory-textarea:focus {
+  border: none;
   border-bottom: 2px solid #FF6B35;
 }
 
@@ -106,21 +120,38 @@
   border: none;
   border-radius: 8px;
   cursor: pointer;
+  -webkit-transition: all 0.2s ease;
   transition: all 0.2s ease;
+  -webkit-box-shadow: 0 2px 8px rgba(255, 107, 53, 0.25);
   box-shadow: 0 2px 8px rgba(255, 107, 53, 0.25);
+  /* Cross-browser fixes */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  /* GPU acceleration for Windows */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 
 .createCategory-button:hover:not(:disabled) {
   background: linear-gradient(135deg, #E55A2B 0%, #d44a1b 100%);
-  transform: translateY(-2px);
+  -webkit-transform: translateY(-2px) translateZ(0);
+  transform: translateY(-2px) translateZ(0);
+  -webkit-box-shadow: 0 4px 16px rgba(255, 107, 53, 0.35);
   box-shadow: 0 4px 16px rgba(255, 107, 53, 0.35);
+  will-change: transform;
 }
 
 .createCategory-button:disabled {
   background: #9ca3af;
   cursor: not-allowed;
+  -webkit-transform: none;
   transform: none;
+  -webkit-box-shadow: none;
   box-shadow: none;
+  will-change: auto;
 }
 
 /* Reset Button */
@@ -135,11 +166,23 @@
   border: none;
   border-radius: 8px;
   cursor: pointer;
+  -webkit-transition: all 0.2s ease;
   transition: all 0.2s ease;
+  /* Cross-browser fixes */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  /* GPU acceleration */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 
 .createCategory-resetButton:hover {
   background: #475569;
+  -webkit-transform: translateY(-1px) translateZ(0);
+  transform: translateY(-1px) translateZ(0);
 }
 
 /* Toggle Yes/No Buttons */
@@ -159,7 +202,12 @@
   background: white;
   color: #6b7280;
   cursor: pointer;
+  -webkit-transition: all 0.2s ease;
   transition: all 0.2s ease;
+  /* Cross-browser fixes */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
 }
 
 .createCategory-toggleBtn:hover {
