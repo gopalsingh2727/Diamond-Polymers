@@ -1,0 +1,533 @@
+/**
+ * WINDOWS-SPECIFIC OPTIMIZATIONS
+ * Additional fixes to ensure pixel-perfect rendering on Windows
+ * These complement the existing cross-platform-fixes.css
+ *
+ * Import this AFTER cross-platform-fixes.css
+ */
+
+/* ============================================
+   WINDOWS FONT RENDERING ENHANCEMENT
+   ============================================ */
+
+/* Windows-specific font rendering improvements */
+@supports (-ms-ime-align: auto) {
+  * {
+    /* Better Windows font rendering */
+    text-rendering: geometricPrecision;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-smooth: always;
+  }
+}
+
+/* Windows 10/11 ClearType optimization */
+@media screen and (min-resolution: 96dpi) {
+  body {
+    -ms-text-size-adjust: 100%;
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+}
+
+/* ============================================
+   WINDOWS CHROME/EDGE SPECIFIC FIXES
+   ============================================ */
+
+/* Fix Windows Chrome scrollbar rendering */
+@supports selector(::-webkit-scrollbar) {
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 5px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-primary, #FF6B35);
+    border-radius: 5px;
+    border: 2px solid #f1f1f1;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-primary-hover, #E55A2B);
+  }
+
+  ::-webkit-scrollbar-thumb:active {
+    background: #d04d1f;
+  }
+}
+
+/* ============================================
+   WINDOWS INPUT/SELECT STYLING
+   ============================================ */
+
+/* Remove Windows native styling completely */
+input,
+select,
+textarea {
+  /* Windows-specific appearance fixes */
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+
+  /* Fix Windows border rendering */
+  border-style: solid !important;
+
+  /* Prevent Windows from applying system colors */
+  background-color: white !important;
+  color: var(--color-text, #1f2937) !important;
+}
+
+/* Windows select dropdown arrow fix */
+select {
+  /* Ensure custom arrow shows */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M10.293 3.293L6 7.586 1.707 3.293A1 1 0 00.293 4.707l5 5a1 1 0 001.414 0l5-5a1 1 0 10-1.414-1.414z'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 0.75rem center !important;
+  background-size: 12px !important;
+  padding-right: 2.5rem !important;
+}
+
+/* Windows Edge select fix */
+select::-ms-expand {
+  display: none !important;
+}
+
+/* Windows Chrome select fix */
+select::-webkit-calendar-picker-indicator {
+  display: none !important;
+}
+
+/* ============================================
+   WINDOWS BUTTON RENDERING
+   ============================================ */
+
+button,
+.shared-save-button,
+.shared-cancel-button,
+.shared-delete-button {
+  /* Force remove Windows button styling */
+  -webkit-appearance: none !important;
+  appearance: none !important;
+
+  /* Fix Windows button rendering */
+  border: none !important;
+  outline: none !important;
+
+  /* Prevent Windows 3D effect */
+  box-shadow: none !important;
+
+  /* Better Windows rendering */
+  transform: translateZ(0);
+  will-change: transform, box-shadow;
+}
+
+/* Windows button hover fix */
+button:hover,
+.shared-save-button:hover,
+.shared-cancel-button:hover {
+  /* Ensure smooth hover on Windows */
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Windows button active state */
+button:active,
+.shared-save-button:active {
+  /* Prevent Windows bounce */
+  transform: translateY(1px) translateZ(0);
+}
+
+/* ============================================
+   WINDOWS FORM FIELD FOCUS STATES
+   ============================================ */
+
+input:focus,
+select:focus,
+textarea:focus {
+  /* Better Windows focus outline */
+  outline: 2px solid var(--color-primary, #FF6B35) !important;
+  outline-offset: 2px !important;
+  border-color: var(--color-primary, #FF6B35) !important;
+}
+
+/* Windows high contrast mode focus */
+@media (prefers-contrast: high) {
+  input:focus,
+  select:focus,
+  textarea:focus,
+  button:focus {
+    outline: 3px solid currentColor !important;
+    outline-offset: 3px !important;
+  }
+}
+
+/* ============================================
+   WINDOWS SHADOW RENDERING
+   ============================================ */
+
+.card,
+.createDiv,
+.createDivOne,
+.createDivSecond,
+.shared-form-container {
+  /* Better Windows shadow rendering */
+  box-shadow:
+    0 1px 2px 0 rgba(0, 0, 0, 0.05),
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+
+  /* Force GPU acceleration on Windows */
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* ============================================
+   WINDOWS ANIMATION PERFORMANCE
+   ============================================ */
+
+/* Force GPU acceleration for all animations on Windows */
+@media screen and (min-resolution: 96dpi) {
+  [class*="animate-"],
+  .btn-hover-lift,
+  button:hover,
+  .transition-all,
+  .transition-transform {
+    /* Windows GPU acceleration */
+    transform: translateZ(0);
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    perspective: 1000px;
+  }
+
+  /* Optimize Windows transitions */
+  * {
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+/* ============================================
+   WINDOWS BORDER RENDERING
+   ============================================ */
+
+/* Fix Windows subpixel border rendering */
+@media (-webkit-min-device-pixel-ratio: 1),
+       (min-resolution: 96dpi) {
+  input,
+  select,
+  textarea,
+  button,
+  .card,
+  .createDiv {
+    /* Sharper borders on Windows */
+    border-width: 1px !important;
+  }
+}
+
+/* Windows high DPI (4K, QHD) */
+@media (-webkit-min-device-pixel-ratio: 1.5),
+       (min-resolution: 144dpi) {
+  input,
+  select,
+  textarea,
+  button,
+  .card,
+  .createDiv {
+    /* Even sharper borders for high DPI Windows displays */
+    border-width: 0.5px !important;
+  }
+}
+
+/* ============================================
+   WINDOWS TEXT SELECTION
+   ============================================ */
+
+::selection {
+  background-color: var(--color-primary, #FF6B35) !important;
+  color: white !important;
+  text-shadow: none !important;
+}
+
+::-moz-selection {
+  background-color: var(--color-primary, #FF6B35) !important;
+  color: white !important;
+  text-shadow: none !important;
+}
+
+/* ============================================
+   WINDOWS SCROLLING BEHAVIOR
+   ============================================ */
+
+/* Smooth scrolling for Windows */
+html {
+  scroll-behavior: smooth !important;
+}
+
+/* Prevent Windows overscroll bounce */
+html,
+body {
+  overscroll-behavior-y: none !important;
+  overscroll-behavior-x: none !important;
+}
+
+/* Windows touch scrolling optimization */
+* {
+  -ms-overflow-style: -ms-autohiding-scrollbar;
+  -ms-scroll-chaining: none;
+  overscroll-behavior: none;
+}
+
+/* ============================================
+   WINDOWS TABLE RENDERING
+   ============================================ */
+
+table {
+  /* Better Windows table rendering */
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  transform: translateZ(0);
+
+  /* Fix Windows text rendering in tables */
+  text-rendering: optimizeLegibility;
+}
+
+th,
+td {
+  /* Prevent Windows from clipping text */
+  overflow: visible;
+  text-overflow: ellipsis;
+}
+
+/* ============================================
+   WINDOWS MODAL/DIALOG RENDERING
+   ============================================ */
+
+.modal,
+.dialog,
+[role="dialog"] {
+  /* Better Windows modal rendering */
+  transform: translateZ(0);
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+}
+
+/* Windows modal backdrop */
+.modal-backdrop,
+.dialog-backdrop {
+  /* Smooth backdrop on Windows */
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* ============================================
+   WINDOWS PRINT OPTIMIZATION
+   ============================================ */
+
+@media print {
+  /* Windows print color accuracy */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Remove Windows print shadows */
+  .card,
+  .createDiv {
+    box-shadow: none !important;
+  }
+}
+
+/* ============================================
+   WINDOWS DRAG & DROP
+   ============================================ */
+
+[draggable="true"] {
+  /* Windows drag cursor */
+  cursor: move !important;
+  -webkit-user-drag: element;
+  user-drag: element;
+}
+
+[draggable="true"]:active {
+  /* Windows drag feedback */
+  opacity: 0.5;
+  transform: scale(0.95) translateZ(0);
+}
+
+/* ============================================
+   WINDOWS TOOLTIP RENDERING
+   ============================================ */
+
+.tooltip,
+[data-tooltip] {
+  /* Crisp Windows tooltip text */
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  backface-visibility: hidden;
+}
+
+/* ============================================
+   WINDOWS FLEX/GRID FIXES
+   ============================================ */
+
+.flex,
+[style*="display: flex"],
+[class*="flex-"] {
+  /* Fix Windows flexbox rendering */
+  transform: translateZ(0);
+}
+
+.grid,
+[style*="display: grid"],
+[class*="grid-"] {
+  /* Fix Windows grid rendering */
+  transform: translateZ(0);
+}
+
+/* ============================================
+   WINDOWS LOADING STATES
+   ============================================ */
+
+.loading,
+.spinner,
+[aria-busy="true"] {
+  /* Smooth Windows loading animations */
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* ============================================
+   WINDOWS ACCESSIBILITY
+   ============================================ */
+
+/* Windows Narrator support */
+[aria-hidden="true"] {
+  visibility: hidden;
+}
+
+/* Windows high contrast mode */
+@media (prefers-contrast: high) {
+  * {
+    border-width: 2px !important;
+    outline-width: 2px !important;
+  }
+}
+
+/* Windows color scheme */
+@media (prefers-color-scheme: light) {
+  :root {
+    color-scheme: light;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+  }
+}
+
+/* ============================================
+   WINDOWS SPECIFIC FIXES FOR COMMON ISSUES
+   ============================================ */
+
+/* Fix Windows checkbox/radio rendering */
+input[type="checkbox"],
+input[type="radio"] {
+  /* Remove Windows default styling */
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  width: 20px !important;
+  height: 20px !important;
+  border: 2px solid var(--color-border, #d1d5db) !important;
+  border-radius: 4px !important;
+  background-color: white !important;
+  cursor: pointer !important;
+  position: relative !important;
+}
+
+input[type="radio"] {
+  border-radius: 50% !important;
+}
+
+input[type="checkbox"]:checked,
+input[type="radio"]:checked {
+  background-color: var(--color-primary, #FF6B35) !important;
+  border-color: var(--color-primary, #FF6B35) !important;
+}
+
+input[type="checkbox"]:checked::after {
+  content: "✓" !important;
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  color: white !important;
+  font-size: 14px !important;
+  font-weight: bold !important;
+}
+
+input[type="radio"]:checked::after {
+  content: "" !important;
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50% !important;
+  background-color: white !important;
+}
+
+/* Fix Windows date picker */
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"] {
+  /* Remove Windows default date picker styling */
+  -webkit-appearance: none !important;
+  appearance: none !important;
+}
+
+/* Windows date picker icon */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  /* Style Windows calendar icon */
+  cursor: pointer !important;
+  filter: invert(0.5) !important;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="time"]::-webkit-calendar-picker-indicator:hover {
+  filter: invert(0.3) !important;
+}
+
+/* ============================================
+   WINDOWS PERFORMANCE HINTS
+   ============================================ */
+
+/* Tell Windows to use GPU for these elements */
+.shared-form-container,
+.card,
+.modal,
+.dialog,
+[class*="animate-"] {
+  /* Windows compositing hints */
+  transform: translateZ(0);
+  will-change: transform;
+  contain: layout style paint;
+}
+
+/* Remove will-change after load for better performance */
+.loaded * {
+  will-change: auto !important;
+}
+
+/* ============================================
+   END OF WINDOWS OPTIMIZATIONS
+   ============================================ */

@@ -1,12 +1,21 @@
 /* CRUD System Animations - Must be first */
 @import './styles/animations.css';
 
+/* Cross-platform fixes for Windows & Mac compatibility */
+@import './styles/cross-platform-fixes.css';
+
+/* Windows-specific optimizations for pixel-perfect rendering */
+@import './styles/windows-optimizations.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  /* Cross-platform font stack - Windows & Mac compatible */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto',
+               'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans',
+               'Helvetica Neue', Inter, system-ui, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
@@ -29,9 +38,8 @@
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
+  /* Font smoothing is handled in cross-platform-fixes.css */
 }
 
 * {
@@ -100,7 +108,7 @@ button:hover {
   text-align: center;
 }
 
-/* Scrollbar Styling */
+/* Scrollbar Styling - Enhanced in cross-platform-fixes.css */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
