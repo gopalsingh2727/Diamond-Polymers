@@ -89,17 +89,18 @@
   display: block;
 }
 
-/* Form Inputs */
+/* Form Inputs - Underline Style */
 .orderTypeFormInput,
 .orderTypeFormTextarea,
 .orderTypeFormSelect {
   width: 100%;
-  padding: 0.625rem 0.75rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem;
+  padding: 10px 0;
+  border: none;
+  border-bottom: 0.5px solid #333;
+  border-radius: 0;
   font-size: 0.875rem;
   color: #111827;
-  background-color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.1);
   transition: all 0.15s ease-in-out;
   outline: none;
   font-family: inherit;
@@ -108,14 +109,14 @@
 .orderTypeFormInput:hover,
 .orderTypeFormTextarea:hover,
 .orderTypeFormSelect:hover {
-  border-color: #9ca3af;
+  border-bottom-color: #6b7280;
 }
 
 .orderTypeFormInput:focus,
 .orderTypeFormTextarea:focus,
 .orderTypeFormSelect:focus {
-  border-color: #FF6B35;
-  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+  border: none;
+  border-bottom: 2px solid #FF6B35;
 }
 
 .orderTypeFormInput:disabled,
