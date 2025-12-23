@@ -19,6 +19,12 @@ dist-ssr
 .env.*.local
 !.env.example
 
+# Security - Token files
+token
+*.token
+*_token
+github_token
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

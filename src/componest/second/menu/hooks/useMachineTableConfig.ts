@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { Parser } from 'expr-eval';
 
 // Data types for columns
 export type ColumnDataType = 'text' | 'number' | 'formula' | 'dropdown' | 'boolean' | 'date' | 'image' | 'file' | 'audio';
@@ -184,7 +185,9 @@ export function useMachineTableConfig(options: UseMachineTableConfigOptions = {}
           formula = formula.replace(new RegExp(col.name, 'g'), String(value));
         }
       });
-      const result = eval(formula);
+      // SECURITY FIX: Use expr-eval Parser instead of eval()
+      const parser = new Parser();
+      const result = parser.evaluate(formula);
       return isNaN(result) ? 0 : Number(result.toFixed(2));
     } catch {
       return 0;

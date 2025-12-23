@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
+import { Parser } from "expr-eval";
 import "./CreateOders.css";
 import "./DynamicForm.css";
 import { BackButton } from "../../../allCompones/BackButton";
@@ -369,8 +370,9 @@ const CreateOrders = () => {
 
       // Only evaluate if all variables are replaced with numbers
       if (/^[\d\s+\-*/().]+$/.test(evalFormula)) {
-        // eslint-disable-next-line no-eval
-        const result = eval(evalFormula);
+        // SECURITY FIX: Use expr-eval Parser instead of eval()
+        const parser = new Parser();
+        const result = parser.evaluate(evalFormula);
         return typeof result === 'number' ? Math.round(result * 100) / 100 : result;
       }
       return '';

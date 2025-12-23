@@ -1,7 +1,13 @@
 import axios, { AxiosRequestConfig } from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_27INFINITY_IN || 'http://localhost:4000/dev';
-const API_KEY = import.meta.env.VITE_API_KEY || '27infinity.in_5f84c89315f74a2db149c06a93cf4820';
+// SECURITY FIX: Removed hardcoded API key fallback - must be provided via environment variable
+const API_KEY = import.meta.env.VITE_API_KEY;
+
+if (!API_KEY) {
+  console.error('CRITICAL: VITE_API_KEY environment variable is not set. API calls will fail.');
+  console.error('Please create a .env file with VITE_API_KEY=your_api_key_here');
+}
 
 /**
  * Get selected branch from localStorage

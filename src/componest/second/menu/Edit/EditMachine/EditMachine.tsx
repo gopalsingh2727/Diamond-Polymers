@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useDispatch } from "react-redux";
+import { Parser } from "expr-eval";
 import {
   updateMachine,
   deleteMachine,
@@ -271,7 +272,7 @@ const EditMachines: React.FC = () => {
   const calculateFormula = (expression: string, rowData: Record<string, any>): number => {
     try {
       let formula = expression;
-      
+
       tableColumns.forEach(col => {
         const value = rowData[col.name];
         if (value !== undefined && value !== '') {
@@ -279,7 +280,9 @@ const EditMachines: React.FC = () => {
         }
       });
 
-      const result = eval(formula);
+      // SECURITY FIX: Use expr-eval Parser instead of eval()
+      const parser = new Parser();
+      const result = parser.evaluate(formula);
       return isNaN(result) ? 0 : Number(result.toFixed(2));
     } catch (error) {
       return 0;

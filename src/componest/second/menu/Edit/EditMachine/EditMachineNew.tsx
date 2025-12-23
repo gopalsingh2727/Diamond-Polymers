@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
+import { Parser } from "expr-eval";
 import {
   updateMachine,
   deleteMachine,
@@ -231,7 +232,9 @@ const EditMachinesNew: React.FC = () => {
         }
       });
 
-      const result = eval(formula);
+      // SECURITY FIX: Use expr-eval Parser instead of eval()
+      const parser = new Parser();
+      const result = parser.evaluate(formula);
       return isNaN(result) ? 0 : Number(result.toFixed(2));
     } catch (error) {
       return 0;

@@ -3,6 +3,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { ActionButton } from '../../../../../components/shared/ActionButton';
 import { ToastContainer } from '../../../../../components/shared/Toast';
 import { useCRUD } from '../../../../../hooks/useCRUD';
+import { createDeviceAccess } from '../../../../redux/deviceAccess/deviceAccessActions';
+import { prepareSecureFormData, isSuspiciousInput } from '../../../../../utils/security';
 import type { AppDispatch } from '../../../../../store';
 
 interface Branch {
@@ -53,6 +55,12 @@ const CreateDeviceAccess: React.FC = () => {
       return;
     }
 
+    // SECURITY: Check for suspicious input
+    if (isSuspiciousInput(deviceName)) {
+      toast.addToast('error', 'Device name contains invalid characters');
+      return;
+    }
+
     if (!password.trim()) {
       toast.addToast('error', 'Password is required');
       return;
@@ -78,29 +86,28 @@ const CreateDeviceAccess: React.FC = () => {
       return;
     }
 
-    // TODO: Add dispatch action for createDeviceAccess
-    // handleSave(
-    //   () => dispatch(createDeviceAccess({
-    //     deviceName,
-    //     password,
-    //     branchId,
-    //     product27InfinityId,
-    //   })),
-    //   {
-    //     successMessage: 'Device Access created successfully!',
-    //     onSuccess: () => {
-    //       setFormData({
-    //         deviceName: '',
-    //         password: '',
-    //         confirmPassword: '',
-    //         branchId: '',
-    //       });
-    //     }
-    //   }
-    // );
+    // SECURITY: Sanitize form data before sending to API
+    const sanitizedData = prepareSecureFormData({
+      deviceName,
+      location: branchId,
+      password,
+      confirmPassword,
+    });
 
-    // Temporary success message (remove when backend is ready)
-    toast.addToast('info', 'Device Access form ready - Backend API pending');
+    handleSave(
+      () => dispatch(createDeviceAccess(sanitizedData)),
+      {
+        successMessage: 'Device Access created successfully!',
+        onSuccess: () => {
+          setFormData({
+            deviceName: '',
+            password: '',
+            confirmPassword: '',
+            branchId: '',
+          });
+        }
+      }
+    );
   };
 
   return (

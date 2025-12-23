@@ -3,6 +3,7 @@
  */
 
 import React from 'react';
+import DOMPurify from 'dompurify';
 
 interface ChatMessageProps {
   role: 'user' | 'assistant' | 'system';
@@ -80,7 +81,12 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
         {/* Message content */}
         <div
           className={`text-sm leading-relaxed ${isUser ? 'text-white' : 'text-gray-700'}`}
-          dangerouslySetInnerHTML={{ __html: formatContent(content) }}
+          dangerouslySetInnerHTML={{
+            __html: DOMPurify.sanitize(formatContent(content), {
+              ALLOWED_TAGS: ['strong', 'code', 'br', 'p', 'span'],
+              ALLOWED_ATTR: ['class']
+            })
+          }}
         />
 
         {/* Timestamp */}
