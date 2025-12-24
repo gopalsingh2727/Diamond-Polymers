@@ -87,7 +87,7 @@ const UnifiedAuthPage = () => {
       return false;
     }
     if (!signUpData.whatsapp.trim()) {
-      setError('WhatsApp number is required for verification');
+      setError('Mobile number is required for OTP verification');
       return false;
     }
     if (!signUpData.address1.trim()) {
@@ -353,7 +353,7 @@ const UnifiedAuthPage = () => {
     );
   }
 
-  // Phone OTP Verification Step (WhatsApp)
+  // Phone OTP Verification Step (SMS)
   if (signupStep === 'phone-verification') {
     return (
       <PhoneVerification
@@ -446,7 +446,7 @@ const UnifiedAuthPage = () => {
           return false;
         }
         if (!signUpData.whatsapp.trim()) {
-          setError('WhatsApp number is required for verification');
+          setError('Mobile number is required for OTP verification');
           return false;
         }
         return true;
@@ -688,7 +688,7 @@ const UnifiedAuthPage = () => {
                   />
                 </div>
                 <div className="Signup-inputGroup">
-                  <label className="Signup-label">WhatsApp Number *</label>
+                  <label className="Signup-label">Mobile Number for OTP *</label>
                   <input
                     name="whatsapp"
                     type="tel"
@@ -697,7 +697,7 @@ const UnifiedAuthPage = () => {
                     value={signUpData.whatsapp}
                     onChange={handleSignUpChange}
                   />
-                  <p className="Signup-inputHint">We'll verify this number via OTP</p>
+                  <p className="Signup-inputHint">We'll verify this number via SMS OTP</p>
                 </div>
               </div>
 
@@ -711,7 +711,7 @@ const UnifiedAuthPage = () => {
                     checked={signUpData.marketingWhatsApp}
                     onChange={handleSignUpChange}
                   />
-                  <span>Send me marketing messages on WhatsApp</span>
+                  <span>Send me marketing messages via SMS/WhatsApp</span>
                 </label>
                 <label className="Signup-checkbox">
                   <input

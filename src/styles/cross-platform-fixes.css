@@ -1,0 +1,427 @@
+/**
+ * CROSS-PLATFORM CSS FIXES
+ * Ensures consistent styling between macOS and Windows
+ * Import this file after your main styles
+ */
+
+/* ============================================
+   FONT RENDERING - Cross Platform
+   ============================================ */
+
+* {
+  /* Cross-platform font smoothing */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-smooth: always;
+  text-rendering: optimizeLegibility;
+}
+
+/* Windows-specific font improvements */
+@media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
+  * {
+    font-feature-settings: "liga" 1, "kern" 1;
+  }
+}
+
+/* ============================================
+   SCROLLBAR - Works on All Browsers
+   ============================================ */
+
+/* Firefox and modern browsers */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-primary, #FF6B35) var(--color-surface, #F9FAFB);
+}
+
+/* Chrome, Safari, Edge (Chromium) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-surface, #F9FAFB);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-primary, #FF6B35);
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary-hover, #E55A2B);
+}
+
+/* Windows Edge Legacy */
+@supports (-ms-ime-align: auto) {
+  body {
+    -ms-overflow-style: -ms-autohiding-scrollbar;
+  }
+}
+
+/* ============================================
+   SELECT DROPDOWN - Cross Platform
+   ============================================ */
+
+select {
+  /* Remove default appearance across all browsers */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  -ms-appearance: none;
+  appearance: none;
+
+  /* Ensure consistent padding */
+  padding-right: 2.5rem !important;
+
+  /* Windows-specific cursor fix */
+  cursor: pointer;
+}
+
+/* Fix for IE11 dropdown arrow */
+select::-ms-expand {
+  display: none;
+}
+
+/* ============================================
+   INPUT & TEXTAREA - Consistent Styling
+   ============================================ */
+
+input,
+textarea,
+select {
+  /* Consistent box model */
+  box-sizing: border-box;
+
+  /* Fix Windows rendering */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+
+  /* Prevent zoom on mobile */
+  font-size: max(14px, 1rem);
+}
+
+/* Fix Windows focus outline */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+}
+
+/* Number input spinner fix for Windows */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* ============================================
+   TEXT GRADIENT - With Fallback
+   ============================================ */
+
+.text-gradient {
+  background: linear-gradient(90deg, var(--color-primary, #FF6B35), var(--color-secondary, #FFA500));
+  -webkit-background-clip: text;
+  -moz-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  -moz-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* Fallback for browsers that don't support background-clip: text */
+@supports not (background-clip: text) or not (-webkit-background-clip: text) {
+  .text-gradient {
+    background: none;
+    color: var(--color-primary, #FF6B35);
+    -webkit-text-fill-color: currentColor;
+  }
+}
+
+/* ============================================
+   TRANSFORM PERFORMANCE - Hardware Acceleration
+   ============================================ */
+
+/* Apply to all animated elements */
+.btn-hover-lift,
+button:hover,
+.shared-save-button:hover,
+.shared-cancel-button:hover,
+.animate-slide-in-right,
+.animate-slide-out-right,
+.animate-slide-in-top,
+.animate-scale-in,
+[class*="animate-"] {
+  /* Force hardware acceleration */
+  transform: translateZ(0);
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Remove will-change after animation completes */
+.animation-complete {
+  will-change: auto;
+}
+
+/* ============================================
+   BUTTON CONSISTENCY - Windows & Mac
+   ============================================ */
+
+button {
+  /* Remove default OS styling */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+
+  /* Prevent text selection on double-click */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+
+  /* Fix cursor */
+  cursor: pointer;
+
+  /* Consistent font rendering */
+  font-family: inherit;
+
+  /* Prevent button shrinking */
+  flex-shrink: 0;
+}
+
+button:active {
+  /* Prevent focus outline on click */
+  outline: none;
+}
+
+/* ============================================
+   CARD & BOX SHADOWS - Better Windows Rendering
+   ============================================ */
+
+.card,
+.createDiv,
+.createDivOne,
+.createDivSecond {
+  /* Layer shadows for better Windows rendering */
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.05),
+    0 10px 15px -3px rgba(0, 0, 0, 0.08),
+    0 20px 25px -5px rgba(0, 0, 0, 0.08);
+}
+
+/* ============================================
+   BORDER RADIUS - Consistent Rendering
+   ============================================ */
+
+input,
+select,
+textarea,
+button,
+.card,
+.createDiv,
+.createDivOne,
+.createDivSecond {
+  /* Fix subpixel rendering on Windows */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/* ============================================
+   FOCUS STATES - Accessible & Consistent
+   ============================================ */
+
+/* Better focus visibility for Windows high contrast mode */
+@media (prefers-contrast: high) {
+  *:focus-visible {
+    outline: 3px solid currentColor;
+    outline-offset: 3px;
+  }
+}
+
+/* Windows forced colors mode support */
+@media (forced-colors: active) {
+  button,
+  input,
+  select,
+  textarea {
+    border: 1px solid ButtonText;
+  }
+
+  button:hover {
+    border: 2px solid ButtonText;
+  }
+}
+
+/* ============================================
+   OVERFLOW & CLIPPING - Windows Fix
+   ============================================ */
+
+/* Fix Windows overflow rendering bugs */
+.card,
+.createDiv,
+.createDivOne,
+.createDivSecond,
+.shared-form-container {
+  /* Contain paint for better performance */
+  contain: paint;
+  overflow: hidden;
+}
+
+/* ============================================
+   ANIMATIONS - Smooth on Windows
+   ============================================ */
+
+/* Prefer reduced motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Optimize animations for Windows */
+@keyframes optimized-fade-in {
+  from {
+    opacity: 0;
+    transform: translateZ(0);
+  }
+  to {
+    opacity: 1;
+    transform: translateZ(0);
+  }
+}
+
+/* ============================================
+   TABLE RENDERING - Cross Platform
+   ============================================ */
+
+table {
+  /* Better rendering on Windows */
+  border-collapse: separate;
+  border-spacing: 0;
+  transform: translateZ(0);
+}
+
+th,
+td {
+  /* Fix text rendering in tables */
+  text-rendering: optimizeLegibility;
+}
+
+/* ============================================
+   WINDOWS HIGH DPI FIXES
+   ============================================ */
+
+@media (-webkit-min-device-pixel-ratio: 1.5),
+       (min-resolution: 144dpi) {
+  /* Fix blurry borders on high DPI Windows displays */
+  * {
+    -webkit-font-smoothing: subpixel-antialiased;
+  }
+
+  /* Sharper borders */
+  .card,
+  input,
+  select,
+  textarea,
+  button {
+    border-width: 0.5px;
+  }
+}
+
+/* ============================================
+   CHROME/EDGE AUTOFILL - Consistent Styling
+   ============================================ */
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px var(--color-surface, white) inset !important;
+  -webkit-text-fill-color: var(--color-text, #1f2937) !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* ============================================
+   PLACEHOLDER - Cross Platform
+   ============================================ */
+
+::placeholder {
+  color: var(--color-text-muted, #6b7280);
+  opacity: 1;
+}
+
+:-ms-input-placeholder {
+  color: var(--color-text-muted, #6b7280);
+  opacity: 1;
+}
+
+::-ms-input-placeholder {
+  color: var(--color-text-muted, #6b7280);
+  opacity: 1;
+}
+
+/* ============================================
+   SELECTION - Consistent Colors
+   ============================================ */
+
+::selection {
+  background-color: var(--color-primary, #FF6B35);
+  color: white;
+  text-shadow: none;
+}
+
+::-moz-selection {
+  background-color: var(--color-primary, #FF6B35);
+  color: white;
+  text-shadow: none;
+}
+
+/* ============================================
+   WINDOWS SCROLLING IMPROVEMENTS
+   ============================================ */
+
+html {
+  /* Smooth scrolling */
+  scroll-behavior: smooth;
+
+  /* Better Windows touch scrolling */
+  -ms-touch-action: manipulation;
+  touch-action: manipulation;
+
+  /* Prevent overscroll bounce on Windows */
+  overscroll-behavior: none;
+}
+
+/* ============================================
+   DRAG & DROP - Windows Compatibility
+   ============================================ */
+
+[draggable="true"] {
+  -webkit-user-drag: element;
+  -moz-user-drag: element;
+  user-drag: element;
+  cursor: move;
+}
+
+/* ============================================
+   PRINT STYLES - Cross Platform
+   ============================================ */
+
+@media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

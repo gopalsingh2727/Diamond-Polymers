@@ -1,0 +1,510 @@
+/* ====================================
+   Print Preview Popup Styles
+   ==================================== */
+
+/* Overlay Background */
+.print-preview-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Popup Container */
+.print-preview-popup {
+  background: #f3f4f6;
+  border-radius: 12px;
+  width: 90vw;
+  max-width: 900px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease;
+  overflow: hidden;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Popup Header */
+.print-preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+  color: white;
+}
+
+.print-preview-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.print-preview-title-icon {
+  font-size: 20px;
+}
+
+.print-preview-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.print-preview-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.print-preview-btn-print {
+  background: #22c55e;
+  color: white;
+}
+
+.print-preview-btn-print:hover {
+  background: #16a34a;
+  transform: translateY(-1px);
+}
+
+.print-preview-btn-download {
+  background: #f59e0b;
+  color: white;
+}
+
+.print-preview-btn-download:hover {
+  background: #d97706;
+  transform: translateY(-1px);
+}
+
+.print-preview-btn-close {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.print-preview-btn-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Popup Body - Scrollable Content */
+.print-preview-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+/* Paper Container */
+.print-preview-paper {
+  background: white;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+  width: 210mm;
+  min-height: 297mm;
+  padding: 15mm;
+  transform-origin: top center;
+}
+
+/* Scale options for different views */
+.print-preview-paper.scale-50 {
+  transform: scale(0.5);
+  margin: -148.5mm 0;
+}
+
+.print-preview-paper.scale-75 {
+  transform: scale(0.75);
+  margin: -74.25mm 0;
+}
+
+.print-preview-paper.scale-100 {
+  transform: scale(1);
+}
+
+/* Popup Footer - Toolbar */
+.print-preview-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background: #e5e7eb;
+  border-top: 1px solid #d1d5db;
+}
+
+.print-preview-zoom {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.print-preview-zoom-label {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.print-preview-zoom-btn {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #d1d5db;
+  background: white;
+  border-radius: 6px;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.print-preview-zoom-btn:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.print-preview-zoom-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  min-width: 50px;
+  text-align: center;
+}
+
+.print-preview-page-info {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* ====================================
+   Print Content Styles (Inside Paper)
+   ==================================== */
+
+/* Header */
+.print-header {
+  text-align: center;
+  border-bottom: 2px solid #333;
+  padding-bottom: 15px;
+  margin-bottom: 20px;
+}
+
+.print-company-name {
+  font-size: 22px;
+  font-weight: bold;
+  color: #1a1a1a;
+  margin-bottom: 4px;
+}
+
+.print-company-address {
+  font-size: 10px;
+  color: #666;
+}
+
+.print-invoice-title {
+  font-size: 16px;
+  font-weight: bold;
+  margin-top: 10px;
+  color: #1e40af;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Order Info Row */
+.print-order-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 15px;
+  padding: 10px;
+  background: #f8fafc;
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+.print-order-info-label {
+  font-weight: 600;
+  color: #374151;
+}
+
+.print-order-info-value {
+  color: #1f2937;
+}
+
+/* Customer Info */
+.print-customer-info {
+  margin-bottom: 15px;
+  padding: 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+}
+
+.print-customer-info h3 {
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #374151;
+  text-transform: uppercase;
+}
+
+/* Items Table */
+.print-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 15px;
+  font-size: 10px;
+}
+
+.print-table th {
+  background: #1e40af;
+  color: white;
+  padding: 8px 6px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 9px;
+  text-transform: uppercase;
+}
+
+.print-table td {
+  padding: 6px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.print-table tr:nth-child(even) {
+  background: #f8fafc;
+}
+
+.print-table .text-right {
+  text-align: right;
+}
+
+.print-table .text-center {
+  text-align: center;
+}
+
+/* Option Type Badge */
+.print-option-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  background: #dbeafe;
+  color: #1e40af;
+  border-radius: 3px;
+  font-size: 8px;
+  font-weight: 600;
+}
+
+/* Dimension Values */
+.print-dim-value {
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+}
+
+.print-dim-calculated {
+  color: #059669;
+}
+
+/* Highlight Cell */
+.print-highlight {
+  background: #fef3c7 !important;
+  font-weight: 600;
+}
+
+/* Totals Section */
+.print-totals {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 15px;
+}
+
+.print-totals-table {
+  width: 200px;
+  border-collapse: collapse;
+  font-size: 10px;
+}
+
+.print-totals-table td {
+  padding: 5px 8px;
+}
+
+.print-totals-table .label {
+  text-align: right;
+  color: #6b7280;
+}
+
+.print-totals-table .value {
+  text-align: right;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.print-totals-table .grand-total {
+  background: #1e40af;
+  color: white;
+}
+
+.print-totals-table .grand-total td {
+  padding: 8px;
+  font-size: 12px;
+}
+
+/* Footer */
+.print-footer {
+  margin-top: 20px;
+  padding-top: 10px;
+  border-top: 1px solid #e5e7eb;
+  font-size: 9px;
+  color: #6b7280;
+}
+
+.print-footer-thanks {
+  text-align: center;
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+
+.print-footer-terms {
+  padding: 8px;
+  background: #f8fafc;
+  border-radius: 4px;
+}
+
+.print-footer-terms ul {
+  margin: 5px 0 0 0;
+  padding-left: 15px;
+}
+
+.print-footer-terms li {
+  margin-bottom: 2px;
+}
+
+.print-footer-timestamp {
+  text-align: center;
+  margin-top: 10px;
+  font-size: 8px;
+}
+
+/* ====================================
+   Responsive Adjustments
+   ==================================== */
+
+@media (max-width: 768px) {
+  .print-preview-popup {
+    width: 100vw;
+    max-width: 100vw;
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+
+  .print-preview-paper {
+    width: 100%;
+    min-height: auto;
+    padding: 10px;
+    transform: none !important;
+    margin: 0 !important;
+  }
+
+  .print-preview-header {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .print-preview-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .print-preview-footer {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+}
+
+/* ====================================
+   Print Media Query - Actual Printing
+   ==================================== */
+
+@media print {
+  .print-preview-overlay {
+    position: static;
+    background: none;
+    padding: 0;
+  }
+
+  .print-preview-popup {
+    box-shadow: none;
+    border-radius: 0;
+    max-height: none;
+    width: 100%;
+  }
+
+  .print-preview-header,
+  .print-preview-footer,
+  .print-preview-btn {
+    display: none !important;
+  }
+
+  .print-preview-body {
+    padding: 0;
+    overflow: visible;
+  }
+
+  .print-preview-paper {
+    box-shadow: none;
+    border-radius: 0;
+    transform: none !important;
+    margin: 0 !important;
+    width: 100%;
+    padding: 10mm;
+  }
+
+  .print-table th {
+    background: #1e40af !important;
+    color: white !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .print-highlight {
+    background: #fef3c7 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .print-totals-table .grand-total {
+    background: #1e40af !important;
+    color: white !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

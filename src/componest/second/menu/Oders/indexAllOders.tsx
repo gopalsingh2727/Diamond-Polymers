@@ -10,6 +10,7 @@ import { fetchOrders } from "../../../redux/oders/OdersActions";
 import { getOrderFormDataIfNeeded } from "../../../redux/oders/orderFormDataActions";
 import { RootState } from "../../../redux/rootReducer";
 import { AppDispatch } from "../../../../store";
+import { useDaybookUpdates } from "../../../../hooks/useWebSocket";  // ✅ WebSocket real-time updates
 
 interface OrderFilters {
   status: string;
@@ -116,14 +117,41 @@ const IndexAllOders = () => {
     { value: 'issue', label: 'Issue' },
   ];
 
+  // Helper function to fetch orders
+  const fetchOrdersData = useCallback(() => {
+    console.log("📋 All Orders - Fetching orders data");
+    dispatch(fetchOrders({}));
+  }, [dispatch]);
+
+  // Get branchId from auth state for WebSocket subscription
+  const authState = useSelector((state: RootState) => state.auth);
+  const branchId = (authState as any)?.user?.branchId || localStorage.getItem('branchId') || localStorage.getItem('selectedBranch') || null;
+
   // Load orders and form data on component mount
   useEffect(() => {
     // fetchOrders automatically uses branchId from localStorage for non-admin users
     // Fetch all orders without date filter - client-side filtering will handle dates
-    dispatch(fetchOrders({}));
+    fetchOrdersData();
     // Also load machine types and machines
     dispatch(getOrderFormDataIfNeeded());
-  }, [dispatch]);
+
+    // ✅ Check if orders were updated while navigating - force refresh
+    const ordersUpdated = sessionStorage.getItem('orders_updated');
+    if (ordersUpdated) {
+      console.log("📡 Orders were updated - forcing refresh");
+      sessionStorage.removeItem('orders_updated');
+      setTimeout(() => fetchOrdersData(), 100);
+    }
+  }, [dispatch, fetchOrdersData]);
+
+  // ✅ WebSocket real-time subscription for live order updates
+  const handleOrderUpdate = useCallback(() => {
+    console.log("📡 WebSocket: All Orders update received - refreshing");
+    fetchOrdersData();
+  }, [fetchOrdersData]);
+
+  // Subscribe to real-time daybook updates via WebSocket
+  useDaybookUpdates(branchId, handleOrderUpdate);
 
   // Get machines for selected machine types (multiple)
   const machinesForSelectedTypes = useMemo(() => {

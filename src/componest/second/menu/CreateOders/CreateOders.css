@@ -843,12 +843,24 @@
   border: none;
   border-radius: var(--co-radius-md);
   cursor: pointer;
+  -webkit-transition: all 0.15s ease;
   transition: all 0.15s ease;
+  /* Cross-browser fixes */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  /* GPU acceleration */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 
 .saveButton:hover {
   background: #059669;
-  transform: translateY(-1px);
+  -webkit-transform: translateY(-1px) translateZ(0);
+  transform: translateY(-1px) translateZ(0);
+  will-change: transform;
 }
 
 /* Popup Cancel Button */
@@ -861,7 +873,17 @@
   border: 1px solid var(--co-border-dark);
   border-radius: var(--co-radius-md);
   cursor: pointer;
+  -webkit-transition: all 0.15s ease;
   transition: all 0.15s ease;
+  /* Cross-browser fixes */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  /* GPU acceleration */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 
 .cancelButton:hover {
@@ -999,20 +1021,35 @@
   border: none;
   border-radius: var(--co-radius-md);
   cursor: pointer;
+  -webkit-transition: all 0.15s ease;
   transition: all 0.15s ease;
+  /* Cross-browser fixes */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  /* GPU acceleration */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 
 .co-btn:hover,
 .co-btn-primary:hover,
 .CreateOrdersButton:hover {
   background: var(--co-primary-light);
-  transform: translateY(-1px);
+  -webkit-transform: translateY(-1px) translateZ(0);
+  transform: translateY(-1px) translateZ(0);
+  -webkit-box-shadow: var(--co-shadow-md);
   box-shadow: var(--co-shadow-md);
+  will-change: transform;
 }
 
 .co-btn:active,
 .CreateOrdersButton:active {
-  transform: translateY(0);
+  -webkit-transform: translateY(0) translateZ(0);
+  transform: translateY(0) translateZ(0);
+  will-change: auto;
 }
 
 .co-btn-icon,
@@ -1022,7 +1059,12 @@
   padding: var(--co-space-xs);
   cursor: pointer;
   color: var(--co-text-secondary);
+  -webkit-transition: color 0.15s ease;
   transition: color 0.15s ease;
+  /* Cross-browser fixes */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
 }
 
 .co-btn-icon:hover,

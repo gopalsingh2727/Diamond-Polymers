@@ -1,77 +1,123 @@
-/* ====================================
-   Create Option Type - Compact Form Styles
-   All class names start with createOptionType-
-   ==================================== */
+/* ==========================================================================
+   CREATE OPTION TYPE COMPONENT - Grid-Based Layout CSS
+   Matching OrderType styling for consistency
+   ========================================================================== */
 
-/* Container - Centered on Screen */
+/* Main Container */
 .createOptionType-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  max-width: 1400px;
   width: 100%;
-  min-height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 20px;
+  margin: 0 auto;
+  padding: 2rem;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  min-height: 100vh;
 }
 
-/* Form Card */
-.createOptionType-form {
-  background: white;
-  padding: 24px 32px;
-  max-width: 500px;
-  width: 100%;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+/* Header Section */
+.createOptionType-header {
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e5e7eb;
+  margin-bottom: 1rem;
 }
 
-/* Title */
 .createOptionType-title {
-  font-size: 1.25rem;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 0.5rem;
+  text-align: left;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.createOptionType-subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* Form Grid */
+.createOptionType-formGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+/* Form Section */
+.createOptionType-section {
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 1.5rem;
+}
+
+.createOptionType-sectionTitle {
+  font-size: 1.125rem;
   font-weight: 600;
-  color: #1f2937;
-  text-align: center;
-  margin: 0 0 20px 0;
-  padding-bottom: 15px;
-  border-bottom: 1px solid #e5e7eb;
+  color: #374151;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #d1d5db;
 }
 
-/* Form Group - Compact spacing */
+/* Form Row - Side by Side Layout */
+.createOptionType-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.createOptionType-row:last-child {
+  margin-bottom: 0;
+}
+
+/* Form Column */
+.createOptionType-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Form Group */
 .createOptionType-group {
-  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
 }
 
-/* Label - Close to input */
+/* Label */
 .createOptionType-label {
-  display: block;
-  font-size: 13px;
+  font-size: 0.875rem;
   font-weight: 500;
   color: #374151;
-  margin-bottom: 4px;
+  display: block;
 }
 
 /* Input - Underline Style */
 .createOptionType-input {
   width: 100%;
   padding: 10px 0;
-  font-size: 14px;
-  color: #1f2937;
+  font-size: 0.875rem;
+  color: #111827;
   background-color: rgba(255, 255, 255, 0.1);
   border: none;
   border-bottom: 0.5px solid #333;
   border-radius: 0;
   outline: none;
   box-sizing: border-box;
-  -webkit-transition: border-color 0.2s ease;
   transition: border-color 0.2s ease;
-  /* Cross-browser fixes */
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  -ms-appearance: none;
-  appearance: none;
+  font-family: inherit;
 }
 
-/* IE11 fix for select dropdown */
-.createOptionType-input::-ms-expand {
-  display: none;
+.createOptionType-input:hover {
+  border-bottom-color: #6b7280;
 }
 
 .createOptionType-input:focus {
@@ -87,22 +133,22 @@
 .createOptionType-textarea {
   width: 100%;
   padding: 10px 0;
-  font-size: 14px;
-  color: #1f2937;
+  font-size: 0.875rem;
+  color: #111827;
   background-color: rgba(255, 255, 255, 0.1);
   border: none;
   border-bottom: 0.5px solid #333;
   border-radius: 0;
   outline: none;
   box-sizing: border-box;
-  -webkit-transition: border-color 0.2s ease;
   transition: border-color 0.2s ease;
   resize: vertical;
   min-height: 60px;
-  /* Cross-browser fixes */
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
+  font-family: inherit;
+}
+
+.createOptionType-textarea:hover {
+  border-bottom-color: #6b7280;
 }
 
 .createOptionType-textarea:focus {
@@ -114,79 +160,362 @@
   color: #9ca3af;
 }
 
-/* Button - Full Width Orange */
-.createOptionType-button {
-  width: 100%;
-  padding: 14px 24px;
-  margin-top: 24px;
-  font-size: 15px;
-  font-weight: 600;
+/* Specifications Header */
+.createOptionType-specsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.createOptionType-addButton {
+  padding: 6px 12px;
+  background: #10b981;
   color: white;
-  background: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%);
   border: none;
-  border-radius: 8px;
+  border-radius: 4px;
   cursor: pointer;
-  -webkit-transition: all 0.2s ease;
+  font-size: 12px;
+  transition: background 0.2s ease;
+}
+
+.createOptionType-addButton:hover {
+  background: #059669;
+}
+
+/* Empty State */
+.createOptionType-emptyState {
+  text-align: center;
+  padding: 2rem;
+  color: #6b7280;
+  font-size: 0.875rem;
+  background-color: #f9fafb;
+  border-radius: 0.5rem;
+  border: 1px dashed #d1d5db;
+}
+
+/* Specification Card */
+.createOptionType-specCard {
+  padding: 16px;
+  margin-bottom: 12px;
+  background: #ffffff;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
   transition: all 0.2s ease;
-  -webkit-box-shadow: 0 2px 8px rgba(255, 107, 53, 0.25);
-  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.25);
-  /* Cross-browser fixes */
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  /* GPU acceleration for Windows */
-  -webkit-transform: translateZ(0);
-  transform: translateZ(0);
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
+}
+
+.createOptionType-specCard:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.createOptionType-specRow {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.createOptionType-specInput {
+  flex: 2;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 13px;
+  transition: border-color 0.2s ease;
+}
+
+.createOptionType-specInput:focus {
+  outline: none;
+  border-color: #FF6B35;
+}
+
+.createOptionType-specSelect {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.createOptionType-unitSelect {
+  width: 80px;
+  padding: 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.createOptionType-removeButton {
+  padding: 8px 12px;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.2s ease;
+}
+
+.createOptionType-removeButton:hover {
+  background: #dc2626;
+}
+
+.createOptionType-defaultInput {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.createOptionType-defaultInput:focus {
+  outline: none;
+  border-color: #FF6B35;
+}
+
+/* Visibility Row */
+.createOptionType-visibilityRow {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 12px;
+  background: #fff;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+.createOptionType-visibilityLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.createOptionType-visibilityText {
+  font-weight: 500;
+}
+
+.createOptionType-visibilityText.visible {
+  color: #059669;
+}
+
+.createOptionType-visibilityText.hidden {
+  color: #9ca3af;
+}
+
+/* Flags Row */
+.createOptionType-flagsRow {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.createOptionType-flagLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+/* Action Buttons */
+.createOptionType-actionButtons {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.createOptionType-backButton {
+  padding: 8px 16px;
+  background: #6b7280;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.createOptionType-backButton:hover {
+  background: #4b5563;
+}
+
+.createOptionType-deleteButton {
+  padding: 8px 16px;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.createOptionType-deleteButton:hover {
+  background: #dc2626;
+}
+
+/* Form Actions */
+.createOptionType-formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 2px solid #e5e7eb;
+}
+
+/* Button */
+.createOptionType-button {
+  width: 200px;
+  padding: 0.875rem 1.5rem;
+  font-size: 0.938rem;
+  font-weight: 600;
+  background-color: #FF6B35;
+  color: #ffffff;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
 }
 
 .createOptionType-button:hover:not(:disabled) {
-  background: linear-gradient(135deg, #E55A2B 0%, #d44a1b 100%);
-  -webkit-transform: translateY(-2px) translateZ(0);
-  transform: translateY(-2px) translateZ(0);
-  -webkit-box-shadow: 0 4px 16px rgba(255, 107, 53, 0.35);
-  box-shadow: 0 4px 16px rgba(255, 107, 53, 0.35);
-  will-change: transform;
+  background-color: #E55A2B;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transform: translateY(-1px);
+}
+
+.createOptionType-button:active:not(:disabled) {
+  background-color: #E55A2B;
+  transform: translateY(0);
 }
 
 .createOptionType-button:disabled {
-  background: #9ca3af;
+  background-color: #9ca3af;
   cursor: not-allowed;
-  -webkit-transform: none;
-  transform: none;
-  -webkit-box-shadow: none;
-  box-shadow: none;
-  will-change: auto;
+  opacity: 0.6;
 }
 
 /* Reset Button */
 .createOptionType-resetButton {
-  width: 100%;
-  padding: 14px 24px;
-  margin-top: 10px;
-  font-size: 15px;
+  width: 200px;
+  padding: 0.875rem 1.5rem;
+  font-size: 0.938rem;
   font-weight: 600;
   color: white;
   background: #64748b;
   border: none;
-  border-radius: 8px;
+  border-radius: 0.375rem;
   cursor: pointer;
-  -webkit-transition: all 0.2s ease;
   transition: all 0.2s ease;
-  /* Cross-browser fixes */
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  /* GPU acceleration */
-  -webkit-transform: translateZ(0);
-  transform: translateZ(0);
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
 }
 
 .createOptionType-resetButton:hover {
   background: #475569;
-  -webkit-transform: translateY(-1px) translateZ(0);
-  transform: translateY(-1px) translateZ(0);
+  transform: translateY(-1px);
+}
+
+/* Animation: Fade In */
+@keyframes createOptionTypeFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.createOptionType-section,
+.createOptionType-specCard {
+  animation: createOptionTypeFadeIn 0.3s ease-out;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .createOptionType-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .createOptionType-container {
+    padding: 1rem;
+  }
+
+  .createOptionType-title {
+    font-size: 1.5rem;
+  }
+
+  .createOptionType-section {
+    padding: 1rem;
+  }
+
+  .createOptionType-row {
+    grid-template-columns: 1fr;
+  }
+
+  .createOptionType-formActions {
+    flex-direction: column;
+  }
+
+  .createOptionType-button,
+  .createOptionType-resetButton {
+    width: 100%;
+  }
+
+  .createOptionType-specRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .createOptionType-specInput,
+  .createOptionType-specSelect,
+  .createOptionType-unitSelect {
+    width: 100%;
+    flex: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .createOptionType-container {
+    padding: 0.75rem;
+  }
+
+  .createOptionType-header {
+    margin-bottom: 1rem;
+  }
+
+  .createOptionType-formGrid {
+    gap: 1rem;
+  }
+
+  .createOptionType-specsHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .createOptionType-addButton {
+    width: 100%;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .createOptionType-container {
+    box-shadow: none;
+    padding: 0;
+  }
+
+  .createOptionType-formActions {
+    display: none;
+  }
+
+  .createOptionType-section {
+    break-inside: avoid;
+  }
 }

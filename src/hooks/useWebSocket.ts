@@ -156,7 +156,7 @@ export const useDaybookUpdates = (branchId: string | null, onOrderUpdate?: (data
     }
   }, [branchId, isConnected, dispatch]);
 
-  // Set up listener for order updates
+  // Set up listener for order updates (WebSocket events)
   useEffect(() => {
     if (!onOrderUpdate) return;
 
@@ -166,7 +166,7 @@ export const useDaybookUpdates = (branchId: string | null, onOrderUpdate?: (data
       if (type === 'order:created' || type === 'order:updated' || type === 'order:deleted' ||
           type === 'order:status_changed' || type === 'order:priority_changed' ||
           type === 'daybook:updated' || type === 'referenceData:invalidate') {
-        console.log('📋 Daybook update received:', type);
+        console.log('📋 Daybook update received (WebSocket):', type);
         onOrderUpdate(data);
       }
     };
@@ -174,6 +174,21 @@ export const useDaybookUpdates = (branchId: string | null, onOrderUpdate?: (data
     window.addEventListener('websocket:message' as any, handleOrderUpdate);
     return () => {
       window.removeEventListener('websocket:message' as any, handleOrderUpdate);
+    };
+  }, [onOrderUpdate]);
+
+  // ✅ Also listen for local order updates (fallback when WebSocket is not connected)
+  useEffect(() => {
+    if (!onOrderUpdate) return;
+
+    const handleLocalOrderUpdate = (event: CustomEvent) => {
+      console.log('📋 Daybook update received (Local):', event.detail.type);
+      onOrderUpdate(event.detail.data);
+    };
+
+    window.addEventListener('order:updated:local' as any, handleLocalOrderUpdate);
+    return () => {
+      window.removeEventListener('order:updated:local' as any, handleLocalOrderUpdate);
     };
   }, [onOrderUpdate]);
 };

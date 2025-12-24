@@ -41,6 +41,18 @@ export const UniversalSearchModal: React.FC = () => {
   const navigate = useNavigate();
   const { results, grouped } = useGroupedSearchResults(debouncedSearchTerm);
 
+  // Log component mount
+  useEffect(() => {
+    console.log('🔍 Universal Search: Component mounted');
+    return () => console.log('🔍 Universal Search: Component unmounted');
+  }, []);
+
+  // Log search results changes
+  useEffect(() => {
+    console.log('🔍 Universal Search: Results updated:', results.length, 'items');
+    console.log('🔍 Universal Search: Grouped results:', grouped);
+  }, [results, grouped]);
+
   // Debounce search input for performance
   const debouncedSetSearch = useCallback(
     debounce((value: string) => {
@@ -51,13 +63,35 @@ export const UniversalSearchModal: React.FC = () => {
 
   // Handle search input change
   const handleSearchChange = (value: string) => {
+    console.log('🔍 Universal Search: Input changed:', value);
     setSearchTerm(value);
     debouncedSetSearch(value);
   };
 
   // Handle result selection
-  const handleSelect = (route: string) => {
-    navigate(route);
+  const handleSelect = (result: any) => {
+    console.log('🔍 Universal Search: Opening result:', result.type, result.title);
+
+    // For orders, navigate to the order form with the order data
+    if (result.type === 'order') {
+      console.log('🔍 Universal Search: Navigating to order form with order data:', result.data);
+      navigate('/menu/orderform', {
+        state: {
+          isEdit: true,
+          orderData: result.data,
+          isEditMode: true,
+          editMode: true,
+          mode: 'edit',
+          orderId: result.data.orderId || result.data._id,
+          customerName: result.data.customer?.companyName || result.data.customerId?.companyName
+        }
+      });
+    } else {
+      // For other entities, just navigate to the route
+      console.log('🔍 Universal Search: Navigating to route:', result.route);
+      navigate(result.route);
+    }
+
     setIsOpen(false);
     setSearchTerm('');
     setDebouncedSearchTerm('');
@@ -76,17 +110,26 @@ export const UniversalSearchModal: React.FC = () => {
       // Cmd+K (Mac) or Ctrl+K (Windows/Linux)
       if ((e.metaKey || e.ctrlKey) && e.key === SEARCH_SHORTCUT.key) {
         e.preventDefault();
-        setIsOpen(prev => !prev);
+        console.log('🔍 Universal Search: Toggling modal via keyboard shortcut');
+        setIsOpen(prev => {
+          console.log('🔍 Universal Search: Modal state changing from', prev, 'to', !prev);
+          return !prev;
+        });
       }
 
       // Escape to close
       if (e.key === 'Escape' && isOpen) {
+        console.log('🔍 Universal Search: Closing modal via ESC key');
         handleClose();
       }
     };
 
     document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    console.log('🔍 Universal Search: Keyboard listener attached');
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      console.log('🔍 Universal Search: Keyboard listener removed');
+    };
   }, [isOpen]);
 
   // Prevent body scroll when modal is open
@@ -161,7 +204,7 @@ export const UniversalSearchModal: React.FC = () => {
                     <Command.Item
                       key={result.id}
                       value={`${result.type}-${result.id}-${result.title}`}
-                      onSelect={() => handleSelect(result.route)}
+                      onSelect={() => handleSelect(result)}
                       className="universal-search-item"
                     >
                       <div className="universal-search-item-icon">
@@ -208,6 +251,66 @@ export const UniversalSearchModal: React.FC = () => {
         </Command>
       </div>
     </div>
+  );
+};
+
+/**
+ * Universal Search Trigger Button
+ * Can be placed in navbar or toolbar to open search modal
+ */
+export const UniversalSearchTrigger: React.FC<{ className?: string }> = ({ className = '' }) => {
+  const handleClick = () => {
+    console.log('🔍 Universal Search: Trigger button clicked');
+    // Dispatch a keyboard event to trigger the modal
+    const event = new KeyboardEvent('keydown', {
+      key: 'k',
+      ctrlKey: true,
+      bubbles: true,
+      cancelable: true
+    });
+    document.dispatchEvent(event);
+  };
+
+  return (
+    <button
+      onClick={handleClick}
+      className={`universal-search-trigger ${className}`}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '8px',
+        padding: '8px 16px',
+        background: 'linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%)',
+        color: 'white',
+        border: 'none',
+        borderRadius: '8px',
+        cursor: 'pointer',
+        fontSize: '14px',
+        fontWeight: 600,
+        transition: 'all 0.2s ease',
+        boxShadow: '0 2px 8px rgba(255, 107, 53, 0.25)'
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = 'translateY(-2px)';
+        e.currentTarget.style.boxShadow = '0 4px 16px rgba(255, 107, 53, 0.35)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'translateY(0)';
+        e.currentTarget.style.boxShadow = '0 2px 8px rgba(255, 107, 53, 0.25)';
+      }}
+    >
+      <Search size={16} />
+      <span>Search</span>
+      <kbd style={{
+        padding: '2px 6px',
+        background: 'rgba(255, 255, 255, 0.2)',
+        borderRadius: '4px',
+        fontSize: '11px',
+        fontFamily: 'monospace'
+      }}>
+        Ctrl+K
+      </kbd>
+    </button>
   );
 };
 

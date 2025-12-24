@@ -43,11 +43,7 @@ interface Specification {
   includeInTotal?: boolean; // Whether to include in totals row
   totalFormula?: string; // Formula for totals row calculation
   referenceItems?: ReferenceItem[]; // For refer type - multiple reference items
-  // 4 boolean flags for specification usage
-  public?: boolean;
-  usedForFormulas?: boolean;
-  orderTypeOnly?: boolean;
-  query?: boolean;
+  visible?: boolean; // Whether this specification is visible (default true)
 }
 
 // Evaluate formula for TOTALS row
@@ -146,13 +142,13 @@ const CreateOptionSpec = () => {
   const [specifications, setSpecifications] = useState<Specification[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // State for OptionSpec dimension name browser (to reference other OptionSpecs)
-  const [selectedReferenceSpecId, setSelectedReferenceSpecId] = useState("");
-  const [referenceDimensionData, setReferenceDimensionData] = useState<{ name: string; value: number; unit?: string }[]>([]);
+  // State for OptionSpec dimension name browser (to reference other OptionSpecs) - MULTIPLE SELECTION
+  const [selectedReferenceSpecIds, setSelectedReferenceSpecIds] = useState<string[]>([]);
+  const [referenceDimensionData, setReferenceDimensionData] = useState<{ name: string; value: number; unit?: string; sourceName?: string }[]>([]);
 
-  // State for Option (Option Name) dimension browser
-  const [selectedReferenceOptionId, setSelectedReferenceOptionId] = useState("");
-  const [referenceOptionDimensionData, setReferenceOptionDimensionData] = useState<{ name: string; value: number; unit?: string }[]>([]);
+  // State for Option (Option Name) dimension browser - MULTIPLE SELECTION
+  const [selectedReferenceOptionIds, setSelectedReferenceOptionIds] = useState<string[]>([]);
+  const [referenceOptionDimensionData, setReferenceOptionDimensionData] = useState<{ name: string; value: number; unit?: string; sourceName?: string }[]>([]);
 
   // State for Option Type specifications (auto-populated when optionTypeId is selected)
   const [optionTypeSpecsData, setOptionTypeSpecsData] = useState<{ name: string; defaultValue: number; unit?: string }[]>([]);
@@ -182,7 +178,7 @@ const CreateOptionSpec = () => {
       // Check both specificationTemplate and specifications (new field name)
       const templateData = selectedType?.specificationTemplate || selectedType?.specifications || [];
       if (selectedType && templateData.length > 0) {
-        // Load template dimensions with 4 boolean flags
+        // Load template dimensions with visible flag
         const templateSpecs = templateData.map((tmpl: any) => ({
           name: tmpl.name,
           value: tmpl.defaultValue || "",
@@ -192,72 +188,88 @@ const CreateOptionSpec = () => {
           isCalculated: false,
           includeInTotal: true,
           totalFormula: "SUM",
-          // Load 4 boolean flags from Option Type specifications
-          public: tmpl.public || false,
-          usedForFormulas: tmpl.usedForFormulas || false,
-          orderTypeOnly: tmpl.orderTypeOnly || false,
-          query: tmpl.query || false,
+          visible: tmpl.visible !== false, // Default to true if not specified
         }));
         setSpecifications(templateSpecs);
       }
     }
   }, [optionTypeId, optionTypes]);
 
-  // Extract dimension data when reference OptionSpec is selected (number types or numeric values for formulas)
+  // Extract dimension data when reference OptionSpecs are selected (MULTIPLE) - number types or numeric values for formulas
   useEffect(() => {
-    if (selectedReferenceSpecId && Array.isArray(optionSpecs)) {
-      const spec = optionSpecs.find((s: any) => s._id === selectedReferenceSpecId);
-      if (spec && spec.specifications) {
-        // Get dimensions that are number type OR have numeric values
-        const dimensionData = spec.specifications
-          .filter((d: any) => {
-            // Include if dataType is 'number'
-            if (d.dataType === 'number') return true;
-            // Include if value is a number or can be parsed as number
-            const val = d.value;
-            if (typeof val === 'number' && !isNaN(val)) return true;
-            if (typeof val === 'string' && val.trim() !== '' && !isNaN(Number(val))) return true;
-            return false;
-          })
-          .map((d: any) => ({
-            name: d.name,
-            value: Number(d.value) || 0,
-            unit: d.unit || ''
-          }));
-        setReferenceDimensionData(dimensionData);
-      }
+    if (selectedReferenceSpecIds.length > 0 && Array.isArray(optionSpecs)) {
+      const allDimensionData: { name: string; value: number; unit?: string; sourceName?: string }[] = [];
+
+      selectedReferenceSpecIds.forEach((specId) => {
+        const spec = optionSpecs.find((s: any) => s._id === specId);
+        // Check both 'specifications' and 'dimensions' field names (backend may use either)
+        const specData = spec?.specifications || spec?.dimensions || [];
+        if (spec && specData.length > 0) {
+          // Get dimensions that are number type OR have numeric values
+          specData
+            .filter((d: any) => {
+              // Include if dataType is 'number'
+              if (d.dataType === 'number') return true;
+              // Include if value is a number or can be parsed as number
+              const val = d.value;
+              if (typeof val === 'number' && !isNaN(val)) return true;
+              if (typeof val === 'string' && val.trim() !== '' && !isNaN(Number(val))) return true;
+              return false;
+            })
+            .forEach((d: any) => {
+              allDimensionData.push({
+                name: d.name,
+                value: Number(d.value) || 0,
+                unit: d.unit || '',
+                sourceName: spec.name || spec.code || 'Unknown'
+              });
+            });
+        }
+      });
+
+      setReferenceDimensionData(allDimensionData);
     } else {
       setReferenceDimensionData([]);
     }
-  }, [selectedReferenceSpecId, optionSpecs]);
+  }, [selectedReferenceSpecIds, optionSpecs]);
 
-  // Extract dimension data when reference Option (Option Name) is selected (number types or numeric values for formulas)
+  // Extract dimension data when reference Options (Option Names) are selected (MULTIPLE) - number types or numeric values for formulas
   useEffect(() => {
-    if (selectedReferenceOptionId && Array.isArray(options)) {
-      const option = options.find((o: any) => o._id === selectedReferenceOptionId);
-      if (option && option.dimensions) {
-        // Get dimensions that are number type OR have numeric values
-        const dimensionData = option.dimensions
-          .filter((d: any) => {
-            // Include if dataType is 'number'
-            if (d.dataType === 'number') return true;
-            // Include if value is a number or can be parsed as number
-            const val = d.value;
-            if (typeof val === 'number' && !isNaN(val)) return true;
-            if (typeof val === 'string' && val.trim() !== '' && !isNaN(Number(val))) return true;
-            return false;
-          })
-          .map((d: any) => ({
-            name: d.name,
-            value: Number(d.value) || 0,
-            unit: d.unit || ''
-          }));
-        setReferenceOptionDimensionData(dimensionData);
-      }
+    if (selectedReferenceOptionIds.length > 0 && Array.isArray(options)) {
+      const allDimensionData: { name: string; value: number; unit?: string; sourceName?: string }[] = [];
+
+      selectedReferenceOptionIds.forEach((optionId) => {
+        const option = options.find((o: any) => o._id === optionId);
+        // Check both 'dimensions' and 'specifications' field names (backend may use either)
+        const dimData = option?.dimensions || option?.specifications || [];
+        if (option && dimData.length > 0) {
+          // Get dimensions that are number type OR have numeric values
+          dimData
+            .filter((d: any) => {
+              // Include if dataType is 'number'
+              if (d.dataType === 'number') return true;
+              // Include if value is a number or can be parsed as number
+              const val = d.value;
+              if (typeof val === 'number' && !isNaN(val)) return true;
+              if (typeof val === 'string' && val.trim() !== '' && !isNaN(Number(val))) return true;
+              return false;
+            })
+            .forEach((d: any) => {
+              allDimensionData.push({
+                name: d.name,
+                value: Number(d.value) || 0,
+                unit: d.unit || '',
+                sourceName: option.name || 'Unknown'
+              });
+            });
+        }
+      });
+
+      setReferenceOptionDimensionData(allDimensionData);
     } else {
       setReferenceOptionDimensionData([]);
     }
-  }, [selectedReferenceOptionId, options]);
+  }, [selectedReferenceOptionIds, options]);
 
   // Extract Option Type specifications when optionTypeId is selected (number types or numeric values for formulas)
   useEffect(() => {
@@ -297,36 +309,46 @@ const CreateOptionSpec = () => {
     // Helper to make variable name formula-safe (replace spaces with underscores)
     const toVarName = (name: string) => name.replace(/\s+/g, '_');
 
-    // ===== ADD REFERENCED OPTION SPEC VALUES TO CONTEXT =====
-    if (selectedReferenceSpecId && Array.isArray(optionSpecs)) {
-      const refSpec = optionSpecs.find((s: any) => s._id === selectedReferenceSpecId);
-      if (refSpec && refSpec.specifications) {
-        refSpec.specifications.forEach((dim: any) => {
-          if (dim.dataType === 'number') {
-            const varName = toVarName(dim.name);
-            context[varName] = Number(dim.value) || 0;
-            context[varName.toLowerCase()] = Number(dim.value) || 0;
-            // Also add original name
-            context[dim.name] = Number(dim.value) || 0;
-          }
-        });
-      }
+    // ===== ADD REFERENCED OPTION SPEC VALUES TO CONTEXT (MULTIPLE) =====
+    if (selectedReferenceSpecIds.length > 0 && Array.isArray(optionSpecs)) {
+      selectedReferenceSpecIds.forEach((specId) => {
+        const refSpec = optionSpecs.find((s: any) => s._id === specId);
+        // Check both 'specifications' and 'dimensions' field names
+        const refSpecData = refSpec?.specifications || refSpec?.dimensions || [];
+        if (refSpec && refSpecData.length > 0) {
+          refSpecData.forEach((dim: any) => {
+            if (dim.dataType === 'number' || (typeof dim.value === 'number') || !isNaN(Number(dim.value))) {
+              const varName = toVarName(dim.name);
+              const numValue = Number(dim.value) || 0;
+              context[varName] = numValue;
+              context[varName.toLowerCase()] = numValue;
+              // Also add original name (for exact match)
+              context[dim.name] = numValue;
+            }
+          });
+        }
+      });
     }
 
-    // ===== ADD REFERENCED OPTION (OPTION NAME) VALUES TO CONTEXT =====
-    if (selectedReferenceOptionId && Array.isArray(options)) {
-      const refOption = options.find((o: any) => o._id === selectedReferenceOptionId);
-      if (refOption && refOption.dimensions) {
-        refOption.dimensions.forEach((dim: any) => {
-          if (dim.dataType === 'number') {
-            const varName = toVarName(dim.name);
-            context[varName] = Number(dim.value) || 0;
-            context[varName.toLowerCase()] = Number(dim.value) || 0;
-            // Also add original name
-            context[dim.name] = Number(dim.value) || 0;
-          }
-        });
-      }
+    // ===== ADD REFERENCED OPTION (OPTION NAME) VALUES TO CONTEXT (MULTIPLE) =====
+    if (selectedReferenceOptionIds.length > 0 && Array.isArray(options)) {
+      selectedReferenceOptionIds.forEach((optionId) => {
+        const refOption = options.find((o: any) => o._id === optionId);
+        // Check both 'dimensions' and 'specifications' field names
+        const refOptionData = refOption?.dimensions || refOption?.specifications || [];
+        if (refOption && refOptionData.length > 0) {
+          refOptionData.forEach((dim: any) => {
+            if (dim.dataType === 'number' || (typeof dim.value === 'number') || !isNaN(Number(dim.value))) {
+              const varName = toVarName(dim.name);
+              const numValue = Number(dim.value) || 0;
+              context[varName] = numValue;
+              context[varName.toLowerCase()] = numValue;
+              // Also add original name (for exact match)
+              context[dim.name] = numValue;
+            }
+          });
+        }
+      });
     }
 
     // ===== ADD OPTION TYPE SPECIFICATIONS TO CONTEXT =====
@@ -367,6 +389,19 @@ const CreateOptionSpec = () => {
     });
   };
 
+  // Re-evaluate formulas when reference selections change
+  useEffect(() => {
+    if (specifications.length > 0 && specifications.some(s => s.formula && s.formula.trim() !== '')) {
+      try {
+        const evaluated = evaluateDimensionFormulas(specifications);
+        setSpecifications(evaluated);
+      } catch (error) {
+        console.error('Formula evaluation error on reference change:', error);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedReferenceSpecIds, selectedReferenceOptionIds, referenceDimensionData, referenceOptionDimensionData]);
+
   const addDimension = () => {
     setSpecifications([
       ...specifications,
@@ -382,11 +417,7 @@ const CreateOptionSpec = () => {
         comparisonOperator: "",
         includeInTotal: true, // Default to true
         totalFormula: "SUM", // Default formula
-        // 4 boolean flags with defaults
-        public: false,
-        usedForFormulas: false,
-        orderTypeOnly: false,
-        query: false,
+        visible: true, // Default to visible
       },
     ]);
   };
@@ -429,9 +460,19 @@ const CreateOptionSpec = () => {
     }
     const updated = [...specifications];
     const currentFormula = updated[activeFormulaIndex].formula || '';
-    updated[activeFormulaIndex].formula = currentFormula + dimName;
+    // Replace spaces with underscores for formula-safe variable names
+    const safeDimName = dimName.replace(/\s+/g, '_');
+    updated[activeFormulaIndex].formula = currentFormula + safeDimName;
     updated[activeFormulaIndex].isCalculated = true;
-    setSpecifications(updated);
+
+    // Re-evaluate all formulas after insertion
+    try {
+      const evaluated = evaluateDimensionFormulas(updated);
+      setSpecifications(evaluated);
+    } catch (error) {
+      console.error('Formula evaluation error:', error);
+      setSpecifications(updated);
+    }
   };
 
   // ========== Refer Popup Handlers - DISABLED (not using this feature currently) ==========
@@ -682,73 +723,87 @@ const CreateOptionSpec = () => {
 
   return (
     <div className="createOptionSpec-container">
-      <div className="createOptionSpec-form">
-        <h2 className="createOptionSpec-title">Create Option Specification</h2>
-
-        <div className="createOptionSpec-templateButtons">
-        <button
-          onClick={() => loadTemplate("plasticBag")}
-          className="createOptionSpec-templateBtn"
-        >
-          📄 Load Bag Template
-        </button>
-        <button
-          onClick={() => loadTemplate("container")}
-          className="createOptionSpec-templateBtn"
-        >
-          🥫 Load Container Template
-        </button>
+      {/* Header Section */}
+      <div className="createOptionSpec-header">
+        <h1 className="createOptionSpec-title">Create Option Specification</h1>
+        <p className="createOptionSpec-subtitle">Configure specifications for your manufacturing options</p>
       </div>
 
-      <div className="createOptionSpec-formGrid">
-        {/* Name, Code, and Option Type in grid */}
-        <div className="createOptionSpec-formRow">
-          <div className="createOptionSpec-formColumn">
-            <label className="createOptionSpec-label">Spec Name *</label>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="createOptionSpec-input"
-              placeholder="e.g., LDPE 500x300x50"
-            />
-          </div>
-
-          <div className="createOptionSpec-formColumn">
-            <label className="createOptionSpec-label">Spec Code *</label>
-            <input
-              value={code}
-              onChange={(e) => setCode(e.target.value.toUpperCase())}
-              className="createOptionSpec-input"
-              placeholder="e.g., LDPE-500-300"
-            />
-          </div>
-        </div>
-
-        <div className="createOptionSpec-formColumn">
-          <label className="createOptionSpec-label">Option Type *</label>
-          <select
-            value={optionTypeId}
-            onChange={(e) => setOptionTypeId(e.target.value)}
-            className="createOptionSpec-input"
+      {/* Template Buttons Section */}
+      <div className="createOptionSpec-section">
+        <h3 className="createOptionSpec-sectionTitle">Quick Templates</h3>
+        <div className="createOptionSpec-templateButtons">
+          <button
+            onClick={() => loadTemplate("plasticBag")}
+            className="createOptionSpec-templateBtn"
           >
-            <option value="">Select option type</option>
-            {Array.isArray(optionTypes) && optionTypes.map((type: any) => (
-              <option key={type._id} value={type._id}>
-                {type.name} ({type.category})
-              </option>
-            ))}
-          </select>
+            Load Bag Template
+          </button>
+          <button
+            onClick={() => loadTemplate("container")}
+            className="createOptionSpec-templateBtn"
+          >
+            Load Container Template
+          </button>
         </div>
+      </div>
 
-        <div className="createOptionSpec-formColumn">
-          <label className="createOptionSpec-label">Description</label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="createOptionSpec-input"
-            rows={2}
-            placeholder="Optional description"
-          />
+      {/* Form Grid */}
+      <div className="createOptionSpec-formGrid">
+        {/* Basic Information Section */}
+        <div className="createOptionSpec-section">
+          <h3 className="createOptionSpec-sectionTitle">Basic Information</h3>
+
+          <div className="createOptionSpec-formRow">
+            <div className="createOptionSpec-formColumn">
+              <label className="createOptionSpec-label">Spec Name *</label>
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="createOptionSpec-input"
+                placeholder="e.g., LDPE 500x300x50"
+              />
+            </div>
+
+            <div className="createOptionSpec-formColumn">
+              <label className="createOptionSpec-label">Spec Code *</label>
+              <input
+                value={code}
+                onChange={(e) => setCode(e.target.value.toUpperCase())}
+                className="createOptionSpec-input"
+                placeholder="e.g., LDPE-500-300"
+              />
+            </div>
+          </div>
+
+          <div className="createOptionSpec-formRow">
+            <div className="createOptionSpec-formColumn">
+              <label className="createOptionSpec-label">Option Type *</label>
+              <select
+                value={optionTypeId}
+                onChange={(e) => setOptionTypeId(e.target.value)}
+                className="createOptionSpec-input"
+              >
+                <option value="">Select option type</option>
+                {Array.isArray(optionTypes) && optionTypes.map((type: any) => (
+                  <option key={type._id} value={type._id}>
+                    {type.name} ({type.category})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="createOptionSpec-formColumn">
+              <label className="createOptionSpec-label">Description</label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="createOptionSpec-input"
+                rows={2}
+                placeholder="Optional description"
+              />
+            </div>
+          </div>
         </div>
 
         {/* Reference Option Type Specifications Browser (Auto-populated) */}
@@ -828,34 +883,71 @@ const CreateOptionSpec = () => {
               📋 Reference Other Option Spec Dimensions (Numbers Only)
             </h3>
             <p className="createOptionSpec-referenceText">
-              Select an Option Spec to see its <strong>number</strong> dimension names for use in formulas.
+              Select <strong>multiple</strong> Option Specs to see their <strong>number</strong> dimension names for use in formulas.
             </p>
 
             <div style={{ marginBottom: '1rem' }}>
               <label className="createOptionSpec-referenceLabel">
-                Select Option Spec:
+                Select Option Specs (Multiple):
               </label>
-              <select
-                value={selectedReferenceSpecId}
-                onChange={(e) => setSelectedReferenceSpecId(e.target.value)}
-                className="createOptionSpec-input"
-              >
-                <option value="">-- Select Option Spec to see dimension names --</option>
-                {Array.isArray(optionSpecs) && optionSpecs.map((spec: any) => (
-                  <option key={spec._id} value={spec._id}>
-                    {spec.name} - {spec.code}
-                  </option>
-                ))}
-              </select>
+              <div style={{
+                maxHeight: '200px',
+                overflowY: 'auto',
+                border: '1px solid #e5e7eb',
+                borderRadius: '6px',
+                padding: '8px',
+                background: '#f9fafb'
+              }}>
+                {Array.isArray(optionSpecs) && optionSpecs.length > 0 ? (
+                  optionSpecs.map((spec: any) => (
+                    <label
+                      key={spec._id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '6px 8px',
+                        cursor: 'pointer',
+                        borderRadius: '4px',
+                        marginBottom: '4px',
+                        background: selectedReferenceSpecIds.includes(spec._id) ? '#dbeafe' : 'transparent',
+                        border: selectedReferenceSpecIds.includes(spec._id) ? '1px solid #3b82f6' : '1px solid transparent'
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedReferenceSpecIds.includes(spec._id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedReferenceSpecIds([...selectedReferenceSpecIds, spec._id]);
+                          } else {
+                            setSelectedReferenceSpecIds(selectedReferenceSpecIds.filter(id => id !== spec._id));
+                          }
+                        }}
+                      />
+                      <span style={{ fontSize: '13px' }}>{spec.name} - {spec.code}</span>
+                    </label>
+                  ))
+                ) : (
+                  <p style={{ color: '#6b7280', fontSize: '12px', margin: 0 }}>No Option Specs available</p>
+                )}
+              </div>
+              {selectedReferenceSpecIds.length > 0 && (
+                <div style={{ marginTop: '8px', fontSize: '12px', color: '#059669' }}>
+                  ✓ {selectedReferenceSpecIds.length} Option Spec(s) selected
+                </div>
+              )}
             </div>
 
             {referenceDimensionData.length > 0 && (
               <div>
                 <div className="createOptionSpec-referenceLabel" style={{ marginBottom: '0.5rem' }}>
-                  Available dimensions from "{Array.isArray(optionSpecs) ? optionSpecs.find((s: any) => s._id === selectedReferenceSpecId)?.name : ''}" (click to insert):
+                  Available dimensions from selected Option Specs (click to insert):
                 </div>
                 <div className="createOptionSpec-dimensionTags">
-                  {referenceDimensionData.map((dim, idx) => (
+                  {referenceDimensionData.map((dim, idx) => {
+                    const safeName = dim.name.replace(/\s+/g, '_');
+                    return (
                     <span
                       key={idx}
                       className="createOptionSpec-dimensionTag"
@@ -877,9 +969,9 @@ const CreateOptionSpec = () => {
                         e.currentTarget.style.color = '';
                         e.currentTarget.style.transform = '';
                       }}
-                      title={`Click to insert "${dim.name}" into formula (Current value: ${dim.value}${dim.unit ? ' ' + dim.unit : ''})`}
+                      title={`Click to insert "${safeName}" into formula (From: ${dim.sourceName}, Value: ${dim.value}${dim.unit ? ' ' + dim.unit : ''})`}
                     >
-                      <strong>{dim.name}</strong>
+                      <strong>{safeName}</strong>
                       <span style={{
                         background: 'rgba(0,0,0,0.1)',
                         padding: '2px 6px',
@@ -888,21 +980,33 @@ const CreateOptionSpec = () => {
                       }}>
                         = {dim.value}{dim.unit ? ` ${dim.unit}` : ''}
                       </span>
+                      {dim.sourceName && (
+                        <span style={{
+                          background: '#dbeafe',
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          fontSize: '10px',
+                          color: '#1d4ed8'
+                        }}>
+                          {dim.sourceName}
+                        </span>
+                      )}
                     </span>
-                  ))}
+                  );
+                  })}
                 </div>
                 <div className="createOptionSpec-referenceHint">
                   💡 <strong>How to use:</strong> Click on a formula field below, then click on any dimension above to insert it.
-                  For example: <code className="createOptionSpec-code">myValue / {referenceDimensionData[0]?.name || 'dimension_name'}</code>
+                  For example: <code className="createOptionSpec-code">myValue / {referenceDimensionData[0]?.name?.replace(/\s+/g, '_') || 'dimension_name'}</code>
                   <br />
-                  <strong>Values shown are from the selected Option Spec and will be used in formula calculations.</strong>
+                  <strong>Values shown are from the selected Option Specs and will be used in formula calculations.</strong>
                 </div>
               </div>
             )}
 
-            {!selectedReferenceSpecId && (
+            {selectedReferenceSpecIds.length === 0 && (
               <div className="createOptionSpec-referenceEmpty">
-                ℹ️ Select an Option Spec above to see available dimension names that you can use in formulas
+                ℹ️ Select one or more Option Specs above to see available dimension names that you can use in formulas
               </div>
             )}
           </div>
@@ -915,7 +1019,7 @@ const CreateOptionSpec = () => {
               🏷️ Reference Option Name Dimensions (Numbers Only)
             </h3>
             <p className="createOptionSpec-referenceText">
-              Select an Option (Option Name) to see its <strong>number</strong> dimension names for use in formulas.
+              Select <strong>multiple</strong> Options (Option Names) to see their <strong>number</strong> dimension names for use in formulas.
             </p>
 
             {/* First select Option Type to filter Option Names */}
@@ -943,39 +1047,87 @@ const CreateOptionSpec = () => {
 
             <div style={{ marginBottom: '1rem' }}>
               <label className="createOptionSpec-referenceLabel">
-                Select Option Name:
+                Select Option Names (Multiple):
               </label>
-              <select
-                value={selectedReferenceOptionId}
-                onChange={(e) => setSelectedReferenceOptionId(e.target.value)}
-                className="createOptionSpec-input"
-                disabled={!optionTypeId}
-              >
-                <option value="">{optionTypeId ? '-- Select Option Name to see dimension names --' : '-- First select Option Type above --'}</option>
-                {Array.isArray(options) && options
-                  .filter((option: any) => {
-                    // Filter by selected optionTypeId
-                    if (!optionTypeId) return false;
-                    const optTypeId = typeof option.optionTypeId === 'string'
-                      ? option.optionTypeId
-                      : option.optionTypeId?._id || option.optionType?._id;
-                    return optTypeId === optionTypeId;
-                  })
-                  .map((option: any) => (
-                    <option key={option._id} value={option._id}>
-                      {option.name}
-                    </option>
-                  ))}
-              </select>
+              <div style={{
+                maxHeight: '200px',
+                overflowY: 'auto',
+                border: '1px solid #fbbf24',
+                borderRadius: '6px',
+                padding: '8px',
+                background: '#fffbeb',
+                opacity: optionTypeId ? 1 : 0.5
+              }}>
+                {!optionTypeId ? (
+                  <p style={{ color: '#92400e', fontSize: '12px', margin: 0 }}>Please select an Option Type above first</p>
+                ) : (
+                  <>
+                    {Array.isArray(options) && options
+                      .filter((option: any) => {
+                        // Filter by selected optionTypeId
+                        if (!optionTypeId) return false;
+                        const optTypeId = typeof option.optionTypeId === 'string'
+                          ? option.optionTypeId
+                          : option.optionTypeId?._id || option.optionType?._id;
+                        return optTypeId === optionTypeId;
+                      })
+                      .map((option: any) => (
+                        <label
+                          key={option._id}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            padding: '6px 8px',
+                            cursor: 'pointer',
+                            borderRadius: '4px',
+                            marginBottom: '4px',
+                            background: selectedReferenceOptionIds.includes(option._id) ? '#fef08a' : 'transparent',
+                            border: selectedReferenceOptionIds.includes(option._id) ? '1px solid #f59e0b' : '1px solid transparent'
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedReferenceOptionIds.includes(option._id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedReferenceOptionIds([...selectedReferenceOptionIds, option._id]);
+                              } else {
+                                setSelectedReferenceOptionIds(selectedReferenceOptionIds.filter(id => id !== option._id));
+                              }
+                            }}
+                          />
+                          <span style={{ fontSize: '13px' }}>{option.name}</span>
+                        </label>
+                      ))}
+                    {Array.isArray(options) && options.filter((option: any) => {
+                      if (!optionTypeId) return false;
+                      const optTypeId = typeof option.optionTypeId === 'string'
+                        ? option.optionTypeId
+                        : option.optionTypeId?._id || option.optionType?._id;
+                      return optTypeId === optionTypeId;
+                    }).length === 0 && (
+                      <p style={{ color: '#92400e', fontSize: '12px', margin: 0 }}>No Options found for this Option Type</p>
+                    )}
+                  </>
+                )}
+              </div>
+              {selectedReferenceOptionIds.length > 0 && (
+                <div style={{ marginTop: '8px', fontSize: '12px', color: '#b45309' }}>
+                  ✓ {selectedReferenceOptionIds.length} Option Name(s) selected
+                </div>
+              )}
             </div>
 
             {referenceOptionDimensionData.length > 0 && (
               <div>
                 <div className="createOptionSpec-referenceLabel" style={{ marginBottom: '0.5rem' }}>
-                  Available dimensions from "{Array.isArray(options) ? options.find((o: any) => o._id === selectedReferenceOptionId)?.name : ''}" (click to insert):
+                  Available dimensions from selected Option Names (click to insert):
                 </div>
                 <div className="createOptionSpec-dimensionTags">
-                  {referenceOptionDimensionData.map((dim, idx) => (
+                  {referenceOptionDimensionData.map((dim, idx) => {
+                    const safeName = dim.name.replace(/\s+/g, '_');
+                    return (
                     <span
                       key={idx}
                       className="createOptionSpec-dimensionTag"
@@ -999,9 +1151,9 @@ const CreateOptionSpec = () => {
                         e.currentTarget.style.color = '';
                         e.currentTarget.style.transform = '';
                       }}
-                      title={`Click to insert "${dim.name}" into formula (Current value: ${dim.value}${dim.unit ? ' ' + dim.unit : ''})`}
+                      title={`Click to insert "${safeName}" into formula (From: ${dim.sourceName}, Value: ${dim.value}${dim.unit ? ' ' + dim.unit : ''})`}
                     >
-                      <strong>{dim.name}</strong>
+                      <strong>{safeName}</strong>
                       <span style={{
                         background: 'rgba(0,0,0,0.1)',
                         padding: '2px 6px',
@@ -1010,34 +1162,47 @@ const CreateOptionSpec = () => {
                       }}>
                         = {dim.value}{dim.unit ? ` ${dim.unit}` : ''}
                       </span>
+                      {dim.sourceName && (
+                        <span style={{
+                          background: '#fef08a',
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          fontSize: '10px',
+                          color: '#92400e'
+                        }}>
+                          {dim.sourceName}
+                        </span>
+                      )}
                     </span>
-                  ))}
+                  );
+                  })}
                 </div>
                 <div className="createOptionSpec-referenceHint" style={{ background: '#fef9c3' }}>
                   💡 <strong>How to use:</strong> Click on a formula field below, then click on any dimension above to insert it.
                   <br />
-                  <strong>Values shown are from the selected Option Name and will be used in formula calculations.</strong>
+                  <strong>Values shown are from the selected Option Names and will be used in formula calculations.</strong>
                 </div>
               </div>
             )}
 
-            {!selectedReferenceOptionId && (
+            {selectedReferenceOptionIds.length === 0 && (
               <div className="createOptionSpec-referenceEmpty" style={{ background: '#fef9c3' }}>
-                ℹ️ Select an Option Name above to see available dimension names that you can use in formulas
+                ℹ️ Select one or more Option Names above to see available dimension names that you can use in formulas
               </div>
             )}
 
-            {selectedReferenceOptionId && referenceOptionDimensionData.length === 0 && (
+            {selectedReferenceOptionIds.length > 0 && referenceOptionDimensionData.length === 0 && (
               <div className="createOptionSpec-referenceEmpty" style={{ background: '#fef9c3' }}>
-                ℹ️ The selected Option Name has no number-type dimensions. Only number dimensions can be used in formulas.
+                ℹ️ The selected Option Names have no number-type dimensions. Only number dimensions can be used in formulas.
               </div>
             )}
           </div>
         </div>
 
-        <div className="createOptionSpec-formColumn">
+        {/* Specifications Section */}
+        <div className="createOptionSpec-section">
           <div className="createOptionSpec-dimensionsHeader">
-            <label className="createOptionSpec-label">Specifications</label>
+            <h3 className="createOptionSpec-sectionTitle" style={{ marginBottom: 0, borderBottom: 'none', paddingBottom: 0 }}>Specifications</h3>
             <button
               onClick={addDimension}
               className="createOptionSpec-addDimensionBtn"
@@ -1148,48 +1313,27 @@ const CreateOptionSpec = () => {
                 </div>
               )}
 
-              {/* 4 Boolean Flags Row */}
+              {/* Visible Toggle Row */}
               <div style={{
                 display: 'flex',
-                gap: '16px',
-                flexWrap: 'wrap',
+                gap: '12px',
+                alignItems: 'center',
                 marginTop: '8px',
                 padding: '10px 12px',
                 background: '#f0fdf4',
                 borderRadius: '6px',
                 border: '1px solid #bbf7d0'
               }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', cursor: 'pointer' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
                   <input
                     type="checkbox"
-                    checked={spec.public || false}
-                    onChange={(e) => updateDimension(index, "public", e.target.checked)}
+                    checked={spec.visible !== false}
+                    onChange={(e) => updateDimension(index, "visible", e.target.checked)}
+                    style={{ width: '16px', height: '16px', cursor: 'pointer' }}
                   />
-                  <span style={{ color: '#059669', fontWeight: 600 }}>🌐 Public</span>
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', cursor: 'pointer' }}>
-                  <input
-                    type="checkbox"
-                    checked={spec.usedForFormulas || false}
-                    onChange={(e) => updateDimension(index, "usedForFormulas", e.target.checked)}
-                  />
-                  <span style={{ color: '#7c3aed', fontWeight: 600 }}>🧮 Formulas</span>
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', cursor: 'pointer' }}>
-                  <input
-                    type="checkbox"
-                    checked={spec.orderTypeOnly || false}
-                    onChange={(e) => updateDimension(index, "orderTypeOnly", e.target.checked)}
-                  />
-                  <span style={{ color: '#dc2626', fontWeight: 600 }}>📋 Order Type Only</span>
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', cursor: 'pointer' }}>
-                  <input
-                    type="checkbox"
-                    checked={spec.query || false}
-                    onChange={(e) => updateDimension(index, "query", e.target.checked)}
-                  />
-                  <span style={{ color: '#0284c7', fontWeight: 600 }}>🔍 Query</span>
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: spec.visible !== false ? '#059669' : '#6b7280' }}>
+                    Visible
+                  </span>
                 </label>
               </div>
 
@@ -1391,15 +1535,17 @@ const CreateOptionSpec = () => {
           )}
         </div>
 
-        <div className="createOptionSpec-formColumn">
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className="createOptionSpec-button"
-          >
-            {loading ? "Saving..." : "💾 Save Option Spec"}
-          </button>
-        </div>
+      </div>
+
+      {/* Form Actions */}
+      <div className="createOptionSpec-formActions">
+        <button
+          onClick={handleSubmit}
+          disabled={loading}
+          className="createOptionSpec-button"
+        >
+          {loading ? "Saving..." : "Save Option Spec"}
+        </button>
       </div>
 
       {/* Reference Popup - Select dimension to reference */}
@@ -1465,8 +1611,6 @@ const CreateOptionSpec = () => {
           </div>
         </div>
       )}
-
-      </div>
     </div>
   );
 };

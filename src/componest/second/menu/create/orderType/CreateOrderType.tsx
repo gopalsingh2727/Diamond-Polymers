@@ -4,7 +4,6 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { createOrderType, updateOrderType, deleteOrderType } from "../../../../redux/create/orderType/orderTypeActions";
 import { getOptionTypes } from "../../../../redux/option/optionTypeActions";
 import { getOptionSpecs } from "../../../../redux/create/optionSpec/optionSpecActions";
-import { getPrintTypes } from "../../../../redux/create/printType/printTypeActions";
 import { AppDispatch } from "../../../../../store";
 import { ActionButton } from "../../../../../components/shared/ActionButton";
 import { ToastContainer } from "../../../../../components/shared/Toast";
@@ -130,14 +129,11 @@ const CreateOrderType: React.FC<CreateOrderTypeProps> = ({ initialData: propInit
   // Allowed Option Types
   const [allowedOptionTypes, setAllowedOptionTypes] = useState<string[]>([]);
 
-  // Linked Print Types
-  const [linkedPrintTypes, setLinkedPrintTypes] = useState<string[]>([]);
-
-  // Global/Default Settings
-  const [isGlobal, setIsGlobal] = useState(false);
-  const [isDefault, setIsDefault] = useState(false);
-  const [projectBase, setProjectBase] = useState(false);
-  const [isActive, setIsActive] = useState(true);
+  // Order Category Settings (manufacturing vs billing)
+  const [orderCategory, setOrderCategory] = useState<'manufacturing' | 'billing'>('manufacturing');
+  const [billingType, setBillingType] = useState<string>('');
+  const [allowManufacturingLink, setAllowManufacturingLink] = useState(false);
+  const [hideManufacturingSteps, setHideManufacturingSteps] = useState(false);
 
   // Delete confirmation modal
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -159,23 +155,45 @@ const CreateOrderType: React.FC<CreateOrderTypeProps> = ({ initialData: propInit
   const dispatch = useDispatch<AppDispatch>();
   const { saveState, handleSave, toast} = useCRUD();
 
-  // Get user role for conditional rendering
-  const userRole = useSelector((state: any) => state.auth?.userData?.role);
-
   // Get option types from Redux store
   const optionTypes = useSelector((state: any) => state.optionType?.optionTypes || []);
 
   // Get option specs from Redux store (contains actual specifications with values)
   const optionSpecs = useSelector((state: any) => state.optionSpec?.optionSpecs || []);
 
-  // Get print types from Redux store
-  const printTypes = useSelector((state: any) => state.printTypeList?.printTypes || []);
-
-  // Fetch option types, option specs, and print types on mount
+  // Fetch option types and option specs on mount
   useEffect(() => {
     dispatch(getOptionTypes());
     dispatch(getOptionSpecs());
-    dispatch(getPrintTypes());
+  }, [dispatch]);
+
+  // Listen for WebSocket updates to refetch data in real-time
+  useEffect(() => {
+    const handleWebSocketMessage = (event: CustomEvent) => {
+      const { type, data } = event.detail;
+
+      if (type === 'referenceData:invalidate') {
+        const entityType = data?.entity || data?.entityType;
+        console.log('🔄 [CreateOrderType] WebSocket invalidate received for:', entityType);
+
+        // Refetch based on entity type
+        if (entityType === 'optionType') {
+          console.log('📥 [CreateOrderType] Refetching optionTypes...');
+          dispatch(getOptionTypes());
+        }
+        if (entityType === 'optionSpec') {
+          console.log('📥 [CreateOrderType] Refetching optionSpecs...');
+          dispatch(getOptionSpecs());
+        }
+      }
+    };
+
+    // Add event listener for WebSocket messages
+    window.addEventListener('websocket:message', handleWebSocketMessage as EventListener);
+
+    return () => {
+      window.removeEventListener('websocket:message', handleWebSocketMessage as EventListener);
+    };
   }, [dispatch]);
 
   // Handle ESC key to go back to list in edit mode
@@ -215,19 +233,11 @@ const CreateOrderType: React.FC<CreateOrderTypeProps> = ({ initialData: propInit
         setAllowedOptionTypes(optionTypeIds);
       }
 
-      // Linked Print Types
-      if (orderTypeData.linkedPrintTypes && Array.isArray(orderTypeData.linkedPrintTypes)) {
-        const printTypeIds = orderTypeData.linkedPrintTypes.map((pt: any) =>
-          typeof pt === 'string' ? pt : pt._id
-        );
-        setLinkedPrintTypes(printTypeIds);
-      }
-
-      // Global/Default Settings
-      setIsGlobal(orderTypeData.isGlobal || false);
-      setIsDefault(orderTypeData.isDefault || false);
-      setProjectBase(orderTypeData.projectBase || false);
-      setIsActive(orderTypeData.isActive !== false); // Default to true if not set
+      // Order Category Settings
+      setOrderCategory(orderTypeData.orderCategory || 'manufacturing');
+      setBillingType(orderTypeData.billingType || '');
+      setAllowManufacturingLink(orderTypeData.allowManufacturingLink || false);
+      setHideManufacturingSteps(orderTypeData.hideManufacturingSteps || false);
 
       // Section Configuration
       if (orderTypeData.sections && orderTypeData.sections.length > 0) {
@@ -503,6 +513,12 @@ const CreateOrderType: React.FC<CreateOrderTypeProps> = ({ initialData: propInit
       return;
     }
 
+    // Validate billing type is required for billing category
+    if (orderCategory === 'billing' && !billingType) {
+      toast.error("Validation Error", "Please select a Billing Type when Order Category is Billing");
+      return;
+    }
+
     // Build order type data
     const dataToSave = {
       typeName,
@@ -512,11 +528,11 @@ const CreateOrderType: React.FC<CreateOrderTypeProps> = ({ initialData: propInit
       numberFormat,
       sequencePadding: Number(sequencePadding),
       allowedOptionTypes,
-      linkedPrintTypes,
-      isGlobal,
-      isDefault,
-      projectBase,
-      isActive,
+      // Order Category Settings
+      orderCategory,
+      billingType: orderCategory === 'billing' ? billingType : undefined,
+      allowManufacturingLink: orderCategory === 'billing' ? allowManufacturingLink : false,
+      hideManufacturingSteps: orderCategory === 'billing' ? hideManufacturingSteps : false,
       // Section configuration for dynamic form rendering - save all sections sorted by order
       sections: sections
         .sort((a, b) => a.order - b.order)
@@ -590,6 +606,10 @@ const CreateOrderType: React.FC<CreateOrderTypeProps> = ({ initialData: propInit
             setLinkedPrintTypes([]);
             setIsGlobal(false);
             setIsDefault(false);
+            setOrderCategory('manufacturing');
+            setBillingType('');
+            setAllowManufacturingLink(false);
+            setHideManufacturingSteps(false);
             setSections(defaultSections);
             setExpandedSection(null);
             setDynamicCalculations([]);
@@ -784,6 +804,136 @@ const CreateOrderType: React.FC<CreateOrderTypeProps> = ({ initialData: propInit
           </div>
         </div>
 
+        {/* Order Category Section */}
+        <div className="orderTypeSection">
+          <h3 className="orderTypeSectionTitle">
+            Order Category
+            <FieldTooltip
+              content="Select whether this order type is for manufacturing (production orders) or billing (invoices, estimates, etc.)"
+              position="right"
+            />
+          </h3>
+
+          <div className="orderTypeFormRow">
+            <div className="orderTypeFormColumn">
+              <label className="orderTypeInputLabel">Category *</label>
+              <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOrderCategory('manufacturing');
+                    setBillingType('');
+                    setAllowManufacturingLink(false);
+                    setHideManufacturingSteps(false);
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: '16px 24px',
+                    background: orderCategory === 'manufacturing' ? '#3b82f6' : '#f3f4f6',
+                    color: orderCategory === 'manufacturing' ? 'white' : '#374151',
+                    border: orderCategory === 'manufacturing' ? '2px solid #2563eb' : '2px solid #e5e7eb',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontWeight: orderCategory === 'manufacturing' ? 600 : 400,
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  <div style={{ fontSize: '24px', marginBottom: '8px' }}>🏭</div>
+                  <div style={{ fontSize: '14px' }}>Manufacturing</div>
+                  <div style={{ fontSize: '11px', opacity: 0.7, marginTop: '4px' }}>Production orders with steps</div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOrderCategory('billing');
+                    setHideManufacturingSteps(true);
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: '16px 24px',
+                    background: orderCategory === 'billing' ? '#10b981' : '#f3f4f6',
+                    color: orderCategory === 'billing' ? 'white' : '#374151',
+                    border: orderCategory === 'billing' ? '2px solid #059669' : '2px solid #e5e7eb',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontWeight: orderCategory === 'billing' ? 600 : 400,
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  <div style={{ fontSize: '24px', marginBottom: '8px' }}>📄</div>
+                  <div style={{ fontSize: '14px' }}>Billing</div>
+                  <div style={{ fontSize: '11px', opacity: 0.7, marginTop: '4px' }}>Invoices, estimates, quotations</div>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Billing-specific options */}
+          {orderCategory === 'billing' && (
+            <div style={{ marginTop: '16px', padding: '16px', background: '#ecfdf5', borderRadius: '8px', border: '1px solid #10b981' }}>
+              <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: 600, color: '#065f46' }}>Billing Options</h4>
+
+              <div className="orderTypeFormRow" style={{ marginBottom: '16px' }}>
+                <div className="orderTypeFormColumn">
+                  <label className="orderTypeInputLabel">Billing Type *</label>
+                  <select
+                    value={billingType}
+                    onChange={(e) => setBillingType(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      background: 'white'
+                    }}
+                  >
+                    <option value="">Select billing type...</option>
+                    <option value="invoice">Invoice</option>
+                    <option value="estimate">Estimate</option>
+                    <option value="quotation">Quotation</option>
+                    <option value="challan">Challan</option>
+                    <option value="credit_note">Credit Note</option>
+                    <option value="debit_note">Debit Note</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={allowManufacturingLink}
+                    onChange={(e) => setAllowManufacturingLink(e.target.checked)}
+                    style={{ width: '18px', height: '18px', accentColor: '#10b981' }}
+                  />
+                  <div>
+                    <div style={{ fontWeight: 500, color: '#065f46' }}>Allow Manufacturing Order Link</div>
+                    <div style={{ fontSize: '12px', color: '#6b7280' }}>
+                      Enable linking this billing order to a completed manufacturing order
+                    </div>
+                  </div>
+                </label>
+
+                <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={hideManufacturingSteps}
+                    onChange={(e) => setHideManufacturingSteps(e.target.checked)}
+                    style={{ width: '18px', height: '18px', accentColor: '#10b981' }}
+                  />
+                  <div>
+                    <div style={{ fontWeight: 500, color: '#065f46' }}>Hide Manufacturing Steps</div>
+                    <div style={{ fontSize: '12px', color: '#6b7280' }}>
+                      Hide production steps section when creating orders of this type
+                    </div>
+                  </div>
+                </label>
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Numbering Configuration Section */}
         <div className="orderTypeSection">
           <h3 className="orderTypeSectionTitle">Order Numbering</h3>
@@ -904,152 +1054,6 @@ const CreateOrderType: React.FC<CreateOrderTypeProps> = ({ initialData: propInit
                   }
                 </div>
               )}
-            </div>
-          </div>
-        </div>
-
-        {/* Linked Print Types Section */}
-        <div className="orderTypeSection">
-          <h3 className="orderTypeSectionTitle">
-            Linked Print Types
-            <FieldTooltip
-              content="Select which print types can be used when printing orders of this type. Leave empty to allow all print types."
-              position="right"
-            />
-          </h3>
-
-          <div className="orderTypeFormRow">
-            <div style={{ width: '100%' }}>
-              {printTypes.length === 0 ? (
-                <p style={{ color: '#666', fontStyle: 'italic' }}>No print types available. Create print types first.</p>
-              ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '0.5rem' }}>
-                  {printTypes.map((printType: any) => (
-                    <label
-                      key={printType._id}
-                      className="orderTypeCheckboxLabel"
-                      style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', padding: '0.5rem', border: '1px solid #e0e0e0', borderRadius: '4px', cursor: 'pointer' }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={linkedPrintTypes.includes(printType._id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setLinkedPrintTypes([...linkedPrintTypes, printType._id]);
-                          } else {
-                            setLinkedPrintTypes(linkedPrintTypes.filter(id => id !== printType._id));
-                          }
-                        }}
-                        style={{ marginTop: '0.25rem', flexShrink: 0 }}
-                      />
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: 500 }}>{printType.typeName}</div>
-                        <div style={{ fontSize: '0.75rem', color: '#666' }}>
-                          Code: {printType.typeCode} | Paper: {printType.paperSize} | {printType.orientation}
-                        </div>
-                        {printType.description && (
-                          <div style={{ fontSize: '0.75rem', color: '#888', marginTop: '0.125rem' }}>
-                            {printType.description}
-                          </div>
-                        )}
-                      </div>
-                    </label>
-                  ))}
-                </div>
-              )}
-              {printTypes.length > 0 && (
-                <div style={{ marginTop: '0.75rem', fontSize: '0.875rem', color: '#666' }}>
-                  {linkedPrintTypes.length === 0
-                    ? "No print types selected (all print types will be allowed)"
-                    : `${linkedPrintTypes.length} print type(s) selected`
-                  }
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Global/Default Settings Section */}
-        <div className="orderTypeSection">
-          <h3 className="orderTypeSectionTitle">Advanced Settings</h3>
-
-          <div className="orderTypeCheckboxGrid">
-            {userRole === 'admin' && (
-              <label className="orderTypeCheckboxLabel">
-                <input
-                  type="checkbox"
-                  checked={isGlobal}
-                  onChange={(e) => setIsGlobal(e.target.checked)}
-                />
-                <span>Global Order Type</span>
-                <FieldTooltip
-                  content="Make this order type available across all branches"
-                  position="right"
-                />
-              </label>
-            )}
-
-            <label className="orderTypeCheckboxLabel">
-              <input
-                type="checkbox"
-                checked={isDefault}
-                onChange={(e) => setIsDefault(e.target.checked)}
-              />
-              <span>Set as Default</span>
-              <FieldTooltip
-                content="Make this the default order type when creating new orders"
-                position="right"
-              />
-            </label>
-
-            <label className="orderTypeCheckboxLabel">
-              <input
-                type="checkbox"
-                checked={projectBase}
-                onChange={(e) => setProjectBase(e.target.checked)}
-              />
-              <span>Project Base</span>
-              <FieldTooltip
-                content="Enable project-based order tracking. When enabled, orders will support project workflows. When disabled, orders follow standard manufacturing workflows."
-                position="right"
-              />
-            </label>
-          </div>
-
-          {/* Active/Inactive Status */}
-          <div style={{ marginTop: '1rem' }}>
-            <label className="orderTypeInputLabel" style={{ marginBottom: '0.5rem', display: 'block' }}>Status</label>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button
-                type="button"
-                onClick={() => setIsActive(true)}
-                style={{
-                  padding: '8px 16px',
-                  background: isActive ? '#22c55e' : '#e5e7eb',
-                  color: isActive ? 'white' : '#666',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontWeight: isActive ? '600' : '400'
-                }}
-              >
-                Active
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsActive(false)}
-                style={{
-                  padding: '8px 16px',
-                  background: !isActive ? '#ef4444' : '#e5e7eb',
-                  color: !isActive ? 'white' : '#666',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontWeight: !isActive ? '600' : '400'
-                }}
-              >
-                Inactive
-              </button>
             </div>
           </div>
         </div>
@@ -1527,6 +1531,13 @@ const CreateOrderType: React.FC<CreateOrderTypeProps> = ({ initialData: propInit
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {sections
+              .filter(section => {
+                // Hide Manufacturing Steps section when hideManufacturingSteps is checked
+                if (hideManufacturingSteps && section.id === 'steps') {
+                  return false;
+                }
+                return true;
+              })
               .sort((a, b) => a.order - b.order)
               .map((section, index) => (
                 <div

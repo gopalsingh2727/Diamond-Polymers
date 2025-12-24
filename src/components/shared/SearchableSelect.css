@@ -8,8 +8,11 @@
   display: block;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #374151;
+  color: #374151 !important;
   margin-bottom: 0.25rem;
+  /* Ensure text visibility */
+  -webkit-text-fill-color: #374151;
+  opacity: 1;
 }
 
 .searchable-select-input-wrapper {
@@ -24,10 +27,19 @@
   border: 1px solid #d1d5db;
   border-radius: 0.375rem;
   font-size: 0.875rem;
-  color: #111827;
+  color: #111827 !important;
   background-color: #fff;
+  -webkit-transition: all 0.15s ease-in-out;
   transition: all 0.15s ease-in-out;
   outline: none;
+  /* Cross-browser fixes */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  -ms-appearance: none;
+  appearance: none;
+  /* Ensure text visibility */
+  -webkit-text-fill-color: #111827;
+  opacity: 1;
 }
 
 .searchable-select-input:hover:not(:disabled) {
@@ -36,6 +48,7 @@
 
 .searchable-select-input:focus {
   border-color: #FF6B35;
+  -webkit-box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
   box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
 }
 
@@ -66,16 +79,19 @@
 
 .searchable-select-loader {
   font-size: 0.875rem;
+  -webkit-animation: pulse 1.5s ease-in-out infinite;
   animation: pulse 1.5s ease-in-out infinite;
 }
 
 .searchable-select-arrow {
   font-size: 0.625rem;
   color: #6b7280;
+  -webkit-transition: transform 0.2s ease;
   transition: transform 0.2s ease;
 }
 
 .searchable-select-arrow.open {
+  -webkit-transform: rotate(180deg);
   transform: rotate(180deg);
 }
 
@@ -86,13 +102,19 @@
   border: 1px solid #bfdbfe;
   border-radius: 0.25rem;
   font-size: 0.75rem;
-  color: #1e40af;
+  color: #1e40af !important;
+  /* Ensure text visibility */
+  -webkit-text-fill-color: #1e40af;
+  opacity: 1;
 }
 
 .searchable-select-error {
   margin-top: 0.25rem;
   font-size: 0.75rem;
-  color: #dc2626;
+  color: #dc2626 !important;
+  /* Ensure text visibility */
+  -webkit-text-fill-color: #dc2626;
+  opacity: 1;
 }
 
 .searchable-select-dropdown {
@@ -107,6 +129,7 @@
   border-top: none;
   border-bottom-left-radius: 0.375rem;
   border-bottom-right-radius: 0.375rem;
+  -webkit-box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   z-index: 50;
 }
@@ -131,14 +154,18 @@
 .searchable-select-no-results {
   padding: 1rem;
   text-align: center;
-  color: #6b7280;
+  color: #6b7280 !important;
   font-size: 0.875rem;
+  /* Ensure text visibility */
+  -webkit-text-fill-color: #6b7280;
+  opacity: 1;
 }
 
 .searchable-select-option {
   padding: 0.75rem;
   cursor: pointer;
   border-bottom: 1px solid #f3f4f6;
+  -webkit-transition: background-color 0.1s ease;
   transition: background-color 0.1s ease;
 }
 
@@ -164,14 +191,20 @@
   gap: 0.5rem;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #111827;
+  color: #111827 !important;
+  /* Ensure text visibility */
+  -webkit-text-fill-color: #111827;
+  opacity: 1;
 }
 
 .searchable-select-option-description {
   margin-top: 0.25rem;
   font-size: 0.75rem;
-  color: #6b7280;
+  color: #6b7280 !important;
   line-height: 1.25;
+  /* Ensure text visibility */
+  -webkit-text-fill-color: #6b7280;
+  opacity: 1;
 }
 
 .searchable-select-badge {
@@ -187,6 +220,15 @@
   color: #065f46;
 }
 
+@-webkit-keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
 @keyframes pulse {
   0%, 100% {
     opacity: 1;
@@ -199,13 +241,15 @@
 /* Dark mode support (optional) */
 @media (prefers-color-scheme: dark) {
   .searchable-select-label {
-    color: #e5e7eb;
+    color: #e5e7eb !important;
+    -webkit-text-fill-color: #e5e7eb;
   }
 
   .searchable-select-input {
     background-color: #1f2937;
     border-color: #374151;
-    color: #f9fafb;
+    color: #f9fafb !important;
+    -webkit-text-fill-color: #f9fafb;
   }
 
   .searchable-select-input:disabled {
@@ -215,7 +259,8 @@
   .searchable-select-hint {
     background-color: #1e3a8a;
     border-color: #1e40af;
-    color: #bfdbfe;
+    color: #bfdbfe !important;
+    -webkit-text-fill-color: #bfdbfe;
   }
 
   .searchable-select-dropdown {
@@ -236,10 +281,12 @@
   }
 
   .searchable-select-option-label {
-    color: #f9fafb;
+    color: #f9fafb !important;
+    -webkit-text-fill-color: #f9fafb;
   }
 
   .searchable-select-option-description {
-    color: #9ca3af;
+    color: #9ca3af !important;
+    -webkit-text-fill-color: #9ca3af;
   }
 }

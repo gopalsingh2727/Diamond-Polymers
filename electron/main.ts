@@ -159,6 +159,25 @@ app.whenReady().then(() => {
     log.error(`Failed to register refresh shortcut: ${refreshShortcut}`);
   }
 
+  // Register global keyboard shortcut for DevTools (Option+Cmd+I on macOS, Ctrl+Shift+I on Windows/Linux)
+  const devToolsShortcut = process.platform === 'darwin' ? 'Option+Command+I' : 'Control+Shift+I';
+  const devToolsRegistered = globalShortcut.register(devToolsShortcut, () => {
+    log.info('DevTools shortcut triggered');
+    if (win && !win.isDestroyed()) {
+      if (win.webContents.isDevToolsOpened()) {
+        win.webContents.closeDevTools();
+      } else {
+        win.webContents.openDevTools();
+      }
+    }
+  });
+
+  if (devToolsRegistered) {
+    log.info(`DevTools shortcut registered: ${devToolsShortcut}`);
+  } else {
+    log.error(`Failed to register DevTools shortcut: ${devToolsShortcut}`);
+  }
+
   // Get download URL with platform-specific auto-download parameter
   const getDownloadUrl = (): string => {
     const baseUrl = 'https://27infinity.in/products';

@@ -1,78 +1,120 @@
-/* ====================================
-   Create Option - Compact Form Styles
-   All class names start with createOption-
-   ==================================== */
+/* ==========================================================================
+   CREATE OPTION COMPONENT - Grid-Based Layout CSS
+   Matching OrderType styling for consistency
+   ========================================================================== */
 
-/* Container - Centered on Screen */
+/* Main Container */
 .createOption-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  max-width: 1400px;
   width: 100%;
-  min-height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 20px;
+  margin: 0 auto;
+  padding: 2rem;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  min-height: 100vh;
 }
 
-/* Form Card */
-.createOption-form {
-  background: white;
-  padding: 24px 32px;
-  max-width: 500px;
-  width: 100%;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+/* Header Section */
+.createOption-header {
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e5e7eb;
+  margin-bottom: 1rem;
 }
 
-/* Title */
 .createOption-title {
-  font-size: 1.25rem;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 0.5rem;
+  text-align: left;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.createOption-subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* Form Grid */
+.createOption-formGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+/* Form Section */
+.createOption-section {
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 1.5rem;
+}
+
+.createOption-sectionTitle {
+  font-size: 1.125rem;
   font-weight: 600;
-  color: #1f2937;
-  text-align: center;
-  margin: 0 0 20px 0;
-  padding-bottom: 15px;
-  border-bottom: 1px solid #e5e7eb;
+  color: #374151;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #d1d5db;
 }
 
-/* Form Group - Compact spacing */
+/* Form Row - Side by Side Layout */
+.createOption-formRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.createOption-formRow:last-child {
+  margin-bottom: 0;
+}
+
+/* Form Group */
 .createOption-group {
-  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0;
 }
 
-/* Label - Close to input */
+/* Input Label */
 .createOption-label {
-  display: block;
-  font-size: 13px;
+  font-size: 0.875rem;
   font-weight: 500;
   color: #374151;
-  margin-bottom: 4px;
+  display: block;
 }
 
-/* Select/Input - Underline Style */
+/* Form Inputs - Underline Style */
 .createOption-select,
 .createOption-input {
   width: 100%;
   padding: 10px 0;
-  font-size: 14px;
-  color: #1f2937;
-  background-color: rgba(255, 255, 255, 0.1);
   border: none;
   border-bottom: 0.5px solid #333;
   border-radius: 0;
+  font-size: 0.875rem;
+  color: #111827;
+  background-color: rgba(255, 255, 255, 0.1);
+  transition: all 0.15s ease-in-out;
   outline: none;
-  box-sizing: border-box;
-  -webkit-transition: border-color 0.2s ease;
-  transition: border-color 0.2s ease;
-  /* Cross-browser fixes */
+  font-family: inherit;
   -webkit-appearance: none;
   -moz-appearance: none;
-  -ms-appearance: none;
   appearance: none;
 }
 
-/* IE11 fix for select dropdown */
-.createOption-select::-ms-expand {
-  display: none;
+.createOption-select:hover,
+.createOption-input:hover {
+  border-bottom-color: #6b7280;
 }
 
 .createOption-select:focus,
@@ -81,59 +123,481 @@
   border-bottom: 2px solid #FF6B35;
 }
 
+.createOption-select:disabled,
+.createOption-input:disabled {
+  background-color: #f3f4f6;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .createOption-input::placeholder {
   color: #9ca3af;
 }
 
-/* Hint text */
-.createOption-hint {
-  font-size: 12px;
-  color: #6b7280;
-  margin-top: 4px;
+/* IE11 fix for select dropdown */
+.createOption-select::-ms-expand {
+  display: none;
 }
 
-/* Button - Full Width Orange */
-.createOption-button {
-  width: 100%;
-  padding: 14px 24px;
-  margin-top: 24px;
+/* Hint text */
+.createOption-hint {
+  font-size: 0.813rem;
+  color: #6b7280;
+  margin-top: 0.375rem;
+  font-style: italic;
+}
+
+/* Option Type Info Box */
+.createOption-optionTypeInfo {
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: #ecfdf5;
+  border: 1px solid #10b981;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.createOption-optionTypeInfoTitle {
+  font-weight: 600;
+  color: #065f46;
+  margin-bottom: 4px;
+}
+
+.createOption-optionTypeInfoFields {
+  color: #047857;
+  font-size: 12px;
+}
+
+/* Option Type Values Display */
+.createOption-optionTypeValues {
+  background: #d1fae5;
+  padding: 16px;
+  border-radius: 8px;
+  border: 2px solid #10b981;
+}
+
+.createOption-optionTypeValuesTitle {
+  color: #065f46;
+  margin-bottom: 10px;
   font-size: 15px;
   font-weight: 600;
-  color: white;
-  background: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%);
-  border: none;
-  border-radius: 8px;
+}
+
+.createOption-optionTypeValuesGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.createOption-optionTypeValueItem {
   cursor: pointer;
-  -webkit-transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: white;
+  border: 1px solid #10b981;
+  padding: 12px 16px;
+  border-radius: 8px;
+  min-width: 100px;
   transition: all 0.2s ease;
-  -webkit-box-shadow: 0 2px 8px rgba(255, 107, 53, 0.25);
-  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.25);
-  /* Cross-browser fixes */
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  /* GPU acceleration for Windows */
-  -webkit-transform: translateZ(0);
-  transform: translateZ(0);
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.createOption-optionTypeValueItem:hover {
+  background: #10b981;
+  color: white;
+  transform: scale(1.05);
+}
+
+.createOption-optionTypeValueName {
+  font-size: 12px;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.createOption-optionTypeValueNumber {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.createOption-formulaHint {
+  padding: 10px;
+  background: #a7f3d0;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #065f46;
+}
+
+.createOption-formulaCode {
+  background: #6ee7b7;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* Dimensions Section Header */
+.createOption-dimensionsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.createOption-dimensionsTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.createOption-templateBadge {
+  font-size: 11px;
+  color: #059669;
+  font-weight: 500;
+}
+
+.createOption-addButton {
+  padding: 6px 12px;
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.2s ease;
+}
+
+.createOption-addButton:hover {
+  background: #059669;
+}
+
+/* Empty State */
+.createOption-emptyState {
+  text-align: center;
+  padding: 2rem;
+  color: #6b7280;
+  font-size: 0.875rem;
+  background-color: #f9fafb;
+  border-radius: 0.5rem;
+  border: 1px dashed #d1d5db;
+}
+
+/* Dimension Card */
+.createOption-dimensionCard {
+  padding: 14px;
+  margin-bottom: 10px;
+  background: #ffffff;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s ease;
+}
+
+.createOption-dimensionCard.calculated {
+  background: #e8f5e9;
+  border-color: #a5d6a7;
+}
+
+.createOption-dimensionRow {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.createOption-dimensionInput {
+  flex: 1;
+  min-width: 120px;
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 13px;
+  transition: border-color 0.2s ease;
+}
+
+.createOption-dimensionInput:focus {
+  outline: none;
+  border-color: #FF6B35;
+}
+
+.createOption-dimensionInput.calculated {
+  background-color: #c8e6c9;
+}
+
+.createOption-dimensionSelect {
+  width: 100px;
+  padding: 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.createOption-unitSelect {
+  width: 70px;
+  padding: 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.createOption-removeButton {
+  padding: 8px 10px;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.2s ease;
+}
+
+.createOption-removeButton:hover {
+  background: #dc2626;
+}
+
+/* Formula Row */
+.createOption-formulaRow {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+  align-items: center;
+}
+
+.createOption-formulaLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: #7c3aed;
+  min-width: 60px;
+}
+
+.createOption-formulaInput {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 13px;
+  font-family: monospace;
+  transition: all 0.2s ease;
+}
+
+.createOption-formulaInput:focus {
+  outline: none;
+  border: 2px solid #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+}
+
+.createOption-autoBadge {
+  background: #22c55e;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Visibility Row */
+.createOption-visibilityRow {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px;
+  background: #fff;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+.createOption-visibilityLabel {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.createOption-visibilityText {
+  font-weight: 500;
+}
+
+.createOption-visibilityText.visible {
+  color: #059669;
+}
+
+.createOption-visibilityText.hidden {
+  color: #9ca3af;
+}
+
+/* Form Actions */
+.createOption-formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 2px solid #e5e7eb;
+}
+
+/* Button */
+.createOption-button {
+  width: 200px;
+  padding: 0.875rem 1.5rem;
+  font-size: 0.938rem;
+  font-weight: 600;
+  background-color: #FF6B35;
+  color: #ffffff;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
 }
 
 .createOption-button:hover:not(:disabled) {
-  background: linear-gradient(135deg, #E55A2B 0%, #d44a1b 100%);
-  -webkit-transform: translateY(-2px) translateZ(0);
-  transform: translateY(-2px) translateZ(0);
-  -webkit-box-shadow: 0 4px 16px rgba(255, 107, 53, 0.35);
-  box-shadow: 0 4px 16px rgba(255, 107, 53, 0.35);
-  will-change: transform;
+  background-color: #E55A2B;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transform: translateY(-1px);
+}
+
+.createOption-button:active:not(:disabled) {
+  background-color: #E55A2B;
+  transform: translateY(0);
 }
 
 .createOption-button:disabled {
-  background: #9ca3af;
+  background-color: #9ca3af;
   cursor: not-allowed;
-  -webkit-transform: none;
-  transform: none;
-  -webkit-box-shadow: none;
-  box-shadow: none;
-  will-change: auto;
+  opacity: 0.6;
+}
+
+/* Back/Delete Button Group */
+.createOption-actionButtons {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.createOption-backButton {
+  padding: 8px 16px;
+  background: #6b7280;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.createOption-backButton:hover {
+  background: #4b5563;
+}
+
+.createOption-deleteButton {
+  padding: 8px 16px;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.createOption-deleteButton:hover {
+  background: #dc2626;
+}
+
+/* Animation: Fade In */
+@keyframes createOptionFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.createOption-section,
+.createOption-dimensionCard {
+  animation: createOptionFadeIn 0.3s ease-out;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .createOption-formRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .createOption-container {
+    padding: 1rem;
+  }
+
+  .createOption-title {
+    font-size: 1.5rem;
+  }
+
+  .createOption-section {
+    padding: 1rem;
+  }
+
+  .createOption-formRow {
+    grid-template-columns: 1fr;
+  }
+
+  .createOption-formActions {
+    flex-direction: column;
+  }
+
+  .createOption-button {
+    width: 100%;
+  }
+
+  .createOption-dimensionRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .createOption-dimensionInput,
+  .createOption-dimensionSelect,
+  .createOption-unitSelect {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .createOption-container {
+    padding: 0.75rem;
+  }
+
+  .createOption-header {
+    margin-bottom: 1rem;
+  }
+
+  .createOption-formGrid {
+    gap: 1rem;
+  }
+
+  .createOption-dimensionsHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .createOption-addButton {
+    width: 100%;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .createOption-container {
+    box-shadow: none;
+    padding: 0;
+  }
+
+  .createOption-formActions {
+    display: none;
+  }
+
+  .createOption-section {
+    break-inside: avoid;
+  }
 }

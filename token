@@ -39,7 +39,10 @@ that uses axios to POST to an API. The API URL should come from VITE_API_27INFIN
 git add .
 git commit -m "Fix landing page import"
 git push origin main
-git tag -d v1.0.14
-git push origin :refs/tags/v1.0.14
+git tag v1.0.15
+git push origin v1.0.15
 npm run build electron-builder --publish always
 
+ aws logs
+ tail /aws/lambda/this27-dev-websocketConnect --follow
+ --region ap-south-1

@@ -58,6 +58,33 @@ const OptionsSection: React.FC<OptionsSectionProps> = ({
     dispatch(getOptions({ category, branchId }) as any);
   }, [dispatch, category]);
 
+  // Listen for WebSocket updates to refetch options in real-time
+  useEffect(() => {
+    const branchId = localStorage.getItem('branchId') || '';
+
+    const handleWebSocketMessage = (event: CustomEvent) => {
+      const { type, data } = event.detail;
+
+      if (type === 'referenceData:invalidate') {
+        const entityType = data?.entity || data?.entityType;
+        console.log('🔄 [OptionsSection] WebSocket invalidate received for:', entityType);
+
+        // Refetch options when option or optionType is updated
+        if (entityType === 'option' || entityType === 'optionType') {
+          console.log('📥 [OptionsSection] Refetching options for category:', category);
+          dispatch(getOptions({ category, branchId }) as any);
+        }
+      }
+    };
+
+    // Add event listener for WebSocket messages
+    window.addEventListener('websocket:message', handleWebSocketMessage as EventListener);
+
+    return () => {
+      window.removeEventListener('websocket:message', handleWebSocketMessage as EventListener);
+    };
+  }, [dispatch, category]);
+
   // Filter options by search term
   const filteredOptions = options.filter((opt: any) =>
     opt.optionTypeId?.category === category &&

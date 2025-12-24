@@ -185,7 +185,7 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
   // Company info with safe access
   const companyName = (authState as any)?.user?.companyName || "ABC Company";
   const branchName = (authState as any)?.user?.branchName || "Main Branch";
-  const branchId = (authState as any)?.user?.branchId || null;  // ✅ For WebSocket subscription
+  const branchId = (authState as any)?.user?.branchId || localStorage.getItem('branchId') || localStorage.getItem('selectedBranch') || null;  // ✅ For WebSocket subscription
 
   // Check if accountData exists
   if (!accountData) {
@@ -350,10 +350,18 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
   useEffect(() => {
     console.log("🔄 AccountInfo useEffect triggered - fetching account orders");
     fetchAccountOrdersData();
+
+    // ✅ Check if orders were updated while navigating - force refresh
+    const ordersUpdated = sessionStorage.getItem('orders_updated');
+    if (ordersUpdated) {
+      console.log("📡 Orders were updated - forcing refresh");
+      sessionStorage.removeItem('orders_updated');
+      setTimeout(() => fetchAccountOrdersData(), 100);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, accountData?._id, fromDate, toDate, searchTerm, statusFilter]);
 
-  // ✅ REPLACED: 30-second polling with WebSocket real-time subscription
+  // ✅ WebSocket real-time subscription for instant order updates
   const handleOrderUpdate = useCallback(() => {
     console.log("📡 WebSocket: Account orders update received - refreshing");
     fetchAccountOrdersData();

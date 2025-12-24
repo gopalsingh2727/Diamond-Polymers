@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
+import ReactDOM from "react-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
 import { createExcelExportType, updateExcelExportType, deleteExcelExportType } from "../../../../redux/create/excelExportType/excelExportTypeActions";
-import { getOptionTypes } from "../../../../redux/option/optionTypeActions";
-import { getOptionSpecs } from "../../../../redux/create/optionSpec/optionSpecActions";
 import { AppDispatch } from "../../../../../store";
 import { ActionButton } from "../../../../../components/shared/ActionButton";
 import { ToastContainer } from "../../../../../components/shared/Toast";
@@ -111,9 +110,6 @@ const CreateExcelExportType: React.FC<CreateExcelExportTypeProps> = ({ initialDa
   const [sheetName, setSheetName] = useState("Orders");
   const [fileNamePrefix, setFileNamePrefix] = useState("Export");
 
-  // Linked Option Types
-  const [linkedOptionTypes, setLinkedOptionTypes] = useState<string[]>([]);
-
   // Global/Default Settings
   const [isGlobal, setIsGlobal] = useState(false);
   const [isDefault, setIsDefault] = useState(false);
@@ -123,66 +119,14 @@ const CreateExcelExportType: React.FC<CreateExcelExportTypeProps> = ({ initialDa
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  // Excel Preview
+  const [showPreview, setShowPreview] = useState(false);
+
   const dispatch = useDispatch<AppDispatch>();
   const { saveState, handleSave, toast } = useCRUD();
 
   // Get user role for conditional rendering
   const userRole = useSelector((state: any) => state.auth?.userData?.role);
-
-  // Get option types from Redux store
-  const optionTypes = useSelector((state: any) => state.optionType?.optionTypes || []);
-
-  // Get option specs from Redux store (contains actual specifications with values)
-  const optionSpecs = useSelector((state: any) => state.optionSpec?.optionSpecs || []);
-
-  // Fetch option types and option specs on mount
-  useEffect(() => {
-    dispatch(getOptionTypes());
-    dispatch(getOptionSpecs());
-  }, [dispatch]);
-
-  // Get all specifications from linked option types (from OptionSpecs)
-  const getLinkedOptionTypesSpecs = () => {
-    const allSpecs: { optionTypeName: string; optionTypeId: string; specs: any[] }[] = [];
-
-    linkedOptionTypes.forEach((optionTypeId) => {
-      const optionType = optionTypes.find((ot: any) => ot._id === optionTypeId);
-      if (optionType) {
-        // Get all OptionSpecs that belong to this OptionType
-        const relatedSpecs = optionSpecs.filter((spec: any) =>
-          spec.optionTypeId === optionTypeId ||
-          (spec.optionTypeId && spec.optionTypeId._id === optionTypeId)
-        );
-
-        // Collect all unique specifications from these OptionSpecs
-        const allSpecsFromOptionSpecs: any[] = [];
-        relatedSpecs.forEach((optionSpec: any) => {
-          if (optionSpec.specifications && Array.isArray(optionSpec.specifications)) {
-            optionSpec.specifications.forEach((spec: any) => {
-              // Check if we already have this spec name (avoid duplicates)
-              if (!allSpecsFromOptionSpecs.some(existing => existing.name === spec.name)) {
-                allSpecsFromOptionSpecs.push({
-                  ...spec,
-                  fromOptionSpec: optionSpec.name,
-                  fromOptionSpecCode: optionSpec.code
-                });
-              }
-            });
-          }
-        });
-
-        if (allSpecsFromOptionSpecs.length > 0) {
-          allSpecs.push({
-            optionTypeName: optionType.name,
-            optionTypeId: optionType._id,
-            specs: allSpecsFromOptionSpecs,
-          });
-        }
-      }
-    });
-
-    return allSpecs;
-  };
 
   // Handle ESC key to go back to list in edit mode
   const handleBackToList = () => {
@@ -222,14 +166,6 @@ const CreateExcelExportType: React.FC<CreateExcelExportTypeProps> = ({ initialDa
           ...col,
           selected: savedColumnKeys.includes(col.key)
         })));
-      }
-
-      // Linked Option Types
-      if (excelExportTypeData.linkedOptionTypes && Array.isArray(excelExportTypeData.linkedOptionTypes)) {
-        const optionTypeIds = excelExportTypeData.linkedOptionTypes.map((ot: any) =>
-          typeof ot === 'string' ? ot : ot._id
-        );
-        setLinkedOptionTypes(optionTypeIds);
       }
 
       // Global/Default Settings
@@ -277,6 +213,7 @@ const CreateExcelExportType: React.FC<CreateExcelExportTypeProps> = ({ initialDa
     }
 
     // Build excel export type data
+    const branchId = localStorage.getItem('branchId') || localStorage.getItem('selectedBranch') || '';
     const dataToSave = {
       typeName,
       typeCode: typeCode.toUpperCase(),
@@ -285,7 +222,7 @@ const CreateExcelExportType: React.FC<CreateExcelExportTypeProps> = ({ initialDa
       includeHeaders,
       sheetName,
       fileNamePrefix,
-      linkedOptionTypes,
+      branchId,
       isGlobal,
       isDefault,
       isActive
@@ -321,7 +258,6 @@ const CreateExcelExportType: React.FC<CreateExcelExportTypeProps> = ({ initialDa
             setIncludeHeaders(true);
             setSheetName("Orders");
             setFileNamePrefix("Export");
-            setLinkedOptionTypes([]);
             setIsGlobal(false);
             setIsDefault(false);
           }
@@ -580,10 +516,6 @@ const CreateExcelExportType: React.FC<CreateExcelExportTypeProps> = ({ initialDa
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <h3 className="orderTypeSectionTitle" style={{ marginBottom: 0 }}>
               Select Columns ({selectedCount} selected)
-              <FieldTooltip
-                content="Select which columns to include in the export"
-                position="right"
-              />
             </h3>
             <div style={{ display: 'flex', gap: '8px' }}>
               <button
@@ -669,152 +601,6 @@ const CreateExcelExportType: React.FC<CreateExcelExportTypeProps> = ({ initialDa
           </div>
         </div>
 
-        {/* Linked Option Types Section */}
-        <div className="orderTypeSection">
-          <h3 className="orderTypeSectionTitle">
-            Linked Option Types
-            <FieldTooltip
-              content="Select which option types can use this export type. Leave empty to allow all option types."
-              position="right"
-            />
-          </h3>
-
-          <div className="orderTypeFormRow">
-            <div style={{ width: '100%' }}>
-              {optionTypes.length === 0 ? (
-                <p style={{ color: '#666', fontStyle: 'italic' }}>Loading option types...</p>
-              ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '0.5rem' }}>
-                  {optionTypes.map((optionType: any) => (
-                    <label
-                      key={optionType._id}
-                      className="orderTypeCheckboxLabel"
-                      style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', padding: '0.5rem', border: '1px solid #e0e0e0', borderRadius: '4px', cursor: 'pointer' }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={linkedOptionTypes.includes(optionType._id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setLinkedOptionTypes([...linkedOptionTypes, optionType._id]);
-                          } else {
-                            setLinkedOptionTypes(linkedOptionTypes.filter(id => id !== optionType._id));
-                          }
-                        }}
-                        style={{ marginTop: '0.25rem', flexShrink: 0 }}
-                      />
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: 500 }}>{optionType.typeName}</div>
-                        <div style={{ fontSize: '0.75rem', color: '#666' }}>
-                          Code: {optionType.typeCode}
-                        </div>
-                      </div>
-                    </label>
-                  ))}
-                </div>
-              )}
-              {optionTypes.length > 0 && (
-                <div style={{ marginTop: '0.75rem', fontSize: '0.875rem', color: '#666' }}>
-                  {linkedOptionTypes.length === 0
-                    ? "No option types selected (all option types will be allowed)"
-                    : `${linkedOptionTypes.length} option type(s) selected`
-                  }
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Available Specifications from Linked Option Types */}
-        {linkedOptionTypes.length > 0 && (
-          <div className="orderTypeSection">
-            <h3 className="orderTypeSectionTitle">
-              Available Specifications
-              <FieldTooltip
-                content="These are the specifications available from the linked option types. They can be included in your export."
-                position="right"
-              />
-            </h3>
-
-            {getLinkedOptionTypesSpecs().length === 0 ? (
-              <p style={{ color: '#6b7280', fontSize: '13px', textAlign: 'center', padding: '24px', background: '#fef3c7', borderRadius: '8px', border: '1px solid #fbbf24' }}>
-                No specifications found in the linked option types.
-              </p>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {getLinkedOptionTypesSpecs().map((typeGroup, groupIndex) => {
-                  const numberSpecs = typeGroup.specs.filter((s: any) => s.dataType === 'number');
-                  const otherSpecs = typeGroup.specs.filter((s: any) => s.dataType !== 'number');
-                  return (
-                    <div key={groupIndex} style={{ background: '#f0f9ff', padding: '12px', borderRadius: '8px', border: '1px solid #0ea5e9' }}>
-                      <div style={{ fontSize: '13px', fontWeight: 600, color: '#0369a1', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span style={{ background: '#0ea5e9', color: 'white', padding: '2px 8px', borderRadius: '4px', fontSize: '11px' }}>
-                          {typeGroup.optionTypeName}
-                        </span>
-                        <span style={{ fontSize: '11px', color: '#64748b' }}>
-                          ({typeGroup.specs.length} specs)
-                        </span>
-                      </div>
-
-                      {/* Number specifications */}
-                      {numberSpecs.length > 0 && (
-                        <div style={{ marginBottom: '8px' }}>
-                          <div style={{ fontSize: '11px', color: '#059669', marginBottom: '4px', fontWeight: 500 }}>
-                            Number Specifications:
-                          </div>
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                            {numberSpecs.map((spec: any, specIndex: number) => (
-                              <span
-                                key={specIndex}
-                                style={{
-                                  padding: '4px 10px',
-                                  background: '#d1fae5',
-                                  border: '1px solid #10b981',
-                                  borderRadius: '4px',
-                                  fontSize: '11px',
-                                  color: '#065f46'
-                                }}
-                              >
-                                {spec.name} {spec.unit && <span style={{ opacity: 0.7 }}>({spec.unit})</span>}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Other specifications */}
-                      {otherSpecs.length > 0 && (
-                        <div>
-                          <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px' }}>
-                            Other Specifications:
-                          </div>
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                            {otherSpecs.map((spec: any, specIndex: number) => (
-                              <span
-                                key={specIndex}
-                                style={{
-                                  padding: '4px 8px',
-                                  background: '#f3f4f6',
-                                  border: '1px solid #d1d5db',
-                                  borderRadius: '4px',
-                                  fontSize: '11px',
-                                  color: '#6b7280'
-                                }}
-                              >
-                                {spec.name} <span style={{ opacity: 0.6 }}>({spec.dataType})</span>
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
-
         {/* Global/Default Settings Section */}
         <div className="orderTypeSection">
           <h3 className="orderTypeSectionTitle">Advanced Settings</h3>
@@ -888,7 +674,34 @@ const CreateExcelExportType: React.FC<CreateExcelExportTypeProps> = ({ initialDa
         </div>
 
         {/* Submit Button */}
-        <div className="orderTypeFormActions">
+        <div className="orderTypeFormActions" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <button
+            type="button"
+            onClick={() => setShowPreview(true)}
+            disabled={selectedCount === 0}
+            style={{
+              padding: '10px 20px',
+              background: selectedCount === 0 ? '#9ca3af' : '#0ea5e9',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: selectedCount === 0 ? 'not-allowed' : 'pointer',
+              fontSize: '14px',
+              fontWeight: 500,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+              <polyline points="10 9 9 9 8 9"/>
+            </svg>
+            Preview Excel
+          </button>
           <ActionButton
             type="save"
             state={saveState}
@@ -901,9 +714,231 @@ const CreateExcelExportType: React.FC<CreateExcelExportTypeProps> = ({ initialDa
         </div>
       </div>
 
+      {/* Excel Preview Popup */}
+      {showPreview && ReactDOM.createPortal(
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            background: 'rgba(0, 0, 0, 0.85)',
+            zIndex: 999999,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+          }}
+          onClick={() => setShowPreview(false)}
+        >
+          {/* Popup Container */}
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: '#f3f4f6',
+              borderRadius: '12px',
+              width: '90vw',
+              maxWidth: '1000px',
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column',
+              boxShadow: '0 25px 50px rgba(0, 0, 0, 0.3)',
+              overflow: 'hidden'
+            }}
+          >
+            {/* Popup Header */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '16px 20px',
+              background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+              color: 'white'
+            }}>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                </svg>
+                Excel Preview: {typeName || 'Untitled Export'}
+              </h3>
+              <button
+                onClick={() => setShowPreview(false)}
+                style={{
+                  padding: '8px 16px',
+                  background: 'rgba(255, 255, 255, 0.2)',
+                  color: 'white',
+                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  fontWeight: 500
+                }}
+              >
+                Close
+              </button>
+            </div>
+
+            {/* Export Info */}
+            <div style={{
+              padding: '12px 20px',
+              background: '#e5e7eb',
+              display: 'flex',
+              gap: '20px',
+              flexWrap: 'wrap',
+              fontSize: '13px'
+            }}>
+              <span><strong>File Name:</strong> {fileNamePrefix || 'Export'}_YYYY-MM-DD.xlsx</span>
+              <span><strong>Sheet Name:</strong> {sheetName || 'Orders'}</span>
+              <span><strong>Include Headers:</strong> {includeHeaders ? 'Yes' : 'No'}</span>
+              <span><strong>Columns:</strong> {selectedCount} selected</span>
+            </div>
+
+            {/* Excel Preview Body */}
+            <div style={{
+              flex: 1,
+              overflow: 'auto',
+              padding: '20px',
+              background: '#fff'
+            }}>
+              {/* Excel Table Preview */}
+              <div style={{
+                overflowX: 'auto',
+                border: '1px solid #d1d5db',
+                borderRadius: '8px'
+              }}>
+                <table style={{
+                  width: '100%',
+                  borderCollapse: 'collapse',
+                  fontSize: '12px',
+                  minWidth: '600px'
+                }}>
+                  {/* Header Row */}
+                  {includeHeaders && (
+                    <thead>
+                      <tr style={{ background: '#059669', color: 'white' }}>
+                        {columns.filter(c => c.selected).map((col, idx) => (
+                          <th key={idx} style={{
+                            padding: '10px 12px',
+                            textAlign: 'left',
+                            fontWeight: 600,
+                            borderRight: idx < columns.filter(c => c.selected).length - 1 ? '1px solid rgba(255,255,255,0.2)' : 'none',
+                            whiteSpace: 'nowrap'
+                          }}>
+                            {col.label}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                  )}
+                  {/* Sample Data Rows */}
+                  <tbody>
+                    {[1, 2, 3, 4, 5].map((rowNum) => (
+                      <tr key={rowNum} style={{ background: rowNum % 2 === 0 ? '#f9fafb' : '#fff' }}>
+                        {columns.filter(c => c.selected).map((col, idx) => (
+                          <td key={idx} style={{
+                            padding: '8px 12px',
+                            borderBottom: '1px solid #e5e7eb',
+                            borderRight: idx < columns.filter(c => c.selected).length - 1 ? '1px solid #e5e7eb' : 'none',
+                            whiteSpace: 'nowrap'
+                          }}>
+                            {getSampleData(col.key, rowNum)}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Legend */}
+              <div style={{
+                marginTop: '20px',
+                padding: '16px',
+                background: '#f0fdf4',
+                borderRadius: '8px',
+                border: '1px solid #86efac'
+              }}>
+                <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#166534' }}>Selected Columns by Category</h4>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+                  {['basic', 'customer', 'material', 'status', 'dates', 'other'].map(category => {
+                    const categoryColumns = columns.filter(c => c.selected && c.category === category);
+                    if (categoryColumns.length === 0) return null;
+                    return (
+                      <div key={category} style={{
+                        padding: '8px 12px',
+                        background: '#dcfce7',
+                        borderRadius: '6px',
+                        fontSize: '12px'
+                      }}>
+                        <strong style={{ textTransform: 'capitalize' }}>{category}:</strong>{' '}
+                        {categoryColumns.map(c => c.label).join(', ')}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
       <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
     </div>
   );
+};
+
+// Helper function to generate sample data
+const getSampleData = (key: string, rowNum: number): string => {
+  const sampleData: Record<string, string[]> = {
+    orderId: ['ORD-001', 'ORD-002', 'ORD-003', 'ORD-004', 'ORD-005'],
+    date: ['2024-01-15', '2024-01-16', '2024-01-17', '2024-01-18', '2024-01-19'],
+    overallStatus: ['Pending', 'In Progress', 'Completed', 'Dispatched', 'Pending'],
+    priority: ['High', 'Medium', 'Low', 'High', 'Medium'],
+    orderType: ['Standard', 'Express', 'Standard', 'Custom', 'Express'],
+    customerName: ['John Smith', 'Jane Doe', 'Robert Johnson', 'Emily Brown', 'Michael Davis'],
+    phone: ['+91 9876543210', '+91 9876543211', '+91 9876543212', '+91 9876543213', '+91 9876543214'],
+    email: ['john@email.com', 'jane@email.com', 'robert@email.com', 'emily@email.com', 'michael@email.com'],
+    address: ['123 Main St', '456 Oak Ave', '789 Pine Rd', '321 Elm St', '654 Maple Dr'],
+    whatsapp: ['+91 9876543210', '+91 9876543211', '+91 9876543212', '+91 9876543213', '+91 9876543214'],
+    productOptions: ['Gold Ring - 5g', 'Silver Chain - 20g', 'Gold Bracelet - 10g', 'Diamond Pendant', 'Gold Necklace - 15g'],
+    materialOptions: ['22K Gold', '925 Silver', '18K Gold', 'Platinum', '24K Gold'],
+    printingOptions: ['Engraved', 'Plain', 'Engraved', 'Plain', 'Engraved'],
+    packagingOptions: ['Gift Box', 'Standard', 'Premium Box', 'Gift Box', 'Standard'],
+    optionQuantity: ['1', '2', '1', '3', '1'],
+    allOptions: ['Ring, Chain', 'Bracelet', 'Pendant, Ring', 'Necklace', 'Ring, Bracelet'],
+    currentStep: ['Polishing', 'Casting', 'Finishing', 'Quality Check', 'Packing'],
+    currentStepIndex: ['3', '2', '4', '5', '6'],
+    machineStatus: ['Running', 'Idle', 'Running', 'Completed', 'Running'],
+    completedMachines: ['2', '1', '3', '4', '5'],
+    totalMachines: ['5', '4', '5', '5', '6'],
+    machineProgress: ['40%', '25%', '60%', '80%', '83%'],
+    stepsCompleted: ['3', '2', '4', '5', '6'],
+    totalSteps: ['7', '6', '7', '7', '8'],
+    stepProgress: ['43%', '33%', '57%', '71%', '75%'],
+    createdAt: ['2024-01-10', '2024-01-11', '2024-01-12', '2024-01-13', '2024-01-14'],
+    updatedAt: ['2024-01-15', '2024-01-16', '2024-01-17', '2024-01-18', '2024-01-19'],
+    scheduledStart: ['2024-01-12', '2024-01-13', '2024-01-14', '2024-01-15', '2024-01-16'],
+    scheduledEnd: ['2024-01-20', '2024-01-21', '2024-01-22', '2024-01-23', '2024-01-24'],
+    actualStart: ['2024-01-12', '2024-01-13', '2024-01-14', '2024-01-15', '2024-01-16'],
+    actualEnd: ['-', '-', '2024-01-18', '2024-01-19', '-'],
+    dispatchedDate: ['-', '-', '-', '2024-01-19', '-'],
+    branch: ['Main Branch', 'North Branch', 'South Branch', 'Main Branch', 'East Branch'],
+    branchCode: ['MB001', 'NB001', 'SB001', 'MB001', 'EB001'],
+    sameDayDispatch: ['No', 'Yes', 'No', 'Yes', 'No'],
+    createdBy: ['Admin', 'Manager', 'Staff', 'Admin', 'Manager'],
+    assignedManager: ['Rahul K', 'Priya S', 'Amit P', 'Neha R', 'Vijay M'],
+    notes: ['Urgent order', 'Handle with care', '-', 'Special packaging', 'Priority delivery']
+  };
+
+  const data = sampleData[key];
+  if (data) {
+    return data[rowNum - 1] || '-';
+  }
+  return '-';
 };
 
 export default CreateExcelExportType;

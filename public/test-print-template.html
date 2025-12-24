@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Print Template Test - Silver Billing</title>
+  <style>
+    /* Reset */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-size: 12px;
+      line-height: 1.4;
+      color: #333;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+
+    .print-page {
+      width: 210mm;
+      min-height: 297mm;
+      background: white;
+      margin: 0 auto;
+      padding: 15mm;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    /* Header Styles */
+    .print-header {
+      text-align: center;
+      border-bottom: 2px solid #333;
+      padding-bottom: 15px;
+      margin-bottom: 20px;
+    }
+
+    .company-name {
+      font-size: 24px;
+      font-weight: bold;
+      color: #1a1a1a;
+      margin-bottom: 5px;
+    }
+
+    .company-address {
+      font-size: 11px;
+      color: #666;
+    }
+
+    .invoice-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-top: 10px;
+      color: #2563eb;
+    }
+
+    /* Order Info */
+    .order-info {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      padding: 10px;
+      background: #f8fafc;
+      border-radius: 5px;
+    }
+
+    .order-info-left, .order-info-right {
+      font-size: 11px;
+    }
+
+    .order-info-label {
+      font-weight: 600;
+      color: #374151;
+    }
+
+    .order-info-value {
+      color: #1f2937;
+    }
+
+    /* Customer Info */
+    .customer-info {
+      margin-bottom: 20px;
+      padding: 10px;
+      border: 1px solid #e5e7eb;
+      border-radius: 5px;
+    }
+
+    .customer-info h3 {
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #374151;
+    }
+
+    /* Items Table */
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+
+    .items-table th {
+      background: #1e40af;
+      color: white;
+      padding: 10px 8px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .items-table td {
+      padding: 8px;
+      border-bottom: 1px solid #e5e7eb;
+      font-size: 11px;
+    }
+
+    .items-table tr:nth-child(even) {
+      background: #f8fafc;
+    }
+
+    .items-table .text-right {
+      text-align: right;
+    }
+
+    .items-table .text-center {
+      text-align: center;
+    }
+
+    .items-table .highlight {
+      background: #fef3c7;
+      font-weight: 600;
+    }
+
+    /* Option Type Badge */
+    .option-type-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      background: #dbeafe;
+      color: #1e40af;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 500;
+    }
+
+    /* Dimension Values */
+    .dim-value {
+      font-family: 'Courier New', monospace;
+      font-weight: 600;
+    }
+
+    .dim-calculated {
+      color: #059669;
+    }
+
+    /* Totals Section */
+    .totals-section {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 20px;
+    }
+
+    .totals-table {
+      width: 250px;
+      border-collapse: collapse;
+    }
+
+    .totals-table td {
+      padding: 6px 10px;
+      font-size: 11px;
+    }
+
+    .totals-table .label {
+      text-align: right;
+      color: #6b7280;
+    }
+
+    .totals-table .value {
+      text-align: right;
+      font-weight: 600;
+      color: #1f2937;
+    }
+
+    .totals-table .grand-total {
+      background: #1e40af;
+      color: white;
+    }
+
+    .totals-table .grand-total td {
+      padding: 10px;
+      font-size: 14px;
+    }
+
+    /* Footer */
+    .print-footer {
+      margin-top: 30px;
+      padding-top: 15px;
+      border-top: 1px solid #e5e7eb;
+      text-align: center;
+      font-size: 10px;
+      color: #6b7280;
+    }
+
+    .print-footer .terms {
+      margin-top: 10px;
+      padding: 10px;
+      background: #f8fafc;
+      border-radius: 5px;
+      text-align: left;
+    }
+
+    /* Print Styles */
+    @media print {
+      body {
+        background: white;
+        padding: 0;
+      }
+      .print-page {
+        box-shadow: none;
+        padding: 10mm;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="print-page">
+    <!-- Header -->
+    <div class="print-header">
+      <div class="company-name">Malabar Gold & Diamonds</div>
+      <div class="company-address">123 Jewellery Street, Mumbai - 400001 | GST: 27AABCU9603R1ZM</div>
+      <div class="invoice-title">SILVER BILLING INVOICE</div>
+    </div>
+
+    <!-- Order Info -->
+    <div class="order-info">
+      <div class="order-info-left">
+        <div><span class="order-info-label">Order No:</span> <span class="order-info-value">SLV-2024-0001</span></div>
+        <div><span class="order-info-label">Date:</span> <span class="order-info-value">24-Dec-2024</span></div>
+        <div><span class="order-info-label">Order Type:</span> <span class="order-info-value">Silver Billing</span></div>
+      </div>
+      <div class="order-info-right">
+        <div><span class="order-info-label">Status:</span> <span class="order-info-value">Completed</span></div>
+      </div>
+    </div>
+
+    <!-- Customer Info -->
+    <div class="customer-info">
+      <h3>Customer Details</h3>
+      <div><span class="order-info-label">Name:</span> <span class="order-info-value">Rajesh Kumar</span></div>
+      <div><span class="order-info-label">Address:</span> <span class="order-info-value">45 Park Street, Kolkata - 700016</span></div>
+      <div><span class="order-info-label">Phone:</span> <span class="order-info-value">+91 98765 43210</span></div>
+    </div>
+
+    <!-- Items Table -->
+    <table class="items-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Option Name</th>
+          <th>Option Type</th>
+          <th class="text-center">Weight (g)</th>
+          <th class="text-center">Purity (%)</th>
+          <th class="text-right">MC/Gram</th>
+          <th class="text-right">Calculation</th>
+          <th class="text-right">Wastage</th>
+          <th class="text-right">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Item 1: MAKDE -->
+        <tr>
+          <td>1</td>
+          <td>Silver Chain 20"</td>
+          <td><span class="option-type-badge">MAKDE</span></td>
+          <td class="text-center dim-value">25.50</td>
+          <td class="text-center dim-value">80</td>
+          <td class="text-right dim-value">45.00</td>
+          <td class="text-right dim-value">103.00</td>
+          <td class="text-right dim-value dim-calculated">23.00</td>
+          <td class="text-right highlight">Rs 2,625.75</td>
+        </tr>
+        <!-- Item 2: MBKSV -->
+        <tr>
+          <td>2</td>
+          <td>Silver Bracelet</td>
+          <td><span class="option-type-badge">MBKSV</span></td>
+          <td class="text-center dim-value">18.75</td>
+          <td class="text-center dim-value">80</td>
+          <td class="text-right dim-value">50.00</td>
+          <td class="text-right dim-value">110.00</td>
+          <td class="text-right dim-value dim-calculated">30.00</td>
+          <td class="text-right highlight">Rs 2,062.50</td>
+        </tr>
+        <!-- Item 3: MAKTN -->
+        <tr>
+          <td>3</td>
+          <td>Silver Ring Size 8</td>
+          <td><span class="option-type-badge">MAKTN</span></td>
+          <td class="text-center dim-value">8.20</td>
+          <td class="text-center dim-value">80</td>
+          <td class="text-right dim-value">55.00</td>
+          <td class="text-right dim-value">105.00</td>
+          <td class="text-right dim-value dim-calculated">25.00</td>
+          <td class="text-right highlight">Rs 861.00</td>
+        </tr>
+        <!-- Item 4: NBKSV -->
+        <tr>
+          <td>4</td>
+          <td>Silver Earrings Pair</td>
+          <td><span class="option-type-badge">NBKSV</span></td>
+          <td class="text-center dim-value">12.30</td>
+          <td class="text-center dim-value">80</td>
+          <td class="text-right dim-value">48.00</td>
+          <td class="text-right dim-value">108.00</td>
+          <td class="text-right dim-value dim-calculated">28.00</td>
+          <td class="text-right highlight">Rs 1,328.40</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Totals Section -->
+    <div class="totals-section">
+      <table class="totals-table">
+        <tr>
+          <td class="label">Total Items:</td>
+          <td class="value">4</td>
+        </tr>
+        <tr>
+          <td class="label">Total Weight:</td>
+          <td class="value">64.75 g</td>
+        </tr>
+        <tr>
+          <td class="label">Subtotal:</td>
+          <td class="value">Rs 6,877.65</td>
+        </tr>
+        <tr>
+          <td class="label">GST (3%):</td>
+          <td class="value">Rs 206.33</td>
+        </tr>
+        <tr>
+          <td class="label">Discount:</td>
+          <td class="value">- Rs 100.00</td>
+        </tr>
+        <tr class="grand-total">
+          <td class="label">Grand Total:</td>
+          <td class="value">Rs 6,983.98</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- Footer -->
+    <div class="print-footer">
+      <p>Thank you for your business!</p>
+      <div class="terms">
+        <strong>Terms & Conditions:</strong>
+        <ul style="margin-top: 5px; padding-left: 20px;">
+          <li>Goods once sold will not be taken back.</li>
+          <li>Purity: 80% Silver (as per hallmark standards)</li>
+          <li>Wastage = Calculation - Purity</li>
+          <li>Making charges are non-refundable.</li>
+        </ul>
+      </div>
+      <p style="margin-top: 15px;">Generated on: 24-Dec-2024 10:30 AM</p>
+    </div>
+  </div>
+</body>
+</html>

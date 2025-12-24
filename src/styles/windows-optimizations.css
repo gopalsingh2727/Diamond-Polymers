@@ -74,11 +74,8 @@ textarea {
   -moz-appearance: none !important;
   appearance: none !important;
 
-  /* Fix Windows border rendering */
-  border-style: solid !important;
-
-  /* Prevent Windows from applying system colors */
-  background-color: white !important;
+  /* Don't override the underline style - keep transparent background */
+  background-color: rgba(255, 255, 255, 0.1) !important;
   color: var(--color-text, #1f2937) !important;
 }
 
@@ -148,10 +145,10 @@ button:active,
 input:focus,
 select:focus,
 textarea:focus {
-  /* Better Windows focus outline */
-  outline: 2px solid var(--color-primary, #FF6B35) !important;
-  outline-offset: 2px !important;
-  border-color: var(--color-primary, #FF6B35) !important;
+  /* Keep the underline style for focus - don't override */
+  outline: none !important;
+  border: none !important;
+  border-bottom: 2px solid var(--color-primary, #FF6B35) !important;
 }
 
 /* Windows high contrast mode focus */
@@ -214,31 +211,41 @@ textarea:focus {
    WINDOWS BORDER RENDERING
    ============================================ */
 
-/* Fix Windows subpixel border rendering */
+/* Fix Windows subpixel border rendering - only for buttons and containers */
 @media (-webkit-min-device-pixel-ratio: 1),
        (min-resolution: 96dpi) {
-  input,
-  select,
-  textarea,
   button,
   .card,
   .createDiv {
     /* Sharper borders on Windows */
     border-width: 1px !important;
   }
+
+  /* Input/select/textarea keep underline style - bottom border only */
+  input,
+  select,
+  textarea {
+    border: none !important;
+    border-bottom: 0.5px solid #333 !important;
+  }
 }
 
 /* Windows high DPI (4K, QHD) */
 @media (-webkit-min-device-pixel-ratio: 1.5),
        (min-resolution: 144dpi) {
-  input,
-  select,
-  textarea,
   button,
   .card,
   .createDiv {
     /* Even sharper borders for high DPI Windows displays */
     border-width: 0.5px !important;
+  }
+
+  /* Input/select/textarea keep underline style - thinner on high DPI */
+  input,
+  select,
+  textarea {
+    border: none !important;
+    border-bottom: 0.5px solid #333 !important;
   }
 }
 

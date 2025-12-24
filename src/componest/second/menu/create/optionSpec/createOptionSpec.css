@@ -1,46 +1,52 @@
-/* ====================================
-   Create Option Specification - Compact Form Styles
-   All class names start with createOptionSpec-
-   ==================================== */
+/* ==========================================================================
+   CREATE OPTION SPEC COMPONENT - Grid-Based Layout CSS
+   Matching OrderType styling for consistency
+   ========================================================================== */
 
-/* Container - Centered on Screen */
+/* Main Container */
 .createOptionSpec-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  max-width: 1400px;
   width: 100%;
-  min-height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding: 20px;
+  margin: 0 auto;
+  padding: 2rem;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  min-height: 100vh;
 }
 
-/* Form Card */
-.createOptionSpec-form {
-  background: white;
-  padding: 24px 32px;
-  max-width: 800px;
-  width: 100%;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+/* Header Section */
+.createOptionSpec-header {
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e5e7eb;
+  margin-bottom: 1rem;
 }
 
-/* Title */
 .createOptionSpec-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #1f2937;
-  text-align: center;
-  margin: 0 0 20px 0;
-  padding-bottom: 15px;
-  border-bottom: 1px solid #e5e7eb;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 0.5rem;
+  text-align: left;
+  border-bottom: none;
+  padding-bottom: 0;
 }
 
-/* Template Buttons - Centered */
+.createOptionSpec-subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* Template Buttons */
 .createOptionSpec-templateButtons {
   display: flex;
   gap: 10px;
   margin-bottom: 20px;
   flex-wrap: wrap;
-  justify-content: center;
 }
 
 .createOptionSpec-templateBtn {
@@ -52,80 +58,84 @@
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
-  -webkit-transition: all 0.3s ease;
   transition: all 0.3s ease;
-  -webkit-box-shadow: 0 2px 4px rgba(255, 107, 53, 0.2);
   box-shadow: 0 2px 4px rgba(255, 107, 53, 0.2);
-  /* Cross-browser fixes */
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  /* GPU acceleration */
-  -webkit-transform: translateZ(0);
-  transform: translateZ(0);
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
 }
 
 .createOptionSpec-templateBtn:hover {
-  -webkit-transform: translateY(-2px) translateZ(0);
-  transform: translateY(-2px) translateZ(0);
-  -webkit-box-shadow: 0 4px 8px rgba(255, 107, 53, 0.3);
+  transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(255, 107, 53, 0.3);
-  will-change: transform;
 }
 
 /* Form Grid */
 .createOptionSpec-formGrid {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
 }
 
+/* Form Section */
+.createOptionSpec-section {
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 1.5rem;
+}
+
+.createOptionSpec-sectionTitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #d1d5db;
+}
+
+/* Form Row - Side by Side Layout */
 .createOptionSpec-formRow {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 15px;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
 }
 
+.createOptionSpec-formRow:last-child {
+  margin-bottom: 0;
+}
+
+/* Form Column */
 .createOptionSpec-formColumn {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 /* Label */
 .createOptionSpec-label {
-  font-size: 13px;
+  font-size: 0.875rem;
   font-weight: 500;
   color: #374151;
-  margin-bottom: 4px;
+  display: block;
 }
 
 /* Input - Underline Style */
 .createOptionSpec-input {
   width: 100%;
   padding: 10px 0;
-  font-size: 14px;
-  color: #1f2937;
+  font-size: 0.875rem;
+  color: #111827;
   background-color: rgba(255, 255, 255, 0.1);
   border: none;
   border-bottom: 0.5px solid #333;
   border-radius: 0;
   outline: none;
   box-sizing: border-box;
-  -webkit-transition: border-color 0.2s ease;
   transition: border-color 0.2s ease;
-  /* Cross-browser fixes */
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  -ms-appearance: none;
-  appearance: none;
+  font-family: inherit;
 }
 
-/* IE11 fix for select dropdown */
-.createOptionSpec-input::-ms-expand {
-  display: none;
+.createOptionSpec-input:hover {
+  border-bottom-color: #6b7280;
 }
 
 .createOptionSpec-input:focus {
@@ -229,24 +239,12 @@
   cursor: pointer;
   font-size: 13px;
   font-weight: 500;
-  -webkit-transition: all 0.2s ease;
   transition: all 0.2s ease;
-  /* Cross-browser fixes */
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  /* GPU acceleration */
-  -webkit-transform: translateZ(0);
-  transform: translateZ(0);
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
 }
 
 .createOptionSpec-addDimensionBtn:hover {
   background: linear-gradient(135deg, #E55A2B 0%, #d44a1b 100%);
-  -webkit-transform: translateY(-1px) translateZ(0);
-  transform: translateY(-1px) translateZ(0);
-  will-change: transform;
+  transform: translateY(-1px);
 }
 
 /* Dimension Row */
@@ -255,6 +253,7 @@
   border-radius: 8px;
   padding: 12px;
   margin-bottom: 10px;
+  background: #ffffff;
   transition: all 0.2s ease;
 }
 
@@ -278,23 +277,12 @@
   font-size: 13px;
   color: #1e293b;
   background: white;
-  /* Cross-browser fixes */
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  -ms-appearance: none;
-  appearance: none;
-}
-
-/* IE11 fix for select dropdown */
-.createOptionSpec-dimensionFields select::-ms-expand {
-  display: none;
 }
 
 .createOptionSpec-dimensionFields input:focus,
 .createOptionSpec-dimensionFields select:focus {
   outline: none;
   border-color: #FF6B35;
-  -webkit-box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.1);
   box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.1);
 }
 
@@ -373,63 +361,52 @@
 /* Empty State */
 .createOptionSpec-emptyState {
   text-align: center;
-  padding: 40px 20px;
-  color: #94a3b8;
-  font-size: 14px;
-  background: #f8fafc;
-  border: 2px dashed #e2e8f0;
-  border-radius: 8px;
+  padding: 2rem;
+  color: #6b7280;
+  font-size: 0.875rem;
+  background-color: #f9fafb;
+  border-radius: 0.5rem;
+  border: 1px dashed #d1d5db;
 }
 
-/* Save Button - Orange */
+/* Form Actions */
+.createOptionSpec-formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 2px solid #e5e7eb;
+}
+
+/* Save Button */
 .createOptionSpec-button {
-  width: 100%;
-  padding: 14px 24px;
-  margin-top: 24px;
-  font-size: 15px;
+  width: 200px;
+  padding: 0.875rem 1.5rem;
+  font-size: 0.938rem;
   font-weight: 600;
   color: white;
-  background: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%);
+  background-color: #FF6B35;
   border: none;
-  border-radius: 8px;
+  border-radius: 0.375rem;
   cursor: pointer;
-  -webkit-transition: all 0.2s ease;
-  transition: all 0.2s ease;
-  -webkit-box-shadow: 0 2px 8px rgba(255, 107, 53, 0.25);
-  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.25);
-  /* Cross-browser fixes */
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  /* GPU acceleration */
-  -webkit-transform: translateZ(0);
-  transform: translateZ(0);
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
+  transition: all 0.15s ease-in-out;
 }
 
 .createOptionSpec-button:hover:not(:disabled) {
-  background: linear-gradient(135deg, #E55A2B 0%, #d44a1b 100%);
-  -webkit-transform: translateY(-2px) translateZ(0);
-  transform: translateY(-2px) translateZ(0);
-  -webkit-box-shadow: 0 4px 16px rgba(255, 107, 53, 0.35);
-  box-shadow: 0 4px 16px rgba(255, 107, 53, 0.35);
-  will-change: transform;
+  background-color: #E55A2B;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transform: translateY(-1px);
 }
 
 .createOptionSpec-button:disabled {
   background: #9ca3af;
   cursor: not-allowed;
-  -webkit-transform: none;
   transform: none;
-  -webkit-box-shadow: none;
   box-shadow: none;
-  will-change: auto;
 }
 
-/* ============ REFERENCE POPUP MODAL ============ */
-
-/* Add Reference Item Button - Orange */
+/* Reference Buttons */
 .createOptionSpec-addReferenceBtn {
   width: 100%;
   padding: 14px 24px;
@@ -451,7 +428,6 @@
   box-shadow: 0 4px 16px rgba(255, 107, 53, 0.35);
 }
 
-/* Save References Button - Orange */
 .createOptionSpec-saveReferencesBtn {
   padding: 12px 28px;
   font-size: 15px;
@@ -470,7 +446,6 @@
   transform: translateY(-2px);
 }
 
-/* Cancel Button */
 .createOptionSpec-cancelBtn {
   padding: 12px 28px;
   font-size: 15px;
@@ -487,7 +462,6 @@
   background: #475569;
 }
 
-/* Reference Popup Add Dimension Button */
 .createOptionSpec-popupAddDimensionBtn {
   padding: 8px 16px;
   font-size: 13px;
@@ -504,7 +478,6 @@
   background: linear-gradient(135deg, #E55A2B 0%, #d44a1b 100%);
 }
 
-/* Remove Item Button - Red */
 .createOptionSpec-removeItemBtn {
   padding: 8px 16px;
   font-size: 13px;
@@ -521,10 +494,45 @@
   background: #dc2626;
 }
 
+/* Animation: Fade In */
+@keyframes createOptionSpecFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.createOptionSpec-section,
+.createOptionSpec-dimensionRow {
+  animation: createOptionSpecFadeIn 0.3s ease-out;
+}
+
 /* Responsive Design */
+@media (max-width: 1024px) {
+  .createOptionSpec-formRow {
+    grid-template-columns: 1fr;
+  }
+
+  .createOptionSpec-dimensionFields {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 @media (max-width: 768px) {
   .createOptionSpec-container {
-    padding: 15px;
+    padding: 1rem;
+  }
+
+  .createOptionSpec-title {
+    font-size: 1.5rem;
+  }
+
+  .createOptionSpec-section {
+    padding: 1rem;
   }
 
   .createOptionSpec-formRow {
@@ -541,5 +549,43 @@
 
   .createOptionSpec-templateBtn {
     width: 100%;
+  }
+
+  .createOptionSpec-formActions {
+    flex-direction: column;
+  }
+
+  .createOptionSpec-button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .createOptionSpec-container {
+    padding: 0.75rem;
+  }
+
+  .createOptionSpec-header {
+    margin-bottom: 1rem;
+  }
+
+  .createOptionSpec-formGrid {
+    gap: 1rem;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .createOptionSpec-container {
+    box-shadow: none;
+    padding: 0;
+  }
+
+  .createOptionSpec-formActions {
+    display: none;
+  }
+
+  .createOptionSpec-section {
+    break-inside: avoid;
   }
 }

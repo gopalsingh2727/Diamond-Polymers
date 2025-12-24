@@ -17,7 +17,7 @@ export const SEARCH_CONFIG: SearchableEntity[] = [
     label: 'Orders',
     icon: 'ShoppingCart',
     route: '/menu/IndexAllOders',
-    searchFields: ['orderId', 'customer.name', 'status', 'quantity']
+    searchFields: ['orderId', '_id', 'customer.name', 'customerId', 'status', 'quantity']
   },
   {
     type: 'machine',

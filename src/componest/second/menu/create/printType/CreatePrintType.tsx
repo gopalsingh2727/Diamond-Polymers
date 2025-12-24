@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
+import ReactDOM from "react-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
 import { createPrintType, updatePrintType, deletePrintType } from "../../../../redux/create/printType/printTypeActions";
 import { getOrderTypes } from "../../../../redux/create/orderType/orderTypeActions";
 import { getOptionTypes } from "../../../../redux/option/optionTypeActions";
 import { getOptionSpecs } from "../../../../redux/create/optionSpec/optionSpecActions";
+import { getOptions } from "../../../../redux/option/optionActions";
 import { AppDispatch } from "../../../../../store";
 import { ActionButton } from "../../../../../components/shared/ActionButton";
 import { ToastContainer } from "../../../../../components/shared/Toast";
@@ -43,6 +45,8 @@ const CreatePrintType: React.FC<CreatePrintTypeProps> = ({ initialData: propInit
   const [headerTemplate, setHeaderTemplate] = useState("");
   const [bodyTemplate, setBodyTemplate] = useState("");
   const [footerTemplate, setFooterTemplate] = useState("");
+  const [cssTemplate, setCssTemplate] = useState("");
+  const [showPreview, setShowPreview] = useState(false);
 
   // Linked Order Types
   const [linkedOrderTypes, setLinkedOrderTypes] = useState<string[]>([]);
@@ -71,11 +75,16 @@ const CreatePrintType: React.FC<CreatePrintTypeProps> = ({ initialData: propInit
   // Get option specs from Redux store (contains actual specifications with values)
   const optionSpecs = useSelector((state: any) => state.optionSpec?.optionSpecs || []);
 
-  // Fetch order types, option types, and option specs on mount
+  // Get options from Redux store (contains options with dimensions like mc/gram, calculation, wastage)
+  const options = useSelector((state: any) => state.option?.options || []);
+
+  // Fetch order types, option types, option specs, and options on mount
   useEffect(() => {
     dispatch(getOrderTypes());
-    dispatch(getOptionTypes());
-    dispatch(getOptionSpecs());
+    dispatch(getOptionTypes({}));
+    dispatch(getOptionSpecs({}));
+    const branchId = localStorage.getItem('branchId') || '';
+    dispatch(getOptions({ branchId }));
   }, [dispatch]);
 
   // Get all option type IDs from linked order types
@@ -173,6 +182,7 @@ const CreatePrintType: React.FC<CreatePrintTypeProps> = ({ initialData: propInit
       setHeaderTemplate(printTypeData.headerTemplate || "");
       setBodyTemplate(printTypeData.bodyTemplate || "");
       setFooterTemplate(printTypeData.footerTemplate || "");
+      setCssTemplate(printTypeData.cssTemplate || "");
 
       // Linked Order Types
       if (printTypeData.linkedOrderTypes && Array.isArray(printTypeData.linkedOrderTypes)) {
@@ -197,6 +207,7 @@ const CreatePrintType: React.FC<CreatePrintTypeProps> = ({ initialData: propInit
     }
 
     // Build print type data
+    const branchId = localStorage.getItem('branchId') || localStorage.getItem('selectedBranch') || '';
     const dataToSave = {
       typeName,
       typeCode: typeCode.toUpperCase(),
@@ -207,7 +218,9 @@ const CreatePrintType: React.FC<CreatePrintTypeProps> = ({ initialData: propInit
       headerTemplate,
       bodyTemplate,
       footerTemplate,
+      cssTemplate,
       linkedOrderTypes,
+      branchId,
       isGlobal,
       isDefault,
       isActive
@@ -245,6 +258,7 @@ const CreatePrintType: React.FC<CreatePrintTypeProps> = ({ initialData: propInit
             setHeaderTemplate("");
             setBodyTemplate("");
             setFooterTemplate("");
+            setCssTemplate("");
             setLinkedOrderTypes([]);
             setIsGlobal(false);
             setIsDefault(false);
@@ -534,199 +548,334 @@ const CreatePrintType: React.FC<CreatePrintTypeProps> = ({ initialData: propInit
 
         {/* Template Configuration Section */}
         <div className="orderTypeSection">
-          <h3 className="orderTypeSectionTitle">
-            Template Configuration
-            <FieldTooltip
-              content="Define HTML templates for header, body, and footer sections of the print output"
-              position="right"
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h3 className="orderTypeSectionTitle" style={{ marginBottom: 0, borderBottom: 'none', paddingBottom: 0 }}>
+              Template Configuration
+              <FieldTooltip
+                content="Define HTML and CSS templates for header, body, and footer sections of the print output"
+                position="right"
+              />
+            </h3>
+            <button
+              type="button"
+              onClick={() => setShowPreview(!showPreview)}
+              style={{
+                padding: '8px 16px',
+                background: showPreview ? '#ef4444' : '#3b82f6',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '13px',
+                fontWeight: 500
+              }}
+            >
+              {showPreview ? '✕ Close Preview' : '👁 Live Preview'}
+            </button>
+          </div>
+
+          {/* CSS Template */}
+          <div className="orderTypeFormColumn">
+            <label className="orderTypeInputLabel" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ background: '#8b5cf6', color: 'white', padding: '2px 8px', borderRadius: '4px', fontSize: '11px' }}>CSS</span>
+              CSS Styles
+            </label>
+            <textarea
+              value={cssTemplate}
+              onChange={(e) => setCssTemplate(e.target.value)}
+              className="orderTypeFormTextarea"
+              placeholder={`/* Example CSS */
+.print-header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; }
+.print-body { padding: 20px 0; }
+.print-footer { text-align: center; border-top: 1px solid #ccc; padding-top: 10px; font-size: 12px; }
+table { width: 100%; border-collapse: collapse; }
+th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+th { background-color: #f5f5f5; }`}
+              rows={8}
+              style={{ fontFamily: 'monospace', fontSize: '0.8rem', background: '#1e1e1e', color: '#d4d4d4', border: '1px solid #333' }}
             />
-          </h3>
+          </div>
 
           <div className="orderTypeFormColumn">
-            <label className="orderTypeInputLabel">Header Template</label>
+            <label className="orderTypeInputLabel" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ background: '#22c55e', color: 'white', padding: '2px 8px', borderRadius: '4px', fontSize: '11px' }}>HTML</span>
+              Header Template
+            </label>
             <textarea
               value={headerTemplate}
               onChange={(e) => setHeaderTemplate(e.target.value)}
               className="orderTypeFormTextarea"
-              placeholder="Enter HTML template for header..."
-              rows={4}
-              style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}
+              placeholder={`<div class="print-header">
+  <h1>Company Name</h1>
+  <p>Address Line 1, City, State - PIN</p>
+  <p>Phone: +91-XXXXXXXXXX | Email: info@company.com</p>
+</div>`}
+              rows={5}
+              style={{ fontFamily: 'monospace', fontSize: '0.8rem', background: '#fefce8', border: '1px solid #eab308' }}
             />
           </div>
 
           <div className="orderTypeFormColumn">
-            <label className="orderTypeInputLabel">Body Template</label>
+            <label className="orderTypeInputLabel" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ background: '#3b82f6', color: 'white', padding: '2px 8px', borderRadius: '4px', fontSize: '11px' }}>HTML</span>
+              Body Template
+            </label>
             <textarea
               value={bodyTemplate}
               onChange={(e) => setBodyTemplate(e.target.value)}
               className="orderTypeFormTextarea"
-              placeholder="Enter HTML template for body..."
-              rows={6}
-              style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}
+              placeholder={`<div class="print-body">
+  <h2>Invoice / Bill</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Item</th>
+        <th>Qty</th>
+        <th>Rate</th>
+        <th>Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#items}}
+      <tr>
+        <td>{{name}}</td>
+        <td>{{qty}}</td>
+        <td>{{rate}}</td>
+        <td>{{amount}}</td>
+      </tr>
+      {{/items}}
+    </tbody>
+  </table>
+  <p><strong>Total: {{total}}</strong></p>
+</div>`}
+              rows={10}
+              style={{ fontFamily: 'monospace', fontSize: '0.8rem', background: '#eff6ff', border: '1px solid #3b82f6' }}
             />
           </div>
 
           <div className="orderTypeFormColumn">
-            <label className="orderTypeInputLabel">Footer Template</label>
+            <label className="orderTypeInputLabel" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ background: '#f97316', color: 'white', padding: '2px 8px', borderRadius: '4px', fontSize: '11px' }}>HTML</span>
+              Footer Template
+            </label>
             <textarea
               value={footerTemplate}
               onChange={(e) => setFooterTemplate(e.target.value)}
               className="orderTypeFormTextarea"
-              placeholder="Enter HTML template for footer..."
+              placeholder={`<div class="print-footer">
+  <p>Thank you for your business!</p>
+  <p>Terms & Conditions Apply</p>
+</div>`}
               rows={4}
-              style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}
+              style={{ fontFamily: 'monospace', fontSize: '0.8rem', background: '#fff7ed', border: '1px solid #f97316' }}
             />
           </div>
-        </div>
 
-        {/* Linked Order Types Section */}
-        <div className="orderTypeSection">
-          <h3 className="orderTypeSectionTitle">
-            Linked Order Types
-            <FieldTooltip
-              content="Select which order types can use this print type. Leave empty to allow all order types."
-              position="right"
-            />
-          </h3>
-
-          <div className="orderTypeFormRow">
-            <div style={{ width: '100%' }}>
-              {orderTypes.length === 0 ? (
-                <p style={{ color: '#666', fontStyle: 'italic' }}>Loading order types...</p>
-              ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '0.5rem' }}>
-                  {orderTypes.map((orderType: any) => (
-                    <label
-                      key={orderType._id}
-                      className="orderTypeCheckboxLabel"
-                      style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', padding: '0.5rem', border: '1px solid #e0e0e0', borderRadius: '4px', cursor: 'pointer' }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={linkedOrderTypes.includes(orderType._id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setLinkedOrderTypes([...linkedOrderTypes, orderType._id]);
-                          } else {
-                            setLinkedOrderTypes(linkedOrderTypes.filter(id => id !== orderType._id));
-                          }
-                        }}
-                        style={{ marginTop: '0.25rem', flexShrink: 0 }}
-                      />
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: 500 }}>{orderType.typeName}</div>
-                        <div style={{ fontSize: '0.75rem', color: '#666' }}>
-                          Code: {orderType.typeCode}
-                        </div>
-                      </div>
-                    </label>
-                  ))}
-                </div>
-              )}
-              {orderTypes.length > 0 && (
-                <div style={{ marginTop: '0.75rem', fontSize: '0.875rem', color: '#666' }}>
-                  {linkedOrderTypes.length === 0
-                    ? "No order types selected (all order types will be allowed)"
-                    : `${linkedOrderTypes.length} order type(s) selected`
-                  }
-                </div>
-              )}
+          {/* Variable Reference */}
+          <div style={{ marginTop: '12px', padding: '12px', background: '#f0f9ff', borderRadius: '8px', border: '1px solid #0ea5e9' }}>
+            <div style={{ fontSize: '13px', fontWeight: 600, color: '#0369a1', marginBottom: '8px' }}>
+              📝 Available Variables (use with {'{{variableName}}'})
             </div>
-          </div>
-        </div>
 
-        {/* Available Specifications from Linked Order Types */}
-        {linkedOrderTypes.length > 0 && (
-          <div className="orderTypeSection">
-            <h3 className="orderTypeSectionTitle">
-              Available Specifications
-              <FieldTooltip
-                content="These are the specifications available from the linked order types' option types. Use these in your print template."
-                position="right"
-              />
-            </h3>
-
-            {getLinkedOptionTypesSpecs().length === 0 ? (
-              <p style={{ color: '#6b7280', fontSize: '13px', textAlign: 'center', padding: '24px', background: '#fef3c7', borderRadius: '8px', border: '1px solid #fbbf24' }}>
-                No specifications found in the linked order types.
-              </p>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {getLinkedOptionTypesSpecs().map((typeGroup, groupIndex) => {
-                  const numberSpecs = typeGroup.specs.filter((s: any) => s.dataType === 'number');
-                  const otherSpecs = typeGroup.specs.filter((s: any) => s.dataType !== 'number');
-                  return (
-                    <div key={groupIndex} style={{ background: '#f0f9ff', padding: '12px', borderRadius: '8px', border: '1px solid #0ea5e9' }}>
-                      <div style={{ fontSize: '13px', fontWeight: 600, color: '#0369a1', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span style={{ background: '#0ea5e9', color: 'white', padding: '2px 8px', borderRadius: '4px', fontSize: '11px' }}>
-                          {typeGroup.optionTypeName}
-                        </span>
-                        <span style={{ fontSize: '11px', color: '#64748b' }}>
-                          ({typeGroup.specs.length} specs)
-                        </span>
-                      </div>
-
-                      {/* Number specifications */}
-                      {numberSpecs.length > 0 && (
-                        <div style={{ marginBottom: '8px' }}>
-                          <div style={{ fontSize: '11px', color: '#059669', marginBottom: '4px', fontWeight: 500 }}>
-                            Number Specifications:
-                          </div>
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                            {numberSpecs.map((spec: any, specIndex: number) => (
-                              <span
-                                key={specIndex}
-                                style={{
-                                  padding: '4px 10px',
-                                  background: '#d1fae5',
-                                  border: '1px solid #10b981',
-                                  borderRadius: '4px',
-                                  fontSize: '11px',
-                                  color: '#065f46'
-                                }}
-                              >
-                                {spec.name} {spec.unit && <span style={{ opacity: 0.7 }}>({spec.unit})</span>}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Other specifications */}
-                      {otherSpecs.length > 0 && (
-                        <div>
-                          <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px' }}>
-                            Other Specifications:
-                          </div>
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                            {otherSpecs.map((spec: any, specIndex: number) => (
-                              <span
-                                key={specIndex}
-                                style={{
-                                  padding: '4px 8px',
-                                  background: '#f3f4f6',
-                                  border: '1px solid #d1d5db',
-                                  borderRadius: '4px',
-                                  fontSize: '11px',
-                                  color: '#6b7280'
-                                }}
-                              >
-                                {spec.name} <span style={{ opacity: 0.6 }}>({spec.dataType})</span>
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+            {/* Order Variables */}
+            <div style={{ marginBottom: '10px' }}>
+              <div style={{ fontSize: '11px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Order Info:</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', fontSize: '11px' }}>
+                {['orderNumber', 'orderDate', 'orderType', 'orderStatus', 'customerName', 'customerAddress', 'customerPhone'].map((v) => (
+                  <code key={v} style={{ background: '#dbeafe', padding: '2px 8px', borderRadius: '4px', color: '#1e40af' }}>
+                    {`{{${v}}}`}
+                  </code>
+                ))}
               </div>
-            )}
+            </div>
 
-            <div style={{ marginTop: '12px', fontSize: '12px', color: '#0369a1', background: '#bae6fd', padding: '8px 12px', borderRadius: '6px' }}>
-              <strong>Tip:</strong> Use these specification names in your templates with the format: <code style={{ background: '#e0f2fe', padding: '2px 6px', borderRadius: '4px' }}>{'{{specName}}'}</code>
+            {/* Option Variables */}
+            <div style={{ marginBottom: '10px' }}>
+              <div style={{ fontSize: '11px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Option Info (per item):</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', fontSize: '11px' }}>
+                {['optionName', 'optionType', 'optionCode', 'optionDimensions'].map((v) => (
+                  <code key={v} style={{ background: '#d1fae5', padding: '2px 8px', borderRadius: '4px', color: '#065f46' }}>
+                    {`{{${v}}}`}
+                  </code>
+                ))}
+              </div>
+            </div>
+
+            {/* Dimension Variables - Dynamic based on Option Type */}
+            <div style={{ marginBottom: '10px' }}>
+              <div style={{ fontSize: '11px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Dimension Variables (from Option):</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', fontSize: '11px' }}>
+                {['dim.mc_gram', 'dim.calculation', 'dim.wastage', 'dim.purity', 'dim.weight', 'dim.rate'].map((v) => (
+                  <code key={v} style={{ background: '#fef3c7', padding: '2px 8px', borderRadius: '4px', color: '#92400e' }}>
+                    {`{{${v}}}`}
+                  </code>
+                ))}
+              </div>
+              <div style={{ fontSize: '10px', color: '#6b7280', marginTop: '4px' }}>
+                Use <code style={{ background: '#fef3c7', padding: '1px 4px', borderRadius: '2px' }}>{'{{dim.YOUR_DIMENSION_NAME}}'}</code> for any dimension
+              </div>
+            </div>
+
+            {/* Calculation Variables */}
+            <div style={{ marginBottom: '10px' }}>
+              <div style={{ fontSize: '11px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Totals & Calculations:</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', fontSize: '11px' }}>
+                {['subtotal', 'tax', 'discount', 'grandTotal', 'totalItems', 'totalQuantity'].map((v) => (
+                  <code key={v} style={{ background: '#fce7f3', padding: '2px 8px', borderRadius: '4px', color: '#9d174d' }}>
+                    {`{{${v}}}`}
+                  </code>
+                ))}
+              </div>
+            </div>
+
+            {/* Loop Variables */}
+            <div>
+              <div style={{ fontSize: '11px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Loop through items:</div>
+              <div style={{ fontSize: '10px', color: '#6b7280', fontFamily: 'monospace', background: '#f3f4f6', padding: '8px', borderRadius: '4px' }}>
+                {'{{#items}}'}<br />
+                {'  <tr><td>{{optionName}}</td><td>{{optionType}}</td><td>{{dim.weight}}</td></tr>'}<br />
+                {'{{/items}}'}
+              </div>
             </div>
           </div>
+        </div>
+
+        {/* Live Preview Popup Modal - Using Portal for Electron */}
+        {showPreview && ReactDOM.createPortal(
+          <div
+            className="print-preview-modal-overlay"
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              width: '100vw',
+              height: '100vh',
+              background: 'rgba(0, 0, 0, 0.9)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 999999,
+              padding: '20px',
+              boxSizing: 'border-box',
+            }}
+            onClick={() => setShowPreview(false)}
+          >
+            <div
+              style={{
+                background: '#f3f4f6',
+                borderRadius: '12px',
+                width: '85vw',
+                maxWidth: '850px',
+                height: '85vh',
+                maxHeight: '85vh',
+                display: 'flex',
+                flexDirection: 'column',
+                boxShadow: '0 25px 50px rgba(0, 0, 0, 0.5)',
+                overflow: 'hidden',
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Popup Header */}
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '14px 20px',
+                background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
+                color: 'white',
+                flexShrink: 0,
+              }}>
+                <h2 style={{ fontSize: '16px', fontWeight: 600, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  Print Preview
+                </h2>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={() => window.print()}
+                    style={{
+                      padding: '6px 14px',
+                      background: '#22c55e',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Print
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowPreview(false)}
+                    style={{
+                      padding: '6px 14px',
+                      background: '#ef4444',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+
+              {/* Popup Body - Scrollable Paper */}
+              <div style={{
+                flex: 1,
+                overflowY: 'auto',
+                padding: '20px',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'flex-start',
+                background: '#374151',
+              }}>
+                <div style={{
+                  background: 'white',
+                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.4)',
+                  borderRadius: '2px',
+                  width: '100%',
+                  maxWidth: '700px',
+                  minHeight: '500px',
+                  padding: '30px',
+                  fontFamily: 'Arial, sans-serif',
+                  fontSize: '12px',
+                  lineHeight: 1.5,
+                  color: '#333',
+                }}>
+                  <style dangerouslySetInnerHTML={{ __html: cssTemplate }} />
+                  <div dangerouslySetInnerHTML={{ __html: headerTemplate }} />
+                  <div dangerouslySetInnerHTML={{ __html: bodyTemplate }} />
+                  <div dangerouslySetInnerHTML={{ __html: footerTemplate }} />
+                </div>
+              </div>
+
+              {/* Popup Footer - Info */}
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '10px 20px',
+                background: '#e5e7eb',
+                borderTop: '1px solid #d1d5db',
+                fontSize: '11px',
+                color: '#6b7280',
+                flexShrink: 0,
+              }}>
+                <div>
+                  Paper: <strong>{paperSize}</strong> | Orientation: <strong>{orientation}</strong>
+                </div>
+                <div>
+                  Margins: {margins.top}mm / {margins.right}mm / {margins.bottom}mm / {margins.left}mm
+                </div>
+              </div>
+            </div>
+          </div>,
+          document.body
         )}
 
         {/* Global/Default Settings Section */}

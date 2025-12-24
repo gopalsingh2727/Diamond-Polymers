@@ -70,7 +70,18 @@
   border-bottom: 1px solid #d1d5db;
   outline: none;
   box-sizing: border-box;
+  -webkit-transition: border-color 0.2s ease;
   transition: border-color 0.2s ease;
+  /* Cross-browser fixes */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  -ms-appearance: none;
+  appearance: none;
+}
+
+/* IE11 fix for select dropdown */
+.EditCategory select::-ms-expand {
+  display: none;
 }
 
 .EditCategory input:focus,
@@ -83,11 +94,9 @@
   color: #9ca3af;
 }
 
-/* Select dropdown */
+/* Select dropdown - additional styling */
 .EditCategory select {
   cursor: pointer;
-  -webkit-appearance: none;
-  appearance: none;
 }
 
 /* Save button */
@@ -103,22 +112,39 @@
   border: none;
   border-radius: 8px;
   cursor: pointer;
+  -webkit-transition: all 0.2s ease;
   transition: all 0.2s ease;
+  -webkit-box-shadow: 0 2px 8px rgba(255, 107, 53, 0.25);
   box-shadow: 0 2px 8px rgba(255, 107, 53, 0.25);
+  /* Cross-browser fixes */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  /* GPU acceleration */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 
 .EditCategory button:hover:not(:disabled),
 .EditCategory .save-button:hover:not(:disabled) {
   background: linear-gradient(135deg, #E55A2B 0%, #d44a1b 100%);
-  transform: translateY(-2px);
+  -webkit-transform: translateY(-2px) translateZ(0);
+  transform: translateY(-2px) translateZ(0);
+  -webkit-box-shadow: 0 4px 16px rgba(255, 107, 53, 0.35);
   box-shadow: 0 4px 16px rgba(255, 107, 53, 0.35);
+  will-change: transform;
 }
 
 .EditCategory button:disabled {
   background: #9ca3af;
   cursor: not-allowed;
+  -webkit-transform: none;
   transform: none;
+  -webkit-box-shadow: none;
   box-shadow: none;
+  will-change: auto;
 }
 
 /* Delete button */
@@ -182,8 +208,13 @@
   background: white;
   color: #6b7280;
   cursor: pointer;
+  -webkit-transition: all 0.2s ease;
   transition: all 0.2s ease;
   margin-top: 0;
+  /* Cross-browser fixes */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
 }
 
 .EditCategory .toggleBtn:hover {

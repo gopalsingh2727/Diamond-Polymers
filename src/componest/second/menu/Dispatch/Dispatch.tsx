@@ -187,7 +187,7 @@ export default function Dispatch() {
   // Company info - safe access with type assertion
   const companyName = (authState as any)?.user?.companyName || "ABC Company";
   const branchName = (authState as any)?.user?.branchName || "Main Branch";
-  const branchId = (authState as any)?.user?.branchId || null;  // ✅ For WebSocket subscription
+  const branchId = (authState as any)?.user?.branchId || localStorage.getItem('branchId') || localStorage.getItem('selectedBranch') || null;  // ✅ For WebSocket subscription
 
   // Status color mapping for dispatch - matches backend overallStatus enum values
   function getStatusColor(status: string): string {
@@ -503,14 +503,22 @@ export default function Dispatch() {
     });
   };
 
-  // Effect hooks
+  // Effect hooks - Fetch orders on mount and filter changes
   useEffect(() => {
     console.log("🚚 Dispatch useEffect triggered - fetching orders");
     fetchOrdersData();
+
+    // ✅ Check if orders were updated while navigating - force refresh
+    const ordersUpdated = sessionStorage.getItem('orders_updated');
+    if (ordersUpdated) {
+      console.log("📡 Orders were updated - forcing refresh");
+      sessionStorage.removeItem('orders_updated');
+      setTimeout(() => fetchOrdersData(), 100);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, currentPage, limit, fromDate, toDate, searchTerm, statusFilter]);
 
-  // ✅ REPLACED: 30-second polling with WebSocket real-time subscription
+  // ✅ WebSocket real-time subscription for instant order updates
   const handleOrderUpdate = useCallback(() => {
     console.log("📡 WebSocket: Dispatch update received - refreshing");
     fetchOrdersData();

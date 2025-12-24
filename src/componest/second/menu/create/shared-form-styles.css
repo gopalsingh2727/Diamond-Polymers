@@ -95,27 +95,28 @@
   color: var(--color-error);
 }
 
-/* Form Input - Standardized */
+/* Form Input - Standardized with Underline Style */
 .shared-form-input {
   width: 100%;
-  padding: 0.625rem 1rem;
+  padding: 10px 0;
   font-size: var(--font-base);
   color: var(--color-text);
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
+  background-color: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-bottom: 0.5px solid #333;
+  border-radius: 0;
   transition: all 0.2s ease;
   box-sizing: border-box;
 }
 
 .shared-form-input:focus {
   outline: none;
-  border-color: var(--color-border-focus);
-  box-shadow: 0 0 0 3px var(--color-primary-light);
+  border: none;
+  border-bottom: 2px solid var(--color-primary);
 }
 
 .shared-form-input:disabled {
-  background-color: var(--color-background);
+  background-color: rgba(255, 255, 255, 0.05);
   cursor: not-allowed;
   opacity: 0.7;
 }
@@ -124,40 +125,46 @@
   color: var(--color-text-muted);
 }
 
-/* Form Select */
+/* Form Select - Underline Style */
 .shared-form-select {
   width: 100%;
-  padding: 0.625rem 1rem;
+  padding: 10px 0;
   font-size: var(--font-base);
   color: var(--color-text);
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
+  background-color: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-bottom: 0.5px solid #333;
+  border-radius: 0;
   transition: all 0.2s ease;
   cursor: pointer;
+  /* Cross-browser appearance reset */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  -ms-appearance: none;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 0.75rem center;
-  background-size: 1rem;
-  padding-right: 2.5rem;
+}
+
+/* IE11 fix */
+.shared-form-select::-ms-expand {
+  display: none;
 }
 
 .shared-form-select:focus {
   outline: none;
-  border-color: var(--color-border-focus);
-  box-shadow: 0 0 0 3px var(--color-primary-light);
+  border: none;
+  border-bottom: 2px solid var(--color-primary);
 }
 
-/* Form Textarea */
+/* Form Textarea - Underline Style */
 .shared-form-textarea {
   width: 100%;
-  padding: 0.625rem 1rem;
+  padding: 10px 0;
   font-size: var(--font-base);
   color: var(--color-text);
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
+  background-color: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-bottom: 0.5px solid #333;
+  border-radius: 0;
   transition: all 0.2s ease;
   resize: vertical;
   min-height: 100px;
@@ -166,8 +173,8 @@
 
 .shared-form-textarea:focus {
   outline: none;
-  border-color: var(--color-border-focus);
-  box-shadow: 0 0 0 3px var(--color-primary-light);
+  border: none;
+  border-bottom: 2px solid var(--color-primary);
 }
 
 /* Primary Save Button */
@@ -354,7 +361,9 @@
    ============================================ */
 
 .CreateForm {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  /* Cross-platform font stack */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto',
+               'Oxygen', 'Ubuntu', 'Cantarell', 'Helvetica Neue', sans-serif;
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -472,6 +481,16 @@
   outline: none;
   cursor: pointer;
   transition: border-color 0.2s ease;
+  /* Cross-browser fixes */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  -ms-appearance: none;
+  appearance: none;
+}
+
+/* IE11 fix */
+.CreateForm select::-ms-expand {
+  display: none;
 }
 
 .CreateForm select:focus {

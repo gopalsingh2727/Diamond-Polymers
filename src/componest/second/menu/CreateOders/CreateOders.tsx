@@ -81,6 +81,11 @@ type OrderTypeConfig = {
   enablePrinting: boolean;
   enableMixing: boolean;
   allowedOptionTypes?: AllowedOptionType[];
+  // Billing order fields
+  orderCategory?: 'manufacturing' | 'billing';
+  billingType?: 'invoice' | 'estimate' | 'quotation' | 'challan' | 'credit_note' | 'debit_note';
+  allowManufacturingLink?: boolean;
+  hideManufacturingSteps?: boolean;
 };
 
 // Helper function to generate unique IDs for options
@@ -266,6 +271,11 @@ const CreateOrders = () => {
         setOrderTypeConfig(selectedConfig);
         console.log('=== Order Type Config Loaded ===');
         console.log('Type Name:', selectedConfig.typeName);
+        console.log('Order Category:', selectedConfig.orderCategory);
+        console.log('Hide Manufacturing Steps:', selectedConfig.hideManufacturingSteps);
+        console.log('Dynamic Calculations:', selectedConfig.dynamicCalculations);
+        console.log('Dynamic Calculations Count:', selectedConfig.dynamicCalculations?.length || 0);
+        console.log('Selected Specs:', selectedConfig.selectedSpecs);
         console.log('Sections from DB:', selectedConfig.sections);
         console.log('Sections Count:', selectedConfig.sections?.length || 0);
         if (selectedConfig.sections && selectedConfig.sections.length > 0) {
@@ -283,6 +293,12 @@ const CreateOrders = () => {
 
   // Helper function to check if a section is enabled
   const isSectionEnabled = (sectionId: string): boolean => {
+    // BILLING ORDER: Hide steps section if hideManufacturingSteps is true
+    if (sectionId === 'steps' && orderTypeConfig?.hideManufacturingSteps) {
+      console.log('🔒 Steps section hidden - billing order type');
+      return false;
+    }
+
     if (!orderTypeConfig || !orderTypeConfig.sections || orderTypeConfig.sections.length === 0) {
       // Default to showing all sections if no config
       return true;
@@ -291,15 +307,18 @@ const CreateOrders = () => {
     // Find section in config
     const section = orderTypeConfig.sections.find(s => s.id === sectionId);
 
-    // BACKWARD COMPATIBILITY: Show 'options' and 'steps' sections by default if not in config
+    // BACKWARD COMPATIBILITY: Show 'options', 'steps', and 'dynamicColumns' sections by default if not in config
     // This handles order types created before these sections were added
-    if ((sectionId === 'options' || sectionId === 'steps') && !section) {
+    if ((sectionId === 'options' || sectionId === 'steps' || sectionId === 'dynamicColumns') && !section) {
       return true;
     }
 
     // For other sections: if not found, it's NOT enabled
     return section ? section.enabled !== false : false;
   };
+
+  // Check if this is a billing order type
+  const isBillingOrder = orderTypeConfig?.orderCategory === 'billing';
 
   // Sort sections by order
   const getSortedSections = (): SectionConfig[] => {
@@ -612,6 +631,32 @@ const CreateOrders = () => {
             orderTypes={orderTypes}
             loading={formDataLoading}
           />
+
+          {/* Billing Order Indicator */}
+          {isBillingOrder && orderTypeConfig && (
+            <div style={{
+              marginTop: '12px',
+              padding: '12px 16px',
+              background: '#ecfdf5',
+              border: '1px solid #10b981',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px'
+            }}>
+              <span style={{ fontSize: '20px' }}>📄</span>
+              <div>
+                <div style={{ fontWeight: 600, color: '#065f46', fontSize: '14px' }}>
+                  Billing Order - {orderTypeConfig.billingType?.replace('_', ' ').toUpperCase() || 'Invoice'}
+                </div>
+                <div style={{ fontSize: '12px', color: '#6b7280' }}>
+                  {orderTypeConfig.allowManufacturingLink
+                    ? 'Can be linked to manufacturing order'
+                    : 'Standalone billing document'}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Hidden input for order type ID - needed for DOM data collection */}
           <input

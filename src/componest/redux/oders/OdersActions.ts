@@ -1332,9 +1332,21 @@ export const updateOrder = (orderId: string, orderData: Partial<UpdatedOrderData
           message: 'Order updated successfully!'
         } as UpdateOrderSuccessPayload
       });
-      
+
       // Optionally refresh the orders list
       dispatch(fetchOrders() as any);
+
+      // ✅ Emit browser event for other components to listen (fallback when WebSocket not connected)
+      window.dispatchEvent(new CustomEvent('order:updated:local', {
+        detail: {
+          type: 'order:updated',
+          data: updatedOrder,
+          orderId: orderId
+        }
+      }));
+
+      // ✅ Store flag in sessionStorage so pages can refresh on mount after navigation
+      sessionStorage.setItem('orders_updated', Date.now().toString());
 
       // ✅ FIXED: Return the updated order so caller can check success
       return updatedOrder;

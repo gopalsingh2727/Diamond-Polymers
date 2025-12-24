@@ -160,7 +160,7 @@ export default function DayBook() {
   // Company info
   const companyName = authState?.user?.companyName || "ABC Company";
   const branchName = authState?.user?.branchName || "Main Branch";
-  const branchId = authState?.user?.branchId || null;  // ✅ For WebSocket subscription
+  const branchId = authState?.user?.branchId || localStorage.getItem('branchId') || localStorage.getItem('selectedBranch') || null;  // ✅ For WebSocket subscription
 
   // Status color mapping - matches backend overallStatus enum values
   function getStatusColor(status: string): string {
@@ -405,14 +405,23 @@ export default function DayBook() {
     });
   };
 
-  // Effect hooks - Fetch orders
+  // Effect hooks - Fetch orders on mount and filter changes
   useEffect(() => {
     console.log("🔄 useEffect triggered - fetching orders");
     fetchOrdersData();
+
+    // ✅ Check if orders were updated while navigating - force refresh
+    const ordersUpdated = sessionStorage.getItem('orders_updated');
+    if (ordersUpdated) {
+      console.log("📡 Orders were updated - forcing refresh");
+      sessionStorage.removeItem('orders_updated');
+      // Small delay to ensure the fetchOrdersData above completes first
+      setTimeout(() => fetchOrdersData(), 100);
+    }
   }, [dispatch, currentPage, limit, fromDate, toDate, searchTerm, statusFilter, orderTypeFilter]);
 
-  // ✅ REPLACED: 30-second polling with WebSocket real-time subscription
-  // This subscribes to the daybook room and receives instant updates when orders change
+  // ✅ WebSocket real-time subscription for instant order updates
+  // This receives updates immediately when orders change - no polling needed
   const handleOrderUpdate = useCallback(() => {
     console.log("📡 WebSocket: Order update received - refreshing");
     fetchOrdersData();

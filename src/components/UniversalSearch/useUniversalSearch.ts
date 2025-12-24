@@ -23,7 +23,8 @@ export interface SearchResult {
  */
 export const useUniversalSearch = (searchTerm: string): SearchResult[] => {
   // Get Redux state slices
-  const orders = useSelector((state: RootState) => state.orders?.orders || []);
+  // FIX: Orders are stored at state.orders.list.orders (orderListReducer is nested in combineReducers)
+  const orders = useSelector((state: RootState) => state.orders?.list?.orders || []);
   const machines = useSelector((state: RootState) => state.machineList?.items || []);
   const machineTypes = useSelector((state: RootState) => state.machineTypeList?.items || []);
   const operators = useSelector((state: RootState) => state.operatorList?.items || []);
@@ -36,7 +37,14 @@ export const useUniversalSearch = (searchTerm: string): SearchResult[] => {
 
   // Memoize search results to avoid recalculating on every render
   const results = useMemo(() => {
+    console.log('🔍 Search Hook: Starting search with term:', searchTerm);
+    console.log('🔍 Search Hook: Redux State Path Check:');
+    console.log('  ├─ Orders available:', orders.length, '(from state.orders.list.orders)');
+    console.log('  ├─ Machines available:', machines.length, '(from state.machineList.items)');
+    console.log('  └─ Operators available:', operators.length, '(from state.operatorList.items)');
+
     if (!searchTerm || searchTerm.trim().length < 2) {
+      console.log('🔍 Search Hook: Search term too short, returning empty results');
       return [];
     }
 
@@ -46,7 +54,12 @@ export const useUniversalSearch = (searchTerm: string): SearchResult[] => {
     // Search Orders
     const orderConfig = SEARCH_CONFIG.find(c => c.type === 'order');
     if (orderConfig && orders.length > 0) {
+      console.log('🔍 Search Hook: Searching orders with fields:', orderConfig.searchFields);
+      console.log('🔍 Search Hook: Sample order:', orders[0]);
+
       const foundOrders = searchData(orders, term, orderConfig.searchFields);
+      console.log('🔍 Search Hook: Found orders:', foundOrders.length);
+
       foundOrders.forEach((order: any) => {
         allResults.push({
           id: order._id || order.orderId,
@@ -58,6 +71,8 @@ export const useUniversalSearch = (searchTerm: string): SearchResult[] => {
           data: order
         });
       });
+    } else {
+      console.log('🔍 Search Hook: No orders to search or config missing');
     }
 
     // Search Machines
@@ -165,7 +180,13 @@ export const useUniversalSearch = (searchTerm: string): SearchResult[] => {
     }
 
     // Limit results and return
-    return allResults.slice(0, MAX_SEARCH_RESULTS);
+    console.log('🔍 Search Hook: Total results found:', allResults.length);
+    console.log('🔍 Search Hook: Results:', allResults);
+
+    const limitedResults = allResults.slice(0, MAX_SEARCH_RESULTS);
+    console.log('🔍 Search Hook: Returning', limitedResults.length, 'results (limited to', MAX_SEARCH_RESULTS, ')');
+
+    return limitedResults;
   }, [searchTerm, orders, machines, machineTypes, operators, customers, products, materials]);
 
   return results;

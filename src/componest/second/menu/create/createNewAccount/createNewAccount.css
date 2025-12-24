@@ -60,40 +60,31 @@
 }
 
 .form-group select {
-  padding: 8px 12px;
+  padding: 10px 0;
   font-size: 14px;
   color: #333;
-  background-color: #fff;
-  border: 2px solid #e5e7eb;
-  border-radius: 6px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-bottom: 0.5px solid #333;
+  border-radius: 0;
   outline: none;
   transition: all 0.2s ease-in-out;
   min-height: 36px;
-}
-
-
-
-
-.form-group select {
   cursor: pointer;
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
-  background-position: right 12px center;
-  background-repeat: no-repeat;
-  background-size: 16px;
-  padding-right: 40px;
   appearance: none;
 }
 
-/* Input Styles - Bordered */
+/* Input Styles - Underline Only */
 .CurstomerInput,
 .CurstomerAddressInput {
   width: 100%;
-  padding: 8px 12px;
+  padding: 10px 0;
   font-size: 14px;
   color: #1f2937;
-  background-color: #fff;
-  border: 2px solid #e5e7eb;
-  border-radius: 6px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-bottom: 0.5px solid #333;
+  border-radius: 0;
   outline: none;
   box-sizing: border-box;
   transition: all 0.2s ease-in-out;
@@ -105,9 +96,9 @@
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
-  border-color: #FF6B35;
+  border: none;
+  border-bottom: 2px solid #FF6B35;
   outline: none;
-  box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.15);
 }
 
 
@@ -206,29 +197,25 @@
 
 .form-group-createAccount select {
   width: 100%;
-  padding: 8px 12px;
+  padding: 10px 0;
   font-size: 14px;
   color: #1f2937;
-  background-color: #fff;
-  border: 2px solid #e5e7eb;
-  border-radius: 6px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-bottom: 0.5px solid #333;
+  border-radius: 0;
   outline: none;
   box-sizing: border-box;
   transition: all 0.2s ease-in-out;
   cursor: pointer;
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
-  background-position: right 8px center;
-  background-repeat: no-repeat;
-  background-size: 14px;
-  padding-right: 32px;
   appearance: none;
   min-height: 36px;
 }
 
 .form-group-createAccount select:focus {
-  border-color: #FF6B35;
+  border: none;
+  border-bottom: 2px solid #FF6B35;
   outline: none;
-  box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.15);
 }
 
 /* Fix for form row items */

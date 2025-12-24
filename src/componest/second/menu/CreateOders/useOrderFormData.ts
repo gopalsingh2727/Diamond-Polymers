@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { getOrderFormDataIfNeeded } from "../../../redux/oders/orderFormDataActions";
+import { getOrderFormDataIfNeeded, refreshOrderFormData } from "../../../redux/oders/orderFormDataActions";
 import { RootState } from "../../../redux/rootReducer";
 
 // Stable empty array reference to prevent re-renders
@@ -10,6 +10,7 @@ const EMPTY_ARRAY: any[] = [];
  * Custom hook to manage order form data
  * Fetches ALL data in ONE API call on mount (uses cache if available)
  * Provides filtered data based on selections
+ * Listens for WebSocket updates to refetch data in real-time
  */
 export const useOrderFormData = () => {
   const dispatch = useDispatch();
@@ -24,6 +25,31 @@ export const useOrderFormData = () => {
   // Fetch all data on mount (uses cache if available - no redundant API calls!)
   useEffect(() => {
     dispatch(getOrderFormDataIfNeeded() as any);
+  }, [dispatch]);
+
+  // Listen for WebSocket updates to refetch order form data in real-time
+  useEffect(() => {
+    const handleWebSocketMessage = (event: CustomEvent) => {
+      const { type, data: eventData } = event.detail;
+
+      if (type === 'referenceData:invalidate') {
+        const entityType = eventData?.entity || eventData?.entityType;
+        console.log('🔄 [useOrderFormData] WebSocket invalidate received for:', entityType);
+
+        // Refetch order form data when orderType is updated (to get latest dynamicCalculations)
+        if (entityType === 'orderType') {
+          console.log('📥 [useOrderFormData] Refetching order form data (orderType updated)...');
+          dispatch(refreshOrderFormData() as any);
+        }
+      }
+    };
+
+    // Add event listener for WebSocket messages
+    window.addEventListener('websocket:message', handleWebSocketMessage as EventListener);
+
+    return () => {
+      window.removeEventListener('websocket:message', handleWebSocketMessage as EventListener);
+    };
   }, [dispatch]);
 
   // Memoize filtered products by selected product type

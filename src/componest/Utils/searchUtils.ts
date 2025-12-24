@@ -18,18 +18,33 @@ export const searchData = <T extends Record<string, any>>(
   }
 
   const normalizedSearch = searchTerm.toLowerCase().trim();
+  console.log('🔎 searchData: Searching for:', normalizedSearch);
+  console.log('🔎 searchData: In fields:', searchFields);
+  console.log('🔎 searchData: Data count:', data.length);
 
-  return data.filter((item) => {
-    return searchFields.some((field) => {
+  const results = data.filter((item, index) => {
+    const matches = searchFields.some((field) => {
       const value = getNestedValue(item, field);
-      
+
       if (value === null || value === undefined) {
         return false;
       }
 
-      return String(value).toLowerCase().includes(normalizedSearch);
+      const stringValue = String(value).toLowerCase();
+      const match = stringValue.includes(normalizedSearch);
+
+      if (index === 0) {
+        console.log(`🔎 searchData: Field "${field}" value:`, value, 'Match:', match);
+      }
+
+      return match;
     });
+
+    return matches;
   });
+
+  console.log('🔎 searchData: Found', results.length, 'matches');
+  return results;
 };
 
 /**

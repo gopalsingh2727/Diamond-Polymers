@@ -260,6 +260,39 @@ const InlineOptionsInput: React.FC<InlineOptionsInputProps> = ({
     dispatch(getOptionSpecs({ branchId }) as any);
   }, [dispatch]);
 
+  // Listen for WebSocket updates to refetch options and optionSpecs in real-time
+  useEffect(() => {
+    const branchId = localStorage.getItem('branchId') || '';
+
+    const handleWebSocketMessage = (event: CustomEvent) => {
+      const { type, data } = event.detail;
+
+      if (type === 'referenceData:invalidate') {
+        const entityType = data?.entity || data?.entityType;
+        console.log('🔄 [InlineOptionsInput] WebSocket invalidate received for:', entityType);
+
+        // Refetch options when option or optionType is updated
+        if (entityType === 'option' || entityType === 'optionType') {
+          console.log('📥 [InlineOptionsInput] Refetching options...');
+          dispatch(getOptions({ orderTypeId, branchId }) as any);
+        }
+
+        // Refetch optionSpecs when optionSpec is updated
+        if (entityType === 'optionSpec') {
+          console.log('📥 [InlineOptionsInput] Refetching optionSpecs...');
+          dispatch(getOptionSpecs({ branchId }) as any);
+        }
+      }
+    };
+
+    // Add event listener for WebSocket messages
+    window.addEventListener('websocket:message', handleWebSocketMessage as EventListener);
+
+    return () => {
+      window.removeEventListener('websocket:message', handleWebSocketMessage as EventListener);
+    };
+  }, [dispatch, orderTypeId]);
+
   // Debug: Log options data
   useEffect(() => {
     console.log('📦 Options data received:', options);

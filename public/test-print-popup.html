@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Print Preview Popup - Silver Billing</title>
+  <style>
+    /* ====================================
+       Print Preview Popup Styles
+       ==================================== */
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #1f2937;
+    }
+
+    /* Overlay Background */
+    .print-preview-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      padding: 20px;
+      animation: fadeIn 0.2s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    /* Popup Container */
+    .print-preview-popup {
+      background: #f3f4f6;
+      border-radius: 12px;
+      width: 90vw;
+      max-width: 900px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+      animation: slideUp 0.3s ease;
+      overflow: hidden;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Popup Header */
+    .print-preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+      color: white;
+    }
+
+    .print-preview-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .print-preview-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .print-preview-btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .print-preview-btn-print {
+      background: #22c55e;
+      color: white;
+    }
+
+    .print-preview-btn-print:hover {
+      background: #16a34a;
+      transform: translateY(-1px);
+    }
+
+    .print-preview-btn-download {
+      background: #f59e0b;
+      color: white;
+    }
+
+    .print-preview-btn-download:hover {
+      background: #d97706;
+      transform: translateY(-1px);
+    }
+
+    .print-preview-btn-close {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .print-preview-btn-close:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    /* Popup Body */
+    .print-preview-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      background: #4b5563;
+    }
+
+    /* Paper */
+    .print-preview-paper {
+      background: white;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      border-radius: 4px;
+      width: 210mm;
+      min-height: 297mm;
+      padding: 15mm;
+    }
+
+    /* Footer Toolbar */
+    .print-preview-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 20px;
+      background: #e5e7eb;
+      border-top: 1px solid #d1d5db;
+    }
+
+    .print-preview-zoom {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .print-preview-zoom-label {
+      font-size: 12px;
+      color: #6b7280;
+      font-weight: 500;
+    }
+
+    .print-preview-zoom-btn {
+      width: 32px;
+      height: 32px;
+      border: 1px solid #d1d5db;
+      background: white;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .print-preview-zoom-btn:hover {
+      background: #f3f4f6;
+      border-color: #9ca3af;
+    }
+
+    .print-preview-zoom-value {
+      font-size: 13px;
+      font-weight: 600;
+      color: #374151;
+      min-width: 50px;
+      text-align: center;
+    }
+
+    .print-preview-page-info {
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    /* ====================================
+       Print Content Styles
+       ==================================== */
+
+    .print-header {
+      text-align: center;
+      border-bottom: 2px solid #333;
+      padding-bottom: 15px;
+      margin-bottom: 20px;
+    }
+
+    .print-company-name {
+      font-size: 22px;
+      font-weight: bold;
+      color: #1a1a1a;
+      margin-bottom: 4px;
+    }
+
+    .print-company-address {
+      font-size: 10px;
+      color: #666;
+    }
+
+    .print-invoice-title {
+      font-size: 16px;
+      font-weight: bold;
+      margin-top: 10px;
+      color: #1e40af;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .print-order-info {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 15px;
+      padding: 10px;
+      background: #f8fafc;
+      border-radius: 4px;
+      font-size: 11px;
+    }
+
+    .print-order-info-label {
+      font-weight: 600;
+      color: #374151;
+    }
+
+    .print-order-info-value {
+      color: #1f2937;
+    }
+
+    .print-customer-info {
+      margin-bottom: 15px;
+      padding: 10px;
+      border: 1px solid #e5e7eb;
+      border-radius: 4px;
+    }
+
+    .print-customer-info h3 {
+      font-size: 11px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #374151;
+      text-transform: uppercase;
+    }
+
+    .print-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 15px;
+      font-size: 10px;
+    }
+
+    .print-table th {
+      background: #1e40af;
+      color: white;
+      padding: 8px 6px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 9px;
+      text-transform: uppercase;
+    }
+
+    .print-table td {
+      padding: 6px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .print-table tr:nth-child(even) {
+      background: #f8fafc;
+    }
+
+    .print-table .text-right {
+      text-align: right;
+    }
+
+    .print-table .text-center {
+      text-align: center;
+    }
+
+    .print-option-badge {
+      display: inline-block;
+      padding: 2px 6px;
+      background: #dbeafe;
+      color: #1e40af;
+      border-radius: 3px;
+      font-size: 8px;
+      font-weight: 600;
+    }
+
+    .print-dim-value {
+      font-family: 'Courier New', monospace;
+      font-weight: 600;
+    }
+
+    .print-dim-calculated {
+      color: #059669;
+    }
+
+    .print-highlight {
+      background: #fef3c7 !important;
+      font-weight: 600;
+    }
+
+    .print-totals {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 15px;
+    }
+
+    .print-totals-table {
+      width: 200px;
+      border-collapse: collapse;
+      font-size: 10px;
+    }
+
+    .print-totals-table td {
+      padding: 5px 8px;
+    }
+
+    .print-totals-table .label {
+      text-align: right;
+      color: #6b7280;
+    }
+
+    .print-totals-table .value {
+      text-align: right;
+      font-weight: 600;
+      color: #1f2937;
+    }
+
+    .print-totals-table .grand-total {
+      background: #1e40af;
+      color: white;
+    }
+
+    .print-totals-table .grand-total td {
+      padding: 8px;
+      font-size: 12px;
+    }
+
+    .print-footer {
+      margin-top: 20px;
+      padding-top: 10px;
+      border-top: 1px solid #e5e7eb;
+      font-size: 9px;
+      color: #6b7280;
+    }
+
+    .print-footer-thanks {
+      text-align: center;
+      font-weight: 500;
+      margin-bottom: 10px;
+    }
+
+    .print-footer-terms {
+      padding: 8px;
+      background: #f8fafc;
+      border-radius: 4px;
+    }
+
+    .print-footer-terms ul {
+      margin: 5px 0 0 0;
+      padding-left: 15px;
+    }
+
+    .print-footer-terms li {
+      margin-bottom: 2px;
+    }
+
+    .print-footer-timestamp {
+      text-align: center;
+      margin-top: 10px;
+      font-size: 8px;
+    }
+
+    /* Print Media */
+    @media print {
+      .print-preview-overlay {
+        position: static;
+        background: none;
+        padding: 0;
+      }
+
+      .print-preview-popup {
+        box-shadow: none;
+        max-height: none;
+        width: 100%;
+      }
+
+      .print-preview-header,
+      .print-preview-footer {
+        display: none !important;
+      }
+
+      .print-preview-body {
+        padding: 0;
+        background: white;
+      }
+
+      .print-preview-paper {
+        box-shadow: none;
+        width: 100%;
+        padding: 10mm;
+      }
+
+      .print-table th,
+      .print-totals-table .grand-total {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Print Preview Popup -->
+  <div class="print-preview-overlay">
+    <div class="print-preview-popup">
+
+      <!-- Header -->
+      <div class="print-preview-header">
+        <h2 class="print-preview-title">
+          <span>🖨️</span>
+          Print Preview - Silver Billing Invoice
+        </h2>
+        <div class="print-preview-actions">
+          <button class="print-preview-btn print-preview-btn-print" onclick="window.print()">
+            <span>🖨️</span> Print
+          </button>
+          <button class="print-preview-btn print-preview-btn-download">
+            <span>📥</span> Download PDF
+          </button>
+          <button class="print-preview-btn print-preview-btn-close" onclick="alert('Close popup')">
+            <span>✕</span> Close
+          </button>
+        </div>
+      </div>
+
+      <!-- Body - Scrollable Paper -->
+      <div class="print-preview-body">
+        <div class="print-preview-paper">
+
+          <!-- Print Header -->
+          <div class="print-header">
+            <div class="print-company-name">Malabar Gold & Diamonds</div>
+            <div class="print-company-address">123 Jewellery Street, Mumbai - 400001 | GST: 27AABCU9603R1ZM | Ph: +91 22 1234 5678</div>
+            <div class="print-invoice-title">Silver Billing Invoice</div>
+          </div>
+
+          <!-- Order Info -->
+          <div class="print-order-info">
+            <div>
+              <div><span class="print-order-info-label">Order No:</span> <span class="print-order-info-value">SLV-2024-0001</span></div>
+              <div><span class="print-order-info-label">Date:</span> <span class="print-order-info-value">24-Dec-2024</span></div>
+            </div>
+            <div>
+              <div><span class="print-order-info-label">Order Type:</span> <span class="print-order-info-value">Silver Billing</span></div>
+              <div><span class="print-order-info-label">Status:</span> <span class="print-order-info-value">Completed</span></div>
+            </div>
+          </div>
+
+          <!-- Customer Info -->
+          <div class="print-customer-info">
+            <h3>Customer Details</h3>
+            <div style="display: flex; gap: 20px; font-size: 10px;">
+              <div><span class="print-order-info-label">Name:</span> Rajesh Kumar</div>
+              <div><span class="print-order-info-label">Phone:</span> +91 98765 43210</div>
+            </div>
+            <div style="font-size: 10px; margin-top: 4px;">
+              <span class="print-order-info-label">Address:</span> 45 Park Street, Kolkata - 700016
+            </div>
+          </div>
+
+          <!-- Items Table -->
+          <table class="print-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Option Name</th>
+                <th>Option Type</th>
+                <th class="text-center">Weight</th>
+                <th class="text-center">Purity</th>
+                <th class="text-right">MC/Gram</th>
+                <th class="text-right">Calculation</th>
+                <th class="text-right">Wastage</th>
+                <th class="text-right">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td>Silver Chain 20"</td>
+                <td><span class="print-option-badge">MAKDE</span></td>
+                <td class="text-center print-dim-value">25.50 g</td>
+                <td class="text-center print-dim-value">80%</td>
+                <td class="text-right print-dim-value">45.00</td>
+                <td class="text-right print-dim-value">103.00</td>
+                <td class="text-right print-dim-value print-dim-calculated">23.00</td>
+                <td class="text-right print-highlight">₹ 2,625.75</td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td>Silver Bracelet</td>
+                <td><span class="print-option-badge">MBKSV</span></td>
+                <td class="text-center print-dim-value">18.75 g</td>
+                <td class="text-center print-dim-value">80%</td>
+                <td class="text-right print-dim-value">50.00</td>
+                <td class="text-right print-dim-value">110.00</td>
+                <td class="text-right print-dim-value print-dim-calculated">30.00</td>
+                <td class="text-right print-highlight">₹ 2,062.50</td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td>Silver Ring Size 8</td>
+                <td><span class="print-option-badge">MAKTN</span></td>
+                <td class="text-center print-dim-value">8.20 g</td>
+                <td class="text-center print-dim-value">80%</td>
+                <td class="text-right print-dim-value">55.00</td>
+                <td class="text-right print-dim-value">105.00</td>
+                <td class="text-right print-dim-value print-dim-calculated">25.00</td>
+                <td class="text-right print-highlight">₹ 861.00</td>
+              </tr>
+              <tr>
+                <td>4</td>
+                <td>Silver Earrings Pair</td>
+                <td><span class="print-option-badge">NBKSV</span></td>
+                <td class="text-center print-dim-value">12.30 g</td>
+                <td class="text-center print-dim-value">80%</td>
+                <td class="text-right print-dim-value">48.00</td>
+                <td class="text-right print-dim-value">108.00</td>
+                <td class="text-right print-dim-value print-dim-calculated">28.00</td>
+                <td class="text-right print-highlight">₹ 1,328.40</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- Totals -->
+          <div class="print-totals">
+            <table class="print-totals-table">
+              <tr>
+                <td class="label">Total Items:</td>
+                <td class="value">4</td>
+              </tr>
+              <tr>
+                <td class="label">Total Weight:</td>
+                <td class="value">64.75 g</td>
+              </tr>
+              <tr>
+                <td class="label">Subtotal:</td>
+                <td class="value">₹ 6,877.65</td>
+              </tr>
+              <tr>
+                <td class="label">GST (3%):</td>
+                <td class="value">₹ 206.33</td>
+              </tr>
+              <tr>
+                <td class="label">Discount:</td>
+                <td class="value">- ₹ 100.00</td>
+              </tr>
+              <tr class="grand-total">
+                <td class="label">Grand Total:</td>
+                <td class="value">₹ 6,983.98</td>
+              </tr>
+            </table>
+          </div>
+
+          <!-- Footer -->
+          <div class="print-footer">
+            <div class="print-footer-thanks">Thank you for your business!</div>
+            <div class="print-footer-terms">
+              <strong>Terms & Conditions:</strong>
+              <ul>
+                <li>Goods once sold will not be taken back.</li>
+                <li>Purity: 80% Silver (as per hallmark standards)</li>
+                <li>Wastage = Calculation - Purity</li>
+                <li>Making charges are non-refundable.</li>
+              </ul>
+            </div>
+            <div class="print-footer-timestamp">Generated on: 24-Dec-2024 10:30 AM</div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Footer Toolbar -->
+      <div class="print-preview-footer">
+        <div class="print-preview-zoom">
+          <span class="print-preview-zoom-label">Zoom:</span>
+          <button class="print-preview-zoom-btn">−</button>
+          <span class="print-preview-zoom-value">100%</span>
+          <button class="print-preview-zoom-btn">+</button>
+        </div>
+        <div class="print-preview-page-info">
+          Page 1 of 1 | A4 Portrait
+        </div>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>
