@@ -1,4 +1,4 @@
-import React, { useState, forwardRef, useImperativeHandle, useEffect } from "react";
+import React, { useState, forwardRef, useImperativeHandle, useEffect, useRef } from "react";
 import Data from "../../../../allCompones/date";
 import OptimizedSuggestions from "../SuggestionInput/OptimizedSuggestions";
 
@@ -22,14 +22,29 @@ interface CustomerData {
 export interface CustomerNameRef {
   getCustomerData: () => CustomerData & { status: string };
   resetCustomerData: () => void;
+  focus: () => void;
 }
 
 interface CustomerNameProps {
   initialData?: any;
   isEditMode?: boolean;
+  onCustomerSelect?: () => void;
 }
 
-const CustomerName = forwardRef<CustomerNameRef, CustomerNameProps>(({ initialData, isEditMode }, ref) => {
+const CustomerName = forwardRef<CustomerNameRef, CustomerNameProps>(({ initialData, isEditMode, onCustomerSelect }, ref) => {
+  const nameInputRef = useRef<HTMLInputElement>(null);
+
+  // Auto-focus the account name input when component mounts (only in create mode)
+  useEffect(() => {
+    if (!isEditMode && nameInputRef.current) {
+      nameInputRef.current.focus();
+    }
+  }, [isEditMode]);
+
+  // Keyboard navigation for suggestions
+  const [suggestionSelectedIndex, setSuggestionSelectedIndex] = useState(-1);
+  const [currentSuggestions, setCurrentSuggestions] = useState<any[]>([]);
+
   const [customerData, setCustomerData] = useState<CustomerData>({
     _id: '',
     name: '',
@@ -132,12 +147,58 @@ const handleCustomerSelect = (account: any) => {
     gstNumber: account.gstNumber || "",
   });
   setShowCustomerSuggestions(false);
+  // Notify parent that customer was selected (for auto-focus on next field)
+  if (onCustomerSelect) {
+    onCustomerSelect();
+  }
 };
 
   const handleCustomerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setCustomerData(prev => ({ ...prev, [name]: value }));
+    // Reset selection when typing
+    setSuggestionSelectedIndex(-1);
     console.log('Customer input changed:', { name, value });
+  };
+
+  // Handle keyboard navigation for suggestions
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showCustomerSuggestions || currentSuggestions.length === 0) return;
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setSuggestionSelectedIndex(prev =>
+          prev < currentSuggestions.length - 1 ? prev + 1 : 0
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setSuggestionSelectedIndex(prev =>
+          prev > 0 ? prev - 1 : currentSuggestions.length - 1
+        );
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (suggestionSelectedIndex >= 0 && suggestionSelectedIndex < currentSuggestions.length) {
+          handleCustomerSelect(currentSuggestions[suggestionSelectedIndex]);
+          setSuggestionSelectedIndex(-1);
+        }
+        break;
+      case 'Escape':
+        setShowCustomerSuggestions(false);
+        setSuggestionSelectedIndex(-1);
+        break;
+    }
+  };
+
+  // Handle suggestions change from OptimizedSuggestions
+  const handleSuggestionsChange = (suggestions: any[]) => {
+    setCurrentSuggestions(suggestions);
+    // Reset selection if suggestions changed
+    if (suggestions.length === 0) {
+      setSuggestionSelectedIndex(-1);
+    }
   };
 
   const resetCustomerData = () => {
@@ -161,6 +222,9 @@ const handleCustomerSelect = (account: any) => {
   useImperativeHandle(ref, () => ({
     getCustomerData: () => ({ ...customerData, status }),
     resetCustomerData,
+    focus: () => {
+      nameInputRef.current?.focus();
+    }
   }));
 
 
@@ -202,10 +266,12 @@ const handleCustomerSelect = (account: any) => {
       <div className="CreateOrdersForm">
         <div>
           <input
+            ref={nameInputRef}
             name="name"
             className="CurstomerNameInput"
             value={customerData.name}
             onChange={handleCustomerChange}
+            onKeyDown={handleKeyDown}
             onFocus={() => !isEditMode && setShowCustomerSuggestions(true)}
             onBlur={() => setTimeout(() => setShowCustomerSuggestions(false), 200)}
             onDoubleClick={() => customerData._id && setShowCustomerDetails(true)}
@@ -223,6 +289,8 @@ const handleCustomerSelect = (account: any) => {
               onSelect={handleCustomerSelect}
               suggestionType="customer"
               showSuggestions={showCustomerSuggestions && customerData.name.length > 0}
+              selectedIndex={suggestionSelectedIndex}
+              onSuggestionsChange={handleSuggestionsChange}
             />
           )}
         </div>

@@ -35,15 +35,27 @@ import {
   DELETE_MACHINE_TABLE_ROW_FAILURE
 } from './OdersContants';
 import { RootState } from '../rootReducer';
+// Note: Axios fallback interceptor is loaded globally in main.tsx
+// If primary server (api.27infinity.in) fails, it auto-switches to fallback (api.27infinity.com)
 
 const baseUrl = import.meta.env.VITE_API_27INFINITY_IN;
 const API_KEY = import.meta.env.VITE_API_KEY;
 
-const getAuthHeaders = (token: string) => ({
-  Authorization: `Bearer ${token}`,
-  "Content-Type": "application/json",
-  "x-api-key": API_KEY,
-});
+const getAuthHeaders = (token: string, branchId?: string | null) => {
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+    "x-api-key": API_KEY,
+  };
+
+  // Add x-selected-branch header for branch-based data isolation
+  const selectedBranch = branchId || localStorage.getItem("selectedBranch");
+  if (selectedBranch) {
+    headers["x-selected-branch"] = selectedBranch;
+  }
+
+  return headers;
+};
 
 interface SchemaAlignedOrderData {
   customerId: string;
@@ -932,6 +944,22 @@ export const saveOrder = (orderData?: SchemaAlignedOrderData, orderTypeConfig?: 
     });
 
     dispatch({ type: SET_LOADING, payload: false });
+
+    // ✅ Emit browser event for other components to listen (fallback when WebSocket not connected)
+    window.dispatchEvent(new CustomEvent('order:updated:local', {
+      detail: {
+        type: 'order:created',
+        data: result.data || result,
+        orderId: result.data?.orderId || result.orderId
+      }
+    }));
+    console.log('📡 [saveOrder] Dispatched order:updated:local event (type: order:created)');
+
+    // ✅ Store flag in sessionStorage so pages can refresh on mount after navigation
+    const timestamp = Date.now().toString();
+    sessionStorage.setItem('orders_updated', timestamp);
+    console.log('📡 [saveOrder] sessionStorage orders_updated SET to:', timestamp);
+
     return result;
 
   } catch (error: any) {
@@ -1122,12 +1150,17 @@ export const fetchOrders= (filters?: OrderFilters) =>
       const requestUrl = `${baseUrl}/orders${queryParams}`;
       console.log("📡 Making request to:", requestUrl);
 
-     
-      const requestHeaders = {
+      // Build request headers with all required headers
+      const requestHeaders: Record<string, string> = {
         'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      
+        'Content-Type': 'application/json',
+        'x-api-key': API_KEY
       };
+
+      // Add x-selected-branch header for branch-based data isolation
+      if (branchId) {
+        requestHeaders['x-selected-branch'] = branchId;
+      }
 
       console.log("📋 Request headers:", {
         ...requestHeaders,
@@ -1344,9 +1377,12 @@ export const updateOrder = (orderId: string, orderData: Partial<UpdatedOrderData
           orderId: orderId
         }
       }));
+      console.log('📡 [updateOrder] Dispatched order:updated:local event');
 
       // ✅ Store flag in sessionStorage so pages can refresh on mount after navigation
-      sessionStorage.setItem('orders_updated', Date.now().toString());
+      const timestamp = Date.now().toString();
+      sessionStorage.setItem('orders_updated', timestamp);
+      console.log('📡 [updateOrder] sessionStorage orders_updated SET to:', timestamp);
 
       // ✅ FIXED: Return the updated order so caller can check success
       return updatedOrder;
@@ -1409,7 +1445,7 @@ export const getAccountOrders = (accountId: string, filters?: OrderFilters) =>
 
       const response = await axios.get(url, {
         headers: {
-          Authorization: `Bearer ${token}`,
+          ...getAuthHeaders(token, branchId),
           customerId: accountId.trim(),
         }
       });
@@ -1452,11 +1488,7 @@ export const fetchOrderMachineTableData = (orderId: string, machineId: string) =
       const response = await axios.get(
         `${baseUrl}/orders/${orderId}/machines/${machineId}/table-data`,
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'x-api-key': API_KEY,
-          },
+          headers: getAuthHeaders(token),
         }
       );
 
@@ -1525,11 +1557,7 @@ export const addMachineTableRow = (orderId: string, machineId: string, rowData: 
         `${baseUrl}/orders/${orderId}/machines/${machineId}/table-data/rows`,
         { rowData },
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'x-api-key': API_KEY,
-          },
+          headers: getAuthHeaders(token),
         }
       );
 
@@ -1578,11 +1606,7 @@ export const updateMachineTableRow = (orderId: string, machineId: string, rowInd
         `${baseUrl}/orders/${orderId}/machines/${machineId}/table-data/rows/${rowIndex}`,
         { rowData },
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'x-api-key': API_KEY,
-          },
+          headers: getAuthHeaders(token),
         }
       );
 
@@ -1629,11 +1653,7 @@ export const deleteMachineTableRow = (orderId: string, machineId: string, rowInd
       const response = await axios.delete(
         `${baseUrl}/orders/${orderId}/machines/${machineId}/table-data/rows/${rowIndex}`,
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'x-api-key': API_KEY,
-          },
+          headers: getAuthHeaders(token),
         }
       );
 
@@ -1690,11 +1710,7 @@ export const deleteOrder = (orderId: string) =>
       const response = await axios.delete(
         `${baseUrl}/orders/${orderId}`,
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'x-api-key': API_KEY,
-          },
+          headers: getAuthHeaders(token),
         }
       );
 
@@ -1704,6 +1720,21 @@ export const deleteOrder = (orderId: string) =>
         type: DELETE_ORDER_SUCCESS,
         payload: orderId,
       });
+
+      // ✅ Emit browser event for other components to listen (fallback when WebSocket not connected)
+      window.dispatchEvent(new CustomEvent('order:updated:local', {
+        detail: {
+          type: 'order:deleted',
+          data: { _id: orderId },
+          orderId: orderId
+        }
+      }));
+      console.log('📡 [deleteOrder] Dispatched order:updated:local event (type: order:deleted)');
+
+      // ✅ Store flag in sessionStorage so pages can refresh on mount after navigation
+      const timestamp = Date.now().toString();
+      sessionStorage.setItem('orders_updated', timestamp);
+      console.log('📡 [deleteOrder] sessionStorage orders_updated SET to:', timestamp);
 
       return response.data;
     } catch (error: any) {

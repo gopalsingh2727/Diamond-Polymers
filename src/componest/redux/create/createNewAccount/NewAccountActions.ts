@@ -21,10 +21,15 @@ const apiKey = import.meta.env.VITE_API_KEY;
 
 const getAuthHeaders = (getState: () => RootState) => {
   const token = getState().auth?.token || localStorage.getItem("authToken");
-  return {
+  const selectedBranch = localStorage.getItem("selectedBranch");
+  const headers: Record<string, string> = {
     Authorization: `Bearer ${token}`,
     "x-api-key": apiKey,
   };
+  if (selectedBranch) {
+    headers["x-selected-branch"] = selectedBranch;
+  }
+  return headers;
 };
 
 // Helper function to convert File to base64

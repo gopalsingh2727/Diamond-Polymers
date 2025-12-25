@@ -194,6 +194,64 @@ export const useDaybookUpdates = (branchId: string | null, onOrderUpdate?: (data
 };
 
 /**
+ * Hook to auto-subscribe to dispatch updates for a branch
+ * Replaces polling with real-time WebSocket subscription
+ */
+export const useDispatchUpdates = (branchId: string | null, onOrderUpdate?: (data: any) => void) => {
+  const dispatch = useDispatch();
+  const { isConnected } = useWebSocketStatus();
+
+  useEffect(() => {
+    if (isConnected && branchId) {
+      console.log('🚚 Subscribing to dispatch updates:', branchId);
+      dispatch({
+        type: 'websocket/send',
+        payload: {
+          action: 'subscribeToDispatch',
+          data: { branchId }
+        }
+      });
+    }
+  }, [branchId, isConnected, dispatch]);
+
+  // Set up listener for order updates (WebSocket events)
+  useEffect(() => {
+    if (!onOrderUpdate) return;
+
+    const handleOrderUpdate = (event: CustomEvent) => {
+      const { type, data } = event.detail;
+      // ✅ Listen for all order-related events
+      if (type === 'order:created' || type === 'order:updated' || type === 'order:deleted' ||
+          type === 'order:status_changed' || type === 'order:priority_changed' ||
+          type === 'dispatch:updated' || type === 'referenceData:invalidate') {
+        console.log('🚚 Dispatch update received (WebSocket):', type);
+        onOrderUpdate(data);
+      }
+    };
+
+    window.addEventListener('websocket:message' as any, handleOrderUpdate);
+    return () => {
+      window.removeEventListener('websocket:message' as any, handleOrderUpdate);
+    };
+  }, [onOrderUpdate]);
+
+  // ✅ Also listen for local order updates (fallback when WebSocket is not connected)
+  useEffect(() => {
+    if (!onOrderUpdate) return;
+
+    const handleLocalOrderUpdate = (event: CustomEvent) => {
+      console.log('🚚 Dispatch update received (Local):', event.detail.type);
+      onOrderUpdate(event.detail.data);
+    };
+
+    window.addEventListener('order:updated:local' as any, handleLocalOrderUpdate);
+    return () => {
+      window.removeEventListener('order:updated:local' as any, handleLocalOrderUpdate);
+    };
+  }, [onOrderUpdate]);
+};
+
+/**
  * Hook to auto-subscribe to dashboard updates
  */
 export const useDashboardUpdates = (branchId: string | null, onDashboardUpdate?: (data: any) => void) => {
@@ -280,6 +338,7 @@ export default {
   useOrderUpdates,
   useMachineUpdates,
   useDaybookUpdates,
+  useDispatchUpdates,
   useDashboardUpdates,
   useReferenceDataUpdates,
   useMachineDataUpdates

@@ -35,6 +35,11 @@ const FETCH_ORDERS_FAILURE = 'FETCH_ORDERS_FAILURE';
 // const UPDATE_ORDER_STATUS = 'UPDATE_ORDER_STATUS';
 const UPDATE_MACHINE_STATUS = 'UPDATE_MACHINE_STATUS';
 const CLEAR_ORDERS = 'CLEAR_ORDERS';
+
+// ✅ UPDATE ORDER Constants - for live table updates
+const UPDATE_ORDER_REQUEST = 'UPDATE_ORDER_REQUEST';
+const UPDATE_ORDER_SUCCESS = 'UPDATE_ORDER_SUCCESS';
+const UPDATE_ORDER_FAILURE = 'UPDATE_ORDER_FAILURE';
 const  GET_ACCOUNT_ORDERS_REQUEST = 'GET_ACCOUNT_ORDERS_REQUEST';
 const GET_ACCOUNT_ORDERS_SUCCESS = 'GET_ACCOUNT_ORDERS_SUCCESS';
 const GET_ACCOUNT_ORDERS_FAILURE = 'GET_ACCOUNT_ORDERS_FAILURE';
@@ -67,6 +72,26 @@ const DELETE_MACHINE_TABLE_ROW_FAILURE = 'DELETE_MACHINE_TABLE_ROW_FAILURE';
 interface ClearOrdersAction {
   type: typeof CLEAR_ORDERS;
 }
+
+// ✅ UPDATE_ORDER action interfaces for live table updates
+interface UpdateOrderRequestAction {
+  type: typeof UPDATE_ORDER_REQUEST;
+}
+
+interface UpdateOrderSuccessAction {
+  type: typeof UPDATE_ORDER_SUCCESS;
+  payload: { order: OrderData; message?: string } | OrderData;
+}
+
+interface UpdateOrderFailureAction {
+  type: typeof UPDATE_ORDER_FAILURE;
+  payload: string;
+}
+
+type UpdateOrderActions =
+  | UpdateOrderRequestAction
+  | UpdateOrderSuccessAction
+  | UpdateOrderFailureAction;
 
 // WebSocket action interfaces
 interface WebSocketOrderCreatedAction {
@@ -108,7 +133,7 @@ type WebSocketOrderActions =
   | WebSocketOrderAssignmentChangedAction;
 
 // Extended action types
-type ExtendedOrderActionTypes = OrderActionTypes | ClearOrdersAction | WebSocketOrderActions;
+type ExtendedOrderActionTypes = OrderActionTypes | ClearOrdersAction | WebSocketOrderActions | UpdateOrderActions;
 
 // Order List State - matching your component expectations
 interface OrderListState {
@@ -381,6 +406,53 @@ const orderListReducer = (
               }
             : order
         ),
+      };
+    }
+
+    // ✅ FIXED: Handle UPDATE_ORDER_SUCCESS for live table updates
+    case UPDATE_ORDER_REQUEST: {
+      console.log('📝 UPDATE_ORDER_REQUEST - Order update in progress');
+      return {
+        ...state,
+        loading: true,
+      };
+    }
+
+    case UPDATE_ORDER_SUCCESS: {
+      console.log('📝 UPDATE_ORDER_SUCCESS - Updating order in list:', action.payload);
+      const payload = (action as any).payload;
+      const updatedOrder = payload?.order || payload;
+
+      if (!updatedOrder || !updatedOrder._id) {
+        console.warn('⚠️ UPDATE_ORDER_SUCCESS - No valid order in payload');
+        return { ...state, loading: false };
+      }
+
+      // Update the order in the list
+      const orderExists = state.orders.some(order => order._id === updatedOrder._id);
+
+      if (orderExists) {
+        return {
+          ...state,
+          loading: false,
+          orders: state.orders.map(order =>
+            order._id === updatedOrder._id
+              ? { ...order, ...updatedOrder }
+              : order
+          ),
+        };
+      } else {
+        // Order not in current list, just update loading state
+        return { ...state, loading: false };
+      }
+    }
+
+    case UPDATE_ORDER_FAILURE: {
+      console.log('❌ UPDATE_ORDER_FAILURE:', action.payload);
+      return {
+        ...state,
+        loading: false,
+        error: (action as any).payload || 'Failed to update order',
       };
     }
 

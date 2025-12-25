@@ -26,14 +26,35 @@ interface OrderFormDataState {
   lastFetched: string | null;
 }
 
-// LocalStorage key
-const LOCAL_STORAGE_KEY = 'order_form_data_cache';
+// LocalStorage key - CACHE_VERSION is incremented when API response format changes
+const CACHE_VERSION = 3; // v3: Branch-specific caching
+const getLocalStorageKey = () => {
+  const branchId = localStorage.getItem("selectedBranch") || "default";
+  return `order_form_data_cache_v${CACHE_VERSION}_${branchId}`;
+};
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
+// Clean up old cache versions on load (keep only current version caches)
+(() => {
+  try {
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const key = localStorage.key(i);
+      // Remove caches from older versions (v1, v2, etc.)
+      if (key && key.startsWith('order_form_data_cache') && !key.includes(`_v${CACHE_VERSION}_`)) {
+        console.log('🗑️ Removing old order form data cache:', key);
+        localStorage.removeItem(key);
+      }
+    }
+  } catch (error) {
+    console.error('Error cleaning up old caches:', error);
+  }
+})();
 
 // Load from localStorage
 const loadFromLocalStorage = (): OrderFormDataState => {
   try {
-    const cached = localStorage.getItem(LOCAL_STORAGE_KEY);
+    const storageKey = getLocalStorageKey();
+    const cached = localStorage.getItem(storageKey);
     if (cached) {
       const parsed = JSON.parse(cached);
 
@@ -42,7 +63,7 @@ const loadFromLocalStorage = (): OrderFormDataState => {
       const now = Date.now();
 
       if (now - lastFetched < CACHE_DURATION) {
-        console.log('✅ Loaded order form data from localStorage cache');
+        console.log('✅ Loaded order form data from localStorage cache for branch:', localStorage.getItem("selectedBranch"));
         return {
           loading: false,
           error: null,
@@ -51,7 +72,7 @@ const loadFromLocalStorage = (): OrderFormDataState => {
         };
       } else {
         console.log('⚠️ Cache expired, will fetch fresh data');
-        localStorage.removeItem(LOCAL_STORAGE_KEY);
+        localStorage.removeItem(storageKey);
       }
     }
   } catch (error) {
@@ -69,11 +90,12 @@ const loadFromLocalStorage = (): OrderFormDataState => {
 // Save to localStorage
 const saveToLocalStorage = (data: OrderFormData, lastFetched: string) => {
   try {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({
+    const storageKey = getLocalStorageKey();
+    localStorage.setItem(storageKey, JSON.stringify({
       data,
       lastFetched
     }));
-    console.log('✅ Saved order form data to localStorage cache');
+    console.log('✅ Saved order form data to localStorage cache for branch:', localStorage.getItem("selectedBranch"));
   } catch (error) {
     console.error('Error saving to localStorage:', error);
   }
@@ -109,8 +131,17 @@ export const orderFormDataReducer = (
       };
 
     case 'CLEAR_ORDER_FORM_DATA':
-      // Clear localStorage on logout
-      localStorage.removeItem(LOCAL_STORAGE_KEY);
+      // Clear all branch caches on logout
+      try {
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith('order_form_data_cache')) {
+            localStorage.removeItem(key);
+          }
+        }
+      } catch (e) {
+        console.error('Error clearing order form data caches:', e);
+      }
       return {
         loading: false,
         error: null,
@@ -119,8 +150,14 @@ export const orderFormDataReducer = (
       };
 
     case 'REFRESH_ORDER_FORM_DATA':
-      // Force refresh - clear cache and set loading
-      localStorage.removeItem(LOCAL_STORAGE_KEY);
+      // Force refresh - clear current branch cache and set loading
+      try {
+        const storageKey = getLocalStorageKey();
+        localStorage.removeItem(storageKey);
+        console.log('🔄 Cleared cache for branch refresh:', localStorage.getItem("selectedBranch"));
+      } catch (e) {
+        console.error('Error clearing cache for refresh:', e);
+      }
       return {
         loading: false,
         error: null,

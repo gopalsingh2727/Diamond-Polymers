@@ -311,7 +311,7 @@
   width: calc(100% + 2 * var(--co-space-xl));
   position: sticky;
   top: 60px;
-  z-index: 48;
+  z-index: 10;
   box-shadow: none;
 }
 
@@ -1744,3 +1744,93 @@
    CO-SCROLLBAR - Hidden for Clean Look
    ================================================ */
 /* Scrollbar is hidden but scrolling works - see .co-form styles above */
+
+/* ================================================
+   ORDER TYPE SELECT - Custom Dropdown
+   ================================================ */
+.order-type-select {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 8px;
+  min-width: 150px;
+  height: 28px;
+  font-size: 12px;
+  background: #fff;
+  border: 1px solid var(--co-border-dark);
+  border-radius: 4px;
+  cursor: pointer;
+  outline: none;
+}
+
+.order-type-select span:first-child {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.order-type-select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.order-type-select .placeholder {
+  color: #999;
+}
+
+.order-type-select .arrow {
+  font-size: 8px;
+  color: #666;
+  transition: transform 0.2s;
+}
+
+.order-type-select .arrow.open {
+  transform: rotate(180deg);
+}
+
+.order-type-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 10px;
+  margin: 2px 0 0 0;
+  padding: 4px 0;
+  list-style: none;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  max-height: 150px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 50;
+  min-width: 150px;
+}
+
+.order-type-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+
+.order-type-dropdown::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 3px;
+}
+
+.order-type-dropdown::-webkit-scrollbar-track {
+  background: #f5f5f5;
+}
+
+.order-type-dropdown li {
+  padding: 5px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.order-type-dropdown li:hover {
+  background: #f5f5f5;
+}
+
+.order-type-dropdown li.selected {
+  background: #3b82f6;
+  color: white;
+}

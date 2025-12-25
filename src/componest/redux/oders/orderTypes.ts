@@ -271,6 +271,24 @@ export interface UpdateMachineStatusAction {
   };
 }
 
+// ✅ ADDED: UPDATE_ORDER action types for live table updates
+export interface UpdateOrderRequestAction {
+  type: 'UPDATE_ORDER_REQUEST';
+}
+
+export interface UpdateOrderSuccessAction {
+  type: 'UPDATE_ORDER_SUCCESS';
+  payload: {
+    order: OrderData | any;
+    message?: string;
+  };
+}
+
+export interface UpdateOrderFailureAction {
+  type: 'UPDATE_ORDER_FAILURE';
+  payload: string;
+}
+
 // Union type for all order actions - NOW INCLUDES CLEAR_ORDERS
 export type OrderActionTypes = 
   | OrderSaveRequestAction
@@ -290,7 +308,10 @@ export type OrderActionTypes =
   | FetchOrdersFailureAction
   | ClearOrdersAction
   | UpdateOrderStatusAction
-  | UpdateMachineStatusAction;
+  | UpdateMachineStatusAction
+  | UpdateOrderRequestAction
+  | UpdateOrderSuccessAction
+  | UpdateOrderFailureAction;
 
 // Updated Redux State Interface
 export interface OrderState {

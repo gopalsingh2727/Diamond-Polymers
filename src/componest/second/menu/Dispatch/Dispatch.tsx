@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { BackButton } from "../../../allCompones/BackButton";
 import * as XLSX from "xlsx";
@@ -8,9 +8,10 @@ import "../Dispatch/Dispatch.css";
 import "../Oders/indexAllOders.css";  // ✅ Import All Orders styling
 import { fetchOrders, updateOrder } from "../../../redux/oders/OdersActions";
 import { RootState } from "../../../../store";
-import { useDaybookUpdates } from "../../../../hooks/useWebSocket";  // ✅ WebSocket real-time updates
+import { useDispatchUpdates, useWebSocketStatus } from "../../../../hooks/useWebSocket";  // ✅ WebSocket real-time updates
 import ExcelExportSelector from "../../../../components/shared/ExcelExportSelector";
-import { Download, Printer, RefreshCw, Tag } from "lucide-react";  // ✅ Icons
+import { Download, Printer, RefreshCw, Tag, Wifi, WifiOff } from "lucide-react";  // ✅ Icons
+import { useFormDataCache } from "../Edit/hooks/useFormDataCache";  // ✅ For order types lookup
 
 interface Order {
   _id: string;
@@ -139,6 +140,7 @@ const DISPATCH_STATUSES = [
 
 export default function Dispatch() {
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch();
 
   // State declarations
@@ -152,6 +154,7 @@ export default function Dispatch() {
   const [currentPage, setCurrentPage] = useState(1);
   const [limit] = useState(50);
   const [showExcelExportSelector, setShowExcelExportSelector] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0); // ✅ ADDED: Force refresh trigger
 
   // Dispatch status modal state
   const [showDispatchModal, setShowDispatchModal] = useState(false);
@@ -175,19 +178,25 @@ export default function Dispatch() {
 
   const authState = useSelector((state: RootState) => state.auth);
 
-  const { 
-    orders: reduxOrders = [], 
-    loading = false, 
-    error = null, 
+  const {
+    orders: reduxOrders = [],
+    loading = false,
+    error = null,
     pagination = null,
     summary = null,
-    statusCounts = null 
+    statusCounts = null
   } = ordersState;
+
+  // ✅ Get order types from cache for fallback lookup
+  const { orderTypes = [] } = useFormDataCache();
 
   // Company info - safe access with type assertion
   const companyName = (authState as any)?.user?.companyName || "ABC Company";
   const branchName = (authState as any)?.user?.branchName || "Main Branch";
   const branchId = (authState as any)?.user?.branchId || localStorage.getItem('branchId') || localStorage.getItem('selectedBranch') || null;  // ✅ For WebSocket subscription
+
+  // ✅ WebSocket status for real-time indicator
+  const { isConnected: wsConnected, status: wsStatus } = useWebSocketStatus();
 
   // Status color mapping for dispatch - matches backend overallStatus enum values
   function getStatusColor(status: string): string {
@@ -253,9 +262,15 @@ export default function Dispatch() {
           }
 
           // Get order type - could be populated object or ID
-          const orderType = order.orderType || order.orderTypeId;
-          const orderTypeName = orderType?.typeName || orderType?.name || '';
-          const orderTypeCode = orderType?.typeCode || orderType?.code || '';
+          // Fallback: look up from cached orderTypes if not populated
+          let orderTypeObj = order.orderType;
+          if (!orderTypeObj && order.orderTypeId) {
+            const orderTypeId = typeof order.orderTypeId === 'object' ? (order.orderTypeId as any)?._id : order.orderTypeId;
+            orderTypeObj = orderTypes.find((ot: any) => ot._id === orderTypeId);
+          }
+          const orderTypeName = orderTypeObj?.typeName || orderTypeObj?.name || '';
+          const orderTypeCode = orderTypeObj?.typeCode || orderTypeObj?.code || '';
+          const orderTypeColor = orderTypeObj?.color || '#374151';
           const priority = order.priority || 'normal';
 
           return {
@@ -267,9 +282,10 @@ export default function Dispatch() {
             phone1: customerPhone,
             status: dispatchStatus,
             priority: priority,
-            orderType: orderType,
+            orderType: orderTypeObj,
             orderTypeName: orderTypeName,
             orderTypeCode: orderTypeCode,
+            orderTypeColor: orderTypeColor,
             date: order.createdAt ? new Date(order.createdAt).toISOString().split('T')[0] : '',
             AllStatus: {
               [dispatchStatus]: {
@@ -503,29 +519,60 @@ export default function Dispatch() {
     });
   };
 
-  // Effect hooks - Fetch orders on mount and filter changes
+  // Effect hooks - Fetch orders on mount, filter changes, and navigation back to page
   useEffect(() => {
-    console.log("🚚 Dispatch useEffect triggered - fetching orders");
+    console.log("🚚 Dispatch useEffect triggered - fetching orders (location.key:", location.key, ", refreshTrigger:", refreshTrigger, ")");
     fetchOrdersData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dispatch, currentPage, limit, fromDate, toDate, searchTerm, statusFilter, location.key, refreshTrigger]);
 
-    // ✅ Check if orders were updated while navigating - force refresh
+  // ✅ FIXED: Check for order updates on mount (using state trigger to avoid stale closures)
+  useEffect(() => {
     const ordersUpdated = sessionStorage.getItem('orders_updated');
     if (ordersUpdated) {
-      console.log("📡 Orders were updated - forcing refresh");
+      console.log("📡 [Dispatch] Orders were updated on MOUNT - triggering refresh");
       sessionStorage.removeItem('orders_updated');
-      setTimeout(() => fetchOrdersData(), 100);
+      setRefreshTrigger(prev => prev + 1);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dispatch, currentPage, limit, fromDate, toDate, searchTerm, statusFilter]);
+  }, []); // Run on mount
+
+  // ✅ FIXED: Also check on any location change (for navigate(-1) back button)
+  useEffect(() => {
+    const ordersUpdated = sessionStorage.getItem('orders_updated');
+    if (ordersUpdated) {
+      console.log("📡 [Dispatch] Orders were updated on LOCATION CHANGE - triggering refresh");
+      sessionStorage.removeItem('orders_updated');
+      setRefreshTrigger(prev => prev + 1);
+    }
+  }, [location]); // Trigger on any location change
 
   // ✅ WebSocket real-time subscription for instant order updates
   const handleOrderUpdate = useCallback(() => {
-    console.log("📡 WebSocket: Dispatch update received - refreshing");
-    fetchOrdersData();
-  }, [currentPage, limit, fromDate, toDate, searchTerm, statusFilter]);
+    console.log("📡 WebSocket: Dispatch update received - triggering refresh");
+    setRefreshTrigger(prev => prev + 1);
+  }, []);
 
-  // Subscribe to real-time daybook updates via WebSocket
-  useDaybookUpdates(branchId, handleOrderUpdate);
+  // Subscribe to real-time dispatch updates via WebSocket
+  useDispatchUpdates(branchId, handleOrderUpdate);
+
+  // ✅ Visibility change listener - refresh when user comes back to page if updates occurred
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        const ordersUpdated = sessionStorage.getItem('orders_updated');
+        if (ordersUpdated) {
+          console.log("📡 Page visible + orders were updated - triggering Dispatch refresh");
+          sessionStorage.removeItem('orders_updated');
+          setRefreshTrigger(prev => prev + 1);
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
 
   // Focus content container when orders are loaded for keyboard navigation
   useEffect(() => {
@@ -1254,6 +1301,33 @@ export default function Dispatch() {
         <div className="all-orders-header__left">
           <BackButton />
           <h1 className="all-orders-title">Dispatch</h1>
+          {/* WebSocket Status Indicator */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              marginLeft: '12px',
+              padding: '4px 10px',
+              borderRadius: '12px',
+              backgroundColor: wsConnected ? '#dcfce7' : '#fef2f2',
+              fontSize: '12px',
+              fontWeight: 500
+            }}
+            title={wsConnected ? 'Real-time updates active' : 'Not connected - updates require manual refresh'}
+          >
+            {wsConnected ? (
+              <>
+                <Wifi size={14} style={{ color: '#16a34a' }} />
+                <span style={{ color: '#16a34a' }}>Live</span>
+              </>
+            ) : (
+              <>
+                <WifiOff size={14} style={{ color: '#dc2626' }} />
+                <span style={{ color: '#dc2626' }}>Offline</span>
+              </>
+            )}
+          </div>
         </div>
         <div className="all-orders-header__actions">
           {/* Selection Controls */}
@@ -1459,10 +1533,23 @@ export default function Dispatch() {
                   </td>
                   <td>
                     {order.orderTypeName ? (
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}>
-                        <span style={{ fontWeight: 500 }}>{order.orderTypeName}</span>
+                      <span style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        fontSize: '12px',
+                        padding: '4px 8px',
+                        background: `${order.orderTypeColor || '#374151'}15`,
+                        borderRadius: '4px',
+                        border: `1px solid ${order.orderTypeColor || '#374151'}30`
+                      }}>
+                        <span style={{ fontWeight: 600, color: order.orderTypeColor || '#374151' }}>
+                          {order.orderTypeName}
+                        </span>
                         {order.orderTypeCode && (
-                          <span style={{ color: '#94a3b8', fontSize: '11px' }}>({order.orderTypeCode})</span>
+                          <span style={{ color: order.orderTypeColor || '#374151', fontSize: '10px', opacity: 0.7 }}>
+                            ({order.orderTypeCode})
+                          </span>
                         )}
                       </span>
                     ) : (

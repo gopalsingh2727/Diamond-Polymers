@@ -1,10 +1,11 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../../componest/redux/rootReducer';
 import { AppDispatch } from '../../../store';
 import { fetchOrders } from '../../../componest/redux/oders/OdersActions';
 import { getAllMachineTypes } from '../../../componest/redux/create/machineType/machineTypeActions';
 import { exportExcel } from '../../../componest/redux/reports/reportActions';
+import { useDaybookUpdates, useWebSocketStatus } from '../../../hooks/useWebSocket';
 
 interface AllOrdersTabProps {
   dateRange: {
@@ -25,15 +26,15 @@ const AllOrdersTab: React.FC<AllOrdersTabProps> = ({ dateRange }) => {
   const dispatch = useDispatch<AppDispatch>();
   const branchId = localStorage.getItem('branchId') || '';
 
-  // Redux state
-  const ordersState = useSelector((state: RootState) => state.orders);
-  const orders = (ordersState as any)?.orders || [];
-  const ordersLoading = (ordersState as any)?.loading || false;
+  // Redux state - ✅ FIXED: Use correct path state.orders.list
+  const ordersState = useSelector((state: RootState) => (state.orders as any)?.list || { orders: [], loading: false });
+  const orders = ordersState?.orders || [];
+  const ordersLoading = ordersState?.loading || false;
   const machineTypeList = useSelector((state: RootState) => state.machineTypeList);
   const machineTypes = (machineTypeList as any)?.items || [];
   const { exporting } = useSelector((state: RootState) => state.reports);
 
-  // Local state for filters
+  // Local state for filters (moved up for use in refetchOrders)
   const [filters, setFilters] = useState<OrderFilters>({
     status: '',
     priority: '',
@@ -45,6 +46,27 @@ const AllOrdersTab: React.FC<AllOrdersTabProps> = ({ dateRange }) => {
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(20);
+
+  // ✅ ADDED: Real-time update support (hook used for connection tracking)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _wsStatus = useWebSocketStatus();
+
+  // ✅ ADDED: Refetch function for real-time updates
+  const refetchOrders = useCallback(() => {
+    if (branchId) {
+      console.log('🔄 AllOrdersTab: Refreshing orders after update');
+      dispatch(fetchOrders({
+        branchId,
+        startDate: dateRange.fromDate || undefined,
+        endDate: dateRange.toDate || undefined,
+        status: filters.status || undefined,
+        limit: 1000,
+      }));
+    }
+  }, [dispatch, branchId, dateRange.fromDate, dateRange.toDate, filters.status]);
+
+  // ✅ ADDED: Subscribe to real-time order updates
+  useDaybookUpdates(branchId, refetchOrders);
 
   // Status and Priority options
   const statusOptions = [

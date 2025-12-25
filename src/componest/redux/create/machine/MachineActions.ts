@@ -25,11 +25,18 @@ const baseUrl = import.meta.env.VITE_API_27INFINITY_IN;
 const apiKey = import.meta.env.VITE_API_KEY;
 
 // Headers helper
-const getHeaders = (token?: string, isJson: boolean = false) => ({
-  ...(isJson && { "Content-Type": "application/json" }),
-  "x-api-key": apiKey,
-  Authorization: token ? `Bearer ${token}` : "",
-});
+const getHeaders = (token?: string, isJson: boolean = false) => {
+  const selectedBranch = localStorage.getItem("selectedBranch");
+  const headers: Record<string, string> = {
+    ...(isJson && { "Content-Type": "application/json" }),
+    "x-api-key": apiKey,
+    Authorization: token ? `Bearer ${token}` : "",
+  };
+  if (selectedBranch) {
+    headers["x-selected-branch"] = selectedBranch;
+  }
+  return headers;
+};
 
 interface MachineData {
   machineName: string;

@@ -4,10 +4,13 @@ interface StatusProps {
   onStatusChange?: (status: string) => void;
   initialStatus?: string;
   isEditMode?: boolean;
+  isBillingOrder?: boolean;  // For billing orders, show limited status options
 }
 
-const Status = ({ onStatusChange, initialStatus }: StatusProps) => {
-  const [status, setStatus] = useState<string>(initialStatus || 'pending');
+const Status = ({ onStatusChange, initialStatus, isBillingOrder }: StatusProps) => {
+  // For billing orders, default to 'Wait for Approval', for manufacturing use 'pending'
+  const defaultStatus = isBillingOrder ? 'Wait for Approval' : 'pending';
+  const [status, setStatus] = useState<string>(initialStatus || defaultStatus);
 
   // Initialize status from initial data
   useEffect(() => {
@@ -69,14 +72,26 @@ const Status = ({ onStatusChange, initialStatus }: StatusProps) => {
           height: '38px'
         }}
       >
-        <option value="Wait for Approval">{getStatusLabel('Wait for Approval')}</option>
-        <option value="pending">{getStatusLabel('pending')}</option>
-        <option value="approved">{getStatusLabel('approved')}</option>
-        <option value="in_progress">{getStatusLabel('in_progress')}</option>
-        <option value="completed">{getStatusLabel('completed')}</option>
-        <option value="dispatched">{getStatusLabel('dispatched')}</option>
-        <option value="cancelled">{getStatusLabel('cancelled')}</option>
-        <option value="issue">{getStatusLabel('issue')}</option>
+        {isBillingOrder ? (
+          // Billing order statuses - only Wait for Approval and Dispatched
+          <>
+            <option value="Wait for Approval">{getStatusLabel('Wait for Approval')}</option>
+            <option value="dispatched">{getStatusLabel('dispatched')}</option>
+            <option value="cancelled">{getStatusLabel('cancelled')}</option>
+          </>
+        ) : (
+          // Manufacturing order statuses - all statuses
+          <>
+            <option value="Wait for Approval">{getStatusLabel('Wait for Approval')}</option>
+            <option value="pending">{getStatusLabel('pending')}</option>
+            <option value="approved">{getStatusLabel('approved')}</option>
+            <option value="in_progress">{getStatusLabel('in_progress')}</option>
+            <option value="completed">{getStatusLabel('completed')}</option>
+            <option value="dispatched">{getStatusLabel('dispatched')}</option>
+            <option value="cancelled">{getStatusLabel('cancelled')}</option>
+            <option value="issue">{getStatusLabel('issue')}</option>
+          </>
+        )}
       </select>
     </div>
   );

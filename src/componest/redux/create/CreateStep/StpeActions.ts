@@ -26,6 +26,20 @@ const getToken = (getState: () => RootState): string | null => {
 
 const getBranchId = () => localStorage.getItem("selectedBranch");
 
+// Headers helper
+const getHeaders = (token?: string | null) => {
+  const selectedBranch = localStorage.getItem("selectedBranch");
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Authorization: token ? `Bearer ${token}` : "",
+    "x-api-key": API_KEY,
+  };
+  if (selectedBranch) {
+    headers["x-selected-branch"] = selectedBranch;
+  }
+  return headers;
+};
+
 // ✅ CREATE STEP
 export const createStep = (stepData: any) => async (
   dispatch: Dispatch,
@@ -39,11 +53,7 @@ export const createStep = (stepData: any) => async (
     if (!branchId) throw new Error("Branch ID is missing");
 
     const config = {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: token ? `Bearer ${token}` : "",
-        "x-api-key": API_KEY,
-      },
+      headers: getHeaders(token),
     };
 
     const payload = {
@@ -110,11 +120,7 @@ export const updateStep = (stepId: string, stepData: any) => async (
     if (!branchId) throw new Error("Branch ID is missing");
 
     const config = {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: token ? `Bearer ${token}` : "",
-        "x-api-key": API_KEY,
-      },
+      headers: getHeaders(token),
     };
 
     const payload = {

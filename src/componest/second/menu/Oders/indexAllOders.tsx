@@ -1,16 +1,16 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { BackButton } from "../../../allCompones/BackButton";
 import "./indexAllOders.css";
-import { Download, Printer, X, ChevronDown, ChevronRight, Loader2, AlertCircle, RefreshCw, Clock, CheckCircle2, Circle, PlayCircle, PauseCircle, AlertTriangle } from "lucide-react";
+import { Download, Printer, X, ChevronDown, ChevronRight, Loader2, AlertCircle, RefreshCw, Clock, CheckCircle2, Circle, PlayCircle, PauseCircle, AlertTriangle, Wifi, WifiOff } from "lucide-react";
 
 // Import Redux actions
 import { fetchOrders } from "../../../redux/oders/OdersActions";
 import { getOrderFormDataIfNeeded } from "../../../redux/oders/orderFormDataActions";
 import { RootState } from "../../../redux/rootReducer";
 import { AppDispatch } from "../../../../store";
-import { useDaybookUpdates } from "../../../../hooks/useWebSocket";  // ✅ WebSocket real-time updates
+import { useDaybookUpdates, useWebSocketStatus } from "../../../../hooks/useWebSocket";  // ✅ WebSocket real-time updates
 
 interface OrderFilters {
   status: string;
@@ -27,6 +27,7 @@ interface OrderFilters {
 const IndexAllOders = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Redux state
   const orderFormData = useSelector((state: RootState) => state.orderFormData);
@@ -83,6 +84,7 @@ const IndexAllOders = () => {
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(20);
+  const [refreshTrigger, setRefreshTrigger] = useState(0); // ✅ ADDED: Force refresh trigger
 
   // Status and Priority options
   const statusOptions = [
@@ -127,31 +129,66 @@ const IndexAllOders = () => {
   const authState = useSelector((state: RootState) => state.auth);
   const branchId = (authState as any)?.user?.branchId || localStorage.getItem('branchId') || localStorage.getItem('selectedBranch') || null;
 
-  // Load orders and form data on component mount
+  // ✅ WebSocket status for real-time indicator
+  const { isConnected: wsConnected, status: wsStatus } = useWebSocketStatus();
+
+  // Load orders and form data on component mount and navigation back to page
   useEffect(() => {
+    console.log("📋 All Orders useEffect triggered - fetching orders (location.key:", location.key, ", refreshTrigger:", refreshTrigger, ")");
     // fetchOrders automatically uses branchId from localStorage for non-admin users
     // Fetch all orders without date filter - client-side filtering will handle dates
     fetchOrdersData();
     // Also load machine types and machines
     dispatch(getOrderFormDataIfNeeded());
+  }, [dispatch, fetchOrdersData, location.key, refreshTrigger]);
 
-    // ✅ Check if orders were updated while navigating - force refresh
+  // ✅ FIXED: Check for order updates on mount (using state trigger to avoid stale closures)
+  useEffect(() => {
     const ordersUpdated = sessionStorage.getItem('orders_updated');
     if (ordersUpdated) {
-      console.log("📡 Orders were updated - forcing refresh");
+      console.log("📡 [All Orders] Orders were updated on MOUNT - triggering refresh");
       sessionStorage.removeItem('orders_updated');
-      setTimeout(() => fetchOrdersData(), 100);
+      setRefreshTrigger(prev => prev + 1);
     }
-  }, [dispatch, fetchOrdersData]);
+  }, []); // Run on mount
+
+  // ✅ FIXED: Also check on any location change (for navigate(-1) back button)
+  useEffect(() => {
+    const ordersUpdated = sessionStorage.getItem('orders_updated');
+    if (ordersUpdated) {
+      console.log("📡 [All Orders] Orders were updated on LOCATION CHANGE - triggering refresh");
+      sessionStorage.removeItem('orders_updated');
+      setRefreshTrigger(prev => prev + 1);
+    }
+  }, [location]); // Trigger on any location change
 
   // ✅ WebSocket real-time subscription for live order updates
   const handleOrderUpdate = useCallback(() => {
-    console.log("📡 WebSocket: All Orders update received - refreshing");
-    fetchOrdersData();
-  }, [fetchOrdersData]);
+    console.log("📡 WebSocket: All Orders update received - triggering refresh");
+    setRefreshTrigger(prev => prev + 1);
+  }, []);
 
   // Subscribe to real-time daybook updates via WebSocket
   useDaybookUpdates(branchId, handleOrderUpdate);
+
+  // ✅ Visibility change listener - refresh when user comes back to page if updates occurred
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        const ordersUpdated = sessionStorage.getItem('orders_updated');
+        if (ordersUpdated) {
+          console.log("📡 Page visible + orders were updated - triggering All Orders refresh");
+          sessionStorage.removeItem('orders_updated');
+          setRefreshTrigger(prev => prev + 1);
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
 
   // Get machines for selected machine types (multiple)
   const machinesForSelectedTypes = useMemo(() => {
@@ -809,6 +846,33 @@ const IndexAllOders = () => {
         <div className="all-orders-header__left">
           <BackButton />
           <h1 className="all-orders-title">All Orders</h1>
+          {/* WebSocket Status Indicator */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              marginLeft: '12px',
+              padding: '4px 10px',
+              borderRadius: '12px',
+              backgroundColor: wsConnected ? '#dcfce7' : '#fef2f2',
+              fontSize: '12px',
+              fontWeight: 500
+            }}
+            title={wsConnected ? 'Real-time updates active' : 'Not connected - updates require manual refresh'}
+          >
+            {wsConnected ? (
+              <>
+                <Wifi size={14} style={{ color: '#16a34a' }} />
+                <span style={{ color: '#16a34a' }}>Live</span>
+              </>
+            ) : (
+              <>
+                <WifiOff size={14} style={{ color: '#dc2626' }} />
+                <span style={{ color: '#dc2626' }}>Offline</span>
+              </>
+            )}
+          </div>
         </div>
         <div className="all-orders-header__actions">
           <button className="action-btn action-btn--export" onClick={exportToExcel}>

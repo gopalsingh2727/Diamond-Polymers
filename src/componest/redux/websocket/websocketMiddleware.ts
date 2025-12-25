@@ -89,7 +89,13 @@ function handleConnect(store: any, payload: { url: string; token: string; platfo
         break;
 
       case 'connected':
-        // Will be handled in WebSocket message
+        // ✅ FIXED: Dispatch connected action immediately when WebSocket opens
+        // This ensures UI shows "Online" even if server doesn't send expected message
+        console.log('🔌 [WS] Connection state changed to connected - dispatching connected action');
+        store.dispatch(connected({
+          connectionId: `ws-${Date.now()}`,  // Temporary ID until server sends real one
+          rooms: []  // Will be updated when server sends room info
+        }));
         break;
 
       case 'disconnected':
@@ -126,6 +132,22 @@ function handleConnect(store: any, payload: { url: string; token: string; platfo
             connectionId: message.connectionId,
             rooms: message.rooms
           }));
+
+          // ✅ Auto-subscribe to daybook AND dispatch rooms for real-time order updates
+          const branchId = message.branchId || localStorage.getItem('branchId') || localStorage.getItem('selectedBranch');
+          if (branchId && wsClient) {
+            console.log('📋 [WS] Auto-subscribing to daybook room:', `daybook:${branchId}`);
+            wsClient.send({
+              action: 'subscribeToDaybook',
+              data: { branchId }
+            });
+
+            console.log('🚚 [WS] Auto-subscribing to dispatch room:', `dispatch:${branchId}`);
+            wsClient.send({
+              action: 'subscribeToDispatch',
+              data: { branchId }
+            });
+          }
         }
         break;
     }
@@ -210,6 +232,15 @@ function handleConnect(store: any, payload: { url: string; token: string; platfo
     // Dispatch browser event for useDaybookUpdates hook
     window.dispatchEvent(new CustomEvent('websocket:message', {
       detail: { type: 'daybook:updated', data: data.data }
+    }));
+  });
+
+  // ✅ Listen for dispatch-specific updates
+  wsClient.on('dispatch:updated', (data) => {
+    console.log('🚚 Dispatch updated:', data);
+    // Dispatch browser event for useDispatchUpdates hook
+    window.dispatchEvent(new CustomEvent('websocket:message', {
+      detail: { type: 'dispatch:updated', data: data.data }
     }));
   });
 

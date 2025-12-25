@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { BackButton } from "../../../allCompones/BackButton";
 import * as XLSX from "xlsx";
@@ -10,8 +10,8 @@ import "../Oders/indexAllOders.css";  // ✅ ADDED: Import All Orders styling
 import { fetchOrders } from "../../../redux/oders/OdersActions";
 import { RootState } from "../../../../store";
 import { useFormDataCache } from "../Edit/hooks/useFormDataCache";  // ✅ ADDED
-import { useDaybookUpdates } from "../../../../hooks/useWebSocket";  // ✅ WebSocket real-time updates
-import { Download, Printer, RefreshCw } from "lucide-react";  // ✅ ADDED: Icons
+import { useDaybookUpdates, useWebSocketStatus } from "../../../../hooks/useWebSocket";  // ✅ WebSocket real-time updates
+import { Download, Printer, RefreshCw, Wifi, WifiOff } from "lucide-react";  // ✅ ADDED: Icons
 
 
 interface Order {
@@ -119,6 +119,7 @@ const defaultOrdersState = {
 
 export default function DayBook() {
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch();
 
   // State declarations
@@ -132,6 +133,7 @@ export default function DayBook() {
   const [orderTypeFilter, setOrderTypeFilter] = useState("");  // ✅ ADDED: Order type filter
   const [currentPage, setCurrentPage] = useState(1);
   const [limit, setLimit] = useState(50);
+  const [refreshTrigger, setRefreshTrigger] = useState(0); // ✅ ADDED: Force refresh trigger
 
   // Refs
   const contentRef = useRef<HTMLDivElement>(null);
@@ -156,6 +158,9 @@ export default function DayBook() {
 
   // ✅ ADDED: Get order types from cache
   const { orderTypes = [] } = useFormDataCache();
+
+  // ✅ WebSocket status for real-time indicator
+  const { isConnected: wsConnected, status: wsStatus } = useWebSocketStatus();
 
   // Company info
   const companyName = authState?.user?.companyName || "ABC Company";
@@ -198,7 +203,7 @@ export default function DayBook() {
   }
 
   // Transform orders for display
-  const transformedOrders: Order[] = Array.isArray(reduxOrders) ? reduxOrders.map(order => {
+  const transformedOrders: Order[] = Array.isArray(reduxOrders) ? reduxOrders.map((order, idx) => {
     // Handle deleted customers - show indicator
     const isDeletedCustomer = (order.customer as any)?.isDeleted === true;
     const customerName = isDeletedCustomer
@@ -207,11 +212,31 @@ export default function DayBook() {
     const customerPhone = order.customer?.phone1 || '';
     const orderStatus = order.overallStatus || 'unknown';
 
-    // Get order type - could be populated object or ID
-    const orderType = order.orderType || order.orderTypeId;
-    const orderTypeName = orderType?.typeName || orderType?.name || '';
-    const orderTypeCode = orderType?.typeCode || orderType?.code || '';
+    // Get order type - handle both populated object and ID reference
+    // Backend returns orderType object with typeName, typeCode, color, category
+    // Fallback: look up from cached orderTypes if not populated
+    let orderTypeObj = order.orderType;
+    if (!orderTypeObj && order.orderTypeId) {
+      // Fallback: find order type from cached orderTypes
+      const orderTypeId = typeof order.orderTypeId === 'object' ? (order.orderTypeId as any)?._id : order.orderTypeId;
+      orderTypeObj = orderTypes.find((ot: any) => ot._id === orderTypeId);
+    }
+    const orderTypeName = orderTypeObj?.typeName || orderTypeObj?.name || '';
+    const orderTypeCode = orderTypeObj?.typeCode || orderTypeObj?.code || '';
+    const orderTypeColor = orderTypeObj?.color || '';
     const priority = order.priority || 'normal';
+
+    // Debug log first few orders
+    if (idx < 2) {
+      console.log(`📋 Order ${order.orderId} transform:`, {
+        overallStatus: order.overallStatus,
+        orderType: order.orderType,
+        orderTypeId: order.orderTypeId,
+        extractedTypeName: orderTypeName,
+        cachedOrderTypes: orderTypes?.length,
+        priority: priority
+      });
+    }
 
     return {
       ...order,
@@ -221,9 +246,10 @@ export default function DayBook() {
       phone: customerPhone,
       status: orderStatus,
       priority: priority,
-      orderType: orderType,
+      orderType: orderTypeObj,
       orderTypeName: orderTypeName,
       orderTypeCode: orderTypeCode,
+      orderTypeColor: orderTypeColor,
       date: new Date(order.createdAt).toISOString().split('T')[0],
       AllStatus: {
         [orderStatus]: {
@@ -405,30 +431,63 @@ export default function DayBook() {
     });
   };
 
-  // Effect hooks - Fetch orders on mount and filter changes
+  // Effect hooks - Fetch orders on mount, filter changes, and navigation back to page
   useEffect(() => {
-    console.log("🔄 useEffect triggered - fetching orders");
+    console.log("🔄 Daybook useEffect triggered - fetching orders (location.key:", location.key, ", refreshTrigger:", refreshTrigger, ")");
     fetchOrdersData();
+  }, [dispatch, currentPage, limit, fromDate, toDate, searchTerm, statusFilter, orderTypeFilter, location.key, refreshTrigger]);
 
-    // ✅ Check if orders were updated while navigating - force refresh
+  // ✅ FIXED: Check for order updates on mount and navigation (using state trigger to avoid stale closures)
+  useEffect(() => {
     const ordersUpdated = sessionStorage.getItem('orders_updated');
+    console.log("📡 [Daybook] Mount check - orders_updated:", ordersUpdated);
     if (ordersUpdated) {
-      console.log("📡 Orders were updated - forcing refresh");
+      console.log("📡 [Daybook] Orders were updated on MOUNT - triggering refresh, flag was:", ordersUpdated);
       sessionStorage.removeItem('orders_updated');
-      // Small delay to ensure the fetchOrdersData above completes first
-      setTimeout(() => fetchOrdersData(), 100);
+      // Use state to trigger refetch (avoids stale closure issues)
+      setRefreshTrigger(prev => prev + 1);
     }
-  }, [dispatch, currentPage, limit, fromDate, toDate, searchTerm, statusFilter, orderTypeFilter]);
+  }, []); // Run on mount
+
+  // ✅ FIXED: Also check on any location change (for navigate(-1) back button)
+  useEffect(() => {
+    const ordersUpdated = sessionStorage.getItem('orders_updated');
+    console.log("📡 [Daybook] Location change check - orders_updated:", ordersUpdated, ", location:", location.pathname);
+    if (ordersUpdated) {
+      console.log("📡 [Daybook] Orders were updated on LOCATION CHANGE - triggering refresh, flag was:", ordersUpdated);
+      sessionStorage.removeItem('orders_updated');
+      setRefreshTrigger(prev => prev + 1);
+    }
+  }, [location]); // Trigger on any location change
 
   // ✅ WebSocket real-time subscription for instant order updates
   // This receives updates immediately when orders change - no polling needed
   const handleOrderUpdate = useCallback(() => {
-    console.log("📡 WebSocket: Order update received - refreshing");
-    fetchOrdersData();
-  }, [currentPage, limit, fromDate, toDate, searchTerm, statusFilter, orderTypeFilter]);
+    console.log("📡 WebSocket: Order update received - triggering refresh");
+    setRefreshTrigger(prev => prev + 1);
+  }, []);
 
   // Subscribe to real-time daybook updates via WebSocket
   useDaybookUpdates(branchId, handleOrderUpdate);
+
+  // ✅ Visibility change listener - refresh when user comes back to page if updates occurred
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        const ordersUpdated = sessionStorage.getItem('orders_updated');
+        if (ordersUpdated) {
+          console.log("📡 Page visible + orders were updated - triggering refresh");
+          sessionStorage.removeItem('orders_updated');
+          setRefreshTrigger(prev => prev + 1);
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
 
   // Focus content container when orders are loaded for keyboard navigation
   useEffect(() => {
@@ -784,6 +843,33 @@ export default function DayBook() {
         <div className="all-orders-header__left">
           <BackButton />
           <h1 className="all-orders-title">Day Book</h1>
+          {/* WebSocket Status Indicator */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              marginLeft: '12px',
+              padding: '4px 10px',
+              borderRadius: '12px',
+              backgroundColor: wsConnected ? '#dcfce7' : '#fef2f2',
+              fontSize: '12px',
+              fontWeight: 500
+            }}
+            title={wsConnected ? 'Real-time updates active' : 'Not connected - updates require manual refresh'}
+          >
+            {wsConnected ? (
+              <>
+                <Wifi size={14} style={{ color: '#16a34a' }} />
+                <span style={{ color: '#16a34a' }}>Live</span>
+              </>
+            ) : (
+              <>
+                <WifiOff size={14} style={{ color: '#dc2626' }} />
+                <span style={{ color: '#dc2626' }}>Offline</span>
+              </>
+            )}
+          </div>
         </div>
         <div className="all-orders-header__actions">
           {/* Selection Controls */}
@@ -996,6 +1082,7 @@ export default function DayBook() {
                   const orderType = (order as any).orderType;
                   const orderTypeName = (order as any).orderTypeName || orderType?.typeName || '';
                   const orderTypeCode = (order as any).orderTypeCode || orderType?.typeCode || '';
+                  const orderTypeColor = (order as any).orderTypeColor || orderType?.color || '#374151';
                   const priority = (order as any).priority || 'normal';
 
                   // Status color mapping
@@ -1059,7 +1146,15 @@ export default function DayBook() {
                           className="status-badge"
                           style={{ backgroundColor: getStatusBadgeColor(order.status || 'pending') }}
                         >
-                          {order.status?.replace(/_/g, ' ') || 'Unknown'}
+                          {(() => {
+                            const status = order.status || 'Unknown';
+                            // Format status: replace underscores with spaces and capitalize words
+                            return status
+                              .replace(/_/g, ' ')
+                              .split(' ')
+                              .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                              .join(' ');
+                          })()}
                         </span>
                       </td>
                       <td>
@@ -1067,7 +1162,7 @@ export default function DayBook() {
                           className="priority-badge"
                           style={{ backgroundColor: getPriorityBadgeColor(priority) }}
                         >
-                          {priority}
+                          {priority.charAt(0).toUpperCase() + priority.slice(1)}
                         </span>
                       </td>
                       <td>
@@ -1076,19 +1171,24 @@ export default function DayBook() {
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: '6px',
-                            fontSize: '12px'
+                            fontSize: '12px',
+                            padding: '4px 8px',
+                            background: `${orderTypeColor}15`,
+                            borderRadius: '4px',
+                            border: `1px solid ${orderTypeColor}30`
                           }}>
                             {orderType?.icon && <span>{orderType.icon}</span>}
                             <span style={{
-                              color: orderType?.color || '#374151',
-                              fontWeight: 500
+                              color: orderTypeColor,
+                              fontWeight: 600
                             }}>
                               {orderTypeName}
                             </span>
                             {orderTypeCode && (
                               <span style={{
-                                color: '#94a3b8',
-                                fontSize: '11px'
+                                color: orderTypeColor,
+                                fontSize: '10px',
+                                opacity: 0.7
                               }}>
                                 ({orderTypeCode})
                               </span>

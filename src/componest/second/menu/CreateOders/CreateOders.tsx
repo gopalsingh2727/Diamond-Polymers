@@ -9,14 +9,14 @@ import { deleteOrder } from "../../../redux/oders/OdersActions";
 import { ToastContainer } from "../../../../components/shared/Toast";
 import { useCRUD } from "../../../../hooks/useCRUD";
 import CustomerName, { CustomerNameRef } from "./account/CurstomerName";
-import OrderTypeSelect from "./OrderTypeSelect";
+import OrderTypeSelect, { OrderTypeSelectRef } from "./OrderTypeSelect";
 import Notes from "./notes";
 import Priority from "./priority";
 import Status from "./status";
 import SaveOrders from "./saveTheOdes";
 import StepContainer, { StepContainerRef } from "./stepContainer";
 import { useOrderFormData } from "./useOrderFormData";
-import InlineOptionsInput from "./optionsSection/InlineOptionsInput";
+import InlineOptionsInput, { InlineOptionsInputRef } from "./optionsSection/InlineOptionsInput";
 import { AppDispatch } from "../../../../store";
 
 // Section configuration type
@@ -209,6 +209,8 @@ const CreateOrders = () => {
   // Refs to access child component data
   const customerNameRef = useRef<CustomerNameRef>(null);
   const stepContainerRef = useRef<StepContainerRef>(null);
+  const orderTypeRef = useRef<OrderTypeSelectRef>(null);
+  const optionsInputRef = useRef<InlineOptionsInputRef>(null);
 
   // Set order type from orderData in edit mode
   useEffect(() => {
@@ -348,8 +350,11 @@ const CreateOrders = () => {
       });
     }
 
+    console.log('🔍 getSortedSections - hasDynamicColumnsSection:', hasDynamicColumnsSection);
+    console.log('🔍 getSortedSections - dynamicCalculations:', orderTypeConfig.dynamicCalculations?.length);
     if (!hasDynamicColumnsSection && orderTypeConfig.dynamicCalculations && orderTypeConfig.dynamicCalculations.length > 0) {
       // Add dynamic columns section
+      console.log('✅ Adding dynamicColumns section');
       sections.push({
         id: 'dynamicColumns',
         name: 'Dynamic Columns',
@@ -357,6 +362,8 @@ const CreateOrders = () => {
         order: 500,
         fields: []
       });
+    } else {
+      console.log('❌ NOT adding dynamicColumns section - condition not met');
     }
 
     if (!hasStepsSection) {
@@ -373,27 +380,87 @@ const CreateOrders = () => {
     return sections.sort((a, b) => a.order - b.order);
   };
 
-  // Calculate dynamic values from formula
-  const calculateDynamicValue = (formula: string, specValues: { [key: string]: any }): number | string => {
+  // Get all spec values from options for calculations - aggregated by option type
+  const getSpecValuesFromOptions = (): {
+    aggregated: { [key: string]: number[] };  // Arrays for SUM aggregation
+    single: { [key: string]: number };        // Single values (last value or first Rate option)
+  } => {
+    const aggregated: { [key: string]: number[] } = {};
+    const single: { [key: string]: number } = {};
+
+    options.forEach(opt => {
+      if (opt.specificationValues) {
+        // Clean option type name for variable naming
+        const cleanTypeName = (opt.optionTypeName || 'Option')
+          .replace(/\s+/g, '_')
+          .replace(/[.%]/g, '')
+          .replace(/_+/g, '_');
+
+        Object.entries(opt.specificationValues).forEach(([key, value]) => {
+          const cleanKey = key.replace(/\s+/g, '_');
+          const varName = `${cleanTypeName}_${cleanKey}`;
+          const numValue = typeof value === 'number' ? value : parseFloat(String(value)) || 0;
+
+          // Add to aggregated array
+          if (!aggregated[varName]) {
+            aggregated[varName] = [];
+          }
+          aggregated[varName].push(numValue);
+
+          // For single values: Rate options take precedence, others use last value
+          if (cleanTypeName.toLowerCase().includes('rate')) {
+            single[varName] = numValue;
+          } else {
+            single[varName] = numValue;
+          }
+        });
+      }
+    });
+
+    return { aggregated, single };
+  };
+
+  // Calculate dynamic values from formula with SUM() support
+  const calculateDynamicValue = (
+    formula: string,
+    aggregated: { [key: string]: number[] },
+    single: { [key: string]: number }
+  ): number | string => {
     if (!formula) return '';
 
     try {
-      // Replace spec variable names with actual values
       let evalFormula = formula;
-      Object.keys(specValues).forEach(key => {
-        const value = specValues[key];
-        if (typeof value === 'number' || !isNaN(Number(value))) {
-          evalFormula = evalFormula.replace(new RegExp(key, 'g'), String(Number(value)));
+
+      // Step 1: Handle SUM(varName) - aggregate values from all options of that type
+      const sumRegex = /SUM\(([^)]+)\)/g;
+      evalFormula = evalFormula.replace(sumRegex, (match, varName) => {
+        const cleanVarName = varName.trim();
+        const values = aggregated[cleanVarName];
+        if (values && values.length > 0) {
+          const sum = values.reduce((acc, val) => acc + val, 0);
+          return String(sum);
         }
+        return '0';
       });
 
-      // Only evaluate if all variables are replaced with numbers
+      // Step 2: Replace single variable names with their values
+      Object.keys(single).forEach(key => {
+        const value = single[key];
+        // Use word boundary to avoid partial matches
+        const regex = new RegExp(`\\b${key}\\b`, 'g');
+        evalFormula = evalFormula.replace(regex, String(value));
+      });
+
+      // Step 3: Evaluate the formula if it's valid
+      // Check if formula is ready for evaluation (only numbers and operators)
       if (/^[\d\s+\-*/().]+$/.test(evalFormula)) {
-        // SECURITY FIX: Use expr-eval Parser instead of eval()
         const parser = new Parser();
         const result = parser.evaluate(evalFormula);
         return typeof result === 'number' ? Math.round(result * 100) / 100 : result;
       }
+
+      // If formula still has unresolved variables, return empty
+      console.log('Formula not ready:', evalFormula, 'from:', formula);
       return '';
     } catch (e) {
       console.error('Error calculating formula:', formula, e);
@@ -401,37 +468,28 @@ const CreateOrders = () => {
     }
   };
 
-  // Get all spec values from options for calculations
-  const getSpecValuesFromOptions = (): { [key: string]: any } => {
-    const specValues: { [key: string]: any } = {};
-
-    options.forEach(opt => {
-      if (opt.specificationValues) {
-        Object.entries(opt.specificationValues).forEach(([key, value]) => {
-          // Create variable name like "OptionTypeName_SpecName"
-          const varName = `${opt.optionTypeName?.replace(/\s+/g, '_') || 'Option'}_${key.replace(/\s+/g, '_')}`;
-          specValues[varName] = value;
-        });
-      }
-    });
-
-    return specValues;
-  };
-
   // Auto-calculate dynamic values when options change
   useEffect(() => {
     if (orderTypeConfig?.dynamicCalculations && options.length > 0) {
-      const specValues = getSpecValuesFromOptions();
+      const { aggregated, single } = getSpecValuesFromOptions();
       const newCalculatedValues: { [key: string]: number | string } = {};
+
+      console.log('=== Dynamic Calculations Debug ===');
+      console.log('Aggregated values:', aggregated);
+      console.log('Single values:', single);
 
       orderTypeConfig.dynamicCalculations
         .filter(calc => calc.enabled && calc.autoPopulate)
         .forEach(calc => {
-          const value = calculateDynamicValue(calc.formula, specValues);
+          const value = calculateDynamicValue(calc.formula, aggregated, single);
+          console.log(`Calculation "${calc.name}": formula="${calc.formula}" => ${value}`);
           if (value !== '') {
             newCalculatedValues[calc.name] = value;
           }
         });
+
+      console.log('Final calculated values:', newCalculatedValues);
+      console.log('================================');
 
       setCalculatedValues(newCalculatedValues);
     }
@@ -598,6 +656,27 @@ const CreateOrders = () => {
           {editMode && orderData?.orderId && (
             <span className="HeaderOrderID">{orderData.orderId}</span>
           )}
+          {/* ✅ ADDED: Show Order Type in header when editing */}
+          {editMode && orderTypeConfig && (
+            <span style={{
+              marginLeft: '12px',
+              padding: '4px 12px',
+              backgroundColor: orderTypeConfig.color || '#6366f1',
+              color: 'white',
+              borderRadius: '16px',
+              fontSize: '12px',
+              fontWeight: 500,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}>
+              {orderTypeConfig.icon && <span>{orderTypeConfig.icon}</span>}
+              {orderTypeConfig.typeName}
+              {orderTypeConfig.typeCode && (
+                <span style={{ opacity: 0.8, fontSize: '10px' }}>({orderTypeConfig.typeCode})</span>
+              )}
+            </span>
+          )}
         </div>
         {editMode && (
           <button
@@ -618,9 +697,16 @@ const CreateOrders = () => {
             ref={customerNameRef}
             initialData={orderData}
             isEditMode={editMode}
+            onCustomerSelect={() => {
+              // Directly focus the order type dropdown
+              setTimeout(() => {
+                orderTypeRef.current?.focus();
+              }, 50);
+            }}
           />
 
           <OrderTypeSelect
+            ref={orderTypeRef}
             value={selectedOrderType}
             onChange={handleOrderTypeChange}
             initialValue={
@@ -630,6 +716,17 @@ const CreateOrders = () => {
             }
             orderTypes={orderTypes}
             loading={formDataLoading}
+            onOrderTypeSelect={() => {
+              // Order type selected with Enter - focus options input
+              console.log('Order type selected:', selectedOrderType);
+              setTimeout(() => {
+                optionsInputRef.current?.focus();
+              }, 100);
+            }}
+            onBackspace={() => {
+              // Backspace - go back to customer name input
+              customerNameRef.current?.focus();
+            }}
           />
 
           {/* Billing Order Indicator */}
@@ -686,12 +783,14 @@ const CreateOrders = () => {
                       return (
                         <div key="options" className="dynamicSection">
                           <InlineOptionsInput
+                            ref={optionsInputRef}
                             key={`options-${selectedOrderType}`}
                             title="Options"
                             orderTypeId={selectedOrderType}
                             onDataChange={setOptions}
                             initialData={editMode ? transformOptionsForEdit(orderData) : options}
                             isEditMode={editMode}
+                            isBillingOrder={isBillingOrder}
                             allowedOptionTypes={orderTypeConfig?.allowedOptionTypes || []}
                             orderId={editMode ? orderData?.orderId : undefined}
                             customerInfo={editMode && orderData?.customer ? {
@@ -701,14 +800,26 @@ const CreateOrders = () => {
                               phone: orderData.customer.phone || orderData.customer.phone1,
                               whatsapp: orderData.customer.whatsapp
                             } : undefined}
+                            dynamicCalculations={orderTypeConfig?.dynamicCalculations || []}
+                            calculatedValues={calculatedValues}
+                            onBackspace={() => {
+                              // Backspace - go back to order type
+                              orderTypeRef.current?.focus();
+                            }}
                         />
                       </div>
                     );
 
                   case 'dynamicColumns':
                     // Only show if there are dynamic calculations configured
+                    console.log('🎯 dynamicColumns case reached');
+                    console.log('🎯 orderTypeConfig?.dynamicCalculations:', orderTypeConfig?.dynamicCalculations);
                     const calculations = orderTypeConfig?.dynamicCalculations?.filter(c => c.enabled) || [];
-                    if (calculations.length === 0) return null;
+                    console.log('🎯 Enabled calculations count:', calculations.length);
+                    if (calculations.length === 0) {
+                      console.log('🎯 No enabled calculations - returning null');
+                      return null;
+                    }
 
                     return (
                       <div key="dynamicColumns" className="dynamicSection dynamicColumnsSection">
@@ -804,6 +915,7 @@ const CreateOrders = () => {
           <Status
             initialStatus={orderData?.overallStatus || 'Wait for Approval'}
             isEditMode={editMode}
+            isBillingOrder={isBillingOrder}
             onStatusChange={(status) => {
               console.log('Status changed:', status);
               setCurrentStatus(status);

@@ -6,6 +6,10 @@ import { Provider } from 'react-redux'
 import  store  from './store'
 import './demos/ipc'
 
+// Initialize axios interceptor for automatic server fallback
+// Primary: api.27infinity.in, Fallback: api.27infinity.com
+import './utils/axiosInterceptor'
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <Provider store={store}>

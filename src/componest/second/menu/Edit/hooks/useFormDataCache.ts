@@ -30,13 +30,13 @@ export const useFormDataCache = () => {
     (state: RootState) => !!(state.auth?.token || localStorage.getItem('authToken'))
   );
 
-  // Auto-fetch if data is null and user is authenticated
+  // Auto-fetch if data is null and user is authenticated (but NOT if there's an error)
   useEffect(() => {
-    if (!formData && !loading && isAuthenticated) {
+    if (!formData && !loading && !error && isAuthenticated) {
       console.log('🔄 FormDataCache: Data is null, triggering auto-fetch...');
       dispatch(getOrderFormData() as any);
     }
-  }, [formData, loading, isAuthenticated, dispatch]);
+  }, [formData, loading, error, isAuthenticated, dispatch]);
 
   // Manual refresh function
   const refresh = useCallback(() => {

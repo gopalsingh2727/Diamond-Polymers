@@ -20,6 +20,7 @@ function IndexComponents() {
   const [branchName, setBranchName] = useState("Loading...");
   const [showBranchModal, setShowBranchModal] = useState(false);
   const [tempSelectedBranch, setTempSelectedBranch] = useState("");
+  const [isBranchChanging, setIsBranchChanging] = useState(false);
 
   // Ref to track if we've already set the manager's branch
   const hasSetManagerBranch = useRef(false);
@@ -28,6 +29,7 @@ function IndexComponents() {
 
   const { branches, loading } = useSelector((state: RootState) => state.branches);
   const { userData, sessionExpired } = useSelector((state: RootState) => state.auth);
+  const orderFormDataLoading = useSelector((state: RootState) => state.orderFormData?.loading ?? false);
 
   // Fetch branches on mount
   useEffect(() => {
@@ -158,25 +160,30 @@ function IndexComponents() {
   }, [selectedIndex, menuItems.length]);
 
   const handleBranchClick = () => {
-    if (userData?.role === "admin") {
+    if (userData?.role === "admin" || userData?.role === "master_admin") {
       const currentBranchId = userData?.selectedBranch?._id || userData?.selectedBranch || "";
       setTempSelectedBranch(currentBranchId);
       setShowBranchModal(true);
     }
   };
 
-  const handleBranchChange = () => {
+  const handleBranchChange = async () => {
     if (!tempSelectedBranch) return;
 
-    // Dispatch action to update Redux and localStorage
-    dispatch(setSelectedBranchInAuth(tempSelectedBranch));
+    setIsBranchChanging(true);
+    try {
+      // Dispatch action to update Redux and localStorage
+      await dispatch(setSelectedBranchInAuth(tempSelectedBranch));
 
-    // Update branch name immediately
-    const foundBranch = branches.find((b: any) => b._id === tempSelectedBranch);
-    setBranchName(foundBranch?.name || "Branch not found");
-    
-    // Close modal
-    setShowBranchModal(false);
+      // Update branch name immediately
+      const foundBranch = branches.find((b: any) => b._id === tempSelectedBranch);
+      setBranchName(foundBranch?.name || "Branch not found");
+
+      // Close modal
+      setShowBranchModal(false);
+    } finally {
+      setIsBranchChanging(false);
+    }
   };
 
   return (
@@ -278,22 +285,40 @@ function IndexComponents() {
                 {loading ? (
                   <span className="header-no-branch">Loading...</span>
                 ) : branches.length > 0 ? (
-                  <select
-                    className="header-branch-dropdown"
-                    value={userData?.selectedBranch?._id || userData?.selectedBranch || ''}
-                    onChange={(e) => {
-                      dispatch(setSelectedBranchInAuth(e.target.value));
-                      const foundBranch = branches.find((b: any) => b._id === e.target.value);
-                      setBranchName(foundBranch?.name || "Branch not found");
-                    }}
-                  >
-                    <option value="" disabled>Select Branch</option>
-                    {branches.map((branch: any) => (
-                      <option key={branch._id} value={branch._id}>
-                        {branch.name}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <select
+                      className={`header-branch-dropdown ${isBranchChanging || orderFormDataLoading ? 'opacity-50' : ''}`}
+                      value={userData?.selectedBranch?._id || userData?.selectedBranch || ''}
+                      disabled={isBranchChanging || orderFormDataLoading}
+                      onChange={async (e) => {
+                        const newBranchId = e.target.value;
+                        const currentBranchId = userData?.selectedBranch?._id || userData?.selectedBranch;
+
+                        if (newBranchId && newBranchId !== currentBranchId) {
+                          setIsBranchChanging(true);
+                          try {
+                            await dispatch(setSelectedBranchInAuth(newBranchId));
+                            const foundBranch = branches.find((b: any) => b._id === newBranchId);
+                            setBranchName(foundBranch?.name || "Branch not found");
+                          } finally {
+                            setIsBranchChanging(false);
+                          }
+                        }
+                      }}
+                    >
+                      <option value="" disabled>Select Branch</option>
+                      {branches.map((branch: any) => (
+                        <option key={branch._id} value={branch._id}>
+                          {branch.name}
+                        </option>
+                      ))}
+                    </select>
+                    {(isBranchChanging || orderFormDataLoading) && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-50 rounded-lg">
+                        <div className="w-4 h-4 border-2 border-[#FF6B35] border-t-transparent rounded-full animate-spin"></div>
+                      </div>
+                    )}
+                  </div>
                 ) : (
                   <span className="header-no-branch">No branches</span>
                 )}
@@ -376,19 +401,27 @@ function IndexComponents() {
                     <button
                       className="flex-1 py-3 px-4 rounded-lg font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 transition-all duration-300"
                       onClick={() => setShowBranchModal(false)}
+                      disabled={isBranchChanging}
                     >
                       Cancel
                     </button>
                     <button
                       className={`flex-1 py-3 px-4 rounded-lg font-medium text-white shadow-md transition-all duration-300 ${
-                        !tempSelectedBranch
+                        !tempSelectedBranch || isBranchChanging
                           ? "bg-gray-400 cursor-not-allowed"
                           : "bg-[#FF6B35] hover:bg-[#E55A2B] hover:shadow-lg"
                       }`}
                       onClick={handleBranchChange}
-                      disabled={!tempSelectedBranch}
+                      disabled={!tempSelectedBranch || isBranchChanging}
                     >
-                      Confirm
+                      {isBranchChanging ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                          Switching...
+                        </span>
+                      ) : (
+                        'Confirm'
+                      )}
                     </button>
                   </div>
                 </>

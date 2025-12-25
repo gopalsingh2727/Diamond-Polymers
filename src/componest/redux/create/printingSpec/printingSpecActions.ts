@@ -22,11 +22,18 @@ const apiKey = import.meta.env.VITE_API_KEY || "27infinity.in_5f84c89315f74a2db1
 const getToken = (getState: () => RootState): string | null =>
   getState().auth?.token || localStorage.getItem("authToken");
 
-const getHeaders = (token?: string | null): Record<string, string> => ({
-  "Content-Type": "application/json",
-  Authorization: token ? `Bearer ${token}` : "",
-  "x-api-key": apiKey,
-});
+const getHeaders = (token?: string | null): Record<string, string> => {
+  const selectedBranch = localStorage.getItem("selectedBranch");
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Authorization: token ? `Bearer ${token}` : "",
+    "x-api-key": apiKey,
+  };
+  if (selectedBranch) {
+    headers["x-selected-branch"] = selectedBranch;
+  }
+  return headers;
+};
 
 // Add Printing Spec
 export const addPrintingSpec = (

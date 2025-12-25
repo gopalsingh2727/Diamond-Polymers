@@ -20,11 +20,16 @@ const ForgotPassword = () => {
   const baseUrl = import.meta.env.VITE_API_27INFINITY_IN || "http://localhost:4000";
   const apiKey = import.meta.env.VITE_API_KEY;
 
-  // Try to find user across all user types
-  const tryRequestOTP = async (endpoint: string): Promise<{ success: boolean; data?: any; error?: string }> => {
+  // Step 1: Send OTP - Single unified endpoint
+  const handleRequestOTP = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    setSuccess("");
+
     try {
       const response = await axios.post(
-        `${baseUrl}/${endpoint}/request-password-reset`,
+        `${baseUrl}/auth/request-password-reset`,
         { email: email.toLowerCase().trim() },
         {
           headers: {
@@ -33,86 +38,25 @@ const ForgotPassword = () => {
           },
         }
       );
-      return { success: true, data: response.data };
-    } catch (err: any) {
-      return {
-        success: false,
-        error: err.response?.data?.message || "Failed"
-      };
-    }
-  };
 
-  // Step 1: Send OTP
-  const handleRequestOTP = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-    setSuccess("");
-
-    // Try unified endpoint first, then fallback to individual endpoints
-    const endpoints = [
-      { type: "auth", prefix: "auth" },
-      { type: "master_admin", prefix: "master-admin" },
-      { type: "admin", prefix: "admin" },
-      { type: "manager", prefix: "manager" },
-    ];
-
-    let found = false;
-
-    for (const { type, prefix } of endpoints) {
-      const result = await tryRequestOTP(prefix);
-
-      if (result.success) {
-        if (result.data?.email || result.data?.userType) {
-          setUserType(result.data.userType || type);
-          setSuccess(result.data.message || "OTP sent to your email!");
-          setStep("otp");
-          found = true;
-          break;
-        }
-        if (prefix === "auth") {
-          setSuccess(result.data.message || "OTP sent to your email!");
-          setStep("otp");
-          found = true;
-          break;
-        }
+      if (response.data?.userType) {
+        setUserType(response.data.userType);
       }
-    }
-
-    if (!found) {
-      setSuccess("If the email exists, a password reset OTP has been sent.");
+      setSuccess(response.data.message || "OTP sent to your email!");
       setStep("otp");
+    } catch (err: any) {
+      const errorMsg = err.response?.data?.message || "Failed to send OTP";
+      if (err.response?.status === 429) {
+        setError(`Too many requests. Please wait ${err.response?.data?.retryAfter || 60} seconds.`);
+      } else {
+        setError(errorMsg);
+      }
     }
 
     setLoading(false);
   };
 
-  // Try to verify OTP across endpoints
-  const tryVerifyOTP = async (endpoint: string): Promise<{ success: boolean; data?: any; error?: string }> => {
-    try {
-      const response = await axios.post(
-        `${baseUrl}/${endpoint}/verify-otp`,
-        {
-          email: email.toLowerCase().trim(),
-          token: otp,
-        },
-        {
-          headers: {
-            "x-api-key": apiKey,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      return { success: true, data: response.data };
-    } catch (err: any) {
-      return {
-        success: false,
-        error: err.response?.data?.message || "Failed"
-      };
-    }
-  };
-
-  // Step 2: Verify OTP
+  // Step 2: Verify OTP - Single unified endpoint
   const handleVerifyOTP = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -125,50 +69,12 @@ const ForgotPassword = () => {
       return;
     }
 
-    // Try unified endpoint first, then fallback to individual endpoints
-    const endpoints = ["auth", "master-admin", "admin", "manager"];
-    let verified = false;
-
-    for (const prefix of endpoints) {
-      const result = await tryVerifyOTP(prefix);
-
-      if (result.success && result.data?.verified) {
-        setUserType(result.data.userType || userType);
-        setSuccess("OTP verified! Please set your new password.");
-        setStep("newPassword");
-        verified = true;
-        break;
-      } else if (result.error?.includes("Invalid OTP")) {
-        setError("Invalid OTP. Please check and try again.");
-        setLoading(false);
-        return;
-      } else if (result.error?.includes("expired")) {
-        setError("OTP has expired. Please request a new one.");
-        setStep("email");
-        setOtp("");
-        setLoading(false);
-        return;
-      }
-    }
-
-    if (!verified) {
-      setError("Failed to verify OTP. Please try again.");
-    }
-
-    setLoading(false);
-  };
-
-  const tryResetPassword = async (endpoint: string): Promise<{ success: boolean; data?: any; error?: string }> => {
     try {
-      console.log(`Calling: ${baseUrl}/${endpoint}/reset-password`);
-      console.log(`Email: ${email.toLowerCase().trim()}, OTP: ${otp}`);
-
       const response = await axios.post(
-        `${baseUrl}/${endpoint}/reset-password`,
+        `${baseUrl}/auth/verify-otp`,
         {
           email: email.toLowerCase().trim(),
           token: otp,
-          newPassword,
         },
         {
           headers: {
@@ -177,18 +83,33 @@ const ForgotPassword = () => {
           },
         }
       );
-      console.log(`${endpoint} success:`, response.data);
-      return { success: true, data: response.data };
+
+      if (response.data?.verified) {
+        if (response.data?.userType) {
+          setUserType(response.data.userType);
+        }
+        setSuccess("OTP verified! Please set your new password.");
+        setStep("newPassword");
+      } else {
+        setError("Failed to verify OTP. Please try again.");
+      }
     } catch (err: any) {
-      console.error(`${endpoint} error:`, err.response?.status, err.response?.data);
-      return {
-        success: false,
-        error: err.response?.data?.message || `Failed (${err.response?.status || 'network error'})`
-      };
+      const errorMsg = err.response?.data?.message || "Failed to verify OTP";
+      if (errorMsg.includes("Invalid OTP")) {
+        setError("Invalid OTP. Please check and try again.");
+      } else if (errorMsg.includes("expired")) {
+        setError("OTP has expired. Please request a new one.");
+        setStep("email");
+        setOtp("");
+      } else {
+        setError(errorMsg);
+      }
     }
+
+    setLoading(false);
   };
 
-  // Step 3: Reset Password
+  // Step 3: Reset Password - Single unified endpoint
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -207,53 +128,39 @@ const ForgotPassword = () => {
       return;
     }
 
-    // Try all endpoints to find the user
-    const endpoints = [
-      { prefix: "auth" },
-      { prefix: "master-admin" },
-      { prefix: "admin" },
-      { prefix: "manager" },
-    ];
+    try {
+      const response = await axios.post(
+        `${baseUrl}/auth/reset-password`,
+        {
+          email: email.toLowerCase().trim(),
+          token: otp,
+          newPassword,
+        },
+        {
+          headers: {
+            "x-api-key": apiKey,
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
-    let resetSuccess = false;
-    let lastError = "";
-
-    for (const { prefix } of endpoints) {
-      console.log(`Trying reset password with endpoint: ${prefix}`);
-      const result = await tryResetPassword(prefix);
-
-      if (result.success) {
-        setSuccess(result.data.message || "Password reset successfully!");
-        resetSuccess = true;
-
-        setTimeout(() => {
-          navigate("/login");
-        }, 2000);
-        break;
+      setSuccess(response.data.message || "Password reset successfully!");
+      setTimeout(() => {
+        navigate("/login");
+      }, 2000);
+    } catch (err: any) {
+      const errorMsg = err.response?.data?.message || "Failed to reset password";
+      if (errorMsg.includes("Invalid OTP")) {
+        setError("Invalid OTP. Please check and try again.");
+        setStep("otp");
+        setOtp("");
+      } else if (errorMsg.includes("expired")) {
+        setError("OTP has expired. Please request a new one.");
+        setStep("email");
+        setOtp("");
       } else {
-        console.log(`${prefix} failed:`, result.error);
-        lastError = result.error || "Failed to reset password";
-
-        // If OTP is invalid or expired, show error and go back to OTP step
-        if (result.error?.includes("Invalid OTP")) {
-          setError("Invalid OTP. Please check and try again.");
-          setStep("otp");
-          setOtp("");
-          setLoading(false);
-          return;
-        }
-        if (result.error?.includes("expired")) {
-          setError("OTP has expired. Please request a new one.");
-          setStep("email");
-          setOtp("");
-          setLoading(false);
-          return;
-        }
+        setError(errorMsg);
       }
-    }
-
-    if (!resetSuccess) {
-      setError(lastError || "Failed to reset password. Please try again.");
     }
 
     setLoading(false);

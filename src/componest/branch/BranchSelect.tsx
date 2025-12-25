@@ -13,6 +13,7 @@ const BranchSelect = () => {
   const { isAuthenticated, userData } = useSelector((state: RootState) => state.auth);
 
   const [selectedBranch, setSelectedBranch] = useState("");
+  const [isSelecting, setIsSelecting] = useState(false);
 
   // ✅ Fetch branches for both admin and master_admin if no branch selected
   useEffect(() => {
@@ -31,12 +32,18 @@ const BranchSelect = () => {
     }
   }, [error, navigate]);
 
-  const handleBranchSelect = () => {
+  const handleBranchSelect = async () => {
     if (!selectedBranch) return;
 
-    // Use the action creator which handles localStorage update
-    dispatch(setSelectedBranchInAuth(selectedBranch));
-    navigate("/");
+    setIsSelecting(true);
+    try {
+      // Use the action creator which handles localStorage update
+      await dispatch(setSelectedBranchInAuth(selectedBranch));
+      navigate("/");
+    } catch (error) {
+      console.error("Failed to select branch:", error);
+      setIsSelecting(false);
+    }
   };
 
   // ✅ Show branch selection for admin and master_admin only if no branch selected
@@ -84,9 +91,10 @@ const BranchSelect = () => {
                     />
                   </svg>
                   <select
-                    className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF6B35] focus:border-transparent appearance-none text-gray-800"
+                    className={`w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF6B35] focus:border-transparent appearance-none text-gray-800 ${isSelecting ? 'opacity-50 cursor-not-allowed' : ''}`}
                     value={selectedBranch}
                     onChange={(e) => setSelectedBranch(e.target.value)}
+                    disabled={isSelecting}
                   >
                     <option value="">-- Select a branch --</option>
                     {branches.map((branch: any) => (
@@ -109,14 +117,21 @@ const BranchSelect = () => {
 
               <button
                 className={`w-full py-3 px-4 rounded-lg font-medium text-white shadow-md transition-all duration-300 ${
-                  !selectedBranch
+                  !selectedBranch || isSelecting
                     ? "bg-gray-400 cursor-not-allowed"
                     : "bg-[#FF6B35] hover:bg-[#E55A2B] hover:shadow-lg"
                 }`}
                 onClick={handleBranchSelect}
-                disabled={!selectedBranch}
+                disabled={!selectedBranch || isSelecting}
               >
-                Continue to Dashboard
+                {isSelecting ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                    Loading Data...
+                  </span>
+                ) : (
+                  'Continue to Dashboard'
+                )}
               </button>
 
               {/* Create Branch Button - Only for master_admin */}

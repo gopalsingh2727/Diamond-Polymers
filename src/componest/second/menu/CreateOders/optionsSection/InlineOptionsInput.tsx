@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { getOptions } from '../../../../redux/option/optionActions';
 import { getOptionSpecs } from '../../../../redux/create/optionSpec/optionSpecActions';
@@ -57,6 +57,12 @@ interface InlineOptionsInputProps {
   allowedOptionTypes?: AllowedOptionType[];
   orderId?: string;
   customerInfo?: CustomerInfo;
+  onBackspace?: () => void;
+}
+
+// Ref interface for parent component access
+export interface InlineOptionsInputRef {
+  focus: () => void;
 }
 
 // Generate unique ID for option items
@@ -195,7 +201,7 @@ const renderSpecValue = (value: any): string => {
   return String(value);
 };
 
-const InlineOptionsInput: React.FC<InlineOptionsInputProps> = ({
+const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputProps>(({
   orderTypeId,
   title,
   onDataChange,
@@ -204,7 +210,8 @@ const InlineOptionsInput: React.FC<InlineOptionsInputProps> = ({
   allowedOptionTypes = [],
   orderId,
   customerInfo,
-}) => {
+  onBackspace,
+}, ref) => {
   const dispatch = useDispatch();
   const { options } = useSelector((state: any) => state.option || { options: [] });
   const { optionSpecs } = useSelector((state: any) => state.optionSpec || { optionSpecs: [] });
@@ -243,10 +250,20 @@ const InlineOptionsInput: React.FC<InlineOptionsInputProps> = ({
   // Refs for Enter key navigation
   const typeRef = useRef<HTMLInputElement>(null);
   const nameRef = useRef<HTMLInputElement>(null);
+  const mainContainerRef = useRef<HTMLDivElement>(null);
 
   // ✅ FIXED: Track if this is the initial mount to prevent infinite loops
   const isInitialMount = useRef(true);
   const hasLoadedInitialData = useRef(false);
+
+  // Expose focus method to parent via ref
+  useImperativeHandle(ref, () => ({
+    focus: () => {
+      setCurrentOption(createEmptyOption());
+      setShowPopup(true);
+      setTimeout(() => typeRef.current?.focus(), 100);
+    }
+  }));
 
   // Fetch options for this order type
   useEffect(() => {
@@ -2632,6 +2649,8 @@ For old files, you need to re-upload them.
       })()}
     </div>
   );
-};
+});
+
+InlineOptionsInput.displayName = 'InlineOptionsInput';
 
 export default InlineOptionsInput;

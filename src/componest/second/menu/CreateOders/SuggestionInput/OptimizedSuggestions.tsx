@@ -8,6 +8,8 @@ interface Props {
   suggestionType: 'customer' | 'productType' | 'productName' | 'materialType' | 'materialName' | 'productSpec' | 'step';
   filterBy?: string;
   showSuggestions?: boolean;
+  selectedIndex?: number;
+  onSuggestionsChange?: (suggestions: any[]) => void;
 }
 
 
@@ -16,7 +18,9 @@ const OptimizedSuggestions: React.FC<Props> = ({
   onSelect,
   suggestionType,
   filterBy = '',
-  showSuggestions = false
+  showSuggestions = false,
+  selectedIndex = -1,
+  onSuggestionsChange
 }) => {
   const orderFormData = useSelector((state: RootState) => state.orderFormData);
   const data = orderFormData?.data;
@@ -168,6 +172,13 @@ const OptimizedSuggestions: React.FC<Props> = ({
         return [];
     }
   }, [searchTerm, data, suggestionType, filterBy]);
+
+  // Notify parent when suggestions change
+  useEffect(() => {
+    if (onSuggestionsChange) {
+      onSuggestionsChange(filtered);
+    }
+  }, [filtered, onSuggestionsChange]);
 
   if (!showSuggestions || filtered.length === 0) {
     return null;
@@ -321,22 +332,24 @@ const OptimizedSuggestions: React.FC<Props> = ({
               break;
           }
 
+          const isSelected = idx === selectedIndex;
           return (
             <li
               key={item._id || idx}
-              className="suggestionItem"
+              className={`suggestionItem ${isSelected ? 'selected' : ''}`}
               onClick={() => onSelect(item)}
               style={{
                 padding: '8px 12px',
                 cursor: 'pointer',
                 borderBottom: idx < filtered.length - 1 ? '1px solid #eee' : 'none',
-                backgroundColor: 'white'
+                backgroundColor: isSelected ? '#FF6B35' : 'white',
+                color: isSelected ? 'white' : 'inherit'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#f5f5f5';
+                if (!isSelected) e.currentTarget.style.backgroundColor = '#f5f5f5';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'white';
+                if (!isSelected) e.currentTarget.style.backgroundColor = 'white';
               }}
             >
               <div>
@@ -346,7 +359,7 @@ const OptimizedSuggestions: React.FC<Props> = ({
               {subText && (
                 <div style={{
                   fontSize: '11px',
-                  color: '#666',
+                  color: isSelected ? 'rgba(255,255,255,0.8)' : '#666',
                   marginLeft: '24px'
                 }}>
                   {subText}

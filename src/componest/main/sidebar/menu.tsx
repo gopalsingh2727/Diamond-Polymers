@@ -10,17 +10,17 @@ const Menu = () => {
 
   const dispatch = useDispatch<AppDispatch>();
 
-  // Menu items for all users
+  // Menu items for all users with keyboard shortcuts
   const allMenuItems = [
-    { name: "Create", path: "/menu/indexcreateroute" },
-    { name: "Edit", path: "/menu/edit" },
-    { name: "Create Orders", path: "/menu/orderform" },
-    { name: "Day Book", path: "/menu/daybook" },
-    { name: "Dispatch", path: "/menu/dispatch" },
-    { name: "Status", path: "/menu/IndexAllOders" },
-    { name: "Account", path: "/menu/Account" },
-    { name: "Reports", path: "/menu/reports" },
-    { name: "Logout", path: "/login" },
+    { name: "Create", path: "/menu/indexcreateroute", shortcut: "C" },
+    { name: "Edit", path: "/menu/edit", shortcut: "E" },
+    { name: "Create Orders", path: "/menu/orderform", shortcut: "O" },
+    { name: "Day Book", path: "/menu/daybook", shortcut: "D" },
+    { name: "Dispatch", path: "/menu/dispatch", shortcut: "P" },
+    { name: "Status", path: "/menu/IndexAllOders", shortcut: "S" },
+    { name: "Account", path: "/menu/Account", shortcut: "A" },
+    { name: "Reports", path: "/menu/reports", shortcut: "R" },
+    { name: "Logout", path: "/login", shortcut: "L" },
   ];
 
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -37,6 +37,23 @@ const Menu = () => {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      // Check for shortcut keys (C, E, O, D, P, S, A, R, L)
+      const pressedKey = event.key.toUpperCase();
+      const menuItemIndex = allMenuItems.findIndex(item => item.shortcut === pressedKey);
+
+      if (menuItemIndex !== -1) {
+        event.preventDefault();
+        const selectedItem = allMenuItems[menuItemIndex];
+        if (selectedItem.name === "Logout") {
+          dispatch(logout());
+          navigate("/login");
+        } else {
+          setSelectedIndex(menuItemIndex);
+          navigate(selectedItem.path);
+        }
+        return;
+      }
+
       switch (event.key) {
         case "ArrowDown":
         case "Tab":
@@ -58,7 +75,7 @@ const Menu = () => {
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [selectedIndex, allMenuItems]);
+  }, [selectedIndex, allMenuItems, dispatch, navigate]);
 
   return (
     <div className="menu-container">

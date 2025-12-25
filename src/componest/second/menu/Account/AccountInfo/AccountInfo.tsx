@@ -151,6 +151,7 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
   const [toDate, setToDate] = useState(propToDate || "");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [refreshTrigger, setRefreshTrigger] = useState(0); // ✅ ADDED: Force refresh trigger
 
   // Refs - must be declared before useEffect
   const scrollWrapperRef = useRef<HTMLDivElement>(null);
@@ -346,29 +347,60 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
 
   // useEffect hooks - AFTER all state and selectors are declared
 
-  // Fetch orders when component mounts or filters change
+  // Fetch orders when component mounts, filters change, or navigation back to page
   useEffect(() => {
-    console.log("🔄 AccountInfo useEffect triggered - fetching account orders");
+    console.log("🔄 AccountInfo useEffect triggered - fetching account orders (location.key:", location.key, ", refreshTrigger:", refreshTrigger, ")");
     fetchAccountOrdersData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dispatch, accountData?._id, fromDate, toDate, searchTerm, statusFilter, location.key, refreshTrigger]);
 
-    // ✅ Check if orders were updated while navigating - force refresh
+  // ✅ FIXED: Check for order updates on mount (using state trigger to avoid stale closures)
+  useEffect(() => {
     const ordersUpdated = sessionStorage.getItem('orders_updated');
     if (ordersUpdated) {
-      console.log("📡 Orders were updated - forcing refresh");
+      console.log("📡 [AccountInfo] Orders were updated on MOUNT - triggering refresh");
       sessionStorage.removeItem('orders_updated');
-      setTimeout(() => fetchAccountOrdersData(), 100);
+      setRefreshTrigger(prev => prev + 1);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dispatch, accountData?._id, fromDate, toDate, searchTerm, statusFilter]);
+  }, []); // Run on mount
+
+  // ✅ FIXED: Also check on any location change (for navigate(-1) back button)
+  useEffect(() => {
+    const ordersUpdated = sessionStorage.getItem('orders_updated');
+    if (ordersUpdated) {
+      console.log("📡 [AccountInfo] Orders were updated on LOCATION CHANGE - triggering refresh");
+      sessionStorage.removeItem('orders_updated');
+      setRefreshTrigger(prev => prev + 1);
+    }
+  }, [location]); // Trigger on any location change
 
   // ✅ WebSocket real-time subscription for instant order updates
   const handleOrderUpdate = useCallback(() => {
-    console.log("📡 WebSocket: Account orders update received - refreshing");
-    fetchAccountOrdersData();
-  }, [accountData?._id, fromDate, toDate, searchTerm, statusFilter]);
+    console.log("📡 WebSocket: Account orders update received - triggering refresh");
+    setRefreshTrigger(prev => prev + 1);
+  }, []);
 
   // Subscribe to real-time daybook updates via WebSocket
   useDaybookUpdates(branchId, handleOrderUpdate);
+
+  // ✅ Visibility change listener - refresh when user comes back to page if updates occurred
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        const ordersUpdated = sessionStorage.getItem('orders_updated');
+        if (ordersUpdated) {
+          console.log("📡 Page visible + orders were updated - triggering Account orders refresh");
+          sessionStorage.removeItem('orders_updated');
+          setRefreshTrigger(prev => prev + 1);
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
 
   // Focus content container when orders are loaded for keyboard navigation
   useEffect(() => {

@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { InfinitySpinner } from '../../components/InfinitySpinner';
 import OTPVerification from './OTPVerification';
-import PhoneVerification from './PhoneVerification';
 import '../../styles/otp-verification.css';
 
 interface SignupProps {
@@ -12,7 +11,7 @@ interface SignupProps {
   branchId?: string; // Required for manager and admin
 }
 
-type SignupStep = 'details' | 'email-verification' | 'phone-verification' | 'complete';
+type SignupStep = 'details' | 'email-verification' | 'complete';
 
 const Signup: React.FC<SignupProps> = ({
   userType,
@@ -60,15 +59,8 @@ const Signup: React.FC<SignupProps> = ({
       return false;
     }
 
-    // ✅ Password length validation removed - accept any password
-
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
-      return false;
-    }
-
-    if (!formData.phone.trim()) {
-      setError('Phone number is required');
       return false;
     }
 
@@ -96,8 +88,7 @@ const Signup: React.FC<SignupProps> = ({
     setError('');
 
     try {
-      // Step 1: Send email OTP (DON'T save user yet)
-      // User data will be saved ONLY after both verifications are complete
+      // Step 1: Send email OTP
       await axios.post(
         `${baseUrl}/signup/send-email-otp`,
         {
@@ -115,7 +106,7 @@ const Signup: React.FC<SignupProps> = ({
 
       console.log('✅ Email OTP sent, moving to verification...');
 
-      // Step 2: Move to email verification (user NOT saved yet)
+      // Step 2: Move to email verification
       setCurrentStep('email-verification');
     } catch (err: any) {
       console.error('❌ Failed to send OTP:', err);
@@ -127,18 +118,13 @@ const Signup: React.FC<SignupProps> = ({
     }
   };
 
-  const handleEmailVerificationSuccess = () => {
-    console.log('✅ Email verified! Moving to phone verification...');
-    setCurrentStep('phone-verification');
-  };
-
-  const handlePhoneVerificationSuccess = async () => {
-    console.log('✅ Phone verified! Now creating user account...');
+  const handleEmailVerificationSuccess = async () => {
+    console.log('✅ Email verified! Now creating user account...');
     setLoading(true);
     setError('');
 
     try {
-      // Create user ONLY after both email and phone are verified
+      // Create user after email verification
       await axios.post(
         `${baseUrl}/signup/complete`,
         {
@@ -170,6 +156,7 @@ const Signup: React.FC<SignupProps> = ({
       setError(
         err.response?.data?.message || 'Failed to create account. Please try again.'
       );
+      setCurrentStep('details');
     } finally {
       setLoading(false);
     }
@@ -263,10 +250,10 @@ const Signup: React.FC<SignupProps> = ({
             />
           </div>
 
-          {/* Phone */}
+          {/* Phone (Optional) */}
           <div className="mb-4">
             <label htmlFor="phone" className="block text-gray-700 text-sm mb-2">
-              Phone Number *
+              Phone Number (Optional)
             </label>
             <div className="flex">
               <span className="inline-flex items-center px-3 text-sm text-gray-700 bg-gray-200 border border-r-0 border-gray-300 rounded-l-lg">
@@ -280,7 +267,6 @@ const Signup: React.FC<SignupProps> = ({
                 placeholder="Enter your phone number"
                 value={formData.phone}
                 onChange={handleInputChange}
-                required
               />
             </div>
           </div>
@@ -295,7 +281,7 @@ const Signup: React.FC<SignupProps> = ({
               name="password"
               type="password"
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF6B35] transition"
-              placeholder="At least 8 characters"
+              placeholder="Enter your password"
               value={formData.password}
               onChange={handleInputChange}
               required
@@ -355,7 +341,7 @@ const Signup: React.FC<SignupProps> = ({
           {/* Info */}
           <div className="mt-6 p-4 bg-blue-50 rounded-lg">
             <p className="text-blue-700 text-xs text-center">
-              📧 Email OTP + 📱 Phone SMS verification required
+              📧 Email verification required to complete signup
             </p>
           </div>
         </form>
@@ -375,20 +361,7 @@ const Signup: React.FC<SignupProps> = ({
     );
   }
 
-  // Step 3: Phone OTP Verification
-  if (currentStep === 'phone-verification') {
-    return (
-      <PhoneVerification
-        phoneNumber={formData.phone}
-        userEmail={formData.email}
-        userType={userType}
-        onVerificationSuccess={handlePhoneVerificationSuccess}
-        onBack={() => setCurrentStep('email-verification')}
-      />
-    );
-  }
-
-  // Step 4: Complete
+  // Step 3: Complete
   if (currentStep === 'complete') {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -410,11 +383,11 @@ const Signup: React.FC<SignupProps> = ({
           </div>
 
           <h2 className="text-2xl font-bold text-gray-800 mb-4">
-            🎉 Account Created Successfully!
+            Account Created Successfully!
           </h2>
 
           <p className="text-gray-600 mb-6">
-            Your email and phone number have been verified.
+            Your email has been verified.
             <br />
             Redirecting to login...
           </p>

@@ -5,6 +5,21 @@ import { refreshOrderFormData } from '../oders/orderFormDataActions';
 const baseUrl = import.meta.env.VITE_API_27INFINITY_IN;
 const API_KEY = import.meta.env.VITE_API_KEY;
 
+// Headers builder
+const getHeaders = () => {
+  const token = localStorage.getItem('authToken');
+  const selectedBranch = localStorage.getItem('selectedBranch');
+  const headers: Record<string, string> = {
+    'x-api-key': API_KEY,
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  };
+  if (selectedBranch) {
+    headers['x-selected-branch'] = selectedBranch;
+  }
+  return headers;
+};
+
 // Action Types
 export const CREATE_OPTION_TYPE_REQUEST = 'CREATE_OPTION_TYPE_REQUEST';
 export const CREATE_OPTION_TYPE_SUCCESS = 'CREATE_OPTION_TYPE_SUCCESS';
@@ -27,12 +42,8 @@ export const createOptionType = (optionTypeData: any) => async (dispatch: Dispat
   dispatch({ type: CREATE_OPTION_TYPE_REQUEST });
 
   try {
-    const token = localStorage.getItem('authToken');
     const response = await axios.post(`${baseUrl}/option-type`, optionTypeData, {
-      headers: {
-        'x-api-key': API_KEY,
-        'Authorization': `Bearer ${token}`,
-      },
+      headers: getHeaders(),
     });
 
     dispatch({
@@ -57,15 +68,11 @@ export const getOptionTypes = (params?: { category?: string; isGlobal?: boolean 
   dispatch({ type: GET_OPTION_TYPES_REQUEST });
 
   try {
-    const token = localStorage.getItem('authToken');
     const queryParams = new URLSearchParams(params as any).toString();
     const url = `${baseUrl}/option-type${queryParams ? `?${queryParams}` : ''}`;
 
     const response = await axios.get(url, {
-      headers: {
-        'x-api-key': API_KEY,
-        'Authorization': `Bearer ${token}`,
-      },
+      headers: getHeaders(),
     });
 
     dispatch({
@@ -87,12 +94,8 @@ export const updateOptionType = (id: string, optionTypeData: any) => async (disp
   dispatch({ type: UPDATE_OPTION_TYPE_REQUEST });
 
   try {
-    const token = localStorage.getItem('authToken');
     const response = await axios.put(`${baseUrl}/option-type/${id}`, optionTypeData, {
-      headers: {
-        'x-api-key': API_KEY,
-        'Authorization': `Bearer ${token}`,
-      },
+      headers: getHeaders(),
     });
 
     dispatch({
@@ -117,12 +120,8 @@ export const deleteOptionType = (id: string) => async (dispatch: Dispatch) => {
   dispatch({ type: DELETE_OPTION_TYPE_REQUEST });
 
   try {
-    const token = localStorage.getItem('authToken');
     await axios.delete(`${baseUrl}/option-type/${id}`, {
-      headers: {
-        'x-api-key': API_KEY,
-        'Authorization': `Bearer ${token}`,
-      },
+      headers: getHeaders(),
     });
 
     dispatch({

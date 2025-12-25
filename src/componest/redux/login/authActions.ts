@@ -78,213 +78,112 @@ export const login = (email: string, password: string) => {
 
       dispatch({ type: LOGIN_REQUEST });
 
-      // ✅ Try unified login endpoint first (auto-detects user type)
-      try {
-        const response = await axios.post(
-          `${baseUrl}/auth/login`,
-          { email, password },
-          {
-            headers: {
-              "x-api-key": API_KEY,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        const { token, refreshToken, expiresIn, userType, user, branches } = response.data;
-        const userData = { ...user, role: userType, branches };
-
-        // ✅ Set default selected branch if branches available
-        if (branches && branches.length > 0 && !userData.selectedBranch) {
-          userData.selectedBranch = branches[0]._id;
-        }
-
-        // ✅ SECURITY FIX: Store tokens securely
-        localStorage.setItem("authToken", token);
-        localStorage.setItem("refreshToken", refreshToken);
-        localStorage.setItem("tokenExpiresAt", String(Date.now() + (expiresIn || 900) * 1000));
-        localStorage.setItem("userData", JSON.stringify(userData));
-        localStorage.setItem("userRole", userType);
-
-        // ✅ CRITICAL: Store selectedBranch in localStorage for API calls
-        // This is required by getHeaders() and crudHelpers for x-selected-branch header
-        if (userData.selectedBranch) {
-          localStorage.setItem("selectedBranch", userData.selectedBranch);
-        }
-
-        if (import.meta.env.DEV) {
-          console.log('✅ Unified login successful for role:', userType, 'branches:', branches?.length || 0);
-        }
-
-        dispatch({
-          type: LOGIN_SUCCESS,
-          payload: {
-            token,
-            refreshToken,
-            userData,
+      // ✅ Single unified login endpoint (auto-detects user type)
+      const response = await axios.post(
+        `${baseUrl}/auth/login`,
+        { email, password },
+        {
+          headers: {
+            "x-api-key": API_KEY,
+            "Content-Type": "application/json",
           },
-        });
-
-        // ✅ SECURITY: Set up automatic token refresh
-        setupTokenRefresh(dispatch, userType, expiresIn || 900);
-
-        // ✅ Reset rate limit counter on successful login
-        loginAttempts = 0;
-
-        // ✅ Fetch form data if user has selected a branch
-        const selectedBranch = userData.selectedBranch;
-        if (selectedBranch) {
-          try {
-            await dispatch(getOrderFormDataIfNeeded() as any);
-          } catch (error) {
-            if (import.meta.env.DEV) {
-              console.error("Failed to fetch order form data on login:", error);
-            }
-          }
         }
+      );
 
-        return;
-      } catch (unifiedErr: any) {
-        // ✅ Handle email verification requirement
-        if (unifiedErr.response?.status === 403 && unifiedErr.response?.data?.requiresVerification) {
-          dispatch({
-            type: LOGIN_REQUIRES_VERIFICATION,
-            payload: {
-              email: unifiedErr.response.data.email,
-              userType: unifiedErr.response.data.userType,
-              message: unifiedErr.response.data.message
-            }
-          });
-          return;
-        }
+      const { token, refreshToken, expiresIn, userType, user, branches } = response.data;
+      const userData = { ...user, role: userType, branches };
 
-        // ✅ Handle account lockout
-        if (unifiedErr.response?.status === 423) {
-          dispatch({
-            type: LOGIN_FAIL,
-            payload: unifiedErr.response.data.message || 'Account is locked. Please try again later.'
-          });
-          return;
-        }
-
-        // ✅ Handle invalid credentials from unified endpoint
-        if (unifiedErr.response?.status === 401) {
-          dispatch({
-            type: LOGIN_FAIL,
-            payload: unifiedErr.response.data.message || "Invalid email or password",
-          });
-          return;
-        }
-
-        if (import.meta.env.DEV) {
-          console.log('Unified login failed, trying individual endpoints...');
-        }
+      // ✅ Set default selected branch if branches available
+      if (branches && branches.length > 0 && !userData.selectedBranch) {
+        userData.selectedBranch = branches[0]._id;
       }
 
-      // ✅ Fallback: Try individual login endpoints
-      const loginEndpoints = [
-        { url: `${baseUrl}/master-admin/login`, role: "master_admin" },
-        { url: `${baseUrl}/admin/login`, role: "admin" },
-        { url: `${baseUrl}/manager/login`, role: "manager" },
-      ];
+      // ✅ SECURITY FIX: Store tokens securely
+      localStorage.setItem("authToken", token);
+      localStorage.setItem("refreshToken", refreshToken);
+      localStorage.setItem("tokenExpiresAt", String(Date.now() + (expiresIn || 900) * 1000));
+      localStorage.setItem("userData", JSON.stringify(userData));
+      localStorage.setItem("userRole", userType);
 
-      for (const endpoint of loginEndpoints) {
-        try {
-          const response = await axios.post(
-            endpoint.url,
-            { email, password },
-            {
-              headers: {
-                "x-api-key": API_KEY,
-                "Content-Type": "application/json",
-              },
-            }
-          );
-
-          const { token, refreshToken, expiresIn, user, admin, manager, branches } = response.data;
-          const userObj = user || admin || manager;
-          const userData = { ...userObj, role: endpoint.role, branches };
-
-          // ✅ Set default selected branch if branches available
-          if (branches && branches.length > 0 && !userData.selectedBranch) {
-            userData.selectedBranch = branches[0]._id;
-          }
-
-          localStorage.setItem("authToken", token);
-          localStorage.setItem("refreshToken", refreshToken);
-          localStorage.setItem("tokenExpiresAt", String(Date.now() + (expiresIn || 900) * 1000));
-          localStorage.setItem("userData", JSON.stringify(userData));
-          localStorage.setItem("userRole", endpoint.role);
-
-          // ✅ CRITICAL: Store selectedBranch in localStorage for API calls
-          if (userData.selectedBranch) {
-            localStorage.setItem("selectedBranch", userData.selectedBranch);
-          }
-
-          if (import.meta.env.DEV) {
-            console.log('✅ Login successful for role:', endpoint.role);
-          }
-
-          dispatch({
-            type: LOGIN_SUCCESS,
-            payload: {
-              token,
-              refreshToken,
-              userData,
-            },
-          });
-
-          setupTokenRefresh(dispatch, endpoint.role, expiresIn || 900);
-          loginAttempts = 0;
-
-          const selectedBranch = userData.selectedBranch;
-          if (selectedBranch) {
-            try {
-              await dispatch(getOrderFormDataIfNeeded() as any);
-            } catch (error) {
-              if (import.meta.env.DEV) {
-                console.error("Failed to fetch order form data on login:", error);
-              }
-            }
-          }
-
-          return;
-        } catch (err: any) {
-          if (err.response?.status === 403 && err.response?.data?.requiresVerification) {
-            dispatch({
-              type: LOGIN_REQUIRES_VERIFICATION,
-              payload: {
-                email: err.response.data.email,
-                userType: endpoint.role,
-                message: err.response.data.message
-              }
-            });
-            return;
-          }
-
-          if (err.response?.status === 423) {
-            dispatch({
-              type: LOGIN_FAIL,
-              payload: err.response.data.message || 'Account is locked. Please try again later.'
-            });
-            return;
-          }
-
-          if (import.meta.env.DEV) {
-            console.error(`Login failed for ${endpoint.role}`, err?.response?.status);
-          }
-        }
+      // ✅ CRITICAL: Store selectedBranch in localStorage for API calls
+      if (userData.selectedBranch) {
+        localStorage.setItem("selectedBranch", userData.selectedBranch);
       }
 
-      // If all failed
+      if (import.meta.env.DEV) {
+        console.log('✅ Login successful for role:', userType, 'branches:', branches?.length || 0);
+      }
+
       dispatch({
-        type: LOGIN_FAIL,
-        payload: "Invalid email or password",
+        type: LOGIN_SUCCESS,
+        payload: {
+          token,
+          refreshToken,
+          userData,
+        },
       });
+
+      // ✅ SECURITY: Set up automatic token refresh
+      setupTokenRefresh(dispatch, userType, expiresIn || 900);
+
+      // ✅ Reset rate limit counter on successful login
+      loginAttempts = 0;
+
+      // ✅ Fetch form data if user has selected a branch
+      const selectedBranch = userData.selectedBranch;
+      if (selectedBranch) {
+        try {
+          await dispatch(getOrderFormDataIfNeeded() as any);
+        } catch (error) {
+          if (import.meta.env.DEV) {
+            console.error("Failed to fetch order form data on login:", error);
+          }
+        }
+      }
     } catch (err: any) {
+      // ✅ Handle email verification requirement
+      if (err.response?.status === 403 && err.response?.data?.requiresVerification) {
+        dispatch({
+          type: LOGIN_REQUIRES_VERIFICATION,
+          payload: {
+            email: err.response.data.email,
+            userType: err.response.data.userType,
+            message: err.response.data.message
+          }
+        });
+        return;
+      }
+
+      // ✅ Handle account lockout
+      if (err.response?.status === 423) {
+        dispatch({
+          type: LOGIN_FAIL,
+          payload: err.response.data.message || 'Account is locked. Please try again later.'
+        });
+        return;
+      }
+
+      // ✅ Handle invalid credentials
+      if (err.response?.status === 401) {
+        dispatch({
+          type: LOGIN_FAIL,
+          payload: err.response.data.message || "Invalid email or password",
+        });
+        return;
+      }
+
+      // ✅ Handle rate limiting
+      if (err.response?.status === 429) {
+        dispatch({
+          type: LOGIN_FAIL,
+          payload: err.response.data.message || "Too many login attempts. Please try again later.",
+        });
+        return;
+      }
+
       dispatch({
         type: LOGIN_FAIL,
-        payload: err.message || "Login failed. Please try again.",
+        payload: err.response?.data?.message || err.message || "Login failed. Please try again.",
       });
     }
   };
@@ -440,10 +339,14 @@ export const logout = () => {
 
 // ✅ Set Selected Branch
 export const setSelectedBranchInAuth = (branchId: string) => {
-  return async (dispatch: any) => {
+  return async (dispatch: any, getState: any) => {
     // Get existing userData from localStorage
     const storedData = localStorage.getItem("userData");
     const userData = storedData ? JSON.parse(storedData) : {};
+
+    // Check if branch is actually changing
+    const currentBranchId = getState().auth?.userData?.selectedBranch || localStorage.getItem("selectedBranch");
+    const isBranchChanging = currentBranchId !== branchId;
 
     // Update the userData object with the new branch
     const updatedUserData = {
@@ -464,12 +367,28 @@ export const setSelectedBranchInAuth = (branchId: string) => {
       payload: branchId,
     });
 
-    // ✅ Fetch form data for the newly selected branch (uses cache if available)
-    try {
-      await dispatch(getOrderFormDataIfNeeded() as any);
-    } catch (error) {
+    // ✅ IMPORTANT: Force refresh data when branch changes (don't use cache)
+    if (isBranchChanging) {
       if (import.meta.env.DEV) {
-        console.error("Failed to fetch order form data for branch:", error);
+        console.log('🔄 Branch changed, forcing data refresh for branch:', branchId);
+      }
+      try {
+        // Import and use refreshOrderFormData to force a fresh fetch
+        const { refreshOrderFormData } = await import('../oders/orderFormDataActions');
+        await dispatch(refreshOrderFormData() as any);
+      } catch (error) {
+        if (import.meta.env.DEV) {
+          console.error("Failed to refresh order form data for branch:", error);
+        }
+      }
+    } else {
+      // Same branch - use cached data if available
+      try {
+        await dispatch(getOrderFormDataIfNeeded() as any);
+      } catch (error) {
+        if (import.meta.env.DEV) {
+          console.error("Failed to fetch order form data for branch:", error);
+        }
       }
     }
   };

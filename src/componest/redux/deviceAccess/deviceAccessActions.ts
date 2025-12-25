@@ -22,11 +22,16 @@ const getToken = (getState: () => RootState): string | null => {
 
 const getHeaders = (token: string | null) => {
   const apiKey = import.meta.env.VITE_API_KEY;
-  return {
+  const selectedBranch = localStorage.getItem("selectedBranch");
+  const headers: Record<string, string> = {
     "Content-Type": "application/json",
     Authorization: token ? `Bearer ${token}` : "",
     "x-api-key": apiKey,
   };
+  if (selectedBranch) {
+    headers["x-selected-branch"] = selectedBranch;
+  }
+  return headers;
 };
 
 const baseUrl = import.meta.env.VITE_API_27INFINITY_IN;

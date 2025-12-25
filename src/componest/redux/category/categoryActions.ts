@@ -5,6 +5,21 @@ import { refreshOrderFormData } from '../oders/orderFormDataActions';
 const baseUrl = import.meta.env.VITE_API_27INFINITY_IN;
 const API_KEY = import.meta.env.VITE_API_KEY;
 
+// Headers builder
+const getHeaders = () => {
+  const token = localStorage.getItem('authToken');
+  const selectedBranch = localStorage.getItem('selectedBranch');
+  const headers: Record<string, string> = {
+    'x-api-key': API_KEY,
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  };
+  if (selectedBranch) {
+    headers['x-selected-branch'] = selectedBranch;
+  }
+  return headers;
+};
+
 // Action Types
 export const CREATE_CATEGORY_REQUEST = 'CREATE_CATEGORY_REQUEST';
 export const CREATE_CATEGORY_SUCCESS = 'CREATE_CATEGORY_SUCCESS';
@@ -27,12 +42,8 @@ export const createCategory = (categoryData: any) => async (dispatch: Dispatch) 
   dispatch({ type: CREATE_CATEGORY_REQUEST });
 
   try {
-    const token = localStorage.getItem('authToken');
     const response = await axios.post(`${baseUrl}/category`, categoryData, {
-      headers: {
-        'x-api-key': API_KEY,
-        'Authorization': `Bearer ${token}`,
-      },
+      headers: getHeaders(),
     });
 
     dispatch({
@@ -57,15 +68,11 @@ export const getCategories = (params?: { branchId?: string; isActive?: boolean }
   dispatch({ type: GET_CATEGORIES_REQUEST });
 
   try {
-    const token = localStorage.getItem('authToken');
     const queryParams = new URLSearchParams(params as any).toString();
     const url = `${baseUrl}/category${queryParams ? `?${queryParams}` : ''}`;
 
     const response = await axios.get(url, {
-      headers: {
-        'x-api-key': API_KEY,
-        'Authorization': `Bearer ${token}`,
-      },
+      headers: getHeaders(),
     });
 
     dispatch({
@@ -87,12 +94,8 @@ export const updateCategory = (id: string, categoryData: any) => async (dispatch
   dispatch({ type: UPDATE_CATEGORY_REQUEST });
 
   try {
-    const token = localStorage.getItem('authToken');
     const response = await axios.put(`${baseUrl}/category/${id}`, categoryData, {
-      headers: {
-        'x-api-key': API_KEY,
-        'Authorization': `Bearer ${token}`,
-      },
+      headers: getHeaders(),
     });
 
     dispatch({
@@ -117,12 +120,8 @@ export const deleteCategory = (id: string) => async (dispatch: Dispatch) => {
   dispatch({ type: DELETE_CATEGORY_REQUEST });
 
   try {
-    const token = localStorage.getItem('authToken');
     await axios.delete(`${baseUrl}/category/${id}`, {
-      headers: {
-        'x-api-key': API_KEY,
-        'Authorization': `Bearer ${token}`,
-      },
+      headers: getHeaders(),
     });
 
     dispatch({

@@ -27,6 +27,20 @@ const getToken = (getState: () => RootState) =>
 
 const getBranchId = () => localStorage.getItem("selectedBranch");
 
+// Headers helper
+const getHeaders = (token?: string | null) => {
+  const selectedBranch = localStorage.getItem("selectedBranch");
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Authorization: token ? `Bearer ${token}` : "",
+    "x-api-key": API_KEY,
+  };
+  if (selectedBranch) {
+    headers["x-selected-branch"] = selectedBranch;
+  }
+  return headers;
+};
+
 // Create Operator
 export const createOperator = (operatorData: {
   username: string;
@@ -48,11 +62,7 @@ export const createOperator = (operatorData: {
     const payload = { ...operatorData, branchId };
 
     const { data } = await axios.post(`${baseUrl}/operators`, payload, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-        "x-api-key": API_KEY,
-      },
+      headers: getHeaders(token),
     });
 
     dispatch({ type: CREATE_OPERATOR_SUCCESS, payload: data });
@@ -78,10 +88,7 @@ export const listOperators = () => async (dispatch: Dispatch, getState: () => Ro
     if (!branchId) throw new Error("Branch ID missing");
 
     const { data } = await axios.get(`${baseUrl}/operator`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "x-api-key": API_KEY,
-      },
+      headers: getHeaders(token),
     });
     console.log(data, "this update of");
     
@@ -111,11 +118,7 @@ export const updateOperator = (operatorId: string, updates: any) => async (
     }
 
     const { data } = await axios.put(`${baseUrl}/operator/${operatorId}`, updates, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-        "x-api-key": API_KEY,
-      },
+      headers: getHeaders(token),
     });
 
     dispatch({ type: UPDATE_OPERATOR_SUCCESS, payload: data });
@@ -142,10 +145,7 @@ export const deleteOperator = (operatorId: string) => async (
     const token = getToken(getState);
 
     const { data } = await axios.delete(`${baseUrl}/operator/${operatorId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "x-api-key": API_KEY,
-      },
+      headers: getHeaders(token),
     });
 
     dispatch({ type: DELETE_OPERATOR_SUCCESS, payload: data });

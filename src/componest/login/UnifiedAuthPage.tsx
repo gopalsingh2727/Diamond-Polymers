@@ -3,12 +3,11 @@ import axios from 'axios';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { InfinitySpinner } from '../../components/InfinitySpinner';
-import PhoneVerification from './PhoneVerification';
 import { LOGIN_SUCCESS } from '../redux/login/authConstants';
 import '../../styles/otp-verification.css';
 import './Signup.css';
 
-type SignupStep = 'details' | 'email-verification' | 'phone-verification' | 'complete';
+type SignupStep = 'details' | 'email-verification' | 'complete';
 
 const UnifiedAuthPage = () => {
   const dispatch = useDispatch();
@@ -82,14 +81,6 @@ const UnifiedAuthPage = () => {
       setError('Passwords do not match');
       return false;
     }
-    if (!signUpData.phone1.trim()) {
-      setError('Primary phone number is required');
-      return false;
-    }
-    if (!signUpData.whatsapp.trim()) {
-      setError('Mobile number is required for OTP verification');
-      return false;
-    }
     if (!signUpData.address1.trim()) {
       setError('Address is required');
       return false;
@@ -116,14 +107,13 @@ const UnifiedAuthPage = () => {
     setError('');
 
     try {
-      // Step 1: Send email OTP (DON'T save user yet)
-      // User data will be saved ONLY after both verifications are complete
+      // Step 1: Send email OTP
       await axios.post(
         `${baseUrl}/signup/send-email-otp`,
         {
           email: signUpData.email,
-          phone: signUpData.whatsapp,
-          userType: 'master-admin', // Create as master admin
+          phone: signUpData.phone1,
+          userType: 'master-admin',
         },
         {
           headers: {
@@ -135,7 +125,7 @@ const UnifiedAuthPage = () => {
 
       console.log('✅ Email OTP sent, moving to verification...');
 
-      // Move to email verification (user NOT saved yet)
+      // Move to email verification
       setSignupStep('email-verification');
     } catch (err: any) {
       console.error('❌ Failed to send OTP:', err);
@@ -145,28 +135,22 @@ const UnifiedAuthPage = () => {
     }
   };
 
-  const handleEmailVerificationSuccess = () => {
-    console.log('✅ Email verified! Moving to phone verification...');
-    setSignupStep('phone-verification');
-  };
-
-  const handlePhoneVerificationSuccess = async () => {
-    console.log('✅ Phone verified! Now creating admin account...');
+  const handleEmailVerificationSuccess = async () => {
+    console.log('✅ Email verified! Now creating admin account...');
     setLoading(true);
     setError('');
 
     try {
-      // Create admin ONLY after both email and phone are verified
+      // Create admin after email verification
       const response = await axios.post(
         `${baseUrl}/signup/complete`,
         {
           email: signUpData.email,
           password: signUpData.password,
-          phone: signUpData.whatsapp,
-          userType: 'master-admin', // Create as master admin
-          username: signUpData.email.split('@')[0], // Use email prefix as username
+          phone: signUpData.phone1,
+          userType: 'master-admin',
+          username: signUpData.email.split('@')[0],
           fullName: `${signUpData.firstName} ${signUpData.lastName}`.trim(),
-          // User-specific fields
           firstName: signUpData.firstName,
           lastName: signUpData.lastName,
           companyName: signUpData.companyName,
@@ -201,9 +185,9 @@ const UnifiedAuthPage = () => {
           refreshToken,
         };
 
-        // Store in localStorage (use 'authToken' to match reducer)
+        // Store in localStorage
         localStorage.setItem('authToken', token);
-        localStorage.setItem('token', token); // Keep for backward compatibility
+        localStorage.setItem('token', token);
         localStorage.setItem('refreshToken', refreshToken);
         localStorage.setItem('userData', JSON.stringify(userData));
         localStorage.setItem('userRole', user.role);
@@ -235,6 +219,7 @@ const UnifiedAuthPage = () => {
     } catch (err: any) {
       console.error('❌ Failed to create account:', err);
       setError(err.response?.data?.message || 'Failed to create account. Please try again.');
+      setSignupStep('details');
     } finally {
       setLoading(false);
     }
@@ -353,19 +338,6 @@ const UnifiedAuthPage = () => {
     );
   }
 
-  // Phone OTP Verification Step (SMS)
-  if (signupStep === 'phone-verification') {
-    return (
-      <PhoneVerification
-        phoneNumber={signUpData.whatsapp}
-        userEmail={signUpData.email}
-        userType="master-admin"
-        onVerificationSuccess={handlePhoneVerificationSuccess}
-        onBack={() => setSignupStep('email-verification')}
-      />
-    );
-  }
-
   // Signup Complete Step
   if (signupStep === 'complete') {
     return (
@@ -439,14 +411,6 @@ const UnifiedAuthPage = () => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(signUpData.email)) {
           setError('Invalid email format');
-          return false;
-        }
-        if (!signUpData.phone1.trim()) {
-          setError('Primary phone number is required');
-          return false;
-        }
-        if (!signUpData.whatsapp.trim()) {
-          setError('Mobile number is required for OTP verification');
           return false;
         }
         return true;
@@ -677,7 +641,7 @@ const UnifiedAuthPage = () => {
 
               <div className="Signup-inputRow">
                 <div className="Signup-inputGroup">
-                  <label className="Signup-label">Primary Phone *</label>
+                  <label className="Signup-label">Phone Number (Optional)</label>
                   <input
                     name="phone1"
                     type="tel"
@@ -688,7 +652,7 @@ const UnifiedAuthPage = () => {
                   />
                 </div>
                 <div className="Signup-inputGroup">
-                  <label className="Signup-label">Mobile Number for OTP *</label>
+                  <label className="Signup-label">WhatsApp (Optional)</label>
                   <input
                     name="whatsapp"
                     type="tel"
@@ -697,7 +661,6 @@ const UnifiedAuthPage = () => {
                     value={signUpData.whatsapp}
                     onChange={handleSignUpChange}
                   />
-                  <p className="Signup-inputHint">We'll verify this number via SMS OTP</p>
                 </div>
               </div>
 
@@ -810,7 +773,7 @@ const UnifiedAuthPage = () => {
               </div>
 
               <div className="Signup-info">
-                <p>Email + Phone verification will be required</p>
+                <p>Email verification will be required</p>
               </div>
             </div>
           )}

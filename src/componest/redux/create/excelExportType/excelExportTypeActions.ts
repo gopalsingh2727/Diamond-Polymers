@@ -49,12 +49,19 @@ const getBranchId = (getState: () => RootState): string | null => {
 const getHeaders = (
   token?: string | null,
   extra?: Record<string, string>
-): Record<string, string> => ({
-  "Content-Type": "application/json",
-  Authorization: token ? `Bearer ${token}` : "",
-  "x-api-key": apiKey,
-  ...(extra || {}),
-});
+): Record<string, string> => {
+  const selectedBranch = localStorage.getItem("selectedBranch");
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Authorization: token ? `Bearer ${token}` : "",
+    "x-api-key": apiKey,
+    ...(extra || {}),
+  };
+  if (selectedBranch) {
+    headers["x-selected-branch"] = selectedBranch;
+  }
+  return headers;
+};
 
 // Create Excel Export Type
 export const createExcelExportType = (exportTypeData: any) => async (dispatch: Dispatch, getState: () => RootState) => {

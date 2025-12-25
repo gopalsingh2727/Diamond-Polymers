@@ -78,12 +78,16 @@ export const fetchBranches = () => {
       if (role === "admin" || role === "master_admin") {
         url = `${baseUrl}/branch/branches`;
 
-        const { data } = await axios.get(url, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "x-api-key": API_KEY,
-          },
-        });
+        const selectedBranch = localStorage.getItem("selectedBranch");
+        const headers: Record<string, string> = {
+          Authorization: `Bearer ${token}`,
+          "x-api-key": API_KEY,
+        };
+        if (selectedBranch) {
+          headers["x-selected-branch"] = selectedBranch;
+        }
+
+        const { data } = await axios.get(url, { headers });
 
         console.log(`${role} API Response:`, data);
 
@@ -106,13 +110,17 @@ export const fetchBranches = () => {
 
       } else if (role === "manager") {
         url = `${baseUrl}/manager/getMyBranch`;
-        
-        const { data } = await axios.get(url, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "x-api-key": API_KEY,
-          },
-        });
+
+        const selectedBranch = localStorage.getItem("selectedBranch");
+        const mgrHeaders: Record<string, string> = {
+          Authorization: `Bearer ${token}`,
+          "x-api-key": API_KEY,
+        };
+        if (selectedBranch) {
+          mgrHeaders["x-selected-branch"] = selectedBranch;
+        }
+
+        const { data } = await axios.get(url, { headers: mgrHeaders });
 
         console.log("Manager API Response:", data);
 
@@ -169,15 +177,20 @@ export const selectBranch = (branchId: string) => {
     try {
       const token = getToken(getState);
 
+      const selectedBranch = localStorage.getItem("selectedBranch");
+      const selectHeaders: Record<string, string> = {
+        Authorization: `Bearer ${token}`,
+        "x-api-key": API_KEY,
+        "Content-Type": "application/json",
+      };
+      if (selectedBranch) {
+        selectHeaders["x-selected-branch"] = selectedBranch;
+      }
+
       const { data } = await axios.post(
         `${baseUrl}/branch/selectBranch`,
         { branchId },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "x-api-key": API_KEY,
-          },
-        }
+        { headers: selectHeaders }
       );
 
       dispatch({ type: SELECT_BRANCH_SUCCESS, payload: data });
@@ -209,11 +222,17 @@ export const listBranches = () => {
     try {
       const token = getToken(getState);
 
+      const selectedBranch = localStorage.getItem("selectedBranch");
+      const listHeaders: Record<string, string> = {
+        Authorization: `Bearer ${token}`,
+        "x-api-key": API_KEY,
+      };
+      if (selectedBranch) {
+        listHeaders["x-selected-branch"] = selectedBranch;
+      }
+
       const { data } = await axios.get(`${baseUrl}/branch/branches`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "x-api-key": API_KEY,
-        },
+        headers: listHeaders,
       });
 
       console.log("List branches response:", data);
