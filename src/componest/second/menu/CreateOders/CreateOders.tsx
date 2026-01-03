@@ -8,6 +8,7 @@ import { BackButton } from "../../../allCompones/BackButton";
 import { deleteOrder } from "../../../redux/oders/OdersActions";
 import { ToastContainer } from "../../../../components/shared/Toast";
 import { useCRUD } from "../../../../hooks/useCRUD";
+import { crudAPI } from "../../../../utils/crudHelpers";
 import CustomerName, { CustomerNameRef } from "./account/CurstomerName";
 import OrderTypeSelect, { OrderTypeSelectRef } from "./OrderTypeSelect";
 import Notes from "./notes";
@@ -17,6 +18,8 @@ import SaveOrders from "./saveTheOdes";
 import StepContainer, { StepContainerRef } from "./stepContainer";
 import { useOrderFormData } from "./useOrderFormData";
 import InlineOptionsInput, { InlineOptionsInputRef } from "./optionsSection/InlineOptionsInput";
+import PrintExcelModal from "./PrintExcelModal";
+import SendOrderModal from "./SendOrderModal";
 import { AppDispatch } from "../../../../store";
 
 // Section configuration type
@@ -97,16 +100,16 @@ const generateOptionId = () => {
 
 // Transform options from database format to component format for edit mode
 const transformOptionsForEdit = (orderData: any): any[] => {
-  console.log('🔍 transformOptionsForEdit called with:', {
-    hasOrderData: !!orderData,
-    orderDataKeys: orderData ? Object.keys(orderData) : [],
-    hasOptions: !!(orderData?.options),
-    optionsLength: orderData?.options?.length || 0,
-    options: orderData?.options
-  });
+
+
+
+
+
+
+
 
   if (!orderData) {
-    console.log('❌ No orderData - returning empty array');
+
     return [];
   }
 
@@ -114,18 +117,18 @@ const transformOptionsForEdit = (orderData: any): any[] => {
   const optionsWithDetails = orderData.optionsWithDetails || [];
 
   if (!Array.isArray(dbOptions) || dbOptions.length === 0) {
-    console.log('❌ No options to transform:', {
-      isArray: Array.isArray(dbOptions),
-      length: dbOptions.length,
-      dbOptions
-    });
+
+
+
+
+
     return [];
   }
 
-  console.log('🔄 Transforming options for edit mode:', {
-    dbOptions: dbOptions.length,
-    withDetails: optionsWithDetails.length
-  });
+
+
+
+
 
   return dbOptions.map((opt: any, index: number) => {
     // Get enriched data if available
@@ -133,7 +136,7 @@ const transformOptionsForEdit = (orderData: any): any[] => {
     const specDetails = enriched.specDetails || {};
 
     // Transform specificationValues from array to object format
-    const specsObject: { [key: string]: any } = {};
+    const specsObject: {[key: string]: any;} = {};
     if (Array.isArray(opt.specificationValues)) {
       opt.specificationValues.forEach((spec: any) => {
         specsObject[spec.name] = spec.value;
@@ -154,11 +157,11 @@ const transformOptionsForEdit = (orderData: any): any[] => {
       mixingData: opt.mixingData || undefined
     };
 
-    console.log('✅ Transformed option:', {
-      original: opt.optionName,
-      specs: Object.keys(specsObject).length,
-      hasMixing: !!transformed.mixingData
-    });
+
+
+
+
+
 
     return transformed;
   });
@@ -172,11 +175,27 @@ const CreateOrders = () => {
 
   // Enhanced edit mode detection
   const { orderData, isEdit, isEditMode } = location.state || {};
-  const editMode = Boolean(isEdit || isEditMode || (orderData && orderData._id));
+  const editMode = Boolean(isEdit || isEditMode || orderData && orderData._id);
+
+  // Debug: Log order data to check createdByName
+
+
+
+
+
+
+
 
   // Delete confirmation modal state
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  // Print/Excel modal state
+  const [showPrintExcelModal, setShowPrintExcelModal] = useState(false);
+  const [modalMode, setModalMode] = useState<'print' | 'excel'>('print');
+
+  // View Print modal state (separate from PrintExcelModal)
+  const [showViewPrint, setShowViewPrint] = useState(false);
 
   // 🚀 OPTIMIZED: Single API call for all form data
   const {
@@ -185,10 +204,10 @@ const CreateOrders = () => {
     allData
   } = useOrderFormData();
 
-  console.log('🔍 CreateOrders - Location state:', location.state);
-  console.log('🔍 CreateOrders - Edit mode detected:', editMode);
-  console.log('🔍 CreateOrders - Order data:', orderData);
-  console.log('✅ Form data loaded:', allData ? 'Yes' : 'Loading...');
+
+
+
+
 
   const [selectedOrderType, setSelectedOrderType] = useState("");
   const [orderTypeConfig, setOrderTypeConfig] = useState<OrderTypeConfig | null>(null);
@@ -197,7 +216,7 @@ const CreateOrders = () => {
   const [options, setOptions] = useState<any[]>([]);
 
   // Dynamic calculation values
-  const [calculatedValues, setCalculatedValues] = useState<{ [key: string]: number | string }>({});
+  const [calculatedValues, setCalculatedValues] = useState<{[key: string]: number | string;}>({});
 
   // Track status and priority changes for edit mode
   const [currentStatus, setCurrentStatus] = useState<string>(orderData?.overallStatus || 'Wait for Approval');
@@ -223,13 +242,13 @@ const CreateOrders = () => {
       } else if (orderData.orderType?._id) {
         orderTypeId = orderData.orderType._id;
       } else if (orderData.orderTypeId) {
-        orderTypeId = typeof orderData.orderTypeId === 'string'
-          ? orderData.orderTypeId
-          : orderData.orderTypeId._id || '';
+        orderTypeId = typeof orderData.orderTypeId === 'string' ?
+        orderData.orderTypeId :
+        orderData.orderTypeId._id || '';
       }
 
       if (orderTypeId) {
-        console.log('📝 Edit mode - Setting order type from orderData:', orderTypeId);
+
         setSelectedOrderType(orderTypeId);
       }
     }
@@ -240,17 +259,17 @@ const CreateOrders = () => {
 
   // Handle order type change - clear options when order type changes
   const handleOrderTypeChange = (newOrderTypeId: string) => {
-    console.log('📝 handleOrderTypeChange called:', {
-      newOrderTypeId,
-      currentSelectedOrderType: selectedOrderType,
-      hasOrderTypeBeenSelected,
-      editMode
-    });
+
+
+
+
+
+
 
     // If this is not the first selection and order type is different, clear options
     if (hasOrderTypeBeenSelected && selectedOrderType !== newOrderTypeId && !editMode) {
-      console.log('⚠️ Order type changed from', selectedOrderType, 'to', newOrderTypeId);
-      console.log('🗑️ Clearing options data...');
+
+
       setOptions([]);
       setCalculatedValues({});
     }
@@ -271,21 +290,21 @@ const CreateOrders = () => {
       );
       if (selectedConfig) {
         setOrderTypeConfig(selectedConfig);
-        console.log('=== Order Type Config Loaded ===');
-        console.log('Type Name:', selectedConfig.typeName);
-        console.log('Order Category:', selectedConfig.orderCategory);
-        console.log('Hide Manufacturing Steps:', selectedConfig.hideManufacturingSteps);
-        console.log('Dynamic Calculations:', selectedConfig.dynamicCalculations);
-        console.log('Dynamic Calculations Count:', selectedConfig.dynamicCalculations?.length || 0);
-        console.log('Selected Specs:', selectedConfig.selectedSpecs);
-        console.log('Sections from DB:', selectedConfig.sections);
-        console.log('Sections Count:', selectedConfig.sections?.length || 0);
+
+
+
+
+
+
+
+
+
         if (selectedConfig.sections && selectedConfig.sections.length > 0) {
-          console.log('Enabled Section IDs:', selectedConfig.sections.map((s: any) => s.id).join(', '));
+
         } else {
-          console.log('No sections configured - showing ALL sections');
+
         }
-        console.log('================================');
+
       }
     } else if (!selectedOrderType) {
       setOrderTypeConfig(null);
@@ -297,7 +316,7 @@ const CreateOrders = () => {
   const isSectionEnabled = (sectionId: string): boolean => {
     // BILLING ORDER: Hide steps section if hideManufacturingSteps is true
     if (sectionId === 'steps' && orderTypeConfig?.hideManufacturingSteps) {
-      console.log('🔒 Steps section hidden - billing order type');
+
       return false;
     }
 
@@ -307,7 +326,7 @@ const CreateOrders = () => {
     }
 
     // Find section in config
-    const section = orderTypeConfig.sections.find(s => s.id === sectionId);
+    const section = orderTypeConfig.sections.find((s) => s.id === sectionId);
 
     // BACKWARD COMPATIBILITY: Show 'options', 'steps', and 'dynamicColumns' sections by default if not in config
     // This handles order types created before these sections were added
@@ -327,17 +346,17 @@ const CreateOrders = () => {
     if (!orderTypeConfig || !orderTypeConfig.sections || orderTypeConfig.sections.length === 0) {
       // Return default order with new unified options section
       return [
-        { id: 'options', name: 'Options', enabled: true, order: 1, fields: [] },
-        { id: 'dynamicColumns', name: 'Dynamic Columns', enabled: true, order: 2, fields: [] },
-        { id: 'steps', name: 'Steps', enabled: true, order: 3, fields: [] }
-      ];
+      { id: 'options', name: 'Options', enabled: true, order: 1, fields: [] },
+      { id: 'dynamicColumns', name: 'Dynamic Columns', enabled: true, order: 2, fields: [] },
+      { id: 'steps', name: 'Steps', enabled: true, order: 3, fields: [] }];
+
     }
 
     // BACKWARD COMPATIBILITY: Add 'options', 'dynamicColumns' and 'steps' sections if not present in config
     const sections = [...orderTypeConfig.sections];
-    const hasOptionsSection = sections.some(s => s.id === 'options');
-    const hasDynamicColumnsSection = sections.some(s => s.id === 'dynamicColumns');
-    const hasStepsSection = sections.some(s => s.id === 'steps');
+    const hasOptionsSection = sections.some((s) => s.id === 'options');
+    const hasDynamicColumnsSection = sections.some((s) => s.id === 'dynamicColumns');
+    const hasStepsSection = sections.some((s) => s.id === 'steps');
 
     if (!hasOptionsSection) {
       // Add options section with order 0 so it appears first
@@ -350,20 +369,37 @@ const CreateOrders = () => {
       });
     }
 
-    console.log('🔍 getSortedSections - hasDynamicColumnsSection:', hasDynamicColumnsSection);
-    console.log('🔍 getSortedSections - dynamicCalculations:', orderTypeConfig.dynamicCalculations?.length);
+
+
+
+
+    // Check if there are any enabled dynamic calculations
+    const hasEnabledCalculations = orderTypeConfig.dynamicCalculations?.some((c) => c.enabled !== false) || false;
+
+
     if (!hasDynamicColumnsSection && orderTypeConfig.dynamicCalculations && orderTypeConfig.dynamicCalculations.length > 0) {
-      // Add dynamic columns section
-      console.log('✅ Adding dynamicColumns section');
+      // Add dynamic columns section if there are ANY calculations (even if disabled)
+
       sections.push({
         id: 'dynamicColumns',
         name: 'Dynamic Columns',
-        enabled: true,
+        enabled: true, // Always enable the section if calculations exist
         order: 500,
         fields: []
       });
+    } else if (hasDynamicColumnsSection) {
+      // If section exists but might be disabled, force enable it if there are calculations
+      if (hasEnabledCalculations) {
+        const dynamicSection = sections.find((s) => s.id === 'dynamicColumns');
+        if (dynamicSection && dynamicSection.enabled === false) {
+
+          dynamicSection.enabled = true;
+        }
+      }
     } else {
-      console.log('❌ NOT adding dynamicColumns section - condition not met');
+
+
+
     }
 
     if (!hasStepsSection) {
@@ -382,19 +418,19 @@ const CreateOrders = () => {
 
   // Get all spec values from options for calculations - aggregated by option type
   const getSpecValuesFromOptions = (): {
-    aggregated: { [key: string]: number[] };  // Arrays for SUM aggregation
-    single: { [key: string]: number };        // Single values (last value or first Rate option)
+    aggregated: {[key: string]: number[];}; // Arrays for SUM aggregation
+    single: {[key: string]: number;}; // Single values (last value or first Rate option)
   } => {
-    const aggregated: { [key: string]: number[] } = {};
-    const single: { [key: string]: number } = {};
+    const aggregated: {[key: string]: number[];} = {};
+    const single: {[key: string]: number;} = {};
 
-    options.forEach(opt => {
+    options.forEach((opt) => {
       if (opt.specificationValues) {
         // Clean option type name for variable naming
-        const cleanTypeName = (opt.optionTypeName || 'Option')
-          .replace(/\s+/g, '_')
-          .replace(/[.%]/g, '')
-          .replace(/_+/g, '_');
+        const cleanTypeName = (opt.optionTypeName || 'Option').
+        replace(/\s+/g, '_').
+        replace(/[.%]/g, '').
+        replace(/_+/g, '_');
 
         Object.entries(opt.specificationValues).forEach(([key, value]) => {
           const cleanKey = key.replace(/\s+/g, '_');
@@ -422,10 +458,10 @@ const CreateOrders = () => {
 
   // Calculate dynamic values from formula with SUM() support
   const calculateDynamicValue = (
-    formula: string,
-    aggregated: { [key: string]: number[] },
-    single: { [key: string]: number }
-  ): number | string => {
+  formula: string,
+  aggregated: {[key: string]: number[];},
+  single: {[key: string]: number;})
+  : number | string => {
     if (!formula) return '';
 
     try {
@@ -444,7 +480,7 @@ const CreateOrders = () => {
       });
 
       // Step 2: Replace single variable names with their values
-      Object.keys(single).forEach(key => {
+      Object.keys(single).forEach((key) => {
         const value = single[key];
         // Use word boundary to avoid partial matches
         const regex = new RegExp(`\\b${key}\\b`, 'g');
@@ -460,10 +496,10 @@ const CreateOrders = () => {
       }
 
       // If formula still has unresolved variables, return empty
-      console.log('Formula not ready:', evalFormula, 'from:', formula);
+
       return '';
     } catch (e) {
-      console.error('Error calculating formula:', formula, e);
+
       return '';
     }
   };
@@ -472,24 +508,24 @@ const CreateOrders = () => {
   useEffect(() => {
     if (orderTypeConfig?.dynamicCalculations && options.length > 0) {
       const { aggregated, single } = getSpecValuesFromOptions();
-      const newCalculatedValues: { [key: string]: number | string } = {};
+      const newCalculatedValues: {[key: string]: number | string;} = {};
 
-      console.log('=== Dynamic Calculations Debug ===');
-      console.log('Aggregated values:', aggregated);
-      console.log('Single values:', single);
 
-      orderTypeConfig.dynamicCalculations
-        .filter(calc => calc.enabled && calc.autoPopulate)
-        .forEach(calc => {
-          const value = calculateDynamicValue(calc.formula, aggregated, single);
-          console.log(`Calculation "${calc.name}": formula="${calc.formula}" => ${value}`);
-          if (value !== '') {
-            newCalculatedValues[calc.name] = value;
-          }
-        });
 
-      console.log('Final calculated values:', newCalculatedValues);
-      console.log('================================');
+
+
+      orderTypeConfig.dynamicCalculations.
+      filter((calc) => calc.enabled && calc.autoPopulate).
+      forEach((calc) => {
+        const value = calculateDynamicValue(calc.formula, aggregated, single);
+
+        if (value !== '') {
+          newCalculatedValues[calc.name] = value;
+        }
+      });
+
+
+
 
       setCalculatedValues(newCalculatedValues);
     }
@@ -512,6 +548,146 @@ const CreateOrders = () => {
     } finally {
       setDeleting(false);
     }
+  };
+
+  // State for send modal
+  const [showSendModal, setShowSendModal] = useState(false);
+  const [sendModalMode, setSendModalMode] = useState<'email' | 'whatsapp' | 'both'>('email');
+
+  // Icon button handlers
+  const handleEmailClick = () => {
+    // Open the SendOrderModal for email - allow sending to any email address
+    setSendModalMode('email');
+    setShowSendModal(true);
+  };
+
+  const handleExcelClick = () => {
+    if (!editMode || !orderData) {
+      toast.error('Error', 'Please save the order first before exporting');
+      return;
+    }
+    setModalMode('excel');
+    setShowPrintExcelModal(true);
+  };
+
+  const handlePrintClick = () => {
+    if (!editMode || !orderData) {
+      toast.error('Error', 'Please save the order first before printing');
+      return;
+    }
+    setModalMode('print');
+    setShowPrintExcelModal(true);
+  };
+
+  const handleViewPrintClick = () => {
+    if (!editMode || !orderData) {
+      toast.error('Error', 'Please save the order first before viewing print');
+      return;
+    }
+    setShowViewPrint(true);
+  };
+
+  const handleActualPrint = () => {
+    window.print();
+  };
+
+  const handleWhatsAppClick = () => {
+    // Open the SendOrderModal for WhatsApp - allow sending to any number
+    setSendModalMode('whatsapp');
+    setShowSendModal(true);
+  };
+
+  // Handle sending email from Print/Excel modal
+  const handlePrintExcelEmail = async (emailAddress: string, content: string, subject: string, attachments?: any[]) => {
+    try {
+      await crudAPI.create('/send-email', {
+        to: emailAddress,
+        subject,
+        html: content,
+        text: content.replace(/<[^>]*>/g, ''), // Strip HTML tags for plain text
+        attachments: attachments || []
+      });
+
+      // Show specific success message based on attachment type
+      // Check if it's Excel (xlsx) or Print (pdf)
+      const isExcel = attachments && attachments.length > 0 &&
+                     attachments[0].contentType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
+      if (isExcel) {
+        toast.success('Success', 'Excel file sent via email successfully!');
+      } else {
+        toast.success('Success', 'Print PDF sent via email successfully!');
+      }
+    } catch (error: any) {
+      // Show specific error message
+      const isExcel = attachments && attachments.length > 0 &&
+                     attachments[0].contentType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+      const errorMsg = isExcel
+        ? 'Failed to send Excel file via email'
+        : 'Failed to send Print PDF via email';
+      toast.error('Error', error?.message || errorMsg);
+    }
+  };
+
+  // Handle sending WhatsApp from Print/Excel modal
+  const handlePrintExcelWhatsApp = async (phoneNumber: string, message: string, document?: any) => {
+    try {
+      if (!document) {
+        // Fallback to web link if no document
+        const cleanPhone = phoneNumber.replace(/\D/g, '');
+        const formattedPhone = cleanPhone.startsWith('91') ? cleanPhone : `91${cleanPhone}`;
+        const whatsappUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
+        window.open(whatsappUrl, '_blank');
+        toast.success('Success', 'Opening WhatsApp...');
+        return;
+      }
+
+      // Send via backend API with document
+      await crudAPI.create('/send-whatsapp', {
+        to: phoneNumber,
+        message: message,
+        document: document
+      });
+
+      // Show specific success message based on document type
+      const isPdf = document.contentType === 'application/pdf';
+      const isExcel = document.contentType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
+      if (isPdf) {
+        toast.success('Success', 'Print PDF sent via WhatsApp successfully!');
+      } else if (isExcel) {
+        toast.success('Success', 'Excel file sent via WhatsApp successfully!');
+      } else {
+        toast.success('Success', 'Document sent via WhatsApp successfully!');
+      }
+    } catch (error: any) {
+      const isPdf = document?.contentType === 'application/pdf';
+      const isExcel = document?.contentType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
+      let errorMsg = 'Failed to send WhatsApp message';
+      if (isPdf) {
+        errorMsg = 'Failed to send Print PDF via WhatsApp';
+      } else if (isExcel) {
+        errorMsg = 'Failed to send Excel file via WhatsApp';
+      }
+
+      toast.error('Error', error?.message || errorMsg);
+    }
+  };
+
+  // Get customer data for modal
+  const getCustomerForModal = () => {
+    const customerData = customerNameRef.current?.getCustomerData?.() || {};
+    const customer = orderData?.customer || orderData?.account || customerData || {};
+    return {
+      companyName: customer.companyName || customer.name || customer.accountName,
+      name: customer.name || customer.accountName,
+      firstName: customer.firstName,
+      lastName: customer.lastName,
+      email: customer.email,
+      phone: customer.phone || customer.phone1,
+      whatsapp: customer.whatsapp || customer.phone || customer.mobile || customer.phone1
+    };
   };
 
   // Show loading state while fetching form data
@@ -546,8 +722,8 @@ const CreateOrders = () => {
             </p>
           </div>
         </div>
-      </div>
-    );
+      </div>);
+
   }
 
   // Show error state if data fetch failed
@@ -587,40 +763,40 @@ const CreateOrders = () => {
                 border: 'none',
                 borderRadius: '4px',
                 cursor: 'pointer'
-              }}
-            >
+              }}>
+
               Retry
             </button>
           </div>
         </div>
-      </div>
-    );
+      </div>);
+
   }
 
   return (
     <div className="CreateOrders CreateForm">
       {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
+      {showDeleteConfirm &&
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0,0,0,0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000
+      }}>
           <div style={{
-            background: 'white',
-            padding: '24px',
-            borderRadius: '12px',
-            maxWidth: '400px',
-            width: '90%',
-            textAlign: 'center'
-          }}>
+          background: 'white',
+          padding: '24px',
+          borderRadius: '12px',
+          maxWidth: '400px',
+          width: '90%',
+          textAlign: 'center'
+        }}>
             <div style={{ fontSize: '48px', marginBottom: '16px' }}>⚠️</div>
             <h3 style={{ margin: '0 0 8px 0', color: '#1f2937' }}>Delete Order?</h3>
             <p style={{ color: '#6b7280', marginBottom: '24px' }}>
@@ -628,24 +804,24 @@ const CreateOrders = () => {
             </p>
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
               <button
-                type="button"
-                onClick={() => setShowDeleteConfirm(false)}
-                style={{ padding: '10px 24px', background: '#e5e7eb', color: '#374151', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
-              >
+              type="button"
+              onClick={() => setShowDeleteConfirm(false)}
+              style={{ padding: '10px 24px', background: '#e5e7eb', color: '#374151', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
+
                 Cancel
               </button>
               <button
-                type="button"
-                onClick={handleDelete}
-                disabled={deleting}
-                style={{ padding: '10px 24px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
-              >
+              type="button"
+              onClick={handleDelete}
+              disabled={deleting}
+              style={{ padding: '10px 24px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
+
                 {deleting ? 'Deleting...' : 'Delete'}
               </button>
             </div>
           </div>
         </div>
-      )}
+      }
 
       <div className="CrateOrdersHaders">
         <BackButton />
@@ -653,42 +829,120 @@ const CreateOrders = () => {
           <p className="CreteOrdersTitel">
             {editMode ? 'Edit' : 'Create Orders'}
           </p>
-          {editMode && orderData?.orderId && (
-            <span className="HeaderOrderID">{orderData.orderId}</span>
-          )}
+          {editMode && orderData?.orderId &&
+          <span className="HeaderOrderID">{orderData.orderId}</span>
+          }
+          {/* ✅ Show Created By in header when editing */}
+          {editMode && orderData?.createdByName &&
+          <span style={{
+            marginLeft: '12px',
+            padding: '4px 12px',
+            backgroundColor: '#f3f4f6',
+            color: '#374151',
+            borderRadius: '16px',
+            fontSize: '12px',
+            fontWeight: 500,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+              {orderData.createdByName}
+            </span>
+          }
           {/* ✅ ADDED: Show Order Type in header when editing */}
-          {editMode && orderTypeConfig && (
-            <span style={{
-              marginLeft: '12px',
-              padding: '4px 12px',
-              backgroundColor: orderTypeConfig.color || '#6366f1',
-              color: 'white',
-              borderRadius: '16px',
-              fontSize: '12px',
-              fontWeight: 500,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}>
+          {editMode && orderTypeConfig &&
+          <span style={{
+            marginLeft: '12px',
+            padding: '4px 12px',
+            backgroundColor: orderTypeConfig.color || '#6366f1',
+            color: 'white',
+            borderRadius: '16px',
+            fontSize: '12px',
+            fontWeight: 500,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}>
               {orderTypeConfig.icon && <span>{orderTypeConfig.icon}</span>}
               {orderTypeConfig.typeName}
-              {orderTypeConfig.typeCode && (
-                <span style={{ opacity: 0.8, fontSize: '10px' }}>({orderTypeConfig.typeCode})</span>
-              )}
+              {orderTypeConfig.typeCode &&
+            <span style={{ opacity: 0.8, fontSize: '10px' }}>({orderTypeConfig.typeCode})</span>
+            }
             </span>
-          )}
+          }
         </div>
-        {editMode && (
+        {/* Action Buttons */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: 'auto' }}>
+          {/* Email Icon */}
           <button
             type="button"
-            onClick={() => setShowDeleteConfirm(true)}
-            className="HeaderDeleteButton"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14zM10 11v6M14 11v6"/>
+            onClick={handleEmailClick}
+            style={{ width: '40px', height: '40px', backgroundColor: 'transparent', color: '#f97316', border: '1px solid #e5e7eb', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            title="Send Email">
+
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+              <polyline points="22,6 12,13 2,6" />
             </svg>
           </button>
-        )}
+
+          {/* Excel Icon */}
+          <button
+            type="button"
+            onClick={handleExcelClick}
+            style={{ width: '40px', height: '40px', backgroundColor: 'transparent', color: '#10b981', border: '1px solid #e5e7eb', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            title="Export to Excel">
+
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+          </button>
+
+          {/* View Print Icon */}
+          <button
+            type="button"
+            onClick={handleViewPrintClick}
+            style={{ width: '40px', height: '40px', backgroundColor: 'transparent', color: '#8b5cf6', border: '1px solid #e5e7eb', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            title="View Print Preview">
+
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+          </button>
+
+          {/* Print Icon */}
+          <button
+            type="button"
+            onClick={handlePrintClick}
+            style={{ width: '40px', height: '40px', backgroundColor: 'transparent', color: '#3b82f6', border: '1px solid #e5e7eb', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            title="Print Order">
+
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="6 9 6 2 18 2 18 9" />
+              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+              <rect x="6" y="14" width="12" height="8" />
+            </svg>
+          </button>
+
+          {/* WhatsApp Icon */}
+          <button
+            type="button"
+            onClick={handleWhatsAppClick}
+            style={{ width: '40px', height: '40px', backgroundColor: 'transparent', color: '#25D366', border: '1px solid #e5e7eb', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            title="Send WhatsApp">
+
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       <div className="CreateOrdersBody">
@@ -702,23 +956,23 @@ const CreateOrders = () => {
               setTimeout(() => {
                 orderTypeRef.current?.focus();
               }, 50);
-            }}
-          />
+            }} />
+
 
           <OrderTypeSelect
             ref={orderTypeRef}
             value={selectedOrderType}
             onChange={handleOrderTypeChange}
             initialValue={
-              typeof orderData?.orderType === 'string'
-                ? orderData.orderType
-                : (orderData?.orderType?._id || orderData?.orderTypeId || '')
+            typeof orderData?.orderType === 'string' ?
+            orderData.orderType :
+            orderData?.orderType?._id || orderData?.orderTypeId || ''
             }
             orderTypes={orderTypes}
             loading={formDataLoading}
             onOrderTypeSelect={() => {
               // Order type selected with Enter - focus options input
-              console.log('Order type selected:', selectedOrderType);
+
               setTimeout(() => {
                 optionsInputRef.current?.focus();
               }, 100);
@@ -726,60 +980,60 @@ const CreateOrders = () => {
             onBackspace={() => {
               // Backspace - go back to customer name input
               customerNameRef.current?.focus();
-            }}
-          />
+            }} />
+
 
           {/* Billing Order Indicator */}
-          {isBillingOrder && orderTypeConfig && (
-            <div style={{
-              marginTop: '12px',
-              padding: '12px 16px',
-              background: '#ecfdf5',
-              border: '1px solid #10b981',
-              borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px'
-            }}>
+          {isBillingOrder && orderTypeConfig &&
+          <div style={{
+            marginTop: '12px',
+            padding: '12px 16px',
+            background: '#ecfdf5',
+            border: '1px solid #10b981',
+            borderRadius: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px'
+          }}>
               <span style={{ fontSize: '20px' }}>📄</span>
               <div>
                 <div style={{ fontWeight: 600, color: '#065f46', fontSize: '14px' }}>
                   Billing Order - {orderTypeConfig.billingType?.replace('_', ' ').toUpperCase() || 'Invoice'}
                 </div>
                 <div style={{ fontSize: '12px', color: '#6b7280' }}>
-                  {orderTypeConfig.allowManufacturingLink
-                    ? 'Can be linked to manufacturing order'
-                    : 'Standalone billing document'}
+                  {orderTypeConfig.allowManufacturingLink ?
+                'Can be linked to manufacturing order' :
+                'Standalone billing document'}
                 </div>
               </div>
             </div>
-          )}
+          }
 
           {/* Hidden input for order type ID - needed for DOM data collection */}
           <input
             type="hidden"
             name="orderTypeId"
-            value={selectedOrderType}
-          />
+            value={selectedOrderType} />
+
 
           {/* Dynamic sections - only render when order type is selected */}
           {selectedOrderType && (() => {
             const sections = getSortedSections();
-            console.log('🔍 Sorted sections:', sections.map(s => ({ id: s.id, enabled: isSectionEnabled(s.id) })));
+
             return (
               <>
                 {/* Dynamic sections - render based on order type configuration */}
-                {sections.map(section => {
+                {sections.map((section) => {
                   // Check if this section should be shown
                   const isEnabled = isSectionEnabled(section.id);
-                  console.log(`🔍 Section "${section.id}" enabled:`, isEnabled);
+
 
                   if (!isEnabled) return null;
 
                   switch (section.id) {
                     case 'options':
-                      console.log('🎯 Rendering options section - editMode:', editMode);
-                      console.log('🎯 allowedOptionTypes:', orderTypeConfig?.allowedOptionTypes);
+
+
                       return (
                         <div key="options" className="dynamicSection">
                           <InlineOptionsInput
@@ -800,51 +1054,58 @@ const CreateOrders = () => {
                               phone: orderData.customer.phone || orderData.customer.phone1,
                               whatsapp: orderData.customer.whatsapp
                             } : undefined}
+                            createdByName={editMode ? orderData?.createdByName : undefined}
+                            createdAt={editMode ? orderData?.createdAt : undefined}
                             dynamicCalculations={orderTypeConfig?.dynamicCalculations || []}
                             calculatedValues={calculatedValues}
                             onBackspace={() => {
                               // Backspace - go back to order type
                               orderTypeRef.current?.focus();
-                            }}
-                        />
-                      </div>
-                    );
+                            }} />
 
-                  case 'dynamicColumns':
-                    // Only show if there are dynamic calculations configured
-                    console.log('🎯 dynamicColumns case reached');
-                    console.log('🎯 orderTypeConfig?.dynamicCalculations:', orderTypeConfig?.dynamicCalculations);
-                    const calculations = orderTypeConfig?.dynamicCalculations?.filter(c => c.enabled) || [];
-                    console.log('🎯 Enabled calculations count:', calculations.length);
-                    if (calculations.length === 0) {
-                      console.log('🎯 No enabled calculations - returning null');
-                      return null;
-                    }
+                      </div>);
 
-                    return (
-                      <div key="dynamicColumns" className="dynamicSection dynamicColumnsSection">
-                        <div className="dynamicSection-title">
-                          Dynamic Calculations
-                          <span className="dynamicSection-count">({calculations.length})</span>
-                        </div>
-                        <div className="dynamicColumnsGrid">
-                          {calculations
-                            .sort((a, b) => (a.order || 0) - (b.order || 0))
-                            .map((calc, idx) => {
+
+                    case 'dynamicColumns':
+                      // Only show if there are dynamic calculations configured
+
+
+                      const calculations = orderTypeConfig?.dynamicCalculations?.filter((c) => c.enabled) || [];
+
+                      if (calculations.length === 0) {
+
+                        return null;
+                      }
+
+                      return (
+                        <div key="dynamicColumns" className="dynamicSection dynamicColumnsSection">
+                        <div className="dynamicSection-title">Dynamic Calculations</div>
+                        <div style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '8px'
+                          }}>
+                          {calculations.
+                            sort((a, b) => (a.order || 0) - (b.order || 0)).
+                            map((calc, idx) => {
                               const value = calculatedValues[calc.name] || '';
                               const formatClass = calc.columnFormat === 'highlight' ? 'dynamicColumn-highlight' :
-                                                  calc.columnFormat === 'summary' ? 'dynamicColumn-summary' :
-                                                  calc.columnFormat === 'hidden' ? 'dynamicColumn-hidden' : '';
+                              calc.columnFormat === 'summary' ? 'dynamicColumn-summary' :
+                              calc.columnFormat === 'hidden' ? 'dynamicColumn-hidden' : '';
+
+
 
                               return (
                                 <div
                                   key={idx}
                                   className={`dynamicColumnItem ${formatClass}`}
-                                  style={{ display: calc.columnFormat === 'hidden' ? 'none' : 'flex' }}
-                                >
-                                  <label className="dynamicColumnLabel">
+                                  style={{
+                                    display: calc.columnFormat === 'hidden' ? 'none' : 'block'
+                                  }}>
+
+                                  <label className="inputLabel">
                                     {calc.name}
-                                    {calc.unit && <span className="dynamicColumnUnit">({calc.unit})</span>}
+                                    {calc.unit && ` (${calc.unit})`}
                                   </label>
                                   <input
                                     type="text"
@@ -853,56 +1114,51 @@ const CreateOrders = () => {
                                     readOnly={calc.autoPopulate}
                                     onChange={(e) => {
                                       if (!calc.autoPopulate) {
-                                        setCalculatedValues(prev => ({
+                                        setCalculatedValues((prev) => ({
                                           ...prev,
                                           [calc.name]: e.target.value
                                         }));
                                       }
                                     }}
-                                    className={`dynamicColumnInput ${calc.autoPopulate ? 'auto-calculated' : ''}`}
-                                    placeholder={calc.autoPopulate ? 'Auto-calculated' : 'Enter value'}
-                                  />
-                                  {calc.rule?.type === 'conditional' && (
-                                    <span className="dynamicColumnRule" title={calc.rule.condition}>
-                                      ⚡
-                                    </span>
-                                  )}
-                                </div>
-                              );
+                                    className="inputField"
+                                    placeholder={calc.autoPopulate ? 'Auto-calculated' : 'Enter value'} />
+
+                                </div>);
+
                             })}
                         </div>
-                      </div>
-                    );
+                      </div>);
 
-                  case 'steps':
-                    console.log('🎯 Rendering steps section - editMode:', editMode, 'orderData:', orderData);
-                    return (
-                      <div key="steps" className="dynamicSection">
+
+                    case 'steps':
+
+                      return (
+                        <div key="steps" className="dynamicSection">
                         <StepContainer
-                          ref={stepContainerRef}
-                          initialData={orderData}
-                          isEditMode={editMode}
-                          onStepsChange={(steps) => {
-                            console.log('Steps changed:', steps);
-                          }}
-                          orderId={editMode ? orderData?.orderId : undefined}
-                          customerInfo={editMode && orderData?.customer ? {
-                            name: orderData.customer.companyName || orderData.customer.name,
-                            companyName: orderData.customer.companyName,
-                            address: orderData.customer.address || orderData.customer.address1,
-                            phone: orderData.customer.phone || orderData.customer.phone1,
-                            whatsapp: orderData.customer.whatsapp
-                          } : undefined}
-                        />
-                      </div>
-                    );
+                            ref={stepContainerRef}
+                            initialData={orderData}
+                            isEditMode={editMode}
+                            onStepsChange={(steps) => {
 
-                  default:
-                    return null;
-                }
-              })}
-            </>
-            );
+                            }}
+                            orderId={editMode ? orderData?.orderId : undefined}
+                            customerInfo={editMode && orderData?.customer ? {
+                              name: orderData.customer.companyName || orderData.customer.name,
+                              companyName: orderData.customer.companyName,
+                              address: orderData.customer.address || orderData.customer.address1,
+                              phone: orderData.customer.phone || orderData.customer.phone1,
+                              whatsapp: orderData.customer.whatsapp
+                            } : undefined} />
+
+                      </div>);
+
+
+                    default:
+                      return null;
+                  }
+                })}
+            </>);
+
           })()}
             
         </div>
@@ -910,25 +1166,25 @@ const CreateOrders = () => {
         <div className="CreateOrdersFooter">
           <Notes
             initialNotes={orderData?.Notes || orderData?.notes}
-            isEditMode={editMode}
-          />
+            isEditMode={editMode} />
+
           <Status
             initialStatus={orderData?.overallStatus || 'Wait for Approval'}
             isEditMode={editMode}
             isBillingOrder={isBillingOrder}
             onStatusChange={(status) => {
-              console.log('Status changed:', status);
+
               setCurrentStatus(status);
-            }}
-          />
+            }} />
+
           <Priority
             initialPriority={orderData?.priority}
             isEditMode={editMode}
             onPriorityChange={(priority) => {
-              console.log('Priority changed:', priority);
+
               setCurrentPriority(priority);
-            }}
-          />
+            }} />
+
           <SaveOrders
             isEditMode={editMode}
             orderId={orderData?._id}
@@ -937,8 +1193,8 @@ const CreateOrders = () => {
               overallStatus: currentStatus,
               priority: currentPriority
             }}
-            optionsData={options}
-          />
+            optionsData={options} />
+
         </div>
       </div>
       
@@ -952,8 +1208,42 @@ const CreateOrders = () => {
       </div>
 
       <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
-    </div>
-  );
+
+      {/* Print/Excel Modal */}
+      <PrintExcelModal
+        isOpen={showPrintExcelModal}
+        onClose={() => setShowPrintExcelModal(false)}
+        mode={modalMode}
+        orderData={{
+          ...orderData,
+          overallStatus: currentStatus,
+          priority: currentPriority,
+          options: options,
+          createdByName: orderData?.createdByName,
+          createdBy: orderData?.createdBy,
+          createdAt: orderData?.createdAt,
+          updatedAt: orderData?.updatedAt
+        }}
+        orderTypeId={selectedOrderType}
+        onSendEmail={handlePrintExcelEmail}
+        onSendWhatsApp={handlePrintExcelWhatsApp} />
+
+      {/* Send Email/WhatsApp Modal */}
+      <SendOrderModal
+        isOpen={showSendModal}
+        onClose={() => setShowSendModal(false)}
+        orderId={orderData?._id || orderData?.orderId}
+        orderData={{
+          ...orderData,
+          overallStatus: currentStatus,
+          priority: currentPriority
+        }}
+        customer={getCustomerForModal()}
+        mode={sendModalMode}
+        branchId={localStorage.getItem('selectedBranch') || orderData?.branchId || undefined} />
+
+    </div>);
+
 };
 
 export default CreateOrders;

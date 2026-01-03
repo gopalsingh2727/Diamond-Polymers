@@ -51,8 +51,8 @@ function shouldTriggerFallback(error: AxiosError): boolean {
   // No response (network error)
   if (!error.response && error.message) {
     if (error.message.includes('Network Error') ||
-        error.message.includes('timeout') ||
-        error.message.includes('CORS')) {
+    error.message.includes('timeout') ||
+    error.message.includes('CORS')) {
       return true;
     }
   }
@@ -85,7 +85,7 @@ function switchToFallbackUrl(url: string | undefined): string {
 export function getCurrentApiUrl(): string {
   // Periodically try primary again
   if (usingFallback && Date.now() - lastPrimaryAttempt > RETRY_PRIMARY_INTERVAL) {
-    console.log('🔄 [API] Attempting to use primary server again...');
+
     usingFallback = false;
   }
   return usingFallback ? FALLBACK_URL : PRIMARY_URL;
@@ -109,7 +109,7 @@ export function getServerStatus() {
     primaryWs: PRIMARY_WS_URL,
     fallbackWs: FALLBACK_WS_URL,
     currentApi: getCurrentApiUrl(),
-    currentWs: getCurrentWsUrl(),
+    currentWs: getCurrentWsUrl()
   };
 }
 
@@ -120,7 +120,7 @@ export function resetToPrimaryServer() {
   usingFallback = false;
   lastPrimaryAttempt = 0;
   sessionStorage.removeItem('api_server_fallback');
-  console.log('🔄 [API] Reset to primary server');
+
 }
 
 /**
@@ -130,7 +130,7 @@ export function switchToFallbackServer() {
   usingFallback = true;
   lastPrimaryAttempt = Date.now();
   sessionStorage.setItem('api_server_fallback', 'true');
-  console.log('⚠️ [API] Switched to fallback server');
+
 }
 
 // ============================================================
@@ -145,7 +145,26 @@ axios.interceptors.response.use(
 
   // Error - check if we should fallback
   async (error: AxiosError) => {
-    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean; _fallbackAttempted?: boolean };
+    const originalRequest = error.config as InternalAxiosRequestConfig & {_retry?: boolean;_fallbackAttempted?: boolean;};
+
+    // ✅ CHECK FOR SESSION EXPIRATION FIRST (401 + sessionExpired flag)
+    if (error.response?.status === 401 && error.response?.data) {
+      const responseData = error.response.data as any;
+      if (responseData.sessionExpired === true) {
+
+
+        // Dispatch SESSION_EXPIRED action to Redux store
+        if (typeof window !== 'undefined' && (window as any).store) {
+          (window as any).store.dispatch({
+            type: 'SESSION_EXPIRED',
+            payload: responseData.message || 'Your session has expired. Please log in again.'
+          });
+        }
+
+        // Don't retry, just reject with the session expired error
+        return Promise.reject(error);
+      }
+    }
 
     // Don't retry if already retried or if fallback already attempted
     if (!originalRequest || originalRequest._fallbackAttempted) {
@@ -154,8 +173,8 @@ axios.interceptors.response.use(
 
     // Check if this error should trigger fallback
     if (shouldTriggerFallback(error) && !usingFallback) {
-      console.warn('⚠️ [API] Primary server failed, switching to fallback:', FALLBACK_URL);
-      console.warn('⚠️ [API] Error details:', error.code, error.message);
+
+
 
       // Switch to fallback
       switchToFallbackServer();
@@ -171,15 +190,15 @@ axios.interceptors.response.use(
         originalRequest.baseURL = FALLBACK_URL;
       }
 
-      console.log('🔄 [API] Retrying request with fallback:', originalRequest.url);
+
 
       // Retry the request with fallback URL
       try {
         const response = await axios.request(originalRequest);
-        console.log('✅ [API] Fallback request succeeded');
+
         return response;
       } catch (fallbackError) {
-        console.error('❌ [API] Fallback server also failed:', (fallbackError as Error).message);
+
         return Promise.reject(fallbackError);
       }
     }
@@ -198,15 +217,15 @@ const storedFallback = sessionStorage.getItem('api_server_fallback');
 if (storedFallback === 'true') {
   usingFallback = true;
   lastPrimaryAttempt = Date.now();
-  console.log('ℹ️ [API] Restored fallback server state from session');
+
 }
 
 // Log current server status on init
-console.log('🌐 [API] Server Configuration:', {
-  primary: PRIMARY_URL,
-  fallback: FALLBACK_URL,
-  currentlyUsing: usingFallback ? 'fallback' : 'primary'
-});
+
+
+
+
+
 
 // Export utility functions
 export default {
@@ -214,5 +233,5 @@ export default {
   getCurrentWsUrl,
   getServerStatus,
   resetToPrimaryServer,
-  switchToFallbackServer,
+  switchToFallbackServer
 };

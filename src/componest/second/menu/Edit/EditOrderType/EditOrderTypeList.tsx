@@ -24,15 +24,22 @@ interface Props {
 
 const EditOrderTypeList: React.FC<Props> = ({ onEdit }) => {
   const dispatch = useDispatch<AppDispatch>();
-  const { orderTypes = [], loading, error } = useSelector((state: RootState) => state.orderTypeList || {});
-
-  // Fetch order types on mount
-  useEffect(() => {
-    dispatch(getOrderTypes());
-  }, [dispatch]);
+  const orderTypeState = useSelector((state: RootState) => state.v2.orderType);
+  const rawOrderTypes = orderTypeState?.list;
+  const orderTypes = Array.isArray(rawOrderTypes) ? rawOrderTypes : [];
+  const loading = orderTypeState?.loading;
+  const error = orderTypeState?.error;
 
   const [selectedRow, setSelectedRow] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Get selected branch to refetch when it changes
+  const selectedBranch = useSelector((state: any) => state.auth?.userData?.selectedBranch);
+
+  // Fetch order types on mount and when branch changes
+  useEffect(() => {
+    dispatch(getOrderTypes());
+  }, [dispatch, selectedBranch]);
 
   const filteredItems = orderTypes.filter((item: OrderType) => {
     if (!searchTerm) return true;

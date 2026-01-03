@@ -19,24 +19,24 @@ const CustomerSuggestions: React.FC<Props> = ({ customerName, onSelect }) => {
 
   useEffect(() => {
     if (customerName && customerName.trim().length > 0) {
-      
-   
-      
+
+
+
       const results = accounts.filter((acc: any) => {
         // More flexible filtering - check multiple possible name fields
         const name = acc?.name || acc?.customerName || acc?.accountName || '';
         const company = acc?.companyName || acc?.company || '';
         const searchTerm = customerName.toLowerCase();
-        
+
         const nameMatch = name.toLowerCase().includes(searchTerm);
         const companyMatch = company.toLowerCase().includes(searchTerm);
-        
-      
-        
+
+
+
         return nameMatch || companyMatch;
       });
-      
-      console.log('Filtered results:', results);
+
+
       setFiltered(results.slice(0, 5));
     } else {
       setFiltered([]);
@@ -55,18 +55,18 @@ const CustomerSuggestions: React.FC<Props> = ({ customerName, onSelect }) => {
   if (filtered.length === 0) return null;
 
   return (
-    <ul className="suggestion-list" >
-      {filtered.map((acc, idx) => (
-        <li
-          key={acc.id || idx} 
-          className="suggestionItem"
-          onClick={() => onSelect(acc)}
-        >
+    <ul className="suggestion-list">
+      {filtered.map((acc, idx) =>
+      <li
+        key={acc.id || idx}
+        className="suggestionItem"
+        onClick={() => onSelect(acc)}>
+
           🙍 {acc.name} ({acc.companyName || "No Company"})
         </li>
-      ))}
-    </ul>
-  );
+      )}
+    </ul>);
+
 };
 
 export default CustomerSuggestions;

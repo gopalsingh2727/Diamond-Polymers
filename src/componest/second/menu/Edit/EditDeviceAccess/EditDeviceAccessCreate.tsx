@@ -2,12 +2,14 @@ import React, { useEffect, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   getDeviceAccessList,
-  updateDeviceAccess,
-} from "../../../../redux/deviceAccess/deviceAccessActions";
+  updateDeviceAccess } from
+"../../../../redux/deviceAccess/deviceAccessActions";
+import { useCRUD } from "../../../../../hooks/useCRUD";
 import { RootState } from "../../../../redux/rootReducer";
 import { AppDispatch } from "../../../../../store";
 import { Copy, Check } from "lucide-react";
 import { formatDate } from "../../../../../utils/dateUtils";
+import { ToastContainer } from "../../../../../components/shared/Toast";
 
 interface DeviceAccessCreate {
   _id: string;
@@ -21,10 +23,15 @@ interface DeviceAccessCreate {
 
 const EditDeviceAccessCreate: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const { handleSave, handleUpdate, handleDelete: crudDelete, saveState, updateState, deleteState, confirmDialog, closeConfirmDialog, toast } = useCRUD();
 
-  const { devices = [], loading, error } = useSelector(
-    (state: RootState) => state.deviceAccess || {}
+  const deviceAccessState = useSelector(
+    (state: RootState) => state.v2.deviceAccess
   );
+  const rawDevices = deviceAccessState?.list;
+  const devices = Array.isArray(rawDevices) ? rawDevices : [];
+  const loading = deviceAccessState?.loading;
+  const error = deviceAccessState?.error;
 
   const [selectedRow, setSelectedRow] = useState(0);
   const [showDetail, setShowDetail] = useState(false);
@@ -38,12 +45,12 @@ const EditDeviceAccessCreate: React.FC = () => {
   // Filter devices based on search term
   const filteredDevices = devices.filter((device: DeviceAccessCreate) => {
     if (!searchTerm) return true;
-    
+
     const search = searchTerm.toLowerCase();
     return (
       device.deviceName?.toLowerCase().includes(search) ||
-      device.location?.toLowerCase().includes(search)
-    );
+      device.location?.toLowerCase().includes(search));
+
   });
 
   const handleKeyDown = useCallback(
@@ -66,9 +73,12 @@ const EditDeviceAccessCreate: React.FC = () => {
     [filteredDevices, selectedRow, showDetail]
   );
 
+  // Get selected branch to refetch when it changes
+  const selectedBranch = useSelector((state: RootState) => state.auth?.userData?.selectedBranch);
+
   useEffect(() => {
     dispatch(getDeviceAccessList());
-  }, [dispatch]);
+  }, [dispatch, selectedBranch]);
 
   useEffect(() => {
     window.addEventListener("keydown", handleKeyDown);
@@ -84,50 +94,55 @@ const EditDeviceAccessCreate: React.FC = () => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleSave = async () => {
+  const handleSaveClick = async () => {
     if (!form._id) return;
 
     if (!form.deviceName?.trim()) {
-      alert("Device name is required");
+      toast.error("Validation Error", "Device name is required");
       return;
     }
 
     if (form.password && form.password !== confirmPassword) {
-      alert("Passwords do not match");
+      toast.error("Validation Error", "Passwords do not match");
       return;
     }
 
     if (form.pin && form.pin !== confirmPin) {
-      alert("PINs do not match");
+      toast.error("Validation Error", "PINs do not match");
       return;
     }
 
-    try {
-      // Only include password/pin in payload if they were provided
-      const updatePayload: Partial<DeviceAccessCreate> = {
-        deviceName: form.deviceName,
-        location: form.location,
-      };
+    // Only include password/pin in payload if they were provided
+    const updatePayload: Partial<DeviceAccessCreate> = {
+      deviceName: form.deviceName,
+      location: form.location
+    };
 
-      // Only send password if user entered a new one
-      if (form.password && form.password.trim()) {
-        updatePayload.password = form.password;
-      }
-
-      // Only send pin if user entered a new one
-      if (form.pin && form.pin.trim()) {
-        updatePayload.pin = form.pin;
-      }
-
-      await dispatch(updateDeviceAccess(form._id, "updateDetails", updatePayload));
-      alert("Device access updated successfully!");
-      setShowDetail(false);
-      setConfirmPassword("");
-      setConfirmPin("");
-      dispatch(getDeviceAccessList());
-    } catch (err) {
-      alert("Failed to update device access.");
+    // Only send password if user entered a new one
+    if (form.password && form.password.trim()) {
+      updatePayload.password = form.password;
     }
+
+    // Only send pin if user entered a new one
+    if (form.pin && form.pin.trim()) {
+      updatePayload.pin = form.pin;
+    }
+
+    await handleUpdate(
+      () => dispatch(updateDeviceAccess(form._id!, "updateDetails", updatePayload)),
+      {
+        successMessage: "Device access updated successfully!",
+        errorMessage: "Failed to update device access.",
+        onSuccess: () => {
+          setTimeout(() => {
+            setShowDetail(false);
+            setConfirmPassword("");
+            setConfirmPin("");
+            dispatch(getDeviceAccessList());
+          }, 1500);
+        }
+      }
+    );
   };
 
   const handleRowClick = (index: number, item: DeviceAccessCreate) => {
@@ -154,7 +169,7 @@ const EditDeviceAccessCreate: React.FC = () => {
         setCopiedDeviceId(true);
         setTimeout(() => setCopiedDeviceId(false), 2000);
       } catch (err) {
-        console.error('Failed to copy device ID:', err);
+
       }
     }
   };
@@ -162,82 +177,82 @@ const EditDeviceAccessCreate: React.FC = () => {
   return (
     <div className="EditMachineType">
        {loading && <p className="loadingAndError">Loading...</p>}
-      {error && <p className="loadingAndError"  style={{ color: "red" }}>{error}</p>}
+      {error && <p className="loadingAndError" style={{ color: "red" }}>{error}</p>}
 
-      {!showDetail && !loading && devices.length > 0 ? (
-        <>
+      {!showDetail && !loading && devices.length > 0 ?
+      <>
           {/* Search Bar */}
           <div style={{
-            marginBottom: '20px',
-            display: 'flex',
-            gap: '10px',
-            alignItems: 'center'
-          }}>
+          marginBottom: '20px',
+          display: 'flex',
+          gap: '10px',
+          alignItems: 'center'
+        }}>
             <div style={{ position: 'relative', flex: 1 }}>
               <input
-                type="text"
-                placeholder="Search by device name or location..."
-                                className="w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-[#FF6B35] transition-all"
-                value={searchTerm}
-                onChange={handleSearchChange}
-                style={{
-                  width: '100%',
-                  padding: '12px 40px 12px 40px',
-                  fontSize: '15px',
-                  border: '2px solid #ddd',
-                  borderRadius: '8px',
-                  outline: 'none',
-                  transition: 'border-color 0.3s ease',
-                }}
-                onFocus={(e) => e.target.style.borderColor = '#2d89ef'}
-                onBlur={(e) => e.target.style.borderColor = '#ddd'}
-              />
+              type="text"
+              placeholder="Search by device name or location..."
+              className="w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-[#FF6B35] transition-all"
+              value={searchTerm}
+              onChange={handleSearchChange}
+              style={{
+                width: '100%',
+                padding: '12px 40px 12px 40px',
+                fontSize: '15px',
+                border: '2px solid #ddd',
+                borderRadius: '8px',
+                outline: 'none',
+                transition: 'border-color 0.3s ease'
+              }}
+              onFocus={(e) => e.target.style.borderColor = '#2d89ef'}
+              onBlur={(e) => e.target.style.borderColor = '#ddd'} />
+
               <span style={{
-                position: 'absolute',
-                left: '14px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                fontSize: '18px',
-                color: '#666',
-              }}>
+              position: 'absolute',
+              left: '14px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              fontSize: '18px',
+              color: '#666'
+            }}>
                 🔍
               </span>
-              {searchTerm && (
-                <button
-                  onClick={clearSearch}
-                  style={{
-                    position: 'absolute',
-                    right: '10px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    fontSize: '20px',
-                    cursor: 'pointer',
-                    color: '#999',
-                    padding: '4px 8px',
-                  }}
-                  title="Clear search"
-                >
+              {searchTerm &&
+            <button
+              onClick={clearSearch}
+              style={{
+                position: 'absolute',
+                right: '10px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'none',
+                border: 'none',
+                fontSize: '20px',
+                cursor: 'pointer',
+                color: '#999',
+                padding: '4px 8px'
+              }}
+              title="Clear search">
+
                   ✕
                 </button>
-              )}
+            }
             </div>
             <div style={{
-              padding: '12px 16px',
-              background: '#f5f5f5',
-              borderRadius: '8px',
-              fontSize: '14px',
-              color: '#666',
-              whiteSpace: 'nowrap',
-            }}>
+            padding: '12px 16px',
+            background: '#f5f5f5',
+            borderRadius: '8px',
+            fontSize: '14px',
+            color: '#666',
+            whiteSpace: 'nowrap'
+          }}>
               {filteredDevices.length} of {devices.length} devices
             </div>
           </div>
 
           {/* Table */}
-          {filteredDevices.length > 0 ? (
-            <table>
+          {filteredDevices.length > 0 ?
+        <table>
               <thead>
                 <tr>
                   <th>No</th>
@@ -246,39 +261,39 @@ const EditDeviceAccessCreate: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredDevices.map((item: DeviceAccessCreate, index: number) => (
-                  <tr
-                    key={item._id}
-                    className={selectedRow === index ? "bg-orange-100" : ""}
-                    onClick={() => handleRowClick(index, item)}
-                    style={{ cursor: "pointer" }}
-                  >
+                {filteredDevices.map((item: DeviceAccessCreate, index: number) =>
+            <tr
+              key={item._id}
+              className={selectedRow === index ? "bg-orange-100" : ""}
+              onClick={() => handleRowClick(index, item)}
+              style={{ cursor: "pointer" }}>
+
                     <td>{index + 1}</td>
                     <td>{item.deviceName || "N/A"}</td>
                     <td>{item.location || "N/A"}</td>
                   </tr>
-                ))}
+            )}
               </tbody>
-            </table>
-          ) : (
-            <div style={{
-              padding: '40px',
-              textAlign: 'center',
-              color: '#999',
-              fontSize: '16px',
-            }}>
+            </table> :
+
+        <div style={{
+          padding: '40px',
+          textAlign: 'center',
+          color: '#999',
+          fontSize: '16px'
+        }}>
               No devices found matching "{searchTerm}"
             </div>
-          )}
-        </>
-      ) : showDetail && form ? (
-        <div className="detail-container">
+        }
+        </> :
+      showDetail && form ?
+      <div className="detail-container">
           <div className="TopButtonEdit">
             <button onClick={() => {
-              setShowDetail(false);
-              setConfirmPassword("");
-              setConfirmPin("");
-            }}>
+            setShowDetail(false);
+            setConfirmPassword("");
+            setConfirmPin("");
+          }}>
               Back
             </button>
           </div>
@@ -286,58 +301,58 @@ const EditDeviceAccessCreate: React.FC = () => {
           <div className="form-section">
             <label>Device Name:</label>
             <input
-              name="deviceName"
-              type="text"
-              placeholder="Enter device name"
-              value={form.deviceName || ""}
-              onChange={(e) => handleFormChange("deviceName", e.target.value)}
-            />
+            name="deviceName"
+            type="text"
+            placeholder="Enter device name"
+            value={form.deviceName || ""}
+            onChange={(e) => handleFormChange("deviceName", e.target.value)} />
+
           </div>
 
           <div className="form-section">
             <label>Device Location:</label>
             <input
-              name="location"
-              type="text"
-              placeholder="Enter location"
-              value={form.location || ""}
-              onChange={(e) => handleFormChange("location", e.target.value)}
-            />
+            name="location"
+            type="text"
+            placeholder="Enter location"
+            value={form.location || ""}
+            onChange={(e) => handleFormChange("location", e.target.value)} />
+
           </div>
 
           <div className="form-section">
             <label>Device ID:</label>
             <div style={{ position: "relative" }}>
               <input
-                name="deviceId"
-                type="text"
-                value={form._id || ""}
-                readOnly
-                style={{
-                  paddingRight: "45px",
-                  backgroundColor: "#f5f5f5",
-                  cursor: "default"
-                }}
-              />
+              name="deviceId"
+              type="text"
+              value={form._id || ""}
+              readOnly
+              style={{
+                paddingRight: "45px",
+                backgroundColor: "#f5f5f5",
+                cursor: "default"
+              }} />
+
               <button
-                type="button"
-                onClick={copyDeviceId}
-                style={{
-                  position: "absolute",
-                  right: "10px",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  fontSize: "1rem",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "4px",
-                  padding: "4px"
-                }}
-                title="Copy Device ID"
-              >
+              type="button"
+              onClick={copyDeviceId}
+              style={{
+                position: "absolute",
+                right: "10px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                fontSize: "1rem",
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
+                padding: "4px"
+              }}
+              title="Copy Device ID">
+
                 {copiedDeviceId ? <Check size={18} color="#10b981" /> : <Copy size={18} />}
               </button>
             </div>
@@ -347,26 +362,26 @@ const EditDeviceAccessCreate: React.FC = () => {
             <label>Password (leave blank to keep current):</label>
             <div style={{ position: "relative" }}>
               <input
-                name="password"
-                type={showPassword ? "text" : "password"}
-                placeholder="Enter new password (optional)"
-                value={form.password || ""}
-                onChange={(e) => handleFormChange("password", e.target.value)}
-              />
+              name="password"
+              type={showPassword ? "text" : "password"}
+              placeholder="Enter new password (optional)"
+              value={form.password || ""}
+              onChange={(e) => handleFormChange("password", e.target.value)} />
+
               <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                style={{
-                  position: "absolute",
-                  right: "10px",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  fontSize: "1rem",
-                }}
-              >
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              style={{
+                position: "absolute",
+                right: "10px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                fontSize: "1rem"
+              }}>
+
                 {showPassword ? "🙈" : "👁"}
               </button>
             </div>
@@ -376,26 +391,26 @@ const EditDeviceAccessCreate: React.FC = () => {
             <label>Confirm Password:</label>
             <div style={{ position: "relative" }}>
               <input
-                name="confirmPassword"
-                type={showPassword ? "text" : "password"}
-                placeholder="Confirm password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-              />
+              name="confirmPassword"
+              type={showPassword ? "text" : "password"}
+              placeholder="Confirm password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)} />
+
               <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                style={{
-                  position: "absolute",
-                  right: "10px",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  fontSize: "1rem",
-                }}
-              >
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              style={{
+                position: "absolute",
+                right: "10px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                fontSize: "1rem"
+              }}>
+
                 {showPassword ? "🙈" : "👁"}
               </button>
             </div>
@@ -405,26 +420,26 @@ const EditDeviceAccessCreate: React.FC = () => {
             <label>Pin (leave blank to keep current):</label>
             <div style={{ position: "relative" }}>
               <input
-                name="pin"
-                type={showPassword ? "text" : "password"}
-                placeholder="Enter new pin (optional)"
-                value={form.pin || ""}
-                onChange={(e) => handleFormChange("pin", e.target.value)}
-              />
+              name="pin"
+              type={showPassword ? "text" : "password"}
+              placeholder="Enter new pin (optional)"
+              value={form.pin || ""}
+              onChange={(e) => handleFormChange("pin", e.target.value)} />
+
               <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                style={{
-                  position: "absolute",
-                  right: "10px",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  fontSize: "1rem",
-                }}
-              >
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              style={{
+                position: "absolute",
+                right: "10px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                fontSize: "1rem"
+              }}>
+
                 {showPassword ? "🙈" : "👁"}
               </button>
             </div>
@@ -434,42 +449,42 @@ const EditDeviceAccessCreate: React.FC = () => {
             <label>Confirm Pin:</label>
             <div style={{ position: "relative" }}>
               <input
-                name="confirmPin"
-                type={showPassword ? "text" : "password"}
-                placeholder="Confirm pin"
-                value={confirmPin}
-                onChange={(e) => setConfirmPin(e.target.value)}
-              />
+              name="confirmPin"
+              type={showPassword ? "text" : "password"}
+              placeholder="Confirm pin"
+              value={confirmPin}
+              onChange={(e) => setConfirmPin(e.target.value)} />
+
               <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                style={{
-                  position: "absolute",
-                  right: "10px",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  fontSize: "1rem",
-                }}
-              >
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              style={{
+                position: "absolute",
+                right: "10px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                fontSize: "1rem"
+              }}>
+
                 {showPassword ? "🙈" : "👁"}
               </button>
             </div>
           </div>
 
           <button
-            onClick={handleSave}
-            className="save-button"
-            disabled={
-              loading ||
-              !form.deviceName?.trim() ||
-              (form.password && form.password !== confirmPassword) ||
-              (form.pin && form.pin !== confirmPin)
-            }
-          >
-            Save
+          onClick={handleSaveClick}
+          className="save-button"
+          disabled={
+          updateState === 'loading' ||
+          !form.deviceName?.trim() ||
+          form.password && form.password !== confirmPassword ||
+          form.pin && form.pin !== confirmPin
+          }>
+
+            {updateState === 'loading' ? 'Saving...' : 'Save'}
           </button>
 
           <div className="info-section">
@@ -482,12 +497,13 @@ const EditDeviceAccessCreate: React.FC = () => {
               {formatDate(form.updatedAt)}
             </p>
           </div>
-        </div>
-      ) : (
-        !loading && <p>No devices available.</p>
-      )}
-    </div>
-  );
+        </div> :
+
+      !loading && <p>No devices available.</p>
+      }
+      <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
+    </div>);
+
 };
 
 export default EditDeviceAccessCreate;

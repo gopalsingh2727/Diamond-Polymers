@@ -6,6 +6,8 @@ import {
   deleteMachine,
 } from "../../../../redux/create/machine/MachineActions";
 import { useFormDataCache } from "../hooks/useFormDataCache";
+import { useCRUD } from "../../../../../hooks/useCRUD";
+import { ToastContainer } from "../../../../../components/shared/Toast";
 import { AppDispatch } from "../../../../../store";
 import { Plus, Trash2, Edit2, Check, X, Calculator, Eye, Table as TableIcon, Settings, Download } from 'lucide-react';
 import "./editMachines.css";
@@ -71,6 +73,7 @@ const EditMachines: React.FC = () => {
 
   // 🚀 OPTIMIZED: Get data from cached form data (no API calls!)
   const { machines, machineTypes, loading, error } = useFormDataCache();
+  const { handleSave, handleUpdate, handleDelete: crudDelete, saveState, updateState, deleteState, confirmDialog, closeConfirmDialog, toast } = useCRUD();
 
   const [selectedRow, setSelectedRow] = useState(0);
   const [showDetail, setShowDetail] = useState(false);
@@ -315,7 +318,7 @@ const EditMachines: React.FC = () => {
 
   // Table Management Functions
  const applyTableTemplate = (template: typeof tableTemplates[0]) => {
-  if (!confirm(`Apply template "${template.name}"? This will replace your current table configuration.`)) {
+  if (!window.confirm(`Apply template "${template.name}"? This will replace your current table configuration.`)) {
     return;
   }
 
@@ -333,17 +336,17 @@ const EditMachines: React.FC = () => {
 
   setTableFormulas(cleanFormulas);
 
-  alert(`✅ Applied template: ${template.name}`);
+  toast.success('Template Applied', `Applied template: ${template.name}`);
 };
 
   const addColumn = () => {
     if (!newColumnName.trim()) {
-      alert("Please enter a column name");
+      toast.error('Validation Error', 'Please enter a column name');
       return;
     }
 
     if (tableColumns.some(col => col.name === newColumnName.trim())) {
-      alert("Column name already exists");
+      toast.error('Validation Error', 'Column name already exists');
       return;
     }
 
@@ -396,7 +399,7 @@ const EditMachines: React.FC = () => {
 
   const addFormula = () => {
     if (!selectedFormulaColumn || !formulaExpression.trim()) {
-      alert("Please select a column and enter a formula expression");
+      toast.error('Validation Error', 'Please select a column and enter a formula expression');
       return;
     }
 
@@ -533,73 +536,80 @@ const EditMachines: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
-  const handleUpdate = async () => {
+  const handleMachineUpdate = async () => {
     if (!selectedMachine) return;
 
     if (!editForm.machineName.trim()) {
-      alert("Please enter machine name");
+      toast.error('Validation Error', 'Please enter machine name');
       return;
     }
 
     if (!editForm.machineTypeId) {
-      alert("Please select machine type");
+      toast.error('Validation Error', 'Please select machine type');
       return;
     }
 
     if (!editForm.sizeX || !editForm.sizeY || !editForm.sizeZ) {
-      alert("Please enter all size dimensions");
+      toast.error('Validation Error', 'Please enter all size dimensions');
       return;
     }
 
-    try {
-      const updateData: any = {
-        machineName: editForm.machineName.trim(),
-        sizeX: editForm.sizeX,
-        sizeY: editForm.sizeY,
-        sizeZ: editForm.sizeZ,
-        machineType: editForm.machineTypeId,
+    const updateData: any = {
+      machineName: editForm.machineName.trim(),
+      sizeX: editForm.sizeX,
+      sizeY: editForm.sizeY,
+      sizeZ: editForm.sizeZ,
+      machineType: editForm.machineTypeId,
+    };
+
+    // Include table config if it exists
+    if (tableColumns.length > 0) {
+      updateData.tableConfig = {
+        columns: tableColumns,
+        formulas: tableFormulas,
+        data: tableRows,
+        settings: {
+          autoCalculate: true,
+          autoUpdateOrders: true,
+          maxRows: 1000,
+          enableHistory: true
+        }
       };
-
-      // Include table config if it exists
-      if (tableColumns.length > 0) {
-        updateData.tableConfig = {
-          columns: tableColumns,
-          formulas: tableFormulas,
-          data: tableRows,
-          settings: {
-            autoCalculate: true,
-            autoUpdateOrders: true,
-            maxRows: 1000,
-            enableHistory: true
-          }
-        };
-      }
-
-      await dispatch(updateMachine(selectedMachine._id, updateData));
-      alert("Machine updated successfully!");
-      setShowDetail(false);
-      setSelectedMachine(null);
-      // ✅ OPTIMIZED: Cache will auto-refresh on next page load
-    } catch (err) {
-      alert("Failed to update machine.");
     }
+
+    handleUpdate(
+      () => dispatch(updateMachine(selectedMachine._id, updateData)),
+      {
+        successMessage: 'Machine updated successfully!',
+        errorMessage: 'Failed to update machine.',
+        onSuccess: () => {
+          setTimeout(() => {
+            setShowDetail(false);
+            setSelectedMachine(null);
+            // ✅ OPTIMIZED: Cache will auto-refresh on next page load
+          }, 1500);
+        }
+      }
+    );
   };
 
-  const handleDelete = async () => {
+  const handleMachineDelete = () => {
     if (!selectedMachine) return;
 
-    if (!window.confirm("Are you sure you want to delete this machine?"))
-      return;
-
-    try {
-      await dispatch(deleteMachine(selectedMachine._id));
-      alert("Deleted successfully.");
-      setShowDetail(false);
-      setSelectedMachine(null);
-      // ✅ OPTIMIZED: Cache will auto-refresh on next page load
-    } catch (err) {
-      alert("Failed to delete.");
-    }
+    crudDelete(
+      () => dispatch(deleteMachine(selectedMachine._id)),
+      {
+        confirmTitle: 'Confirm Delete',
+        confirmMessage: 'Are you sure you want to delete this machine?',
+        successMessage: 'Machine deleted successfully.',
+        errorMessage: 'Failed to delete machine.',
+        onSuccess: () => {
+          setShowDetail(false);
+          setSelectedMachine(null);
+          // ✅ OPTIMIZED: Cache will auto-refresh on next page load
+        }
+      }
+    );
   };
 
   const handleRowClick = (index: number, machine: Machine) => {
@@ -719,8 +729,8 @@ const EditMachines: React.FC = () => {
         <div className="detail-container">
           <div className="TopButtonEdit">
             <button onClick={() => setShowDetail(false)}>Back</button>
-            <button onClick={handleDelete} className="Delete">
-              Delete Machine
+            <button onClick={handleMachineDelete} className="Delete" disabled={deleteState === 'loading'}>
+              {deleteState === 'loading' ? 'Deleting...' : 'Delete Machine'}
             </button>
           </div>
 
@@ -1334,23 +1344,83 @@ const EditMachines: React.FC = () => {
               Cancel
             </button>
             <button
-              onClick={handleUpdate}
+              onClick={handleMachineUpdate}
+              disabled={updateState === 'loading'}
               style={{
                 padding: '10px 24px',
-                background: '#2d89ef',
+                background: updateState === 'loading' ? '#9ca3af' : '#2d89ef',
                 color: 'white',
                 border: 'none',
                 borderRadius: '6px',
-                cursor: 'pointer',
+                cursor: updateState === 'loading' ? 'not-allowed' : 'pointer',
                 fontSize: '14px',
                 fontWeight: '600'
               }}
             >
-              Save Changes
+              {updateState === 'loading' ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
         </div>
       ) : null}
+
+      {/* Delete Confirmation Modal */}
+      {confirmDialog.isOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: 'white',
+            padding: '24px',
+            borderRadius: '12px',
+            maxWidth: '400px',
+            width: '90%',
+            textAlign: 'center'
+          }}>
+            <h3 style={{ margin: '0 0 8px 0', color: '#1f2937' }}>{confirmDialog.title}</h3>
+            <p style={{ color: '#6b7280', marginBottom: '24px' }}>{confirmDialog.message}</p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button
+                onClick={closeConfirmDialog}
+                disabled={deleteState === 'loading'}
+                style={{
+                  padding: '10px 24px',
+                  background: '#e5e7eb',
+                  color: '#374151',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDialog.onConfirm}
+                disabled={deleteState === 'loading'}
+                style={{
+                  padding: '10px 24px',
+                  background: '#ef4444',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer'
+                }}
+              >
+                {deleteState === 'loading' ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
     </div>
   );
 };

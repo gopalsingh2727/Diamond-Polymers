@@ -55,37 +55,47 @@ const CreateManager: React.FC = () => {
     email: "",
     password: "",
     phone: "",
-    fullName: "",
     branchId: "",
   });
+
+  // Generate random password
+  const generatePassword = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+    let password = '';
+    for (let i = 0; i < 10; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
+  };
 
   // Handle form input changes
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   // Step 1: Send OTP
   const handleSendOTP = async () => {
     if (!formData.email.trim()) {
-      toast.addToast('error', 'Email is required');
+      toast.error('Error', 'Email is required');
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
-      toast.addToast('error', 'Please enter a valid email address');
+      toast.error('Error', 'Please enter a valid email address');
       return;
     }
 
     setOtpSending(true);
     try {
       await dispatch(sendManagerEmailOTP(formData.email));
-      toast.addToast('success', 'OTP sent to email! Please check your inbox.');
+      toast.success('Success', 'OTP sent to email! Please check your inbox.');
       setStep('otp');
     } catch (error: any) {
-      toast.addToast('error', error.response?.data?.message || 'Failed to send OTP');
+      toast.error('Error', error.response?.data?.message || 'Failed to send OTP');
     } finally {
       setOtpSending(false);
     }
@@ -94,23 +104,27 @@ const CreateManager: React.FC = () => {
   // Step 2: Verify OTP
   const handleVerifyOTP = async () => {
     if (!otp.trim()) {
-      toast.addToast('error', 'Please enter the OTP');
+      toast.error('Error', 'Please enter the OTP');
       return;
     }
 
     if (otp.length !== 6) {
-      toast.addToast('error', 'OTP must be 6 digits');
+      toast.error('Error', 'OTP must be 6 digits');
       return;
     }
 
     setOtpVerifying(true);
     try {
       await dispatch(verifyManagerEmailOTP(formData.email, otp));
-      toast.addToast('success', 'Email verified successfully!');
+      toast.success('Success', 'Email verified successfully!');
       setEmailVerified(true);
       setStep('details');
+      // Auto-generate password when moving to details step
+      if (!formData.password) {
+        setFormData(prev => ({ ...prev, password: generatePassword() }));
+      }
     } catch (error: any) {
-      toast.addToast('error', error.response?.data?.message || 'Invalid OTP');
+      toast.error('Error', error.response?.data?.message || 'Invalid OTP');
     } finally {
       setOtpVerifying(false);
     }
@@ -121,10 +135,10 @@ const CreateManager: React.FC = () => {
     setOtpSending(true);
     try {
       await dispatch(sendManagerEmailOTP(formData.email));
-      toast.addToast('success', 'OTP resent! Please check your inbox.');
+      toast.success('Success', 'OTP resent! Please check your inbox.');
       setOtp('');
     } catch (error: any) {
-      toast.addToast('error', error.response?.data?.message || 'Failed to resend OTP');
+      toast.error('Error', error.response?.data?.message || 'Failed to resend OTP');
     } finally {
       setOtpSending(false);
     }
@@ -142,7 +156,7 @@ const CreateManager: React.FC = () => {
     e?.preventDefault();
 
     if (!emailVerified) {
-      toast.addToast('error', 'Please verify your email first');
+      toast.error('Error', 'Please verify your email first');
       return;
     }
 
@@ -150,19 +164,19 @@ const CreateManager: React.FC = () => {
 
     // Validation
     if (!username.trim()) {
-      toast.addToast('error', 'Username is required');
+      toast.error('Error', 'Username is required');
       return;
     }
     if (!password.trim()) {
-      toast.addToast('error', 'Password is required');
+      toast.error('Error', 'Password is required');
       return;
     }
     if (password.length < 8) {
-      toast.addToast('error', 'Password must be at least 8 characters');
+      toast.error('Error', 'Password must be at least 8 characters');
       return;
     }
     if (!branchId) {
-      toast.addToast('error', 'Please select a branch');
+      toast.error('Error', 'Please select a branch');
       return;
     }
 
@@ -181,7 +195,6 @@ const CreateManager: React.FC = () => {
             email: '',
             password: '',
             phone: '',
-            fullName: '',
             branchId: ''
           });
           setStep('email');
@@ -313,18 +326,6 @@ const CreateManager: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-            <input
-              name="fullName"
-              type="text"
-              placeholder="Enter full name"
-              value={formData.fullName}
-              onChange={handleChange}
-              className="border p-2 w-full rounded"
-            />
-          </div>
-
-          <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Username *</label>
             <input
               name="username"
@@ -351,16 +352,27 @@ const CreateManager: React.FC = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Password *</label>
-            <input
-              name="password"
-              type="password"
-              placeholder="Password (min 8 chars)"
-              value={formData.password}
-              onChange={handleChange}
-              className="border p-2 w-full rounded"
-              required
-              minLength={8}
-            />
+            <div className="flex gap-2">
+              <input
+                name="password"
+                type="text"
+                placeholder="Password (min 8 chars)"
+                value={formData.password}
+                onChange={handleChange}
+                className="flex-1 border p-2 rounded"
+                required
+                minLength={8}
+              />
+              <button
+                type="button"
+                onClick={() => setFormData(prev => ({ ...prev, password: generatePassword() }))}
+                className="px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded text-sm"
+                title="Generate random password"
+              >
+                🔄
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">Password will be sent to the manager's email</p>
           </div>
 
           <div>

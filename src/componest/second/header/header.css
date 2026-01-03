@@ -120,6 +120,38 @@
   display: inline-block;
 }
 
+/* QR Button */
+.header-qr-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #495057;
+}
+
+.header-qr-btn:hover {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border-color: #3b82f6;
+  color: white;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.header-qr-btn:active {
+  transform: scale(0.95);
+}
+
+.header-qr-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
 /* Settings Button */
 .header-settings-btn {
   display: flex;
@@ -150,5 +182,161 @@
 
 .header-settings-btn svg {
   transition: inherit;
+}
+
+/* Send Order Actions */
+.send-order-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.quick-send-buttons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.send-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: #ffffff;
+}
+
+.send-btn:hover:not(.disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.send-btn.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.send-btn-email {
+  color: #FF6B35;
+}
+
+.send-btn-email:hover:not(.disabled) {
+  background: #FF6B35;
+  border-color: #FF6B35;
+  color: white;
+}
+
+.send-btn-whatsapp {
+  color: #25D366;
+}
+
+.send-btn-whatsapp:hover:not(.disabled) {
+  background: #25D366;
+  border-color: #25D366;
+  color: white;
+}
+
+.send-btn-more {
+  color: #6b7280;
+}
+
+.send-btn-more:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+/* Send Dropdown */
+.send-dropdown-container {
+  position: relative;
+}
+
+.send-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  min-width: 200px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  overflow: hidden;
+  animation: dropdownSlide 0.15s ease-out;
+}
+
+@keyframes dropdownSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.send-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 14px;
+  color: #374151;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  text-align: left;
+}
+
+.send-dropdown-item:hover:not(:disabled) {
+  background: #f3f4f6;
+}
+
+.send-dropdown-item:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.send-dropdown-item .not-configured {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-left: auto;
+}
+
+.send-dropdown-divider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 4px 0;
+}
+
+.send-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .quick-send-buttons {
+    gap: 4px;
+  }
+
+  .send-btn {
+    width: 32px;
+    height: 32px;
+  }
+
+  .send-btn svg {
+    width: 16px;
+    height: 16px;
+  }
 }
 

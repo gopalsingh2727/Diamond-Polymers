@@ -34,14 +34,14 @@ const UnifiedAuthPage = () => {
     pinCode: '',
     marketingWhatsApp: false,
     marketingSMS: false,
-    marketingEmail: false,
+    marketingEmail: false
   });
 
   // UI State
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const baseUrl = import.meta.env.VITE_API_27INFINITY_IN || 'http://localhost:4000/dev';
+  const baseUrl = import.meta.env.VITE_API_27INFINITY_IN || 'https://api.27infinity.in';
   const apiKey = import.meta.env.VITE_API_KEY;
 
   // ============= SIGN UP FUNCTIONS =============
@@ -113,22 +113,22 @@ const UnifiedAuthPage = () => {
         {
           email: signUpData.email,
           phone: signUpData.phone1,
-          userType: 'master-admin',
+          userType: 'master-admin'
         },
         {
           headers: {
             'x-api-key': apiKey,
-            'Content-Type': 'application/json',
-          },
+            'Content-Type': 'application/json'
+          }
         }
       );
 
-      console.log('✅ Email OTP sent, moving to verification...');
+
 
       // Move to email verification
       setSignupStep('email-verification');
     } catch (err: any) {
-      console.error('❌ Failed to send OTP:', err);
+
       setError(err.response?.data?.message || 'Failed to send verification email. Please try again.');
     } finally {
       setLoading(false);
@@ -136,7 +136,7 @@ const UnifiedAuthPage = () => {
   };
 
   const handleEmailVerificationSuccess = async () => {
-    console.log('✅ Email verified! Now creating admin account...');
+
     setLoading(true);
     setError('');
 
@@ -164,17 +164,17 @@ const UnifiedAuthPage = () => {
           pinCode: signUpData.pinCode,
           marketingWhatsApp: signUpData.marketingWhatsApp,
           marketingSMS: signUpData.marketingSMS,
-          marketingEmail: signUpData.marketingEmail,
+          marketingEmail: signUpData.marketingEmail
         },
         {
           headers: {
             'x-api-key': apiKey,
-            'Content-Type': 'application/json',
-          },
+            'Content-Type': 'application/json'
+          }
         }
       );
 
-      console.log('✅ Master Admin account created successfully!');
+
 
       // Auto-login: Store token and user data
       const { token, refreshToken, user } = response.data;
@@ -182,7 +182,7 @@ const UnifiedAuthPage = () => {
         const userData = {
           ...user,
           token,
-          refreshToken,
+          refreshToken
         };
 
         // Store in localStorage
@@ -198,11 +198,11 @@ const UnifiedAuthPage = () => {
           payload: {
             token,
             refreshToken,
-            userData,
-          },
+            userData
+          }
         });
 
-        console.log('✅ Auto-login successful! Redirecting to create branch...');
+
 
         // Redirect to create branch page
         setSignupStep('complete');
@@ -217,7 +217,7 @@ const UnifiedAuthPage = () => {
         }, 2000);
       }
     } catch (err: any) {
-      console.error('❌ Failed to create account:', err);
+
       setError(err.response?.data?.message || 'Failed to create account. Please try again.');
       setSignupStep('details');
     } finally {
@@ -256,7 +256,7 @@ const UnifiedAuthPage = () => {
 
             try {
               const otpInputs = document.querySelectorAll('.otp-digit') as NodeListOf<HTMLInputElement>;
-              const otpCode = Array.from(otpInputs).map(input => input.value).join('');
+              const otpCode = Array.from(otpInputs).map((input) => input.value).join('');
 
               if (otpCode.length !== 6) {
                 setError('Please enter all 6 digits');
@@ -270,7 +270,7 @@ const UnifiedAuthPage = () => {
                 { headers: { 'x-api-key': apiKey, 'Content-Type': 'application/json' } }
               );
 
-              console.log('✅ Email verified:', response.data);
+
               handleEmailVerificationSuccess();
             } catch (err: any) {
               setError(err.response?.data?.message || 'Verification failed. Please try again.');
@@ -279,63 +279,63 @@ const UnifiedAuthPage = () => {
             }
           }}>
             <div className="flex justify-center gap-2 mb-6">
-              {[0, 1, 2, 3, 4, 5].map((i) => (
-                <input
-                  key={i}
-                  type="text"
-                  maxLength={1}
-                  className="otp-digit w-12 h-12 text-center text-xl font-bold border-2 border-gray-300 rounded-lg focus:outline-none focus:border-[#FF6B35] focus:ring-2 focus:ring-[#FF6B35] focus:ring-opacity-30 transition"
-                  onInput={(e) => {
-                    const target = e.target as HTMLInputElement;
-                    if (target.value && i < 5) {
-                      const next = target.nextElementSibling as HTMLInputElement;
-                      next?.focus();
-                    }
-                  }}
-                  onKeyDown={(e) => {
-                    const target = e.target as HTMLInputElement;
-                    if (e.key === 'Backspace' && !target.value && i > 0) {
-                      const prev = target.previousElementSibling as HTMLInputElement;
-                      prev?.focus();
-                    }
-                  }}
-                />
-              ))}
+              {[0, 1, 2, 3, 4, 5].map((i) =>
+              <input
+                key={i}
+                type="text"
+                maxLength={1}
+                className="otp-digit w-12 h-12 text-center text-xl font-bold border-2 border-gray-300 rounded-lg focus:outline-none focus:border-[#FF6B35] focus:ring-2 focus:ring-[#FF6B35] focus:ring-opacity-30 transition"
+                onInput={(e) => {
+                  const target = e.target as HTMLInputElement;
+                  if (target.value && i < 5) {
+                    const next = target.nextElementSibling as HTMLInputElement;
+                    next?.focus();
+                  }
+                }}
+                onKeyDown={(e) => {
+                  const target = e.target as HTMLInputElement;
+                  if (e.key === 'Backspace' && !target.value && i > 0) {
+                    const prev = target.previousElementSibling as HTMLInputElement;
+                    prev?.focus();
+                  }
+                }} />
+
+              )}
             </div>
 
-            {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            {error &&
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
                 <p className="text-red-600 text-sm text-center">{error}</p>
               </div>
-            )}
+            }
 
             <button
               type="submit"
               className="w-full bg-gradient-to-r from-[#FF6B35] to-[#FFA500] hover:opacity-90 text-white font-medium py-3 px-4 rounded-lg transition duration-300 shadow-md hover:shadow-lg mb-4"
-              disabled={loading}
-            >
-              {loading ? (
-                <span className="flex items-center justify-center gap-2">
+              disabled={loading}>
+
+              {loading ?
+              <span className="flex items-center justify-center gap-2">
                   <InfinitySpinner size="sm" />
                   Verifying...
-                </span>
-              ) : (
-                'Verify Email'
-              )}
+                </span> :
+
+              'Verify Email'
+              }
             </button>
 
             <button
               type="button"
               onClick={handleBackToSignUpForm}
               className="w-full text-gray-600 hover:text-gray-800 text-sm font-medium py-2 transition"
-              disabled={loading}
-            >
+              disabled={loading}>
+
               ← Back
             </button>
           </form>
         </div>
-      </div>
-    );
+      </div>);
+
   }
 
   // Signup Complete Step
@@ -348,14 +348,14 @@ const UnifiedAuthPage = () => {
               className="w-12 h-12 text-green-600"
               fill="none"
               stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
+              viewBox="0 0 24 24">
+
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M5 13l4 4L19 7"
-              />
+                d="M5 13l4 4L19 7" />
+
             </svg>
           </div>
           <h2 className="text-2xl font-bold text-gray-800 mb-4">
@@ -370,8 +370,8 @@ const UnifiedAuthPage = () => {
             <InfinitySpinner size="md" />
           </div>
         </div>
-      </div>
-    );
+      </div>);
+
   }
 
   // ============= STEP VALIDATION =============
@@ -402,6 +402,10 @@ const UnifiedAuthPage = () => {
           setError('Pin code is required');
           return false;
         }
+        if (!/^\d{6}$/.test(signUpData.pinCode)) {
+          setError('Pin code must be exactly 6 digits');
+          return false;
+        }
         return true;
       case 3: // Contact Information
         if (!signUpData.email.trim()) {
@@ -421,6 +425,18 @@ const UnifiedAuthPage = () => {
         }
         if (signUpData.password.length < 8) {
           setError('Password must be at least 8 characters');
+          return false;
+        }
+        if (!/[0-9]/.test(signUpData.password)) {
+          setError('Password must contain at least one number');
+          return false;
+        }
+        if (!/[a-zA-Z]/.test(signUpData.password)) {
+          setError('Password must contain at least one letter');
+          return false;
+        }
+        if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(signUpData.password)) {
+          setError('Password must contain at least one symbol (!@#$%^&*...)');
           return false;
         }
         if (signUpData.password !== signUpData.confirmPassword) {
@@ -453,8 +469,8 @@ const UnifiedAuthPage = () => {
         <button
           onClick={() => window.location.href = '#/login'}
           className="Signup-closeButton"
-          title="Close"
-        >
+          title="Close">
+
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
@@ -471,24 +487,24 @@ const UnifiedAuthPage = () => {
 
         {/* Progress Steps */}
         <div className="Signup-progress">
-          {[1, 2, 3, 4].map((step, index) => (
-            <div key={step} className="Signup-progressStep">
+          {[1, 2, 3, 4].map((step, index) =>
+          <div key={step} className="Signup-progressStep">
               <div className={`Signup-progressNumber ${formStep === step ? 'active' : ''} ${formStep > step ? 'completed' : ''}`}>
                 {formStep > step ? '✓' : step}
               </div>
-              {index < 3 && (
-                <div className={`Signup-progressLine ${formStep > step ? 'completed' : ''}`} />
-              )}
+              {index < 3 &&
+            <div className={`Signup-progressLine ${formStep > step ? 'completed' : ''}`} />
+            }
             </div>
-          ))}
+          )}
         </div>
 
         {/* SIGNUP FORM */}
         <form onSubmit={handleSignUp}>
 
           {/* Step 1: Personal Information */}
-          {formStep === 1 && (
-            <div className="Signup-section">
+          {formStep === 1 &&
+          <div className="Signup-section">
               <div className="Signup-sectionHeader">
                 <span className="Signup-sectionNumber">1</span>
                 <h3 className="Signup-sectionTitle">Personal Information</h3>
@@ -498,44 +514,44 @@ const UnifiedAuthPage = () => {
                 <div className="Signup-inputGroup">
                   <label className="Signup-label">First Name *</label>
                   <input
-                    name="firstName"
-                    type="text"
-                    className="Signup-input"
-                    placeholder="First name"
-                    value={signUpData.firstName}
-                    onChange={handleSignUpChange}
-                  />
+                  name="firstName"
+                  type="text"
+                  className="Signup-input"
+                  placeholder="First name"
+                  value={signUpData.firstName}
+                  onChange={handleSignUpChange} />
+
                 </div>
                 <div className="Signup-inputGroup">
                   <label className="Signup-label">Last Name *</label>
                   <input
-                    name="lastName"
-                    type="text"
-                    className="Signup-input"
-                    placeholder="Last name"
-                    value={signUpData.lastName}
-                    onChange={handleSignUpChange}
-                  />
+                  name="lastName"
+                  type="text"
+                  className="Signup-input"
+                  placeholder="Last name"
+                  value={signUpData.lastName}
+                  onChange={handleSignUpChange} />
+
                 </div>
               </div>
 
               <div className="Signup-inputGroup">
                 <label className="Signup-label">Company Name (Optional)</label>
                 <input
-                  name="companyName"
-                  type="text"
-                  className="Signup-input"
-                  placeholder="Company name"
-                  value={signUpData.companyName}
-                  onChange={handleSignUpChange}
-                />
+                name="companyName"
+                type="text"
+                className="Signup-input"
+                placeholder="Company name"
+                value={signUpData.companyName}
+                onChange={handleSignUpChange} />
+
               </div>
 
-              {error && (
-                <div className="Signup-error">
+              {error &&
+            <div className="Signup-error">
                   <p>{error}</p>
                 </div>
-              )}
+            }
 
               <div className="Signup-buttonRow">
                 <button type="button" className="Signup-buttonNext" onClick={handleNextStep}>
@@ -543,11 +559,11 @@ const UnifiedAuthPage = () => {
                 </button>
               </div>
             </div>
-          )}
+          }
 
           {/* Step 2: Address */}
-          {formStep === 2 && (
-            <div className="Signup-section">
+          {formStep === 2 &&
+          <div className="Signup-section">
               <div className="Signup-sectionHeader">
                 <span className="Signup-sectionNumber">2</span>
                 <h3 className="Signup-sectionTitle">Address</h3>
@@ -556,57 +572,99 @@ const UnifiedAuthPage = () => {
               <div className="Signup-inputGroup">
                 <label className="Signup-label">Address Line 1 *</label>
                 <input
-                  name="address1"
-                  type="text"
-                  className="Signup-input"
-                  placeholder="Street address, building, etc."
-                  value={signUpData.address1}
-                  onChange={handleSignUpChange}
-                />
+                name="address1"
+                type="text"
+                className="Signup-input"
+                placeholder="Street address, building, etc."
+                value={signUpData.address1}
+                onChange={handleSignUpChange} />
+
               </div>
 
               <div className="Signup-inputGroup">
                 <label className="Signup-label">Address Line 2</label>
                 <input
-                  name="address2"
-                  type="text"
-                  className="Signup-input"
-                  placeholder="Apartment, suite, unit, etc."
-                  value={signUpData.address2}
-                  onChange={handleSignUpChange}
-                />
+                name="address2"
+                type="text"
+                className="Signup-input"
+                placeholder="Apartment, suite, unit, etc."
+                value={signUpData.address2}
+                onChange={handleSignUpChange} />
+
               </div>
 
               <div className="Signup-inputRow">
                 <div className="Signup-inputGroup">
                   <label className="Signup-label">State *</label>
-                  <input
-                    name="state"
-                    type="text"
-                    className="Signup-input"
-                    placeholder="Maharashtra"
-                    value={signUpData.state}
-                    onChange={handleSignUpChange}
-                  />
+                  <select
+                  name="state"
+                  className="Signup-input"
+                  value={signUpData.state}
+                  onChange={handleSignUpChange}>
+
+                    <option value="">Select State</option>
+                    <option value="Andhra Pradesh">Andhra Pradesh</option>
+                    <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+                    <option value="Assam">Assam</option>
+                    <option value="Bihar">Bihar</option>
+                    <option value="Chhattisgarh">Chhattisgarh</option>
+                    <option value="Goa">Goa</option>
+                    <option value="Gujarat">Gujarat</option>
+                    <option value="Haryana">Haryana</option>
+                    <option value="Himachal Pradesh">Himachal Pradesh</option>
+                    <option value="Jharkhand">Jharkhand</option>
+                    <option value="Karnataka">Karnataka</option>
+                    <option value="Kerala">Kerala</option>
+                    <option value="Madhya Pradesh">Madhya Pradesh</option>
+                    <option value="Maharashtra">Maharashtra</option>
+                    <option value="Manipur">Manipur</option>
+                    <option value="Meghalaya">Meghalaya</option>
+                    <option value="Mizoram">Mizoram</option>
+                    <option value="Nagaland">Nagaland</option>
+                    <option value="Odisha">Odisha</option>
+                    <option value="Punjab">Punjab</option>
+                    <option value="Rajasthan">Rajasthan</option>
+                    <option value="Sikkim">Sikkim</option>
+                    <option value="Tamil Nadu">Tamil Nadu</option>
+                    <option value="Telangana">Telangana</option>
+                    <option value="Tripura">Tripura</option>
+                    <option value="Uttar Pradesh">Uttar Pradesh</option>
+                    <option value="Uttarakhand">Uttarakhand</option>
+                    <option value="West Bengal">West Bengal</option>
+                    <option value="Andaman and Nicobar Islands">Andaman and Nicobar Islands</option>
+                    <option value="Chandigarh">Chandigarh</option>
+                    <option value="Dadra and Nagar Haveli and Daman and Diu">Dadra and Nagar Haveli and Daman and Diu</option>
+                    <option value="Delhi">Delhi</option>
+                    <option value="Jammu and Kashmir">Jammu and Kashmir</option>
+                    <option value="Ladakh">Ladakh</option>
+                    <option value="Lakshadweep">Lakshadweep</option>
+                    <option value="Puducherry">Puducherry</option>
+                  </select>
                 </div>
                 <div className="Signup-inputGroup">
                   <label className="Signup-label">Pin Code *</label>
                   <input
-                    name="pinCode"
-                    type="text"
-                    className="Signup-input"
-                    placeholder="400001"
-                    value={signUpData.pinCode}
-                    onChange={handleSignUpChange}
-                  />
+                  name="pinCode"
+                  type="text"
+                  className="Signup-input"
+                  placeholder="400001"
+                  value={signUpData.pinCode}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                    handleSignUpChange({ target: { name: 'pinCode', value } } as any);
+                  }}
+                  maxLength={6}
+                  pattern="[0-9]{6}"
+                  inputMode="numeric" />
+
                 </div>
               </div>
 
-              {error && (
-                <div className="Signup-error">
+              {error &&
+            <div className="Signup-error">
                   <p>{error}</p>
                 </div>
-              )}
+            }
 
               <div className="Signup-buttonRow">
                 <button type="button" className="Signup-buttonBack" onClick={handlePrevStep}>
@@ -617,11 +675,11 @@ const UnifiedAuthPage = () => {
                 </button>
               </div>
             </div>
-          )}
+          }
 
           {/* Step 3: Contact Information */}
-          {formStep === 3 && (
-            <div className="Signup-section">
+          {formStep === 3 &&
+          <div className="Signup-section">
               <div className="Signup-sectionHeader">
                 <span className="Signup-sectionNumber">3</span>
                 <h3 className="Signup-sectionTitle">Contact Information</h3>
@@ -630,37 +688,37 @@ const UnifiedAuthPage = () => {
               <div className="Signup-inputGroup">
                 <label className="Signup-label">Email *</label>
                 <input
-                  name="email"
-                  type="email"
-                  className="Signup-input"
-                  placeholder="your@email.com"
-                  value={signUpData.email}
-                  onChange={handleSignUpChange}
-                />
+                name="email"
+                type="email"
+                className="Signup-input"
+                placeholder="your@email.com"
+                value={signUpData.email}
+                onChange={handleSignUpChange} />
+
               </div>
 
               <div className="Signup-inputRow">
                 <div className="Signup-inputGroup">
                   <label className="Signup-label">Phone Number (Optional)</label>
                   <input
-                    name="phone1"
-                    type="tel"
-                    className="Signup-input"
-                    placeholder="+91 9876543210"
-                    value={signUpData.phone1}
-                    onChange={handleSignUpChange}
-                  />
+                  name="phone1"
+                  type="tel"
+                  className="Signup-input"
+                  placeholder="+91 9876543210"
+                  value={signUpData.phone1}
+                  onChange={handleSignUpChange} />
+
                 </div>
                 <div className="Signup-inputGroup">
                   <label className="Signup-label">WhatsApp (Optional)</label>
                   <input
-                    name="whatsapp"
-                    type="tel"
-                    className="Signup-input"
-                    placeholder="+91 9876543210"
-                    value={signUpData.whatsapp}
-                    onChange={handleSignUpChange}
-                  />
+                  name="whatsapp"
+                  type="tel"
+                  className="Signup-input"
+                  placeholder="+91 9876543210"
+                  value={signUpData.whatsapp}
+                  onChange={handleSignUpChange} />
+
                 </div>
               </div>
 
@@ -669,38 +727,38 @@ const UnifiedAuthPage = () => {
                 <p className="Signup-checkboxTitle">Marketing Permissions (Optional)</p>
                 <label className="Signup-checkbox">
                   <input
-                    type="checkbox"
-                    name="marketingWhatsApp"
-                    checked={signUpData.marketingWhatsApp}
-                    onChange={handleSignUpChange}
-                  />
+                  type="checkbox"
+                  name="marketingWhatsApp"
+                  checked={signUpData.marketingWhatsApp}
+                  onChange={handleSignUpChange} />
+
                   <span>Send me marketing messages via SMS/WhatsApp</span>
                 </label>
                 <label className="Signup-checkbox">
                   <input
-                    type="checkbox"
-                    name="marketingSMS"
-                    checked={signUpData.marketingSMS}
-                    onChange={handleSignUpChange}
-                  />
+                  type="checkbox"
+                  name="marketingSMS"
+                  checked={signUpData.marketingSMS}
+                  onChange={handleSignUpChange} />
+
                   <span>Send me marketing SMS messages</span>
                 </label>
                 <label className="Signup-checkbox">
                   <input
-                    type="checkbox"
-                    name="marketingEmail"
-                    checked={signUpData.marketingEmail}
-                    onChange={handleSignUpChange}
-                  />
+                  type="checkbox"
+                  name="marketingEmail"
+                  checked={signUpData.marketingEmail}
+                  onChange={handleSignUpChange} />
+
                   <span>Send me marketing emails</span>
                 </label>
               </div>
 
-              {error && (
-                <div className="Signup-error">
+              {error &&
+            <div className="Signup-error">
                   <p>{error}</p>
                 </div>
-              )}
+            }
 
               <div className="Signup-buttonRow">
                 <button type="button" className="Signup-buttonBack" onClick={handlePrevStep}>
@@ -711,11 +769,11 @@ const UnifiedAuthPage = () => {
                 </button>
               </div>
             </div>
-          )}
+          }
 
           {/* Step 4: Security */}
-          {formStep === 4 && (
-            <div className="Signup-section">
+          {formStep === 4 &&
+          <div className="Signup-section">
               <div className="Signup-sectionHeader">
                 <span className="Signup-sectionNumber">4</span>
                 <h3 className="Signup-sectionTitle">Security</h3>
@@ -725,50 +783,89 @@ const UnifiedAuthPage = () => {
                 <div className="Signup-inputGroup">
                   <label className="Signup-label">Password *</label>
                   <input
-                    name="password"
-                    type="password"
-                    className="Signup-input"
-                    placeholder="Your password"
-                    value={signUpData.password}
-                    onChange={handleSignUpChange}
-                  />
+                  name="password"
+                  type="password"
+                  className="Signup-input"
+                  placeholder="Your password"
+                  value={signUpData.password}
+                  onChange={handleSignUpChange} />
+
                 </div>
                 <div className="Signup-inputGroup">
                   <label className="Signup-label">Confirm Password *</label>
                   <input
-                    name="confirmPassword"
-                    type="password"
-                    className="Signup-input"
-                    placeholder="Confirm password"
-                    value={signUpData.confirmPassword}
-                    onChange={handleSignUpChange}
-                  />
+                  name="confirmPassword"
+                  type="password"
+                  className="Signup-input"
+                  placeholder="Confirm password"
+                  value={signUpData.confirmPassword}
+                  onChange={handleSignUpChange} />
+
                 </div>
               </div>
 
-              {error && (
-                <div className="Signup-error">
+              {/* Password Requirements */}
+              <div style={{ marginTop: '12px', padding: '12px', backgroundColor: '#f8f9fa', borderRadius: '8px', fontSize: '13px' }}>
+                <p style={{ fontWeight: '600', marginBottom: '8px', color: '#495057' }}>Password must contain:</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ color: /[0-9]/.test(signUpData.password) ? '#28a745' : '#6c757d' }}>
+                      {/[0-9]/.test(signUpData.password) ? '✓' : '○'}
+                    </span>
+                    <span style={{ color: /[0-9]/.test(signUpData.password) ? '#28a745' : '#6c757d' }}>
+                      At least one number (0-9)
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ color: /[a-zA-Z]/.test(signUpData.password) ? '#28a745' : '#6c757d' }}>
+                      {/[a-zA-Z]/.test(signUpData.password) ? '✓' : '○'}
+                    </span>
+                    <span style={{ color: /[a-zA-Z]/.test(signUpData.password) ? '#28a745' : '#6c757d' }}>
+                      At least one letter (a-z, A-Z)
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ color: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(signUpData.password) ? '#28a745' : '#6c757d' }}>
+                      {/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(signUpData.password) ? '✓' : '○'}
+                    </span>
+                    <span style={{ color: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(signUpData.password) ? '#28a745' : '#6c757d' }}>
+                      At least one symbol (!@#$%^&*...)
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ color: signUpData.password.length >= 8 ? '#28a745' : '#6c757d' }}>
+                      {signUpData.password.length >= 8 ? '✓' : '○'}
+                    </span>
+                    <span style={{ color: signUpData.password.length >= 8 ? '#28a745' : '#6c757d' }}>
+                      Minimum 8 characters
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {error &&
+            <div className="Signup-error">
                   <p>{error}</p>
                 </div>
-              )}
+            }
 
               <div className="Signup-buttonRow">
                 <button type="button" className="Signup-buttonBack" onClick={handlePrevStep}>
                   Back
                 </button>
                 <button
-                  type="submit"
-                  className="Signup-buttonSubmit"
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <span className="Signup-loading">
+                type="submit"
+                className="Signup-buttonSubmit"
+                disabled={loading}>
+
+                  {loading ?
+                <span className="Signup-loading">
                       <InfinitySpinner size="sm" />
                       Creating Account...
-                    </span>
-                  ) : (
-                    'Create Account'
-                  )}
+                    </span> :
+
+                'Create Account'
+                }
                 </button>
               </div>
 
@@ -776,11 +873,11 @@ const UnifiedAuthPage = () => {
                 <p>Email verification will be required</p>
               </div>
             </div>
-          )}
+          }
         </form>
       </div>
-    </div>
-  );
+    </div>);
+
 };
 
 export default UnifiedAuthPage;

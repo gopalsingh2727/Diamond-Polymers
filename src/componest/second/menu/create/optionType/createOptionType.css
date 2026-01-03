@@ -160,6 +160,125 @@
   color: #9ca3af;
 }
 
+/* Inventory Toggle */
+.createOptionType-inventoryToggle {
+  padding: 16px;
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border: 1px solid #10b981;
+  border-radius: 8px;
+  margin-top: 8px;
+}
+
+.createOptionType-inventoryLabel {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.createOptionType-inventoryLabel input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: #10b981;
+}
+
+.createOptionType-inventoryText {
+  font-weight: 600;
+  color: #065f46;
+}
+
+.createOptionType-inventoryHint {
+  margin: 8px 0 0 32px;
+  font-size: 12px;
+  color: #047857;
+  line-height: 1.4;
+}
+
+/* Inventory Units Section */
+.createOptionType-inventoryUnitsSection {
+  margin-top: 16px;
+  padding: 16px;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border: 1px solid #3b82f6;
+  border-radius: 8px;
+}
+
+.createOptionType-inventoryUnitsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.createOptionType-inventoryUnitItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.createOptionType-inventoryUnitItem:hover {
+  border-color: #3b82f6;
+  background: #f0f9ff;
+}
+
+.createOptionType-inventoryUnitItem input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #3b82f6;
+}
+
+.createOptionType-unitName {
+  font-weight: 500;
+  color: #1f2937;
+  font-size: 13px;
+}
+
+.createOptionType-unitSymbol {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.createOptionType-primaryUnit {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #bfdbfe;
+}
+
+.createOptionType-noUnits {
+  text-align: center;
+  padding: 16px;
+}
+
+.createOptionType-noUnits p {
+  margin-bottom: 12px;
+  color: #6b7280;
+}
+
+.createOptionType-seedButton {
+  padding: 10px 20px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.2s ease;
+}
+
+.createOptionType-seedButton:hover {
+  background: #2563eb;
+}
+
 /* Specifications Header */
 .createOptionType-specsHeader {
   display: flex;
@@ -357,6 +476,98 @@
   background: #dc2626;
 }
 
+/* Excel Import/Export Section */
+.createOptionType-excelSection {
+  margin-top: 20px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border: 2px solid #0ea5e9;
+  border-radius: 10px;
+}
+
+.createOptionType-excelButtons {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.createOptionType-downloadButton {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.createOptionType-downloadButton:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.createOptionType-uploadButton {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.createOptionType-uploadButton:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.createOptionType-importingMessage {
+  padding: 12px 16px;
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 6px;
+  color: #92400e;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.createOptionType-excelHint {
+  margin: 12px 0 0 0;
+  font-size: 13px;
+  color: #0c4a6e;
+  line-height: 1.6;
+  font-weight: 500;
+}
+
 /* Form Actions */
 .createOptionType-formActions {
   display: flex;
@@ -477,6 +688,20 @@
   .createOptionType-unitSelect {
     width: 100%;
     flex: none;
+  }
+
+  .createOptionType-excelSection {
+    padding: 16px;
+  }
+
+  .createOptionType-excelButtons {
+    flex-direction: column;
+  }
+
+  .createOptionType-downloadButton,
+  .createOptionType-uploadButton {
+    width: 100%;
+    justify-content: center;
   }
 }
 

@@ -1,12 +1,14 @@
 /**
  * EditOptionTypeListOnly - LIST ONLY
- * Click → Goes to CreateOptionType for editing
+ * Click -> Goes to CreateOptionType for editing
  */
 import React, { useState, useCallback, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getOptionTypes } from "../../../../redux/option/optionTypeActions";
 import { RootState } from "../../../../redux/rootReducer";
 import { AppDispatch } from "../../../../../store";
+import { useCRUD } from "../../../../../hooks/useCRUD";
+import { ToastContainer } from "../../../../../components/shared/Toast";
 
 interface OptionType {
   _id: string;
@@ -22,7 +24,12 @@ interface Props {
 
 const EditOptionTypeListOnly: React.FC<Props> = ({ onEdit }) => {
   const dispatch = useDispatch<AppDispatch>();
-  const { optionTypes = [], loading, error } = useSelector((state: RootState) => state.optionType || {});
+  const optionTypeState = useSelector((state: RootState) => state.v2.optionType);
+  const rawOptionTypes = optionTypeState?.list;
+  const optionTypes = Array.isArray(rawOptionTypes) ? rawOptionTypes : [];
+  const loading = optionTypeState?.loading;
+  const error = optionTypeState?.error;
+  const { toast } = useCRUD();
 
   // Fetch option types on mount
   useEffect(() => {
@@ -62,6 +69,13 @@ const EditOptionTypeListOnly: React.FC<Props> = ({ onEdit }) => {
 
   useEffect(() => { setSelectedRow(0); }, [searchTerm]);
 
+  // Show error via toast if any
+  useEffect(() => {
+    if (error) {
+      toast.error('Error', error);
+    }
+  }, [error, toast]);
+
   if (loading) return <p className="loadingAndError">Loading...</p>;
   if (error) return <p className="loadingAndError" style={{ color: "red" }}>{error}</p>;
 
@@ -77,8 +91,8 @@ const EditOptionTypeListOnly: React.FC<Props> = ({ onEdit }) => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-            <span className="editsectionsTable-searchIcon">🔍</span>
-            {searchTerm && <button onClick={() => setSearchTerm("")} className="editsectionsTable-clearButton">✕</button>}
+            <span className="editsectionsTable-searchIcon">&#128269;</span>
+            {searchTerm && <button onClick={() => setSearchTerm("")} className="editsectionsTable-clearButton">&#10005;</button>}
           </div>
           <div className="editsectionsTable-countBadge">{filteredItems.length} types</div>
         </div>
@@ -114,6 +128,7 @@ const EditOptionTypeListOnly: React.FC<Props> = ({ onEdit }) => {
           <div className="editsectionsTable-empty">No option types found</div>
         )}
       </div>
+      <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
     </div>
   );
 };

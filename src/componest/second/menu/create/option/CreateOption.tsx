@@ -5,6 +5,11 @@ import { getOptionTypes } from '../../../../redux/option/optionTypeActions';
 import { RootState } from '../../../../redux/rootReducer';
 import { AppDispatch } from '../../../../../store';
 import { Parser } from 'expr-eval';
+import { useCRUD } from '../../../../../hooks/useCRUD';
+import { ToastContainer } from '../../../../../components/shared/Toast';
+import ImportProgressPopup from '../../../../../components/shared/ImportProgressPopup';
+import ImportAccountPopup from '../../../../../components/shared/ImportAccountPopup';
+import * as XLSX from 'xlsx';
 import './createOption.css';
 
 // Dimension data type - only string and number
@@ -25,7 +30,7 @@ interface CreateOptionProps {
     _id: string;
     name: string;
     optionTypeId?: string;
-    optionType?: { _id: string; name: string };
+    optionType?: {_id: string;name: string;};
     dimensions?: Dimension[];
   };
   onCancel?: () => void;
@@ -42,7 +47,7 @@ const evaluateTotalFormula = (formula: string, values: number[]): number | strin
 
   try {
     // Extract only numeric values
-    const numericValues = values.filter(v => typeof v === 'number' && !isNaN(v));
+    const numericValues = values.filter((v) => typeof v === 'number' && !isNaN(v));
 
     if (numericValues.length === 0) {
       return '-';
@@ -105,32 +110,55 @@ const evaluateTotalFormula = (formula: string, values: number[]): number | strin
 const CreateOption: React.FC<CreateOptionProps> = ({ initialData, onCancel, onSaveSuccess }) => {
   const isEditMode = !!initialData;
   const dispatch = useDispatch<AppDispatch>();
+  const { handleSave, handleDelete: crudDelete, saveState, deleteState, confirmDialog, closeConfirmDialog, toast } = useCRUD();
 
-  const { optionTypes, loading: optionTypesLoading } = useSelector((state: RootState) => state.optionType);
+  const optionTypeState = useSelector((state: RootState) => state.v2.optionType);
+  const rawOptionTypes = optionTypeState?.list;
+  const optionTypes = Array.isArray(rawOptionTypes) ? rawOptionTypes : [];
+  const optionTypesLoading = optionTypeState?.loading;
+
+  // Get selected branch to refetch when it changes
+  const selectedBranch = useSelector((state: RootState) => state.auth?.userData?.selectedBranch);
 
   const [name, setName] = useState('');
   const [optionTypeId, setOptionTypeId] = useState('');
-  const [loading, setLoading] = useState(false);
   const [dimensions, setDimensions] = useState<Dimension[]>([]);
 
   // State for Option Type specifications display and formula support
-  const [optionTypeSpecsData, setOptionTypeSpecsData] = useState<{ name: string; defaultValue: number; unit?: string }[]>([]);
+  const [optionTypeSpecsData, setOptionTypeSpecsData] = useState<{name: string;defaultValue: number;unit?: string;}[]>([]);
   const [activeFormulaIndex, setActiveFormulaIndex] = useState<number | null>(null);
+
+  // Excel import state
+  const [showImportPopup, setShowImportPopup] = useState(false);
+  const [bulkImporting, setBulkImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState({
+    current: 0,
+    total: 0,
+    success: 0,
+    failed: 0,
+    percentage: 0,
+  });
+  const [importSummary, setImportSummary] = useState<{
+    total: number;
+    success: number;
+    failed: number;
+    errors: string[];
+  } | null>(null);
 
   // Add new dimension
   const addDimension = () => {
     setDimensions([
-      ...dimensions,
-      {
-        name: '',
-        value: '',
-        unit: '',
-        dataType: 'string',
-        visible: true,
-        formula: '',
-        isCalculated: false,
-      },
-    ]);
+    ...dimensions,
+    {
+      name: '',
+      value: '',
+      unit: '',
+      dataType: 'string',
+      visible: true,
+      formula: '',
+      isCalculated: false
+    }]
+    );
   };
 
   // Helper function to check if a formula is empty or just whitespace
@@ -185,28 +213,28 @@ const CreateOption: React.FC<CreateOptionProps> = ({ initialData, onCancel, onSa
         if (!hasValidFormula(dim.formula)) {
           const numValue = Number(dim.value) || 0;
           addToContext(dim.name, numValue);
-          console.log(`📊 Added to context: ${dim.name} = ${numValue}`);
+
         }
       }
     });
 
-    console.log('🧮 Formula context:', context);
+
 
     // Second pass: evaluate formulas (e.g., wastage = calculation - OT_purity)
     return dims.map((dim) => {
       if (hasValidFormula(dim.formula) && dim.dataType === 'number') {
         try {
-          console.log(`🧮 Evaluating formula for ${dim.name}: ${dim.formula}`);
+
           const expression = parser.parse(dim.formula);
           const result = expression.evaluate(context);
-          console.log(`🧮 Result: ${result}`);
+
           dim.value = result;
           dim.isCalculated = true;
           // Add result to context for dependent formulas (chained calculations)
           addToContext(dim.name, result);
         } catch (error) {
-          console.error(`❌ Formula evaluation error for ${dim.name}:`, error);
-          console.error('Context was:', context);
+
+
           dim.isCalculated = false;
         }
       }
@@ -230,14 +258,14 @@ const CreateOption: React.FC<CreateOptionProps> = ({ initialData, onCancel, onSa
       const evaluated = evaluateDimensionFormulas(updated);
       setDimensions(evaluated);
     } catch (error) {
-      console.error('Error evaluating formula after insert:', error);
+
       setDimensions(updated);
     }
   };
 
   // Update dimension field
   const updateDimension = (index: number, field: keyof Dimension, value: any) => {
-    console.log(`🔄 updateDimension called: index=${index}, field=${field}, value=${value}`);
+
 
     const updated = [...dimensions];
     updated[index] = { ...updated[index], [field]: value };
@@ -256,12 +284,12 @@ const CreateOption: React.FC<CreateOptionProps> = ({ initialData, onCancel, onSa
 
     // Re-evaluate all formulas when any dimension changes (value, name, formula, etc.)
     // This ensures that if CALCULATION changes from 103 to 110, the formula CALCULATION - OT_PURITY recalculates
-    console.log('🔄 Re-evaluating all formulas after dimension change...');
+
     try {
       const evaluated = evaluateDimensionFormulas(updated);
       setDimensions(evaluated);
     } catch (error) {
-      console.error('❌ Error during formula evaluation:', error);
+
       // If evaluation fails, just update without evaluation
       setDimensions(updated);
     }
@@ -274,7 +302,7 @@ const CreateOption: React.FC<CreateOptionProps> = ({ initialData, onCancel, onSa
 
   useEffect(() => {
     dispatch(getOptionTypes({}));
-  }, [dispatch]);
+  }, [dispatch, selectedBranch]);
 
   useEffect(() => {
     if (initialData) {
@@ -286,10 +314,10 @@ const CreateOption: React.FC<CreateOptionProps> = ({ initialData, onCancel, onSa
           name: dim.name || '',
           value: dim.value || '',
           unit: dim.unit || '',
-          dataType: (dim.dataType === 'string' || dim.dataType === 'number') ? dim.dataType : 'string',
+          dataType: dim.dataType === 'string' || dim.dataType === 'number' ? dim.dataType : 'string',
           visible: dim.visible !== false,
           formula: dim.formula || '',
-          isCalculated: dim.isCalculated || false,
+          isCalculated: dim.isCalculated || false
         })));
       }
     }
@@ -301,19 +329,19 @@ const CreateOption: React.FC<CreateOptionProps> = ({ initialData, onCancel, onSa
       const selectedType = optionTypes.find((ot: any) => ot._id === optionTypeId);
       const templateData = selectedType?.specificationTemplate || selectedType?.specifications || [];
       if (templateData.length > 0) {
-        const specsData = templateData
-          .filter((spec: any) => {
-            if (spec.dataType === 'number') return true;
-            const val = spec.defaultValue;
-            if (typeof val === 'number' && !isNaN(val)) return true;
-            if (typeof val === 'string' && val.trim() !== '' && !isNaN(Number(val))) return true;
-            return false;
-          })
-          .map((spec: any) => ({
-            name: spec.name,
-            defaultValue: Number(spec.defaultValue) || 0,
-            unit: spec.unit || ''
-          }));
+        const specsData = templateData.
+        filter((spec: any) => {
+          if (spec.dataType === 'number') return true;
+          const val = spec.defaultValue;
+          if (typeof val === 'number' && !isNaN(val)) return true;
+          if (typeof val === 'string' && val.trim() !== '' && !isNaN(Number(val))) return true;
+          return false;
+        }).
+        map((spec: any) => ({
+          name: spec.name,
+          defaultValue: Number(spec.defaultValue) || 0,
+          unit: spec.unit || ''
+        }));
         setOptionTypeSpecsData(specsData);
       } else {
         setOptionTypeSpecsData([]);
@@ -327,14 +355,14 @@ const CreateOption: React.FC<CreateOptionProps> = ({ initialData, onCancel, onSa
   useEffect(() => {
     if (optionTypeSpecsData.length > 0 && dimensions.length > 0) {
       // Check if any dimension has a formula that uses OT_ variables
-      const hasOTFormulas = dimensions.some(dim => dim.formula && dim.formula.includes('OT_'));
+      const hasOTFormulas = dimensions.some((dim) => dim.formula && dim.formula.includes('OT_'));
       if (hasOTFormulas) {
-        console.log('🔄 Re-evaluating formulas with new Option Type specs:', optionTypeSpecsData);
+
         try {
           const evaluated = evaluateDimensionFormulas([...dimensions]);
           setDimensions(evaluated);
         } catch (error) {
-          console.error('Error re-evaluating formulas:', error);
+
         }
       }
     }
@@ -348,20 +376,20 @@ const CreateOption: React.FC<CreateOptionProps> = ({ initialData, onCancel, onSa
       const templateData = selectedType?.specificationTemplate || selectedType?.specifications || [];
 
       if (selectedType && templateData.length > 0) {
-        console.log('📋 Loading specifications template from OptionType:', selectedType.name);
-        console.log('📋 Template data:', templateData);
+
+
 
         // Load template dimensions with values from OptionType specifications including formula fields
         const templateSpecs: Dimension[] = templateData.map((tmpl: any) => ({
           name: tmpl.name || '',
           value: tmpl.defaultValue || '',
           unit: tmpl.unit || '',
-          dataType: (tmpl.dataType === 'string' || tmpl.dataType === 'number') ? tmpl.dataType : 'string',
+          dataType: tmpl.dataType === 'string' || tmpl.dataType === 'number' ? tmpl.dataType : 'string',
           // Load visibility flag from Option Type specifications
           visible: tmpl.visible !== false,
           // Load formula fields
           formula: tmpl.formula || '',
-          isCalculated: tmpl.isCalculated || false,
+          isCalculated: tmpl.isCalculated || false
         }));
 
         setDimensions(templateSpecs);
@@ -375,64 +403,362 @@ const CreateOption: React.FC<CreateOptionProps> = ({ initialData, onCancel, onSa
 
   const handleSubmit = async () => {
     if (!name || !optionTypeId) {
-      alert('Option Type and Option Name are required');
+      toast.error('Validation Error', 'Option Type and Option Name are required');
       return;
     }
 
-    setLoading(true);
+    const branchId = localStorage.getItem('selectedBranch') || '';
+    // Filter out empty dimensions
+    const validDimensions = dimensions.filter((dim) => dim.name && dim.name.trim() !== '');
+    const optionData: any = { name, optionTypeId, branchId, dimensions: validDimensions };
 
-    try {
-      const branchId = localStorage.getItem('branchId') || '';
-      // Filter out empty dimensions
-      const validDimensions = dimensions.filter(dim => dim.name && dim.name.trim() !== '');
-      const optionData: any = { name, optionTypeId, branchId, dimensions: validDimensions };
-
+    const saveAction = async () => {
       if (isEditMode) {
-        await dispatch(updateOption(initialData!._id, optionData) as any);
-        alert('Option updated!');
+        return dispatch(updateOption(initialData!._id, optionData) as any);
       } else {
-        await dispatch(createOption(optionData));
-        alert('Option created!');
+        return dispatch(createOption(optionData));
       }
+    };
 
-      setName('');
-      setOptionTypeId('');
-      setDimensions([]);
-      if (onSaveSuccess) onSaveSuccess();
-    } catch (err: any) {
-      alert(err.message || 'Failed to save option');
-    } finally {
-      setLoading(false);
-    }
+    handleSave(saveAction, {
+      successMessage: isEditMode ? 'Option updated successfully' : 'Option created successfully',
+      onSuccess: () => {
+        setName('');
+        setOptionTypeId('');
+        setDimensions([]);
+        if (onSaveSuccess) {
+          setTimeout(() => {
+            onSaveSuccess();
+          }, 1500);
+        }
+      }
+    });
   };
 
-  const handleDelete = async () => {
+  const handleDeleteClick = () => {
     if (!isEditMode || !initialData) return;
-    if (!window.confirm("Delete this option?")) return;
+
+    crudDelete(
+      () => dispatch(deleteOption(initialData._id) as any),
+      {
+        successMessage: 'Option deleted successfully',
+        confirmMessage: 'Are you sure you want to delete this option? This action cannot be undone.',
+        confirmTitle: 'Delete Option',
+        onSuccess: () => {
+          // Delay navigation to show toast
+          setTimeout(() => {
+            if (onSaveSuccess) onSaveSuccess();
+          }, 1500);
+        }
+      }
+    );
+  };
+
+  // Excel import functions
+  const downloadExcelTemplate = () => {
+    const instructions = [
+      ['Option Bulk Import Template'],
+      [''],
+      ['INSTRUCTIONS:'],
+      ['1. Maximum 50 options per import'],
+      ['2. Required fields are marked with * in column headers'],
+      ['3. Delete the example rows before adding your data'],
+      ['4. Option Type Name must exactly match an existing option type'],
+      [''],
+      ['FIELD DESCRIPTIONS:'],
+      [''],
+      ['Option Name * - Required. Name of the option (e.g., "Red", "Large", "Premium")'],
+      ['Option Type Name * - Required. Must match existing option type name (e.g., "Color", "Size", "Quality")'],
+    ];
+
+    const templateData = [
+      {
+        'Option Name *': 'Red',
+        'Option Type Name *': 'Color'
+      },
+      {
+        'Option Name *': 'Large',
+        'Option Type Name *': 'Size'
+      },
+    ];
+
+    const wb = XLSX.utils.book_new();
+    const wsInstructions = XLSX.utils.aoa_to_sheet(instructions);
+    XLSX.utils.book_append_sheet(wb, wsInstructions, 'Instructions');
+    const wsTemplate = XLSX.utils.json_to_sheet(templateData);
+    XLSX.utils.book_append_sheet(wb, wsTemplate, 'Template');
+    XLSX.writeFile(wb, 'Option_Import_Template.xlsx');
+
+    toast.addToast({
+      type: 'success',
+      title: 'Success',
+      message: 'Template downloaded successfully',
+    });
+  };
+
+  const handleExcelImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
     try {
-      await dispatch(deleteOption(initialData._id) as any);
-      alert('Option deleted');
-      if (onSaveSuccess) onSaveSuccess();
-    } catch {
-      alert('Failed to delete');
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data);
+
+      if (!workbook.Sheets['Template']) {
+        toast.addToast({
+          type: 'error',
+          title: 'Import Error',
+          message: 'Template sheet not found. Please use the downloaded template.',
+        });
+        return;
+      }
+
+      const worksheet = workbook.Sheets['Template'];
+      let jsonData: any[] = XLSX.utils.sheet_to_json(worksheet);
+
+      if (jsonData.length === 0) {
+        toast.addToast({
+          type: 'error',
+          title: 'Import Error',
+          message: 'No data found in Template sheet',
+        });
+        return;
+      }
+
+      if (jsonData.length > 50) {
+        toast.addToast({
+          type: 'warning',
+          title: 'Import Limit',
+          message: `Limiting import to first 50 options (found ${jsonData.length})`,
+        });
+        jsonData = jsonData.slice(0, 50);
+      }
+
+      const validationErrors: string[] = [];
+      const processedData: any[] = [];
+      const branchId = localStorage.getItem('selectedBranch') || "";
+
+      jsonData.forEach((row, index) => {
+        const rowNum = index + 2;
+        const errors: string[] = [];
+
+        const optionName = row['Option Name *']?.toString().trim();
+        if (!optionName) {
+          errors.push(`Row ${rowNum}: Missing Option Name`);
+        }
+
+        const optionTypeName = row['Option Type Name *']?.toString().trim();
+        let optionTypeId = '';
+        if (!optionTypeName) {
+          errors.push(`Row ${rowNum}: Missing Option Type Name`);
+        } else {
+          const optionType = optionTypes.find(
+            (ot: any) => ot.name.toLowerCase() === optionTypeName.toLowerCase()
+          );
+          if (!optionType) {
+            errors.push(`Row ${rowNum}: Option Type "${optionTypeName}" not found`);
+          } else {
+            optionTypeId = optionType._id;
+          }
+        }
+
+        if (errors.length === 0) {
+          processedData.push({
+            name: optionName,
+            optionTypeId,
+            branchId,
+            dimensions: []
+          });
+        } else {
+          validationErrors.push(...errors);
+        }
+      });
+
+      const validCount = processedData.length;
+      const errorCount = validationErrors.length;
+
+      const confirmMessage =
+        `Ready to import ${validCount} options.\n` +
+        (errorCount > 0 ? `${errorCount} validation issues found (see console for details).\n` : '') +
+        '\nProceed with import?';
+
+      if (errorCount > 0) {
+        console.warn('Import Validation Errors:', validationErrors);
+      }
+
+      const confirmed = window.confirm(confirmMessage);
+      if (!confirmed) {
+        return;
+      }
+
+      setBulkImporting(true);
+      let successCount = 0;
+      let failCount = 0;
+      const importErrors: string[] = [];
+
+      for (let i = 0; i < processedData.length; i++) {
+        const optionData = processedData[i];
+
+        setImportProgress({
+          current: i + 1,
+          total: processedData.length,
+          success: successCount,
+          failed: failCount,
+          percentage: Math.round(((i + 1) / processedData.length) * 100),
+        });
+
+        try {
+          await dispatch(createOption(optionData) as any);
+          successCount++;
+        } catch (error: any) {
+          failCount++;
+          const errorMsg = error.response?.data?.message || error.message || 'Unknown error';
+          importErrors.push(
+            `Row ${i + 2} (${optionData.name}): ${errorMsg}`
+          );
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      }
+
+      setBulkImporting(false);
+
+      setImportSummary({
+        total: processedData.length,
+        success: successCount,
+        failed: failCount,
+        errors: importErrors,
+      });
+
+      if (successCount > 0) {
+        toast.addToast({
+          type: 'success',
+          title: 'Import Complete',
+          message: `Successfully imported ${successCount} option(s)`,
+        });
+      }
+    } catch (error: any) {
+      console.error('Excel import error:', error);
+      toast.addToast({
+        type: 'error',
+        title: 'Import Failed',
+        message: `Failed to import Excel file: ${error.message}`,
+      });
+      setBulkImporting(false);
     }
   };
 
   return (
     <div className="createOption-container">
+      {/* Delete Confirmation Modal */}
+      {confirmDialog.isOpen &&
+      <div
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: "rgba(0,0,0,0.5)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 1000
+        }}>
+
+          <div
+          style={{
+            background: "white",
+            padding: "24px",
+            borderRadius: "12px",
+            maxWidth: "400px",
+            width: "90%",
+            textAlign: "center"
+          }}>
+
+            <h3 style={{ margin: "0 0 8px 0", color: "#1f2937" }}>{confirmDialog.title}</h3>
+            <p style={{ color: "#6b7280", marginBottom: "24px" }}>
+              {confirmDialog.message}
+            </p>
+            <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
+              <button
+              type="button"
+              onClick={closeConfirmDialog}
+              style={{
+                padding: "10px 24px",
+                background: "#e5e7eb",
+                color: "#374151",
+                border: "none",
+                borderRadius: "6px",
+                cursor: "pointer",
+                transition: "all 0.2s ease"
+              }}>
+
+                Cancel
+              </button>
+              <button
+              type="button"
+              onClick={confirmDialog.onConfirm}
+              disabled={deleteState === 'loading'}
+              style={{
+                padding: "10px 24px",
+                background: "#ef4444",
+                color: "white",
+                border: "none",
+                borderRadius: "6px",
+                cursor: "pointer",
+                opacity: deleteState === 'loading' ? 0.7 : 1,
+                transition: "all 0.2s ease"
+              }}>
+
+                {deleteState === 'loading' ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+
       {/* Header Section */}
       <div className="createOption-header">
-        {isEditMode && (
-          <div className="createOption-actionButtons">
+        {isEditMode &&
+        <div className="createOption-actionButtons">
             <button type="button" onClick={onCancel} className="createOption-backButton">
               ← Back to List
             </button>
-            <button type="button" onClick={handleDelete} className="createOption-deleteButton">
-              Delete
+            <button
+            type="button"
+            onClick={handleDeleteClick}
+            className="createOption-deleteButton"
+            disabled={deleteState === 'loading'}
+            style={{ opacity: deleteState === 'loading' ? 0.7 : 1, transition: "all 0.2s ease" }}>
+
+              {deleteState === 'loading' ? 'Deleting...' : 'Delete'}
             </button>
           </div>
+        }
+
+        {!isEditMode ? (
+          <div className="createaccount-title-row">
+            <h1 className="createOption-title" style={{ margin: 0, border: 'none', padding: 0 }}>Create Option</h1>
+
+            <button
+              type="button"
+              onClick={() => setShowImportPopup(true)}
+              className="import-accounts-title-btn"
+              disabled={bulkImporting}
+            >
+              Import Options
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="12" y1="18" x2="12" y2="12"></line>
+                <line x1="9" y1="15" x2="15" y2="15"></line>
+              </svg>
+            </button>
+          </div>
+        ) : (
+          <h1 className="createOption-title">Edit: {initialData?.name}</h1>
         )}
-        <h1 className="createOption-title">{isEditMode ? `Edit: ${initialData?.name}` : 'Create Option'}</h1>
         <p className="createOption-subtitle">Configure a new option for your manufacturing system</p>
       </div>
 
@@ -452,8 +778,8 @@ const CreateOption: React.FC<CreateOptionProps> = ({ initialData, onCancel, onSa
                   return (
                     <option key={type._id} value={type._id}>
                       {type.name} {specCount > 0 ? `(${specCount} specs)` : ''}
-                    </option>
-                  );
+                    </option>);
+
                 })}
               </select>
               {/* Show OptionType specifications info */}
@@ -469,8 +795,8 @@ const CreateOption: React.FC<CreateOptionProps> = ({ initialData, onCancel, onSa
                       <div className="createOption-optionTypeInfoFields">
                         Fields: {templateData.map((t: any) => t.name).join(', ')}
                       </div>
-                    </div>
-                  );
+                    </div>);
+
                 }
                 return null;
               })()}
@@ -484,34 +810,34 @@ const CreateOption: React.FC<CreateOptionProps> = ({ initialData, onCancel, onSa
         </div>
 
         {/* Option Type Values Display - Shows purity and other specs from selected Option Type */}
-        {optionTypeId && optionTypeSpecsData.length > 0 && (
-          <div className="createOption-section">
+        {optionTypeId && optionTypeSpecsData.length > 0 &&
+        <div className="createOption-section">
             <h3 className="createOption-sectionTitle">Option Type Values</h3>
             <div className="createOption-optionTypeValues">
               <h4 className="createOption-optionTypeValuesTitle">
                 {Array.isArray(optionTypes) ? optionTypes.find((ot: any) => ot._id === optionTypeId)?.name : ''}
               </h4>
               <div className="createOption-optionTypeValuesGrid">
-                {optionTypeSpecsData.map((spec, idx) => (
-                  <div
-                    key={idx}
-                    onClick={() => insertIntoFormula('OT_' + spec.name.replace(/\s+/g, '_'))}
-                    className="createOption-optionTypeValueItem"
-                    title={`Click to use OT_${spec.name.replace(/\s+/g, '_')} in formula`}
-                  >
+                {optionTypeSpecsData.map((spec, idx) =>
+              <div
+                key={idx}
+                onClick={() => insertIntoFormula('OT_' + spec.name.replace(/\s+/g, '_'))}
+                className="createOption-optionTypeValueItem"
+                title={`Click to use OT_${spec.name.replace(/\s+/g, '_')} in formula`}>
+
                     <span className="createOption-optionTypeValueName">{spec.name}</span>
                     <span className="createOption-optionTypeValueNumber">
                       {spec.defaultValue}{spec.unit ? ` ${spec.unit}` : ''}
                     </span>
                   </div>
-                ))}
+              )}
               </div>
               <div className="createOption-formulaHint">
                 Formula Example: wastage = <code className="createOption-formulaCode">calculation - OT_purity</code>
               </div>
             </div>
           </div>
-        )}
+        }
 
         {/* Dimensions Section */}
         <div className="createOption-section">
@@ -525,8 +851,8 @@ const CreateOption: React.FC<CreateOptionProps> = ({ initialData, onCancel, onSa
                   return (
                     <span className="createOption-templateBadge">
                       (from OptionType template)
-                    </span>
-                  );
+                    </span>);
+
                 }
                 return null;
               })()}
@@ -536,45 +862,45 @@ const CreateOption: React.FC<CreateOptionProps> = ({ initialData, onCancel, onSa
             </button>
           </div>
 
-          {dimensions.length === 0 && (
-            <p className="createOption-emptyState">
+          {dimensions.length === 0 &&
+          <p className="createOption-emptyState">
               {optionTypeId ? 'No specifications template in this OptionType. Click "+ Add Dimension" to add custom data.' : 'Select an Option Type first, or click "+ Add Dimension" to add custom data columns.'}
             </p>
-          )}
+          }
 
-          {dimensions.map((dim, index) => (
-            <div key={index} className={`createOption-dimensionCard ${dim.isCalculated ? 'calculated' : ''}`}>
+          {dimensions.map((dim, index) =>
+          <div key={index} className={`createOption-dimensionCard ${dim.isCalculated ? 'calculated' : ''}`}>
               {/* Row 1: Name, Value, DataType, Unit */}
               <div className="createOption-dimensionRow">
                 <input
-                  type="text"
-                  placeholder="Name *"
-                  value={dim.name}
-                  onChange={(e) => updateDimension(index, 'name', e.target.value)}
-                  className="createOption-dimensionInput"
-                />
+                type="text"
+                placeholder="Name *"
+                value={dim.name}
+                onChange={(e) => updateDimension(index, 'name', e.target.value)}
+                className="createOption-dimensionInput" />
+
                 <input
-                  type={dim.dataType === 'number' ? 'number' : 'text'}
-                  placeholder={dim.isCalculated ? 'Auto-calculated' : 'Value'}
-                  value={dim.value}
-                  onChange={(e) => updateDimension(index, 'value', e.target.value)}
-                  disabled={dim.isCalculated}
-                  className={`createOption-dimensionInput ${dim.isCalculated ? 'calculated' : ''}`}
-                />
+                type={dim.dataType === 'number' ? 'number' : 'text'}
+                placeholder={dim.isCalculated ? 'Auto-calculated' : 'Value'}
+                value={dim.value}
+                onChange={(e) => updateDimension(index, 'value', e.target.value)}
+                disabled={dim.isCalculated}
+                className={`createOption-dimensionInput ${dim.isCalculated ? 'calculated' : ''}`} />
+
                 <select
-                  value={dim.dataType}
-                  onChange={(e) => updateDimension(index, 'dataType', e.target.value as DimensionDataType)}
-                  className="createOption-dimensionSelect"
-                >
+                value={dim.dataType}
+                onChange={(e) => updateDimension(index, 'dataType', e.target.value as DimensionDataType)}
+                className="createOption-dimensionSelect">
+
                   <option value="string">String</option>
                   <option value="number">Number</option>
                 </select>
-                {dim.dataType === 'number' && (
-                  <select
-                    value={dim.unit || ''}
-                    onChange={(e) => updateDimension(index, 'unit', e.target.value)}
-                    className="createOption-unitSelect"
-                  >
+                {dim.dataType === 'number' &&
+              <select
+                value={dim.unit || ''}
+                onChange={(e) => updateDimension(index, 'unit', e.target.value)}
+                className="createOption-unitSelect">
+
                     <option value="">Unit</option>
                     <option value="cm">cm</option>
                     <option value="mm">mm</option>
@@ -589,64 +915,143 @@ const CreateOption: React.FC<CreateOptionProps> = ({ initialData, onCancel, onSa
                     <option value="Rs">Rs</option>
                     <option value="pcs">pcs</option>
                   </select>
-                )}
+              }
                 <button
-                  type="button"
-                  onClick={() => removeDimension(index)}
-                  className="createOption-removeButton"
-                >
+                type="button"
+                onClick={() => removeDimension(index)}
+                className="createOption-removeButton">
+
                   ✕
                 </button>
               </div>
 
               {/* Row 2: Formula field - only for number type */}
-              {dim.dataType === 'number' && (
-                <div className="createOption-formulaRow">
+              {dim.dataType === 'number' &&
+            <div className="createOption-formulaRow">
                   <span className="createOption-formulaLabel">Formula:</span>
                   <input
-                    type="text"
-                    placeholder="e.g., length * width or OT_purity / 100 (leave empty for manual value)"
-                    value={dim.formula || ''}
-                    onChange={(e) => updateDimension(index, 'formula', e.target.value)}
-                    onFocus={() => setActiveFormulaIndex(index)}
-                    className="createOption-formulaInput"
-                    style={{
-                      borderColor: activeFormulaIndex === index ? '#3b82f6' : undefined,
-                      boxShadow: activeFormulaIndex === index ? '0 0 0 2px rgba(59, 130, 246, 0.3)' : undefined
-                    }}
-                  />
-                  {dim.isCalculated && (
-                    <span className="createOption-autoBadge">Auto</span>
-                  )}
+                type="text"
+                placeholder="e.g., length * width or OT_purity / 100 (leave empty for manual value)"
+                value={dim.formula || ''}
+                onChange={(e) => updateDimension(index, 'formula', e.target.value)}
+                onFocus={() => setActiveFormulaIndex(index)}
+                className="createOption-formulaInput"
+                style={{
+                  borderColor: activeFormulaIndex === index ? '#3b82f6' : undefined,
+                  boxShadow: activeFormulaIndex === index ? '0 0 0 2px rgba(59, 130, 246, 0.3)' : undefined
+                }} />
+
+                  {dim.isCalculated &&
+              <span className="createOption-autoBadge">Auto</span>
+              }
                 </div>
-              )}
+            }
 
               {/* Row 3: Visibility Toggle */}
               <div className="createOption-visibilityRow">
                 <label className="createOption-visibilityLabel">
                   <input
-                    type="checkbox"
-                    checked={dim.visible}
-                    onChange={(e) => updateDimension(index, 'visible', e.target.checked)}
-                  />
+                  type="checkbox"
+                  checked={dim.visible}
+                  onChange={(e) => updateDimension(index, 'visible', e.target.checked)} />
+
                   <span className={`createOption-visibilityText ${dim.visible ? 'visible' : 'hidden'}`}>
                     {dim.visible ? 'Visible' : 'Hidden'}
                   </span>
                 </label>
               </div>
             </div>
-          ))}
+          )}
         </div>
       </div>
 
       {/* Form Actions */}
       <div className="createOption-formActions">
-        <button onClick={handleSubmit} disabled={loading || optionTypesLoading} className="createOption-button">
-          {loading ? 'Saving...' : isEditMode ? 'Update Option' : 'Save Option'}
+        <button onClick={handleSubmit} disabled={saveState === 'loading' || optionTypesLoading} className="createOption-button" style={{ opacity: saveState === 'loading' ? 0.7 : 1, transition: "all 0.2s ease" }}>
+          {saveState === 'loading' ? 'Saving...' : isEditMode ? 'Update Option' : 'Save Option'}
         </button>
       </div>
-    </div>
-  );
+
+      {/* Import Account Popup */}
+      <ImportAccountPopup
+        isOpen={showImportPopup}
+        onClose={() => setShowImportPopup(false)}
+        onDownloadTemplate={downloadExcelTemplate}
+        onFileSelect={(e) => {
+          handleExcelImport(e);
+          setShowImportPopup(false);
+        }}
+        isImporting={bulkImporting}
+        title="Import Options"
+        infoMessage="Bulk import up to 50 options at once. Download the template first."
+        buttonText="Import from Excel"
+      />
+
+      {/* Import Progress Popup */}
+      <ImportProgressPopup
+        isOpen={bulkImporting}
+        currentIndex={importProgress.current}
+        total={importProgress.total}
+        successCount={importProgress.success}
+        failedCount={importProgress.failed}
+        message={`Importing ${importProgress.current} of ${importProgress.total} options...`}
+      />
+
+      {/* Import Summary Modal */}
+      {importSummary && (
+        <div className="import-summary-overlay" onClick={() => setImportSummary(null)}>
+          <div className="import-summary-content" onClick={(e) => e.stopPropagation()}>
+            <h2 style={{ fontSize: '1.75rem', fontWeight: 700, marginBottom: '24px', color: '#1f2937', textAlign: 'center' }}>
+              Import Complete
+            </h2>
+
+            <div className="summary-stats">
+              <div className="stat-box success">
+                <div className="stat-number">{importSummary.success}</div>
+                <div className="stat-label">Success</div>
+              </div>
+              <div className="stat-box failed">
+                <div className="stat-number">{importSummary.failed}</div>
+                <div className="stat-label">Failed</div>
+              </div>
+            </div>
+
+            {importSummary.errors.length > 0 && (
+              <div className="error-list">
+                <h4 style={{ margin: '0 0 12px 0', color: '#dc2626', fontWeight: 600 }}>Errors:</h4>
+                <ul style={{ margin: 0, paddingLeft: '20px', maxHeight: '200px', overflowY: 'auto' }}>
+                  {importSummary.errors.map((err, idx) => (
+                    <li key={idx} style={{ marginBottom: '8px', color: '#991b1b', fontSize: '0.875rem' }}>{err}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <button
+              onClick={() => setImportSummary(null)}
+              style={{
+                width: '100%',
+                padding: '12px 24px',
+                marginTop: '24px',
+                background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '15px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
+    </div>);
+
 };
 
 export default CreateOption;

@@ -10,9 +10,9 @@ import { refreshOrderFormData } from '../oders/orderFormDataActions';
 const baseUrl = import.meta.env.VITE_API_27INFINITY_IN;
 const API_KEY = import.meta.env.VITE_API_KEY;
 
-const getHeaders = () => {
+const getHeaders = (branchId?: string) => {
   const token = localStorage.getItem('authToken');
-  const selectedBranch = localStorage.getItem('selectedBranch');
+  const selectedBranch = branchId || localStorage.getItem('selectedBranch');
   const headers: Record<string, string> = {
     'x-api-key': API_KEY,
     'Authorization': `Bearer ${token}`,
@@ -84,7 +84,7 @@ export const getAccountsV2 = (params?: Record<string, any>) => async (dispatch: 
 
     dispatch({
       type: ACCOUNT_V2_LIST_SUCCESS,
-      payload: response.data.data,
+      payload: response.data.data.data || response.data.data,
     });
 
     return response.data.data;

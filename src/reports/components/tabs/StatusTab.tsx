@@ -1,8 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../../componest/redux/rootReducer';
 import { AppDispatch } from '../../../store';
 import { getStatusReport, exportExcel } from '../../../componest/redux/reports/reportActions';
+import OrdersListModal from '../OrdersListModal';
 
 interface StatusTabProps {
   dateRange: {
@@ -13,8 +14,12 @@ interface StatusTabProps {
 
 const StatusTab: React.FC<StatusTabProps> = ({ dateRange }) => {
   const dispatch = useDispatch<AppDispatch>();
-  const branchId = localStorage.getItem('branchId') || '';
+  const branchId = localStorage.getItem('selectedBranch') || localStorage.getItem('branchId') || localStorage.getItem('selectedBranchId') || '';
   const { statusReport, exporting } = useSelector((state: RootState) => state.reports);
+
+  // Modal state
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState<any>(null);
 
   useEffect(() => {
     if (branchId) {
@@ -109,6 +114,11 @@ const StatusTab: React.FC<StatusTabProps> = ({ dateRange }) => {
     return statusOrder.indexOf(a.status) - statusOrder.indexOf(b.status);
   }) || [];
 
+  const handleStatusClick = (status: any) => {
+    setSelectedStatus(status);
+    setModalOpen(true);
+  };
+
   return (
     <div className="status-tab">
       <div className="tab-header">
@@ -134,7 +144,8 @@ const StatusTab: React.FC<StatusTabProps> = ({ dateRange }) => {
               <div
                 key={item.status}
                 className="status-summary-card"
-                style={{ borderColor: getStatusColor(item.status) }}
+                style={{ borderColor: getStatusColor(item.status), cursor: 'pointer' }}
+                onClick={() => handleStatusClick(item)}
               >
                 <div
                   className="status-summary-card__icon"
@@ -160,7 +171,11 @@ const StatusTab: React.FC<StatusTabProps> = ({ dateRange }) => {
             <h3>Order Status Flow</h3>
             <div className="status-flow-diagram">
               <div className="flow-step">
-                <div className="flow-box" style={{ backgroundColor: getStatusColor('Wait for Approval') }}>
+                <div
+                  className="flow-box"
+                  style={{ backgroundColor: getStatusColor('Wait for Approval'), cursor: 'pointer' }}
+                  onClick={() => handleStatusClick(data.byStatus.find((s: any) => s.status === 'Wait for Approval'))}
+                >
                   <span className="flow-count">
                     {data.byStatus.find((s: any) => s.status === 'Wait for Approval')?.count || 0}
                   </span>
@@ -169,7 +184,11 @@ const StatusTab: React.FC<StatusTabProps> = ({ dateRange }) => {
               </div>
               <div className="flow-arrow">&rarr;</div>
               <div className="flow-step">
-                <div className="flow-box" style={{ backgroundColor: getStatusColor('pending') }}>
+                <div
+                  className="flow-box"
+                  style={{ backgroundColor: getStatusColor('pending'), cursor: 'pointer' }}
+                  onClick={() => handleStatusClick(data.byStatus.find((s: any) => s.status === 'pending'))}
+                >
                   <span className="flow-count">
                     {data.byStatus.find((s: any) => s.status === 'pending')?.count || 0}
                   </span>
@@ -178,7 +197,11 @@ const StatusTab: React.FC<StatusTabProps> = ({ dateRange }) => {
               </div>
               <div className="flow-arrow">&rarr;</div>
               <div className="flow-step">
-                <div className="flow-box" style={{ backgroundColor: getStatusColor('approved') }}>
+                <div
+                  className="flow-box"
+                  style={{ backgroundColor: getStatusColor('approved'), cursor: 'pointer' }}
+                  onClick={() => handleStatusClick(data.byStatus.find((s: any) => s.status === 'approved'))}
+                >
                   <span className="flow-count">
                     {data.byStatus.find((s: any) => s.status === 'approved')?.count || 0}
                   </span>
@@ -187,7 +210,11 @@ const StatusTab: React.FC<StatusTabProps> = ({ dateRange }) => {
               </div>
               <div className="flow-arrow">&rarr;</div>
               <div className="flow-step">
-                <div className="flow-box" style={{ backgroundColor: getStatusColor('in_progress') }}>
+                <div
+                  className="flow-box"
+                  style={{ backgroundColor: getStatusColor('in_progress'), cursor: 'pointer' }}
+                  onClick={() => handleStatusClick(data.byStatus.find((s: any) => s.status === 'in_progress'))}
+                >
                   <span className="flow-count">
                     {data.byStatus.find((s: any) => s.status === 'in_progress')?.count || 0}
                   </span>
@@ -196,7 +223,11 @@ const StatusTab: React.FC<StatusTabProps> = ({ dateRange }) => {
               </div>
               <div className="flow-arrow">&rarr;</div>
               <div className="flow-step">
-                <div className="flow-box" style={{ backgroundColor: getStatusColor('completed') }}>
+                <div
+                  className="flow-box"
+                  style={{ backgroundColor: getStatusColor('completed'), cursor: 'pointer' }}
+                  onClick={() => handleStatusClick(data.byStatus.find((s: any) => s.status === 'completed'))}
+                >
                   <span className="flow-count">
                     {data.byStatus.find((s: any) => s.status === 'completed')?.count || 0}
                   </span>
@@ -205,7 +236,11 @@ const StatusTab: React.FC<StatusTabProps> = ({ dateRange }) => {
               </div>
               <div className="flow-arrow">&rarr;</div>
               <div className="flow-step">
-                <div className="flow-box" style={{ backgroundColor: getStatusColor('dispatched') }}>
+                <div
+                  className="flow-box"
+                  style={{ backgroundColor: getStatusColor('dispatched'), cursor: 'pointer' }}
+                  onClick={() => handleStatusClick(data.byStatus.find((s: any) => s.status === 'dispatched'))}
+                >
                   <span className="flow-count">
                     {data.byStatus.find((s: any) => s.status === 'dispatched')?.count || 0}
                   </span>
@@ -214,14 +249,22 @@ const StatusTab: React.FC<StatusTabProps> = ({ dateRange }) => {
               </div>
             </div>
             <div className="status-exceptions">
-              <div className="exception-box" style={{ borderColor: getStatusColor('issue') }}>
+              <div
+                className="exception-box"
+                style={{ borderColor: getStatusColor('issue'), cursor: 'pointer' }}
+                onClick={() => handleStatusClick(data.byStatus.find((s: any) => s.status === 'issue'))}
+              >
                 <span className="exception-icon">{getStatusIcon('issue')}</span>
                 <span className="exception-count">
                   {data.byStatus.find((s: any) => s.status === 'issue')?.count || 0}
                 </span>
                 <span className="exception-label">Issues</span>
               </div>
-              <div className="exception-box" style={{ borderColor: getStatusColor('cancelled') }}>
+              <div
+                className="exception-box"
+                style={{ borderColor: getStatusColor('cancelled'), cursor: 'pointer' }}
+                onClick={() => handleStatusClick(data.byStatus.find((s: any) => s.status === 'cancelled'))}
+              >
                 <span className="exception-icon">{getStatusIcon('cancelled')}</span>
                 <span className="exception-count">
                   {data.byStatus.find((s: any) => s.status === 'cancelled')?.count || 0}
@@ -239,7 +282,12 @@ const StatusTab: React.FC<StatusTabProps> = ({ dateRange }) => {
                 const maxCount = Math.max(...data.byStatus.map((s: any) => s.count));
                 const percentage = maxCount > 0 ? (item.count / maxCount) * 100 : 0;
                 return (
-                  <div key={item.status} className="status-bar">
+                  <div
+                    key={item.status}
+                    className="status-bar"
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => handleStatusClick(item)}
+                  >
                     <div className="status-bar__label" style={{ width: '140px' }}>
                       {formatStatusName(item.status)}
                     </div>
@@ -272,7 +320,12 @@ const StatusTab: React.FC<StatusTabProps> = ({ dateRange }) => {
               </thead>
               <tbody>
                 {sortedByStatus.map((item: any, index: number) => (
-                  <tr key={item.status}>
+                  <tr
+                    key={item.status}
+                    onClick={() => handleStatusClick(item)}
+                    style={{ cursor: 'pointer' }}
+                    className="clickable-row"
+                  >
                     <td>{index + 1}</td>
                     <td>
                       <div className="status-cell">
@@ -335,6 +388,21 @@ const StatusTab: React.FC<StatusTabProps> = ({ dateRange }) => {
             </table>
           </div>
         </>
+      )}
+
+      {/* Orders List Modal */}
+      {selectedStatus && (
+        <OrdersListModal
+          isOpen={modalOpen}
+          onClose={() => setModalOpen(false)}
+          title={`${formatStatusName(selectedStatus.status)} Orders`}
+          filters={{
+            branchId,
+            status: selectedStatus.status,
+            startDate: dateRange.fromDate,
+            endDate: dateRange.toDate,
+          }}
+        />
       )}
     </div>
   );

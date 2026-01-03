@@ -69,16 +69,16 @@ const isCacheValid = (entry: CacheEntry): boolean => {
 export const fetchBranches = createAsyncThunk(
   'cache/fetchBranches',
   async (force: boolean = false, { getState, rejectWithValue }) => {
-    const state = getState() as { cache: CacheState };
+    const state = getState() as {cache: CacheState;};
 
     // Return cached data if valid and not forced
     if (!force && isCacheValid(state.cache.branches)) {
-      console.log('[Redux Cache] Using cached branches');
+
       return state.cache.branches.data;
     }
 
     try {
-      console.log('[Redux Cache] Fetching fresh branches...');
+
       const response = await crudAPI.read('/branch/branches');
       return response.branches || response;
     } catch (error: any) {
@@ -90,15 +90,15 @@ export const fetchBranches = createAsyncThunk(
 export const fetchCustomers = createAsyncThunk(
   'cache/fetchCustomers',
   async (force: boolean = false, { getState, rejectWithValue }) => {
-    const state = getState() as { cache: CacheState };
+    const state = getState() as {cache: CacheState;};
 
     if (!force && isCacheValid(state.cache.customers)) {
-      console.log('[Redux Cache] Using cached customers');
+
       return state.cache.customers.data;
     }
 
     try {
-      console.log('[Redux Cache] Fetching fresh customers...');
+
       const response = await crudAPI.read('/customer/customers');
       return response.customers || response;
     } catch (error: any) {
@@ -110,15 +110,15 @@ export const fetchCustomers = createAsyncThunk(
 export const fetchMachines = createAsyncThunk(
   'cache/fetchMachines',
   async (force: boolean = false, { getState, rejectWithValue }) => {
-    const state = getState() as { cache: CacheState };
+    const state = getState() as {cache: CacheState;};
 
     if (!force && isCacheValid(state.cache.machines)) {
-      console.log('[Redux Cache] Using cached machines');
+
       return state.cache.machines.data;
     }
 
     try {
-      console.log('[Redux Cache] Fetching fresh machines...');
+
       const response = await crudAPI.read('/machine/machines');
       return response.machines || response;
     } catch (error: any) {
@@ -130,15 +130,15 @@ export const fetchMachines = createAsyncThunk(
 export const fetchProducts = createAsyncThunk(
   'cache/fetchProducts',
   async (force: boolean = false, { getState, rejectWithValue }) => {
-    const state = getState() as { cache: CacheState };
+    const state = getState() as {cache: CacheState;};
 
     if (!force && isCacheValid(state.cache.products)) {
-      console.log('[Redux Cache] Using cached products');
+
       return state.cache.products.data;
     }
 
     try {
-      console.log('[Redux Cache] Fetching fresh products...');
+
       const response = await crudAPI.read('/product/products');
       return response.products || response;
     } catch (error: any) {
@@ -150,15 +150,15 @@ export const fetchProducts = createAsyncThunk(
 export const fetchMaterials = createAsyncThunk(
   'cache/fetchMaterials',
   async (force: boolean = false, { getState, rejectWithValue }) => {
-    const state = getState() as { cache: CacheState };
+    const state = getState() as {cache: CacheState;};
 
     if (!force && isCacheValid(state.cache.materials)) {
-      console.log('[Redux Cache] Using cached materials');
+
       return state.cache.materials.data;
     }
 
     try {
-      console.log('[Redux Cache] Fetching fresh materials...');
+
       const response = await crudAPI.read('/material/materials');
       return response.materials || response;
     } catch (error: any) {
@@ -170,15 +170,15 @@ export const fetchMaterials = createAsyncThunk(
 export const fetchMaterialTypes = createAsyncThunk(
   'cache/fetchMaterialTypes',
   async (force: boolean = false, { getState, rejectWithValue }) => {
-    const state = getState() as { cache: CacheState };
+    const state = getState() as {cache: CacheState;};
 
     if (!force && isCacheValid(state.cache.materialTypes)) {
-      console.log('[Redux Cache] Using cached material types');
+
       return state.cache.materialTypes.data;
     }
 
     try {
-      console.log('[Redux Cache] Fetching fresh material types...');
+
       const response = await crudAPI.read('/materialType/materialTypes');
       return response.materialTypes || response;
     } catch (error: any) {
@@ -190,15 +190,15 @@ export const fetchMaterialTypes = createAsyncThunk(
 export const fetchProductTypes = createAsyncThunk(
   'cache/fetchProductTypes',
   async (force: boolean = false, { getState, rejectWithValue }) => {
-    const state = getState() as { cache: CacheState };
+    const state = getState() as {cache: CacheState;};
 
     if (!force && isCacheValid(state.cache.productTypes)) {
-      console.log('[Redux Cache] Using cached product types');
+
       return state.cache.productTypes.data;
     }
 
     try {
-      console.log('[Redux Cache] Fetching fresh product types...');
+
       const response = await crudAPI.read('/productType/productTypes');
       return response.productTypes || response;
     } catch (error: any) {
@@ -210,15 +210,15 @@ export const fetchProductTypes = createAsyncThunk(
 export const fetchMachineTypes = createAsyncThunk(
   'cache/fetchMachineTypes',
   async (force: boolean = false, { getState, rejectWithValue }) => {
-    const state = getState() as { cache: CacheState };
+    const state = getState() as {cache: CacheState;};
 
     if (!force && isCacheValid(state.cache.machineTypes)) {
-      console.log('[Redux Cache] Using cached machine types');
+
       return state.cache.machineTypes.data;
     }
 
     try {
-      console.log('[Redux Cache] Fetching fresh machine types...');
+
       const response = await crudAPI.read('/machineType/machineTypes');
       return response.machineTypes || response;
     } catch (error: any) {
@@ -231,20 +231,20 @@ export const fetchMachineTypes = createAsyncThunk(
 export const fetchAllCachedData = createAsyncThunk(
   'cache/fetchAll',
   async (force: boolean = false, { dispatch }) => {
-    console.log('[Redux Cache] Fetching all cached data...');
+
 
     await Promise.all([
-      dispatch(fetchBranches(force)),
-      dispatch(fetchCustomers(force)),
-      dispatch(fetchMachines(force)),
-      dispatch(fetchProducts(force)),
-      dispatch(fetchMaterials(force)),
-      dispatch(fetchMaterialTypes(force)),
-      dispatch(fetchProductTypes(force)),
-      dispatch(fetchMachineTypes(force))
-    ]);
+    dispatch(fetchBranches(force)),
+    dispatch(fetchCustomers(force)),
+    dispatch(fetchMachines(force)),
+    dispatch(fetchProducts(force)),
+    dispatch(fetchMaterials(force)),
+    dispatch(fetchMaterialTypes(force)),
+    dispatch(fetchProductTypes(force)),
+    dispatch(fetchMachineTypes(force))]
+    );
 
-    console.log('[Redux Cache] All data fetched');
+
   }
 );
 
@@ -261,12 +261,12 @@ const cacheSlice = createSlice({
       state.materialTypes = initialCacheEntry;
       state.productTypes = initialCacheEntry;
       state.machineTypes = initialCacheEntry;
-      console.log('[Redux Cache] Cache cleared');
+
     },
     clearCacheItem: (state, action: PayloadAction<keyof Omit<CacheState, 'loading'>>) => {
       const key = action.payload;
       state[key] = initialCacheEntry;
-      console.log(`[Redux Cache] Cleared ${key}`);
+
     }
   },
   extraReducers: (builder) => {

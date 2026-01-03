@@ -3,8 +3,8 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   listBranches,
   updateBranch,
-  deleteBranch,
-} from "../../../../redux/createBranchAndManager/branchActions";
+  deleteBranch } from
+"../../../../redux/createBranchAndManager/branchActions";
 import { RootState } from "../../../../redux/rootReducer";
 import "./editStyles.css";
 
@@ -33,7 +33,7 @@ const SeeAllBranchAndEdit: React.FC = () => {
     location: "",
     phone: "",
     email: "",
-    isActive: true,
+    isActive: true
   });
   const [searchTerm, setSearchTerm] = useState("");
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
@@ -43,9 +43,9 @@ const SeeAllBranchAndEdit: React.FC = () => {
   }, [dispatch]);
 
   const filteredBranches = branches.filter((branch: Branch) =>
-    branch.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    branch.code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    branch.location?.toLowerCase().includes(searchTerm.toLowerCase())
+  branch.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  branch.code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  branch.location?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const openEditor = (branch: Branch) => {
@@ -56,7 +56,7 @@ const SeeAllBranchAndEdit: React.FC = () => {
       location: branch.location || "",
       phone: branch.phone || "",
       email: branch.email || "",
-      isActive: branch.isActive !== false,
+      isActive: branch.isActive !== false
     });
   };
 
@@ -76,13 +76,13 @@ const SeeAllBranchAndEdit: React.FC = () => {
       await dispatch(
         updateBranch(selectedBranch._id, {
           name: editForm.name.trim(),
-          location: editForm.location.trim(),
+          location: editForm.location.trim()
         }) as any
       );
       dispatch(listBranches() as any);
       setSelectedBranch(null);
     } catch (err) {
-      console.error("Update failed:", err);
+
     }
   };
 
@@ -92,7 +92,7 @@ const SeeAllBranchAndEdit: React.FC = () => {
       dispatch(listBranches() as any);
       setDeleteConfirm(null);
     } catch (err) {
-      console.error("Delete failed:", err);
+
     }
   };
 
@@ -101,12 +101,12 @@ const SeeAllBranchAndEdit: React.FC = () => {
       await dispatch(
         updateBranch(branch._id, {
           name: branch.name,
-          location: branch.location,
+          location: branch.location
         }) as any
       );
       dispatch(listBranches() as any);
     } catch (err) {
-      console.error("Toggle active failed:", err);
+
     }
   };
 
@@ -120,22 +120,19 @@ const SeeAllBranchAndEdit: React.FC = () => {
 
   return (
     <div className="edit-container">
-      <div className="edit-header">
-        <h2>Branch Management</h2>
-        <p className="edit-subtitle">View, edit, and manage all branches</p>
-      </div>
+  
 
-      {!selectedBranch ? (
-        <>
+      {!selectedBranch ?
+      <>
           <div className="edit-toolbar">
             <div className="search-box">
               <input
-                type="text"
-                placeholder="Search branches..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="search-input"
-              />
+              type="text"
+              placeholder="Search branches..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="search-input" />
+
             </div>
             <div className="toolbar-stats">
               Total: {filteredBranches.length} branches
@@ -155,15 +152,15 @@ const SeeAllBranchAndEdit: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredBranches.length === 0 ? (
-                  <tr>
+                {filteredBranches.length === 0 ?
+              <tr>
                     <td colSpan={6} className="no-data">
                       No branches found
                     </td>
-                  </tr>
-                ) : (
-                  filteredBranches.map((branch: Branch) => (
-                    <tr key={branch._id}>
+                  </tr> :
+
+              filteredBranches.map((branch: Branch) =>
+              <tr key={branch._id}>
                       <td className="cell-name">{branch.name}</td>
                       <td className="cell-code">{branch.code}</td>
                       <td>{branch.location || "-"}</td>
@@ -172,60 +169,60 @@ const SeeAllBranchAndEdit: React.FC = () => {
                       </td>
                       <td>
                         <span
-                          className={`status-badge ${
-                            branch.isActive !== false ? "active" : "inactive"
-                          }`}
-                          onClick={() => handleToggleActive(branch)}
-                        >
+                    className={`status-badge ${
+                    branch.isActive !== false ? "active" : "inactive"}`
+                    }
+                    onClick={() => handleToggleActive(branch)}>
+
                           {branch.isActive !== false ? "Active" : "Inactive"}
                         </span>
                       </td>
                       <td className="cell-actions">
                         <button
-                          className="btn-edit"
-                          onClick={() => openEditor(branch)}
-                        >
+                    className="btn-edit"
+                    onClick={() => openEditor(branch)}>
+
                           Edit
                         </button>
-                        {deleteConfirm === branch._id ? (
-                          <div className="delete-confirm">
+                        {deleteConfirm === branch._id ?
+                  <div className="delete-confirm">
                             <button
-                              className="btn-confirm-delete"
-                              onClick={() => handleDelete(branch._id)}
-                            >
+                      className="btn-confirm-delete"
+                      onClick={() => handleDelete(branch._id)}>
+
                               Confirm
                             </button>
                             <button
-                              className="btn-cancel-delete"
-                              onClick={() => setDeleteConfirm(null)}
-                            >
+                      className="btn-cancel-delete"
+                      onClick={() => setDeleteConfirm(null)}>
+
                               Cancel
                             </button>
-                          </div>
-                        ) : (
-                          <button
-                            className="btn-delete"
-                            onClick={() => setDeleteConfirm(branch._id)}
-                          >
+                          </div> :
+
+                  <button
+                    className="btn-delete"
+                    onClick={() => setDeleteConfirm(branch._id)}>
+
                             Delete
                           </button>
-                        )}
+                  }
                       </td>
                     </tr>
-                  ))
-                )}
+              )
+              }
               </tbody>
             </table>
           </div>
-        </>
-      ) : (
-        <div className="edit-form-container">
+        </> :
+
+      <div className="edit-form-container">
           <div className="edit-form-header">
             <h3>Edit Branch</h3>
             <button
-              className="btn-close"
-              onClick={() => setSelectedBranch(null)}
-            >
+            className="btn-close"
+            onClick={() => setSelectedBranch(null)}>
+
               X
             </button>
           </div>
@@ -234,62 +231,62 @@ const SeeAllBranchAndEdit: React.FC = () => {
             <div className="form-group">
               <label>Branch Name *</label>
               <input
-                type="text"
-                value={editForm.name}
-                onChange={(e) => handleEditChange("name", e.target.value)}
-                placeholder="Enter branch name"
-              />
+              type="text"
+              value={editForm.name}
+              onChange={(e) => handleEditChange("name", e.target.value)}
+              placeholder="Enter branch name" />
+
             </div>
 
             <div className="form-group">
               <label>Branch Code</label>
               <input
-                type="text"
-                value={editForm.code}
-                onChange={(e) => handleEditChange("code", e.target.value)}
-                placeholder="Enter branch code"
-                disabled
-              />
+              type="text"
+              value={editForm.code}
+              onChange={(e) => handleEditChange("code", e.target.value)}
+              placeholder="Enter branch code"
+              disabled />
+
               <small className="form-hint">Code cannot be changed</small>
             </div>
 
             <div className="form-group">
               <label>Location</label>
               <input
-                type="text"
-                value={editForm.location}
-                onChange={(e) => handleEditChange("location", e.target.value)}
-                placeholder="Enter location"
-              />
+              type="text"
+              value={editForm.location}
+              onChange={(e) => handleEditChange("location", e.target.value)}
+              placeholder="Enter location" />
+
             </div>
 
             <div className="form-group">
               <label>Phone</label>
               <input
-                type="text"
-                value={editForm.phone}
-                onChange={(e) => handleEditChange("phone", e.target.value)}
-                placeholder="Enter phone number"
-              />
+              type="text"
+              value={editForm.phone}
+              onChange={(e) => handleEditChange("phone", e.target.value)}
+              placeholder="Enter phone number" />
+
             </div>
 
             <div className="form-group">
               <label>Email</label>
               <input
-                type="email"
-                value={editForm.email}
-                onChange={(e) => handleEditChange("email", e.target.value)}
-                placeholder="Enter email"
-              />
+              type="email"
+              value={editForm.email}
+              onChange={(e) => handleEditChange("email", e.target.value)}
+              placeholder="Enter email" />
+
             </div>
 
             <div className="form-group checkbox-group">
               <label className="checkbox-label">
                 <input
-                  type="checkbox"
-                  checked={editForm.isActive}
-                  onChange={(e) => handleEditChange("isActive", e.target.checked)}
-                />
+                type="checkbox"
+                checked={editForm.isActive}
+                onChange={(e) => handleEditChange("isActive", e.target.checked)} />
+
                 <span>Active</span>
               </label>
             </div>
@@ -299,17 +296,17 @@ const SeeAllBranchAndEdit: React.FC = () => {
                 Save Changes
               </button>
               <button
-                className="btn-cancel"
-                onClick={() => setSelectedBranch(null)}
-              >
+              className="btn-cancel"
+              onClick={() => setSelectedBranch(null)}>
+
                 Cancel
               </button>
             </div>
           </div>
         </div>
-      )}
-    </div>
-  );
+      }
+    </div>);
+
 };
 
 export default SeeAllBranchAndEdit;

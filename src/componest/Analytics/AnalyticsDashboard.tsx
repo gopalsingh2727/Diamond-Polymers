@@ -13,8 +13,8 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
-  ResponsiveContainer
-} from 'recharts';
+  ResponsiveContainer } from
+'recharts';
 
 interface DashboardData {
   topMaterials: Array<{
@@ -73,7 +73,7 @@ const AnalyticsDashboard: React.FC = () => {
       });
       setAnalytics(response.data);
     } catch (error) {
-      console.error('Error fetching analytics:', error);
+
     } finally {
       setLoading(false);
     }
@@ -85,8 +85,8 @@ const AnalyticsDashboard: React.FC = () => {
         <div className="text-center">
           <div className="text-xl text-gray-600">Loading analytics...</div>
         </div>
-      </div>
-    );
+      </div>);
+
   }
 
   if (!analytics) {
@@ -95,8 +95,8 @@ const AnalyticsDashboard: React.FC = () => {
         <div className="text-center">
           <div className="text-xl text-gray-600">No data available</div>
         </div>
-      </div>
-    );
+      </div>);
+
   }
 
   return (
@@ -108,8 +108,8 @@ const AnalyticsDashboard: React.FC = () => {
           <select
             value={days}
             onChange={(e) => setDays(Number(e.target.value))}
-            className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF6B35]"
-          >
+            className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF6B35]">
+
             <option value={7}>Last 7 days</option>
             <option value={30}>Last 30 days</option>
             <option value={90}>Last 90 days</option>
@@ -123,24 +123,24 @@ const AnalyticsDashboard: React.FC = () => {
 
       {/* Tabs */}
       <div className="flex gap-2 mb-6 bg-white p-1 rounded-lg shadow-sm">
-        {(['overview', 'materials', 'products', 'mixing'] as const).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
-              activeTab === tab
-                ? 'bg-[#FF6B35] text-white'
-                : 'text-gray-600 hover:bg-gray-100'
-            }`}
-          >
+        {(['overview', 'materials', 'products', 'mixing'] as const).map((tab) =>
+        <button
+          key={tab}
+          onClick={() => setActiveTab(tab)}
+          className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
+          activeTab === tab ?
+          'bg-[#FF6B35] text-white' :
+          'text-gray-600 hover:bg-gray-100'}`
+          }>
+
             {tab.charAt(0).toUpperCase() + tab.slice(1)}
           </button>
-        ))}
+        )}
       </div>
 
       {/* Overview Tab */}
-      {activeTab === 'overview' && (
-        <div className="space-y-6">
+      {activeTab === 'overview' &&
+      <div className="space-y-6">
           {/* Key Metrics */}
           <div className="grid grid-cols-4 gap-4">
             <div className="bg-white p-6 rounded-lg shadow-md">
@@ -179,17 +179,17 @@ const AnalyticsDashboard: React.FC = () => {
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
-                  data={analytics.statusBreakdown}
-                  dataKey="count"
-                  nameKey="_id"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={100}
-                  label
-                >
-                  {analytics.statusBreakdown.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
+                data={analytics.statusBreakdown}
+                dataKey="count"
+                nameKey="_id"
+                cx="50%"
+                cy="50%"
+                outerRadius={100}
+                label>
+
+                  {analytics.statusBreakdown.map((entry, index) =>
+                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                )}
                 </Pie>
                 <Tooltip />
                 <Legend />
@@ -197,11 +197,11 @@ const AnalyticsDashboard: React.FC = () => {
             </ResponsiveContainer>
           </div>
         </div>
-      )}
+      }
 
       {/* Materials Tab */}
-      {activeTab === 'materials' && (
-        <div className="space-y-6">
+      {activeTab === 'materials' &&
+      <div className="space-y-6">
           <div className="bg-white p-6 rounded-lg shadow-md">
             <h2 className="text-2xl font-bold mb-4">Top Materials Used</h2>
             <ResponsiveContainer width="100%" height={400}>
@@ -229,8 +229,8 @@ const AnalyticsDashboard: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {analytics.topMaterials.map((material, idx) => (
-                    <tr key={idx} className="border-t hover:bg-gray-50">
+                  {analytics.topMaterials.map((material, idx) =>
+                <tr key={idx} className="border-t hover:bg-gray-50">
                       <td className="px-4 py-3 font-medium">{material.materialName}</td>
                       <td className="px-4 py-3 text-right">{material.totalUsed.toFixed(2)}</td>
                       <td className="px-4 py-3 text-right">{material.ordersCount}</td>
@@ -238,7 +238,7 @@ const AnalyticsDashboard: React.FC = () => {
                         {(material.totalUsed / material.ordersCount).toFixed(2)}
                       </td>
                     </tr>
-                  ))}
+                )}
                 </tbody>
               </table>
             </div>
@@ -270,11 +270,11 @@ const AnalyticsDashboard: React.FC = () => {
             </div>
           </div>
         </div>
-      )}
+      }
 
       {/* Products Tab */}
-      {activeTab === 'products' && (
-        <div className="space-y-6">
+      {activeTab === 'products' &&
+      <div className="space-y-6">
           <div className="bg-white p-6 rounded-lg shadow-md">
             <h2 className="text-2xl font-bold mb-4">Most Ordered Products</h2>
             <ResponsiveContainer width="100%" height={400}>
@@ -304,8 +304,8 @@ const AnalyticsDashboard: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {analytics.topProducts.map((product, idx) => (
-                    <tr key={idx} className="border-t hover:bg-gray-50">
+                  {analytics.topProducts.map((product, idx) =>
+                <tr key={idx} className="border-t hover:bg-gray-50">
                       <td className="px-4 py-3 font-medium">{product._id}</td>
                       <td className="px-4 py-3 text-right">{product.totalOrders}</td>
                       <td className="px-4 py-3 text-right">{product.totalQuantity.toLocaleString()}</td>
@@ -313,17 +313,17 @@ const AnalyticsDashboard: React.FC = () => {
                         {(product.totalQuantity / product.totalOrders).toFixed(0)}
                       </td>
                     </tr>
-                  ))}
+                )}
                 </tbody>
               </table>
             </div>
           </div>
         </div>
-      )}
+      }
 
       {/* Mixing Tab */}
-      {activeTab === 'mixing' && (
-        <div className="space-y-6">
+      {activeTab === 'mixing' &&
+      <div className="space-y-6">
           <div className="grid grid-cols-3 gap-4">
             <div className="bg-white p-6 rounded-lg shadow-md">
               <div className="text-gray-600">Average Mixing Time</div>
@@ -375,19 +375,19 @@ const AnalyticsDashboard: React.FC = () => {
             </div>
           </div>
         </div>
-      )}
+      }
 
       {/* Export Button */}
       <div className="mt-6 flex justify-end">
         <button
           onClick={() => alert('Export functionality coming soon')}
-          className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
-        >
+          className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium">
+
           Export Report (PDF/Excel)
         </button>
       </div>
-    </div>
-  );
+    </div>);
+
 };
 
 export default AnalyticsDashboard;

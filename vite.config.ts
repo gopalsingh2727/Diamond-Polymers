@@ -5,63 +5,71 @@ import react from '@vitejs/plugin-react'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
   plugins: [
     react(),
     electron({
       main: {
-        // Shortcut of `build.lib.entry`.
         entry: 'electron/main.ts',
       },
       preload: {
-        // Shortcut of `build.rollupOptions.input`.
-        // Preload scripts may contain Web assets, so use the `build.rollupOptions.input` instead `build.lib.entry`.
         input: path.join(__dirname, 'electron/preload.ts'),
       },
-      // Ployfill the Electron and Node.js API for Renderer process.
-      // If you want use Node.js in Renderer process, the `nodeIntegration` needs to be enabled in the Main process.
-      // See 👉 https://github.com/electron-vite/vite-plugin-electron-renderer
-      renderer: process.env.NODE_ENV === 'test'
-        // https://github.com/electron-vite/vite-plugin-electron-renderer/issues/78#issuecomment-2053600808
-        ? undefined
-        : {},
+      renderer: process.env.NODE_ENV === 'test' ? undefined : {},
     }),
   ],
+  // Exclude large Vosk models from build - they'll be fetched from CDN
+  publicDir: 'public',
   build: {
     minify: 'terser',
     terserOptions: {
       compress: {
         drop_console: true,
         drop_debugger: true,
-        pure_funcs: ['console.log', 'console.info', 'console.debug'],
+        passes: 2,
       },
       mangle: true,
     },
     sourcemap: false,
+    // Target modern browsers for smaller bundle
+    target: 'esnext',
+    // CSS code splitting
+    cssCodeSplit: true,
     rollupOptions: {
       output: {
-        manualChunks: {
-          // Core React vendor chunk
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          // Redux chunk
-          'vendor-redux': ['@reduxjs/toolkit', 'react-redux', 'redux'],
-          // Charts chunk
-          'vendor-charts': ['recharts'],
-          // UI components chunk
-          'vendor-radix': [
-            '@radix-ui/react-dialog',
-            '@radix-ui/react-select',
-            '@radix-ui/react-dropdown-menu',
-            '@radix-ui/react-popover',
-            '@radix-ui/react-tabs',
-            '@radix-ui/react-tooltip',
-            '@radix-ui/react-checkbox',
-            '@radix-ui/react-switch',
-            '@radix-ui/react-scroll-area',
-          ],
-          // Excel handling
-          'vendor-xlsx': ['xlsx'],
-          // Icons - lucide-react only (tree-shakes unused icons)
-          'vendor-icons': ['lucide-react'],
+        manualChunks: (id) => {
+          // Core React - loaded first
+          if (id.includes('react-dom') || id.includes('react-router')) {
+            return 'vendor-react';
+          }
+          // Redux - loaded with app shell
+          if (id.includes('@reduxjs/toolkit') || id.includes('react-redux') || id.includes('redux')) {
+            return 'vendor-redux';
+          }
+          // Charts - lazy loaded with reports
+          if (id.includes('recharts')) {
+            return 'vendor-charts';
+          }
+          // Excel - lazy loaded on export
+          if (id.includes('xlsx')) {
+            return 'vendor-xlsx';
+          }
+          // Radix UI components
+          if (id.includes('@radix-ui')) {
+            return 'vendor-radix';
+          }
+          // Icons
+          if (id.includes('lucide-react') || id.includes('@heroicons')) {
+            return 'vendor-icons';
+          }
+          // Vosk speech - lazy loaded
+          if (id.includes('vosk')) {
+            return 'vendor-speech';
+          }
         },
       },
       treeshake: {
@@ -69,6 +77,11 @@ export default defineConfig({
         propertyReadSideEffects: false,
       },
     },
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 500,
+  },
+  // Optimize dependencies
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react-router-dom', '@reduxjs/toolkit', 'react-redux'],
+    exclude: ['vosk-browser'],
   },
 })

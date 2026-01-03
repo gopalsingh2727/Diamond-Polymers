@@ -12,8 +12,8 @@ import {
   OrderMeta,
   ValidationResult,
   OrderMachineTableResponse,
-  OrderMachineTableState,
-} from './orderTypes';
+  OrderMachineTableState } from
+'./orderTypes';
 
 
 // Constants - make sure these match your OdersContants.ts
@@ -40,7 +40,7 @@ const CLEAR_ORDERS = 'CLEAR_ORDERS';
 const UPDATE_ORDER_REQUEST = 'UPDATE_ORDER_REQUEST';
 const UPDATE_ORDER_SUCCESS = 'UPDATE_ORDER_SUCCESS';
 const UPDATE_ORDER_FAILURE = 'UPDATE_ORDER_FAILURE';
-const  GET_ACCOUNT_ORDERS_REQUEST = 'GET_ACCOUNT_ORDERS_REQUEST';
+const GET_ACCOUNT_ORDERS_REQUEST = 'GET_ACCOUNT_ORDERS_REQUEST';
 const GET_ACCOUNT_ORDERS_SUCCESS = 'GET_ACCOUNT_ORDERS_SUCCESS';
 const GET_ACCOUNT_ORDERS_FAILURE = 'GET_ACCOUNT_ORDERS_FAILURE';
 
@@ -80,7 +80,7 @@ interface UpdateOrderRequestAction {
 
 interface UpdateOrderSuccessAction {
   type: typeof UPDATE_ORDER_SUCCESS;
-  payload: { order: OrderData; message?: string } | OrderData;
+  payload: {order: OrderData;message?: string;} | OrderData;
 }
 
 interface UpdateOrderFailureAction {
@@ -89,9 +89,9 @@ interface UpdateOrderFailureAction {
 }
 
 type UpdateOrderActions =
-  | UpdateOrderRequestAction
-  | UpdateOrderSuccessAction
-  | UpdateOrderFailureAction;
+UpdateOrderRequestAction |
+UpdateOrderSuccessAction |
+UpdateOrderFailureAction;
 
 // WebSocket action interfaces
 interface WebSocketOrderCreatedAction {
@@ -101,12 +101,12 @@ interface WebSocketOrderCreatedAction {
 
 interface WebSocketOrderStatusChangedAction {
   type: typeof ORDER_STATUS_CHANGED_VIA_WS;
-  payload: { _id: string; status: string; updatedAt?: string };
+  payload: {_id: string;status: string;updatedAt?: string;};
 }
 
 interface WebSocketOrderPriorityChangedAction {
   type: typeof ORDER_PRIORITY_CHANGED_VIA_WS;
-  payload: { _id: string; priority: string; updatedAt?: string };
+  payload: {_id: string;priority: string;updatedAt?: string;};
 }
 
 interface WebSocketOrderUpdatedAction {
@@ -116,21 +116,21 @@ interface WebSocketOrderUpdatedAction {
 
 interface WebSocketOrderDeletedAction {
   type: typeof ORDER_DELETED_VIA_WS;
-  payload: { _id: string };
+  payload: {_id: string;};
 }
 
 interface WebSocketOrderAssignmentChangedAction {
   type: typeof ORDER_ASSIGNMENT_CHANGED_VIA_WS;
-  payload: { _id: string; machineId?: string; operatorId?: string; updatedAt?: string };
+  payload: {_id: string;machineId?: string;operatorId?: string;updatedAt?: string;};
 }
 
 type WebSocketOrderActions =
-  | WebSocketOrderCreatedAction
-  | WebSocketOrderStatusChangedAction
-  | WebSocketOrderPriorityChangedAction
-  | WebSocketOrderUpdatedAction
-  | WebSocketOrderDeletedAction
-  | WebSocketOrderAssignmentChangedAction;
+WebSocketOrderCreatedAction |
+WebSocketOrderStatusChangedAction |
+WebSocketOrderPriorityChangedAction |
+WebSocketOrderUpdatedAction |
+WebSocketOrderDeletedAction |
+WebSocketOrderAssignmentChangedAction;
 
 // Extended action types
 type ExtendedOrderActionTypes = OrderActionTypes | ClearOrdersAction | WebSocketOrderActions | UpdateOrderActions;
@@ -173,7 +173,7 @@ const initialOrderListState: OrderListState = {
   meta: null,
   loading: false,
   error: null,
-  isFetching: false,
+  isFetching: false
 };
 
 const initialOrderFormState: OrderFormState = {
@@ -187,7 +187,7 @@ const initialOrderFormState: OrderFormState = {
   warningMessage: null,
   isCreating: false,
   isUpdating: false,
-  isDeleting: false,
+  isDeleting: false
 };
 
 const initialMachineTableState: OrderMachineTableState = {
@@ -198,19 +198,19 @@ const initialMachineTableState: OrderMachineTableState = {
   deletingTableRow: false,
   addingTableRow: false,
   machineTableError: null,
-  machineTableSuccess: null,
+  machineTableSuccess: null
 };
 
 // Order List Reducer - THIS IS THE MAIN ONE YOUR COMPONENT USES
 const orderListReducer = (
-  state: OrderListState = initialOrderListState,
-  action: ExtendedOrderActionTypes
-): OrderListState => {
-  console.log('📊 Order List Reducer - Action:', action.type, action);
-  
+state: OrderListState = initialOrderListState,
+action: ExtendedOrderActionTypes)
+: OrderListState => {
+
+
   switch (action.type) {
     case FETCH_ORDERS_REQUEST:
-      console.log('📊 FETCH_ORDERS_REQUEST received');
+
       return {
         ...state,
         loading: true,
@@ -219,7 +219,7 @@ const orderListReducer = (
       };
 
     case SET_LOADING:
-      console.log('📊 SET_LOADING:', action.payload);
+
       return {
         ...state,
         loading: action.payload,
@@ -228,7 +228,7 @@ const orderListReducer = (
       };
 
     case SET_ERROR:
-      console.log('📊 SET_ERROR:', action.payload);
+
       return {
         ...state,
         error: action.payload,
@@ -237,15 +237,15 @@ const orderListReducer = (
       };
 
     case FETCH_ORDERS_SUCCESS:
-      console.log('📊 FETCH_ORDERS_SUCCESS - Full Action:', action);
-      console.log('📊 FETCH_ORDERS_SUCCESS - Payload:', action.payload);
-      
+
+
+
       // Handle different possible payload structures from your API
       let orders: OrderData[] = [];
       let pagination: PaginationInfo | null = null;
       let summary: OrderSummary | null = null;
       let statusCounts: StatusCounts | null = null;
-      
+
       if (action.payload) {
         // Check if payload has the nested data structure
         if (action.payload.data) {
@@ -280,10 +280,10 @@ const orderListReducer = (
         }
       }
 
-      console.log('📊 Processed orders:', orders.length);
-      console.log('📊 Sample order:', orders[0]);
-      console.log('📊 Processed pagination:', pagination);
-      
+
+
+
+
       return {
         ...state,
         orders: orders,
@@ -296,7 +296,7 @@ const orderListReducer = (
       };
 
     case FETCH_ORDERS_FAILURE:
-      console.log('📊 FETCH_ORDERS_FAILURE:', action.payload);
+
       return {
         ...state,
         orders: [],
@@ -306,7 +306,7 @@ const orderListReducer = (
       };
 
     case CLEAR_ORDERS:
-      console.log('📊 CLEAR_ORDERS');
+
       return {
         ...initialOrderListState
       };
@@ -321,140 +321,140 @@ const orderListReducer = (
     // WebSocket Real-Time Update Cases
     // ========================================
 
-    case ORDER_CREATED_VIA_WS: {
-      console.log('📡 ORDER_CREATED_VIA_WS:', action.payload);
-      const newOrder = (action as any).payload as OrderData;
+    case ORDER_CREATED_VIA_WS:{
 
-      // Check if order already exists (prevent duplicates)
-      const exists = state.orders.some(order => order._id === newOrder._id);
-      if (exists) {
-        console.warn('Order already exists, skipping duplicate:', newOrder._id);
-        return state;
+        const newOrder = (action as any).payload as OrderData;
+
+        // Check if order already exists (prevent duplicates)
+        const exists = state.orders.some((order) => order._id === newOrder._id);
+        if (exists) {
+
+          return state;
+        }
+
+        return {
+          ...state,
+          orders: [newOrder, ...state.orders] // Add to beginning
+        };
       }
 
-      return {
-        ...state,
-        orders: [newOrder, ...state.orders], // Add to beginning
-      };
-    }
+    case ORDER_STATUS_CHANGED_VIA_WS:{
 
-    case ORDER_STATUS_CHANGED_VIA_WS: {
-      console.log('📡 ORDER_STATUS_CHANGED_VIA_WS:', action.payload);
-      const { _id, status, updatedAt } = (action as any).payload;
+        const { _id, status, updatedAt } = (action as any).payload;
 
-      return {
-        ...state,
-        orders: state.orders.map(order =>
-          order._id === _id
-            ? { ...order, status, ...(updatedAt && { updatedAt }) }
-            : order
-        ),
-      };
-    }
+        return {
+          ...state,
+          orders: state.orders.map((order) =>
+          order._id === _id ?
+          { ...order, status, ...(updatedAt && { updatedAt }) } :
+          order
+          )
+        };
+      }
 
-    case ORDER_PRIORITY_CHANGED_VIA_WS: {
-      console.log('📡 ORDER_PRIORITY_CHANGED_VIA_WS:', action.payload);
-      const { _id, priority, updatedAt } = (action as any).payload;
+    case ORDER_PRIORITY_CHANGED_VIA_WS:{
 
-      return {
-        ...state,
-        orders: state.orders.map(order =>
-          order._id === _id
-            ? { ...order, priority, ...(updatedAt && { updatedAt }) }
-            : order
-        ),
-      };
-    }
+        const { _id, priority, updatedAt } = (action as any).payload;
 
-    case ORDER_UPDATED_VIA_WS: {
-      console.log('📡 ORDER_UPDATED_VIA_WS:', action.payload);
-      const updatedOrder = (action as any).payload as OrderData;
+        return {
+          ...state,
+          orders: state.orders.map((order) =>
+          order._id === _id ?
+          { ...order, priority, ...(updatedAt && { updatedAt }) } :
+          order
+          )
+        };
+      }
 
-      return {
-        ...state,
-        orders: state.orders.map(order =>
-          order._id === updatedOrder._id
-            ? { ...order, ...updatedOrder }
-            : order
-        ),
-      };
-    }
+    case ORDER_UPDATED_VIA_WS:{
 
-    case ORDER_DELETED_VIA_WS: {
-      console.log('📡 ORDER_DELETED_VIA_WS:', action.payload);
-      const { _id } = (action as any).payload;
+        const updatedOrder = (action as any).payload as OrderData;
 
-      return {
-        ...state,
-        orders: state.orders.filter(order => order._id !== _id),
-      };
-    }
+        return {
+          ...state,
+          orders: state.orders.map((order) =>
+          order._id === updatedOrder._id ?
+          { ...order, ...updatedOrder } :
+          order
+          )
+        };
+      }
 
-    case ORDER_ASSIGNMENT_CHANGED_VIA_WS: {
-      console.log('📡 ORDER_ASSIGNMENT_CHANGED_VIA_WS:', action.payload);
-      const { _id, machineId, operatorId, updatedAt } = (action as any).payload;
+    case ORDER_DELETED_VIA_WS:{
 
-      return {
-        ...state,
-        orders: state.orders.map(order =>
-          order._id === _id
-            ? {
-                ...order,
-                ...(machineId !== undefined && { machineId }),
-                ...(operatorId !== undefined && { operatorId }),
-                ...(updatedAt && { updatedAt })
-              }
-            : order
-        ),
-      };
-    }
+        const { _id } = (action as any).payload;
+
+        return {
+          ...state,
+          orders: state.orders.filter((order) => order._id !== _id)
+        };
+      }
+
+    case ORDER_ASSIGNMENT_CHANGED_VIA_WS:{
+
+        const { _id, machineId, operatorId, updatedAt } = (action as any).payload;
+
+        return {
+          ...state,
+          orders: state.orders.map((order) =>
+          order._id === _id ?
+          {
+            ...order,
+            ...(machineId !== undefined && { machineId }),
+            ...(operatorId !== undefined && { operatorId }),
+            ...(updatedAt && { updatedAt })
+          } :
+          order
+          )
+        };
+      }
 
     // ✅ FIXED: Handle UPDATE_ORDER_SUCCESS for live table updates
-    case UPDATE_ORDER_REQUEST: {
-      console.log('📝 UPDATE_ORDER_REQUEST - Order update in progress');
-      return {
-        ...state,
-        loading: true,
-      };
-    }
+    case UPDATE_ORDER_REQUEST:{
 
-    case UPDATE_ORDER_SUCCESS: {
-      console.log('📝 UPDATE_ORDER_SUCCESS - Updating order in list:', action.payload);
-      const payload = (action as any).payload;
-      const updatedOrder = payload?.order || payload;
-
-      if (!updatedOrder || !updatedOrder._id) {
-        console.warn('⚠️ UPDATE_ORDER_SUCCESS - No valid order in payload');
-        return { ...state, loading: false };
+        return {
+          ...state,
+          loading: true
+        };
       }
 
-      // Update the order in the list
-      const orderExists = state.orders.some(order => order._id === updatedOrder._id);
+    case UPDATE_ORDER_SUCCESS:{
 
-      if (orderExists) {
+        const payload = (action as any).payload;
+        const updatedOrder = payload?.order || payload;
+
+        if (!updatedOrder || !updatedOrder._id) {
+
+          return { ...state, loading: false };
+        }
+
+        // Update the order in the list
+        const orderExists = state.orders.some((order) => order._id === updatedOrder._id);
+
+        if (orderExists) {
+          return {
+            ...state,
+            loading: false,
+            orders: state.orders.map((order) =>
+            order._id === updatedOrder._id ?
+            { ...order, ...updatedOrder } :
+            order
+            )
+          };
+        } else {
+          // Order not in current list, just update loading state
+          return { ...state, loading: false };
+        }
+      }
+
+    case UPDATE_ORDER_FAILURE:{
+
         return {
           ...state,
           loading: false,
-          orders: state.orders.map(order =>
-            order._id === updatedOrder._id
-              ? { ...order, ...updatedOrder }
-              : order
-          ),
+          error: (action as any).payload || 'Failed to update order'
         };
-      } else {
-        // Order not in current list, just update loading state
-        return { ...state, loading: false };
       }
-    }
-
-    case UPDATE_ORDER_FAILURE: {
-      console.log('❌ UPDATE_ORDER_FAILURE:', action.payload);
-      return {
-        ...state,
-        loading: false,
-        error: (action as any).payload || 'Failed to update order',
-      };
-    }
 
     default:
       return state;
@@ -463,9 +463,9 @@ const orderListReducer = (
 
 // Order Form Reducer
 const orderFormReducer = (
-  state: OrderFormState = initialOrderFormState,
-  action: OrderActionTypes
-): OrderFormState => {
+state: OrderFormState = initialOrderFormState,
+action: OrderActionTypes)
+: OrderFormState => {
   switch (action.type) {
     case ORDER_SAVE_REQUEST:
       return {
@@ -474,9 +474,9 @@ const orderFormReducer = (
         saving: true,
         isCreating: true,
         error: null,
-        successMessage: null,
+        successMessage: null
       };
-      
+
     case ORDER_SAVE_SUCCESS:
       const savePayload = action.payload as any;
       return {
@@ -486,9 +486,9 @@ const orderFormReducer = (
         isCreating: false,
         currentOrder: savePayload.order,
         error: null,
-        successMessage: 'Order saved successfully!',
+        successMessage: 'Order saved successfully!'
       };
-      
+
     case ORDER_SAVE_FAILURE:
       return {
         ...state,
@@ -496,33 +496,33 @@ const orderFormReducer = (
         saving: false,
         isCreating: false,
         error: action.payload as string,
-        successMessage: null,
+        successMessage: null
       };
-      
+
     case ORDER_RESET:
       return {
-        ...initialOrderFormState,
+        ...initialOrderFormState
       };
-      
+
     case COLLECT_FORM_DATA:
       return {
         ...state,
-        formData: action.payload as OrderData,
+        formData: action.payload as OrderData
       };
-      
+
     case VALIDATE_FORM_DATA:
       return {
         ...state,
-        validation: action.payload as ValidationResult,
+        validation: action.payload as ValidationResult
       };
-      
+
     case CLEAR_FORM_DATA:
       return {
         ...state,
         formData: null,
-        validation: null,
+        validation: null
       };
-      
+
     case SET_ERROR:
       return {
         ...state,
@@ -531,27 +531,27 @@ const orderFormReducer = (
         saving: false,
         isCreating: false,
         isUpdating: false,
-        isDeleting: false,
+        isDeleting: false
       };
-      
+
     case CLEAR_ERROR:
       return {
         ...state,
-        error: null,
+        error: null
       };
-      
+
     case SET_SUCCESS_MESSAGE:
       return {
         ...state,
-        successMessage: action.payload as string,
+        successMessage: action.payload as string
       };
-      
+
     case CLEAR_SUCCESS_MESSAGE:
       return {
         ...state,
-        successMessage: null,
+        successMessage: null
       };
-      
+
     case UPDATE_MACHINE_STATUS:
       const machinePayload = action.payload as any;
       if (state.currentOrder && state.currentOrder.steps) {
@@ -562,20 +562,20 @@ const orderFormReducer = (
             status: machinePayload.status,
             operatorId: machinePayload.operatorId,
             note: machinePayload.note,
-            reason: machinePayload.reason,
+            reason: machinePayload.reason
           };
         }
-        
+
         return {
           ...state,
           currentOrder: {
             ...state.currentOrder,
-            steps: updatedSteps,
-          },
+            steps: updatedSteps
+          }
         };
       }
       return state;
-      
+
     default:
       return state;
   }
@@ -583,145 +583,145 @@ const orderFormReducer = (
 
 // Machine Table Reducer
 const machineTableReducer = (
-  state: OrderMachineTableState = initialMachineTableState,
-  action: OrderMachineTableActionTypes
-): OrderMachineTableState => {
-  console.log('🗂️ Machine Table Reducer - Action:', action.type);
+state: OrderMachineTableState = initialMachineTableState,
+action: OrderMachineTableActionTypes)
+: OrderMachineTableState => {
+
 
   switch (action.type) {
     case FETCH_ORDER_MACHINE_TABLE_REQUEST:
-      console.log('🗂️ FETCH_ORDER_MACHINE_TABLE_REQUEST');
+
       return {
         ...state,
         loadingMachineTable: true,
-        machineTableError: null,
+        machineTableError: null
       };
 
     case FETCH_ORDER_MACHINE_TABLE_SUCCESS:
-      console.log('🗂️ FETCH_ORDER_MACHINE_TABLE_SUCCESS:', action.payload);
+
       const fetchedTable = action.payload as OrderMachineTableResponse;
       return {
         ...state,
         currentMachineTable: fetchedTable,
         machineTablesCache: {
           ...state.machineTablesCache,
-          [fetchedTable.machine.machineId]: fetchedTable,
+          [fetchedTable.machine.machineId]: fetchedTable
         },
         loadingMachineTable: false,
-        machineTableError: null,
+        machineTableError: null
       };
 
     case FETCH_ORDER_MACHINE_TABLE_FAILURE:
-      console.log('🗂️ FETCH_ORDER_MACHINE_TABLE_FAILURE:', action.payload);
+
       return {
         ...state,
         loadingMachineTable: false,
-        machineTableError: action.payload as string,
+        machineTableError: action.payload as string
       };
 
     case CLEAR_ORDER_MACHINE_TABLE:
-      console.log('🗂️ CLEAR_ORDER_MACHINE_TABLE');
+
       return {
-        ...initialMachineTableState,
+        ...initialMachineTableState
       };
 
     case ADD_MACHINE_TABLE_ROW_REQUEST:
-      console.log('🗂️ ADD_MACHINE_TABLE_ROW_REQUEST');
+
       return {
         ...state,
         addingTableRow: true,
         machineTableError: null,
-        machineTableSuccess: null,
+        machineTableSuccess: null
       };
 
     case ADD_MACHINE_TABLE_ROW_SUCCESS:
-      console.log('🗂️ ADD_MACHINE_TABLE_ROW_SUCCESS:', action.payload);
+
       const addedTable = action.payload as OrderMachineTableResponse;
       return {
         ...state,
         currentMachineTable: addedTable,
         machineTablesCache: {
           ...state.machineTablesCache,
-          [addedTable.machine.machineId]: addedTable,
+          [addedTable.machine.machineId]: addedTable
         },
         addingTableRow: false,
         machineTableError: null,
-        machineTableSuccess: 'Row added successfully',
+        machineTableSuccess: 'Row added successfully'
       };
 
     case ADD_MACHINE_TABLE_ROW_FAILURE:
-      console.log('🗂️ ADD_MACHINE_TABLE_ROW_FAILURE:', action.payload);
+
       return {
         ...state,
         addingTableRow: false,
         machineTableError: action.payload as string,
-        machineTableSuccess: null,
+        machineTableSuccess: null
       };
 
     case UPDATE_MACHINE_TABLE_ROW_REQUEST:
-      console.log('🗂️ UPDATE_MACHINE_TABLE_ROW_REQUEST');
+
       return {
         ...state,
         updatingTableRow: true,
         machineTableError: null,
-        machineTableSuccess: null,
+        machineTableSuccess: null
       };
 
     case UPDATE_MACHINE_TABLE_ROW_SUCCESS:
-      console.log('🗂️ UPDATE_MACHINE_TABLE_ROW_SUCCESS:', action.payload);
+
       const updatedTable = action.payload as OrderMachineTableResponse;
       return {
         ...state,
         currentMachineTable: updatedTable,
         machineTablesCache: {
           ...state.machineTablesCache,
-          [updatedTable.machine.machineId]: updatedTable,
+          [updatedTable.machine.machineId]: updatedTable
         },
         updatingTableRow: false,
         machineTableError: null,
-        machineTableSuccess: 'Row updated successfully',
+        machineTableSuccess: 'Row updated successfully'
       };
 
     case UPDATE_MACHINE_TABLE_ROW_FAILURE:
-      console.log('🗂️ UPDATE_MACHINE_TABLE_ROW_FAILURE:', action.payload);
+
       return {
         ...state,
         updatingTableRow: false,
         machineTableError: action.payload as string,
-        machineTableSuccess: null,
+        machineTableSuccess: null
       };
 
     case DELETE_MACHINE_TABLE_ROW_REQUEST:
-      console.log('🗂️ DELETE_MACHINE_TABLE_ROW_REQUEST');
+
       return {
         ...state,
         deletingTableRow: true,
         machineTableError: null,
-        machineTableSuccess: null,
+        machineTableSuccess: null
       };
 
     case DELETE_MACHINE_TABLE_ROW_SUCCESS:
-      console.log('🗂️ DELETE_MACHINE_TABLE_ROW_SUCCESS:', action.payload);
+
       const deletedTable = action.payload as OrderMachineTableResponse;
       return {
         ...state,
         currentMachineTable: deletedTable,
         machineTablesCache: {
           ...state.machineTablesCache,
-          [deletedTable.machine.machineId]: deletedTable,
+          [deletedTable.machine.machineId]: deletedTable
         },
         deletingTableRow: false,
         machineTableError: null,
-        machineTableSuccess: 'Row deleted successfully',
+        machineTableSuccess: 'Row deleted successfully'
       };
 
     case DELETE_MACHINE_TABLE_ROW_FAILURE:
-      console.log('🗂️ DELETE_MACHINE_TABLE_ROW_FAILURE:', action.payload);
+
       return {
         ...state,
         deletingTableRow: false,
         machineTableError: action.payload as string,
-        machineTableSuccess: null,
+        machineTableSuccess: null
       };
 
     default:
@@ -733,7 +733,7 @@ const machineTableReducer = (
 const orderReducer = combineReducers({
   list: orderListReducer,
   form: orderFormReducer,
-  machineTable: machineTableReducer,
+  machineTable: machineTableReducer
 });
 
 // Export the combined state type

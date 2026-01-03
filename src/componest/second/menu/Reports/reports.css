@@ -1,0 +1,506 @@
+/**
+ * Report Viewer Styles
+ */
+
+.report-viewer {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Header */
+.report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.report-header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.report-header h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+/* Filters */
+.report-filters {
+  display: flex;
+  gap: 16px;
+  align-items: flex-end;
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.filter-group label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #6b7280;
+  text-transform: uppercase;
+}
+
+.filter-group select,
+.filter-group input {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  min-width: 200px;
+}
+
+.filter-group select:focus,
+.filter-group input:focus {
+  outline: none;
+  border-color: var(--color-primary, #FF6B35);
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+}
+
+.execute-btn {
+  padding: 8px 20px;
+  background: var(--color-primary, #FF6B35);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.execute-btn:hover:not(:disabled) {
+  background: var(--color-primary-hover, #E55A2B);
+}
+
+.execute-btn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* Error */
+.report-error {
+  padding: 12px 16px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  color: #991b1b;
+  margin-bottom: 16px;
+}
+
+/* Report Content */
+.report-content {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+/* Report Info */
+.report-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.report-info h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+  color: #1f2937;
+}
+
+.category-badge {
+  padding: 4px 12px;
+  border-radius: 16px;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.row-count {
+  margin-left: auto;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+/* Tabs */
+.report-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 0 20px;
+}
+
+.tab-btn {
+  padding: 12px 20px;
+  border: none;
+  background: none;
+  color: #6b7280;
+  font-weight: 500;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.2s;
+}
+
+.tab-btn:hover {
+  color: #1f2937;
+}
+
+.tab-btn.active {
+  color: var(--color-primary, #FF6B35);
+}
+
+.tab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--color-primary, #FF6B35);
+}
+
+/* Tab Content */
+.tab-content {
+  padding: 20px;
+}
+
+/* Data Table */
+.data-table-container {
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.data-table th {
+  padding: 12px 16px;
+  background: #f9fafb;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 2px solid #e5e7eb;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.data-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  color: #4b5563;
+}
+
+.data-table tr:hover {
+  background: #f9fafb;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.pagination button {
+  padding: 8px 16px;
+  border: 1px solid #d1d5db;
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pagination button:hover:not(:disabled) {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Charts */
+.charts-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 20px;
+}
+
+.chart-card {
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.chart-card h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+  color: #1f2937;
+}
+
+.chart-placeholder {
+  min-height: 200px;
+}
+
+.chart-type-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  background: #e5e7eb;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-bottom: 12px;
+}
+
+.chart-data {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chart-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bar-label {
+  min-width: 100px;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.bar-fill {
+  height: 20px;
+  background: var(--color-primary, #FF6B35);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.bar-value {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #1f2937;
+  min-width: 50px;
+}
+
+.no-charts,
+.no-calculations {
+  text-align: center;
+  padding: 40px;
+  color: #9ca3af;
+}
+
+/* Summary */
+.summary-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.calculations-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.calculation-card {
+  background: linear-gradient(135deg, var(--color-primary, #FF6B35) 0%, var(--color-primary-hover, #E55A2B) 100%);
+  color: white;
+  padding: 20px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.calc-name {
+  font-size: 0.875rem;
+  opacity: 0.9;
+  margin-bottom: 8px;
+}
+
+.calc-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+}
+
+.calc-unit {
+  font-size: 1rem;
+  font-weight: 400;
+  margin-left: 4px;
+}
+
+.calc-formula {
+  font-size: 0.75rem;
+  opacity: 0.7;
+  margin-top: 8px;
+}
+
+/* Production Summary */
+.production-summary {
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.production-summary h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 16px 0;
+  color: #1f2937;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.metric-card {
+  padding: 16px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.metric-card.input {
+  background: linear-gradient(135deg, var(--color-primary, #FF6B35) 0%, #E55A2B 100%);
+  color: white;
+}
+
+.metric-card.output {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+
+.metric-card.loss {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+}
+
+.metric-card.efficiency {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  color: white;
+}
+
+.metric-label {
+  font-size: 0.75rem;
+  opacity: 0.9;
+  margin-bottom: 4px;
+}
+
+.metric-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+/* Export Actions */
+.export-actions {
+  display: flex;
+  gap: 12px;
+  padding: 16px 20px;
+  border-top: 1px solid #e5e7eb;
+  justify-content: flex-end;
+}
+
+.export-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.export-btn.excel {
+  background: #10b981;
+  color: white;
+}
+
+.export-btn.excel:hover {
+  background: #059669;
+}
+
+.export-btn.pdf {
+  background: #ef4444;
+  color: white;
+}
+
+.export-btn.pdf:hover {
+  background: #dc2626;
+}
+
+.export-btn.print {
+  background: #6b7280;
+  color: white;
+}
+
+.export-btn.print:hover {
+  background: #4b5563;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #9ca3af;
+}
+
+.empty-icon {
+  font-size: 4rem;
+  margin-bottom: 16px;
+}
+
+.empty-state h2 {
+  font-size: 1.25rem;
+  color: #6b7280;
+  margin: 0 0 8px 0;
+}
+
+.empty-state p {
+  font-size: 0.875rem;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+/* Print Styles */
+@media print {
+  .report-header,
+  .report-filters,
+  .report-tabs,
+  .export-actions,
+  .pagination {
+    display: none;
+  }
+
+  .report-content {
+    box-shadow: none;
+  }
+
+  .data-table {
+    font-size: 0.75rem;
+  }
+}

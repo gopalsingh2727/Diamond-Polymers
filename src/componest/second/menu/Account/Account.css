@@ -137,10 +137,51 @@
 /* Accounts list */
 .accounts-list {
   border-top: 1px solid #e5e7eb;
+  max-height: calc(100vh - 280px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* Electron scroll fix - cross-platform support */
+  -webkit-overflow-scrolling: touch;
+  /* Force hardware acceleration for smooth scrolling */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  will-change: scroll-position;
+  contain: layout style;
 }
 
 .accounts-list > div:not(:last-child) {
   border-bottom: 1px solid #e5e7eb;
+}
+
+/* Responsive heights for accounts list */
+@media (min-width: 1680px) {
+  .accounts-list {
+    max-height: calc(100vh - 270px);
+  }
+}
+
+@media (max-width: 1440px) {
+  .accounts-list {
+    max-height: calc(100vh - 270px);
+  }
+}
+
+@media (max-width: 1366px) {
+  .accounts-list {
+    max-height: calc(100vh - 260px);
+  }
+}
+
+@media (max-width: 1024px) {
+  .accounts-list {
+    max-height: calc(100vh - 280px);
+  }
+}
+
+@media (max-width: 768px) {
+  .accounts-list {
+    max-height: calc(100vh - 300px);
+  }
 }
 
 /* Account item */

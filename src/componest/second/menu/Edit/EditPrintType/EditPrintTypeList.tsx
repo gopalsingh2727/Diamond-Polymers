@@ -18,14 +18,20 @@ interface PrintType {
 
 const EditPrintTypeList = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { printTypes, loading, error } = useSelector((state: any) => state.printTypeList);
+  const printTypeState = useSelector((state: any) => state.v2?.printType);
+  const printTypes = printTypeState?.list || [];
+  const loading = printTypeState?.loading || false;
+  const error = printTypeState?.error || null;
   const [selectedPrintType, setSelectedPrintType] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRow, setSelectedRow] = useState(0);
 
+  // Get selected branch to refetch when it changes
+  const selectedBranch = useSelector((state: any) => state.auth?.userData?.selectedBranch);
+
   useEffect(() => {
     dispatch(getPrintTypes());
-  }, [dispatch]);
+  }, [dispatch, selectedBranch]);
 
   const handleEdit = (printType: any) => {
     setSelectedPrintType(printType);

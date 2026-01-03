@@ -161,7 +161,10 @@ const OrderTypeSelect = forwardRef<OrderTypeSelectRef, OrderTypeSelectProps>(({
             <li
               key={type._id}
               className={index === selectedIndex ? 'selected' : ''}
-              onClick={() => handleItemClick(type._id, index)}
+              onMouseDown={(e) => {
+                e.preventDefault(); // Prevent blur from firing
+                handleItemClick(type._id, index);
+              }}
             >
               {type.typeName} {type.typeCode ? `(${type.typeCode})` : ''}
             </li>

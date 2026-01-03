@@ -4,7 +4,7 @@
  */
 import React, { useState, useCallback, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { listOperators } from "../../../../redux/create/CreateMachineOpertor/MachineOpertorActions";
+import { getOperatorsV2 } from "../../../../redux/unifiedV2";
 import { useFormDataCache } from "../hooks/useFormDataCache";
 import { RootState } from "../../../../redux/rootReducer";
 import { AppDispatch } from "../../../../../store";
@@ -24,14 +24,21 @@ interface Props {
 const EditMachineOperatorList: React.FC<Props> = ({ onEdit }) => {
   const dispatch = useDispatch<AppDispatch>();
   const { machines } = useFormDataCache();
-  const { operators = [], loading, error } = useSelector((state: RootState) => state.operatorList || {});
+  const operatorState = useSelector((state: RootState) => state.v2.operator);
+  const rawOperators = operatorState?.list;
+  const operators = Array.isArray(rawOperators) ? rawOperators : [];
+  const loading = operatorState?.loading;
+  const error = operatorState?.error;
 
   const [selectedRow, setSelectedRow] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
 
+  // Get selected branch to refetch when it changes
+  const selectedBranch = useSelector((state: any) => state.auth?.userData?.selectedBranch);
+
   useEffect(() => {
-    dispatch(listOperators());
-  }, [dispatch]);
+    dispatch(getOperatorsV2());
+  }, [dispatch, selectedBranch]);
 
   const filteredItems = operators.filter((op: Operator) => {
     if (!searchTerm) return true;

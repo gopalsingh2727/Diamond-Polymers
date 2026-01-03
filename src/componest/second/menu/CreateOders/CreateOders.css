@@ -10,8 +10,8 @@
   /* Colors */
   --co-primary: #0f172a;
   --co-primary-light: #1e293b;
-  --co-accent: #3b82f6;
-  --co-accent-hover: #2563eb;
+  --co-accent: #FF6B35;
+  --co-accent-hover: #E55A2B;
   --co-success: #10b981;
   --co-warning: #f59e0b;
   --co-danger: #ef4444;
@@ -1771,8 +1771,8 @@
 }
 
 .order-type-select:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  border-color: var(--co-accent, #FF6B35);
+  box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.2);
 }
 
 .order-type-select .placeholder {
@@ -1831,6 +1831,6 @@
 }
 
 .order-type-dropdown li.selected {
-  background: #3b82f6;
+  background: var(--co-accent, #FF6B35);
   color: white;
 }

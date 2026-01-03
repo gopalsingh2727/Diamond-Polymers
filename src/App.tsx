@@ -1,11 +1,15 @@
 import './App.css';
-import { useState, useEffect } from 'react';
-import { HashRouter } from "react-router-dom"; // ✅ Use HashRouter
-import { useSelector, useDispatch } from 'react-redux';
+import { useState } from 'react';
+import { HashRouter } from "react-router-dom";
+import { useSelector } from 'react-redux';
 import MainRount from './componest/MainRounts/MainRount';
 import { InfinityLoader } from './components/InfinityLoader';
+
+// Direct imports for Electron app
 import ChatWidget from './components/chat/ChatWidget';
 import UniversalSearchModal from './components/UniversalSearch/UniversalSearchModal';
+import WebSocketManager from './components/WebSocketManager';
+import BranchSwitchingLoader from './componest/BranchSwitchingLoader';
 
 // Chat widget wrapper to show only when authenticated
 const AuthenticatedChatWidget = () => {
@@ -15,39 +19,6 @@ const AuthenticatedChatWidget = () => {
   return <ChatWidget />;
 };
 
-// WebSocket auto-connect component
-const WebSocketManager = () => {
-  const dispatch = useDispatch();
-  const isAuthenticated = useSelector((state: any) => state.auth?.isAuthenticated);
-  const token = useSelector((state: any) => state.auth?.token);
-  const isConnected = useSelector((state: any) => state.websocket?.isConnected);
-
-  useEffect(() => {
-    if (isAuthenticated && token && !isConnected) {
-      const wsUrl = import.meta.env.VITE_WEBSOCKET_URL || 'wss://dsv0otzkrg.execute-api.ap-south-1.amazonaws.com';
-
-      console.log('🔌 Connecting to WebSocket:', wsUrl);
-      console.log('📌 Token present:', !!token);
-
-      dispatch({
-        type: 'websocket/connect',
-        payload: {
-          url: wsUrl,
-          token,
-          platform: 'electron',
-          autoReconnect: true,
-          reconnectInterval: 3000,
-          maxReconnectAttempts: 10,
-          heartbeatInterval: 30000
-        }
-      });
-    }
-  }, [isAuthenticated, token, isConnected, dispatch]);
-
-  return null;
-};
-
-// this last project
 function App() {
   const [isLoading, setIsLoading] = useState(true);
 
@@ -55,7 +26,7 @@ function App() {
     return (
       <InfinityLoader
         onLoadComplete={() => setIsLoading(false)}
-        minDuration={500}
+        minDuration={100}
       />
     );
   }
@@ -63,6 +34,7 @@ function App() {
   return (
     <HashRouter>
       <WebSocketManager />
+      <BranchSwitchingLoader />
       <MainRount />
       <AuthenticatedChatWidget />
       <UniversalSearchModal />

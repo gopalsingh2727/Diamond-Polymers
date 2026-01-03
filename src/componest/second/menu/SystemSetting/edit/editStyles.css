@@ -232,6 +232,7 @@
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   max-width: 500px;
+  margin: 0 auto;
 }
 
 .edit-form-header {
@@ -247,6 +248,8 @@
   font-weight: 600;
   color: #1f2937;
   margin: 0;
+  flex: 1;
+  text-align: center;
 }
 
 .btn-close {

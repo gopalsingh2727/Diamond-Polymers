@@ -17,7 +17,7 @@ interface OptionSystemTabProps {
 
 const OptionSystemTab: React.FC<OptionSystemTabProps> = ({ dateRange }) => {
   const dispatch = useDispatch<AppDispatch>();
-  const branchId = localStorage.getItem('branchId') || '';
+  const branchId = localStorage.getItem('selectedBranch') || localStorage.getItem('branchId') || localStorage.getItem('selectedBranchId') || '';
   const { optionTypeReport, optionsByType, exporting } = useSelector(
     (state: RootState) => state.reports
   );

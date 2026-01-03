@@ -34,11 +34,24 @@ export const useOrderFormData = () => {
 
       if (type === 'referenceData:invalidate') {
         const entityType = eventData?.entity || eventData?.entityType;
-        console.log('🔄 [useOrderFormData] WebSocket invalidate received for:', entityType);
 
-        // Refetch order form data when orderType is updated (to get latest dynamicCalculations)
-        if (entityType === 'orderType') {
-          console.log('📥 [useOrderFormData] Refetching order form data (orderType updated)...');
+        // List of entity types that should trigger a refresh of order form data
+        const refreshTriggers = [
+          'orderType',      // Order types with dynamic calculations
+          'category',       // Product/service categories
+          'optionType',     // Option types
+          'option',         // Options
+          'optionSpec',     // Option specifications
+          'customer',       // Customers
+          'machine',        // Machines
+          'machineType',    // Machine types
+          'operator',       // Operators
+          'step'            // Manufacturing steps
+        ];
+
+        // Refetch order form data when any relevant entity is updated
+        if (refreshTriggers.includes(entityType)) {
+          console.log(`🔄 WebSocket: Refreshing order form data due to ${entityType} update`);
           dispatch(refreshOrderFormData() as any);
         }
       }
@@ -99,6 +112,13 @@ export const useOrderFormData = () => {
     machines: data?.machines || EMPTY_ARRAY,
     operators: data?.operators || EMPTY_ARRAY,
     steps: data?.steps || EMPTY_ARRAY,
+    orderTypes: data?.orderTypes || EMPTY_ARRAY,
+
+    // Options System data - ✅ NEW
+    categories: data?.categories || EMPTY_ARRAY,
+    optionTypes: data?.optionTypes || EMPTY_ARRAY,
+    options: data?.options || EMPTY_ARRAY,
+    optionSpecs: data?.optionSpecs || EMPTY_ARRAY,
 
     // Filtered data based on selections
     filteredProducts,
@@ -111,15 +131,15 @@ export const useOrderFormData = () => {
 
     // Current selections
     selectedProductType,
-    selectedMaterialType,
-  }), [
-    loading,
-    error,
-    data,
-    filteredProducts,
-    filteredProductSpecs,
-    filteredMaterials,
-    selectedProductType,
     selectedMaterialType
-  ]);
+  }), [
+  loading,
+  error,
+  data,
+  filteredProducts,
+  filteredProductSpecs,
+  filteredMaterials,
+  selectedProductType,
+  selectedMaterialType]
+  );
 };

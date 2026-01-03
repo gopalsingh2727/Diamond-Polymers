@@ -4,8 +4,8 @@ import { FuseV1Options, FuseVersion } from '@electron/fuses';
 export default {
   packagerConfig: {
     asar: true,
-    name: 'DiamondPolymers',
-    executableName: 'DiamondPolymers',
+    name: '27Manufacturing ',
+    executableName: '27Manufacturing ',
   },
   rebuildConfig: {},
   makers: [
@@ -18,7 +18,7 @@ export default {
     name: '@electron-forge/maker-squirrel',
     platforms: ['win32'],
     config: {
-      name: 'DiamondPolymers',
+      name: '27Manufacturing ',
       authors: 'Diamond Polymers',
       description: '27 Manufacturing Management System'
     }

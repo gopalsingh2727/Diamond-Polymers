@@ -85,71 +85,71 @@ export default function AddressList() {
   }, [selectedIndex]);
 
   const toggleSelection = (address: Address) => {
-    setSelectedAddresses(prev =>
-      prev.some(a => a._id === address._id)
-        ? prev.filter(a => a._id !== address._id)
-        : [...prev, address]
+    setSelectedAddresses((prev) =>
+    prev.some((a) => a._id === address._id) ?
+    prev.filter((a) => a._id !== address._id) :
+    [...prev, address]
     );
   };
 
   const handleSend = () => {
-    console.log("Sending email to:", selectedAddresses);
+
   };
 
-  const renderListView = () => (
-    <div className="address-items-container" ref={listRef}>
-      {addresses.map((address, index) => (
-        <div
-          key={address._id}
-          data-index={index}
-          className={`address-item 
+  const renderListView = () =>
+  <div className="address-items-container" ref={listRef}>
+      {addresses.map((address, index) =>
+    <div
+      key={address._id}
+      data-index={index}
+      className={`address-item 
             ${index === selectedIndex ? 'keyboard-selected' : ''}
-            ${selectedAddresses.some(a => a._id === address._id) ? 'space-selected' : ''}`}
-          onClick={() => {
-            setSelectedIndex(index);
-            setExpandedIndex(expandedIndex === index ? null : index);
-          }}
-        >
+            ${selectedAddresses.some((a) => a._id === address._id) ? 'space-selected' : ''}`}
+      onClick={() => {
+        setSelectedIndex(index);
+        setExpandedIndex(expandedIndex === index ? null : index);
+      }}>
+
           <div className="address-main-info">
             <div className="address-name">{address.firstName} {address.lastName}</div>
             <div className="address-phone">{address.phone1}</div>
-            {address.address1 && (
-              <div className="address-address">{address.address1}</div>
-            )}
+            {address.address1 &&
+        <div className="address-address">{address.address1}</div>
+        }
           </div>
 
-          {expandedIndex === index && (
-            <div className="address-details">
-              {address.email && (
-                <div className="address-detail-item email">
+          {expandedIndex === index &&
+      <div className="address-details">
+              {address.email &&
+        <div className="address-detail-item email">
                   <span className="detail-label">Email:</span>
                   <span className="detail-value">{address.email}</span>
                 </div>
-              )}
-              {address.whatsapp && (
-                <div className="address-detail-item whatsapp">
+        }
+              {address.whatsapp &&
+        <div className="address-detail-item whatsapp">
                   <span className="detail-label">WhatsApp:</span>
                   <span className="detail-value">{address.whatsapp}</span>
                 </div>
-              )}
-              {address.state && (
-                <div className="address-detail-item location">
+        }
+              {address.state &&
+        <div className="address-detail-item location">
                   <span className="detail-label">State:</span>
                   <span className="detail-value">{address.state}</span>
                 </div>
-              )}
-              {address.address2 && (
-                <div className="address-detail-item address">
+        }
+              {address.address2 &&
+        <div className="address-detail-item address">
                   <span className="detail-label">Full Address:</span>
                   <span className="detail-value">{address.address1} {address.address2}</span>
                 </div>
-              )}
+        }
             </div>
-          )}
+      }
         </div>
-      ))}
-    </div>
-  );
+    )}
+    </div>;
+
 
   return (
     <div className="container">
@@ -171,36 +171,36 @@ export default function AddressList() {
       </div>
 
       <div className="item">
-        {currentView === 'list' ? renderListView() : (
-          currentView === 'email' ? (
-            <EmailView
-              selectedAddresses={selectedAddresses}
-              message={message}
-              subject={subject}
-              attachments={attachments}
-              onMessageChange={setMessage}
-              onSubjectChange={setSubject}
-              onAttachmentsChange={setAttachments}
-              onSend={handleSend}
-              onBack={() => setCurrentView('list')}
-            />
-          ) : currentView === 'whatsapp' ? (
-            <WhatsAppView
-              selectedAddresses={selectedAddresses}
-              message={message}
-              onMessageChange={setMessage}
-              onBack={() => setCurrentView('list')}
-            />
-          ) : (
-            <SMSView
-              selectedAddresses={selectedAddresses}
-              message={message}
-              onMessageChange={setMessage}
-              onBack={() => setCurrentView('list')}
-            />
-          )
-        )}
+        {currentView === 'list' ? renderListView() :
+        currentView === 'email' ?
+        <EmailView
+          selectedAddresses={selectedAddresses}
+          message={message}
+          subject={subject}
+          attachments={attachments}
+          onMessageChange={setMessage}
+          onSubjectChange={setSubject}
+          onAttachmentsChange={setAttachments}
+          onSend={handleSend}
+          onBack={() => setCurrentView('list')} /> :
+
+        currentView === 'whatsapp' ?
+        <WhatsAppView
+          selectedAddresses={selectedAddresses}
+          message={message}
+          onMessageChange={setMessage}
+          onBack={() => setCurrentView('list')} /> :
+
+
+        <SMSView
+          selectedAddresses={selectedAddresses}
+          message={message}
+          onMessageChange={setMessage}
+          onBack={() => setCurrentView('list')} />
+
+
+        }
       </div>
-    </div>
-  );
+    </div>);
+
 }

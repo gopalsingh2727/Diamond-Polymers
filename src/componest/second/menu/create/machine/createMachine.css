@@ -11,6 +11,236 @@
   box-sizing: border-box;
 }
 
+/* Title Row with Import Button */
+.createaccount-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 1rem;
+  margin-bottom: 8px;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 6px;
+  width: 100%;
+}
+
+.import-accounts-title-btn {
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.import-accounts-title-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.35);
+}
+
+.import-accounts-title-btn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Import Summary Modal */
+.import-summary-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.import-summary-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 16px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideInUp 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform-origin: center;
+}
+
+@keyframes slideInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(40px) scale(0.7);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-10px) scale(1.05);
+  }
+  70% {
+    transform: translateY(5px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.summary-stats {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.stat-box {
+  flex: 1;
+  padding: 1.5rem 1rem;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  animation: scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+.stat-box:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.stat-box:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.stat-box.success {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  border: 2px solid #10b981;
+}
+
+.stat-box.failed {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  border: 2px solid #ef4444;
+}
+
+.stat-number {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+  animation: countUp 0.6s ease-out;
+}
+
+@keyframes countUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stat-box.success .stat-number {
+  color: #065f46;
+}
+
+.stat-box.failed .stat-number {
+  color: #991b1b;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.stat-box.success .stat-label {
+  color: #047857;
+}
+
+.stat-box.failed .stat-label {
+  color: #b91c1c;
+}
+
+.error-list {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 1rem;
+  animation: slideDown 0.3s ease-out;
+  animation-delay: 0.3s;
+  animation-fill-mode: backwards;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+    padding: 0 1rem;
+  }
+  to {
+    opacity: 1;
+    max-height: 300px;
+    padding: 1rem;
+  }
+}
+
+/* Responsive styles for mobile */
+@media (max-width: 767px) {
+  .createaccount-title-row {
+    flex-direction: column;
+    gap: 8px;
+    padding: 0 0.75rem;
+  }
+
+  .import-accounts-title-btn {
+    font-size: 13px;
+    padding: 6px 12px;
+  }
+
+  .import-accounts-title-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .import-summary-content {
+    padding: 1.5rem;
+    width: 95%;
+  }
+
+  .summary-stats {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .stat-number {
+    font-size: 2rem;
+  }
+}
+
 /* Main Form */
 .CreateMachineForm {
   display: flex;
@@ -676,33 +906,33 @@
     padding: 20px;
     margin: 10px;
   }
-  
+
   .CreateMachineSizeInputs {
     grid-template-columns: 1fr;
   }
-  
+
   .CreateMachineColumnInputs {
     grid-template-columns: 1fr;
     gap: 10px;
   }
-  
+
   .CreateMachineFormulaInputs {
     grid-template-columns: 1fr;
   }
-  
+
   .CreateMachineSectionHeader {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .CreateMachineTemplateButtons {
     flex-direction: column;
   }
-  
+
   .CreateMachinePreviewTableWrapper {
     font-size: 12px;
   }
-  
+
   .CreateMachinePreviewHeader,
   .CreateMachinePreviewCell {
     padding: 8px;
@@ -713,21 +943,21 @@
   .CreateMachineFormTitle {
     font-size: 24px;
   }
-  
+
   .CreateMachineSectionTitle {
     font-size: 18px;
   }
-  
+
   .CreateMachineSubsectionTitle {
     font-size: 16px;
   }
-  
+
   .CreateMachineColumnItem {
     flex-direction: column;
     align-items: stretch;
     gap: 10px;
   }
-  
+
   .CreateMachineColumnInfo {
     justify-content: space-between;
   }

@@ -4,6 +4,25 @@ import { Dispatch } from 'redux';
 const baseUrl = import.meta.env.VITE_API_27INFINITY_IN;
 const API_KEY = import.meta.env.VITE_API_KEY;
 
+const getHeaders = () => {
+  const token = localStorage.getItem('authToken');
+  const selectedBranch = localStorage.getItem('selectedBranch') ||
+                         localStorage.getItem('branchId') ||
+                         localStorage.getItem('selectedBranchId');
+
+  const headers: Record<string, string> = {
+    'x-api-key': API_KEY,
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  };
+
+  if (selectedBranch) {
+    headers['x-selected-branch'] = selectedBranch;
+  }
+
+  return headers;
+};
+
 // Action Types
 export const CREATE_REPORT_GROUP_REQUEST = 'CREATE_REPORT_GROUP_REQUEST';
 export const CREATE_REPORT_GROUP_SUCCESS = 'CREATE_REPORT_GROUP_SUCCESS';
@@ -56,12 +75,8 @@ export const createReportGroup = (groupData: ReportGroupData) => async (dispatch
   dispatch({ type: CREATE_REPORT_GROUP_REQUEST });
 
   try {
-    const token = localStorage.getItem('authToken');
     const response = await axios.post(`${baseUrl}/report-groups`, groupData, {
-      headers: {
-        'x-api-key': API_KEY,
-        'Authorization': `Bearer ${token}`,
-      },
+      headers: getHeaders(),
     });
 
     dispatch({
@@ -83,15 +98,11 @@ export const getReportGroups = (params?: { branchId?: string; isActive?: boolean
   dispatch({ type: GET_REPORT_GROUPS_REQUEST });
 
   try {
-    const token = localStorage.getItem('authToken');
     const queryParams = new URLSearchParams(params as any).toString();
     const url = `${baseUrl}/report-groups${queryParams ? `?${queryParams}` : ''}`;
 
     const response = await axios.get(url, {
-      headers: {
-        'x-api-key': API_KEY,
-        'Authorization': `Bearer ${token}`,
-      },
+      headers: getHeaders(),
     });
 
     dispatch({
@@ -113,12 +124,8 @@ export const getReportGroupById = (id: string) => async (dispatch: Dispatch) => 
   dispatch({ type: GET_REPORT_GROUP_BY_ID_REQUEST });
 
   try {
-    const token = localStorage.getItem('authToken');
     const response = await axios.get(`${baseUrl}/report-groups/${id}`, {
-      headers: {
-        'x-api-key': API_KEY,
-        'Authorization': `Bearer ${token}`,
-      },
+      headers: getHeaders(),
     });
 
     dispatch({
@@ -140,12 +147,8 @@ export const updateReportGroup = (id: string, groupData: Partial<ReportGroupData
   dispatch({ type: UPDATE_REPORT_GROUP_REQUEST });
 
   try {
-    const token = localStorage.getItem('authToken');
     const response = await axios.put(`${baseUrl}/report-groups/${id}`, groupData, {
-      headers: {
-        'x-api-key': API_KEY,
-        'Authorization': `Bearer ${token}`,
-      },
+      headers: getHeaders(),
     });
 
     dispatch({
@@ -167,12 +170,8 @@ export const deleteReportGroup = (id: string) => async (dispatch: Dispatch) => {
   dispatch({ type: DELETE_REPORT_GROUP_REQUEST });
 
   try {
-    const token = localStorage.getItem('authToken');
     await axios.delete(`${baseUrl}/report-groups/${id}`, {
-      headers: {
-        'x-api-key': API_KEY,
-        'Authorization': `Bearer ${token}`,
-      },
+      headers: getHeaders(),
     });
 
     dispatch({
@@ -194,15 +193,11 @@ export const getReportGroupStats = (id: string, params?: { fromDate?: string; to
   dispatch({ type: GET_REPORT_GROUP_STATS_REQUEST });
 
   try {
-    const token = localStorage.getItem('authToken');
     const queryParams = new URLSearchParams(params as any).toString();
     const url = `${baseUrl}/report-groups/${id}/stats${queryParams ? `?${queryParams}` : ''}`;
 
     const response = await axios.get(url, {
-      headers: {
-        'x-api-key': API_KEY,
-        'Authorization': `Bearer ${token}`,
-      },
+      headers: getHeaders(),
     });
 
     dispatch({

@@ -3,8 +3,8 @@ import {
   LOGIN_FAIL,
   LOGIN_REQUEST,
   LOGIN_SUCCESS,
-  LOGOUT,
-} from "./authConstants";
+  LOGOUT } from
+"./authConstants";
 import { getOrderFormDataIfNeeded, clearOrderFormData } from "../oders/orderFormDataActions";
 
 export const SET_SELECTED_BRANCH_IN_AUTH = "SET_SELECTED_BRANCH_IN_AUTH";
@@ -71,7 +71,7 @@ export const login = (email: string, password: string) => {
       if (!validateEmail(email)) {
         dispatch({
           type: LOGIN_FAIL,
-          payload: "Invalid email format",
+          payload: "Invalid email format"
         });
         return;
       }
@@ -85,17 +85,24 @@ export const login = (email: string, password: string) => {
         {
           headers: {
             "x-api-key": API_KEY,
-            "Content-Type": "application/json",
-          },
+            "Content-Type": "application/json"
+          }
         }
       );
 
       const { token, refreshToken, expiresIn, userType, user, branches } = response.data;
       const userData = { ...user, role: userType, branches };
 
-      // ✅ Set default selected branch if branches available
-      if (branches && branches.length > 0 && !userData.selectedBranch) {
-        userData.selectedBranch = branches[0]._id;
+      // ✅ Set default selected branch based on user role
+      if (!userData.selectedBranch) {
+        // For managers, use their assigned branchId from JWT
+        if (userType === 'manager' && user.branchId) {
+          userData.selectedBranch = user.branchId;
+        }
+        // For admin/master_admin, use first branch from branches array
+        else if (branches && branches.length > 0) {
+          userData.selectedBranch = branches[0]._id;
+        }
       }
 
       // ✅ SECURITY FIX: Store tokens securely
@@ -111,7 +118,7 @@ export const login = (email: string, password: string) => {
       }
 
       if (import.meta.env.DEV) {
-        console.log('✅ Login successful for role:', userType, 'branches:', branches?.length || 0);
+
       }
 
       dispatch({
@@ -119,8 +126,8 @@ export const login = (email: string, password: string) => {
         payload: {
           token,
           refreshToken,
-          userData,
-        },
+          userData
+        }
       });
 
       // ✅ SECURITY: Set up automatic token refresh
@@ -136,7 +143,7 @@ export const login = (email: string, password: string) => {
           await dispatch(getOrderFormDataIfNeeded() as any);
         } catch (error) {
           if (import.meta.env.DEV) {
-            console.error("Failed to fetch order form data on login:", error);
+
           }
         }
       }
@@ -167,7 +174,7 @@ export const login = (email: string, password: string) => {
       if (err.response?.status === 401) {
         dispatch({
           type: LOGIN_FAIL,
-          payload: err.response.data.message || "Invalid email or password",
+          payload: err.response.data.message || "Invalid email or password"
         });
         return;
       }
@@ -176,14 +183,14 @@ export const login = (email: string, password: string) => {
       if (err.response?.status === 429) {
         dispatch({
           type: LOGIN_FAIL,
-          payload: err.response.data.message || "Too many login attempts. Please try again later.",
+          payload: err.response.data.message || "Too many login attempts. Please try again later."
         });
         return;
       }
 
       dispatch({
         type: LOGIN_FAIL,
-        payload: err.response?.data?.message || err.message || "Login failed. Please try again.",
+        payload: err.response?.data?.message || err.message || "Login failed. Please try again."
       });
     }
   };
@@ -197,7 +204,7 @@ const setupTokenRefresh = (dispatch: any, role: string, expiresIn: number) => {
   }
 
   // Calculate when to refresh (1 minute before expiry)
-  const refreshTime = (expiresIn * 1000) - TOKEN_REFRESH_BUFFER;
+  const refreshTime = expiresIn * 1000 - TOKEN_REFRESH_BUFFER;
 
   if (refreshTime > 0) {
     refreshTokenTimer = setTimeout(() => {
@@ -218,11 +225,11 @@ export const refreshAccessToken = (role?: string) => {
         return false;
       }
 
-      const refreshEndpoint = userRole === 'master_admin'
-        ? `${baseUrl}/master-admin/refresh-token`
-        : userRole === 'admin'
-        ? `${baseUrl}/admin/refresh-token`
-        : `${baseUrl}/manager/refresh-token`;
+      const refreshEndpoint = userRole === 'master_admin' ?
+      `${baseUrl}/master-admin/refresh-token` :
+      userRole === 'admin' ?
+      `${baseUrl}/admin/refresh-token` :
+      `${baseUrl}/manager/refresh-token`;
 
       const response = await axios.post(
         refreshEndpoint,
@@ -230,8 +237,8 @@ export const refreshAccessToken = (role?: string) => {
         {
           headers: {
             "x-api-key": API_KEY,
-            "Content-Type": "application/json",
-          },
+            "Content-Type": "application/json"
+          }
         }
       );
 
@@ -244,31 +251,31 @@ export const refreshAccessToken = (role?: string) => {
 
       dispatch({
         type: TOKEN_REFRESH_SUCCESS,
-        payload: { token, refreshToken },
+        payload: { token, refreshToken }
       });
 
       // Set up next refresh
       setupTokenRefresh(dispatch, userRole, expiresIn || 900);
 
       if (import.meta.env.DEV) {
-        console.log('✅ Token refreshed successfully');
+
       }
 
       return true;
     } catch (error: any) {
       if (import.meta.env.DEV) {
-        console.error('❌ Token refresh failed:', error?.response?.status);
+
       }
 
       dispatch({
         type: TOKEN_REFRESH_FAIL,
-        payload: 'Session expired. Please log in again.',
+        payload: 'Session expired. Please log in again.'
       });
 
       // ✅ Show session expired modal instead of auto-logout
       dispatch({
         type: SESSION_EXPIRED,
-        payload: 'Your session has expired. Please log in again to continue.',
+        payload: 'Your session has expired. Please log in again to continue.'
       });
       return false;
     }
@@ -293,7 +300,7 @@ export const checkAndRefreshToken = () => {
     if (now >= expiresAt || expiresAt - now < 2 * 60 * 1000) {
       if (import.meta.env.DEV) {
         const isExpired = now >= expiresAt;
-        console.log(isExpired ? '⚠️ Token expired, refreshing...' : '⏰ Token expiring soon, refreshing...');
+
       }
       return await dispatch(refreshAccessToken());
     }
@@ -332,14 +339,16 @@ export const logout = () => {
     dispatch({ type: LOGOUT });
 
     if (import.meta.env.DEV) {
-      console.log('✅ User logged out successfully');
+
     }
   };
 };
 
-// ✅ Set Selected Branch
+// ✅ Set Selected Branch (Enhanced with comprehensive cache clearing)
 export const setSelectedBranchInAuth = (branchId: string) => {
   return async (dispatch: any, getState: any) => {
+    const { BRANCH_SWITCHING, BRANCH_SWITCH_COMPLETE, CLEAR_BRANCH_DATA } = await import('./authConstants');
+
     // Get existing userData from localStorage
     const storedData = localStorage.getItem("userData");
     const userData = storedData ? JSON.parse(storedData) : {};
@@ -348,48 +357,157 @@ export const setSelectedBranchInAuth = (branchId: string) => {
     const currentBranchId = getState().auth?.userData?.selectedBranch || localStorage.getItem("selectedBranch");
     const isBranchChanging = currentBranchId !== branchId;
 
-    // Update the userData object with the new branch
-    const updatedUserData = {
-      ...userData,
-      selectedBranch: branchId,
-    };
-
-    // Save the updated userData back to localStorage
-    localStorage.setItem("userData", JSON.stringify(updatedUserData));
-
-    // ✅ CRITICAL: Also store directly in localStorage for API calls
-    // This is required by getHeaders() and crudHelpers for x-selected-branch header
-    localStorage.setItem("selectedBranch", branchId);
-
-    // Dispatch the action to update Redux store
-    dispatch({
-      type: SET_SELECTED_BRANCH_IN_AUTH,
-      payload: branchId,
-    });
-
-    // ✅ IMPORTANT: Force refresh data when branch changes (don't use cache)
-    if (isBranchChanging) {
-      if (import.meta.env.DEV) {
-        console.log('🔄 Branch changed, forcing data refresh for branch:', branchId);
-      }
-      try {
-        // Import and use refreshOrderFormData to force a fresh fetch
-        const { refreshOrderFormData } = await import('../oders/orderFormDataActions');
-        await dispatch(refreshOrderFormData() as any);
-      } catch (error) {
-        if (import.meta.env.DEV) {
-          console.error("Failed to refresh order form data for branch:", error);
-        }
-      }
-    } else {
-      // Same branch - use cached data if available
+    // If branch is NOT changing, just use cached data
+    if (!isBranchChanging) {
       try {
         await dispatch(getOrderFormDataIfNeeded() as any);
       } catch (error) {
         if (import.meta.env.DEV) {
-          console.error("Failed to fetch order form data for branch:", error);
+          console.log('⚠️ Error loading cached order form data:', error);
         }
       }
+      return;
+    }
+
+    try {
+      // ✅ STEP 1: Show loading animation
+      dispatch({ type: BRANCH_SWITCHING });
+
+      if (import.meta.env.DEV) {
+        console.log('🔄 Branch switching from', currentBranchId, 'to', branchId);
+      }
+
+      // ✅ STEP 2: Clear ONLY branch-specific cached data
+      // Define branch-specific cache keys to delete
+      const branchCacheKeys = [
+        // Old branch ID key (deprecated, some components still use it)
+        'branchId',
+        // Form data cache
+        'orderFormData',
+        'orderFormData_lastFetched',
+        // Entity caches
+        'cachedOrders',
+        'cachedAccounts',
+        'cachedCustomers',
+        'cachedMachines',
+        'cachedMachineTypes',
+        'cachedSteps',
+        'cachedOperators',
+        'cachedOptions',
+        'cachedOptionTypes',
+        'cachedOptionSpecs',
+        'cachedCategories',
+        'cachedOrderTypes',
+        'cachedPrintTypes',
+        'cachedExcelTypes',
+        'cachedReportTypes',
+        'cachedInventory',
+        'cachedTemplates',
+        'cachedParentCompanies',
+        'cachedCustomerCategories',
+        'cachedDeviceAccess',
+        // View caches
+        'machineTableData',
+        'daybookData',
+        'dispatchData',
+        'reportsData',
+        'analyticsData',
+        // Edit form states (if any)
+        'editFormData',
+        'lastEditedEntity',
+        'pendingEdits',
+      ];
+
+      // Remove only branch-specific cache keys
+      let removedCount = 0;
+      branchCacheKeys.forEach(key => {
+        if (localStorage.getItem(key)) {
+          localStorage.removeItem(key);
+          removedCount++;
+        }
+      });
+
+      // ⚠️ CRITICAL: Also clear ALL versioned cache keys (e.g., order_form_data_cache_v3_*)
+      // These are branch-specific caches that need to be cleared
+      const allKeys = Object.keys(localStorage);
+      allKeys.forEach(key => {
+        if (key.startsWith('order_form_data_cache_v')) {
+          localStorage.removeItem(key);
+          removedCount++;
+          if (import.meta.env.DEV) {
+            console.log('🗑️ Removed versioned cache:', key);
+          }
+        }
+      });
+
+      if (import.meta.env.DEV) {
+        console.log('🗑️ Cleared branch-specific cache:', removedCount, 'keys removed');
+      }
+
+      // ✅ STEP 3: Update branch in localStorage
+      const updatedUserData = {
+        ...userData,
+        selectedBranch: branchId
+      };
+      localStorage.setItem("userData", JSON.stringify(updatedUserData));
+      localStorage.setItem("selectedBranch", branchId);
+
+      if (import.meta.env.DEV) {
+        console.log('💾 Updated selectedBranch in localStorage:', branchId);
+      }
+
+      // ✅ STEP 4: Update Redux auth state FIRST (before clearing data)
+      // This ensures components see the new branch ID when they re-render
+      dispatch({
+        type: SET_SELECTED_BRANCH_IN_AUTH,
+        payload: branchId
+      });
+
+      if (import.meta.env.DEV) {
+        console.log('💾 Updated selectedBranch in Redux state:', branchId);
+      }
+
+      // ✅ STEP 5: Clear ALL branch-specific Redux data
+      dispatch({ type: CLEAR_BRANCH_DATA });
+
+      if (import.meta.env.DEV) {
+        console.log('🗑️ Cleared all Redux branch-specific caches');
+      }
+
+      // ⚠️ CRITICAL: Wait a tiny bit for React to process state updates
+      // This ensures components unmount/remount before we fetch new data
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      // ✅ STEP 6: Fetch fresh data from new branch
+      try {
+        const { getOrderFormData } = await import('../oders/orderFormDataActions');
+        // Use getOrderFormData directly instead of refresh to avoid double-clearing
+        await dispatch(getOrderFormData() as any);
+
+        if (import.meta.env.DEV) {
+          console.log('✅ Fetched fresh order form data for new branch');
+        }
+      } catch (error) {
+        if (import.meta.env.DEV) {
+          console.error('❌ Error fetching order form data:', error);
+        }
+      }
+
+      // ✅ STEP 7: Hide loading animation
+      dispatch({ type: BRANCH_SWITCH_COMPLETE });
+
+      if (import.meta.env.DEV) {
+        console.log('✅ Branch switch complete');
+      }
+
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        console.error('❌ Error during branch switch:', error);
+      }
+      // Hide loading even on error
+      const { BRANCH_SWITCH_COMPLETE } = await import('./authConstants');
+      dispatch({ type: BRANCH_SWITCH_COMPLETE });
+      throw error;
     }
   };
 };
@@ -430,7 +548,7 @@ export const clearVerificationState = () => {
 
 // ✅ Add branch to auth state (called when new branch is created)
 export const ADD_BRANCH_TO_AUTH = "ADD_BRANCH_TO_AUTH";
-export const addBranchToAuth = (branch: { _id: string; name: string; code?: string; location?: string; phone?: string; email?: string }) => {
+export const addBranchToAuth = (branch: {_id: string;name: string;code?: string;location?: string;phone?: string;email?: string;}) => {
   return (dispatch: any) => {
     // Update localStorage
     const storedData = localStorage.getItem("userData");
@@ -447,7 +565,7 @@ export const addBranchToAuth = (branch: { _id: string; name: string; code?: stri
     // Dispatch action to update Redux store
     dispatch({
       type: ADD_BRANCH_TO_AUTH,
-      payload: branch,
+      payload: branch
     });
   };
 };
@@ -479,7 +597,7 @@ export const requestPhoneOTP = (phone: string) => {
       if (!phone) {
         dispatch({
           type: PHONE_OTP_FAIL,
-          payload: "Phone number is required",
+          payload: "Phone number is required"
         });
         return;
       }
@@ -487,7 +605,7 @@ export const requestPhoneOTP = (phone: string) => {
       if (!validatePhone(phone)) {
         dispatch({
           type: PHONE_OTP_FAIL,
-          payload: "Invalid phone number format",
+          payload: "Invalid phone number format"
         });
         return;
       }
@@ -500,8 +618,8 @@ export const requestPhoneOTP = (phone: string) => {
         {
           headers: {
             "x-api-key": API_KEY,
-            "Content-Type": "application/json",
-          },
+            "Content-Type": "application/json"
+          }
         }
       );
 
@@ -510,12 +628,12 @@ export const requestPhoneOTP = (phone: string) => {
         payload: {
           phone: response.data.phone,
           userType: response.data.userType,
-          message: response.data.message,
-        },
+          message: response.data.message
+        }
       });
 
       if (import.meta.env.DEV) {
-        console.log('✅ Phone OTP sent to:', response.data.phone);
+
       }
 
       return true;
@@ -524,7 +642,7 @@ export const requestPhoneOTP = (phone: string) => {
 
       dispatch({
         type: PHONE_OTP_FAIL,
-        payload: errorMessage,
+        payload: errorMessage
       });
 
       return false;
@@ -539,7 +657,7 @@ export const verifyPhoneOTP = (phone: string, otp: string) => {
       if (!phone || !otp) {
         dispatch({
           type: PHONE_OTP_VERIFY_FAIL,
-          payload: "Phone number and OTP are required",
+          payload: "Phone number and OTP are required"
         });
         return false;
       }
@@ -552,8 +670,8 @@ export const verifyPhoneOTP = (phone: string, otp: string) => {
         {
           headers: {
             "x-api-key": API_KEY,
-            "Content-Type": "application/json",
-          },
+            "Content-Type": "application/json"
+          }
         }
       );
 
@@ -578,7 +696,7 @@ export const verifyPhoneOTP = (phone: string, otp: string) => {
       }
 
       if (import.meta.env.DEV) {
-        console.log('✅ Phone OTP login successful for role:', userType, 'branches:', branches?.length || 0);
+
       }
 
       dispatch({
@@ -586,8 +704,8 @@ export const verifyPhoneOTP = (phone: string, otp: string) => {
         payload: {
           token,
           refreshToken,
-          userData,
-        },
+          userData
+        }
       });
 
       // Clear phone OTP state
@@ -606,7 +724,7 @@ export const verifyPhoneOTP = (phone: string, otp: string) => {
           await dispatch(getOrderFormDataIfNeeded() as any);
         } catch (error) {
           if (import.meta.env.DEV) {
-            console.error("Failed to fetch order form data on login:", error);
+
           }
         }
       }
@@ -619,7 +737,7 @@ export const verifyPhoneOTP = (phone: string, otp: string) => {
       dispatch({
         type: PHONE_OTP_VERIFY_FAIL,
         payload: errorMessage,
-        expired: isExpired,
+        expired: isExpired
       });
 
       return false;

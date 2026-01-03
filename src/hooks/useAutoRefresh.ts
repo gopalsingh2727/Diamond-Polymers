@@ -28,9 +28,9 @@ interface UseAutoRefreshReturn {
 }
 
 export const useAutoRefresh = (
-  refreshFunction: () => void | Promise<void>,
-  options: UseAutoRefreshOptions = {}
-): UseAutoRefreshReturn => {
+refreshFunction: () => void | Promise<void>,
+options: UseAutoRefreshOptions = {})
+: UseAutoRefreshReturn => {
   const {
     interval = 60000, // Default: 1 minute
     enabled = true,
@@ -47,7 +47,7 @@ export const useAutoRefresh = (
 
     try {
       setIsRefreshing(true);
-      console.log('🔄 Auto-refresh: Fetching fresh data...');
+
 
       // Execute the refresh function
       await refreshFunction();
@@ -58,16 +58,16 @@ export const useAutoRefresh = (
       }
 
       setLastRefresh(new Date());
-      console.log('✅ Auto-refresh: Complete');
+
     } catch (error) {
-      console.error('❌ Auto-refresh: Failed', error);
+
     } finally {
       setIsRefreshing(false);
     }
   }, [refreshFunction, onRefresh, isRefreshing]);
 
   const triggerRefresh = useCallback(() => {
-    console.log('🔄 Manual refresh triggered');
+
     executeRefresh();
   }, [executeRefresh]);
 
@@ -76,13 +76,13 @@ export const useAutoRefresh = (
       clearInterval(intervalRef.current);
       intervalRef.current = null;
       setIsEnabled(false);
-      console.log('⏸️ Auto-refresh: Stopped');
+
     }
   }, []);
 
   const startRefresh = useCallback(() => {
     setIsEnabled(true);
-    console.log('▶️ Auto-refresh: Started');
+
   }, []);
 
   useEffect(() => {
@@ -99,7 +99,7 @@ export const useAutoRefresh = (
       executeRefresh();
     }, interval);
 
-    console.log(`⏰ Auto-refresh: Enabled (every ${interval / 1000} seconds)`);
+
 
     // Cleanup
     return () => {

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import ErrorBoundary from "../../../error/error";
-import Headers from "../../header/Headers";
+
 import "../create/create.css";
 import "../../../main/sidebar/menu.css";
 
@@ -25,7 +25,8 @@ import EditExcelExportTypeList from "./EditExcelExportType/EditExcelExportTypeLi
 import UpdataIDAndPassword from "./UpdataIDandPassword/UpdataIDAndPassword";
 import EditCustomerCategoryList from "./EditCustomerCategory/EditCustomerCategoryList";
 import EditParentCompanyList from "./EditParentCompany/EditParentCompanyList";
-
+import EditInventoryList from "./EditInventory/EditInventoryList";
+import EditReportTypeList from "./EditReportType/EditReportTypeList";
 // ========== CREATE Components (reused for both Create & Edit) ==========
 import CreateNewAccount from "../create/createNewAccount/createNewAccount";
 import CreateMachine from "../create/machine/CreateMachine";
@@ -42,7 +43,9 @@ import ViewTemplateWizard from "../create/machine/ViewTemplateWizard";
 import DeviceAccessCreate from "../create/deviceAccess/deviceAccessCreate";
 import CustomerCategory from "../create/customerCategory/CustomerCategory";
 import CustomerParentCompany from "../create/customerParentCompany/CustomerParentCompany";
-
+import CreateInventory from "../create/inventory/CreateInventory";
+import CreateReportType from "../create/reportType/CreateReportType";
+import { BackButton } from "@/componest/allCompones/BackButton";
 interface LocationStateType {
   editMode?: boolean;
   editData?: any;
@@ -65,7 +68,19 @@ const EditIndex = () => {
   const [editState, setEditState] = useState<EditState | null>(null);
   const buttonRefs = useRef<(HTMLLIElement | null)[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [componentKey, setComponentKey] = useState(0); // Force re-render on branch change
   const userRole = useSelector((state: any) => state.auth.userData?.role);
+  const selectedBranch = useSelector((state: any) => state.auth.userData?.selectedBranch);
+
+  // Listen for branch changes and force refresh
+  useEffect(() => {
+    if (selectedBranch) {
+      // Clear edit state and force re-render when branch changes
+      setEditState(null);
+      setComponentKey(prev => prev + 1);
+      console.log('🔄 Edit lists refreshing for new branch:', selectedBranch);
+    }
+  }, [selectedBranch]);
 
   useEffect(() => {
     if (locationState?.editMode && locationState?.editData) {
@@ -94,7 +109,8 @@ const EditIndex = () => {
     "Machine Management": false,
     "Device Access": false,
     "Options System": false,
-    "Order Management": false
+    "Order Management": false,
+    "Report": false
   });
 
   const toggleSection = (sectionTitle: string) => {
@@ -131,8 +147,12 @@ const EditIndex = () => {
     ]},
     { title: "Order Management", items: [
       { key: "orderType", label: "Order Type" },
+      { key: "inventory", label: "Inventory" },
       { key: "printType", label: "Print Type" },
       { key: "excelExportType", label: "Excel Export Type" }
+    ]},
+    { title: "Report", items: [
+      { key: "reportType", label: "Report Type" }
     ]}
   ];
 
@@ -146,35 +166,39 @@ const EditIndex = () => {
     if (editState?.editMode && editState?.editType === key) {
       switch (key) {
         case 'account':
-          return <ErrorBoundary><CreateNewAccount initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
+          return <ErrorBoundary key={`edit-account-${componentKey}`}><CreateNewAccount initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
         case 'customerCategory':
-          return <ErrorBoundary><CustomerCategory initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
+          return <ErrorBoundary key={`edit-customerCategory-${componentKey}`}><CustomerCategory initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
         case 'parentCompany':
-          return <ErrorBoundary><CustomerParentCompany initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
+          return <ErrorBoundary key={`edit-parentCompany-${componentKey}`}><CustomerParentCompany initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
         case 'machine':
-          return <ErrorBoundary><CreateMachine initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
+          return <ErrorBoundary key={`edit-machine-${componentKey}`}><CreateMachine initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
         case 'machineType':
-          return <ErrorBoundary><CreateMachineType initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
+          return <ErrorBoundary key={`edit-machineType-${componentKey}`}><CreateMachineType initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
         case 'machineOperator':
-          return <ErrorBoundary><CreateMachineOperator initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
+          return <ErrorBoundary key={`edit-machineOperator-${componentKey}`}><CreateMachineOperator initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
         case 'step':
-          return <ErrorBoundary><CreateStep initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
+          return <ErrorBoundary key={`edit-step-${componentKey}`}><CreateStep initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
         case 'category':
-          return <ErrorBoundary><CreateCategory initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
+          return <ErrorBoundary key={`edit-category-${componentKey}`}><CreateCategory initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
         case 'optionType':
-          return <ErrorBoundary><CreateOptionType initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
+          return <ErrorBoundary key={`edit-optionType-${componentKey}`}><CreateOptionType initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
         case 'option':
-          return <ErrorBoundary><CreateOption initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
+          return <ErrorBoundary key={`edit-option-${componentKey}`}><CreateOption initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
         case 'orderType':
-          return <ErrorBoundary><CreateOrderType initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
+          return <ErrorBoundary key={`edit-orderType-${componentKey}`}><CreateOrderType initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
         case 'printType':
-          return <ErrorBoundary><CreatePrintType initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
+          return <ErrorBoundary key={`edit-printType-${componentKey}`}><CreatePrintType initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
         case 'excelExportType':
-          return <ErrorBoundary><CreateExcelExportType initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
+          return <ErrorBoundary key={`edit-excelExportType-${componentKey}`}><CreateExcelExportType initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
+        case 'inventory':
+          return <ErrorBoundary key={`edit-inventory-${componentKey}`}><CreateInventory initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
+        case 'reportType':
+          return <ErrorBoundary key={`edit-reportType-${componentKey}`}><CreateReportType initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
         case 'machineTemplate':
-          return <ErrorBoundary><ViewTemplateWizard initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
+          return <ErrorBoundary key={`edit-machineTemplate-${componentKey}`}><ViewTemplateWizard initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
         case 'Access':
-          return <ErrorBoundary><DeviceAccessCreate initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
+          return <ErrorBoundary key={`edit-Access-${componentKey}`}><DeviceAccessCreate initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
         default:
           break;
       }
@@ -184,23 +208,25 @@ const EditIndex = () => {
     const setEdit = (type: string) => (data: any) => setEditState({ editMode: true, editData: data, editType: type });
 
     const baseComponentsMap: Record<string, JSX.Element> = {
-      account: <ErrorBoundary><EditNewAccount onEdit={setEdit('account')} /></ErrorBoundary>,
-      customerCategory: <ErrorBoundary><EditCustomerCategoryList onEdit={setEdit('customerCategory')} /></ErrorBoundary>,
-      parentCompany: <ErrorBoundary><EditParentCompanyList onEdit={setEdit('parentCompany')} /></ErrorBoundary>,
-      machineType: <ErrorBoundary><EditMachineTypeList onEdit={setEdit('machineType')} /></ErrorBoundary>,
-      machine: <ErrorBoundary><EditMachineList onEdit={setEdit('machine')} /></ErrorBoundary>,
-      step: <ErrorBoundary><EditStepList onEdit={setEdit('step')} /></ErrorBoundary>,
-      machineOperator: <ErrorBoundary><EditMachineOperatorList onEdit={setEdit('machineOperator')} /></ErrorBoundary>,
-      DeviceAccess: <ErrorBoundary><EditDeviceAccess /></ErrorBoundary>,
-      Access: <ErrorBoundary><EditAccessListOnly onEdit={setEdit('Access')} /></ErrorBoundary>,
-      category: <ErrorBoundary><EditCategoryListOnly onEdit={setEdit('category')} /></ErrorBoundary>,
-      optionType: <ErrorBoundary><EditOptionTypeListOnly onEdit={setEdit('optionType')} /></ErrorBoundary>,
-      option: <ErrorBoundary><EditOptionListOnly onEdit={setEdit('option')} /></ErrorBoundary>,
-      optionSpec: <ErrorBoundary><EditOptionSpecList /></ErrorBoundary>,
-      orderType: <ErrorBoundary><EditOrderTypeList onEdit={setEdit('orderType')} /></ErrorBoundary>,
-      printType: <ErrorBoundary><EditPrintTypeList /></ErrorBoundary>,
-      excelExportType: <ErrorBoundary><EditExcelExportTypeList /></ErrorBoundary>,
-      machineTemplate: <ErrorBoundary><EditMachineTemplateList onEdit={setEdit('machineTemplate')} /></ErrorBoundary>
+      account: <ErrorBoundary key={`account-${componentKey}`}><EditNewAccount onEdit={setEdit('account')} /></ErrorBoundary>,
+      customerCategory: <ErrorBoundary key={`customerCategory-${componentKey}`}><EditCustomerCategoryList onEdit={setEdit('customerCategory')} /></ErrorBoundary>,
+      parentCompany: <ErrorBoundary key={`parentCompany-${componentKey}`}><EditParentCompanyList onEdit={setEdit('parentCompany')} /></ErrorBoundary>,
+      machineType: <ErrorBoundary key={`machineType-${componentKey}`}><EditMachineTypeList onEdit={setEdit('machineType')} /></ErrorBoundary>,
+      machine: <ErrorBoundary key={`machine-${componentKey}`}><EditMachineList onEdit={setEdit('machine')} /></ErrorBoundary>,
+      step: <ErrorBoundary key={`step-${componentKey}`}><EditStepList onEdit={setEdit('step')} /></ErrorBoundary>,
+      machineOperator: <ErrorBoundary key={`machineOperator-${componentKey}`}><EditMachineOperatorList onEdit={setEdit('machineOperator')} /></ErrorBoundary>,
+      DeviceAccess: <ErrorBoundary key={`DeviceAccess-${componentKey}`}><EditDeviceAccess /></ErrorBoundary>,
+      Access: <ErrorBoundary key={`Access-${componentKey}`}><EditAccessListOnly onEdit={setEdit('Access')} /></ErrorBoundary>,
+      category: <ErrorBoundary key={`category-${componentKey}`}><EditCategoryListOnly onEdit={setEdit('category')} /></ErrorBoundary>,
+      optionType: <ErrorBoundary key={`optionType-${componentKey}`}><EditOptionTypeListOnly onEdit={setEdit('optionType')} /></ErrorBoundary>,
+      option: <ErrorBoundary key={`option-${componentKey}`}><EditOptionListOnly onEdit={setEdit('option')} /></ErrorBoundary>,
+      optionSpec: <ErrorBoundary key={`optionSpec-${componentKey}`}><EditOptionSpecList /></ErrorBoundary>,
+      orderType: <ErrorBoundary key={`orderType-${componentKey}`}><EditOrderTypeList onEdit={setEdit('orderType')} /></ErrorBoundary>,
+      inventory: <ErrorBoundary key={`inventory-${componentKey}`}><EditInventoryList onEdit={setEdit('inventory')} /></ErrorBoundary>,
+      reportType: <ErrorBoundary key={`reportType-${componentKey}`}><EditReportTypeList onEdit={setEdit('reportType')} /></ErrorBoundary>,
+      printType: <ErrorBoundary key={`printType-${componentKey}`}><EditPrintTypeList /></ErrorBoundary>,
+      excelExportType: <ErrorBoundary key={`excelExportType-${componentKey}`}><EditExcelExportTypeList /></ErrorBoundary>,
+      machineTemplate: <ErrorBoundary key={`machineTemplate-${componentKey}`}><EditMachineTemplateList onEdit={setEdit('machineTemplate')} /></ErrorBoundary>
     };
 
     if (userRole === "manager") {
@@ -234,7 +260,7 @@ const EditIndex = () => {
   return (
     <div className="container" style={{ marginTop: 0 }}>
       <div className="item menu-header" style={{ gridColumn: "1 / -1" }}>
-        <Headers />
+        <BackButton/>
       </div>
 
       <div className="item">

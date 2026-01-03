@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 import "./SearchableSelect.css";
 
 interface Option {
@@ -20,9 +20,19 @@ interface SearchableSelectProps {
   className?: string;
   showHint?: boolean;
   error?: string;
+  onSelectionComplete?: () => void; // Called after selection is made (for Tab/Enter to next field)
+  onFocus?: () => void; // Called when field receives focus
+  onSpaceBack?: () => void; // Called when Space is pressed on empty field
 }
 
-const SearchableSelect: React.FC<SearchableSelectProps> = ({
+export interface SearchableSelectHandle {
+  focus: () => void;
+  blur: () => void;
+  open: () => void;
+  close: () => void;
+}
+
+const SearchableSelect = forwardRef<SearchableSelectHandle, SearchableSelectProps>(({
   options,
   value,
   onChange,
@@ -33,13 +43,36 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
   loading = false,
   className = "",
   showHint = true,
-  error
-}) => {
+  error,
+  onSelectionComplete,
+  onFocus,
+  onSpaceBack
+}, ref) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [highlightedIndex, setHighlightedIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Expose methods to parent via ref
+  useImperativeHandle(ref, () => ({
+    focus: () => {
+      inputRef.current?.focus();
+    },
+    blur: () => {
+      inputRef.current?.blur();
+    },
+    open: () => {
+      if (!disabled && !loading) {
+        setIsOpen(true);
+        setSearchTerm("");
+      }
+    },
+    close: () => {
+      setIsOpen(false);
+      setSearchTerm("");
+    }
+  }));
 
   // Get selected option
   const selectedOption = options.find(opt => opt.value === value);
@@ -74,7 +107,12 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
     if (!disabled && !loading) {
       setIsOpen(true);
       setSearchTerm("");
+      onFocus?.();
     }
+  };
+
+  const handleInputFocus = () => {
+    onFocus?.();
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -86,6 +124,11 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
     onChange(optionValue);
     setIsOpen(false);
     setSearchTerm("");
+
+    // Notify parent that selection is complete (for auto-progression)
+    setTimeout(() => {
+      onSelectionComplete?.();
+    }, 100);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -94,26 +137,94 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
     switch (e.key) {
       case "ArrowDown":
         e.preventDefault();
-        setHighlightedIndex(prev =>
-          prev < filteredOptions.length - 1 ? prev + 1 : prev
-        );
+        if (!isOpen) {
+          setIsOpen(true);
+        } else {
+          setHighlightedIndex(prev =>
+            prev < filteredOptions.length - 1 ? prev + 1 : prev
+          );
+        }
         break;
+
       case "ArrowUp":
         e.preventDefault();
-        setHighlightedIndex(prev => (prev > 0 ? prev - 1 : prev));
+        if (!isOpen) {
+          setIsOpen(true);
+        } else {
+          setHighlightedIndex(prev => (prev > 0 ? prev - 1 : prev));
+        }
         break;
+
+      case "ArrowRight":
+        // Move to next field
+        if (!isOpen && value) {
+          e.preventDefault();
+          onSelectionComplete?.();
+        }
+        break;
+
+      case "ArrowLeft":
+        // Move to previous field
+        if (!isOpen && value) {
+          e.preventDefault();
+          onSpaceBack?.();
+        }
+        break;
+
       case "Enter":
         e.preventDefault();
         if (isOpen && filteredOptions[highlightedIndex]) {
+          // Select highlighted option
           handleOptionClick(filteredOptions[highlightedIndex].value);
+        } else if (isOpen && filteredOptions.length === 0) {
+          // No options - close popup
+          setIsOpen(false);
+          setSearchTerm("");
+        } else if (!isOpen && value) {
+          // Already has value - move to next field
+          onSelectionComplete?.();
         } else {
+          // Open dropdown
           setIsOpen(true);
         }
         break;
+
+      case "Tab":
+        // Allow default Tab behavior, but close dropdown and trigger completion
+        if (isOpen) {
+          // If dropdown is open and there's a highlighted option, select it
+          if (filteredOptions[highlightedIndex]) {
+            e.preventDefault();
+            handleOptionClick(filteredOptions[highlightedIndex].value);
+          } else {
+            setIsOpen(false);
+            setSearchTerm("");
+          }
+        } else if (value) {
+          // If has value and dropdown closed, let Tab move to next field
+          // Don't prevent default - let browser handle Tab
+          onSelectionComplete?.();
+        }
+        break;
+
       case "Escape":
         e.preventDefault();
         setIsOpen(false);
         setSearchTerm("");
+        break;
+
+      case " ": // Space key
+        // If field is empty or showing placeholder, go back
+        if (!isOpen && !value) {
+          e.preventDefault();
+          onSpaceBack?.();
+        } else if (isOpen && searchTerm === "") {
+          // If dropdown is open but search is empty, close and go back
+          e.preventDefault();
+          setIsOpen(false);
+          onSpaceBack?.();
+        }
+        // Otherwise, let space work normally for typing
         break;
     }
   };
@@ -140,6 +251,7 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
           value={displayValue}
           onChange={handleInputChange}
           onClick={handleInputClick}
+          onFocus={handleInputFocus}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           disabled={disabled || loading}
@@ -202,6 +314,8 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
       )}
     </div>
   );
-};
+});
+
+SearchableSelect.displayName = 'SearchableSelect';
 
 export default SearchableSelect;

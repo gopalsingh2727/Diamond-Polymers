@@ -1,0 +1,317 @@
+/* PayrollSettings.css */
+
+.payroll-settings-container {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  background: #f9fafb;
+  min-height: 100vh;
+}
+
+.payroll-settings-header {
+  margin-bottom: 32px;
+}
+
+.payroll-settings-header h2 {
+  margin: 0 0 8px 0;
+  font-size: 28px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.payroll-settings-header .subtitle {
+  margin: 0;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.settings-content {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.settings-section {
+  padding: 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.settings-section:last-child {
+  border-bottom: none;
+}
+
+.settings-section h3 {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.section-header h3 {
+  margin: 0;
+}
+
+.help-text {
+  margin: 0 0 16px 0;
+  font-size: 13px;
+  color: #6b7280;
+  font-style: italic;
+}
+
+/* Form Groups */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.form-group small {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.settings-input {
+  width: 100%;
+  max-width: 300px;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.settings-input:focus {
+  outline: none;
+  border-color: #FF6B35;
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+}
+
+.checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.checkbox-group input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #FF6B35;
+  cursor: pointer;
+}
+
+/* Items List */
+.items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.item-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1.5fr auto auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.item-row:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.item-name,
+.item-amount,
+.item-type {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+  transition: border-color 0.2s;
+}
+
+.item-name:focus,
+.item-amount:focus,
+.item-type:focus {
+  outline: none;
+  border-color: #FF6B35;
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+}
+
+.item-name {
+  font-weight: 500;
+}
+
+.item-amount {
+  text-align: right;
+}
+
+.default-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #6b7280;
+  white-space: nowrap;
+}
+
+.default-checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #FF6B35;
+  cursor: pointer;
+}
+
+/* Buttons */
+.add-btn {
+  padding: 8px 16px;
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.add-btn:hover {
+  background: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
+}
+
+.add-btn:active {
+  transform: translateY(0);
+}
+
+.remove-btn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 20px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.remove-btn:hover {
+  background: #dc2626;
+  transform: scale(1.05);
+}
+
+.remove-btn:active {
+  transform: scale(0.98);
+}
+
+.settings-actions {
+  padding: 24px;
+  background: #f9fafb;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.save-btn {
+  padding: 12px 32px;
+  background: #FF6B35;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(255, 107, 53, 0.2);
+}
+
+.save-btn:hover {
+  background: #e55a28;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(255, 107, 53, 0.3);
+}
+
+.save-btn:active {
+  transform: translateY(0);
+}
+
+.save-btn:disabled {
+  background: #d1d5db;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Access Denied */
+.access-denied {
+  padding: 48px;
+  text-align: center;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.access-denied h2 {
+  margin: 0 0 12px 0;
+  font-size: 24px;
+  color: #1f2937;
+}
+
+.access-denied p {
+  margin: 0;
+  font-size: 16px;
+  color: #6b7280;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .payroll-settings-container {
+    padding: 16px;
+  }
+
+  .item-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .default-checkbox {
+    justify-self: start;
+  }
+
+  .remove-btn {
+    justify-self: end;
+  }
+}

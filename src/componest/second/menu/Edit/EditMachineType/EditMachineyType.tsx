@@ -8,6 +8,8 @@ import {
 import { useFormDataCache } from "../hooks/useFormDataCache";
 import { AppDispatch } from "../../../../../store";
 import { formatDate } from "../../../../../utils/dateUtils";
+import { useCRUD } from "../../../../../hooks/useCRUD";
+import { ToastContainer } from "../../../../../components/shared/Toast";
 
 interface Branch {
   _id: string;
@@ -39,6 +41,7 @@ interface MachineType {
 
 const EditMachineType: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const { handleUpdate, handleDelete: crudDelete, updateState, deleteState, confirmDialog, closeConfirmDialog, toast } = useCRUD();
 
   // 🚀 OPTIMIZED: Get data from cached form data (no API calls!)
   const { machineTypes: cachedMachineTypes, machines: cachedMachines, loading, error } = useFormDataCache();
@@ -113,36 +116,41 @@ const EditMachineType: React.FC = () => {
 
   const handleEditSave = async () => {
     if (!editType.trim()) {
-      alert("Type cannot be empty");
+      toast.error('Validation Error', 'Type cannot be empty');
       return;
     }
 
     if (!editId) return;
 
-    try {
-      await dispatch(updateMachineType(editId, editType, editDescription));
-      alert("Machine Type updated successfully!");
-      setShowDetail(false);
-      // ✅ OPTIMIZED: Cache will auto-refresh on next page load
-    } catch (err) {
-      alert("Failed to update Machine Type.");
-    }
+    await handleUpdate(
+      () => dispatch(updateMachineType(editId, editType, editDescription)),
+      {
+        successMessage: 'Machine Type updated successfully!',
+        onSuccess: () => {
+          setTimeout(() => {
+            setShowDetail(false);
+            // ✅ OPTIMIZED: Cache will auto-refresh on next page load
+          }, 1500);
+        }
+      }
+    );
   };
 
-  const handleDelete = async () => {
+  const handleDeleteClick = async () => {
     if (!editId) return;
 
-    if (!window.confirm("Are you sure you want to delete this machine type?"))
-      return;
-
-    try {
-      await dispatch(deleteMachineType(editId));
-      alert("Deleted successfully.");
-      setShowDetail(false);
-      // ✅ OPTIMIZED: Cache will auto-refresh on next page load
-    } catch (err) {
-      alert("Failed to delete.");
-    }
+    await crudDelete(
+      () => dispatch(deleteMachineType(editId)),
+      {
+        confirmTitle: 'Delete Machine Type',
+        confirmMessage: 'Are you sure you want to delete this machine type?',
+        successMessage: 'Deleted successfully.',
+        onSuccess: () => {
+          setShowDetail(false);
+          // ✅ OPTIMIZED: Cache will auto-refresh on next page load
+        }
+      }
+    );
   };
 
   const handleRowClick = (index: number, item: MachineType) => {
@@ -236,8 +244,12 @@ const EditMachineType: React.FC = () => {
         <div className="detail-container">
           <div className="TopButtonEdit">
             <button onClick={() => setShowDetail(false)}>Back</button>
-            <button onClick={handleDelete} className="Delete">
-              Delete
+            <button
+              onClick={handleDeleteClick}
+              className="Delete"
+              disabled={deleteState === 'loading'}
+            >
+              {deleteState === 'loading' ? 'Deleting...' : 'Delete'}
             </button>
           </div>
 
@@ -263,11 +275,12 @@ const EditMachineType: React.FC = () => {
             onClick={handleEditSave}
             className="save-button"
             disabled={
-              editType === selectedItem.type &&
-              editDescription === selectedItem.description
+              updateState === 'loading' ||
+              (editType === selectedItem.type &&
+              editDescription === selectedItem.description)
             }
           >
-            Save
+            {updateState === 'loading' ? 'Saving...' : 'Save'}
           </button>
 
           <div className="info-section">
@@ -314,6 +327,31 @@ const EditMachineType: React.FC = () => {
       ) : (
         !loading && <p>No machine types available.</p>
       )}
+
+      {/* Confirmation Modal */}
+      {confirmDialog.isOpen && (
+        <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded shadow-lg max-w-sm w-full text-center">
+            <h3 className="text-lg font-bold mb-4">{confirmDialog.title}</h3>
+            <p className="mb-4">{confirmDialog.message}</p>
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={confirmDialog.onConfirm}
+                className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+              >
+                Confirm
+              </button>
+              <button
+                onClick={closeConfirmDialog}
+                className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
     </div>
   );
 };

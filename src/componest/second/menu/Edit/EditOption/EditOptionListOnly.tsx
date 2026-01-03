@@ -1,12 +1,14 @@
 /**
  * EditOptionListOnly - LIST ONLY
- * Click → Goes to CreateOption for editing
+ * Click -> Goes to CreateOption for editing
  */
 import React, { useState, useCallback, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getOptions } from "../../../../redux/option/optionActions";
 import { RootState } from "../../../../redux/rootReducer";
 import { AppDispatch } from "../../../../../store";
+import { useCRUD } from "../../../../../hooks/useCRUD";
+import { ToastContainer } from "../../../../../components/shared/Toast";
 
 interface Option {
   _id: string;
@@ -22,7 +24,12 @@ interface Props {
 
 const EditOptionListOnly: React.FC<Props> = ({ onEdit }) => {
   const dispatch = useDispatch<AppDispatch>();
-  const { options = [], loading, error } = useSelector((state: RootState) => state.option || {});
+  const optionState = useSelector((state: RootState) => state.v2.option);
+  const rawOptions = optionState?.list;
+  const options = Array.isArray(rawOptions) ? rawOptions : [];
+  const loading = optionState?.loading;
+  const error = optionState?.error;
+  const { toast } = useCRUD();
 
   // Fetch options on mount
   useEffect(() => {
@@ -62,6 +69,13 @@ const EditOptionListOnly: React.FC<Props> = ({ onEdit }) => {
 
   useEffect(() => { setSelectedRow(0); }, [searchTerm]);
 
+  // Show error via toast if any
+  useEffect(() => {
+    if (error) {
+      toast.error('Error', error);
+    }
+  }, [error, toast]);
+
   if (loading) return <p className="loadingAndError">Loading...</p>;
   if (error) return <p className="loadingAndError" style={{ color: "red" }}>{error}</p>;
 
@@ -77,8 +91,8 @@ const EditOptionListOnly: React.FC<Props> = ({ onEdit }) => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-            <span className="editsectionsTable-searchIcon">🔍</span>
-            {searchTerm && <button onClick={() => setSearchTerm("")} className="editsectionsTable-clearButton">✕</button>}
+            <span className="editsectionsTable-searchIcon">&#128269;</span>
+            {searchTerm && <button onClick={() => setSearchTerm("")} className="editsectionsTable-clearButton">&#10005;</button>}
           </div>
           <div className="editsectionsTable-countBadge">{filteredItems.length} options</div>
         </div>
@@ -114,6 +128,7 @@ const EditOptionListOnly: React.FC<Props> = ({ onEdit }) => {
           <div className="editsectionsTable-empty">No options found</div>
         )}
       </div>
+      <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
     </div>
   );
 };

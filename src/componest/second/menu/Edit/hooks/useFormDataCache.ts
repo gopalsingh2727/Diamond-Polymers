@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../../../redux/rootReducer';
 import { getOrderFormData } from '../../../../redux/oders/orderFormDataActions';
@@ -23,57 +23,154 @@ import { getOrderFormData } from '../../../../redux/oders/orderFormDataActions';
  */
 export const useFormDataCache = () => {
   const dispatch = useDispatch();
-  const { data: formData, loading, error } = useSelector(
-    (state: RootState) => state.orderFormData || {}
-  );
+  const orderFormDataState = useSelector((state: RootState) => state.orderFormData);
+  const formData = orderFormDataState?.data;
+  const loading = orderFormDataState?.loading || false;
+  const error = orderFormDataState?.error;
+
   const isAuthenticated = useSelector(
     (state: RootState) => !!(state.auth?.token || localStorage.getItem('authToken'))
   );
+  // ⚠️ CRITICAL: Listen to selectedBranch to detect branch changes
+  const selectedBranch = useSelector(
+    (state: RootState) => state.auth?.userData?.selectedBranch
+  );
+
+  // ✅ FIX: Track previous branch to detect changes
+  const prevBranchRef = useRef(selectedBranch);
 
   // Auto-fetch if data is null and user is authenticated (but NOT if there's an error)
+  // ✅ CRITICAL FIX: Also re-fetch when selectedBranch changes
   useEffect(() => {
-    if (!formData && !loading && !error && isAuthenticated) {
-      console.log('🔄 FormDataCache: Data is null, triggering auto-fetch...');
-      dispatch(getOrderFormData() as any);
+    const branchChanged = prevBranchRef.current !== selectedBranch;
+
+    if (isAuthenticated && !loading) {
+      // Fetch if: no data OR branch changed OR error
+      if (!formData || branchChanged || error) {
+        if (import.meta.env.DEV) {
+          console.log('🔄 useFormDataCache: Fetching data for branch:', selectedBranch);
+          if (branchChanged) {
+            console.log('   Branch changed from', prevBranchRef.current, 'to', selectedBranch);
+          }
+        }
+        dispatch(getOrderFormData() as any);
+        prevBranchRef.current = selectedBranch;
+      }
     }
-  }, [formData, loading, error, isAuthenticated, dispatch]);
+  }, [formData, loading, error, isAuthenticated, selectedBranch, dispatch]);
+
+  // ✅ WebSocket listener: Auto-refresh when reference data is invalidated
+  useEffect(() => {
+    const handleWebSocketMessage = (event: CustomEvent) => {
+      const { type, data: eventData } = event.detail;
+
+      if (type === 'referenceData:invalidate') {
+        const entityType = eventData?.entity || eventData?.entityType;
+
+        // List of entity types that should trigger a refresh of form data cache
+        const refreshTriggers = [
+          'orderType',      // Order types with dynamic calculations
+          'category',       // Product/service categories
+          'optionType',     // Option types
+          'option',         // Options
+          'optionSpec',     // Option specifications
+          'customer',       // Customers
+          'machine',        // Machines
+          'machineType',    // Machine types
+          'operator',       // Operators
+          'step'            // Manufacturing steps
+        ];
+
+        // Refetch form data when any relevant entity is updated
+        if (refreshTriggers.includes(entityType)) {
+          if (import.meta.env.DEV) {
+            console.log(`🔄 useFormDataCache: WebSocket refresh triggered by ${entityType} update`);
+          }
+          dispatch(getOrderFormData() as any);
+        }
+      }
+    };
+
+    // Add event listener for WebSocket messages
+    window.addEventListener('websocket:message', handleWebSocketMessage as EventListener);
+
+    return () => {
+      window.removeEventListener('websocket:message', handleWebSocketMessage as EventListener);
+    };
+  }, [dispatch]);
 
   // Manual refresh function
   const refresh = useCallback(() => {
-    console.log('🔄 FormDataCache: Manual refresh triggered');
+
     dispatch(getOrderFormData() as any);
   }, [dispatch]);
 
+  // ⚠️ CRITICAL FIX: Check if data matches current branch
+  // If data is from a different branch, return empty arrays to prevent showing stale data
+  const isDataValid = useCallback(() => {
+    if (!formData || !selectedBranch) return false;
+
+    // Check if any customer has wrong branchId
+    if (formData.customers && formData.customers.length > 0) {
+      const firstCustomer = formData.customers[0];
+      const customerBranch = firstCustomer?.branchId?._id || firstCustomer?.branchId;
+
+      // If customer belongs to different branch, data is invalid
+      if (customerBranch && customerBranch !== selectedBranch) {
+        if (import.meta.env.DEV) {
+          console.log('⚠️ useFormDataCache: Data is from wrong branch!');
+          console.log('   Current branch:', selectedBranch);
+          console.log('   Data branch:', customerBranch);
+        }
+        return false;
+      }
+    }
+
+    return true;
+  }, [formData, selectedBranch]);
+
+  // Only return data if it's valid for current branch
+  const validData = isDataValid() ? formData : null;
+
+  // DEBUG: Log options system data
+  if (import.meta.env.DEV && validData) {
+    console.log('📊 useFormDataCache - Options System Data:');
+    console.log('   Categories:', validData?.categories?.length || 0);
+    console.log('   OptionTypes:', validData?.optionTypes?.length || 0);
+    console.log('   Options:', validData?.options?.length || 0);
+    console.log('   Customers:', validData?.customers?.length || 0);
+  }
+
   return {
-    // All cached data
-    customers: formData?.customers || [],
-    productTypes: formData?.productTypes || [],
-    products: formData?.products || [],
-    productSpecs: formData?.productSpecs || [],
-    materialTypes: formData?.materialTypes || [],
-    materials: formData?.materials || [],
-    materialSpecs: formData?.materialSpecs || [],
-    machineTypes: formData?.machineTypes || [],
-    machines: formData?.machines || [],
-    operators: formData?.operators || [],
-    steps: formData?.steps || [],
-    orderTypes: formData?.orderTypes || [],
+    // All cached data - only if valid for current branch
+    customers: validData?.customers || [],
+    productTypes: validData?.productTypes || [],
+    products: validData?.products || [],
+    productSpecs: validData?.productSpecs || [],
+    materialTypes: validData?.materialTypes || [],
+    materials: validData?.materials || [],
+    materialSpecs: validData?.materialSpecs || [],
+    machineTypes: validData?.machineTypes || [],
+    machines: validData?.machines || [],
+    operators: validData?.operators || [],
+    steps: validData?.steps || [],
+    orderTypes: validData?.orderTypes || [],
 
     // Options System data
-    categories: formData?.categories || [],
-    optionTypes: formData?.optionTypes || [],
-    options: formData?.options || [],
-    optionSpecs: formData?.optionSpecs || [],
+    categories: validData?.categories || [],
+    optionTypes: validData?.optionTypes || [],
+    options: validData?.options || [],
+    optionSpecs: validData?.optionSpecs || [],
 
     // Loading states
     loading,
     error,
 
     // Helper to check if data is ready
-    isReady: !loading && !!formData,
+    isReady: !loading && !!validData,
 
     // Manual refresh function
-    refresh,
+    refresh
   };
 };
 

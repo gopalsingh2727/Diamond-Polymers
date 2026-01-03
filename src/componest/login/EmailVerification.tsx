@@ -11,7 +11,7 @@ interface EmailVerificationProps {
 const EmailVerification: React.FC<EmailVerificationProps> = ({
   email,
   onVerificationSuccess,
-  onBack,
+  onBack
 }) => {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
@@ -21,7 +21,7 @@ const EmailVerification: React.FC<EmailVerificationProps> = ({
   const [timeLeft, setTimeLeft] = useState(600); // 10 minutes
   const [otpSent, setOtpSent] = useState(false);
 
-  const baseUrl = import.meta.env.VITE_API_27INFINITY_IN || 'http://localhost:4000/dev';
+  const baseUrl = import.meta.env.VITE_API_27INFINITY_IN || 'https://api.27infinity.in';
   const apiKey = import.meta.env.VITE_API_KEY;
 
   // Auto-send OTP when component mounts
@@ -59,17 +59,17 @@ const EmailVerification: React.FC<EmailVerificationProps> = ({
         {
           headers: {
             'x-api-key': apiKey,
-            'Content-Type': 'application/json',
-          },
+            'Content-Type': 'application/json'
+          }
         }
       );
 
       setOtpSent(true);
       setSuccess(`OTP sent to ${email}`);
       setTimeLeft(600); // Reset timer
-      console.log('✅ Email OTP sent');
+
     } catch (err: any) {
-      console.error('❌ Failed to send email OTP:', err);
+
       setError(err.response?.data?.message || err.message || 'Failed to send OTP. Please try again.');
     } finally {
       setSending(false);
@@ -133,17 +133,17 @@ const EmailVerification: React.FC<EmailVerificationProps> = ({
         `${baseUrl}/user/verify-email`,
         {
           email,
-          otp: otpCode,
+          otp: otpCode
         },
         {
           headers: {
             'x-api-key': apiKey,
-            'Content-Type': 'application/json',
-          },
+            'Content-Type': 'application/json'
+          }
         }
       );
 
-      console.log('✅ Email verified and saved in MongoDB');
+
       setSuccess('Email verified successfully!');
 
       // Call success callback after 1.5 seconds
@@ -151,7 +151,7 @@ const EmailVerification: React.FC<EmailVerificationProps> = ({
         onVerificationSuccess(true);
       }, 1500);
     } catch (err: any) {
-      console.error('❌ Email verification failed:', err);
+
       setError(err.response?.data?.message || err.message || 'Verification failed. Please try again.');
     } finally {
       setLoading(false);
@@ -173,14 +173,14 @@ const EmailVerification: React.FC<EmailVerificationProps> = ({
               className="w-8 h-8 text-white"
               fill="none"
               stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
+              viewBox="0 0 24 24">
+
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-              />
+                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+
             </svg>
           </div>
           <h2 className="text-2xl font-bold text-gray-800 mb-2">
@@ -200,79 +200,79 @@ const EmailVerification: React.FC<EmailVerificationProps> = ({
         {/* OTP Input */}
         <form onSubmit={handleVerifyOTP}>
           <div className="flex justify-center gap-2 mb-6">
-            {otp.map((digit, index) => (
-              <input
-                key={index}
-                id={`email-otp-${index}`}
-                type="text"
-                maxLength={1}
-                value={digit}
-                onChange={(e) => handleOtpChange(index, e.target.value)}
-                onKeyDown={(e) => handleKeyDown(index, e)}
-                onPaste={handlePaste}
-                className="w-12 h-12 text-center text-xl font-bold border-2 border-gray-300 rounded-lg focus:outline-none focus:border-[#FF6B35] focus:ring-2 focus:ring-[#FF6B35] focus:ring-opacity-30 transition"
-                disabled={loading || sending}
-              />
-            ))}
+            {otp.map((digit, index) =>
+            <input
+              key={index}
+              id={`email-otp-${index}`}
+              type="text"
+              maxLength={1}
+              value={digit}
+              onChange={(e) => handleOtpChange(index, e.target.value)}
+              onKeyDown={(e) => handleKeyDown(index, e)}
+              onPaste={handlePaste}
+              className="w-12 h-12 text-center text-xl font-bold border-2 border-gray-300 rounded-lg focus:outline-none focus:border-[#FF6B35] focus:ring-2 focus:ring-[#FF6B35] focus:ring-opacity-30 transition"
+              disabled={loading || sending} />
+
+            )}
           </div>
 
           {/* Timer */}
           <div className="text-center mb-6">
-            {timeLeft > 0 ? (
-              <p className="text-gray-600 text-sm">
+            {timeLeft > 0 ?
+            <p className="text-gray-600 text-sm">
                 Code expires in{' '}
                 <span className="font-bold text-[#FF6B35]">
                   {formatTime(timeLeft)}
                 </span>
-              </p>
-            ) : (
-              <p className="text-red-600 text-sm font-medium">
+              </p> :
+
+            <p className="text-red-600 text-sm font-medium">
                 Code expired. Please request a new one.
               </p>
-            )}
+            }
           </div>
 
           {/* Error/Success Messages */}
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+          {error &&
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-red-600 text-sm text-center">{error}</p>
             </div>
-          )}
-          {success && (
-            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+          }
+          {success &&
+          <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
               <p className="text-green-600 text-sm text-center flex items-center justify-center gap-2">
                 <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24">
+
                   <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7" />
+
                 </svg>
                 {success}
               </p>
             </div>
-          )}
+          }
 
           {/* Verify Button */}
           <button
             type="submit"
             className="w-full bg-gradient-to-r from-[#FF6B35] to-[#FFA500] hover:opacity-90 text-white font-medium py-3 px-4 rounded-lg transition duration-300 shadow-md hover:shadow-lg mb-4"
-            disabled={loading || sending || timeLeft <= 0 || !otpSent}
-          >
-            {loading ? (
-              <span className="flex items-center justify-center gap-2">
+            disabled={loading || sending || timeLeft <= 0 || !otpSent}>
+
+            {loading ?
+            <span className="flex items-center justify-center gap-2">
                 <InfinitySpinner size="sm" />
                 Verifying...
-              </span>
-            ) : (
-              'Verify Email'
-            )}
+              </span> :
+
+            'Verify Email'
+            }
           </button>
 
           {/* Resend OTP */}
@@ -284,14 +284,14 @@ const EmailVerification: React.FC<EmailVerificationProps> = ({
               className="text-[#FF6B35] hover:text-[#FFA500] text-sm font-medium underline disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={sending || timeLeft > 540} // Disable for first 1 minute
             >
-              {sending ? (
-                <span className="flex items-center justify-center gap-2">
+              {sending ?
+              <span className="flex items-center justify-center gap-2">
                   <InfinitySpinner size="sm" />
                   Sending...
-                </span>
-              ) : (
-                'Resend Code'
-              )}
+                </span> :
+
+              'Resend Code'
+              }
             </button>
           </div>
 
@@ -300,8 +300,8 @@ const EmailVerification: React.FC<EmailVerificationProps> = ({
             type="button"
             onClick={onBack}
             className="w-full text-gray-600 hover:text-gray-800 text-sm font-medium py-2 transition"
-            disabled={loading || sending}
-          >
+            disabled={loading || sending}>
+
             ← Back
           </button>
         </form>
@@ -315,8 +315,8 @@ const EmailVerification: React.FC<EmailVerificationProps> = ({
           </p>
         </div>
       </div>
-    </div>
-  );
+    </div>);
+
 };
 
 export default EmailVerification;

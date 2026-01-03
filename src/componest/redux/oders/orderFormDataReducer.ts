@@ -1,8 +1,8 @@
 import {
   GET_ORDER_FORM_DATA_REQUEST,
   GET_ORDER_FORM_DATA_SUCCESS,
-  GET_ORDER_FORM_DATA_FAIL,
-} from "./orderFormDataActions";
+  GET_ORDER_FORM_DATA_FAIL } from
+"./orderFormDataActions";
 
 interface OrderFormData {
   customers: any[];
@@ -17,6 +17,11 @@ interface OrderFormData {
   operators: any[];
   steps: any[];
   orderTypes: any[];
+  // Options System
+  categories: any[];
+  optionTypes: any[];
+  options: any[];
+  optionSpecs: any[];
 }
 
 interface OrderFormDataState {
@@ -41,12 +46,12 @@ const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
       const key = localStorage.key(i);
       // Remove caches from older versions (v1, v2, etc.)
       if (key && key.startsWith('order_form_data_cache') && !key.includes(`_v${CACHE_VERSION}_`)) {
-        console.log('🗑️ Removing old order form data cache:', key);
+
         localStorage.removeItem(key);
       }
     }
   } catch (error) {
-    console.error('Error cleaning up old caches:', error);
+
   }
 })();
 
@@ -63,7 +68,7 @@ const loadFromLocalStorage = (): OrderFormDataState => {
       const now = Date.now();
 
       if (now - lastFetched < CACHE_DURATION) {
-        console.log('✅ Loaded order form data from localStorage cache for branch:', localStorage.getItem("selectedBranch"));
+
         return {
           loading: false,
           error: null,
@@ -71,12 +76,12 @@ const loadFromLocalStorage = (): OrderFormDataState => {
           lastFetched: parsed.lastFetched
         };
       } else {
-        console.log('⚠️ Cache expired, will fetch fresh data');
+
         localStorage.removeItem(storageKey);
       }
     }
   } catch (error) {
-    console.error('Error loading from localStorage:', error);
+
   }
 
   return {
@@ -95,21 +100,39 @@ const saveToLocalStorage = (data: OrderFormData, lastFetched: string) => {
       data,
       lastFetched
     }));
-    console.log('✅ Saved order form data to localStorage cache for branch:', localStorage.getItem("selectedBranch"));
+
   } catch (error) {
-    console.error('Error saving to localStorage:', error);
+
   }
 };
 
-const initialState: OrderFormDataState = loadFromLocalStorage();
+// ⚠️ CRITICAL FIX: Don't load from localStorage at module load time
+// This causes stale data to persist when CLEAR_BRANCH_DATA resets state to undefined
+// Instead, always start with empty state and let components trigger fresh fetches
+const initialState: OrderFormDataState = {
+  loading: false,
+  error: null,
+  data: null,
+  lastFetched: null
+};
 
 export const orderFormDataReducer = (
-  state = initialState,
-  action: any
-): OrderFormDataState => {
+state = initialState,
+action: any)
+: OrderFormDataState => {
   switch (action.type) {
-    case GET_ORDER_FORM_DATA_REQUEST:
+    // ✅ NEW: Try to load from localStorage for current branch on first request
+    case GET_ORDER_FORM_DATA_REQUEST: {
+      // If we don't have data yet, try loading from localStorage first
+      if (!state.data) {
+        const cached = loadFromLocalStorage();
+        // If cache exists and is valid, use it but still set loading: true for fresh fetch
+        if (cached.data) {
+          return { ...cached, loading: true };
+        }
+      }
       return { ...state, loading: true, error: null };
+    }
 
     case GET_ORDER_FORM_DATA_SUCCESS:
       const timestamp = new Date().toISOString();
@@ -140,7 +163,24 @@ export const orderFormDataReducer = (
           }
         }
       } catch (e) {
-        console.error('Error clearing order form data caches:', e);
+
+      }
+      return {
+        loading: false,
+        error: null,
+        data: null,
+        lastFetched: null
+      };
+
+    // ✅ NEW: Clear cache when branch switches
+    case 'CLEAR_BRANCH_DATA':
+      // Clear current branch's cache to prevent showing stale options data
+      try {
+        const storageKey = getLocalStorageKey();
+        localStorage.removeItem(storageKey);
+
+      } catch (e) {
+
       }
       return {
         loading: false,
@@ -150,14 +190,16 @@ export const orderFormDataReducer = (
       };
 
     case 'REFRESH_ORDER_FORM_DATA':
-      // Force refresh - clear current branch cache and set loading
+      // ✅ CRITICAL FIX: Clear current branch cache and reset to empty state
+      // This ensures old data doesn't persist when branch switches
       try {
         const storageKey = getLocalStorageKey();
         localStorage.removeItem(storageKey);
-        console.log('🔄 Cleared cache for branch refresh:', localStorage.getItem("selectedBranch"));
+
       } catch (e) {
-        console.error('Error clearing cache for refresh:', e);
+
       }
+      // Return empty state - next GET_ORDER_FORM_DATA_REQUEST will fetch fresh
       return {
         loading: false,
         error: null,

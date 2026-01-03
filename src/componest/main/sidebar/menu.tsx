@@ -16,6 +16,7 @@ const Menu = () => {
     { name: "Edit", path: "/menu/edit", shortcut: "E" },
     { name: "Create Orders", path: "/menu/orderform", shortcut: "O" },
     { name: "Day Book", path: "/menu/daybook", shortcut: "D" },
+    { name: "Inventory", path: "/menu/inventory", shortcut: "I" },
     { name: "Dispatch", path: "/menu/dispatch", shortcut: "P" },
     { name: "Status", path: "/menu/IndexAllOders", shortcut: "S" },
     { name: "Account", path: "/menu/Account", shortcut: "A" },
@@ -82,7 +83,7 @@ const Menu = () => {
       <div className="menu-header-padding">
         <ul id="main-menu">
           {allMenuItems.map((item, index) => {
-            const isGroupDivider = index === 1 || index === 5 || index === 7;
+            const isGroupDivider = index === 1 || index === 6 || index === 8;
             return (
               <div
                 key={item.name}

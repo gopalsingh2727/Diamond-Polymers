@@ -1,11 +1,10 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "../../../../../store";
-import {
-  updateStep,
-  deleteStep,
-} from "../../../../redux/create/CreateStep/StpeActions";
+import { updateStepV2, deleteStepV2 } from "../../../../redux/unifiedV2";
 import { useFormDataCache } from "../hooks/useFormDataCache";
+import { useCRUD } from "../../../../../hooks/useCRUD";
+import { ToastContainer } from "../../../../../components/shared/Toast";
 
 // Define interfaces for type safety
 interface Machine {
@@ -39,6 +38,7 @@ interface EditForm {
 
 const EditStep: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const { handleUpdate, handleDelete: crudDelete, updateState, deleteState, confirmDialog, closeConfirmDialog, toast } = useCRUD();
 
   // 🚀 OPTIMIZED: Get data from cached form data (no API calls!)
   const { steps, machines, loading, error } = useFormDataCache();
@@ -129,17 +129,17 @@ const EditStep: React.FC = () => {
     setEditForm((prev) => ({ ...prev, machines: updated }));
   };
 
-  const handleUpdate = async () => {
+  const handleUpdateClick = async () => {
     if (!selectedStep) return;
 
     const machinesFiltered = editForm.machines.filter((m) => m.machineId);
 
     if (!editForm.stepName.trim()) {
-      alert("Step name is required");
+      toast.error('Validation Error', 'Step name is required');
       return;
     }
     if (machinesFiltered.length === 0) {
-      alert("At least one machine is required");
+      toast.error('Validation Error', 'At least one machine is required');
       return;
     }
 
@@ -151,32 +151,37 @@ const EditStep: React.FC = () => {
       })),
     };
 
-    try {
-      await dispatch(updateStep(selectedStep._id, updatedStep));
-      alert("Step updated successfully!");
-      setShowDetail(false);
-      setSelectedStep(null);
-      // ✅ OPTIMIZED: Cache will auto-refresh on next page load
-    } catch (err) {
-      alert("Failed to update step.");
-    }
+    await handleUpdate(
+      () => dispatch(updateStepV2(selectedStep._id, updatedStep)),
+      {
+        successMessage: 'Step updated successfully!',
+        onSuccess: () => {
+          setTimeout(() => {
+            setShowDetail(false);
+            setSelectedStep(null);
+            // ✅ OPTIMIZED: Cache will auto-refresh on next page load
+          }, 1500);
+        }
+      }
+    );
   };
 
-  const handleDelete = async () => {
+  const handleDeleteClick = async () => {
     if (!selectedStep) return;
 
-    if (!window.confirm("Are you sure you want to delete this step?"))
-      return;
-
-    try {
-      await dispatch(deleteStep(selectedStep._id));
-      alert("Deleted successfully.");
-      setShowDetail(false);
-      setSelectedStep(null);
-      // ✅ OPTIMIZED: Cache will auto-refresh on next page load
-    } catch (err) {
-      alert("Failed to delete.");
-    }
+    await crudDelete(
+      () => dispatch(deleteStepV2(selectedStep._id)),
+      {
+        confirmTitle: 'Delete Step',
+        confirmMessage: 'Are you sure you want to delete this step?',
+        successMessage: 'Deleted successfully.',
+        onSuccess: () => {
+          setShowDetail(false);
+          setSelectedStep(null);
+          // ✅ OPTIMIZED: Cache will auto-refresh on next page load
+        }
+      }
+    );
   };
 
   const handleRowClick = (index: number, step: Step) => {
@@ -263,8 +268,12 @@ const EditStep: React.FC = () => {
         <div className="detail-container">
           <div className="TopButtonEdit">
             <button onClick={() => setShowDetail(false)}>Back</button>
-            <button onClick={handleDelete} className="Delete">
-              Delete
+            <button
+              onClick={handleDeleteClick}
+              className="Delete"
+              disabled={deleteState === 'loading'}
+            >
+              {deleteState === 'loading' ? 'Deleting...' : 'Delete'}
             </button>
           </div>
 
@@ -344,14 +353,15 @@ const EditStep: React.FC = () => {
           </div>
 
           <button
-            onClick={handleUpdate}
+            onClick={handleUpdateClick}
             className="save-button"
             disabled={
+              updateState === 'loading' ||
               !editForm.stepName.trim() ||
               editForm.machines.filter((m) => m.machineId).length === 0
             }
           >
-            Save
+            {updateState === 'loading' ? 'Saving...' : 'Save'}
           </button>
 
           <div className="info-section">
@@ -366,6 +376,31 @@ const EditStep: React.FC = () => {
       ) : (
         !loading && <p>No steps available.</p>
       )}
+
+      {/* Confirmation Modal */}
+      {confirmDialog.isOpen && (
+        <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded shadow-lg max-w-sm w-full text-center">
+            <h3 className="text-lg font-bold mb-4">{confirmDialog.title}</h3>
+            <p className="mb-4">{confirmDialog.message}</p>
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={confirmDialog.onConfirm}
+                className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+              >
+                Confirm
+              </button>
+              <button
+                onClick={closeConfirmDialog}
+                className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
     </div>
   );
 };

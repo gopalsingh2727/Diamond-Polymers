@@ -53,13 +53,18 @@ function createWindow() {
     height: 800,
     icon: path.join(process.env.VITE_PUBLIC!, 'electron-vite.svg'),
     autoHideMenuBar: true,
+    // Performance optimizations
+    backgroundColor: '#f9fafb', // Match app background - faster first paint
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
-      // Enable features required for speech recognition and WASM
       webSecurity: true,
       allowRunningInsecureContent: false,
       contextIsolation: true,
       nodeIntegration: false,
+      // Performance: cache compiled JS
+      v8CacheOptions: 'bypassHeatCheck',
+      // Performance: enable hardware acceleration
+      backgroundThrottling: false,
     },
   });
 
@@ -262,7 +267,7 @@ app.whenReady().then(() => {
       // Also notify the renderer
       win?.webContents.send('update-can-available', result);
     }
-  }, 3000); // Check 3 seconds after startup
+  }, 10000); // Check 10 seconds after startup - don't interfere with initial load
 
   // IPC handler for manual update check
   ipcMain.handle('check-update', async () => {
@@ -470,4 +475,3 @@ app.on('will-quit', () => {
   log.info('All global shortcuts unregistered');
 });
 
-console.log(`App root: ${process.env.APP_ROOT}`);

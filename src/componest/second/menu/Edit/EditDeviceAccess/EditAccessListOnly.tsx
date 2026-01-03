@@ -25,9 +25,13 @@ interface Props {
 
 const EditAccessListOnly: React.FC<Props> = ({ onEdit }) => {
   const dispatch = useDispatch<AppDispatch>();
-  const { devices = [], loading, error } = useSelector(
-    (state: RootState) => state.deviceAccess || {}
+  const deviceAccessState = useSelector(
+    (state: RootState) => state.v2.deviceAccess
   );
+  const rawDevices = deviceAccessState?.list;
+  const devices = Array.isArray(rawDevices) ? rawDevices : [];
+  const loading = deviceAccessState?.loading;
+  const error = deviceAccessState?.error;
 
   // Fetch devices on mount
   useEffect(() => {

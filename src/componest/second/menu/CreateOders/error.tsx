@@ -24,8 +24,8 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
-    
+
+
     this.setState({
       error,
       errorInfo
@@ -66,25 +66,25 @@ class ErrorBoundary extends Component<Props, State> {
             <strong>Error:</strong> {this.state.error?.message || 'Unknown error occurred'}
           </div>
           
-          {process.env.NODE_ENV === 'development' && this.state.errorInfo && (
-            <details style={{ marginBottom: '15px' }}>
+          {process.env.NODE_ENV === 'development' && this.state.errorInfo &&
+          <details style={{ marginBottom: '15px' }}>
               <summary style={{ cursor: 'pointer', marginBottom: '10px' }}>
                 View Error Details (Development Only)
               </summary>
               <pre style={{
-                fontSize: '12px',
-                backgroundColor: '#f8f8f8',
-                padding: '10px',
-                borderRadius: '4px',
-                overflow: 'auto',
-                maxHeight: '200px'
-              }}>
+              fontSize: '12px',
+              backgroundColor: '#f8f8f8',
+              padding: '10px',
+              borderRadius: '4px',
+              overflow: 'auto',
+              maxHeight: '200px'
+            }}>
                 {this.state.error?.stack}
                 {'\n\n'}
                 {this.state.errorInfo.componentStack}
               </pre>
             </details>
-          )}
+          }
           
           <div>
             <button
@@ -97,8 +97,8 @@ class ErrorBoundary extends Component<Props, State> {
                 borderRadius: '4px',
                 cursor: 'pointer',
                 marginRight: '10px'
-              }}
-            >
+              }}>
+
               Try Again
             </button>
             
@@ -111,13 +111,13 @@ class ErrorBoundary extends Component<Props, State> {
                 border: 'none',
                 borderRadius: '4px',
                 cursor: 'pointer'
-              }}
-            >
+              }}>
+
               Reload Page
             </button>
           </div>
-        </div>
-      );
+        </div>);
+
     }
 
     return this.props.children;
@@ -125,16 +125,16 @@ class ErrorBoundary extends Component<Props, State> {
 }
 
 // Higher-order component version for easier use
-export const withErrorBoundary = <P extends object>(
-  WrappedComponent: React.ComponentType<P>,
-  fallback?: ReactNode,
-  onError?: (error: Error, errorInfo: ErrorInfo) => void
-) => {
-  const WithErrorBoundaryComponent = (props: P) => (
-    <ErrorBoundary fallback={fallback} onError={onError}>
+export const withErrorBoundary = <P extends object,>(
+WrappedComponent: React.ComponentType<P>,
+fallback?: ReactNode,
+onError?: (error: Error, errorInfo: ErrorInfo) => void) =>
+{
+  const WithErrorBoundaryComponent = (props: P) =>
+  <ErrorBoundary fallback={fallback} onError={onError}>
       <WrappedComponent {...props} />
-    </ErrorBoundary>
-  );
+    </ErrorBoundary>;
+
 
   WithErrorBoundaryComponent.displayName = `withErrorBoundary(${WrappedComponent.displayName || WrappedComponent.name})`;
 

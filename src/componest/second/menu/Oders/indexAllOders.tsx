@@ -3,14 +3,16 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useLocation } from "react-router-dom";
 import { BackButton } from "../../../allCompones/BackButton";
 import "./indexAllOders.css";
-import { Download, Printer, X, ChevronDown, ChevronRight, Loader2, AlertCircle, RefreshCw, Clock, CheckCircle2, Circle, PlayCircle, PauseCircle, AlertTriangle, Wifi, WifiOff } from "lucide-react";
+import { ArrowDownTrayIcon, PrinterIcon, XMarkIcon, ChevronDownIcon, ChevronRightIcon, ChevronLeftIcon, ArrowPathIcon, SignalIcon, SignalSlashIcon } from "@heroicons/react/24/solid";
+import { CheckCircle2, Circle, PlayCircle, PauseCircle, AlertTriangle, Loader2, AlertCircle, Clock, X, RefreshCw } from "lucide-react";
+import CustomSelect from "../../../../components/shared/CustomSelect";
 
 // Import Redux actions
 import { fetchOrders } from "../../../redux/oders/OdersActions";
 import { getOrderFormDataIfNeeded } from "../../../redux/oders/orderFormDataActions";
 import { RootState } from "../../../redux/rootReducer";
 import { AppDispatch } from "../../../../store";
-import { useDaybookUpdates, useWebSocketStatus } from "../../../../hooks/useWebSocket";  // ✅ WebSocket real-time updates
+import { useDaybookUpdates, useWebSocketStatus } from "../../../../hooks/useWebSocket"; // ✅ WebSocket real-time updates
 
 interface OrderFilters {
   status: string;
@@ -20,7 +22,7 @@ interface OrderFilters {
   operatorIds: string[];
   orderTypeId: string;
   stepNames: string[];
-  machineStatus: string;  // Machine-level status filter
+  machineStatus: string; // Machine-level status filter
   search: string;
 }
 
@@ -45,17 +47,17 @@ const IndexAllOders = () => {
 
   // Debug logging
   useEffect(() => {
-    console.log('📊 Orders State:', ordersState);
-    console.log('📊 Orders Array:', orders?.length, 'orders');
-    console.log('📊 Order Form Data:', orderFormData);
-    console.log('📊 Machine Types:', machineTypes?.length, 'types', machineTypes);
-    console.log('📊 Machines:', machines?.length, 'machines', machines);
-    console.log('📊 Operators:', operators?.length, 'operators', operators);
-    console.log('📊 Order Types:', orderTypes?.length, 'types', orderTypes);
-    console.log('📊 Steps from Form Data:', stepsFromFormData?.length, 'steps', stepsFromFormData);
+
+
+
+
+
+
+
+
   }, [ordersState, orders, machineTypes, machines, operators, orderTypes, orderFormData, stepsFromFormData]);
 
-  // Local state for filters
+  // Filters state (old working pattern)
   const [filters, setFilters] = useState<OrderFilters>({
     status: '',
     priority: '',
@@ -72,7 +74,7 @@ const IndexAllOders = () => {
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
 
-  // Dropdown open states
+  // Dropdown state for multi-select filters
   const [machineTypeDropdownOpen, setMachineTypeDropdownOpen] = useState(false);
   const [machineNameDropdownOpen, setMachineNameDropdownOpen] = useState(false);
   const [operatorDropdownOpen, setOperatorDropdownOpen] = useState(false);
@@ -83,119 +85,120 @@ const IndexAllOders = () => {
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(20);
-  const [refreshTrigger, setRefreshTrigger] = useState(0); // ✅ ADDED: Force refresh trigger
+  const [itemsPerPage] = useState(50); // ✅ Load 50 orders per page for performance
 
   // Status and Priority options
   const statusOptions = [
-    { value: '', label: 'All Status' },
-    { value: 'Wait for Approval', label: 'Wait for Approval' },
-    { value: 'pending', label: 'Pending' },
-    { value: 'approved', label: 'Approved' },
-    { value: 'in_progress', label: 'In Progress' },
-    { value: 'completed', label: 'Completed' },
-    { value: 'dispatched', label: 'Dispatched' },
-    { value: 'issue', label: 'Issue' },
-    { value: 'cancelled', label: 'Cancelled' },
-  ];
+  { value: '', label: 'All Status' },
+  { value: 'Wait for Approval', label: 'Wait for Approval' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'approved', label: 'Approved' },
+  { value: 'in_progress', label: 'In Progress' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'dispatched', label: 'Dispatched' },
+  { value: 'issue', label: 'Issue' },
+  { value: 'cancelled', label: 'Cancelled' }];
+
 
   const priorityOptions = [
-    { value: '', label: 'All Priority' },
-    { value: 'urgent', label: 'Urgent' },
-    { value: 'high', label: 'High' },
-    { value: 'normal', label: 'Normal' },
-    { value: 'low', label: 'Low' },
-  ];
+  { value: '', label: 'All Priority' },
+  { value: 'urgent', label: 'Urgent' },
+  { value: 'high', label: 'High' },
+  { value: 'normal', label: 'Normal' },
+  { value: 'low', label: 'Low' }];
+
 
   // Machine status options (step machine level)
   const machineStatusOptions = [
-    { value: '', label: 'All Machine Status' },
-    { value: 'none', label: 'None' },
-    { value: 'pending', label: 'Pending' },
-    { value: 'in-progress', label: 'In Progress' },
-    { value: 'completed', label: 'Completed' },
-    { value: 'paused', label: 'Paused' },
-    { value: 'error', label: 'Error' },
-    { value: 'issue', label: 'Issue' },
-  ];
+  { value: '', label: 'All Machine Status' },
+  { value: 'none', label: 'None' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'in-progress', label: 'In Progress' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'paused', label: 'Paused' },
+  { value: 'error', label: 'Error' },
+  { value: 'issue', label: 'Issue' }];
 
-  // Helper function to fetch orders
+
+  // Helper function to fetch orders - ✅ Server-side filtering for performance
   const fetchOrdersData = useCallback(() => {
-    console.log("📋 All Orders - Fetching orders data");
-    dispatch(fetchOrders({}));
-  }, [dispatch]);
+    const apiFilters: any = {
+      page: currentPage,
+      limit: itemsPerPage,
+      sortBy: 'createdAt',
+      sortOrder: 'desc'
+    };
+
+    // ✅ Send date filters to API to reduce database load (server-side filtering)
+    if (fromDate) apiFilters.startDate = fromDate;
+    if (toDate) apiFilters.endDate = toDate;
+    if (filters.search) apiFilters.search = filters.search;
+    if (filters.status) apiFilters.status = filters.status;
+    if (filters.priority) apiFilters.priority = filters.priority;
+    if (filters.orderTypeId) apiFilters.orderTypeId = filters.orderTypeId;
+
+    dispatch(fetchOrders(apiFilters));
+  }, [dispatch, currentPage, itemsPerPage, fromDate, toDate, filters.search, filters.status, filters.priority, filters.orderTypeId]);
 
   // Get branchId from auth state for WebSocket subscription
   const authState = useSelector((state: RootState) => state.auth);
-  const branchId = (authState as any)?.user?.branchId || localStorage.getItem('branchId') || localStorage.getItem('selectedBranch') || null;
+  const selectedBranch = useSelector((state: RootState) => state.auth.userData?.selectedBranch);
+  const branchId = selectedBranch || (authState as any)?.user?.branchId || localStorage.getItem('selectedBranch') || null;
+
+  // ✅ Listen for branch changes and refresh orders
+  useEffect(() => {
+    if (selectedBranch) {
+      console.log('🔄 Orders list refreshing for new branch:', selectedBranch);
+      // Reset filters and pagination when branch changes
+      setFilters({
+        status: '',
+        priority: '',
+        machineTypeIds: [],
+        machineNames: [],
+        operatorIds: [],
+        orderTypeId: '',
+        stepNames: [],
+        machineStatus: '',
+        search: ''
+      });
+      setFromDate('');
+      setToDate('');
+      setCurrentPage(1);
+      // Fetch fresh orders
+      dispatch(fetchOrders({}));
+    }
+  }, [selectedBranch, dispatch]);
 
   // ✅ WebSocket status for real-time indicator
   const { isConnected: wsConnected, status: wsStatus } = useWebSocketStatus();
 
-  // Load orders and form data on component mount and navigation back to page
+  // ✅ Reset page when filters change
   useEffect(() => {
-    console.log("📋 All Orders useEffect triggered - fetching orders (location.key:", location.key, ", refreshTrigger:", refreshTrigger, ")");
-    // fetchOrders automatically uses branchId from localStorage for non-admin users
-    // Fetch all orders without date filter - client-side filtering will handle dates
+    setCurrentPage(1);
+  }, [fromDate, toDate, filters.status, filters.priority, filters.orderTypeId, filters.search]);
+
+  // ✅ Load orders when filters or page changes (server-side filtering)
+  useEffect(() => {
     fetchOrdersData();
-    // Also load machine types and machines
-    dispatch(getOrderFormDataIfNeeded());
-  }, [dispatch, fetchOrdersData, location.key, refreshTrigger]);
-
-  // ✅ FIXED: Check for order updates on mount (using state trigger to avoid stale closures)
-  useEffect(() => {
-    const ordersUpdated = sessionStorage.getItem('orders_updated');
-    if (ordersUpdated) {
-      console.log("📡 [All Orders] Orders were updated on MOUNT - triggering refresh");
-      sessionStorage.removeItem('orders_updated');
-      setRefreshTrigger(prev => prev + 1);
+    // Also load machine types and machines on mount
+    if (location.key) {
+      dispatch(getOrderFormDataIfNeeded());
     }
-  }, []); // Run on mount
-
-  // ✅ FIXED: Also check on any location change (for navigate(-1) back button)
-  useEffect(() => {
-    const ordersUpdated = sessionStorage.getItem('orders_updated');
-    if (ordersUpdated) {
-      console.log("📡 [All Orders] Orders were updated on LOCATION CHANGE - triggering refresh");
-      sessionStorage.removeItem('orders_updated');
-      setRefreshTrigger(prev => prev + 1);
-    }
-  }, [location]); // Trigger on any location change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dispatch, currentPage, fromDate, toDate, filters.status, filters.priority, filters.orderTypeId, filters.search, location.key]);
 
   // ✅ WebSocket real-time subscription for live order updates
-  const handleOrderUpdate = useCallback(() => {
-    console.log("📡 WebSocket: All Orders update received - triggering refresh");
-    setRefreshTrigger(prev => prev + 1);
-  }, []);
-
-  // Subscribe to real-time daybook updates via WebSocket
-  useDaybookUpdates(branchId, handleOrderUpdate);
-
-  // ✅ Visibility change listener - refresh when user comes back to page if updates occurred
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        const ordersUpdated = sessionStorage.getItem('orders_updated');
-        if (ordersUpdated) {
-          console.log("📡 Page visible + orders were updated - triggering All Orders refresh");
-          sessionStorage.removeItem('orders_updated');
-          setRefreshTrigger(prev => prev + 1);
-        }
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, []);
+  // NO NEED to refetch - Redux state is automatically updated by WebSocket middleware
+  // The reducer already handles: ORDER_CREATED_VIA_WS, ORDER_UPDATED_VIA_WS, ORDER_DELETED_VIA_WS, etc.
+  // Subscribe to real-time daybook updates via WebSocket (this enables WebSocket events)
+  useDaybookUpdates(branchId, undefined); // Pass undefined - we don't need the callback
 
   // Get machines for selected machine types (multiple)
   const machinesForSelectedTypes = useMemo(() => {
     if (filters.machineTypeIds.length === 0) return machines;
 
     const filteredMachines: any[] = [];
-    filters.machineTypeIds.forEach(typeId => {
+    filters.machineTypeIds.forEach((typeId) => {
       const selectedType = machineTypes.find((mt: any) => mt._id === typeId);
       if (selectedType?.machines) {
         filteredMachines.push(...selectedType.machines);
@@ -209,7 +212,7 @@ const IndexAllOders = () => {
 
   // Get operators - combine API data with operators from orders
   const availableOperators = useMemo(() => {
-    const operatorMap = new Map<string, { id: string; name: string }>();
+    const operatorMap = new Map<string, {id: string;name: string;}>();
 
     // First add operators from API (orderFormData)
     operators.forEach((op: any) => {
@@ -256,16 +259,16 @@ const IndexAllOders = () => {
 
       // Order Type filter
       if (filters.orderTypeId && order.orderTypeId !== filters.orderTypeId &&
-          order.orderTypeId?._id !== filters.orderTypeId) return false;
+      order.orderTypeId?._id !== filters.orderTypeId) return false;
 
       // Machine Type filter (multiple)
       if (filters.machineTypeIds.length > 0) {
         const orderMachines = order.steps?.flatMap((step: any) => step.machines || []) || [];
         const hasMachineType = orderMachines.some((m: any) =>
-          filters.machineTypeIds.includes(m.machineType) ||
-          filters.machineTypeIds.some(typeId =>
-            machineTypes.find((mt: any) => mt._id === typeId)?.type === m.machineType
-          )
+        filters.machineTypeIds.includes(m.machineType) ||
+        filters.machineTypeIds.some((typeId) =>
+        machineTypes.find((mt: any) => mt._id === typeId)?.type === m.machineType
+        )
         );
         if (!hasMachineType) return false;
       }
@@ -276,29 +279,29 @@ const IndexAllOders = () => {
 
         // Debug: Log first order's machines for troubleshooting
         if (index === 0) {
-          console.log('🔍 Machine Filter Debug:', {
-            filterMachineNames: filters.machineNames,
-            orderMachines: orderMachines.map((m: any) => ({
-              machineId: m.machineId,
-              machineIdType: typeof m.machineId,
-              machineIdStr: m.machineId?.toString?.(),
-              machineName: m.machineName,
-              _id: m._id
-            }))
-          });
+
+
+
+
+
+
+
+
+
+
         }
 
         const hasMachine = orderMachines.some((m: any) => {
           // Get the machine ID - could be ObjectId, string, or populated object
-          const machineIdStr = typeof m.machineId === 'object'
-            ? (m.machineId?._id?.toString() || m.machineId?.toString())
-            : m.machineId?.toString();
+          const machineIdStr = typeof m.machineId === 'object' ?
+          m.machineId?._id?.toString() || m.machineId?.toString() :
+          m.machineId?.toString();
 
           return filters.machineNames.includes(machineIdStr) ||
-            filters.machineNames.includes(m.machineName) ||
-            filters.machineNames.includes(m._id?.toString()) ||
-            // Also check if the machineId object has a matching _id
-            (m.machineId?._id && filters.machineNames.includes(m.machineId._id.toString()));
+          filters.machineNames.includes(m.machineName) ||
+          filters.machineNames.includes(m._id?.toString()) ||
+          // Also check if the machineId object has a matching _id
+          m.machineId?._id && filters.machineNames.includes(m.machineId._id.toString());
         });
         if (!hasMachine) return false;
       }
@@ -307,18 +310,18 @@ const IndexAllOders = () => {
       if (filters.operatorIds.length > 0) {
         const orderOperator = order.operator || order.assignedOperator || order.operatorName || order.operatorId;
         const stepOperators = order.steps?.flatMap((step: any) =>
-          step.machines?.map((m: any) => m.operator || m.operatorName || m.operatorId) || []
+        step.machines?.map((m: any) => m.operator || m.operatorName || m.operatorId) || []
         ) || [];
 
         const allOperators = [orderOperator, ...stepOperators].filter(Boolean);
-        const hasOperator = allOperators.some(op => filters.operatorIds.includes(op));
+        const hasOperator = allOperators.some((op) => filters.operatorIds.includes(op));
         if (!hasOperator) return false;
       }
 
       // Step Name filter (multiple)
       if (filters.stepNames.length > 0) {
         const orderStepNames = order.steps?.map((step: any, idx: number) =>
-          step.stepName || step.name || step.stepId?.stepName || step.stepId?.name || `Step ${idx + 1}`
+        step.stepName || step.name || step.stepId?.stepName || step.stepId?.name || `Step ${idx + 1}`
         ) || [];
         const hasStepName = orderStepNames.some((name: string) => filters.stepNames.includes(name));
         if (!hasStepName) return false;
@@ -331,23 +334,15 @@ const IndexAllOders = () => {
         if (!hasMachineWithStatus) return false;
       }
 
-      // Date range filter
-      if (fromDate) {
-        const orderDate = new Date(order.createdAt).toISOString().split('T')[0];
-        if (orderDate < fromDate) return false;
-      }
-      if (toDate) {
-        const orderDate = new Date(order.createdAt).toISOString().split('T')[0];
-        if (orderDate > toDate) return false;
-      }
+      // ✅ Date range filter removed - API handles this now (server-side filtering)
 
       // Search filter
       if (filters.search) {
         const searchLower = filters.search.toLowerCase();
         const matchesOrderNumber = order.orderNumber?.toLowerCase().includes(searchLower) ||
-          order.orderId?.toLowerCase().includes(searchLower);
+        order.orderId?.toLowerCase().includes(searchLower);
         const matchesCompany = order.customer?.companyName?.toLowerCase().includes(searchLower) ||
-          order.customerId?.companyName?.toLowerCase().includes(searchLower);
+        order.customerId?.companyName?.toLowerCase().includes(searchLower);
         const matchesId = order._id?.toLowerCase().includes(searchLower);
         if (!matchesOrderNumber && !matchesCompany && !matchesId) return false;
       }
@@ -401,10 +396,10 @@ const IndexAllOders = () => {
 
   // Handle multi-select toggle for Machine Type
   const toggleMachineType = (typeId: string) => {
-    setFilters(prev => {
-      const newTypes = prev.machineTypeIds.includes(typeId)
-        ? prev.machineTypeIds.filter(id => id !== typeId)
-        : [...prev.machineTypeIds, typeId];
+    setFilters((prev) => {
+      const newTypes = prev.machineTypeIds.includes(typeId) ?
+      prev.machineTypeIds.filter((id) => id !== typeId) :
+      [...prev.machineTypeIds, typeId];
       return { ...prev, machineTypeIds: newTypes, machineNames: [] }; // Reset machine names when type changes
     });
     setCurrentPage(1);
@@ -412,10 +407,10 @@ const IndexAllOders = () => {
 
   // Handle multi-select toggle for Machine Name
   const toggleMachineName = (machineId: string) => {
-    setFilters(prev => {
-      const newMachines = prev.machineNames.includes(machineId)
-        ? prev.machineNames.filter(id => id !== machineId)
-        : [...prev.machineNames, machineId];
+    setFilters((prev) => {
+      const newMachines = prev.machineNames.includes(machineId) ?
+      prev.machineNames.filter((id) => id !== machineId) :
+      [...prev.machineNames, machineId];
       return { ...prev, machineNames: newMachines };
     });
     setCurrentPage(1);
@@ -423,10 +418,10 @@ const IndexAllOders = () => {
 
   // Handle multi-select toggle for Operator
   const toggleOperator = (operatorId: string) => {
-    setFilters(prev => {
-      const newOperators = prev.operatorIds.includes(operatorId)
-        ? prev.operatorIds.filter(id => id !== operatorId)
-        : [...prev.operatorIds, operatorId];
+    setFilters((prev) => {
+      const newOperators = prev.operatorIds.includes(operatorId) ?
+      prev.operatorIds.filter((id) => id !== operatorId) :
+      [...prev.operatorIds, operatorId];
       return { ...prev, operatorIds: newOperators };
     });
     setCurrentPage(1);
@@ -434,7 +429,7 @@ const IndexAllOders = () => {
 
   // Handle single select filter change
   const handleFilterChange = (field: 'status' | 'priority', value: string) => {
-    setFilters(prev => ({ ...prev, [field]: value }));
+    setFilters((prev) => ({ ...prev, [field]: value }));
     setCurrentPage(1);
   };
 
@@ -468,7 +463,7 @@ const IndexAllOders = () => {
       'cancelled': '#94a3b8',
       'dispatched': '#10b981',
       'approved': '#6366f1',
-      'Wait for Approval': '#f97316',
+      'Wait for Approval': '#f97316'
     };
     return colors[status] || '#94a3b8';
   };
@@ -479,7 +474,7 @@ const IndexAllOders = () => {
       'urgent': '#ef4444',
       'high': '#f97316',
       'normal': '#3b82f6',
-      'low': '#94a3b8',
+      'low': '#94a3b8'
     };
     return colors[priority] || '#94a3b8';
   };
@@ -500,8 +495,8 @@ const IndexAllOders = () => {
     return (
       <span title={uniqueMachines.join(', ')}>
         {uniqueMachines[0]} <span className="machine-count">+{uniqueMachines.length - 1}</span>
-      </span>
-    );
+      </span>);
+
   };
 
   // Get operator names for display - shows all unique operators
@@ -530,12 +525,12 @@ const IndexAllOders = () => {
     return (
       <span title={allOperators.join(', ')}>
         {allOperators[0]} <span className="operator-count">+{allOperators.length - 1}</span>
-      </span>
-    );
+      </span>);
+
   };
 
   // Get step/machine summary for display
-  const getStepMachineSummary = (order: any): { steps: number; machines: number; completed: number } => {
+  const getStepMachineSummary = (order: any): {steps: number;machines: number;completed: number;} => {
     const steps = order.steps?.length || 0;
     let machines = 0;
     let completed = 0;
@@ -561,8 +556,8 @@ const IndexAllOders = () => {
     return (
       <span title={stepNames.join(' → ')}>
         {stepNames[0]} <span className="step-count">+{stepNames.length - 1}</span>
-      </span>
-    );
+      </span>);
+
   };
 
   // Get machine types for display
@@ -579,17 +574,17 @@ const IndexAllOders = () => {
     return (
       <span title={uniqueTypes.join(', ')}>
         {uniqueTypes[0]} <span className="type-count">+{uniqueTypes.length - 1}</span>
-      </span>
-    );
+      </span>);
+
   };
 
   // Get available step names from form data (all steps for the branch) or from orders
   const availableStepNames = useMemo(() => {
     // First try to get steps from form data API (all available steps for the branch)
     if (stepsFromFormData && stepsFromFormData.length > 0) {
-      const stepNames = stepsFromFormData
-        .map((s: any) => s.stepName || s.name)
-        .filter(Boolean);
+      const stepNames = stepsFromFormData.
+      map((s: any) => s.stepName || s.name).
+      filter(Boolean);
       return [...new Set(stepNames)].sort() as string[];
     }
 
@@ -607,20 +602,20 @@ const IndexAllOders = () => {
 
   // Debug log for step names
   useEffect(() => {
-    console.log('📋 Available Step Names:', availableStepNames);
-    console.log('📋 Steps from Form Data:', stepsFromFormData?.length, stepsFromFormData);
+
+
     if (orders?.[0]?.steps?.[0]) {
-      console.log('📋 Sample order step FULL:', JSON.stringify(orders[0].steps[0], null, 2));
-      console.log('📋 Step keys:', Object.keys(orders[0].steps[0]));
+
+
     }
   }, [availableStepNames, stepsFromFormData, orders]);
 
   // Toggle step name filter
   const toggleStepName = (stepName: string) => {
-    setFilters(prev => {
-      const newStepNames = prev.stepNames.includes(stepName)
-        ? prev.stepNames.filter(n => n !== stepName)
-        : [...prev.stepNames, stepName];
+    setFilters((prev) => {
+      const newStepNames = prev.stepNames.includes(stepName) ?
+      prev.stepNames.filter((n) => n !== stepName) :
+      [...prev.stepNames, stepName];
       return { ...prev, stepNames: newStepNames };
     });
     setCurrentPage(1);
@@ -672,13 +667,13 @@ const IndexAllOders = () => {
       'pending': '#94a3b8',
       'error': '#ef4444',
       'issue': '#ef4444',
-      'none': '#e2e8f0',
+      'none': '#e2e8f0'
     };
     return colors[status] || '#e2e8f0';
   };
 
   // Calculate step progress
-  const getStepProgress = (order: any): { completed: number; total: number; percentage: number } => {
+  const getStepProgress = (order: any): {completed: number;total: number;percentage: number;} => {
     if (!order.steps || order.steps.length === 0) {
       return { completed: 0, total: 0, percentage: 0 };
     }
@@ -690,12 +685,12 @@ const IndexAllOders = () => {
       if (step.machines && step.machines.length > 0) {
         totalMachines += step.machines.length;
         completedMachines += step.machines.filter((m: any) =>
-          m.status === 'completed'
+        m.status === 'completed'
         ).length;
       }
     });
 
-    const percentage = totalMachines > 0 ? Math.round((completedMachines / totalMachines) * 100) : 0;
+    const percentage = totalMachines > 0 ? Math.round(completedMachines / totalMachines * 100) : 0;
     return { completed: completedMachines, total: totalMachines, percentage };
   };
 
@@ -724,27 +719,27 @@ const IndexAllOders = () => {
   const exportToExcel = () => {
     const data = filteredOrders;
     const csv = [
-      ["No", "Order ID", "Company", "Status", "Priority", "Steps", "Machines", "Operators", "End Date", "Created Date"],
-      ...data.map((order: any, index: number) => {
-        const summary = getStepMachineSummary(order);
-        return [
-          index + 1,
-          order.orderNumber || order.orderId || order._id?.slice(-8),
-          order.customer?.companyName || order.customerId?.companyName || 'Unknown',
-          order.overallStatus || 'Unknown',
-          order.priority || 'normal',
-          `${summary.steps} steps`,
-          getMachineNamesForExport(order),
-          getOperatorNamesForExport(order),
-          order.endDate || order.expectedEndDate || order.dueDate
-            ? new Date(order.endDate || order.expectedEndDate || order.dueDate).toLocaleDateString()
-            : '-',
-          new Date(order.createdAt).toLocaleDateString(),
-        ];
-      }),
-    ]
-      .map((row) => row.map((cell) => `"${cell}"`).join(","))
-      .join("\n");
+    ["No", "Order ID", "Company", "Status", "Priority", "Steps", "Machines", "Operators", "End Date", "Created Date"],
+    ...data.map((order: any, index: number) => {
+      const summary = getStepMachineSummary(order);
+      return [
+      index + 1,
+      order.orderNumber || order.orderId || order._id?.slice(-8),
+      order.customer?.companyName || order.customerId?.companyName || 'Unknown',
+      order.overallStatus || 'Unknown',
+      order.priority || 'normal',
+      `${summary.steps} steps`,
+      getMachineNamesForExport(order),
+      getOperatorNamesForExport(order),
+      order.endDate || order.expectedEndDate || order.dueDate ?
+      new Date(order.endDate || order.expectedEndDate || order.dueDate).toLocaleDateString() :
+      '-',
+      new Date(order.createdAt).toLocaleDateString()];
+
+    })].
+
+    map((row) => row.map((cell) => `"${cell}"`).join(",")).
+    join("\n");
 
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
@@ -784,7 +779,7 @@ const IndexAllOders = () => {
 
   // Handle row click - toggle expand
   const handleRowClick = useCallback((orderId: string) => {
-    setExpandedRows(prev => {
+    setExpandedRows((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(orderId)) {
         newSet.delete(orderId);
@@ -833,7 +828,7 @@ const IndexAllOders = () => {
   const getSelectedOperatorsLabel = () => {
     if (filters.operatorIds.length === 0) return 'All Operators';
     if (filters.operatorIds.length === 1) {
-      const operator = availableOperators.find(op => op.id === filters.operatorIds[0]);
+      const operator = availableOperators.find((op) => op.id === filters.operatorIds[0]);
       return operator?.name || '1 selected';
     }
     return `${filters.operatorIds.length} selected`;
@@ -859,27 +854,62 @@ const IndexAllOders = () => {
               fontSize: '12px',
               fontWeight: 500
             }}
-            title={wsConnected ? 'Real-time updates active' : 'Not connected - updates require manual refresh'}
-          >
-            {wsConnected ? (
-              <>
-                <Wifi size={14} style={{ color: '#16a34a' }} />
+            title={wsConnected ? 'Real-time updates active' : 'Not connected - updates require manual refresh'}>
+
+            {wsConnected ?
+            <>
+                <SignalIcon style={{ width: '14px', height: '14px', color: '#16a34a' }} />
                 <span style={{ color: '#16a34a' }}>Live</span>
-              </>
-            ) : (
-              <>
-                <WifiOff size={14} style={{ color: '#dc2626' }} />
+              </> :
+
+            <>
+                <SignalSlashIcon style={{ width: '14px', height: '14px', color: '#dc2626' }} />
                 <span style={{ color: '#dc2626' }}>Offline</span>
               </>
-            )}
+            }
           </div>
         </div>
-        <div className="all-orders-header__actions">
-          <button className="action-btn action-btn--export" onClick={exportToExcel}>
-            <Download size={16} /> Export
+        <div className="all-orders-header__actions" style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          flexShrink: 0
+        }}>
+          <button
+            style={{ width: '40px', height: '40px', backgroundColor: 'transparent', color: '#3b82f6', border: '1px solid #e5e7eb', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            onClick={exportToExcel}
+            title="Export to Excel">
+
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
           </button>
-          <button className="action-btn action-btn--print" onClick={handlePrint}>
-            <Printer size={16} /> Print
+          <button
+            style={{ width: '40px', height: '40px', backgroundColor: 'transparent', color: '#8b5cf6', border: '1px solid #e5e7eb', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            onClick={handlePrint}
+            title="Print Report">
+
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="6 9 6 2 18 2 18 9" />
+              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+              <rect x="6" y="14" width="12" height="8" />
+            </svg>
+          </button>
+          <button
+            style={{ width: '40px', height: '40px', backgroundColor: 'transparent', color: '#f59e0b', border: '1px solid #e5e7eb', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            onClick={() => {
+
+              dispatch(fetchOrders({}));
+            }}
+            title="Refresh Orders">
+
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="23 4 23 10 17 10" />
+              <polyline points="1 20 1 14 7 14" />
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+            </svg>
           </button>
         </div>
       </div>
@@ -893,62 +923,55 @@ const IndexAllOders = () => {
               type="text"
               placeholder="Order ID, Company..."
               value={filters.search}
-              onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-              className="filter-input"
-            />
+              onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value }))}
+              className="filter-input" />
+
           </div>
 
           <div className="filter-group">
             <label>Order Status</label>
-            <select
+            <CustomSelect
               value={filters.status}
-              onChange={(e) => handleFilterChange('status', e.target.value)}
+              options={statusOptions}
+              onChange={(value) => handleFilterChange('status', value)}
               className="filter-select"
-            >
-              {statusOptions.map(opt => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
+            />
           </div>
 
           <div className="filter-group">
             <label>Priority</label>
-            <select
+            <CustomSelect
               value={filters.priority}
-              onChange={(e) => handleFilterChange('priority', e.target.value)}
+              options={priorityOptions}
+              onChange={(value) => handleFilterChange('priority', value)}
               className="filter-select"
-            >
-              {priorityOptions.map(opt => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
+            />
           </div>
 
           <div className="filter-group">
             <label>Machine Status</label>
-            <select
+            <CustomSelect
               value={filters.machineStatus}
-              onChange={(e) => { setFilters(prev => ({ ...prev, machineStatus: e.target.value })); setCurrentPage(1); }}
+              options={machineStatusOptions}
+              onChange={(value) => {setFilters((prev) => ({ ...prev, machineStatus: value }));setCurrentPage(1);}}
               className="filter-select"
-            >
-              {machineStatusOptions.map(opt => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
+            />
           </div>
 
           <div className="filter-group">
             <label>Order Type</label>
-            <select
+            <CustomSelect
               value={filters.orderTypeId}
-              onChange={(e) => setFilters(prev => ({ ...prev, orderTypeId: e.target.value }))}
+              options={[
+                { value: '', label: 'All Order Types' },
+                ...orderTypes.map((ot: any) => ({
+                  value: ot._id,
+                  label: ot.typeName || ot.name
+                }))
+              ]}
+              onChange={(value) => setFilters((prev) => ({ ...prev, orderTypeId: value }))}
               className="filter-select"
-            >
-              <option value="">All Order Types</option>
-              {orderTypes.map((ot: any) => (
-                <option key={ot._id} value={ot._id}>{ot.typeName || ot.name}</option>
-              ))}
-            </select>
+            />
           </div>
 
           <div className="filter-group">
@@ -956,9 +979,9 @@ const IndexAllOders = () => {
             <input
               type="date"
               value={fromDate}
-              onChange={(e) => { setFromDate(e.target.value); setCurrentPage(1); }}
-              className="filter-input"
-            />
+              onChange={(e) => {setFromDate(e.target.value);setCurrentPage(1);}}
+              className="filter-input" />
+
           </div>
 
           <div className="filter-group">
@@ -966,9 +989,9 @@ const IndexAllOders = () => {
             <input
               type="date"
               value={toDate}
-              onChange={(e) => { setToDate(e.target.value); setCurrentPage(1); }}
-              className="filter-input"
-            />
+              onChange={(e) => {setToDate(e.target.value);setCurrentPage(1);}}
+              className="filter-input" />
+
           </div>
         </div>
 
@@ -983,42 +1006,42 @@ const IndexAllOders = () => {
                   setMachineTypeDropdownOpen(!machineTypeDropdownOpen);
                   setMachineNameDropdownOpen(false);
                   setOperatorDropdownOpen(false);
-                }}
-              >
+                }}>
+
                 <span>{getSelectedMachineTypesLabel()}</span>
-                <ChevronDown size={16} />
+                <ChevronDownIcon style={{ width: '16px', height: '16px' }} />
               </button>
-              {machineTypeDropdownOpen && (
-                <div className="multi-select-menu">
-                  {machineTypes?.map((mt: any) => (
-                    <label key={mt._id} className="multi-select-option">
+              {machineTypeDropdownOpen &&
+              <div className="multi-select-menu">
+                  {machineTypes?.map((mt: any) =>
+                <label key={mt._id} className="multi-select-option">
                       <input
-                        type="checkbox"
-                        checked={filters.machineTypeIds.includes(mt._id)}
-                        onChange={() => toggleMachineType(mt._id)}
-                      />
+                    type="checkbox"
+                    checked={filters.machineTypeIds.includes(mt._id)}
+                    onChange={() => toggleMachineType(mt._id)} />
+
                       <span>{mt.type}</span>
                     </label>
-                  ))}
-                  {machineTypes?.length === 0 && (
-                    <div className="multi-select-empty">No machine types available</div>
-                  )}
+                )}
+                  {machineTypes?.length === 0 &&
+                <div className="multi-select-empty">No machine types available</div>
+                }
                 </div>
-              )}
+              }
             </div>
-            {filters.machineTypeIds.length > 0 && (
-              <div className="selected-tags">
-                {filters.machineTypeIds.map(typeId => {
-                  const type = machineTypes.find((mt: any) => mt._id === typeId);
-                  return (
-                    <span key={typeId} className="selected-tag">
+            {filters.machineTypeIds.length > 0 &&
+            <div className="selected-tags">
+                {filters.machineTypeIds.map((typeId) => {
+                const type = machineTypes.find((mt: any) => mt._id === typeId);
+                return (
+                  <span key={typeId} className="selected-tag">
                       {type?.type}
-                      <X size={12} onClick={() => toggleMachineType(typeId)} />
-                    </span>
-                  );
-                })}
+                      <XMarkIcon style={{ width: '12px', height: '12px' }} onClick={() => toggleMachineType(typeId)} />
+                    </span>);
+
+              })}
               </div>
-            )}
+            }
           </div>
 
           {/* Machine Name Multi-Select */}
@@ -1031,42 +1054,42 @@ const IndexAllOders = () => {
                   setMachineNameDropdownOpen(!machineNameDropdownOpen);
                   setMachineTypeDropdownOpen(false);
                   setOperatorDropdownOpen(false);
-                }}
-              >
+                }}>
+
                 <span>{getSelectedMachineNamesLabel()}</span>
-                <ChevronDown size={16} />
+                <ChevronDownIcon style={{ width: '16px', height: '16px' }} />
               </button>
-              {machineNameDropdownOpen && (
-                <div className="multi-select-menu">
-                  {machinesForSelectedTypes?.map((m: any) => (
-                    <label key={m._id} className="multi-select-option">
+              {machineNameDropdownOpen &&
+              <div className="multi-select-menu">
+                  {machinesForSelectedTypes?.map((m: any) =>
+                <label key={m._id} className="multi-select-option">
                       <input
-                        type="checkbox"
-                        checked={filters.machineNames.includes(m._id) || filters.machineNames.includes(m.machineName)}
-                        onChange={() => toggleMachineName(m._id)}
-                      />
+                    type="checkbox"
+                    checked={filters.machineNames.includes(m._id) || filters.machineNames.includes(m.machineName)}
+                    onChange={() => toggleMachineName(m._id)} />
+
                       <span>{m.machineName}</span>
                     </label>
-                  ))}
-                  {machinesForSelectedTypes?.length === 0 && (
-                    <div className="multi-select-empty">No machines available</div>
-                  )}
+                )}
+                  {machinesForSelectedTypes?.length === 0 &&
+                <div className="multi-select-empty">No machines available</div>
+                }
                 </div>
-              )}
+              }
             </div>
-            {filters.machineNames.length > 0 && (
-              <div className="selected-tags">
-                {filters.machineNames.map(machineId => {
-                  const machine = machinesForSelectedTypes.find((m: any) => m._id === machineId || m.machineName === machineId);
-                  return (
-                    <span key={machineId} className="selected-tag">
+            {filters.machineNames.length > 0 &&
+            <div className="selected-tags">
+                {filters.machineNames.map((machineId) => {
+                const machine = machinesForSelectedTypes.find((m: any) => m._id === machineId || m.machineName === machineId);
+                return (
+                  <span key={machineId} className="selected-tag">
                       {machine?.machineName || machineId}
                       <X size={12} onClick={() => toggleMachineName(machineId)} />
-                    </span>
-                  );
-                })}
+                    </span>);
+
+              })}
               </div>
-            )}
+            }
           </div>
 
           {/* Operator Multi-Select */}
@@ -1079,42 +1102,42 @@ const IndexAllOders = () => {
                   setOperatorDropdownOpen(!operatorDropdownOpen);
                   setMachineTypeDropdownOpen(false);
                   setMachineNameDropdownOpen(false);
-                }}
-              >
+                }}>
+
                 <span>{getSelectedOperatorsLabel()}</span>
-                <ChevronDown size={16} />
+                <ChevronDownIcon style={{ width: '16px', height: '16px' }} />
               </button>
-              {operatorDropdownOpen && (
-                <div className="multi-select-menu">
-                  {availableOperators.map((op) => (
-                    <label key={op.id} className="multi-select-option">
+              {operatorDropdownOpen &&
+              <div className="multi-select-menu">
+                  {availableOperators.map((op) =>
+                <label key={op.id} className="multi-select-option">
                       <input
-                        type="checkbox"
-                        checked={filters.operatorIds.includes(op.id)}
-                        onChange={() => toggleOperator(op.id)}
-                      />
+                    type="checkbox"
+                    checked={filters.operatorIds.includes(op.id)}
+                    onChange={() => toggleOperator(op.id)} />
+
                       <span>{op.name}</span>
                     </label>
-                  ))}
-                  {availableOperators.length === 0 && (
-                    <div className="multi-select-empty">No operators available</div>
-                  )}
+                )}
+                  {availableOperators.length === 0 &&
+                <div className="multi-select-empty">No operators available</div>
+                }
                 </div>
-              )}
+              }
             </div>
-            {filters.operatorIds.length > 0 && (
-              <div className="selected-tags">
-                {filters.operatorIds.map(opId => {
-                  const operator = availableOperators.find(op => op.id === opId);
-                  return (
-                    <span key={opId} className="selected-tag">
+            {filters.operatorIds.length > 0 &&
+            <div className="selected-tags">
+                {filters.operatorIds.map((opId) => {
+                const operator = availableOperators.find((op) => op.id === opId);
+                return (
+                  <span key={opId} className="selected-tag">
                       {operator?.name || opId}
-                      <X size={12} onClick={() => toggleOperator(opId)} />
-                    </span>
-                  );
-                })}
+                      <XMarkIcon style={{ width: '12px', height: '12px' }} onClick={() => toggleOperator(opId)} />
+                    </span>);
+
+              })}
               </div>
-            )}
+            }
           </div>
 
           {/* Step Name Multi-Select */}
@@ -1128,39 +1151,39 @@ const IndexAllOders = () => {
                   setMachineTypeDropdownOpen(false);
                   setMachineNameDropdownOpen(false);
                   setOperatorDropdownOpen(false);
-                }}
-              >
+                }}>
+
                 <span>{getSelectedStepNamesLabel()}</span>
-                <ChevronDown size={16} />
+                <ChevronDownIcon style={{ width: '16px', height: '16px' }} />
               </button>
-              {stepNameDropdownOpen && (
-                <div className="multi-select-menu">
-                  {availableStepNames.map((stepName) => (
-                    <label key={stepName} className="multi-select-option">
+              {stepNameDropdownOpen &&
+              <div className="multi-select-menu">
+                  {availableStepNames.map((stepName) =>
+                <label key={stepName} className="multi-select-option">
                       <input
-                        type="checkbox"
-                        checked={filters.stepNames.includes(stepName)}
-                        onChange={() => toggleStepName(stepName)}
-                      />
+                    type="checkbox"
+                    checked={filters.stepNames.includes(stepName)}
+                    onChange={() => toggleStepName(stepName)} />
+
                       <span>{stepName}</span>
                     </label>
-                  ))}
-                  {availableStepNames.length === 0 && (
-                    <div className="multi-select-empty">No steps available</div>
-                  )}
+                )}
+                  {availableStepNames.length === 0 &&
+                <div className="multi-select-empty">No steps available</div>
+                }
                 </div>
-              )}
+              }
             </div>
-            {filters.stepNames.length > 0 && (
-              <div className="selected-tags">
-                {filters.stepNames.map(name => (
-                  <span key={name} className="selected-tag">
+            {filters.stepNames.length > 0 &&
+            <div className="selected-tags">
+                {filters.stepNames.map((name) =>
+              <span key={name} className="selected-tag">
                     {name}
                     <X size={12} onClick={() => toggleStepName(name)} />
                   </span>
-                ))}
+              )}
               </div>
-            )}
+            }
           </div>
 
           <button className="filter-reset-btn" onClick={handleResetFilters}>
@@ -1173,17 +1196,17 @@ const IndexAllOders = () => {
       <div className="summary-cards summary-cards--compact">
         <div
           className={`summary-card summary-card--mini summary-card--clickable ${filters.status === '' ? 'summary-card--active' : ''}`}
-          onClick={() => { handleFilterChange('status', ''); setCurrentPage(1); }}
-          title="Show all orders"
-        >
+          onClick={() => {handleFilterChange('status', '');setCurrentPage(1);}}
+          title="Show all orders">
+
           <div className="summary-card__value">{orders.length}</div>
           <div className="summary-card__label">Total</div>
         </div>
         <div
           className={`summary-card summary-card--mini summary-card--waiting summary-card--clickable ${filters.status === 'Wait for Approval' ? 'summary-card--active' : ''}`}
-          onClick={() => { handleFilterChange('status', 'Wait for Approval'); setCurrentPage(1); }}
-          title="Filter: Wait for Approval"
-        >
+          onClick={() => {handleFilterChange('status', 'Wait for Approval');setCurrentPage(1);}}
+          title="Filter: Wait for Approval">
+
           <div className="summary-card__value">
             {orders.filter((o: any) => o.overallStatus === 'Wait for Approval').length}
           </div>
@@ -1191,9 +1214,9 @@ const IndexAllOders = () => {
         </div>
         <div
           className={`summary-card summary-card--mini summary-card--pending summary-card--clickable ${filters.status === 'pending' ? 'summary-card--active' : ''}`}
-          onClick={() => { handleFilterChange('status', 'pending'); setCurrentPage(1); }}
-          title="Filter: Pending"
-        >
+          onClick={() => {handleFilterChange('status', 'pending');setCurrentPage(1);}}
+          title="Filter: Pending">
+
           <div className="summary-card__value">
             {orders.filter((o: any) => o.overallStatus === 'pending').length}
           </div>
@@ -1201,9 +1224,9 @@ const IndexAllOders = () => {
         </div>
         <div
           className={`summary-card summary-card--mini summary-card--approved summary-card--clickable ${filters.status === 'approved' ? 'summary-card--active' : ''}`}
-          onClick={() => { handleFilterChange('status', 'approved'); setCurrentPage(1); }}
-          title="Filter: Approved"
-        >
+          onClick={() => {handleFilterChange('status', 'approved');setCurrentPage(1);}}
+          title="Filter: Approved">
+
           <div className="summary-card__value">
             {orders.filter((o: any) => o.overallStatus === 'approved').length}
           </div>
@@ -1211,9 +1234,9 @@ const IndexAllOders = () => {
         </div>
         <div
           className={`summary-card summary-card--mini summary-card--progress summary-card--clickable ${filters.status === 'in_progress' ? 'summary-card--active' : ''}`}
-          onClick={() => { handleFilterChange('status', 'in_progress'); setCurrentPage(1); }}
-          title="Filter: In Progress"
-        >
+          onClick={() => {handleFilterChange('status', 'in_progress');setCurrentPage(1);}}
+          title="Filter: In Progress">
+
           <div className="summary-card__value">
             {orders.filter((o: any) => o.overallStatus === 'in_progress').length}
           </div>
@@ -1221,9 +1244,9 @@ const IndexAllOders = () => {
         </div>
         <div
           className={`summary-card summary-card--mini summary-card--completed summary-card--clickable ${filters.status === 'completed' ? 'summary-card--active' : ''}`}
-          onClick={() => { handleFilterChange('status', 'completed'); setCurrentPage(1); }}
-          title="Filter: Completed"
-        >
+          onClick={() => {handleFilterChange('status', 'completed');setCurrentPage(1);}}
+          title="Filter: Completed">
+
           <div className="summary-card__value">
             {orders.filter((o: any) => o.overallStatus === 'completed').length}
           </div>
@@ -1231,9 +1254,9 @@ const IndexAllOders = () => {
         </div>
         <div
           className={`summary-card summary-card--mini summary-card--dispatched summary-card--clickable ${filters.status === 'dispatched' ? 'summary-card--active' : ''}`}
-          onClick={() => { handleFilterChange('status', 'dispatched'); setCurrentPage(1); }}
-          title="Filter: Dispatched"
-        >
+          onClick={() => {handleFilterChange('status', 'dispatched');setCurrentPage(1);}}
+          title="Filter: Dispatched">
+
           <div className="summary-card__value">
             {orders.filter((o: any) => o.overallStatus === 'dispatched').length}
           </div>
@@ -1241,9 +1264,9 @@ const IndexAllOders = () => {
         </div>
         <div
           className={`summary-card summary-card--mini summary-card--issue summary-card--clickable ${filters.status === 'issue' ? 'summary-card--active' : ''}`}
-          onClick={() => { handleFilterChange('status', 'issue'); setCurrentPage(1); }}
-          title="Filter: Issue"
-        >
+          onClick={() => {handleFilterChange('status', 'issue');setCurrentPage(1);}}
+          title="Filter: Issue">
+
           <div className="summary-card__value">
             {orders.filter((o: any) => o.overallStatus === 'issue').length}
           </div>
@@ -1251,9 +1274,9 @@ const IndexAllOders = () => {
         </div>
         <div
           className={`summary-card summary-card--mini summary-card--cancelled summary-card--clickable ${filters.status === 'cancelled' ? 'summary-card--active' : ''}`}
-          onClick={() => { handleFilterChange('status', 'cancelled'); setCurrentPage(1); }}
-          title="Filter: Cancelled"
-        >
+          onClick={() => {handleFilterChange('status', 'cancelled');setCurrentPage(1);}}
+          title="Filter: Cancelled">
+
           <div className="summary-card__value">
             {orders.filter((o: any) => o.overallStatus === 'cancelled').length}
           </div>
@@ -1262,35 +1285,35 @@ const IndexAllOders = () => {
       </div>
 
       {/* Orders Table */}
-      {ordersLoading ? (
-        <div className="loading-state">
+      {ordersLoading ?
+      <div className="loading-state">
           <Loader2 size={32} className="loading-spinner" />
           <p>Loading orders...</p>
-        </div>
-      ) : ordersError ? (
-        <div className="error-state">
+        </div> :
+      ordersError ?
+      <div className="error-state">
           <AlertCircle size={32} className="error-icon" />
           <p className="error-message">{ordersError}</p>
           <button className="retry-btn" onClick={handleRetry}>
             <RefreshCw size={16} /> Retry
           </button>
-        </div>
-      ) : filteredOrders.length === 0 ? (
-        <div className="empty-state">
+        </div> :
+      filteredOrders.length === 0 ?
+      <div className="empty-state">
           <p>{orders.length === 0 ? 'No orders found. Create your first order to get started.' : 'No orders found matching the filters'}</p>
-          {orders.length > 0 && (
-            <button className="filter-reset-btn" onClick={handleResetFilters}>
+          {orders.length > 0 &&
+        <button className="filter-reset-btn" onClick={handleResetFilters}>
               Clear Filters
             </button>
-          )}
-          {orders.length === 0 && (
-            <button className="retry-btn" onClick={handleRetry}>
+        }
+          {orders.length === 0 &&
+        <button className="retry-btn" onClick={handleRetry}>
               <RefreshCw size={16} /> Refresh
             </button>
-          )}
-        </div>
-      ) : (
-        <>
+        }
+        </div> :
+
+      <>
           <div className="orders-table-container">
             <table className="orders-table orders-table--step-view">
               <thead>
@@ -1299,6 +1322,7 @@ const IndexAllOders = () => {
                   <th>No</th>
                   <th>Order ID</th>
                   <th>Company</th>
+                  <th>Created By</th>
                   <th>Order Status</th>
                   <th>Priority</th>
                   <th>Step</th>
@@ -1312,148 +1336,151 @@ const IndexAllOders = () => {
               </thead>
               <tbody>
                 {paginatedRows.map((row: any, index: number) => {
-                  const { order, step, stepIndex, isFirstRow, totalSteps, rowKey } = row;
-                  const isExpanded = expandedRows.has(order._id);
+                const { order, step, stepIndex, isFirstRow, totalSteps, rowKey } = row;
+                const isExpanded = expandedRows.has(order._id);
 
-                  // Get machines from step
-                  const stepMachines = step?.machines || [];
+                // Get machines from step
+                const stepMachines = step?.machines || [];
 
-                  // Get machine types from this step's machines
-                  const stepMachineTypes = stepMachines
-                    .map((m: any) => m.machineType || m.machineTypeName)
-                    .filter(Boolean) as string[];
-                  const uniqueStepTypes = [...new Set(stepMachineTypes)] as string[];
+                // Get machine types from this step's machines
+                const stepMachineTypes = stepMachines.
+                map((m: any) => m.machineType || m.machineTypeName).
+                filter(Boolean) as string[];
+                const uniqueStepTypes = [...new Set(stepMachineTypes)] as string[];
 
-                  // Get machine names from this step
-                  const stepMachineNames = stepMachines
-                    .map((m: any) => m.machineName)
-                    .filter(Boolean) as string[];
+                // Get machine names from this step
+                const stepMachineNames = stepMachines.
+                map((m: any) => m.machineName).
+                filter(Boolean) as string[];
 
-                  // Get operators from this step's machines
-                  const stepOperators = stepMachines
-                    .map((m: any) => m.operatorName || m.operator)
-                    .filter(Boolean) as string[];
-                  const uniqueStepOperators = [...new Set(stepOperators)] as string[];
+                // Get operators from this step's machines
+                const stepOperators = stepMachines.
+                map((m: any) => m.operatorName || m.operator).
+                filter(Boolean) as string[];
+                const uniqueStepOperators = [...new Set(stepOperators)] as string[];
 
-                  // Get machine statuses from this step
-                  const machineStatuses = stepMachines
-                    .map((m: any) => m.status)
-                    .filter(Boolean) as string[];
-                  const uniqueStatuses = [...new Set(machineStatuses)] as string[];
+                // Get machine statuses from this step
+                const machineStatuses = stepMachines.
+                map((m: any) => m.status).
+                filter(Boolean) as string[];
+                const uniqueStatuses = [...new Set(machineStatuses)] as string[];
 
-                  // Calculate step progress for expanded view
-                  const stepProgress = getStepProgress(order);
+                // Calculate step progress for expanded view
+                const stepProgress = getStepProgress(order);
 
-                  // Check if order has steps for expanded view
-                  const hasSteps = order.steps && order.steps.length > 0;
+                // Check if order has steps for expanded view
+                const hasSteps = order.steps && order.steps.length > 0;
 
-                  return (
-                    <React.Fragment key={rowKey}>
+                return (
+                  <React.Fragment key={rowKey}>
                       <tr
-                        onClick={() => handleRowClick(order._id)}
-                        onDoubleClick={() => handleOrderDoubleClick(order)}
-                        className={`clickable-row ${isExpanded ? 'row-expanded' : ''} ${!isFirstRow ? 'row-continuation' : 'row-first'}`}
-                        title="Click to expand, Double-click to edit"
-                      >
+                      onClick={() => handleRowClick(order._id)}
+                      onDoubleClick={() => handleOrderDoubleClick(order)}
+                      className={`clickable-row ${isExpanded ? 'row-expanded' : ''} ${!isFirstRow ? 'row-continuation' : 'row-first'}`}
+                      title="Click to expand, Double-click to edit">
+
                         <td className="expand-cell">
-                          {isFirstRow && (
-                            <button
-                              className="expand-btn"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleRowClick(order._id);
-                              }}
-                              title={isExpanded ? 'Collapse' : 'Expand details'}
-                            >
-                              {isExpanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+                          {isFirstRow &&
+                        <button
+                          className="expand-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRowClick(order._id);
+                          }}
+                          title={isExpanded ? 'Collapse' : 'Expand details'}>
+
+                              {isExpanded ? <ChevronDownIcon style={{ width: '18px', height: '18px' }} /> : <ChevronRightIcon style={{ width: '18px', height: '18px' }} />}
                             </button>
-                          )}
+                        }
                         </td>
                         <td className={!isFirstRow ? 'cell-continuation' : ''}>
                           {isFirstRow ? (currentPage - 1) * itemsPerPage + index + 1 : ''}
                         </td>
                         <td className={`order-id-cell ${!isFirstRow ? 'cell-continuation' : ''}`}>
-                          {isFirstRow ? (order.orderNumber || order.orderId || order._id?.slice(-8)) : ''}
+                          {isFirstRow ? order.orderNumber || order.orderId || order._id?.slice(-8) : ''}
                         </td>
                         <td className={!isFirstRow ? 'cell-continuation' : ''}>
-                          {isFirstRow ? (order.customer?.companyName || order.customerId?.companyName || 'Unknown') : ''}
+                          {isFirstRow ? order.customer?.companyName || order.customerId?.companyName || 'Unknown' : ''}
+                        </td>
+                        <td className={!isFirstRow ? 'cell-continuation' : ''} style={{ fontSize: '12px', color: '#64748b' }}>
+                          {isFirstRow ? order.createdByName || order.creator?.username || order.creator?.name || '-' : ''}
                         </td>
                         <td className={!isFirstRow ? 'cell-continuation' : ''}>
-                          {isFirstRow ? (
-                            <span
-                              className="status-badge"
-                              style={{ backgroundColor: getStatusColor(order.overallStatus) }}
-                            >
+                          {isFirstRow ?
+                        <span
+                          className="status-badge"
+                          style={{ backgroundColor: getStatusColor(order.overallStatus) }}>
+
                               {order.overallStatus || 'Unknown'}
-                            </span>
-                          ) : ''}
+                            </span> :
+                        ''}
                         </td>
                         <td className={!isFirstRow ? 'cell-continuation' : ''}>
-                          {isFirstRow ? (
-                            <span
-                              className="priority-badge"
-                              style={{ backgroundColor: getPriorityColor(order.priority) }}
-                            >
+                          {isFirstRow ?
+                        <span
+                          className="priority-badge"
+                          style={{ backgroundColor: getPriorityColor(order.priority) }}>
+
                               {order.priority || 'normal'}
-                            </span>
-                          ) : ''}
+                            </span> :
+                        ''}
                         </td>
                         <td className="step-cell">
-                          {step ? (
-                            <span className="step-name-badge">
+                          {step ?
+                        <span className="step-name-badge">
                               <span className="step-number">{stepIndex + 1}/{totalSteps}</span>
                               {step.stepName || step.name || step.stepId?.stepName || step.stepId?.name || `Step ${stepIndex + 1}`}
-                            </span>
-                          ) : '-'}
+                            </span> :
+                        '-'}
                         </td>
                         <td>
-                          {step ? (
-                            <span
-                              className="status-badge status-badge--small"
-                              style={{ backgroundColor: getMachineStatusColor(step.stepStatus || 'pending') }}
-                            >
+                          {step ?
+                        <span
+                          className="status-badge status-badge--small"
+                          style={{ backgroundColor: getMachineStatusColor(step.stepStatus || 'pending') }}>
+
                               {step.stepStatus || 'pending'}
-                            </span>
-                          ) : '-'}
+                            </span> :
+                        '-'}
                         </td>
                         <td className="type-cell">
-                          {uniqueStepTypes.length > 0 ? (
-                            uniqueStepTypes.length === 1 ? uniqueStepTypes[0] : (
-                              <span title={uniqueStepTypes.join(', ')}>
+                          {uniqueStepTypes.length > 0 ?
+                        uniqueStepTypes.length === 1 ? uniqueStepTypes[0] :
+                        <span title={uniqueStepTypes.join(', ')}>
                                 {uniqueStepTypes[0]} <span className="type-count">+{uniqueStepTypes.length - 1}</span>
-                              </span>
-                            )
-                          ) : '-'}
+                              </span> :
+
+                        '-'}
                         </td>
                         <td className="machine-cell">
-                          {stepMachineNames.length > 0 ? (
-                            stepMachineNames.length === 1 ? stepMachineNames[0] : (
-                              <span title={stepMachineNames.join(', ')}>
+                          {stepMachineNames.length > 0 ?
+                        stepMachineNames.length === 1 ? stepMachineNames[0] :
+                        <span title={stepMachineNames.join(', ')}>
                                 {stepMachineNames[0]} <span className="machine-count">+{stepMachineNames.length - 1}</span>
-                              </span>
-                            )
-                          ) : '-'}
+                              </span> :
+
+                        '-'}
                         </td>
                         <td>
-                          {uniqueStatuses.length > 0 ? (
-                            <span
-                              className="status-badge status-badge--small"
-                              style={{ backgroundColor: getMachineStatusColor(uniqueStatuses[0] || 'none') }}
-                              title={uniqueStatuses.join(', ')}
-                            >
+                          {uniqueStatuses.length > 0 ?
+                        <span
+                          className="status-badge status-badge--small"
+                          style={{ backgroundColor: getMachineStatusColor(uniqueStatuses[0] || 'none') }}
+                          title={uniqueStatuses.join(', ')}>
+
                               {uniqueStatuses[0]}
                               {uniqueStatuses.length > 1 && <span className="status-count"> +{uniqueStatuses.length - 1}</span>}
-                            </span>
-                          ) : '-'}
+                            </span> :
+                        '-'}
                         </td>
                         <td>
-                          {uniqueStepOperators.length > 0 ? (
-                            uniqueStepOperators.length === 1 ? uniqueStepOperators[0] : (
-                              <span title={uniqueStepOperators.join(', ')}>
+                          {uniqueStepOperators.length > 0 ?
+                        uniqueStepOperators.length === 1 ? uniqueStepOperators[0] :
+                        <span title={uniqueStepOperators.join(', ')}>
                                 {uniqueStepOperators[0]} <span className="operator-count">+{uniqueStepOperators.length - 1}</span>
-                              </span>
-                            )
-                          ) : '-'}
+                              </span> :
+
+                        '-'}
                         </td>
                         <td className="date-cell">
                           {isFirstRow ? new Date(order.createdAt).toLocaleDateString() : ''}
@@ -1461,9 +1488,9 @@ const IndexAllOders = () => {
                       </tr>
 
                       {/* Expanded Row - Order Details - Only show on first row of each order */}
-                      {isExpanded && isFirstRow && (
-                        <tr key={`${order._id}-expanded`} className="expanded-row">
-                          <td colSpan={13}>
+                      {isExpanded && isFirstRow &&
+                    <tr key={`${order._id}-expanded`} className="expanded-row">
+                          <td colSpan={14}>
                             <div className="order-details-expanded">
                               {/* Order Info Grid */}
                               <div className="order-details-grid">
@@ -1479,24 +1506,24 @@ const IndexAllOders = () => {
                                       <span className="detail-label">Customer:</span>
                                       <span className="detail-value">{order.customer?.companyName || order.customerId?.companyName || 'Unknown'}</span>
                                     </div>
-                                    {(order.customer?.phone1 || order.customer?.telephone) && (
-                                      <div className="detail-item">
+                                    {(order.customer?.phone1 || order.customer?.telephone) &&
+                                <div className="detail-item">
                                         <span className="detail-label">Phone:</span>
                                         <span className="detail-value">{order.customer?.phone1 || order.customer?.telephone}</span>
                                       </div>
-                                    )}
-                                    {order.customer?.email && (
-                                      <div className="detail-item">
+                                }
+                                    {order.customer?.email &&
+                                <div className="detail-item">
                                         <span className="detail-label">Email:</span>
                                         <span className="detail-value">{order.customer.email}</span>
                                       </div>
-                                    )}
-                                    {order.orderType && (
-                                      <div className="detail-item">
+                                }
+                                    {order.orderType &&
+                                <div className="detail-item">
                                         <span className="detail-label">Order Type:</span>
                                         <span className="detail-value">{order.orderType?.typeName || order.orderType?.name || '-'}</span>
                                       </div>
-                                    )}
+                                }
                                   </div>
                                 </div>
 
@@ -1504,43 +1531,43 @@ const IndexAllOders = () => {
                                 <div className="detail-section">
                                   <h5 className="detail-section-title">Options & Specifications</h5>
                                   <div className="detail-items">
-                                    {order.options && order.options.length > 0 ? (
-                                      order.options.map((opt: any, idx: number) => (
-                                        <div key={idx} className="detail-item">
+                                    {order.options && order.options.length > 0 ?
+                                order.options.map((opt: any, idx: number) =>
+                                <div key={idx} className="detail-item">
                                           <span className="detail-label">{opt.optionTypeName || opt.category || 'Option'}:</span>
                                           <span className="detail-value">{opt.optionName || opt.value}</span>
                                         </div>
-                                      ))
-                                    ) : (
-                                      <>
-                                        {order.material?.materialName && (
-                                          <div className="detail-item">
+                                ) :
+
+                                <>
+                                        {order.material?.materialName &&
+                                  <div className="detail-item">
                                             <span className="detail-label">Material:</span>
                                             <span className="detail-value">{order.material.materialName}</span>
                                           </div>
-                                        )}
-                                        {order.materialWeight && (
-                                          <div className="detail-item">
+                                  }
+                                        {order.materialWeight &&
+                                  <div className="detail-item">
                                             <span className="detail-label">Weight:</span>
                                             <span className="detail-value">{order.materialWeight} kg</span>
                                           </div>
-                                        )}
-                                        {(order.Width || order.Height) && (
-                                          <div className="detail-item">
+                                  }
+                                        {(order.Width || order.Height) &&
+                                  <div className="detail-item">
                                             <span className="detail-label">Dimensions:</span>
                                             <span className="detail-value">
                                               {order.Width} × {order.Height} {order.Thickness ? `× ${order.Thickness}` : ''}
                                             </span>
                                           </div>
-                                        )}
+                                  }
                                       </>
-                                    )}
-                                    {order.totalQuantity && (
-                                      <div className="detail-item">
+                                }
+                                    {order.totalQuantity &&
+                                <div className="detail-item">
                                         <span className="detail-label">Quantity:</span>
                                         <span className="detail-value">{order.totalQuantity}</span>
                                       </div>
-                                    )}
+                                }
                                   </div>
                                 </div>
 
@@ -1556,41 +1583,41 @@ const IndexAllOders = () => {
                                       <span className="detail-label">Created:</span>
                                       <span className="detail-value">{new Date(order.createdAt).toLocaleString()}</span>
                                     </div>
-                                    {order.updatedAt && (
-                                      <div className="detail-item">
+                                    {order.updatedAt &&
+                                <div className="detail-item">
                                         <span className="detail-label">Updated:</span>
                                         <span className="detail-value">{new Date(order.updatedAt).toLocaleString()}</span>
                                       </div>
-                                    )}
-                                    {order.Notes && (
-                                      <div className="detail-item detail-item--full">
+                                }
+                                    {order.Notes &&
+                                <div className="detail-item detail-item--full">
                                         <span className="detail-label">Notes:</span>
                                         <span className="detail-value">{order.Notes}</span>
                                       </div>
-                                    )}
+                                }
                                   </div>
                                 </div>
                               </div>
 
                               {/* Step Workflow - only if has steps */}
-                              {hasSteps && (
-                                <div className="step-workflow">
+                              {hasSteps &&
+                          <div className="step-workflow">
                                   <h5 className="step-workflow-title">Workflow Steps</h5>
                                   <div className="step-flow-container">
-                                    {order.steps.map((step: any, stepIndex: number) => (
-                                      <div key={step._id || stepIndex} className="step-card">
+                                    {order.steps.map((step: any, stepIndex: number) =>
+                              <div key={step._id || stepIndex} className="step-card">
                                         <div className="step-header">
                                           <span className="step-number">Step {stepIndex + 1}</span>
                                           <span className="step-name">{step.stepName || step.name || `Step ${stepIndex + 1}`}</span>
                                         </div>
                                         <div className="step-machines">
-                                          {step.machines && step.machines.length > 0 ? (
-                                            step.machines.map((machine: any, machineIndex: number) => (
-                                              <div
-                                                key={machine._id || machineIndex}
-                                                className="machine-item"
-                                                style={{ borderLeftColor: getMachineStatusColor(machine.status || 'none') }}
-                                              >
+                                          {step.machines && step.machines.length > 0 ?
+                                  step.machines.map((machine: any, machineIndex: number) =>
+                                  <div
+                                    key={machine._id || machineIndex}
+                                    className="machine-item"
+                                    style={{ borderLeftColor: getMachineStatusColor(machine.status || 'none') }}>
+
                                                 <div className="machine-info">
                                                   <div className="machine-status-row">
                                                     {getMachineStatusIcon(machine.status || 'none')}
@@ -1599,50 +1626,50 @@ const IndexAllOders = () => {
                                                     </span>
                                                   </div>
                                                   <div className="machine-details">
-                                                    {machine.operatorName || machine.operator ? (
-                                                      <span className="machine-operator">
+                                                    {machine.operatorName || machine.operator ?
+                                        <span className="machine-operator">
                                                         {machine.operatorName || machine.operator}
-                                                      </span>
-                                                    ) : null}
-                                                    {(machine.estimatedTime || machine.actualTime) && (
-                                                      <span className="machine-time">
+                                                      </span> :
+                                        null}
+                                                    {(machine.estimatedTime || machine.actualTime) &&
+                                        <span className="machine-time">
                                                         <Clock size={12} />
-                                                        {machine.actualTime
-                                                          ? formatDuration(machine.actualTime)
-                                                          : formatDuration(machine.estimatedTime)}
-                                                        {machine.actualTime && machine.estimatedTime && (
-                                                          <span className={`time-diff ${machine.actualTime > machine.estimatedTime ? 'over' : 'under'}`}>
+                                                        {machine.actualTime ?
+                                          formatDuration(machine.actualTime) :
+                                          formatDuration(machine.estimatedTime)}
+                                                        {machine.actualTime && machine.estimatedTime &&
+                                          <span className={`time-diff ${machine.actualTime > machine.estimatedTime ? 'over' : 'under'}`}>
                                                             ({machine.actualTime > machine.estimatedTime ? '+' : '-'}
                                                             {formatDuration(Math.abs(machine.actualTime - machine.estimatedTime))})
                                                           </span>
-                                                        )}
+                                          }
                                                       </span>
-                                                    )}
+                                        }
                                                   </div>
                                                 </div>
                                                 <span
-                                                  className="machine-status-text"
-                                                  style={{ color: getMachineStatusColor(machine.status || 'none') }}
-                                                >
+                                      className="machine-status-text"
+                                      style={{ color: getMachineStatusColor(machine.status || 'none') }}>
+
                                                   {machine.status || 'none'}
                                                 </span>
                                               </div>
-                                            ))
-                                          ) : (
-                                            <div className="no-machines">No machines assigned</div>
-                                          )}
+                                  ) :
+
+                                  <div className="no-machines">No machines assigned</div>
+                                  }
                                         </div>
                                         {/* Flow Arrow */}
-                                        {stepIndex < order.steps.length - 1 && (
-                                          <div className="step-arrow">
-                                            <ChevronRight size={24} />
+                                        {stepIndex < order.steps.length - 1 &&
+                                <div className="step-arrow">
+                                            <ChevronRightIcon style={{ width: '24px', height: '24px' }} />
                                           </div>
-                                        )}
+                                }
                                       </div>
-                                    ))}
+                              )}
                                   </div>
                                 </div>
-                              )}
+                          }
 
                               {/* Edit Hint */}
                               <div className="edit-hint">
@@ -1651,52 +1678,54 @@ const IndexAllOders = () => {
                             </div>
                           </td>
                         </tr>
-                      )}
-                    </React.Fragment>
-                  );
-                })}
+                    }
+                    </React.Fragment>);
+
+              })}
               </tbody>
             </table>
           </div>
 
           {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="pagination">
+          {totalPages > 1 &&
+        <div className="pagination">
               <button
-                className="pagination-btn"
-                onClick={() => setCurrentPage(1)}
-                disabled={currentPage === 1}
-              >
+            className="pagination-btn"
+            onClick={() => setCurrentPage(1)}
+            disabled={currentPage === 1}>
+
                 First
               </button>
               <button
-                className="pagination-btn"
-                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                disabled={currentPage === 1}
-              >
+            className="pagination-btn"
+            onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+            disabled={currentPage === 1}>
+
+                <ChevronLeftIcon style={{ width: '16px', height: '16px' }} />
                 Prev
               </button>
               <span className="pagination-info">
                 Page {currentPage} of {totalPages} ({filteredOrders.length} orders, {flattenedOrderRows.length} rows)
               </span>
               <button
-                className="pagination-btn"
-                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                disabled={currentPage === totalPages}
-              >
+            className="pagination-btn"
+            onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+            disabled={currentPage === totalPages}>
+
                 Next
+                <ChevronRightIcon style={{ width: '16px', height: '16px' }} />
               </button>
               <button
-                className="pagination-btn"
-                onClick={() => setCurrentPage(totalPages)}
-                disabled={currentPage === totalPages}
-              >
+            className="pagination-btn"
+            onClick={() => setCurrentPage(totalPages)}
+            disabled={currentPage === totalPages}>
+
                 Last
               </button>
             </div>
-          )}
+        }
         </>
-      )}
+      }
 
       {/* Print Styles */}
       <style>{`
@@ -1708,8 +1737,8 @@ const IndexAllOders = () => {
           .orders-table th, .orders-table td { border: 1px solid #000 !important; }
         }
       `}</style>
-    </div>
-  );
+    </div>);
+
 };
 
 export default IndexAllOders;

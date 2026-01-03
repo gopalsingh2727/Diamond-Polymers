@@ -24,7 +24,7 @@ interface OrderFilters {
 
 const AllOrdersTab: React.FC<AllOrdersTabProps> = ({ dateRange }) => {
   const dispatch = useDispatch<AppDispatch>();
-  const branchId = localStorage.getItem('branchId') || '';
+  const branchId = localStorage.getItem('selectedBranch') || localStorage.getItem('branchId') || localStorage.getItem('selectedBranchId') || '';
 
   // Redux state - ✅ FIXED: Use correct path state.orders.list
   const ordersState = useSelector((state: RootState) => (state.orders as any)?.list || { orders: [], loading: false });
@@ -54,13 +54,13 @@ const AllOrdersTab: React.FC<AllOrdersTabProps> = ({ dateRange }) => {
   // ✅ ADDED: Refetch function for real-time updates
   const refetchOrders = useCallback(() => {
     if (branchId) {
-      console.log('🔄 AllOrdersTab: Refreshing orders after update');
+
       dispatch(fetchOrders({
         branchId,
         startDate: dateRange.fromDate || undefined,
         endDate: dateRange.toDate || undefined,
         status: filters.status || undefined,
-        limit: 1000,
+        limit: 1000
       }));
     }
   }, [dispatch, branchId, dateRange.fromDate, dateRange.toDate, filters.status]);
@@ -70,24 +70,24 @@ const AllOrdersTab: React.FC<AllOrdersTabProps> = ({ dateRange }) => {
 
   // Status and Priority options
   const statusOptions = [
-    { value: '', label: 'All Status' },
-    { value: 'Wait for Approval', label: 'Wait for Approval' },
-    { value: 'pending', label: 'Pending' },
-    { value: 'approved', label: 'Approved' },
-    { value: 'in_progress', label: 'In Progress' },
-    { value: 'completed', label: 'Completed' },
-    { value: 'dispatched', label: 'Dispatched' },
-    { value: 'issue', label: 'Issue' },
-    { value: 'cancelled', label: 'Cancelled' },
-  ];
+  { value: '', label: 'All Status' },
+  { value: 'Wait for Approval', label: 'Wait for Approval' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'approved', label: 'Approved' },
+  { value: 'in_progress', label: 'In Progress' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'dispatched', label: 'Dispatched' },
+  { value: 'issue', label: 'Issue' },
+  { value: 'cancelled', label: 'Cancelled' }];
+
 
   const priorityOptions = [
-    { value: '', label: 'All Priority' },
-    { value: 'urgent', label: 'Urgent' },
-    { value: 'high', label: 'High' },
-    { value: 'normal', label: 'Normal' },
-    { value: 'low', label: 'Low' },
-  ];
+  { value: '', label: 'All Priority' },
+  { value: 'urgent', label: 'Urgent' },
+  { value: 'high', label: 'High' },
+  { value: 'normal', label: 'Normal' },
+  { value: 'low', label: 'Low' }];
+
 
   // Fetch orders and machine types on mount
   useEffect(() => {
@@ -97,7 +97,7 @@ const AllOrdersTab: React.FC<AllOrdersTabProps> = ({ dateRange }) => {
         startDate: dateRange.fromDate || undefined,
         endDate: dateRange.toDate || undefined,
         status: filters.status || undefined,
-        limit: 1000,
+        limit: 1000
       }));
     }
     dispatch(getAllMachineTypes());
@@ -125,8 +125,8 @@ const AllOrdersTab: React.FC<AllOrdersTabProps> = ({ dateRange }) => {
       if (filters.machineTypeId) {
         const orderMachines = order.steps?.flatMap((step: any) => step.machines || []) || [];
         const hasMachineType = orderMachines.some((m: any) =>
-          m.machineType === filters.machineTypeId ||
-          machineTypes.find((mt: any) => mt._id === filters.machineTypeId)?.type === m.machineType
+        m.machineType === filters.machineTypeId ||
+        machineTypes.find((mt: any) => mt._id === filters.machineTypeId)?.type === m.machineType
         );
         if (!hasMachineType) return false;
       }
@@ -135,7 +135,7 @@ const AllOrdersTab: React.FC<AllOrdersTabProps> = ({ dateRange }) => {
       if (filters.machineName) {
         const orderMachines = order.steps?.flatMap((step: any) => step.machines || []) || [];
         const hasMachine = orderMachines.some((m: any) =>
-          m.machineId === filters.machineName || m.machineName === filters.machineName
+        m.machineId === filters.machineName || m.machineName === filters.machineName
         );
         if (!hasMachine) return false;
       }
@@ -163,7 +163,7 @@ const AllOrdersTab: React.FC<AllOrdersTabProps> = ({ dateRange }) => {
 
   // Handle filter changes
   const handleFilterChange = (field: keyof OrderFilters, value: string) => {
-    setFilters(prev => {
+    setFilters((prev) => {
       const newFilters = { ...prev, [field]: value };
       // Reset machine name when machine type changes
       if (field === 'machineTypeId') {
@@ -205,7 +205,7 @@ const AllOrdersTab: React.FC<AllOrdersTabProps> = ({ dateRange }) => {
       'cancelled': '#94a3b8',
       'dispatched': '#10b981',
       'approved': '#6366f1',
-      'Wait for Approval': '#f97316',
+      'Wait for Approval': '#f97316'
     };
     return colors[status] || '#94a3b8';
   };
@@ -216,7 +216,7 @@ const AllOrdersTab: React.FC<AllOrdersTabProps> = ({ dateRange }) => {
       'urgent': '#ef4444',
       'high': '#f97316',
       'normal': '#3b82f6',
-      'low': '#94a3b8',
+      'low': '#94a3b8'
     };
     return colors[priority] || '#94a3b8';
   };
@@ -235,8 +235,8 @@ const AllOrdersTab: React.FC<AllOrdersTabProps> = ({ dateRange }) => {
         <button
           className="report-export-btn"
           onClick={handleExport}
-          disabled={exporting}
-        >
+          disabled={exporting}>
+
           {exporting ? 'Exporting...' : 'Export to Excel'}
         </button>
       </div>
@@ -251,8 +251,8 @@ const AllOrdersTab: React.FC<AllOrdersTabProps> = ({ dateRange }) => {
               placeholder="Order ID, Company..."
               value={filters.search}
               onChange={(e) => handleFilterChange('search', e.target.value)}
-              className="filter-input"
-            />
+              className="filter-input" />
+
           </div>
 
           <div className="filter-group">
@@ -260,11 +260,11 @@ const AllOrdersTab: React.FC<AllOrdersTabProps> = ({ dateRange }) => {
             <select
               value={filters.status}
               onChange={(e) => handleFilterChange('status', e.target.value)}
-              className="filter-select"
-            >
-              {statusOptions.map(opt => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
+              className="filter-select">
+
+              {statusOptions.map((opt) =>
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+              )}
             </select>
           </div>
 
@@ -273,11 +273,11 @@ const AllOrdersTab: React.FC<AllOrdersTabProps> = ({ dateRange }) => {
             <select
               value={filters.priority}
               onChange={(e) => handleFilterChange('priority', e.target.value)}
-              className="filter-select"
-            >
-              {priorityOptions.map(opt => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
+              className="filter-select">
+
+              {priorityOptions.map((opt) =>
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+              )}
             </select>
           </div>
 
@@ -286,12 +286,12 @@ const AllOrdersTab: React.FC<AllOrdersTabProps> = ({ dateRange }) => {
             <select
               value={filters.machineTypeId}
               onChange={(e) => handleFilterChange('machineTypeId', e.target.value)}
-              className="filter-select"
-            >
+              className="filter-select">
+
               <option value="">All Machine Types</option>
-              {machineTypes?.map((mt: any) => (
-                <option key={mt._id} value={mt._id}>{mt.type}</option>
-              ))}
+              {machineTypes?.map((mt: any) =>
+              <option key={mt._id} value={mt._id}>{mt.type}</option>
+              )}
             </select>
           </div>
 
@@ -301,12 +301,12 @@ const AllOrdersTab: React.FC<AllOrdersTabProps> = ({ dateRange }) => {
               value={filters.machineName}
               onChange={(e) => handleFilterChange('machineName', e.target.value)}
               className="filter-select"
-              disabled={!filters.machineTypeId}
-            >
+              disabled={!filters.machineTypeId}>
+
               <option value="">All Machines</option>
-              {machinesForSelectedType.map((m: any) => (
-                <option key={m._id} value={m._id}>{m.machineName}</option>
-              ))}
+              {machinesForSelectedType.map((m: any) =>
+              <option key={m._id} value={m._id}>{m.machineName}</option>
+              )}
             </select>
           </div>
 
@@ -343,12 +343,12 @@ const AllOrdersTab: React.FC<AllOrdersTabProps> = ({ dateRange }) => {
       </div>
 
       {/* Orders Table */}
-      {ordersLoading ? (
-        <div className="loading">Loading orders...</div>
-      ) : filteredOrders.length === 0 ? (
-        <div className="report-empty">No orders found matching the filters</div>
-      ) : (
-        <>
+      {ordersLoading ?
+      <div className="loading">Loading orders...</div> :
+      filteredOrders.length === 0 ?
+      <div className="report-empty">No orders found matching the filters</div> :
+
+      <>
           <div className="report-table-container">
             <table className="report-table">
               <thead>
@@ -364,24 +364,24 @@ const AllOrdersTab: React.FC<AllOrdersTabProps> = ({ dateRange }) => {
                 </tr>
               </thead>
               <tbody>
-                {paginatedOrders.map((order: any, index: number) => (
-                  <tr key={order._id}>
+                {paginatedOrders.map((order: any, index: number) =>
+              <tr key={order._id}>
                     <td>{(currentPage - 1) * itemsPerPage + index + 1}</td>
                     <td>{order.orderNumber || order._id?.slice(-8)}</td>
                     <td>{order.customerId?.companyName || 'Unknown'}</td>
                     <td>
                       <span
-                        className="status-badge"
-                        style={{ backgroundColor: getStatusColor(order.overallStatus) }}
-                      >
+                    className="status-badge"
+                    style={{ backgroundColor: getStatusColor(order.overallStatus) }}>
+
                         {order.overallStatus || 'Unknown'}
                       </span>
                     </td>
                     <td>
                       <span
-                        className="priority-badge"
-                        style={{ backgroundColor: getPriorityColor(order.priority) }}
-                      >
+                    className="priority-badge"
+                    style={{ backgroundColor: getPriorityColor(order.priority) }}>
+
                         {order.priority || 'normal'}
                       </span>
                     </td>
@@ -389,51 +389,51 @@ const AllOrdersTab: React.FC<AllOrdersTabProps> = ({ dateRange }) => {
                     <td>{order.totalQuantity || order.quantity || 0}</td>
                     <td>{new Date(order.createdAt).toLocaleDateString()}</td>
                   </tr>
-                ))}
+              )}
               </tbody>
             </table>
           </div>
 
           {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="pagination">
+          {totalPages > 1 &&
+        <div className="pagination">
               <button
-                className="pagination-btn"
-                onClick={() => setCurrentPage(1)}
-                disabled={currentPage === 1}
-              >
+            className="pagination-btn"
+            onClick={() => setCurrentPage(1)}
+            disabled={currentPage === 1}>
+
                 First
               </button>
               <button
-                className="pagination-btn"
-                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                disabled={currentPage === 1}
-              >
+            className="pagination-btn"
+            onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+            disabled={currentPage === 1}>
+
                 Prev
               </button>
               <span className="pagination-info">
                 Page {currentPage} of {totalPages} ({filteredOrders.length} orders)
               </span>
               <button
-                className="pagination-btn"
-                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                disabled={currentPage === totalPages}
-              >
+            className="pagination-btn"
+            onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+            disabled={currentPage === totalPages}>
+
                 Next
               </button>
               <button
-                className="pagination-btn"
-                onClick={() => setCurrentPage(totalPages)}
-                disabled={currentPage === totalPages}
-              >
+            className="pagination-btn"
+            onClick={() => setCurrentPage(totalPages)}
+            disabled={currentPage === totalPages}>
+
                 Last
               </button>
             </div>
-          )}
+        }
         </>
-      )}
-    </div>
-  );
+      }
+    </div>);
+
 };
 
 export default AllOrdersTab;

@@ -61,7 +61,7 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
     const [noteText, setNoteText] = useState("");
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
-    
+
     // New states for table view
     const [showTableView, setShowTableView] = useState(false);
     const [selectedMachineForTable, setSelectedMachineForTable] = useState<{
@@ -88,9 +88,9 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
         const { type } = event.detail || {};
         // Listen for table data and order update events
         if (type === 'table:data_saved' || type === 'table:row_added' ||
-            type === 'operator:session_started' || type === 'operator:session_ended' ||
-            type === 'operator:session_paused' || type === 'order:updated') {
-          console.log('📡 WebSocket: Table/Order update received:', type);
+        type === 'operator:session_started' || type === 'operator:session_ended' ||
+        type === 'operator:session_paused' || type === 'order:updated') {
+
           setLastUpdate(new Date());
         }
       };
@@ -115,29 +115,29 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
       if (step.OptereName && !step.StartTime) {
         return 'pending';
       }
-      
+
       // If start time is set but no end time, set to in-progress
       if (step.StartTime && !step.EndTime) {
         return 'in-progress';
       }
-      
+
       // If both start and end times are set, mark as completed
       if (step.StartTime && step.EndTime) {
         return 'completed';
       }
-      
+
       // If no operator assigned, keep as none
       if (!step.OptereName) {
         return step.status || 'none';
       }
-      
+
       return step.status || 'none';
     };
 
     // Update next machine status when current completes
     const updateNextMachineStatus = (steps: StepItem[], currentIndex: number) => {
       const updatedSteps = [...steps];
-      
+
       // If current machine is completed, activate next machine
       if (updatedSteps[currentIndex]?.status === 'completed') {
         if (currentIndex + 1 < updatedSteps.length) {
@@ -147,7 +147,7 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
           }
         }
       }
-      
+
       return updatedSteps;
     };
 
@@ -171,7 +171,7 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
 
     useEffect(() => {
       if (isEditMode && initialData && initialData.steps && initialData.steps.length > 0) {
-        console.log('🔄 Loading initial step data for edit mode:', initialData.steps);
+
 
         try {
           const firstStep = initialData.steps[0];
@@ -209,15 +209,15 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
                 }
               }
 
-              console.log(`📅 Machine ${index} data:`, {
-                machineId,
-                operatorName,
-                rawStartTime,
-                rawEndTime,
-                formattedStart: formatDateForInput(rawStartTime),
-                formattedEnd: formatDateForInput(rawEndTime),
-                tableDataFound: !!tableDataEntry
-              });
+
+
+
+
+
+
+
+
+
 
               const mappedMachine = {
                 _Id: machine._id || '',
@@ -243,17 +243,17 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
             });
           }
 
-          console.log('✅ Converted step data with auto statuses:', stepData);
+
           setSavedStep(stepData);
         } catch (error) {
-          console.error('❌ Error loading initial step data:', error);
+
           handleError(error, 'loading initial step data');
         }
       }
     }, [isEditMode, initialData]);
 
     const handleError = (error: any, context: string) => {
-      console.error(`Error in ${context}:`, error);
+
       setError(`Error in ${context}: ${error?.message || 'Unknown error'}`);
       setIsLoading(false);
     };
@@ -268,7 +268,7 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
         const baseUrl = import.meta.env.VITE_API_27INFINITY_IN || '';
         const tableOrderId = initialData?._id || initialData?.orderId;
 
-        console.log('📊 Fetching table data:', { orderId: tableOrderId, machineId, machineName, baseUrl });
+
 
         if (!token) {
           throw new Error('Authentication token not found');
@@ -279,7 +279,7 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
         }
 
         const url = `${baseUrl}/orders/${tableOrderId}/machines/${machineId}/table-data`;
-        console.log('📊 API URL:', url);
+
 
         const response = await fetch(url, {
           method: 'GET',
@@ -289,18 +289,18 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
           }
         });
 
-        console.log('📊 Response status:', response.status);
+
 
         if (!response.ok) {
           const errorData = await response.json();
-          console.error('📊 Error response:', errorData);
+
           throw new Error(errorData.message || 'Failed to fetch machine table data');
         }
 
         const result = await response.json();
-        console.log('📊 API Response:', result);
-        console.log('📊 Operator Session Data:', result.data?.operatorSessionData);
-        console.log('📊 Table Data:', result.data?.tableData);
+
+
+
 
         if (result.success && result.data) {
           setTableData(result.data);
@@ -311,7 +311,7 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
 
         setLoadingTable(false);
       } catch (error) {
-        console.error('❌ Error fetching machine table data:', error);
+
         setError(error instanceof Error ? error.message : 'Failed to load machine table data');
         setLoadingTable(false);
         setShowTableView(false);
@@ -335,7 +335,7 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
       },
       getMachineIds: () => {
         try {
-          return savedStep?.steps?.map(step => step.MachineId).filter(Boolean) || [];
+          return savedStep?.steps?.map((step) => step.MachineId).filter(Boolean) || [];
         } catch (error) {
           handleError(error, 'getMachineIds');
           return [];
@@ -366,14 +366,14 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
         if (typeof window !== 'undefined') {
           (window as any).stepContainerRef = {
             getStepData: () => savedStep,
-            getMachineIds: () => savedStep?.steps?.map(step => step.MachineId).filter(Boolean) || []
+            getMachineIds: () => savedStep?.steps?.map((step) => step.MachineId).filter(Boolean) || []
           };
         }
       } catch (error) {
         handleError(error, 'window reference setup');
       }
     }, [savedStep]);
-    
+
     useEffect(() => {
       try {
         if (onStepsChange && savedStep) {
@@ -405,8 +405,8 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
             return;
           }
 
-          const incompleteSteps = selectedStep.steps.filter(step => 
-            !step.MachineId || !step.MachineName || !step.MachineType
+          const incompleteSteps = selectedStep.steps.filter((step) =>
+          !step.MachineId || !step.MachineName || !step.MachineType
           );
 
           if (incompleteSteps.length > 0) {
@@ -415,7 +415,7 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
           }
 
           // Auto-update all machine statuses before saving
-          const updatedSteps = selectedStep.steps.map(step => ({
+          const updatedSteps = selectedStep.steps.map((step) => ({
             ...step,
             status: autoUpdateMachineStatus(step)
           }));
@@ -423,7 +423,7 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
           setSavedStep({ ...selectedStep, steps: updatedSteps });
           setShowStepPopup(false);
           setError(null);
-          console.log('✅ Step saved successfully with auto statuses:', { ...selectedStep, steps: updatedSteps });
+
         }
       } catch (error) {
         handleError(error, 'handleSaveStep');
@@ -436,13 +436,13 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
           // Format dates for datetime-local input when editing
           const formattedStep = {
             ...savedStep,
-            steps: savedStep.steps.map(step => ({
+            steps: savedStep.steps.map((step) => ({
               ...step,
               StartTime: formatDateForInput(step.StartTime || step.startedAt),
               EndTime: formatDateForInput(step.EndTime || step.completedAt)
             }))
           };
-          console.log('📝 Editing step with formatted dates:', formattedStep);
+
           setSelectedStep(formattedStep);
           setShowStepPopup(true);
           setError(null);
@@ -455,19 +455,19 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
     const handleStepUpdate = (index: number, field: keyof StepItem, value: string) => {
       try {
         if (!selectedStep || !selectedStep.steps[index]) return;
-        
+
         const updated = { ...selectedStep };
         updated.steps[index] = { ...updated.steps[index], [field]: value };
-        
+
         // Auto-update status when operator, start time, or end time changes
         if (field === 'OptereName' || field === 'StartTime' || field === 'EndTime') {
           updated.steps[index].status = autoUpdateMachineStatus(updated.steps[index]);
-          
+
           // Update next machine status if current is completed
           const updatedWithNext = updateNextMachineStatus(updated.steps, index);
           updated.steps = updatedWithNext;
         }
-        
+
         setSelectedStep(updated);
       } catch (error) {
         handleError(error, 'handleStepUpdate');
@@ -487,12 +487,12 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
     const handleNoteSave = () => {
       try {
         if (noteIndex === null) return;
-        
+
         const updated = savedStep ? { ...savedStep } : selectedStep ? { ...selectedStep } : null;
         if (updated && updated.steps[noteIndex]) {
           updated.steps[noteIndex].note = noteText;
-          if (savedStep) setSavedStep(updated);
-          else setSelectedStep(updated);
+          if (savedStep) setSavedStep(updated);else
+          setSelectedStep(updated);
         }
         setNoteIndex(null);
         setNoteText("");
@@ -503,9 +503,9 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
 
     const handleSuggestionSelect = (selectedStepData: any) => {
       try {
-        console.log("Selected step data:", selectedStepData);
+
         setIsLoading(true);
-        
+
         if (!selectedStepData) {
           setError("Invalid step data received");
           setIsLoading(false);
@@ -519,16 +519,16 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
         };
 
         if (selectedStepData.machines && Array.isArray(selectedStepData.machines)) {
-          console.log('🔍 DEBUG - Raw machines data:', selectedStepData.machines);
+
 
           formattedStep.steps = selectedStepData.machines.map((m: any, index: number) => {
-            console.log(`🔍 DEBUG - Machine ${index}:`, {
-              raw: m,
-              machineId: m.machineId,
-              machineIdType: typeof m.machineId,
-              machineName: m.machineId?.machineName,
-              machineType: m.machineId?.machineType
-            });
+
+
+
+
+
+
+
 
             const machine = {
               _Id: m._id || '',
@@ -542,7 +542,7 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
               status: m.status || (index === 0 ? 'pending' : 'none')
             };
 
-            console.log(`🔍 DEBUG - Formatted machine ${index}:`, machine);
+
 
             // Auto-update status
             machine.status = autoUpdateMachineStatus(machine);
@@ -551,7 +551,7 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
           });
         }
 
-        console.log("Formatted step with auto statuses:", formattedStep);
+
         setIsLoading(false);
         handleSelect(formattedStep);
       } catch (error) {
@@ -578,41 +578,41 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
 
       switch (normalizedStatus) {
         // Machine statuses
-        case 'none': return '#9e9e9e';
-        case 'pending': return '#ff9800';
-        case 'in-progress': return '#2196f3';
-        case 'completed': return '#4caf50';
-        case 'paused': return '#ffc107';
-        case 'error': return '#f44336';
+        case 'none':return '#9e9e9e';
+        case 'pending':return '#ff9800';
+        case 'in-progress':return '#2196f3';
+        case 'completed':return '#4caf50';
+        case 'paused':return '#ffc107';
+        case 'error':return '#f44336';
 
         // Order statuses
-        case 'wait-for-approval': return '#f59e0b';  // Amber/Orange
-        case 'approved': return '#10b981';           // Green
-        case 'book': return '#8b5cf6';               // Purple
-        case 'booked': return '#8b5cf6';             // Purple
-        case 'dispatch': return '#3b82f6';           // Blue
-        case 'dispatched': return '#3b82f6';         // Blue
-        case 'delivered': return '#22c55e';          // Green
-        case 'cancelled': return '#ef4444';          // Red
-        case 'rejected': return '#dc2626';           // Red
-        case 'on-hold': return '#f97316';            // Orange
-        case 'processing': return '#0ea5e9';         // Sky Blue
-        case 'ready': return '#14b8a6';              // Teal
-        case 'shipped': return '#6366f1';            // Indigo
+        case 'wait-for-approval':return '#f59e0b'; // Amber/Orange
+        case 'approved':return '#10b981'; // Green
+        case 'book':return '#8b5cf6'; // Purple
+        case 'booked':return '#8b5cf6'; // Purple
+        case 'dispatch':return '#3b82f6'; // Blue
+        case 'dispatched':return '#3b82f6'; // Blue
+        case 'delivered':return '#22c55e'; // Green
+        case 'cancelled':return '#ef4444'; // Red
+        case 'rejected':return '#dc2626'; // Red
+        case 'on-hold':return '#f97316'; // Orange
+        case 'processing':return '#0ea5e9'; // Sky Blue
+        case 'ready':return '#14b8a6'; // Teal
+        case 'shipped':return '#6366f1'; // Indigo
 
-        default: return '#6b7280';  // Gray for unknown statuses
+        default:return '#6b7280'; // Gray for unknown statuses
       }
     };
 
     const getStatusLabel = (status?: string) => {
       switch (status) {
-        case 'none': return 'Not Started';
-        case 'pending': return 'Pending';
-        case 'in-progress': return 'In Progress';
-        case 'completed': return 'Completed';
-        case 'paused': return 'Paused';
-        case 'error': return 'Error';
-        default: return 'Unknown';
+        case 'none':return 'Not Started';
+        case 'pending':return 'Pending';
+        case 'in-progress':return 'In Progress';
+        case 'completed':return 'Completed';
+        case 'paused':return 'Paused';
+        case 'error':return 'Error';
+        default:return 'Unknown';
       }
     };
 
@@ -795,14 +795,9 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
             iframe.contentWindow?.focus();
             iframe.contentWindow?.print();
           } catch (e) {
-            console.error('Print error:', e);
-            const printWin = window.open('', '_blank');
-            if (printWin) {
-              printWin.document.write(printContent);
-              printWin.document.close();
-              printWin.focus();
-              printWin.print();
-            }
+
+            // Don't use window.open as it's blocked in Electron
+            alert('Print failed. Please try again.');
           }
           setTimeout(() => {
             if (iframe.parentNode) {
@@ -820,41 +815,41 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
       // Create CSV content
       const headers = ['#', 'Status', 'Machine Type', 'Machine Name', 'Operator', 'Start Time', 'End Time', 'Note'];
       const rows = savedStep.steps.map((step, idx) => [
-        idx + 1,
-        getStatusLabel(step.status),
-        step.MachineType || '',
-        step.MachineName || '',
-        step.OptereName || '',
-        step.StartTime && step.status !== 'none' && step.status !== 'pending' ? new Date(step.StartTime).toLocaleString() : '',
-        step.EndTime && step.status === 'completed' ? new Date(step.EndTime).toLocaleString() : '',
-        step.note || ''
-      ]);
+      idx + 1,
+      getStatusLabel(step.status),
+      step.MachineType || '',
+      step.MachineName || '',
+      step.OptereName || '',
+      step.StartTime && step.status !== 'none' && step.status !== 'pending' ? new Date(step.StartTime).toLocaleString() : '',
+      step.EndTime && step.status === 'completed' ? new Date(step.EndTime).toLocaleString() : '',
+      step.note || '']
+      );
 
       // Add header info
       const headerInfo = [
-        ['Manufacturing Steps Report'],
-        [''],
-        orderId ? ['Order ID:', orderId] : [],
-        customerInfo?.name ? ['Customer:', customerInfo.name] : [],
-        customerInfo?.companyName ? ['Company:', customerInfo.companyName] : [],
-        customerInfo?.address ? ['Address:', customerInfo.address] : [],
-        ['Step Name:', savedStep.stepname],
-        ['Generated:', new Date().toLocaleString()],
-        [''],
-        headers,
-        ...rows
-      ].filter(row => row.length > 0);
+      ['Manufacturing Steps Report'],
+      [''],
+      orderId ? ['Order ID:', orderId] : [],
+      customerInfo?.name ? ['Customer:', customerInfo.name] : [],
+      customerInfo?.companyName ? ['Company:', customerInfo.companyName] : [],
+      customerInfo?.address ? ['Address:', customerInfo.address] : [],
+      ['Step Name:', savedStep.stepname],
+      ['Generated:', new Date().toLocaleString()],
+      [''],
+      headers,
+      ...rows].
+      filter((row) => row.length > 0);
 
       // Convert to CSV
-      const csvContent = headerInfo.map(row =>
-        row.map(cell => {
-          // Escape quotes and wrap in quotes if contains comma
-          const cellStr = String(cell);
-          if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
-            return `"${cellStr.replace(/"/g, '""')}"`;
-          }
-          return cellStr;
-        }).join(',')
+      const csvContent = headerInfo.map((row) =>
+      row.map((cell) => {
+        // Escape quotes and wrap in quotes if contains comma
+        const cellStr = String(cell);
+        if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
+          return `"${cellStr.replace(/"/g, '""')}"`;
+        }
+        return cellStr;
+      }).join(',')
       ).join('\n');
 
       // Create and download file
@@ -1103,14 +1098,9 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
             iframe.contentWindow?.focus();
             iframe.contentWindow?.print();
           } catch (e) {
-            console.error('Print error:', e);
-            const printWin = window.open('', '_blank');
-            if (printWin) {
-              printWin.document.write(printContent);
-              printWin.document.close();
-              printWin.focus();
-              printWin.print();
-            }
+
+            // Don't use window.open as it's blocked in Electron
+            alert('Print failed. Please try again.');
           }
           setTimeout(() => {
             if (iframe.parentNode) {
@@ -1126,14 +1116,14 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
       if (!tableData || !selectedMachineForTable) return;
 
       const csvRows: string[][] = [
-        [`Machine Table Export - ${selectedMachineForTable.machineName}`],
-        [''],
-        orderId ? ['Order ID:', orderId] : [],
-        customerInfo?.name ? ['Customer:', customerInfo.name] : [],
-        customerInfo?.companyName ? ['Company:', customerInfo.companyName] : [],
-        ['Generated:', new Date().toLocaleString()],
-        ['']
-      ].filter(r => r.length > 0);
+      [`Machine Table Export - ${selectedMachineForTable.machineName}`],
+      [''],
+      orderId ? ['Order ID:', orderId] : [],
+      customerInfo?.name ? ['Customer:', customerInfo.name] : [],
+      customerInfo?.companyName ? ['Company:', customerInfo.companyName] : [],
+      ['Generated:', new Date().toLocaleString()],
+      ['']].
+      filter((r) => r.length > 0);
 
       // Order & Machine Info
       if (tableData.order || tableData.machine) {
@@ -1163,14 +1153,14 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
 
         tableData.operatorSessionData.operatorSessions.forEach((session: any, idx: number) => {
           csvRows.push([
-            String(idx + 1),
-            session.operatorName,
-            session.startTime ? new Date(session.startTime).toLocaleString() : '-',
-            session.endTime ? new Date(session.endTime).toLocaleString() : '-',
-            session.duration ? `${Math.floor(session.duration / 60)}h ${session.duration % 60}m` : '-',
-            session.status,
-            session.notes || session.pauseReason || '-'
-          ]);
+          String(idx + 1),
+          session.operatorName,
+          session.startTime ? new Date(session.startTime).toLocaleString() : '-',
+          session.endTime ? new Date(session.endTime).toLocaleString() : '-',
+          session.duration ? `${Math.floor(session.duration / 60)}h ${session.duration % 60}m` : '-',
+          session.status,
+          session.notes || session.pauseReason || '-']
+          );
         });
 
         csvRows.push(['Total Production Time:', tableData.operatorSessionData.totalProductionTimeFormatted]);
@@ -1186,9 +1176,9 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
 
         tableData.tableData.rowData.forEach((row: any, idx: number) => {
           const rowData = [
-            String(idx + 1),
-            ...(tableData.tableStructure?.columns?.map((col: any) => String(row[col.name] !== undefined ? row[col.name] : '-')) || [])
-          ];
+          String(idx + 1),
+          ...(tableData.tableStructure?.columns?.map((col: any) => String(row[col.name] !== undefined ? row[col.name] : '-')) || [])];
+
           csvRows.push(rowData);
         });
         csvRows.push(['']);
@@ -1203,13 +1193,13 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
       }
 
       // Convert to CSV
-      const csvContent = csvRows.map(row =>
-        row.map(cell => {
-          const s = String(cell);
-          return s.includes(',') || s.includes('"') || s.includes('\n')
-            ? `"${s.replace(/"/g, '""')}"`
-            : s;
-        }).join(',')
+      const csvContent = csvRows.map((row) =>
+      row.map((cell) => {
+        const s = String(cell);
+        return s.includes(',') || s.includes('"') || s.includes('\n') ?
+        `"${s.replace(/"/g, '""')}"` :
+        s;
+      }).join(',')
       ).join('\n');
 
       // Create and download file
@@ -1230,81 +1220,81 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
       return (
         <div className="container12">
           <h3 className="ManufacturingStepsTitel">Manufacturing Steps:</h3>
-          <div style={{ 
-            color: '#ff4444', 
-            padding: '10px', 
-            backgroundColor: '#ffe6e6', 
+          <div style={{
+            color: '#ff4444',
+            padding: '10px',
+            backgroundColor: '#ffe6e6',
             borderRadius: '4px',
             marginBottom: '10px'
           }}>
             {error}
-            <button 
+            <button
               onClick={() => setError(null)}
-              style={{ marginLeft: '10px', padding: '2px 8px' }}
-            >
+              style={{ marginLeft: '10px', padding: '2px 8px' }}>
+
               Clear
             </button>
           </div>
-        </div>
-      );
+        </div>);
+
     }
 
     return (
       <div className="container12">
         <h3 className="ManufacturingStepsTitel">Manufacturing Steps:</h3>
         
-        {isLoading && (
-          <div style={{ padding: '10px', textAlign: 'center', color: '#666' }}>
+        {isLoading &&
+        <div style={{ padding: '10px', textAlign: 'center', color: '#666' }}>
             Loading step data...
           </div>
-        )}
+        }
 
-        {savedStep?.stepId && (
-          <input 
-            type="hidden" 
-            name="stepId" 
-            value={savedStep.stepId} 
-          />
-        )}
+        {savedStep?.stepId &&
+        <input
+          type="hidden"
+          name="stepId"
+          value={savedStep.stepId} />
 
-        {!savedStep && !isLoading && (
-          <div className="section search" style={{ position: 'relative', marginBottom: '10px' }}>
+        }
+
+        {!savedStep && !isLoading &&
+        <div className="section search" style={{ position: 'relative', marginBottom: '10px' }}>
             <label htmlFor="searchInput" className="ManufacturingStepsTitel">Step Name:</label>
             <div style={{ position: 'relative' }}>
               <input
-                id="searchInput"
-                type="text"
-                placeholder="Enter step name to search..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="inputBox"
-                style={{ width: '100%', padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: '6px', fontSize: '13px' }}
-              />
+              id="searchInput"
+              type="text"
+              placeholder="Enter step name to search..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="inputBox"
+              style={{ width: '100%', padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: '6px', fontSize: '13px' }} />
+
               <StepSuggestions
-                stepName={searchTerm}
-                onSelect={handleSuggestionSelect}
-              />
+              stepName={searchTerm}
+              onSelect={handleSuggestionSelect} />
+
             </div>
           </div>
-        )}
+        }
 
-        {showStepPopup && selectedStep && (
-          <div className="popup-overlay">
+        {showStepPopup && selectedStep &&
+        <div className="popup-overlay">
             <div className="popup">
               <div className="popup-content">
                 <h3>Configure Step: {selectedStep.stepname}</h3>
 
-                {selectedStep.steps.length === 0 && (
-                  <div style={{
-                    padding: '10px',
-                    backgroundColor: '#fff3cd',
-                    border: '1px solid #ffeaa7',
-                    borderRadius: '4px',
-                    marginBottom: '10px'
-                  }}>
+                {selectedStep.steps.length === 0 &&
+              <div style={{
+                padding: '10px',
+                backgroundColor: '#fff3cd',
+                border: '1px solid #ffeaa7',
+                borderRadius: '4px',
+                marginBottom: '10px'
+              }}>
                     No machines found for this step.
                   </div>
-                )}
+              }
                 
                 <div className="headerRow">
                   <span>Status</span>
@@ -1317,8 +1307,8 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
                   <span>Table</span>
                 </div>
 
-                {selectedStep.steps && selectedStep.steps.map((step, index) => (
-                  <div key={index} className="popupitemallStep popupitemall">
+                {selectedStep.steps && selectedStep.steps.map((step, index) =>
+              <div key={index} className="popupitemallStep popupitemall">
                     
                     <input type="hidden" name={`machineId_${index}`} value={step.MachineId || ''} />
                     <input type="hidden" name={`machine_${index}_id`} value={step.MachineId || ''} />
@@ -1326,201 +1316,201 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
                     
                     {/* Status Badge */}
                     <div style={{
-                      padding: '4px 8px',
-                      borderRadius: '12px',
-                      backgroundColor: getStatusColor(step.status),
-                      color: 'white',
-                      fontSize: '11px',
-                      fontWeight: 'bold',
-                      textAlign: 'center',
-                      whiteSpace: 'nowrap'
-                    }}>
+                  padding: '4px 8px',
+                  borderRadius: '12px',
+                  backgroundColor: getStatusColor(step.status),
+                  color: 'white',
+                  fontSize: '11px',
+                  fontWeight: 'bold',
+                  textAlign: 'center',
+                  whiteSpace: 'nowrap'
+                }}>
                       {getStatusLabel(step.status)}
                     </div>
                     
                     <input
-                      type="text"
-                      value={step.MachineType || ''}
-                      onChange={(e) => handleStepUpdate(index, 'MachineType', e.target.value)}
-                      placeholder="Machine Type"
-                      required
-                    />
+                  type="text"
+                  value={step.MachineType || ''}
+                  onChange={(e) => handleStepUpdate(index, 'MachineType', e.target.value)}
+                  placeholder="Machine Type"
+                  required />
+
                     <input
-                      type="text"
-                      value={step.MachineName || ''}
-                      onChange={(e) => handleStepUpdate(index, 'MachineName', e.target.value)}
-                      placeholder="Machine Name"
-                      required
-                    />
+                  type="text"
+                  value={step.MachineName || ''}
+                  onChange={(e) => handleStepUpdate(index, 'MachineName', e.target.value)}
+                  placeholder="Machine Name"
+                  required />
+
                     <input
-                      type="text"
-                      value={step.OptereName || ''}
-                      onChange={(e) => handleStepUpdate(index, 'OptereName', e.target.value)}
-                      placeholder="Operator Name"
-                    />
+                  type="text"
+                  value={step.OptereName || ''}
+                  onChange={(e) => handleStepUpdate(index, 'OptereName', e.target.value)}
+                  placeholder="Operator Name" />
+
                     <input
-                      type="datetime-local"
-                      value={step.StartTime || ''}
-                      onChange={(e) => handleStepUpdate(index, 'StartTime', e.target.value)}
-                      placeholder="Start Time"
-                    />
+                  type="datetime-local"
+                  value={step.StartTime || ''}
+                  onChange={(e) => handleStepUpdate(index, 'StartTime', e.target.value)}
+                  placeholder="Start Time" />
+
                     <input
-                      type="datetime-local"
-                      value={step.EndTime || ''}
-                      onChange={(e) => handleStepUpdate(index, 'EndTime', e.target.value)}
-                      placeholder="End Time"
-                    />
+                  type="datetime-local"
+                  value={step.EndTime || ''}
+                  onChange={(e) => handleStepUpdate(index, 'EndTime', e.target.value)}
+                  placeholder="End Time" />
+
 
                     <button
-                      onClick={() => handleNoteEdit(index)}
-                      className="buttonStepRowNote"
-                      type="button"
-                      title={step.note ? `Note: ${step.note}` : 'Add note'}
-                    >
+                  onClick={() => handleNoteEdit(index)}
+                  className="buttonStepRowNote"
+                  type="button"
+                  title={step.note ? `Note: ${step.note}` : 'Add note'}>
+
                       {step.note ? '📝' : '✎'} Note
                     </button>
 
                     <button
-                      onClick={() => handleViewTable(step.MachineId, step.MachineName, index)}
-                      type="button"
-                      style={{
-                        background: "none",
-                        border: "none",
-                        fontSize: "18px",
-                        cursor: "pointer",
-                        color: "#2196F3",
-                        padding: "5px",
-                      }}
-                      title="View Machine Table"
-                      disabled={!step.MachineId}
-                    >
+                  onClick={() => handleViewTable(step.MachineId, step.MachineName, index)}
+                  type="button"
+                  style={{
+                    background: "none",
+                    border: "none",
+                    fontSize: "18px",
+                    cursor: "pointer",
+                    color: "#2196F3",
+                    padding: "5px"
+                  }}
+                  title="View Machine Table"
+                  disabled={!step.MachineId}>
+
                       📊
                     </button>
                   </div>
-                ))}
+              )}
 
                 <div className="popupButtons">
                   <button onClick={handleSaveStep} className="saveButton" type="button">
                     Save Step
                   </button>
                   <button
-                    onClick={handleCancelEdit}
-                    className="cancelButton"
-                    type="button"
-                  >
+                  onClick={handleCancelEdit}
+                  className="cancelButton"
+                  type="button">
+
                     Cancel
                   </button>
                 </div>
               </div>
             </div>
           </div>
-        )}
+        }
 
-        {savedStep && (
-          <div className="section-result" onDoubleClick={handleEditStep}>
+        {savedStep &&
+        <div className="section-result" onDoubleClick={handleEditStep}>
             <div className="savedStepDisplay">
               {/* Step Header with Print and Excel buttons */}
               <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '8px 10px',
-                background: '#f0f9ff',
-                borderRadius: '6px 6px 0 0',
-                borderBottom: '1px solid #e0e7ff'
-              }}>
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '8px 10px',
+              background: '#f0f9ff',
+              borderRadius: '6px 6px 0 0',
+              borderBottom: '1px solid #e0e7ff'
+            }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <span style={{
-                    background: '#0ea5e9',
-                    color: 'white',
-                    padding: '4px 12px',
-                    borderRadius: '12px',
-                    fontSize: '12px',
-                    fontWeight: '600'
-                  }}>
+                  background: '#0ea5e9',
+                  color: 'white',
+                  padding: '4px 12px',
+                  borderRadius: '12px',
+                  fontSize: '12px',
+                  fontWeight: '600'
+                }}>
                     {savedStep.stepname}
                   </span>
                   <span style={{
-                    background: '#dbeafe',
-                    color: '#1d4ed8',
-                    padding: '3px 10px',
-                    borderRadius: '10px',
-                    fontSize: '11px',
-                    fontWeight: '500'
-                  }}>
+                  background: '#dbeafe',
+                  color: '#1d4ed8',
+                  padding: '3px 10px',
+                  borderRadius: '10px',
+                  fontSize: '11px',
+                  fontWeight: '500'
+                }}>
                     {savedStep.steps.length} machine{savedStep.steps.length > 1 ? 's' : ''}
                   </span>
                 </div>
                 <div style={{ display: 'flex', gap: '6px' }}>
                   <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handlePrintSteps();
-                    }}
-                    style={{
-                      background: '#f59e0b',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      color: 'white',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      padding: '5px 10px',
-                      fontSize: '11px',
-                      fontWeight: '500'
-                    }}
-                    title="Print Manufacturing Steps"
-                  >
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handlePrintSteps();
+                  }}
+                  style={{
+                    background: '#f59e0b',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    color: 'white',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: '5px 10px',
+                    fontSize: '11px',
+                    fontWeight: '500'
+                  }}
+                  title="Print Manufacturing Steps">
+
                     <Printer size={14} />
                     Print
                   </button>
                   <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleExportExcel();
-                    }}
-                    style={{
-                      background: '#10b981',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      color: 'white',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      padding: '5px 10px',
-                      fontSize: '11px',
-                      fontWeight: '500'
-                    }}
-                    title="Export to Excel (CSV)"
-                  >
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleExportExcel();
+                  }}
+                  style={{
+                    background: '#10b981',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    color: 'white',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: '5px 10px',
+                    fontSize: '11px',
+                    fontWeight: '500'
+                  }}
+                  title="Export to Excel (CSV)">
+
                     <FileSpreadsheet size={14} />
                     Excel
                   </button>
                   <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowAllStepsPopup(true);
-                    }}
-                    style={{
-                      background: '#8b5cf6',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      color: 'white',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      padding: '5px 10px',
-                      fontSize: '11px',
-                      fontWeight: '500'
-                    }}
-                    title="View all step details"
-                  >
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowAllStepsPopup(true);
+                  }}
+                  style={{
+                    background: '#8b5cf6',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    color: 'white',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: '5px 10px',
+                    fontSize: '11px',
+                    fontWeight: '500'
+                  }}
+                  title="View all step details">
+
                     <Eye size={14} />
                     View All
                   </button>
@@ -1539,8 +1529,8 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
                 <strong>Table</strong>
               </div>
 
-              {savedStep.steps && savedStep.steps.map((step, index) => (
-                <div key={index} className="stepRow">
+              {savedStep.steps && savedStep.steps.map((step, index) =>
+            <div key={index} className="stepRow">
                   <input type="hidden" name={`machineId_${index}`} value={step.MachineId || ''} />
                   <input type="hidden" name={`machine_${index}_id`} value={step.MachineId || ''} />
                   <input type="hidden" name={`machine_${index}_status`} value={step.status || 'none'} />
@@ -1548,14 +1538,14 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
                   <span>{index + 1}</span>
                   <span>
                     <span style={{
-                      padding: '3px 8px',
-                      borderRadius: '10px',
-                      backgroundColor: getStatusColor(step.status),
-                      color: 'white',
-                      fontSize: '10px',
-                      fontWeight: 'bold',
-                      display: 'inline-block'
-                    }}>
+                  padding: '3px 8px',
+                  borderRadius: '10px',
+                  backgroundColor: getStatusColor(step.status),
+                  color: 'white',
+                  fontSize: '10px',
+                  fontWeight: 'bold',
+                  display: 'inline-block'
+                }}>
                       {getStatusLabel(step.status)}
                     </span>
                   </span>
@@ -1566,200 +1556,200 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
                   <span>{step.EndTime && step.status === 'completed' ? new Date(step.EndTime).toLocaleString() : 'N/A'}</span>
                   <span>
                     <button
-                      onClick={() => handleNoteEdit(index)}
-                      className="buttonStepRowNote"
-                      type="button"
-                      title={step.note || 'Add note'}
-                    >
+                  onClick={() => handleNoteEdit(index)}
+                  className="buttonStepRowNote"
+                  type="button"
+                  title={step.note || 'Add note'}>
+
                       {step.note ? '📝' : '✎'} {step.note ? 'View' : 'Add'}
                     </button>
                   </span>
                   <span>
                     <button
-                      onClick={() => handleViewTable(step.MachineId, step.MachineName, index)}
-                      type="button"
-                      style={{
-                        background: "none",
-                        border: "none",
-                        fontSize: "18px",
-                        cursor: step.MachineId ? "pointer" : "not-allowed",
-                        color: step.MachineId ? "#2196F3" : "#ccc",
-                        padding: "5px",
-                      }}
-                      title="View Machine Table"
-                      disabled={!step.MachineId}
-                    >
+                  onClick={() => handleViewTable(step.MachineId, step.MachineName, index)}
+                  type="button"
+                  style={{
+                    background: "none",
+                    border: "none",
+                    fontSize: "18px",
+                    cursor: step.MachineId ? "pointer" : "not-allowed",
+                    color: step.MachineId ? "#2196F3" : "#ccc",
+                    padding: "5px"
+                  }}
+                  title="View Machine Table"
+                  disabled={!step.MachineId}>
+
                       📊
                     </button>
                   </span>
                 </div>
-              ))}
+            )}
             </div>
 
             <div className="Configured-Step">
             </div>
           </div>
-        )}
+        }
 
         {/* Table View Popup */}
-        {showTableView && selectedMachineForTable && (
-          <div className="popup-overlay Machine-Table">
-            <div className="popup  Machine-Table "  >
+        {showTableView && selectedMachineForTable &&
+        <div className="popup-overlay Machine-Table">
+            <div className="popup  Machine-Table ">
       
               <div className="popup-content Machine-Table ">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', padding: '10px 15px', backgroundColor: '#f8fafc', borderRadius: '8px', borderBottom: '1px solid #e5e7eb' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    {orderId && (
-                      <span style={{
-                        background: '#fef3c7',
-                        color: '#d97706',
-                        padding: '4px 10px',
-                        borderRadius: '4px',
-                        fontSize: '12px',
-                        fontWeight: '600',
-                        border: '1px solid #fcd34d'
-                      }}>
+                    {orderId &&
+                  <span style={{
+                    background: '#fef3c7',
+                    color: '#d97706',
+                    padding: '4px 10px',
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    border: '1px solid #fcd34d'
+                  }}>
                         {orderId}
                       </span>
-                    )}
+                  }
                     <h3 style={{ margin: 0, fontSize: '16px', color: '#1e293b' }}>Machine Table: {selectedMachineForTable.machineName}</h3>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    {lastUpdate && (
-                      <span style={{ fontSize: '11px', color: '#4caf50' }}>
+                    {lastUpdate &&
+                  <span style={{ fontSize: '11px', color: '#4caf50' }}>
                         🟢 Live • {lastUpdate.toLocaleTimeString()}
                       </span>
-                    )}
+                  }
                     <button
-                      onClick={handlePrintMachineTable}
-                      style={{
-                        padding: '6px 12px',
-                        backgroundColor: '#f59e0b',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        fontSize: '12px',
-                        fontWeight: '500',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px'
-                      }}
-                      disabled={loadingTable || !tableData}
-                      title="Print Machine Table"
-                    >
+                    onClick={handlePrintMachineTable}
+                    style={{
+                      padding: '6px 12px',
+                      backgroundColor: '#f59e0b',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      fontWeight: '500',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                    disabled={loadingTable || !tableData}
+                    title="Print Machine Table">
+
                       <Printer size={14} />
                       Print
                     </button>
                     <button
-                      onClick={handleExportMachineTableExcel}
-                      style={{
-                        padding: '6px 12px',
-                        backgroundColor: '#10b981',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        fontSize: '12px',
-                        fontWeight: '500',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px'
-                      }}
-                      disabled={loadingTable || !tableData}
-                      title="Export to Excel (CSV)"
-                    >
+                    onClick={handleExportMachineTableExcel}
+                    style={{
+                      padding: '6px 12px',
+                      backgroundColor: '#10b981',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      fontWeight: '500',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                    disabled={loadingTable || !tableData}
+                    title="Export to Excel (CSV)">
+
                       <FileSpreadsheet size={14} />
                       Excel
                     </button>
                     <button
-                      onClick={() => handleViewTable(selectedMachineForTable.machineId, selectedMachineForTable.machineName, selectedMachineForTable.index)}
-                      style={{
-                        padding: '6px 12px',
-                        backgroundColor: '#2196F3',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        fontSize: '12px',
-                        fontWeight: '500',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px'
-                      }}
-                      disabled={loadingTable}
-                    >
+                    onClick={() => handleViewTable(selectedMachineForTable.machineId, selectedMachineForTable.machineName, selectedMachineForTable.index)}
+                    style={{
+                      padding: '6px 12px',
+                      backgroundColor: '#2196F3',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      fontWeight: '500',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                    disabled={loadingTable}>
+
                       {loadingTable ? '🔄 Refreshing...' : '🔄 Refresh'}
                     </button>
                   </div>
                 </div>
 
-                {loadingTable && (
-                  <div style={{ padding: '20px', textAlign: 'center' }}>
+                {loadingTable &&
+              <div style={{ padding: '20px', textAlign: 'center' }}>
                     Loading machine table data...
                   </div>
-                )}
+              }
                 
-                {!loadingTable && tableData && (
-                  <div style={{ overflowX: 'auto', maxHeight: '600px' }}>
+                {!loadingTable && tableData &&
+              <div style={{ overflowX: 'auto', maxHeight: '600px' }}>
                     {/* Order and Machine Info */}
                     <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#f5f5f5', borderRadius: '4px' }}>
                       <h4>Order & Machine Details</h4>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px' }}>
-                        {tableData.order && (
-                          <>
+                        {tableData.order &&
+                    <>
                             <div><strong>Order ID:</strong> {tableData.order.orderId}</div>
                             <div><strong>Customer:</strong> {tableData.order.customer}</div>
                             <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
                               <strong>Order Status:</strong>
                               <span style={{
-                                padding: '4px 12px',
-                                borderRadius: '12px',
-                                backgroundColor: getStatusColor(tableData.order.status),
-                                color: 'white',
-                                fontSize: '11px',
-                                fontWeight: '600',
-                                whiteSpace: 'nowrap',
-                                display: 'inline-block',
-                                lineHeight: '1.2'
-                              }}>
+                          padding: '4px 12px',
+                          borderRadius: '12px',
+                          backgroundColor: getStatusColor(tableData.order.status),
+                          color: 'white',
+                          fontSize: '11px',
+                          fontWeight: '600',
+                          whiteSpace: 'nowrap',
+                          display: 'inline-block',
+                          lineHeight: '1.2'
+                        }}>
                                 {tableData.order.status}
                               </span>
                             </div>
                           </>
-                        )}
-                        {tableData.machine && (
-                          <>
+                    }
+                        {tableData.machine &&
+                    <>
                             <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
                               <strong>Machine Status:</strong>
                               <span style={{
-                                padding: '4px 12px',
-                                borderRadius: '12px',
-                                backgroundColor: getStatusColor(tableData.machine.status),
-                                color: 'white',
-                                fontSize: '11px',
-                                fontWeight: '600',
-                                whiteSpace: 'nowrap',
-                                display: 'inline-block',
-                                lineHeight: '1.2'
-                              }}>
+                          padding: '4px 12px',
+                          borderRadius: '12px',
+                          backgroundColor: getStatusColor(tableData.machine.status),
+                          color: 'white',
+                          fontSize: '11px',
+                          fontWeight: '600',
+                          whiteSpace: 'nowrap',
+                          display: 'inline-block',
+                          lineHeight: '1.2'
+                        }}>
                                 {getStatusLabel(tableData.machine.status)}
                               </span>
                             </div>
                             <div><strong>Operator:</strong> {tableData.machine.operatorName || 'Not assigned'}</div>
-                            {tableData.machine.startedAt && (
-                              <div><strong>Started At:</strong> {new Date(tableData.machine.startedAt).toLocaleString()}</div>
-                            )}
-                            {tableData.machine.completedAt && (
-                              <div><strong>Completed At:</strong> {new Date(tableData.machine.completedAt).toLocaleString()}</div>
-                            )}
-                            {tableData.machine.note && (
-                              <div style={{ gridColumn: '1 / -1' }}>
+                            {tableData.machine.startedAt &&
+                      <div><strong>Started At:</strong> {new Date(tableData.machine.startedAt).toLocaleString()}</div>
+                      }
+                            {tableData.machine.completedAt &&
+                      <div><strong>Completed At:</strong> {new Date(tableData.machine.completedAt).toLocaleString()}</div>
+                      }
+                            {tableData.machine.note &&
+                      <div style={{ gridColumn: '1 / -1' }}>
                                 <strong>Note:</strong> {tableData.machine.note}
                               </div>
-                            )}
+                      }
                           </>
-                        )}
+                    }
                       </div>
                     </div>
 
@@ -1767,70 +1757,70 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
                     <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#e8f5e9', borderRadius: '4px' }}>
                       <h4 style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         👷 Operator Production Sessions
-                        {tableData.operatorSessionData ? (
-                          <span style={{
-                            padding: '2px 10px',
-                            borderRadius: '15px',
-                            backgroundColor: '#4caf50',
-                            color: 'white',
-                            fontSize: '12px'
-                          }}>
+                        {tableData.operatorSessionData ?
+                    <span style={{
+                      padding: '2px 10px',
+                      borderRadius: '15px',
+                      backgroundColor: '#4caf50',
+                      color: 'white',
+                      fontSize: '12px'
+                    }}>
                             Total: {tableData.operatorSessionData.totalProductionTimeFormatted}
-                          </span>
-                        ) : (
-                          <span style={{
-                            padding: '2px 10px',
-                            borderRadius: '15px',
-                            backgroundColor: '#9e9e9e',
-                            color: 'white',
-                            fontSize: '12px'
-                          }}>
+                          </span> :
+
+                    <span style={{
+                      padding: '2px 10px',
+                      borderRadius: '15px',
+                      backgroundColor: '#9e9e9e',
+                      color: 'white',
+                      fontSize: '12px'
+                    }}>
                             No data saved yet
                           </span>
-                        )}
+                    }
                       </h4>
 
-                      {tableData.operatorSessionData ? (
-                        <>
+                      {tableData.operatorSessionData ?
+                  <>
                           {/* Current Active Session */}
-                          {tableData.operatorSessionData.currentSession?.isActive && (
-                            <div style={{
-                              marginBottom: '15px',
-                              padding: '10px',
-                              backgroundColor: '#fff3e0',
-                              borderRadius: '4px',
-                              border: '2px solid #ff9800'
-                            }}>
+                          {tableData.operatorSessionData.currentSession?.isActive &&
+                    <div style={{
+                      marginBottom: '15px',
+                      padding: '10px',
+                      backgroundColor: '#fff3e0',
+                      borderRadius: '4px',
+                      border: '2px solid #ff9800'
+                    }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                                 <span style={{ fontSize: '18px' }}>▶️</span>
                                 <strong>Active Session</strong>
                                 <span style={{
-                                  padding: '2px 8px',
-                                  borderRadius: '10px',
-                                  backgroundColor: '#ff9800',
-                                  color: 'white',
-                                  fontSize: '11px',
-                                  animation: 'pulse 1.5s infinite'
-                                }}>LIVE</span>
+                          padding: '2px 8px',
+                          borderRadius: '10px',
+                          backgroundColor: '#ff9800',
+                          color: 'white',
+                          fontSize: '11px',
+                          animation: 'pulse 1.5s infinite'
+                        }}>LIVE</span>
                               </div>
                               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
                                 <div><strong>Operator:</strong> {tableData.operatorSessionData.currentSession.operatorName}</div>
                                 <div><strong>Started:</strong> {new Date(tableData.operatorSessionData.currentSession.startTime).toLocaleString()}</div>
                               </div>
                             </div>
-                          )}
+                    }
 
                           {/* Session History */}
-                          {tableData.operatorSessionData.operatorSessions?.length > 0 ? (
-                            <div>
+                          {tableData.operatorSessionData.operatorSessions?.length > 0 ?
+                    <div>
                               <strong style={{ marginBottom: '10px', display: 'block' }}>
                                 Session History ({tableData.operatorSessionData.sessionCount} sessions, {tableData.operatorSessionData.completedSessions} completed)
                               </strong>
                               <table style={{
-                                width: '100%',
-                                borderCollapse: 'collapse',
-                                fontSize: '13px'
-                              }}>
+                        width: '100%',
+                        borderCollapse: 'collapse',
+                        fontSize: '13px'
+                      }}>
                                 <thead>
                                   <tr style={{ backgroundColor: '#4caf50', color: 'white' }}>
                                     <th style={{ padding: '8px', border: '1px solid #ddd' }}>#</th>
@@ -1843,8 +1833,8 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
                                   </tr>
                                 </thead>
                                 <tbody>
-                                  {tableData.operatorSessionData.operatorSessions.map((session: any, idx: number) => (
-                                    <tr key={idx} style={{ backgroundColor: idx % 2 === 0 ? 'white' : '#f9f9f9' }}>
+                                  {tableData.operatorSessionData.operatorSessions.map((session: any, idx: number) =>
+                          <tr key={idx} style={{ backgroundColor: idx % 2 === 0 ? 'white' : '#f9f9f9' }}>
                                       <td style={{ padding: '8px', border: '1px solid #ddd' }}>{idx + 1}</td>
                                       <td style={{ padding: '8px', border: '1px solid #ddd' }}>{session.operatorName}</td>
                                       <td style={{ padding: '8px', border: '1px solid #ddd' }}>
@@ -1858,15 +1848,15 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
                                       </td>
                                       <td style={{ padding: '8px', border: '1px solid #ddd' }}>
                                         <span style={{
-                                          padding: '2px 8px',
-                                          borderRadius: '10px',
-                                          backgroundColor:
-                                            session.status === 'completed' ? '#4caf50' :
-                                            session.status === 'paused' ? '#ff9800' :
-                                            session.status === 'active' ? '#2196f3' : '#9e9e9e',
-                                          color: 'white',
-                                          fontSize: '11px'
-                                        }}>
+                                padding: '2px 8px',
+                                borderRadius: '10px',
+                                backgroundColor:
+                                session.status === 'completed' ? '#4caf50' :
+                                session.status === 'paused' ? '#ff9800' :
+                                session.status === 'active' ? '#2196f3' : '#9e9e9e',
+                                color: 'white',
+                                fontSize: '11px'
+                              }}>
                                           {session.status}
                                         </span>
                                       </td>
@@ -1874,71 +1864,71 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
                                         {session.notes || session.pauseReason || '-'}
                                       </td>
                                     </tr>
-                                  ))}
+                          )}
                                 </tbody>
                               </table>
-                            </div>
-                          ) : (
-                            <div style={{
-                              padding: '15px',
-                              textAlign: 'center',
-                              color: '#666',
-                              backgroundColor: '#f5f5f5',
-                              borderRadius: '4px'
-                            }}>
+                            </div> :
+
+                    <div style={{
+                      padding: '15px',
+                      textAlign: 'center',
+                      color: '#666',
+                      backgroundColor: '#f5f5f5',
+                      borderRadius: '4px'
+                    }}>
                               No production sessions recorded yet.
                             </div>
-                          )}
+                    }
 
                           {/* Saved Row Data from Operator Panel */}
-                          {tableData.operatorSessionData.rows && tableData.operatorSessionData.rows.length > 0 && (
-                            <div style={{ marginTop: '15px' }}>
+                          {tableData.operatorSessionData.rows && tableData.operatorSessionData.rows.length > 0 &&
+                    <div style={{ marginTop: '15px' }}>
                               <strong style={{ marginBottom: '10px', display: 'block' }}>
                                 📋 Saved Production Data ({tableData.operatorSessionData.rows.length} entries)
                               </strong>
                               <div style={{ overflowX: 'auto' }}>
                                 <table style={{
-                                  width: '100%',
-                                  borderCollapse: 'collapse',
-                                  fontSize: '12px'
-                                }}>
+                          width: '100%',
+                          borderCollapse: 'collapse',
+                          fontSize: '12px'
+                        }}>
                                   <thead>
                                     <tr style={{ backgroundColor: '#2196F3', color: 'white' }}>
                                       <th style={{ padding: '8px', border: '1px solid #ddd' }}>#</th>
                                       {/* Dynamic columns from row data */}
                                       {tableData.operatorSessionData.rows[0]?.data &&
-                                        Object.keys(tableData.operatorSessionData.rows[0].data).map((key, idx) => (
-                                          <th key={idx} style={{ padding: '8px', border: '1px solid #ddd' }}>{key}</th>
-                                        ))
-                                      }
+                              Object.keys(tableData.operatorSessionData.rows[0].data).map((key, idx) =>
+                              <th key={idx} style={{ padding: '8px', border: '1px solid #ddd' }}>{key}</th>
+                              )
+                              }
                                     </tr>
                                   </thead>
                                   <tbody>
-                                    {tableData.operatorSessionData.rows.map((row: any, rowIdx: number) => (
-                                      <tr key={rowIdx} style={{ backgroundColor: rowIdx % 2 === 0 ? 'white' : '#f9f9f9' }}>
+                                    {tableData.operatorSessionData.rows.map((row: any, rowIdx: number) =>
+                            <tr key={rowIdx} style={{ backgroundColor: rowIdx % 2 === 0 ? 'white' : '#f9f9f9' }}>
                                         <td style={{ padding: '8px', border: '1px solid #ddd' }}>{row.rowId || rowIdx + 1}</td>
-                                        {row.data && Object.values(row.data).map((value: any, valIdx: number) => (
-                                          <td key={valIdx} style={{ padding: '8px', border: '1px solid #ddd' }}>
+                                        {row.data && Object.values(row.data).map((value: any, valIdx: number) =>
+                              <td key={valIdx} style={{ padding: '8px', border: '1px solid #ddd' }}>
                                             {value || '-'}
                                           </td>
-                                        ))}
+                              )}
                                       </tr>
-                                    ))}
+                            )}
                                   </tbody>
                                 </table>
                               </div>
                             </div>
-                          )}
-                        </>
-                      ) : (
-                        <div style={{
-                          padding: '20px',
-                          textAlign: 'center',
-                          color: '#666',
-                          backgroundColor: '#f5f5f5',
-                          borderRadius: '4px',
-                          marginTop: '10px'
-                        }}>
+                    }
+                        </> :
+
+                  <div style={{
+                    padding: '20px',
+                    textAlign: 'center',
+                    color: '#666',
+                    backgroundColor: '#f5f5f5',
+                    borderRadius: '4px',
+                    marginTop: '10px'
+                  }}>
                           <p style={{ margin: '0 0 10px 0', fontWeight: 'bold' }}>No operator data saved for this machine yet.</p>
                           <p style={{ margin: 0, fontSize: '13px' }}>
                             Data will appear here when operators use the MachineAccessAndManagement app to:
@@ -1949,120 +1939,120 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
                             <li>Save or complete the session</li>
                           </ul>
                         </div>
-                      )}
+                  }
                     </div>
 
 
                     {/* Formulas */}
-                    {tableData.tableStructure?.formulas && Object.keys(tableData.tableStructure.formulas).length > 0 && (
-                      <>
+                    {tableData.tableStructure?.formulas && Object.keys(tableData.tableStructure.formulas).length > 0 &&
+                <>
                         <h4>Formulas</h4>
-                        <div style={{ 
-                          backgroundColor: '#f9f9f9', 
-                          padding: '15px', 
-                          borderRadius: '4px',
-                          border: '1px solid #ddd',
-                          marginBottom: '20px'
-                        }}>
-                          {Object.entries(tableData.tableStructure.formulas).map(([key, formula]: [string, any]) => (
-                            <div key={key} style={{ marginBottom: '15px' }}>
+                        <div style={{
+                    backgroundColor: '#f9f9f9',
+                    padding: '15px',
+                    borderRadius: '4px',
+                    border: '1px solid #ddd',
+                    marginBottom: '20px'
+                  }}>
+                          {Object.entries(tableData.tableStructure.formulas).map(([key, formula]: [string, any]) =>
+                    <div key={key} style={{ marginBottom: '15px' }}>
                               <div style={{ fontWeight: 'bold', color: '#1976d2' }}>{key}</div>
                               <div style={{ marginLeft: '15px', marginTop: '5px' }}>
                                 <div><strong>Expression:</strong> <code>{formula.expression}</code></div>
                                 <div><strong>Dependencies:</strong> {formula.dependencies?.join(', ') || 'None'}</div>
-                                {formula.description && (
-                                  <div style={{ fontSize: '12px', color: '#666', marginTop: '3px' }}>
+                                {formula.description &&
+                        <div style={{ fontSize: '12px', color: '#666', marginTop: '3px' }}>
                                     {formula.description}
                                   </div>
-                                )}
+                        }
                               </div>
                             </div>
-                          ))}
+                    )}
                         </div>
                       </>
-                    )}
+                }
 
                     {/* Actual Table Data */}
-                    {tableData.tableData && tableData.tableData.rowData && tableData.tableData.rowData.length > 0 ? (
-                      <>
+                    {tableData.tableData && tableData.tableData.rowData && tableData.tableData.rowData.length > 0 ?
+                <>
                         <h4>Entered Data ({tableData.tableData.rowData.length} rows)</h4>
                         <div style={{ overflowX: 'auto', marginBottom: '20px' }}>
                           <table style={{
-                            width: '100%',
-                            borderCollapse: 'collapse',
-                            fontSize: '14px'
-                          }}>
+                      width: '100%',
+                      borderCollapse: 'collapse',
+                      fontSize: '14px'
+                    }}>
                             <thead>
                               <tr style={{ backgroundColor: '#2196F3', color: 'white' }}>
                                 <th style={{ padding: '8px', border: '1px solid #ddd' }}>#</th>
                                 {/* Use columns if available, otherwise extract keys from first row */}
-                                {tableData.tableStructure?.columns?.length > 0 ? (
-                                  tableData.tableStructure.columns.map((col: any, idx: number) => (
-                                    <th key={idx} style={{ padding: '8px', border: '1px solid #ddd' }}>
+                                {tableData.tableStructure?.columns?.length > 0 ?
+                          tableData.tableStructure.columns.map((col: any, idx: number) =>
+                          <th key={idx} style={{ padding: '8px', border: '1px solid #ddd' }}>
                                       {col.name || col.label || `Col ${col.order || idx + 1}`}
                                     </th>
-                                  ))
-                                ) : (
-                                  Object.keys(tableData.tableData.rowData[0] || {})
-                                    .filter(key => key !== 'rowId')
-                                    .map((key, idx) => (
-                                      <th key={idx} style={{ padding: '8px', border: '1px solid #ddd' }}>
+                          ) :
+
+                          Object.keys(tableData.tableData.rowData[0] || {}).
+                          filter((key) => key !== 'rowId').
+                          map((key, idx) =>
+                          <th key={idx} style={{ padding: '8px', border: '1px solid #ddd' }}>
                                         {key}
                                       </th>
-                                    ))
-                                )}
+                          )
+                          }
                               </tr>
                             </thead>
                             <tbody>
-                              {tableData.tableData.rowData.map((row: any, rowIdx: number) => (
-                                <tr key={rowIdx} style={{ backgroundColor: rowIdx % 2 === 0 ? 'white' : '#f9f9f9' }}>
+                              {tableData.tableData.rowData.map((row: any, rowIdx: number) =>
+                        <tr key={rowIdx} style={{ backgroundColor: rowIdx % 2 === 0 ? 'white' : '#f9f9f9' }}>
                                   <td style={{ padding: '8px', border: '1px solid #ddd' }}>{rowIdx + 1}</td>
                                   {/* Use columns if available, otherwise render all row values */}
-                                  {tableData.tableStructure?.columns?.length > 0 ? (
-                                    tableData.tableStructure.columns.map((col: any, colIdx: number) => (
-                                      <td key={colIdx} style={{ padding: '8px', border: '1px solid #ddd' }}>
-                                        {row[String(col.order)] !== undefined ? row[String(col.order)] : (row[col.order] !== undefined ? row[col.order] : (row[col.name] !== undefined ? row[col.name] : '-'))}
+                                  {tableData.tableStructure?.columns?.length > 0 ?
+                          tableData.tableStructure.columns.map((col: any, colIdx: number) =>
+                          <td key={colIdx} style={{ padding: '8px', border: '1px solid #ddd' }}>
+                                        {row[String(col.order)] !== undefined ? row[String(col.order)] : row[col.order] !== undefined ? row[col.order] : row[col.name] !== undefined ? row[col.name] : '-'}
                                       </td>
-                                    ))
-                                  ) : (
-                                    Object.keys(row)
-                                      .filter(key => key !== 'rowId')
-                                      .map((key, idx) => (
-                                        <td key={idx} style={{ padding: '8px', border: '1px solid #ddd' }}>
+                          ) :
+
+                          Object.keys(row).
+                          filter((key) => key !== 'rowId').
+                          map((key, idx) =>
+                          <td key={idx} style={{ padding: '8px', border: '1px solid #ddd' }}>
                                           {row[key] !== undefined ? row[key] : '-'}
                                         </td>
-                                      ))
-                                  )}
+                          )
+                          }
                                 </tr>
-                              ))}
+                        )}
                             </tbody>
                           </table>
                         </div>
 
-                      </>
-                    ) : (
-                      <div style={{ 
-                        padding: '20px', 
-                        textAlign: 'center', 
-                        backgroundColor: '#fff3cd',
-                        borderRadius: '4px',
-                        border: '1px solid #ffeaa7'
-                      }}>
+                      </> :
+
+                <div style={{
+                  padding: '20px',
+                  textAlign: 'center',
+                  backgroundColor: '#fff3cd',
+                  borderRadius: '4px',
+                  border: '1px solid #ffeaa7'
+                }}>
                         <p>No data has been entered for this machine yet.</p>
                         <p style={{ fontSize: '12px', color: '#666' }}>
                           Data will appear here once operators start entering information.
                         </p>
                       </div>
-                    )}
+                }
 
                     {/* Calculated Output from Order */}
-                    {tableData.calculatedOutput && (
-                      <div style={{ 
-                        backgroundColor: '#e1f5fe', 
-                        padding: '15px', 
-                        borderRadius: '4px',
-                        marginTop: '20px'
-                      }}>
+                    {tableData.calculatedOutput &&
+                <div style={{
+                  backgroundColor: '#e1f5fe',
+                  padding: '15px',
+                  borderRadius: '4px',
+                  marginTop: '20px'
+                }}>
                         <h4>Real-time Order Calculations</h4>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
                           <div><strong>Net Weight:</strong> {tableData.calculatedOutput.netWeight} kg</div>
@@ -2073,183 +2063,183 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
                           <div><strong>Last Updated:</strong> {new Date(tableData.calculatedOutput.lastUpdated).toLocaleString()}</div>
                         </div>
                       </div>
-                    )}
+                }
                   </div>
-                )}
+              }
 
                 <div className="popupButtons" style={{ marginTop: '20px' }}>
                   <button
-                    onClick={closeTableView}
-                    className="cancelButton"
-                    type="button"
-                  >
+                  onClick={closeTableView}
+                  className="cancelButton"
+                  type="button">
+
                     Close
                   </button>
                 </div>
               </div>
             </div>
           </div>
-        )}
+        }
 
-        {noteIndex !== null && (
-          <div className="popup-overlay">
+        {noteIndex !== null &&
+        <div className="popup-overlay">
             <div className="popup">
               <div className="popup-content">
                 <h3>Edit Note for Machine #{noteIndex + 1}</h3>
                 <textarea
-                  value={noteText}
-                  onChange={(e) => setNoteText(e.target.value)}
-                  rows={5}
-                  placeholder="Add notes for the operator regarding this machine..."
-                  style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #ccc", background:'#fff', color:"#000" }}
-                />
+                value={noteText}
+                onChange={(e) => setNoteText(e.target.value)}
+                rows={5}
+                placeholder="Add notes for the operator regarding this machine..."
+                style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #ccc", background: '#fff', color: "#000" }} />
+
 
                 <div className="popupButtons">
                   <button
-                    onClick={handleNoteSave}
-                    className="saveButton"
-                    type="button"
-                  >
+                  onClick={handleNoteSave}
+                  className="saveButton"
+                  type="button">
+
                     Save Note
                   </button>
                   <button
-                    onClick={() => {
-                      setNoteIndex(null);
-                      setNoteText("");
-                    }}
-                    className="cancelButton"
-                    type="button"
-                  >
+                  onClick={() => {
+                    setNoteIndex(null);
+                    setNoteText("");
+                  }}
+                  className="cancelButton"
+                  type="button">
+
                     Cancel
                   </button>
                 </div>
               </div>
             </div>
           </div>
-        )}
+        }
 
         {/* View All Steps Popup */}
-        {showAllStepsPopup && savedStep && (
-          <div
-            style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: 'rgba(0, 0, 0, 0.5)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 10000,
-              padding: '20px'
-            }}
-            onClick={() => setShowAllStepsPopup(false)}
-          >
+        {showAllStepsPopup && savedStep &&
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000,
+            padding: '20px'
+          }}
+          onClick={() => setShowAllStepsPopup(false)}>
+
             <div
-              style={{
-                backgroundColor: 'white',
-                borderRadius: '12px',
-                maxWidth: '95vw',
-                maxHeight: '90vh',
-                overflow: 'hidden',
-                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-                display: 'flex',
-                flexDirection: 'column',
-                minWidth: '800px'
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
+            style={{
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              maxWidth: '95vw',
+              maxHeight: '90vh',
+              overflow: 'hidden',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              display: 'flex',
+              flexDirection: 'column',
+              minWidth: '800px'
+            }}
+            onClick={(e) => e.stopPropagation()}>
+
               {/* Header */}
               <div
-                style={{
-                  padding: '16px 20px',
-                  borderBottom: '1px solid #e5e7eb',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  backgroundColor: '#f0f9ff'
-                }}
-              >
+              style={{
+                padding: '16px 20px',
+                borderBottom: '1px solid #e5e7eb',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                backgroundColor: '#f0f9ff'
+              }}>
+
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  {orderId && (
-                    <span style={{
-                      background: '#0ea5e9',
-                      color: 'white',
-                      padding: '4px 10px',
-                      borderRadius: '4px',
-                      fontSize: '12px',
-                      fontWeight: '600'
-                    }}>
+                  {orderId &&
+                <span style={{
+                  background: '#0ea5e9',
+                  color: 'white',
+                  padding: '4px 10px',
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  fontWeight: '600'
+                }}>
                       {orderId}
                     </span>
-                  )}
+                }
                   <h3 style={{ margin: 0, fontSize: '16px', color: '#0369a1', fontWeight: '600' }}>
                     Manufacturing Steps - {savedStep.stepname}
                   </h3>
                   <span style={{
-                    background: '#0ea5e9',
-                    color: 'white',
-                    padding: '4px 10px',
-                    borderRadius: '12px',
-                    fontSize: '12px',
-                    fontWeight: '500'
-                  }}>
+                  background: '#0ea5e9',
+                  color: 'white',
+                  padding: '4px 10px',
+                  borderRadius: '12px',
+                  fontSize: '12px',
+                  fontWeight: '500'
+                }}>
                     {savedStep.steps.length} machine{savedStep.steps.length > 1 ? 's' : ''}
                   </span>
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button
-                    onClick={handlePrintSteps}
-                    style={{
-                      background: '#f59e0b',
-                      border: 'none',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      padding: '6px 12px',
-                      fontSize: '13px',
-                      color: 'white',
-                      fontWeight: '500',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px'
-                    }}
-                  >
+                  onClick={handlePrintSteps}
+                  style={{
+                    background: '#f59e0b',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    padding: '6px 12px',
+                    fontSize: '13px',
+                    color: 'white',
+                    fontWeight: '500',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}>
+
                     <Printer size={14} />
                     Print
                   </button>
                   <button
-                    onClick={handleExportExcel}
-                    style={{
-                      background: '#10b981',
-                      border: 'none',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      padding: '6px 12px',
-                      fontSize: '13px',
-                      color: 'white',
-                      fontWeight: '500',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px'
-                    }}
-                  >
+                  onClick={handleExportExcel}
+                  style={{
+                    background: '#10b981',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    padding: '6px 12px',
+                    fontSize: '13px',
+                    color: 'white',
+                    fontWeight: '500',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}>
+
                     <FileSpreadsheet size={14} />
                     Excel
                   </button>
                   <button
-                    onClick={() => setShowAllStepsPopup(false)}
-                    style={{
-                      background: '#f1f5f9',
-                      border: 'none',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      padding: '6px 12px',
-                      fontSize: '13px',
-                      color: '#64748b',
-                      fontWeight: '500'
-                    }}
-                  >
+                  onClick={() => setShowAllStepsPopup(false)}
+                  style={{
+                    background: '#f1f5f9',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    padding: '6px 12px',
+                    fontSize: '13px',
+                    color: '#64748b',
+                    fontWeight: '500'
+                  }}>
+
                     ✕ Close
                   </button>
                 </div>
@@ -2258,42 +2248,42 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
               {/* Content */}
               <div style={{ padding: '16px', overflowY: 'auto', maxHeight: 'calc(90vh - 80px)' }}>
                 {/* Customer Info Card */}
-                {customerInfo && (
-                  <div style={{
-                    background: '#fef3c7',
-                    border: '1px solid #fcd34d',
-                    borderRadius: '8px',
-                    padding: '12px 16px',
-                    marginBottom: '16px'
-                  }}>
+                {customerInfo &&
+              <div style={{
+                background: '#fef3c7',
+                border: '1px solid #fcd34d',
+                borderRadius: '8px',
+                padding: '12px 16px',
+                marginBottom: '16px'
+              }}>
                     <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
-                      {customerInfo.name && (
-                        <div>
+                      {customerInfo.name &&
+                  <div>
                           <div style={{ fontSize: '10px', color: '#92400e', fontWeight: '600', textTransform: 'uppercase' }}>Customer</div>
                           <div style={{ fontSize: '13px', color: '#78350f', fontWeight: '500' }}>{customerInfo.name}</div>
                         </div>
-                      )}
-                      {customerInfo.companyName && (
-                        <div>
+                  }
+                      {customerInfo.companyName &&
+                  <div>
                           <div style={{ fontSize: '10px', color: '#92400e', fontWeight: '600', textTransform: 'uppercase' }}>Company</div>
                           <div style={{ fontSize: '13px', color: '#78350f' }}>{customerInfo.companyName}</div>
                         </div>
-                      )}
-                      {customerInfo.address && (
-                        <div>
+                  }
+                      {customerInfo.address &&
+                  <div>
                           <div style={{ fontSize: '10px', color: '#92400e', fontWeight: '600', textTransform: 'uppercase' }}>Address</div>
                           <div style={{ fontSize: '13px', color: '#78350f' }}>{customerInfo.address}</div>
                         </div>
-                      )}
-                      {(customerInfo.phone || customerInfo.whatsapp) && (
-                        <div>
+                  }
+                      {(customerInfo.phone || customerInfo.whatsapp) &&
+                  <div>
                           <div style={{ fontSize: '10px', color: '#92400e', fontWeight: '600', textTransform: 'uppercase' }}>Phone</div>
                           <div style={{ fontSize: '13px', color: '#78350f' }}>{customerInfo.phone || customerInfo.whatsapp}</div>
                         </div>
-                      )}
+                  }
                     </div>
                   </div>
-                )}
+              }
 
                 {/* Steps Table */}
                 <div style={{ overflowX: 'auto' }}>
@@ -2311,19 +2301,19 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
                       </tr>
                     </thead>
                     <tbody>
-                      {savedStep.steps.map((step, idx) => (
-                        <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                      {savedStep.steps.map((step, idx) =>
+                    <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
                           <td style={{ padding: '10px 12px', color: '#64748b' }}>{idx + 1}</td>
                           <td style={{ padding: '10px 12px' }}>
                             <span style={{
-                              padding: '4px 10px',
-                              borderRadius: '12px',
-                              backgroundColor: getStatusColor(step.status),
-                              color: 'white',
-                              fontSize: '11px',
-                              fontWeight: 'bold',
-                              display: 'inline-block'
-                            }}>
+                          padding: '4px 10px',
+                          borderRadius: '12px',
+                          backgroundColor: getStatusColor(step.status),
+                          color: 'white',
+                          fontSize: '11px',
+                          fontWeight: 'bold',
+                          display: 'inline-block'
+                        }}>
                               {getStatusLabel(step.status)}
                             </span>
                           </td>
@@ -2340,16 +2330,16 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
                             {step.note || '-'}
                           </td>
                         </tr>
-                      ))}
+                    )}
                     </tbody>
                   </table>
                 </div>
               </div>
             </div>
           </div>
-        )}
-      </div>
-    );
+        }
+      </div>);
+
   }
 );
 

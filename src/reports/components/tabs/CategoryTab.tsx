@@ -1,8 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../../componest/redux/rootReducer';
 import { AppDispatch } from '../../../store';
 import { getCategoryReport, exportExcel } from '../../../componest/redux/reports/reportActions';
+import OrdersListModal from '../OrdersListModal';
 
 interface CategoryTabProps {
   dateRange: {
@@ -13,8 +14,15 @@ interface CategoryTabProps {
 
 const CategoryTab: React.FC<CategoryTabProps> = ({ dateRange }) => {
   const dispatch = useDispatch<AppDispatch>();
-  const branchId = localStorage.getItem('branchId') || '';
+  const branchId = localStorage.getItem('selectedBranch') ||
+                   localStorage.getItem('branchId') ||
+                   localStorage.getItem('selectedBranchId') ||
+                   '';
   const { categoryReport, exporting } = useSelector((state: RootState) => state.reports);
+
+  // Modal state
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<any>(null);
 
   useEffect(() => {
     if (branchId) {
@@ -71,6 +79,11 @@ const CategoryTab: React.FC<CategoryTabProps> = ({ dateRange }) => {
 
   const formulas = data ? calculateFormulas(data.byCategory || []) : null;
 
+  const handleCategoryClick = (category: any) => {
+    setSelectedCategory(category);
+    setModalOpen(true);
+  };
+
   return (
     <div className="category-tab">
       <div className="tab-header">
@@ -96,7 +109,8 @@ const CategoryTab: React.FC<CategoryTabProps> = ({ dateRange }) => {
               <div
                 key={item.category}
                 className="category-card"
-                style={{ borderLeftColor: getCategoryColor(item.category) }}
+                style={{ borderLeftColor: getCategoryColor(item.category), cursor: 'pointer' }}
+                onClick={() => handleCategoryClick(item)}
               >
                 <div className="category-card__icon">{getCategoryIcon(item.category)}</div>
                 <div className="category-card__info">
@@ -144,7 +158,12 @@ const CategoryTab: React.FC<CategoryTabProps> = ({ dateRange }) => {
                   const maxCount = Math.max(...data.byCategory.map((c: any) => c.orderCount || 0));
                   const percentage = maxCount > 0 ? ((item.orderCount || 0) / maxCount) * 100 : 0;
                   return (
-                    <div key={item.category} className="status-bar">
+                    <div
+                      key={item.category}
+                      className="status-bar"
+                      style={{ cursor: 'pointer' }}
+                      onClick={() => handleCategoryClick(item)}
+                    >
                       <div className="status-bar__label" style={{ width: '100px' }}>
                         {item.categoryName || item.category}
                       </div>
@@ -179,7 +198,12 @@ const CategoryTab: React.FC<CategoryTabProps> = ({ dateRange }) => {
               </thead>
               <tbody>
                 {data.byCategory.map((item: any, index: number) => (
-                  <tr key={item.category}>
+                  <tr
+                    key={item.category}
+                    onClick={() => handleCategoryClick(item)}
+                    style={{ cursor: 'pointer' }}
+                    className="clickable-row"
+                  >
                     <td>{index + 1}</td>
                     <td>
                       <div className="category-cell">
@@ -216,6 +240,25 @@ const CategoryTab: React.FC<CategoryTabProps> = ({ dateRange }) => {
             </table>
           </div>
         </>
+      )}
+
+      {/* Orders List Modal */}
+      {selectedCategory && (
+        <OrdersListModal
+          isOpen={modalOpen}
+          onClose={() => setModalOpen(false)}
+          title={`Orders in ${selectedCategory.categoryName || selectedCategory.category} Category`}
+          filters={{
+            branchId,
+            startDate: dateRange.fromDate,
+            endDate: dateRange.toDate,
+          }}
+          customFilter={(order: any) => {
+            // Filter by category - check customer category
+            return order.customerId?.category === selectedCategory.category ||
+                   order.category === selectedCategory.category;
+          }}
+        />
       )}
     </div>
   );

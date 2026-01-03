@@ -7,6 +7,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { getMachineTemplates, activateMachineTemplate, deactivateMachineTemplate, deleteMachineTemplate } from "../../../../redux/machineTemplate/machineTemplateActions";
 import { RootState } from "../../../../redux/rootReducer";
 import { AppDispatch } from "../../../../../store";
+import { useCRUD } from "../../../../../hooks/useCRUD";
+import { ToastContainer } from "../../../../../components/shared/Toast";
 
 interface CalculationRule {
   id: string;
@@ -32,8 +34,8 @@ interface MachineTemplate {
   _id: string;
   templateName: string;
   description?: string;
-  machineId: string | { _id: string; machineName: string };
-  orderTypeId: string | { _id: string; typeName: string };
+  machineId: string | {_id: string;machineName: string;};
+  orderTypeId: string | {_id: string;typeName: string;};
   isActive: boolean;
   columns?: any[];
   displayItems?: any[];
@@ -42,9 +44,9 @@ interface MachineTemplate {
   optionSpecIds?: string[];
   selectedSpecifications?: SelectedSpecification[];
   calculationRules?: CalculationRule[];
-  machine?: { _id: string; machineName: string };
-  orderType?: { _id: string; typeName: string };
-  branchId?: { _id: string; name: string };
+  machine?: {_id: string;machineName: string;};
+  orderType?: {_id: string;typeName: string;};
+  branchId?: {_id: string;name: string;};
 }
 
 interface Props {
@@ -54,28 +56,31 @@ interface Props {
 const EditMachineTemplateList: React.FC<Props> = ({ onEdit }) => {
   const dispatch = useDispatch<AppDispatch>();
   const { templates = [], loading, error } = useSelector((state: RootState) => state.machineTemplate || {});
-
-  // Fetch templates on mount
-  useEffect(() => {
-    dispatch(getMachineTemplates());
-  }, [dispatch]);
+  const { handleSave, handleUpdate, handleDelete: crudDelete, saveState, updateState, deleteState, confirmDialog, closeConfirmDialog, toast } = useCRUD();
 
   const [selectedRow, setSelectedRow] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+
+  // Get selected branch to refetch when it changes
+  const selectedBranch = useSelector((state: any) => state.auth?.userData?.selectedBranch);
+
+  // Fetch templates on mount and when branch changes
+  useEffect(() => {
+    dispatch(getMachineTemplates());
+  }, [dispatch, selectedBranch]);
 
   const filteredItems = templates.filter((item: MachineTemplate) => {
     if (!searchTerm) return true;
     const search = searchTerm.toLowerCase();
-    const machineName = typeof item.machineId === 'object' ? item.machineId.machineName : (item.machine?.machineName || '');
-    const orderTypeName = typeof item.orderTypeId === 'object' ? item.orderTypeId.typeName : (item.orderType?.typeName || '');
+    const machineName = typeof item.machineId === 'object' ? item.machineId.machineName : item.machine?.machineName || '';
+    const orderTypeName = typeof item.orderTypeId === 'object' ? item.orderTypeId.typeName : item.orderType?.typeName || '';
     return (
       item.templateName?.toLowerCase().includes(search) ||
       item.description?.toLowerCase().includes(search) ||
       machineName.toLowerCase().includes(search) ||
-      orderTypeName.toLowerCase().includes(search)
-    );
+      orderTypeName.toLowerCase().includes(search));
+
   });
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
@@ -97,7 +102,7 @@ const EditMachineTemplateList: React.FC<Props> = ({ onEdit }) => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleKeyDown]);
 
-  useEffect(() => { setSelectedRow(0); }, [searchTerm]);
+  useEffect(() => {setSelectedRow(0);}, [searchTerm]);
 
   const handleToggleActive = async (e: React.MouseEvent, template: MachineTemplate) => {
     e.stopPropagation();
@@ -105,26 +110,29 @@ const EditMachineTemplateList: React.FC<Props> = ({ onEdit }) => {
     try {
       if (template.isActive) {
         await dispatch(deactivateMachineTemplate(template._id));
+        toast.success('Template Updated', 'Template deactivated successfully');
       } else {
         await dispatch(activateMachineTemplate(template._id));
+        toast.success('Template Updated', 'Template activated successfully');
       }
     } catch (err) {
-      console.error('Failed to toggle template status:', err);
+
+      toast.error('Error', 'Failed to toggle template status');
     } finally {
       setActionLoading(null);
     }
   };
 
-  const handleDelete = async (templateId: string) => {
-    setActionLoading(templateId);
-    try {
-      await dispatch(deleteMachineTemplate(templateId));
-      setShowDeleteConfirm(null);
-    } catch (err) {
-      console.error('Failed to delete template:', err);
-    } finally {
-      setActionLoading(null);
-    }
+  const handleTemplateDelete = (templateId: string) => {
+    crudDelete(
+      () => dispatch(deleteMachineTemplate(templateId)),
+      {
+        confirmTitle: 'Delete Template?',
+        confirmMessage: 'Are you sure you want to delete this template? This action cannot be undone.',
+        successMessage: 'Template deleted successfully',
+        errorMessage: 'Failed to delete template'
+      }
+    );
   };
 
   const getMachineName = (item: MachineTemplate): string => {
@@ -145,51 +153,52 @@ const EditMachineTemplateList: React.FC<Props> = ({ onEdit }) => {
   return (
     <div className="EditMachineType">
       {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
+      {confirmDialog.isOpen &&
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0,0,0,0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000
+      }}>
           <div style={{
-            background: 'white',
-            padding: '24px',
-            borderRadius: '12px',
-            maxWidth: '400px',
-            width: '90%',
-            textAlign: 'center'
-          }}>
-            <h3 style={{ margin: '0 0 8px 0', color: '#1f2937' }}>Delete Template?</h3>
+          background: 'white',
+          padding: '24px',
+          borderRadius: '12px',
+          maxWidth: '400px',
+          width: '90%',
+          textAlign: 'center'
+        }}>
+            <h3 style={{ margin: '0 0 8px 0', color: '#1f2937' }}>{confirmDialog.title}</h3>
             <p style={{ color: '#6b7280', marginBottom: '24px' }}>
-              Are you sure you want to delete this template? This action cannot be undone.
+              {confirmDialog.message}
             </p>
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
               <button
-                type="button"
-                onClick={() => setShowDeleteConfirm(null)}
-                style={{ padding: '10px 24px', background: '#e5e7eb', color: '#374151', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
-              >
+              type="button"
+              onClick={closeConfirmDialog}
+              disabled={deleteState === 'loading'}
+              style={{ padding: '10px 24px', background: '#e5e7eb', color: '#374151', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
+
                 Cancel
               </button>
               <button
-                type="button"
-                onClick={() => handleDelete(showDeleteConfirm)}
-                disabled={actionLoading === showDeleteConfirm}
-                style={{ padding: '10px 24px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
-              >
-                {actionLoading === showDeleteConfirm ? 'Deleting...' : 'Delete'}
+              type="button"
+              onClick={confirmDialog.onConfirm}
+              disabled={deleteState === 'loading'}
+              style={{ padding: '10px 24px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
+
+                {deleteState === 'loading' ? 'Deleting...' : 'Delete'}
               </button>
             </div>
           </div>
         </div>
-      )}
+      }
 
       <div className="editsectionsTable-container">
         <div className="editsectionsTable-searchWrapper">
@@ -199,16 +208,16 @@ const EditMachineTemplateList: React.FC<Props> = ({ onEdit }) => {
               placeholder="Search templates..."
               className="editsectionsTable-searchInput"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+              onChange={(e) => setSearchTerm(e.target.value)} />
+
             <span className="editsectionsTable-searchIcon">&#x1F50D;</span>
             {searchTerm && <button onClick={() => setSearchTerm("")} className="editsectionsTable-clearButton">&#x2715;</button>}
           </div>
           <div className="editsectionsTable-countBadge">{filteredItems.length} templates</div>
         </div>
 
-        {filteredItems.length > 0 ? (
-          <div className="editsectionsTable-wrapper">
+        {filteredItems.length > 0 ?
+        <div className="editsectionsTable-wrapper">
             <table className="editsectionsTable-table">
               <thead className="editsectionsTable-thead">
                 <tr>
@@ -226,12 +235,12 @@ const EditMachineTemplateList: React.FC<Props> = ({ onEdit }) => {
                 </tr>
               </thead>
               <tbody className="editsectionsTable-tbody">
-                {filteredItems.map((item: MachineTemplate, index: number) => (
-                  <tr
-                    key={item._id}
-                    className={`editsectionsTable-tr ${selectedRow === index ? "editsectionsTable-trSelected" : ""}`}
-                    onClick={() => { setSelectedRow(index); onEdit(item); }}
-                  >
+                {filteredItems.map((item: MachineTemplate, index: number) =>
+              <tr
+                key={item._id}
+                className={`editsectionsTable-tr ${selectedRow === index ? "editsectionsTable-trSelected" : ""}`}
+                onClick={() => {setSelectedRow(index);onEdit(item);}}>
+
                     <td className="editsectionsTable-td">{index + 1}</td>
                     <td className="editsectionsTable-td">{item.templateName || "N/A"}</td>
                     <td className="editsectionsTable-td">{getMachineName(item)}</td>
@@ -239,104 +248,106 @@ const EditMachineTemplateList: React.FC<Props> = ({ onEdit }) => {
                     <td className="editsectionsTable-td">{item.branchId?.name || "N/A"}</td>
                     <td className="editsectionsTable-td">
                       <span style={{
-                        padding: '2px 6px',
-                        borderRadius: '4px',
-                        fontSize: '11px',
-                        background: '#e0f2fe',
-                        color: '#0369a1'
-                      }}>
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                    fontSize: '11px',
+                    background: '#e0f2fe',
+                    color: '#0369a1'
+                  }}>
                         {item.columns?.length || 0}
                       </span>
                     </td>
                     <td className="editsectionsTable-td">
                       <span style={{
-                        padding: '2px 6px',
-                        borderRadius: '4px',
-                        fontSize: '11px',
-                        background: '#fef3c7',
-                        color: '#92400e'
-                      }}>
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                    fontSize: '11px',
+                    background: '#fef3c7',
+                    color: '#92400e'
+                  }}>
                         {item.displayItems?.length || 0}
                       </span>
                     </td>
                     <td className="editsectionsTable-td">
                       <span style={{
-                        padding: '2px 6px',
-                        borderRadius: '4px',
-                        fontSize: '11px',
-                        background: '#dcfce7',
-                        color: '#166534'
-                      }}>
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                    fontSize: '11px',
+                    background: '#dcfce7',
+                    color: '#166534'
+                  }}>
                         {item.totalsConfig?.length || 0}
                       </span>
                     </td>
                     <td className="editsectionsTable-td">
                       <span style={{
-                        padding: '2px 6px',
-                        borderRadius: '4px',
-                        fontSize: '11px',
-                        background: item.calculationRules?.length ? '#d1fae5' : '#f3f4f6',
-                        color: item.calculationRules?.length ? '#065f46' : '#6b7280'
-                      }}>
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                    fontSize: '11px',
+                    background: item.calculationRules?.length ? '#d1fae5' : '#f3f4f6',
+                    color: item.calculationRules?.length ? '#065f46' : '#6b7280'
+                  }}>
                         {item.calculationRules?.length || 0}
                       </span>
                     </td>
                     <td className="editsectionsTable-td">
                       <span style={{
-                        padding: '4px 8px',
-                        borderRadius: '4px',
-                        fontSize: '12px',
-                        fontWeight: '500',
-                        background: item.isActive ? '#dcfce7' : '#fee2e2',
-                        color: item.isActive ? '#166534' : '#991b1b'
-                      }}>
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                    fontWeight: '500',
+                    background: item.isActive ? '#dcfce7' : '#fee2e2',
+                    color: item.isActive ? '#166534' : '#991b1b'
+                  }}>
                         {item.isActive ? 'Active' : 'Inactive'}
                       </span>
                     </td>
                     <td className="editsectionsTable-td" onClick={(e) => e.stopPropagation()}>
                       <div style={{ display: 'flex', gap: '8px' }}>
                         <button
-                          onClick={(e) => handleToggleActive(e, item)}
-                          disabled={actionLoading === item._id}
-                          style={{
-                            padding: '4px 8px',
-                            fontSize: '12px',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            background: item.isActive ? '#fef3c7' : '#d1fae5',
-                            color: item.isActive ? '#92400e' : '#065f46'
-                          }}
-                        >
-                          {actionLoading === item._id ? '...' : (item.isActive ? 'Deactivate' : 'Activate')}
+                      onClick={(e) => handleToggleActive(e, item)}
+                      disabled={actionLoading === item._id}
+                      style={{
+                        padding: '4px 8px',
+                        fontSize: '12px',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        background: item.isActive ? '#fef3c7' : '#d1fae5',
+                        color: item.isActive ? '#92400e' : '#065f46'
+                      }}>
+
+                          {actionLoading === item._id ? '...' : item.isActive ? 'Deactivate' : 'Activate'}
                         </button>
                         <button
-                          onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(item._id); }}
-                          style={{
-                            padding: '4px 8px',
-                            fontSize: '12px',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            background: '#fee2e2',
-                            color: '#991b1b'
-                          }}
-                        >
-                          Delete
+                      onClick={(e) => {e.stopPropagation();handleTemplateDelete(item._id);}}
+                      disabled={deleteState === 'loading'}
+                      style={{
+                        padding: '4px 8px',
+                        fontSize: '12px',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: deleteState === 'loading' ? 'not-allowed' : 'pointer',
+                        background: '#fee2e2',
+                        color: '#991b1b'
+                      }}>
+
+                          {deleteState === 'loading' ? '...' : 'Delete'}
                         </button>
                       </div>
                     </td>
                   </tr>
-                ))}
+              )}
               </tbody>
             </table>
-          </div>
-        ) : (
-          <div className="editsectionsTable-empty">No machine templates found</div>
-        )}
+          </div> :
+
+        <div className="editsectionsTable-empty">No machine templates found</div>
+        }
       </div>
-    </div>
-  );
+      <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
+    </div>);
+
 };
 
 export default EditMachineTemplateList;

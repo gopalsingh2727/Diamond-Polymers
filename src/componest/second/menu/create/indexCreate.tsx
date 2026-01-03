@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
+import { useSelector } from "react-redux";
 import CreateAccount from "./createNewAccount/createNewAccount";
 import CreateMachine from "./machine/CreateMachine";
 import CreateStep from "./CreateStep/CreateStep";
@@ -19,57 +20,96 @@ import ViewTemplateWizard from "./machine/ViewTemplateWizard";
 import OperatorEntryView from "./machine/OperatorEntryView";
 import CustomerCategory from "./customerCategory/CustomerCategory";
 import CustomerParentCompany from "./customerParentCompany/CustomerParentCompany";
+import CreateInventory from "./inventory/CreateInventory";
 import './create.css';
 import '../../../main/sidebar/menu.css';
 import ErrorBoundary from '../../../error/error';
+import { BackButton } from "@/componest/allCompones/BackButton";
+
+interface RootState {
+  auth: {
+    userData: {
+      role?: string;
+    } | null;
+  };
+}
 
 const Layout = () => {
-  const menuSections = [
+  // Get user role from Redux
+  const userData = useSelector((state: RootState) => state.auth.userData);
+  const userRole = userData?.role || '';
+  const isMasterAdmin = userRole === 'master_admin';
+  const isAdmin = userRole === 'admin';
+
+  // All possible menu sections with role restrictions
+  const allMenuSections = [
     {
       title: "Account",
+      masterAdminOnly: false, // All roles can access
       items: [
-        { key: "account", label: "Create Account" },
-        { key: "customerCategory", label: "Customer Category" },
-        { key: "customerParentCompany", label: "Parent Company" }
+        { key: "account", label: "Create Account", masterAdminOnly: false },
+        { key: "customerCategory", label: "Customer Category", masterAdminOnly: false },
+        { key: "customerParentCompany", label: "Parent Company", masterAdminOnly: false }
       ]
     },
     {
       title: "Machine Management",
+      masterAdminOnly: false,
       items: [
-        { key: "machineType", label: "Create Machine Type" },
-        { key: "machine", label: "Create Machine" },
-        { key: "step", label: "Create Step" },
-        { key: "Create Machine Operator", label: "Create Machine Operator" }
+        { key: "machineType", label: "Create Machine Type", masterAdminOnly: false },
+        { key: "machine", label: "Create Machine", masterAdminOnly: false },
+        { key: "step", label: "Create Step", masterAdminOnly: false },
+        { key: "Create Machine Operator", label: "Create Machine Operator", masterAdminOnly: false }
       ]
     },
     {
       title: "Device Access",
+      masterAdminOnly: false, // All roles can access
       items: [
-        { key: "Create Device Access", label: "Create Device Access" },
-        { key: "Create Access", label: "Create Access" }
+        { key: "Create Device Access", label: "Create Device Access", masterAdminOnly: false },
+        { key: "Create Access", label: "Create Access", masterAdminOnly: false }
       ]
     },
     {
       title: "Options System",
+      masterAdminOnly: false,
       items: [
-        { key: "category", label: "Create Category" },
-        { key: "optionType", label: "Create Option Type" },
-        { key: "optionSpec", label: "Create Option Spec" },
-        { key: "option", label: "Create Option" }
+        { key: "category", label: "Create Category", masterAdminOnly: false },
+        { key: "optionType", label: "Create Option Type", masterAdminOnly: false },
+        { key: "optionSpec", label: "Create Option Spec", masterAdminOnly: false },
+        { key: "option", label: "Create Option", masterAdminOnly: false }
       ]
     },
     {
       title: "Order Management",
+      masterAdminOnly: false,
       items: [
-        { key: "orderType", label: "Create Order Type" },
-        { key: "printType", label: "Create Print Type" },
-        { key: "excelExportType", label: "Create Excel Export Type" },
-        { key: "reportType", label: "Create Report Type" },
-        { key: "viewTemplate", label: "View Template" },
-
+        { key: "orderType", label: "Create Order Type", masterAdminOnly: false },
+        { key: "inventory", label: "Create Inventory", masterAdminOnly: false },
+        { key: "printType", label: "Create Print Type", masterAdminOnly: false },
+        { key: "excelExportType", label: "Create Excel Export Type", masterAdminOnly: false },
+        { key: "viewTemplate", label: "View Template", masterAdminOnly: false },
+      ]
+    },
+    {
+      title: "Report",
+      masterAdminOnly: false,
+      items: [
+        { key: "reportType", label: "Create Report Type", masterAdminOnly: false }
       ]
     }
   ];
+
+  // Filter menu sections based on user role
+  const menuSections = useMemo(() => {
+    return allMenuSections
+      .filter(section => !section.masterAdminOnly || isMasterAdmin)
+      .map(section => ({
+        ...section,
+        items: section.items.filter(item => !item.masterAdminOnly || isMasterAdmin)
+      }))
+      .filter(section => section.items.length > 0); // Remove empty sections
+  }, [isMasterAdmin]);
 
   // Flatten all items for navigation
   const menuItems = menuSections.flatMap(section => section.items);
@@ -85,7 +125,8 @@ const Layout = () => {
     "Machine Management": false,
     "Device Access": false,
     "Options System": true,
-    "Order Management": false
+    "Order Management": false,
+    "Report": false
   });
 
   const toggleSection = (sectionTitle: string) => {
@@ -159,7 +200,9 @@ const Layout = () => {
       case "option":
         return <ErrorBoundary><CreateOption /></ErrorBoundary>;
       case "orderType":
-        return <CreateOrderType />
+        return <ErrorBoundary><CreateOrderType /></ErrorBoundary>;
+      case "inventory":
+        return <ErrorBoundary><CreateInventory /></ErrorBoundary>;
       case "printType":
         return <ErrorBoundary><CreatePrintType /></ErrorBoundary>;
       case "excelExportType":
@@ -178,7 +221,8 @@ const Layout = () => {
     <div className="container">
       {/* Header */}
       <div className="item menu-header" style={{ gridColumn: "1 / -1" }}>
-        <Headers  />
+         <BackButton/>
+
       </div>
 
       {/* Sidebar */}

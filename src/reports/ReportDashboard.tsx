@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { RootState } from '../componest/redux/rootReducer';
 import { AppDispatch } from '../store';
 import { getDashboard } from '../componest/redux/reports/reportActions';
@@ -18,22 +19,35 @@ type TabType = 'overview' | 'groups' | 'orderTypes' | 'categories' | 'options' |
 
 const ReportDashboard: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [dateRange, setDateRange] = useState({
     fromDate: '',
     toDate: ''
   });
 
-  // Get branchId from Redux state or localStorage as fallback
-  const { selectedBranch } = useSelector((state: RootState) => state.branches);
-  const branchId = selectedBranch?.id?.toString() || selectedBranch?._id || localStorage.getItem('branchId') || '';
+  // Get branchId from localStorage
+  const branchId = localStorage.getItem('selectedBranch') ||
+                   localStorage.getItem('branchId') ||
+                   localStorage.getItem('selectedBranchId') ||
+                   '';
 
   const { dashboard } = useSelector((state: RootState) => state.reports);
 
   useEffect(() => {
+    console.log('=== REPORTS DEBUG ===');
+    console.log('branchId:', branchId);
+    console.log('dateRange:', dateRange);
+    console.log('selectedBranch from localStorage:', localStorage.getItem('selectedBranch'));
+    console.log('branchId from localStorage:', localStorage.getItem('branchId'));
+    console.log('selectedBranchId from localStorage:', localStorage.getItem('selectedBranchId'));
+    console.log('=====================');
+
     if (branchId) {
       dispatch(getDashboard({ branchId, ...dateRange }));
       dispatch(getReportGroups({ branchId }));
+    } else {
+      console.error('No branchId found! Reports cannot load without a branch ID.');
     }
   }, [dispatch, branchId, dateRange.fromDate, dateRange.toDate]);
 
@@ -80,9 +94,44 @@ const ReportDashboard: React.FC = () => {
 
   return (
     <div className="report-dashboard">
+      {/* Debug Info - Remove after testing */}
+      {!branchId && (
+        <div style={{
+          background: '#fee2e2',
+          border: '1px solid #ef4444',
+          padding: '12px',
+          margin: '12px',
+          borderRadius: '8px',
+          color: '#991b1b'
+        }}>
+          <strong>⚠️ No Branch ID Found!</strong>
+          <div>selectedBranch: {localStorage.getItem('selectedBranch') || 'null'}</div>
+          <div>branchId: {localStorage.getItem('branchId') || 'null'}</div>
+          <div>selectedBranchId: {localStorage.getItem('selectedBranchId') || 'null'}</div>
+        </div>
+      )}
+      {branchId && (
+        <div style={{
+          background: '#d1fae5',
+          border: '1px solid #10b981',
+          padding: '8px 12px',
+          margin: '12px',
+          borderRadius: '8px',
+          color: '#065f46',
+          fontSize: '13px'
+        }}>
+          ✓ Branch ID: {branchId}
+        </div>
+      )}
       <div className="report-dashboard__header">
          <BackButton/>
         <h1 className="report-dashboard__title">Reports Dashboard</h1>
+        <button
+          className="report-dashboard__custom-btn"
+          onClick={() => navigate('/menu/reports/viewer')}
+        >
+          Custom Reports
+        </button>
         <div className="report-dashboard__actions">
           <div className="report-dashboard__date-filters">
             <div className="report-dashboard__date-field">

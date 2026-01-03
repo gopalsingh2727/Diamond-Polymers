@@ -121,7 +121,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     const message = inputValue.trim();
 
     // Add to message history
-    setMessageHistory(prev => [...prev, message]);
+    setMessageHistory((prev) => [...prev, message]);
     setHistoryIndex(-1);
     setInputValue('');
 
@@ -149,9 +149,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       e.preventDefault();
       if (messageHistory.length === 0) return;
 
-      const newIndex = historyIndex === -1
-        ? messageHistory.length - 1
-        : Math.max(0, historyIndex - 1);
+      const newIndex = historyIndex === -1 ?
+      messageHistory.length - 1 :
+      Math.max(0, historyIndex - 1);
 
       setHistoryIndex(newIndex);
       setInputValue(messageHistory[newIndex]);
@@ -205,7 +205,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
   const speakText = (text: string) => {
     if (!('speechSynthesis' in window)) {
-      console.warn('Speech synthesis not supported');
+
       return;
     }
 
@@ -213,11 +213,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     speechSynthesis.cancel();
 
     // Clean text for speech (remove markdown, excessive punctuation)
-    const cleanText = text
-      .replace(/[#*_`]/g, '')
-      .replace(/\n+/g, '. ')
-      .replace(/•/g, '')
-      .trim();
+    const cleanText = text.
+    replace(/[#*_`]/g, '').
+    replace(/\n+/g, '. ').
+    replace(/•/g, '').
+    trim();
 
     const utterance = new SpeechSynthesisUtterance(cleanText);
     utterance.lang = settings?.language || 'en-IN';
@@ -228,26 +228,26 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     // Select voice based on gender preference
     if (voices.length > 0) {
       // Try to find a matching voice
-      let selectedVoice = voices.find(v => {
+      let selectedVoice = voices.find((v) => {
         const name = v.name.toLowerCase();
         if (voiceGender === 'female') {
           return name.includes('female') ||
-                 name.includes('swara') ||
-                 name.includes('veena') ||
-                 name.includes('samantha') ||
-                 name.includes('karen');
+          name.includes('swara') ||
+          name.includes('veena') ||
+          name.includes('samantha') ||
+          name.includes('karen');
         } else {
           return name.includes('male') ||
-                 name.includes('ravi') ||
-                 name.includes('alex') ||
-                 name.includes('daniel');
+          name.includes('ravi') ||
+          name.includes('alex') ||
+          name.includes('daniel');
         }
       });
 
       // Fallback: find any voice for the language
       if (!selectedVoice) {
         const langCode = (settings?.language || 'en-IN').split('-')[0];
-        selectedVoice = voices.find(v => v.lang.startsWith(langCode));
+        selectedVoice = voices.find((v) => v.lang.startsWith(langCode));
       }
 
       // Fallback: use first available voice
@@ -270,7 +270,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     };
 
     utterance.onerror = (event) => {
-      console.error('Speech synthesis error:', event.error);
+
       setIsSpeaking(false);
     };
 
@@ -292,17 +292,19 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         onClick={onMaximize}
         className="w-64 bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg
                    shadow-lg cursor-pointer hover:shadow-xl transition-all p-3
-                   flex items-center gap-3"
-      >
+                   flex items-center gap-3">
+
+
+
         <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
           <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
           </svg>
         </div>
         <span className="text-white font-medium">{assistantName}</span>
-      </div>
-    );
+      </div>);
+
   }
 
   return (
@@ -314,13 +316,13 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                    ${isDragging ? 'cursor-grabbing' : ''}`}
         style={{
           background: 'linear-gradient(135deg, #FF6B00 0%, #FF8C00 100%)'
-        }}
-      >
+        }}>
+
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
             <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
           </div>
           <div>
@@ -335,11 +337,12 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
           {/* Minimize button */}
           <button
             type="button"
-            onClick={(e) => { e.stopPropagation(); e.preventDefault(); onMinimize(); }}
+            onClick={(e) => {e.stopPropagation();e.preventDefault();onMinimize();}}
             onMouseDown={(e) => e.stopPropagation()}
             className="w-7 h-7 rounded-full bg-white/20 hover:bg-white/30
-                       flex items-center justify-center transition-colors cursor-pointer"
-          >
+                       flex items-center justify-center transition-colors cursor-pointer">
+
+
             <svg className="w-4 h-4 text-white pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
             </svg>
@@ -348,11 +351,12 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
           {/* Close button */}
           <button
             type="button"
-            onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleClose(); }}
+            onClick={(e) => {e.stopPropagation();e.preventDefault();handleClose();}}
             onMouseDown={(e) => e.stopPropagation()}
             className="w-7 h-7 rounded-full bg-white/20 hover:bg-red-500
-                       flex items-center justify-center transition-colors cursor-pointer"
-          >
+                       flex items-center justify-center transition-colors cursor-pointer">
+
+
             <svg className="w-4 h-4 text-white pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -362,8 +366,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
-        {messages.length === 0 ? (
-          <div className="text-center text-gray-500 mt-8">
+        {messages.length === 0 ?
+        <div className="text-center text-gray-500 mt-8">
             <div className="text-4xl mb-3">👋</div>
             <p className="font-medium text-lg text-gray-700">Hi there! I'm {assistantName}</p>
             <p className="text-sm mt-2 text-gray-500">Your friendly manufacturing assistant</p>
@@ -378,56 +382,57 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
               </div>
             </div>
             <p className="text-xs text-gray-400 mt-4">Type <span className="font-mono bg-gray-100 px-1 rounded">/help</span> for all commands</p>
-          </div>
-        ) : (
-          messages.map((msg, index) => (
-            <ChatMessage
-              key={index}
-              role={msg.role}
-              content={msg.content}
-              timestamp={msg.timestamp}
-              assistantName={assistantName}
-            />
-          ))
-        )}
+          </div> :
+
+        messages.map((msg, index) =>
+        <ChatMessage
+          key={index}
+          role={msg.role}
+          content={msg.content}
+          timestamp={msg.timestamp}
+          assistantName={assistantName} />
+
+        )
+        }
         <div ref={messagesEndRef} />
       </div>
 
       {/* Error display */}
-      {error && (
-        <div className="px-4 py-2 bg-red-50 text-red-600 text-sm">
+      {error &&
+      <div className="px-4 py-2 bg-red-50 text-red-600 text-sm">
           {error}
         </div>
-      )}
+      }
 
       {/* Input Area */}
       <div className="p-3 border-t bg-white">
         <div className="flex items-center gap-2">
           {/* Stop speaker button - shows when speaking */}
-          {isSpeaking && (
-            <button
-              onClick={stopSpeaking}
-              className="w-10 h-10 rounded-full flex items-center justify-center
+          {isSpeaking &&
+          <button
+            onClick={stopSpeaking}
+            className="w-10 h-10 rounded-full flex items-center justify-center
                          bg-red-500 hover:bg-red-600 transition-all animate-pulse"
-              title="Stop speaking"
-              type="button"
-            >
+
+            title="Stop speaking"
+            type="button">
+
               <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                      d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                      d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+              d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
               </svg>
             </button>
-          )}
+          }
 
           {/* Voice input button */}
           <VoiceInput
             isListening={isListening}
             onStart={() => setIsListening(true)}
             onStop={() => setIsListening(false)}
-            onResult={handleVoiceResult}
-          />
+            onResult={handleVoiceResult} />
+
 
           {/* Text input */}
           <input
@@ -440,8 +445,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             disabled={isSending || isListening}
             className="flex-1 px-4 py-2 rounded-full border border-gray-200
                        focus:outline-none focus:border-orange-400 focus:ring-2
-                       focus:ring-orange-100 text-sm disabled:bg-gray-50"
-          />
+                       focus:ring-orange-100 text-sm disabled:bg-gray-50" />
+
+
+
 
           {/* Send button */}
           <button
@@ -449,29 +456,30 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             disabled={!inputValue.trim() || isSending}
             className="w-10 h-10 rounded-full flex items-center justify-center
                        transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+
             style={{
-              background: inputValue.trim() && !isSending
-                ? 'linear-gradient(135deg, #FF6B00 0%, #FF8C00 100%)'
-                : '#e5e7eb'
-            }}
-          >
-            {isSending ? (
-              <svg className="w-5 h-5 text-white animate-spin" fill="none" viewBox="0 0 24 24">
+              background: inputValue.trim() && !isSending ?
+              'linear-gradient(135deg, #FF6B00 0%, #FF8C00 100%)' :
+              '#e5e7eb'
+            }}>
+
+            {isSending ?
+            <svg className="w-5 h-5 text-white animate-spin" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-              </svg>
-            ) : (
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg> :
+
+            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                      d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
               </svg>
-            )}
+            }
           </button>
         </div>
       </div>
-    </div>
-  );
+    </div>);
+
 };
 
 export default ChatWindow;

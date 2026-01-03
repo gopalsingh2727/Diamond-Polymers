@@ -14,19 +14,19 @@ export const sanitizeString = (str: string): string => {
   if (typeof str !== 'string') return str;
 
   return str
-    // Remove null bytes
-    .replace(/\0/g, '')
-    // Escape HTML entities
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;')
-    // Remove potential script injections
-    .replace(/javascript:/gi, '')
-    .replace(/on\w+=/gi, '')
-    // Trim whitespace
-    .trim();
+  // Remove null bytes
+  .replace(/\0/g, '')
+  // Escape HTML entities
+  .replace(/&/g, '&amp;').
+  replace(/</g, '&lt;').
+  replace(/>/g, '&gt;').
+  replace(/"/g, '&quot;').
+  replace(/'/g, '&#x27;')
+  // Remove potential script injections
+  .replace(/javascript:/gi, '').
+  replace(/on\w+=/gi, '')
+  // Trim whitespace
+  .trim();
 };
 
 /**
@@ -39,16 +39,16 @@ export const sanitizeForDisplay = (str: string): string => {
   let safe = sanitizeString(str);
 
   // Then decode safe entities for display
-  return safe
-    .replace(/&amp;/g, '&')
-    .replace(/&#x27;/g, "'")
-    .replace(/&quot;/g, '"');
+  return safe.
+  replace(/&amp;/g, '&').
+  replace(/&#x27;/g, "'").
+  replace(/&quot;/g, '"');
 };
 
 /**
  * Deep sanitize object properties
  */
-export const sanitizeObject = <T extends Record<string, unknown>>(obj: T): T => {
+export const sanitizeObject = <T extends Record<string, unknown>,>(obj: T): T => {
   if (obj === null || obj === undefined) return obj;
 
   if (typeof obj === 'string') {
@@ -56,7 +56,7 @@ export const sanitizeObject = <T extends Record<string, unknown>>(obj: T): T => 
   }
 
   if (Array.isArray(obj)) {
-    return obj.map(item => sanitizeObject(item as Record<string, unknown>)) as unknown as T;
+    return obj.map((item) => sanitizeObject(item as Record<string, unknown>)) as unknown as T;
   }
 
   if (typeof obj === 'object') {
@@ -101,7 +101,7 @@ export const isValidObjectId = (id: string): boolean => {
 /**
  * Validate password strength
  */
-export const validatePassword = (password: string): { valid: boolean; errors: string[] } => {
+export const validatePassword = (password: string): {valid: boolean;errors: string[];} => {
   const errors: string[] = [];
 
   if (password.length < 8) {
@@ -131,15 +131,15 @@ export const validatePassword = (password: string): { valid: boolean; errors: st
  * Patterns that indicate potential attacks
  */
 const SUSPICIOUS_PATTERNS = [
-  // SQL injection patterns
-  /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|UNION|ALTER)\b)/i,
-  // Path traversal
-  /\.\.\//,
-  // Script injection
-  /<script/i,
-  // MongoDB operators in user input
-  /\$where|\$eval|\$function/i,
-];
+// SQL injection patterns
+/(\b(SELECT|INSERT|UPDATE|DELETE|DROP|UNION|ALTER)\b)/i,
+// Path traversal
+/\.\.\//,
+// Script injection
+/<script/i,
+// MongoDB operators in user input
+/\$where|\$eval|\$function/i];
+
 
 /**
  * Check if input contains suspicious patterns
@@ -147,7 +147,7 @@ const SUSPICIOUS_PATTERNS = [
 export const isSuspiciousInput = (input: string): boolean => {
   if (typeof input !== 'string') return false;
 
-  return SUSPICIOUS_PATTERNS.some(pattern => pattern.test(input));
+  return SUSPICIOUS_PATTERNS.some((pattern) => pattern.test(input));
 };
 
 // ============================================================================
@@ -161,7 +161,7 @@ export const storeToken = (token: string): void => {
   try {
     localStorage.setItem('authToken', token);
   } catch (error) {
-    console.error('Failed to store token:', error);
+
   }
 };
 
@@ -172,7 +172,7 @@ export const getToken = (): string | null => {
   try {
     return localStorage.getItem('authToken');
   } catch (error) {
-    console.error('Failed to get token:', error);
+
     return null;
   }
 };
@@ -186,7 +186,7 @@ export const removeToken = (): void => {
     localStorage.removeItem('user');
     localStorage.removeItem('selectedBranch');
   } catch (error) {
-    console.error('Failed to remove token:', error);
+
   }
 };
 
@@ -207,16 +207,16 @@ export const isTokenExpired = (token: string): boolean => {
 // RATE LIMITING (Client-side)
 // ============================================================================
 
-const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const rateLimitMap = new Map<string, {count: number;resetTime: number;}>();
 
 /**
  * Client-side rate limiting for actions
  */
 export const checkRateLimit = (
-  action: string,
-  maxAttempts: number = 5,
-  windowMs: number = 60000
-): { allowed: boolean; remaining: number; resetIn: number } => {
+action: string,
+maxAttempts: number = 5,
+windowMs: number = 60000)
+: {allowed: boolean;remaining: number;resetIn: number;} => {
   const now = Date.now();
   const record = rateLimitMap.get(action);
 
@@ -250,10 +250,10 @@ export const checkRateLimit = (
 /**
  * Prepare form data with sanitization
  */
-export const prepareSecureFormData = <T extends Record<string, unknown>>(
-  data: T,
-  allowedFields?: string[]
-): T => {
+export const prepareSecureFormData = <T extends Record<string, unknown>,>(
+data: T,
+allowedFields?: string[])
+: T => {
   // Filter to allowed fields if specified
   let filtered = data;
   if (allowedFields) {
@@ -268,7 +268,7 @@ export const prepareSecureFormData = <T extends Record<string, unknown>>(
   // Check for suspicious input
   for (const [key, value] of Object.entries(filtered)) {
     if (typeof value === 'string' && isSuspiciousInput(value)) {
-      console.warn(`Suspicious input detected in field: ${key}`);
+
     }
   }
 
@@ -294,5 +294,5 @@ export default {
   removeToken,
   isTokenExpired,
   checkRateLimit,
-  prepareSecureFormData,
+  prepareSecureFormData
 };

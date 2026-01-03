@@ -37,14 +37,14 @@ export const useUniversalSearch = (searchTerm: string): SearchResult[] => {
 
   // Memoize search results to avoid recalculating on every render
   const results = useMemo(() => {
-    console.log('🔍 Search Hook: Starting search with term:', searchTerm);
-    console.log('🔍 Search Hook: Redux State Path Check:');
-    console.log('  ├─ Orders available:', orders.length, '(from state.orders.list.orders)');
-    console.log('  ├─ Machines available:', machines.length, '(from state.machineList.items)');
-    console.log('  └─ Operators available:', operators.length, '(from state.operatorList.items)');
+
+
+
+
+
 
     if (!searchTerm || searchTerm.trim().length < 2) {
-      console.log('🔍 Search Hook: Search term too short, returning empty results');
+
       return [];
     }
 
@@ -52,13 +52,13 @@ export const useUniversalSearch = (searchTerm: string): SearchResult[] => {
     const term = searchTerm.trim();
 
     // Search Orders
-    const orderConfig = SEARCH_CONFIG.find(c => c.type === 'order');
+    const orderConfig = SEARCH_CONFIG.find((c) => c.type === 'order');
     if (orderConfig && orders.length > 0) {
-      console.log('🔍 Search Hook: Searching orders with fields:', orderConfig.searchFields);
-      console.log('🔍 Search Hook: Sample order:', orders[0]);
+
+
 
       const foundOrders = searchData(orders, term, orderConfig.searchFields);
-      console.log('🔍 Search Hook: Found orders:', foundOrders.length);
+
 
       foundOrders.forEach((order: any) => {
         allResults.push({
@@ -72,11 +72,11 @@ export const useUniversalSearch = (searchTerm: string): SearchResult[] => {
         });
       });
     } else {
-      console.log('🔍 Search Hook: No orders to search or config missing');
+
     }
 
     // Search Machines
-    const machineConfig = SEARCH_CONFIG.find(c => c.type === 'machine');
+    const machineConfig = SEARCH_CONFIG.find((c) => c.type === 'machine');
     if (machineConfig && machines.length > 0) {
       const foundMachines = searchData(machines, term, machineConfig.searchFields);
       foundMachines.forEach((machine: any) => {
@@ -85,9 +85,9 @@ export const useUniversalSearch = (searchTerm: string): SearchResult[] => {
           type: 'machine',
           title: machine.machineName,
           subtitle: machine.machineType,
-          description: machine.sizeX && machine.sizeY
-            ? `Size: ${machine.sizeX} × ${machine.sizeY}`
-            : undefined,
+          description: machine.sizeX && machine.sizeY ?
+          `Size: ${machine.sizeX} × ${machine.sizeY}` :
+          undefined,
           route: machineConfig.route,
           data: machine
         });
@@ -95,7 +95,7 @@ export const useUniversalSearch = (searchTerm: string): SearchResult[] => {
     }
 
     // Search Machine Types
-    const machineTypeConfig = SEARCH_CONFIG.find(c => c.type === 'machineType');
+    const machineTypeConfig = SEARCH_CONFIG.find((c) => c.type === 'machineType');
     if (machineTypeConfig && machineTypes.length > 0) {
       const foundMachineTypes = searchData(machineTypes, term, machineTypeConfig.searchFields);
       foundMachineTypes.forEach((machineType: any) => {
@@ -112,7 +112,7 @@ export const useUniversalSearch = (searchTerm: string): SearchResult[] => {
     }
 
     // Search Operators
-    const operatorConfig = SEARCH_CONFIG.find(c => c.type === 'operator');
+    const operatorConfig = SEARCH_CONFIG.find((c) => c.type === 'operator');
     if (operatorConfig && operators.length > 0) {
       const foundOperators = searchData(operators, term, operatorConfig.searchFields);
       foundOperators.forEach((operator: any) => {
@@ -129,7 +129,7 @@ export const useUniversalSearch = (searchTerm: string): SearchResult[] => {
     }
 
     // Search Customers (from cache)
-    const customerConfig = SEARCH_CONFIG.find(c => c.type === 'customer');
+    const customerConfig = SEARCH_CONFIG.find((c) => c.type === 'customer');
     if (customerConfig && customers.length > 0) {
       const foundCustomers = searchData(customers, term, customerConfig.searchFields);
       foundCustomers.forEach((customer: any) => {
@@ -146,7 +146,7 @@ export const useUniversalSearch = (searchTerm: string): SearchResult[] => {
     }
 
     // Search Products (from cache)
-    const productConfig = SEARCH_CONFIG.find(c => c.type === 'product');
+    const productConfig = SEARCH_CONFIG.find((c) => c.type === 'product');
     if (productConfig && products.length > 0) {
       const foundProducts = searchData(products, term, productConfig.searchFields);
       foundProducts.forEach((product: any) => {
@@ -163,7 +163,7 @@ export const useUniversalSearch = (searchTerm: string): SearchResult[] => {
     }
 
     // Search Materials (from cache)
-    const materialConfig = SEARCH_CONFIG.find(c => c.type === 'material');
+    const materialConfig = SEARCH_CONFIG.find((c) => c.type === 'material');
     if (materialConfig && materials.length > 0) {
       const foundMaterials = searchData(materials, term, materialConfig.searchFields);
       foundMaterials.forEach((material: any) => {
@@ -180,11 +180,11 @@ export const useUniversalSearch = (searchTerm: string): SearchResult[] => {
     }
 
     // Limit results and return
-    console.log('🔍 Search Hook: Total results found:', allResults.length);
-    console.log('🔍 Search Hook: Results:', allResults);
+
+
 
     const limitedResults = allResults.slice(0, MAX_SEARCH_RESULTS);
-    console.log('🔍 Search Hook: Returning', limitedResults.length, 'results (limited to', MAX_SEARCH_RESULTS, ')');
+
 
     return limitedResults;
   }, [searchTerm, orders, machines, machineTypes, operators, customers, products, materials]);
@@ -201,7 +201,7 @@ export const useGroupedSearchResults = (searchTerm: string) => {
   const grouped = useMemo(() => {
     const groups: Record<string, SearchResult[]> = {};
 
-    results.forEach(result => {
+    results.forEach((result) => {
       if (!groups[result.type]) {
         groups[result.type] = [];
       }

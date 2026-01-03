@@ -108,7 +108,7 @@ export const useOrderUpdates = (orderId: string | null) => {
 
   useEffect(() => {
     if (isConnected && orderId) {
-      console.log('📦 Subscribing to order updates:', orderId);
+
       dispatch({
         type: 'websocket/subscribeToOrder',
         payload: orderId
@@ -126,7 +126,7 @@ export const useMachineUpdates = (machineId: string | null) => {
 
   useEffect(() => {
     if (isConnected && machineId) {
-      console.log('🏭 Subscribing to machine updates:', machineId);
+
       dispatch({
         type: 'websocket/subscribeToMachine',
         payload: machineId
@@ -145,7 +145,7 @@ export const useDaybookUpdates = (branchId: string | null, onOrderUpdate?: (data
 
   useEffect(() => {
     if (isConnected && branchId) {
-      console.log('📋 Subscribing to daybook updates:', branchId);
+
       dispatch({
         type: 'websocket/send',
         payload: {
@@ -164,9 +164,9 @@ export const useDaybookUpdates = (branchId: string | null, onOrderUpdate?: (data
       const { type, data } = event.detail;
       // ✅ Listen for all order-related events
       if (type === 'order:created' || type === 'order:updated' || type === 'order:deleted' ||
-          type === 'order:status_changed' || type === 'order:priority_changed' ||
-          type === 'daybook:updated' || type === 'referenceData:invalidate') {
-        console.log('📋 Daybook update received (WebSocket):', type);
+      type === 'order:status_changed' || type === 'order:priority_changed' ||
+      type === 'daybook:updated' || type === 'referenceData:invalidate') {
+
         onOrderUpdate(data);
       }
     };
@@ -182,7 +182,7 @@ export const useDaybookUpdates = (branchId: string | null, onOrderUpdate?: (data
     if (!onOrderUpdate) return;
 
     const handleLocalOrderUpdate = (event: CustomEvent) => {
-      console.log('📋 Daybook update received (Local):', event.detail.type);
+
       onOrderUpdate(event.detail.data);
     };
 
@@ -203,7 +203,7 @@ export const useDispatchUpdates = (branchId: string | null, onOrderUpdate?: (dat
 
   useEffect(() => {
     if (isConnected && branchId) {
-      console.log('🚚 Subscribing to dispatch updates:', branchId);
+
       dispatch({
         type: 'websocket/send',
         payload: {
@@ -222,9 +222,9 @@ export const useDispatchUpdates = (branchId: string | null, onOrderUpdate?: (dat
       const { type, data } = event.detail;
       // ✅ Listen for all order-related events
       if (type === 'order:created' || type === 'order:updated' || type === 'order:deleted' ||
-          type === 'order:status_changed' || type === 'order:priority_changed' ||
-          type === 'dispatch:updated' || type === 'referenceData:invalidate') {
-        console.log('🚚 Dispatch update received (WebSocket):', type);
+      type === 'order:status_changed' || type === 'order:priority_changed' ||
+      type === 'dispatch:updated' || type === 'referenceData:invalidate') {
+
         onOrderUpdate(data);
       }
     };
@@ -240,7 +240,7 @@ export const useDispatchUpdates = (branchId: string | null, onOrderUpdate?: (dat
     if (!onOrderUpdate) return;
 
     const handleLocalOrderUpdate = (event: CustomEvent) => {
-      console.log('🚚 Dispatch update received (Local):', event.detail.type);
+
       onOrderUpdate(event.detail.data);
     };
 
@@ -260,7 +260,7 @@ export const useDashboardUpdates = (branchId: string | null, onDashboardUpdate?:
 
   useEffect(() => {
     if (isConnected && branchId) {
-      console.log('📊 Subscribing to dashboard updates:', branchId);
+
       dispatch({
         type: 'websocket/send',
         payload: {
@@ -278,7 +278,7 @@ export const useDashboardUpdates = (branchId: string | null, onDashboardUpdate?:
     const handleDashboardUpdate = (event: CustomEvent) => {
       const { type, data } = event.detail;
       if (type === 'dashboard:updated' || type === 'referenceData:invalidate') {
-        console.log('📊 Dashboard update received:', type);
+
         onDashboardUpdate(data);
       }
     };
@@ -295,9 +295,9 @@ export const useDashboardUpdates = (branchId: string | null, onDashboardUpdate?:
  * Triggers callback when data changes so components can refetch
  */
 export const useReferenceDataUpdates = (
-  entityTypes: string[],
-  onUpdate?: (data: { entityType: string; action: string }) => void
-) => {
+entityTypes: string[],
+onUpdate?: (data: {entityType: string;action: string;}) => void) =>
+{
   useEffect(() => {
     if (!onUpdate) return;
 
@@ -306,7 +306,7 @@ export const useReferenceDataUpdates = (
       if (type === 'referenceData:invalidate') {
         const entityType = data?.entityType;
         if (entityTypes.includes(entityType) || entityTypes.includes('*')) {
-          console.log(`🔄 Reference data update received for ${entityType}`);
+
           onUpdate({ entityType, action: data?.action });
         }
       }
@@ -324,7 +324,7 @@ export const useReferenceDataUpdates = (
  */
 export const useMachineDataUpdates = (onUpdate?: () => void) => {
   useReferenceDataUpdates(['machine', 'machineType'], () => {
-    console.log('🏭 Machine/MachineType data changed, triggering refresh...');
+
     onUpdate?.();
   });
 };

@@ -34,92 +34,92 @@ export interface ExportTemplate {
 }
 
 const DEFAULT_TEMPLATES: ExportTemplate[] = [
-  {
-    id: 'basic',
-    name: 'Basic Export',
-    description: 'Order ID, Customer, Status, Date',
-    columns: ['orderId', 'customerName', 'status', 'date', 'weight']
-  },
-  {
-    id: 'detailed',
-    name: 'Detailed Export',
-    description: 'All order details with material info',
-    columns: ['orderId', 'date', 'customerName', 'phone', 'status', 'weight', 'width', 'height', 'thickness', 'material', 'branch', 'notes']
-  },
-  {
-    id: 'dispatch',
-    name: 'Dispatch Report',
-    description: 'Dispatch and delivery information',
-    columns: ['orderId', 'customerName', 'phone', 'dispatchStatus', 'trackingNumber', 'carrier', 'dispatchDate', 'weight']
-  },
-  {
-    id: 'production',
-    name: 'Production Report',
-    description: 'Manufacturing and steps information',
-    columns: ['orderId', 'customerName', 'status', 'stepsCompleted', 'totalSteps', 'material', 'weight', 'width', 'height']
-  },
-  {
-    id: 'custom',
-    name: 'Custom Export',
-    description: 'Select your own columns',
-    columns: []
-  }
-];
+{
+  id: 'basic',
+  name: 'Basic Export',
+  description: 'Order ID, Customer, Status, Date',
+  columns: ['orderId', 'customerName', 'status', 'date', 'weight']
+},
+{
+  id: 'detailed',
+  name: 'Detailed Export',
+  description: 'All order details with material info',
+  columns: ['orderId', 'date', 'customerName', 'phone', 'status', 'weight', 'width', 'height', 'thickness', 'material', 'branch', 'notes']
+},
+{
+  id: 'dispatch',
+  name: 'Dispatch Report',
+  description: 'Dispatch and delivery information',
+  columns: ['orderId', 'customerName', 'phone', 'dispatchStatus', 'trackingNumber', 'carrier', 'dispatchDate', 'weight']
+},
+{
+  id: 'production',
+  name: 'Production Report',
+  description: 'Manufacturing and steps information',
+  columns: ['orderId', 'customerName', 'status', 'stepsCompleted', 'totalSteps', 'material', 'weight', 'width', 'height']
+},
+{
+  id: 'custom',
+  name: 'Custom Export',
+  description: 'Select your own columns',
+  columns: []
+}];
+
 
 // All available columns - updated with options, machine status, and steps
 const ALL_COLUMNS: ExportColumn[] = [
-  // Basic Order Info
-  { key: 'orderId', label: 'Order ID', selected: true, category: 'basic' },
-  { key: 'date', label: 'Order Date', selected: true, category: 'basic' },
-  { key: 'overallStatus', label: 'Overall Status', selected: true, category: 'basic' },
-  { key: 'priority', label: 'Priority', selected: false, category: 'basic' },
-  { key: 'orderType', label: 'Order Type', selected: false, category: 'basic' },
+// Basic Order Info
+{ key: 'orderId', label: 'Order ID', selected: true, category: 'basic' },
+{ key: 'date', label: 'Order Date', selected: true, category: 'basic' },
+{ key: 'overallStatus', label: 'Overall Status', selected: true, category: 'basic' },
+{ key: 'priority', label: 'Priority', selected: false, category: 'basic' },
+{ key: 'orderType', label: 'Order Type', selected: false, category: 'basic' },
 
-  // Customer
-  { key: 'customerName', label: 'Customer Name', selected: true, category: 'customer' },
-  { key: 'phone', label: 'Phone', selected: true, category: 'customer' },
-  { key: 'email', label: 'Email', selected: false, category: 'customer' },
-  { key: 'address', label: 'Address', selected: false, category: 'customer' },
-  { key: 'whatsapp', label: 'WhatsApp', selected: false, category: 'customer' },
+// Customer
+{ key: 'customerName', label: 'Customer Name', selected: true, category: 'customer' },
+{ key: 'phone', label: 'Phone', selected: true, category: 'customer' },
+{ key: 'email', label: 'Email', selected: false, category: 'customer' },
+{ key: 'address', label: 'Address', selected: false, category: 'customer' },
+{ key: 'whatsapp', label: 'WhatsApp', selected: false, category: 'customer' },
 
-  // Options (Products/Materials)
-  { key: 'productOptions', label: 'Products', selected: true, category: 'material' },
-  { key: 'materialOptions', label: 'Materials', selected: false, category: 'material' },
-  { key: 'printingOptions', label: 'Printing', selected: false, category: 'material' },
-  { key: 'packagingOptions', label: 'Packaging', selected: false, category: 'material' },
-  { key: 'optionQuantity', label: 'Total Quantity', selected: true, category: 'material' },
-  { key: 'allOptions', label: 'All Options', selected: false, category: 'material' },
+// Options (Products/Materials)
+{ key: 'productOptions', label: 'Products', selected: true, category: 'material' },
+{ key: 'materialOptions', label: 'Materials', selected: false, category: 'material' },
+{ key: 'printingOptions', label: 'Printing', selected: false, category: 'material' },
+{ key: 'packagingOptions', label: 'Packaging', selected: false, category: 'material' },
+{ key: 'optionQuantity', label: 'Total Quantity', selected: true, category: 'material' },
+{ key: 'allOptions', label: 'All Options', selected: false, category: 'material' },
 
-  // Machine Status
-  { key: 'currentStep', label: 'Current Step', selected: true, category: 'status' },
-  { key: 'currentStepIndex', label: 'Step Number', selected: false, category: 'status' },
-  { key: 'machineStatus', label: 'Machine Status', selected: true, category: 'status' },
-  { key: 'completedMachines', label: 'Completed Machines', selected: false, category: 'status' },
-  { key: 'totalMachines', label: 'Total Machines', selected: false, category: 'status' },
-  { key: 'machineProgress', label: 'Machine Progress', selected: false, category: 'status' },
+// Machine Status
+{ key: 'currentStep', label: 'Current Step', selected: true, category: 'status' },
+{ key: 'currentStepIndex', label: 'Step Number', selected: false, category: 'status' },
+{ key: 'machineStatus', label: 'Machine Status', selected: true, category: 'status' },
+{ key: 'completedMachines', label: 'Completed Machines', selected: false, category: 'status' },
+{ key: 'totalMachines', label: 'Total Machines', selected: false, category: 'status' },
+{ key: 'machineProgress', label: 'Machine Progress', selected: false, category: 'status' },
 
-  // Steps Progress
-  { key: 'stepsCompleted', label: 'Steps Completed', selected: false, category: 'status' },
-  { key: 'totalSteps', label: 'Total Steps', selected: false, category: 'status' },
-  { key: 'stepProgress', label: 'Step Progress %', selected: false, category: 'status' },
+// Steps Progress
+{ key: 'stepsCompleted', label: 'Steps Completed', selected: false, category: 'status' },
+{ key: 'totalSteps', label: 'Total Steps', selected: false, category: 'status' },
+{ key: 'stepProgress', label: 'Step Progress %', selected: false, category: 'status' },
 
-  // Dates
-  { key: 'createdAt', label: 'Created Date', selected: false, category: 'dates' },
-  { key: 'updatedAt', label: 'Updated Date', selected: false, category: 'dates' },
-  { key: 'scheduledStart', label: 'Scheduled Start', selected: false, category: 'dates' },
-  { key: 'scheduledEnd', label: 'Scheduled End', selected: false, category: 'dates' },
-  { key: 'actualStart', label: 'Actual Start', selected: false, category: 'dates' },
-  { key: 'actualEnd', label: 'Actual End', selected: false, category: 'dates' },
-  { key: 'dispatchedDate', label: 'Dispatched Date', selected: false, category: 'dates' },
+// Dates
+{ key: 'createdAt', label: 'Created Date', selected: false, category: 'dates' },
+{ key: 'updatedAt', label: 'Updated Date', selected: false, category: 'dates' },
+{ key: 'scheduledStart', label: 'Scheduled Start', selected: false, category: 'dates' },
+{ key: 'scheduledEnd', label: 'Scheduled End', selected: false, category: 'dates' },
+{ key: 'actualStart', label: 'Actual Start', selected: false, category: 'dates' },
+{ key: 'actualEnd', label: 'Actual End', selected: false, category: 'dates' },
+{ key: 'dispatchedDate', label: 'Dispatched Date', selected: false, category: 'dates' },
 
-  // Other
-  { key: 'branch', label: 'Branch', selected: false, category: 'other' },
-  { key: 'branchCode', label: 'Branch Code', selected: false, category: 'other' },
-  { key: 'sameDayDispatch', label: 'Same Day Dispatch', selected: false, category: 'other' },
-  { key: 'createdBy', label: 'Created By', selected: false, category: 'other' },
-  { key: 'assignedManager', label: 'Assigned Manager', selected: false, category: 'other' },
-  { key: 'notes', label: 'Notes', selected: false, category: 'other' }
-];
+// Other
+{ key: 'branch', label: 'Branch', selected: false, category: 'other' },
+{ key: 'branchCode', label: 'Branch Code', selected: false, category: 'other' },
+{ key: 'sameDayDispatch', label: 'Same Day Dispatch', selected: false, category: 'other' },
+{ key: 'createdBy', label: 'Created By', selected: false, category: 'other' },
+{ key: 'assignedManager', label: 'Assigned Manager', selected: false, category: 'other' },
+{ key: 'notes', label: 'Notes', selected: false, category: 'other' }];
+
 
 interface ExcelExportSelectorProps {
   isOpen: boolean;
@@ -176,7 +176,7 @@ const ExcelExportSelector: React.FC<ExcelExportSelectorProps> = ({
         }
       }
     } catch (error) {
-      console.error('Failed to fetch export types:', error);
+
       // Fall back to default templates
       setSavedExportTypes([]);
     } finally {
@@ -194,11 +194,11 @@ const ExcelExportSelector: React.FC<ExcelExportSelectorProps> = ({
 
     // Apply columns from the saved type
     if (exportType.columns && exportType.columns.length > 0) {
-      const savedColumnKeys = exportType.columns
-        .filter(c => c.selected)
-        .map(c => c.key);
+      const savedColumnKeys = exportType.columns.
+      filter((c) => c.selected).
+      map((c) => c.key);
 
-      setColumns(ALL_COLUMNS.map(col => ({
+      setColumns(ALL_COLUMNS.map((col) => ({
         ...col,
         selected: savedColumnKeys.includes(col.key)
       })));
@@ -210,7 +210,7 @@ const ExcelExportSelector: React.FC<ExcelExportSelectorProps> = ({
     setSelectedTemplate(templateId);
 
     // Check if it's a saved export type
-    const savedType = savedExportTypes.find(t => t._id === templateId);
+    const savedType = savedExportTypes.find((t) => t._id === templateId);
     if (savedType) {
       applyExportType(savedType);
       return;
@@ -223,9 +223,9 @@ const ExcelExportSelector: React.FC<ExcelExportSelectorProps> = ({
       return; // Keep current selection for custom
     }
 
-    const template = DEFAULT_TEMPLATES.find(t => t.id === templateId);
+    const template = DEFAULT_TEMPLATES.find((t) => t.id === templateId);
     if (template) {
-      setColumns(columns.map(col => ({
+      setColumns(columns.map((col) => ({
         ...col,
         selected: template.columns.includes(col.key)
       })));
@@ -236,8 +236,8 @@ const ExcelExportSelector: React.FC<ExcelExportSelectorProps> = ({
   const toggleColumn = (key: string) => {
     setSelectedTemplate('custom');
     setUsingSavedType(false);
-    setColumns(columns.map(col =>
-      col.key === key ? { ...col, selected: !col.selected } : col
+    setColumns(columns.map((col) =>
+    col.key === key ? { ...col, selected: !col.selected } : col
     ));
   };
 
@@ -245,8 +245,8 @@ const ExcelExportSelector: React.FC<ExcelExportSelectorProps> = ({
   const toggleCategory = (category: string, selected: boolean) => {
     setSelectedTemplate('custom');
     setUsingSavedType(false);
-    setColumns(columns.map(col =>
-      col.category === category ? { ...col, selected } : col
+    setColumns(columns.map((col) =>
+    col.category === category ? { ...col, selected } : col
     ));
   };
 
@@ -306,81 +306,81 @@ const ExcelExportSelector: React.FC<ExcelExportSelectorProps> = ({
 
     switch (key) {
       // Basic
-      case 'orderId': return order.orderId || order._id || 'N/A';
-      case 'date': return order.date || (order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A');
-      case 'overallStatus': return order.overallStatus || order.status || 'N/A';
-      case 'priority': return order.priority || 'normal';
-      case 'orderType': return order.orderTypeId?.typeName || order.orderType?.typeName || 'N/A';
+      case 'orderId':return order.orderId || order._id || 'N/A';
+      case 'date':return order.date || (order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A');
+      case 'overallStatus':return order.overallStatus || order.status || 'N/A';
+      case 'priority':return order.priority || 'normal';
+      case 'orderType':return order.orderTypeId?.typeName || order.orderType?.typeName || 'N/A';
 
       // Customer
-      case 'customerName': return order.customerId?.name || order.customer?.name || order.companyName || 'N/A';
-      case 'phone': return order.customerId?.phone1 || order.customer?.phone1 || order.customer?.phone || 'N/A';
-      case 'email': return order.customerId?.email || order.customer?.email || 'N/A';
-      case 'address': return order.customerId?.address || order.customer?.address || 'N/A';
-      case 'whatsapp': return order.customerId?.whatsapp || order.customer?.whatsapp || 'N/A';
+      case 'customerName':return order.customerId?.name || order.customer?.name || order.companyName || 'N/A';
+      case 'phone':return order.customerId?.phone1 || order.customer?.phone1 || order.customer?.phone || 'N/A';
+      case 'email':return order.customerId?.email || order.customer?.email || 'N/A';
+      case 'address':return order.customerId?.address || order.customer?.address || 'N/A';
+      case 'whatsapp':return order.customerId?.whatsapp || order.customer?.whatsapp || 'N/A';
 
       // Options (Products/Materials)
-      case 'productOptions': return getOptionsByCategory(options, 'product');
-      case 'materialOptions': return getOptionsByCategory(options, 'material');
-      case 'printingOptions': return getOptionsByCategory(options, 'printing');
-      case 'packagingOptions': return getOptionsByCategory(options, 'packaging');
-      case 'optionQuantity': return getTotalQuantity(options);
-      case 'allOptions': return getAllOptions(options);
+      case 'productOptions':return getOptionsByCategory(options, 'product');
+      case 'materialOptions':return getOptionsByCategory(options, 'material');
+      case 'printingOptions':return getOptionsByCategory(options, 'printing');
+      case 'packagingOptions':return getOptionsByCategory(options, 'packaging');
+      case 'optionQuantity':return getTotalQuantity(options);
+      case 'allOptions':return getAllOptions(options);
 
       // Machine Status
       case 'currentStep':
         if (steps.length === 0) return 'N/A';
         const step = steps[currentStepIndex];
         return step?.stepId?.stepName || step?.stepName || `Step ${currentStepIndex + 1}`;
-      case 'currentStepIndex': return currentStepIndex + 1;
-      case 'machineStatus': return getCurrentStepMachineStatus(steps, currentStepIndex);
-      case 'completedMachines': return getCompletedMachinesCount(steps);
-      case 'totalMachines': return getTotalMachinesCount(steps);
-      case 'machineProgress': {
-        const total = getTotalMachinesCount(steps);
-        const completed = getCompletedMachinesCount(steps);
-        return total > 0 ? `${completed}/${total}` : 'N/A';
-      }
+      case 'currentStepIndex':return currentStepIndex + 1;
+      case 'machineStatus':return getCurrentStepMachineStatus(steps, currentStepIndex);
+      case 'completedMachines':return getCompletedMachinesCount(steps);
+      case 'totalMachines':return getTotalMachinesCount(steps);
+      case 'machineProgress':{
+          const total = getTotalMachinesCount(steps);
+          const completed = getCompletedMachinesCount(steps);
+          return total > 0 ? `${completed}/${total}` : 'N/A';
+        }
 
       // Steps Progress
-      case 'stepsCompleted': return getCompletedStepsCount(steps);
-      case 'totalSteps': return steps.length;
-      case 'stepProgress': {
-        const total = steps.length;
-        const completed = getCompletedStepsCount(steps);
-        return total > 0 ? `${Math.round((completed / total) * 100)}%` : 'N/A';
-      }
+      case 'stepsCompleted':return getCompletedStepsCount(steps);
+      case 'totalSteps':return steps.length;
+      case 'stepProgress':{
+          const total = steps.length;
+          const completed = getCompletedStepsCount(steps);
+          return total > 0 ? `${Math.round(completed / total * 100)}%` : 'N/A';
+        }
 
       // Dates
-      case 'createdAt': return order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A';
-      case 'updatedAt': return order.updatedAt ? new Date(order.updatedAt).toLocaleDateString() : 'N/A';
-      case 'scheduledStart': return order.scheduledStartDate ? new Date(order.scheduledStartDate).toLocaleDateString() : 'N/A';
-      case 'scheduledEnd': return order.scheduledEndDate ? new Date(order.scheduledEndDate).toLocaleDateString() : 'N/A';
-      case 'actualStart': return order.actualStartDate ? new Date(order.actualStartDate).toLocaleDateString() : 'N/A';
-      case 'actualEnd': return order.actualEndDate ? new Date(order.actualEndDate).toLocaleDateString() : 'N/A';
-      case 'dispatchedDate': return order.dispatchedDate ? new Date(order.dispatchedDate).toLocaleDateString() : 'N/A';
+      case 'createdAt':return order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A';
+      case 'updatedAt':return order.updatedAt ? new Date(order.updatedAt).toLocaleDateString() : 'N/A';
+      case 'scheduledStart':return order.scheduledStartDate ? new Date(order.scheduledStartDate).toLocaleDateString() : 'N/A';
+      case 'scheduledEnd':return order.scheduledEndDate ? new Date(order.scheduledEndDate).toLocaleDateString() : 'N/A';
+      case 'actualStart':return order.actualStartDate ? new Date(order.actualStartDate).toLocaleDateString() : 'N/A';
+      case 'actualEnd':return order.actualEndDate ? new Date(order.actualEndDate).toLocaleDateString() : 'N/A';
+      case 'dispatchedDate':return order.dispatchedDate ? new Date(order.dispatchedDate).toLocaleDateString() : 'N/A';
 
       // Other
-      case 'branch': return order.branchId?.name || order.branch?.name || 'N/A';
-      case 'branchCode': return order.branchId?.code || order.branch?.code || 'N/A';
-      case 'sameDayDispatch': return order.sameDayDispatch ? 'Yes' : 'No';
-      case 'createdBy': return order.createdByRole || order.createdBy || 'N/A';
-      case 'assignedManager': return order.assignedManager?.name || 'N/A';
-      case 'notes': {
-        const notes = order.notes || [];
-        if (Array.isArray(notes)) {
-          return notes.map((n: any) => n.message || n).join('; ');
+      case 'branch':return order.branchId?.name || order.branch?.name || 'N/A';
+      case 'branchCode':return order.branchId?.code || order.branch?.code || 'N/A';
+      case 'sameDayDispatch':return order.sameDayDispatch ? 'Yes' : 'No';
+      case 'createdBy':return order.createdByRole || order.createdBy || 'N/A';
+      case 'assignedManager':return order.assignedManager?.name || 'N/A';
+      case 'notes':{
+          const notes = order.notes || [];
+          if (Array.isArray(notes)) {
+            return notes.map((n: any) => n.message || n).join('; ');
+          }
+          return notes || '';
         }
-        return notes || '';
-      }
 
-      default: return 'N/A';
+      default:return 'N/A';
     }
   };
 
   // Export to Excel
   const handleExport = () => {
-    const selectedColumns = columns.filter(col => col.selected);
+    const selectedColumns = columns.filter((col) => col.selected);
 
     if (selectedColumns.length === 0) {
       alert('Please select at least one column to export');
@@ -388,9 +388,9 @@ const ExcelExportSelector: React.FC<ExcelExportSelectorProps> = ({
     }
 
     // Build export data
-    const exportData = orders.map(order => {
+    const exportData = orders.map((order) => {
       const row: any = {};
-      selectedColumns.forEach(col => {
+      selectedColumns.forEach((col) => {
         row[col.label] = getOrderValue(order, col.key);
       });
       return row;
@@ -398,11 +398,11 @@ const ExcelExportSelector: React.FC<ExcelExportSelectorProps> = ({
 
     // Create workbook
     const ws = XLSX.utils.json_to_sheet(exportData, {
-      header: includeHeaders ? selectedColumns.map(c => c.label) : undefined
+      header: includeHeaders ? selectedColumns.map((c) => c.label) : undefined
     });
 
     // Set column widths
-    const colWidths = selectedColumns.map(col => ({ wch: Math.max(col.label.length + 2, 15) }));
+    const colWidths = selectedColumns.map((col) => ({ wch: Math.max(col.label.length + 2, 15) }));
     ws['!cols'] = colWidths;
 
     const wb = XLSX.utils.book_new();
@@ -437,19 +437,19 @@ const ExcelExportSelector: React.FC<ExcelExportSelectorProps> = ({
 
   // Combine saved types with default templates
   const allTemplates = [
-    ...savedExportTypes.map(t => ({
-      id: t._id,
-      name: t.typeName,
-      description: t.description || `${t.columns?.filter(c => c.selected).length || 0} columns`,
-      isDefault: t.isDefault,
-      isSaved: true
-    })),
-    ...DEFAULT_TEMPLATES.map(t => ({
-      ...t,
-      isDefault: false,
-      isSaved: false
-    }))
-  ];
+  ...savedExportTypes.map((t) => ({
+    id: t._id,
+    name: t.typeName,
+    description: t.description || `${t.columns?.filter((c) => c.selected).length || 0} columns`,
+    isDefault: t.isDefault,
+    isSaved: true
+  })),
+  ...DEFAULT_TEMPLATES.map((t) => ({
+    ...t,
+    isDefault: false,
+    isSaved: false
+  }))];
+
 
   return (
     <div style={overlayStyle}>
@@ -469,72 +469,72 @@ const ExcelExportSelector: React.FC<ExcelExportSelectorProps> = ({
               {loadingTypes && <span style={{ marginLeft: '10px', color: '#6b7280', fontSize: '12px' }}>Loading...</span>}
             </label>
             <div style={templateGridStyle}>
-              {allTemplates.map(template => (
-                <div
-                  key={template.id}
-                  onClick={() => handleTemplateChange(template.id)}
-                  style={{
-                    ...templateItemStyle,
-                    borderColor: selectedTemplate === template.id ? '#FF6B35' : '#e5e7eb',
-                    backgroundColor: selectedTemplate === template.id ? '#FFF5F2' : '#fff'
-                  }}
-                >
+              {allTemplates.map((template) =>
+              <div
+                key={template.id}
+                onClick={() => handleTemplateChange(template.id)}
+                style={{
+                  ...templateItemStyle,
+                  borderColor: selectedTemplate === template.id ? '#FF6B35' : '#e5e7eb',
+                  backgroundColor: selectedTemplate === template.id ? '#FFF5F2' : '#fff'
+                }}>
+
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <span style={{ fontWeight: '600', color: '#1f2937' }}>{template.name}</span>
-                    {template.isDefault && (
-                      <span style={defaultBadgeStyle}>Default</span>
-                    )}
-                    {template.isSaved && (
-                      <span style={savedBadgeStyle}>Saved</span>
-                    )}
+                    {template.isDefault &&
+                  <span style={defaultBadgeStyle}>Default</span>
+                  }
+                    {template.isSaved &&
+                  <span style={savedBadgeStyle}>Saved</span>
+                  }
                   </div>
                   <div style={{ fontSize: '12px', color: '#6b7280' }}>{template.description}</div>
                 </div>
-              ))}
+              )}
             </div>
           </div>
 
           {/* Column Selection */}
           <div style={sectionStyle}>
-            <label style={labelStyle}>Select Columns ({columns.filter(c => c.selected).length} selected)</label>
+            <label style={labelStyle}>Select Columns ({columns.filter((c) => c.selected).length} selected)</label>
             <div style={columnsContainerStyle}>
-              {categories.map(category => {
-                const categoryColumns = columns.filter(c => c.category === category);
-                const allSelected = categoryColumns.every(c => c.selected);
-                const someSelected = categoryColumns.some(c => c.selected);
+              {categories.map((category) => {
+                const categoryColumns = columns.filter((c) => c.category === category);
+                const allSelected = categoryColumns.every((c) => c.selected);
+                const someSelected = categoryColumns.some((c) => c.selected);
 
                 return (
                   <div key={category} style={categoryStyle}>
                     <div
                       style={categoryHeaderStyle}
-                      onClick={() => toggleCategory(category, !allSelected)}
-                    >
+                      onClick={() => toggleCategory(category, !allSelected)}>
+
                       <input
                         type="checkbox"
                         checked={allSelected}
-                        ref={input => {
+                        ref={(input) => {
                           if (input) input.indeterminate = someSelected && !allSelected;
                         }}
                         onChange={() => toggleCategory(category, !allSelected)}
-                        style={{ marginRight: '8px' }}
-                      />
+                        style={{ marginRight: '8px' }} />
+
                       <span style={{ fontWeight: '600' }}>{categoryLabels[category]}</span>
                     </div>
                     <div style={columnListStyle}>
-                      {categoryColumns.map(col => (
-                        <label key={col.key} style={columnItemStyle}>
+                      {categoryColumns.map((col) =>
+                      <label key={col.key} style={columnItemStyle}>
                           <input
-                            type="checkbox"
-                            checked={col.selected}
-                            onChange={() => toggleColumn(col.key)}
-                            style={{ marginRight: '6px' }}
-                          />
+                          type="checkbox"
+                          checked={col.selected}
+                          onChange={() => toggleColumn(col.key)}
+                          style={{ marginRight: '6px' }} />
+
                           {col.label}
                         </label>
-                      ))}
+                      )}
                     </div>
-                  </div>
-                );
+                  </div>);
+
               })}
             </div>
           </div>
@@ -548,8 +548,8 @@ const ExcelExportSelector: React.FC<ExcelExportSelectorProps> = ({
                 value={filename}
                 onChange={(e) => setFilename(e.target.value)}
                 style={inputStyle}
-                placeholder="Enter filename"
-              />
+                placeholder="Enter filename" />
+
             </div>
             <div style={{ ...sectionStyle, flex: 1 }}>
               <label style={labelStyle}>Sheet Name</label>
@@ -559,8 +559,8 @@ const ExcelExportSelector: React.FC<ExcelExportSelectorProps> = ({
                 onChange={(e) => setSheetName(e.target.value)}
                 style={inputStyle}
                 placeholder="Sheet name"
-                maxLength={31}
-              />
+                maxLength={31} />
+
             </div>
           </div>
 
@@ -571,8 +571,8 @@ const ExcelExportSelector: React.FC<ExcelExportSelectorProps> = ({
                 type="checkbox"
                 checked={includeHeaders}
                 onChange={(e) => setIncludeHeaders(e.target.checked)}
-                style={{ marginRight: '8px' }}
-              />
+                style={{ marginRight: '8px' }} />
+
               Include column headers
             </label>
           </div>
@@ -591,8 +591,8 @@ const ExcelExportSelector: React.FC<ExcelExportSelectorProps> = ({
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div>);
+
 };
 
 // Styles

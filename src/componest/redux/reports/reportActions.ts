@@ -4,6 +4,25 @@ import { Dispatch } from 'redux';
 const baseUrl = import.meta.env.VITE_API_27INFINITY_IN;
 const API_KEY = import.meta.env.VITE_API_KEY;
 
+const getHeaders = () => {
+  const token = localStorage.getItem('authToken');
+  const selectedBranch = localStorage.getItem('selectedBranch') ||
+                         localStorage.getItem('branchId') ||
+                         localStorage.getItem('selectedBranchId');
+
+  const headers: Record<string, string> = {
+    'x-api-key': API_KEY,
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  };
+
+  if (selectedBranch) {
+    headers['x-selected-branch'] = selectedBranch;
+  }
+
+  return headers;
+};
+
 // Action Types
 export const GET_DASHBOARD_REQUEST = 'GET_DASHBOARD_REQUEST';
 export const GET_DASHBOARD_SUCCESS = 'GET_DASHBOARD_SUCCESS';
@@ -55,16 +74,18 @@ export const getDashboard = (filters?: ReportFilters) => async (dispatch: Dispat
   dispatch({ type: GET_DASHBOARD_REQUEST });
 
   try {
-    const token = localStorage.getItem('authToken');
     const queryParams = new URLSearchParams(filters as any).toString();
     const url = `${baseUrl}/reports/dashboard${queryParams ? `?${queryParams}` : ''}`;
 
+    console.log('📊 Fetching dashboard report:', url);
+    console.log('📊 Filters:', filters);
+    console.log('📊 Headers:', getHeaders());
+
     const response = await axios.get(url, {
-      headers: {
-        'x-api-key': API_KEY,
-        'Authorization': `Bearer ${token}`,
-      },
+      headers: getHeaders(),
     });
+
+    console.log('📊 Dashboard response:', response.data);
 
     dispatch({
       type: GET_DASHBOARD_SUCCESS,
@@ -73,6 +94,7 @@ export const getDashboard = (filters?: ReportFilters) => async (dispatch: Dispat
 
     return response.data.data;
   } catch (error: any) {
+    console.error('📊 Dashboard error:', error.response?.data || error.message);
     dispatch({
       type: GET_DASHBOARD_FAILURE,
       payload: error.response?.data?.message || error.message,
@@ -85,16 +107,18 @@ export const getStatusReport = (filters?: ReportFilters) => async (dispatch: Dis
   dispatch({ type: GET_STATUS_REPORT_REQUEST });
 
   try {
-    const token = localStorage.getItem('authToken');
     const queryParams = new URLSearchParams(filters as any).toString();
     const url = `${baseUrl}/reports/by-status${queryParams ? `?${queryParams}` : ''}`;
 
+    console.log('📊 Fetching status report:', url);
+    console.log('📊 Filters:', filters);
+    console.log('📊 Headers:', getHeaders());
+
     const response = await axios.get(url, {
-      headers: {
-        'x-api-key': API_KEY,
-        'Authorization': `Bearer ${token}`,
-      },
+      headers: getHeaders(),
     });
+
+    console.log('📊 Status report response:', response.data);
 
     dispatch({
       type: GET_STATUS_REPORT_SUCCESS,
@@ -103,6 +127,7 @@ export const getStatusReport = (filters?: ReportFilters) => async (dispatch: Dis
 
     return response.data.data;
   } catch (error: any) {
+    console.error('📊 Status report error:', error.response?.data || error.message);
     dispatch({
       type: GET_STATUS_REPORT_FAILURE,
       payload: error.response?.data?.message || error.message,
@@ -115,16 +140,18 @@ export const getOrderTypeReport = (filters?: ReportFilters) => async (dispatch: 
   dispatch({ type: GET_ORDER_TYPE_REPORT_REQUEST });
 
   try {
-    const token = localStorage.getItem('authToken');
     const queryParams = new URLSearchParams(filters as any).toString();
     const url = `${baseUrl}/reports/by-order-type${queryParams ? `?${queryParams}` : ''}`;
 
+    console.log('📊 Fetching order type report:', url);
+    console.log('📊 Filters:', filters);
+    console.log('📊 Headers:', getHeaders());
+
     const response = await axios.get(url, {
-      headers: {
-        'x-api-key': API_KEY,
-        'Authorization': `Bearer ${token}`,
-      },
+      headers: getHeaders(),
     });
+
+    console.log('📊 Order type report response:', response.data);
 
     dispatch({
       type: GET_ORDER_TYPE_REPORT_SUCCESS,
@@ -133,6 +160,7 @@ export const getOrderTypeReport = (filters?: ReportFilters) => async (dispatch: 
 
     return response.data.data;
   } catch (error: any) {
+    console.error('📊 Order type report error:', error.response?.data || error.message);
     dispatch({
       type: GET_ORDER_TYPE_REPORT_FAILURE,
       payload: error.response?.data?.message || error.message,
@@ -145,16 +173,18 @@ export const getCategoryReport = (filters?: ReportFilters) => async (dispatch: D
   dispatch({ type: GET_CATEGORY_REPORT_REQUEST });
 
   try {
-    const token = localStorage.getItem('authToken');
     const queryParams = new URLSearchParams(filters as any).toString();
     const url = `${baseUrl}/reports/by-category${queryParams ? `?${queryParams}` : ''}`;
 
+    console.log('📊 Fetching category report:', url);
+    console.log('📊 Filters:', filters);
+    console.log('📊 Headers:', getHeaders());
+
     const response = await axios.get(url, {
-      headers: {
-        'x-api-key': API_KEY,
-        'Authorization': `Bearer ${token}`,
-      },
+      headers: getHeaders(),
     });
+
+    console.log('📊 Category report response:', response.data);
 
     dispatch({
       type: GET_CATEGORY_REPORT_SUCCESS,
@@ -163,6 +193,7 @@ export const getCategoryReport = (filters?: ReportFilters) => async (dispatch: D
 
     return response.data.data;
   } catch (error: any) {
+    console.error('📊 Category report error:', error.response?.data || error.message);
     dispatch({
       type: GET_CATEGORY_REPORT_FAILURE,
       payload: error.response?.data?.message || error.message,
@@ -175,16 +206,18 @@ export const getOptionTypeReport = (filters?: ReportFilters) => async (dispatch:
   dispatch({ type: GET_OPTION_TYPE_REPORT_REQUEST });
 
   try {
-    const token = localStorage.getItem('authToken');
     const queryParams = new URLSearchParams(filters as any).toString();
     const url = `${baseUrl}/reports/by-option-type${queryParams ? `?${queryParams}` : ''}`;
 
+    console.log('📊 Fetching option type report:', url);
+    console.log('📊 Filters:', filters);
+    console.log('📊 Headers:', getHeaders());
+
     const response = await axios.get(url, {
-      headers: {
-        'x-api-key': API_KEY,
-        'Authorization': `Bearer ${token}`,
-      },
+      headers: getHeaders(),
     });
+
+    console.log('📊 Option type report response:', response.data);
 
     dispatch({
       type: GET_OPTION_TYPE_REPORT_SUCCESS,
@@ -193,6 +226,7 @@ export const getOptionTypeReport = (filters?: ReportFilters) => async (dispatch:
 
     return response.data.data;
   } catch (error: any) {
+    console.error('📊 Option type report error:', error.response?.data || error.message);
     dispatch({
       type: GET_OPTION_TYPE_REPORT_FAILURE,
       payload: error.response?.data?.message || error.message,
@@ -205,15 +239,11 @@ export const getOptionsByType = (optionTypeId: string, filters?: ReportFilters) 
   dispatch({ type: GET_OPTIONS_BY_TYPE_REQUEST });
 
   try {
-    const token = localStorage.getItem('authToken');
     const queryParams = new URLSearchParams(filters as any).toString();
     const url = `${baseUrl}/reports/option-types/${optionTypeId}/options${queryParams ? `?${queryParams}` : ''}`;
 
     const response = await axios.get(url, {
-      headers: {
-        'x-api-key': API_KEY,
-        'Authorization': `Bearer ${token}`,
-      },
+      headers: getHeaders(),
     });
 
     dispatch({
@@ -235,16 +265,18 @@ export const getCompanyReport = (filters?: ReportFilters) => async (dispatch: Di
   dispatch({ type: GET_COMPANY_REPORT_REQUEST });
 
   try {
-    const token = localStorage.getItem('authToken');
     const queryParams = new URLSearchParams(filters as any).toString();
     const url = `${baseUrl}/reports/by-company${queryParams ? `?${queryParams}` : ''}`;
 
+    console.log('📊 Fetching company report:', url);
+    console.log('📊 Filters:', filters);
+    console.log('📊 Headers:', getHeaders());
+
     const response = await axios.get(url, {
-      headers: {
-        'x-api-key': API_KEY,
-        'Authorization': `Bearer ${token}`,
-      },
+      headers: getHeaders(),
     });
+
+    console.log('📊 Company report response:', response.data);
 
     dispatch({
       type: GET_COMPANY_REPORT_SUCCESS,
@@ -253,6 +285,7 @@ export const getCompanyReport = (filters?: ReportFilters) => async (dispatch: Di
 
     return response.data.data;
   } catch (error: any) {
+    console.error('📊 Company report error:', error.response?.data || error.message);
     dispatch({
       type: GET_COMPANY_REPORT_FAILURE,
       payload: error.response?.data?.message || error.message,
@@ -272,12 +305,8 @@ export const exportExcel = (exportData: {
   dispatch({ type: EXPORT_EXCEL_REQUEST });
 
   try {
-    const token = localStorage.getItem('authToken');
     const response = await axios.post(`${baseUrl}/reports/export/excel`, exportData, {
-      headers: {
-        'x-api-key': API_KEY,
-        'Authorization': `Bearer ${token}`,
-      },
+      headers: getHeaders(),
       responseType: 'blob',
     });
 

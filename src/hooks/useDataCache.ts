@@ -19,11 +19,11 @@ interface CacheEntry<T> {
  * Hook to cache API data and prevent multiple calls
  * Data is cached and reused until TTL expires
  */
-export const useDataCache = <T = any>(
-  key: string,
-  fetchFunction: () => Promise<T>,
-  config: CacheConfig = {}
-) => {
+export const useDataCache = <T = any,>(
+key: string,
+fetchFunction: () => Promise<T>,
+config: CacheConfig = {}) =>
+{
   const {
     ttl = 5 * 60 * 1000, // 5 minutes default
     autoRefresh = false,
@@ -48,7 +48,7 @@ export const useDataCache = <T = any>(
           };
         }
       } catch (e) {
-        console.error('Cache parse error:', e);
+
       }
     }
 
@@ -67,18 +67,18 @@ export const useDataCache = <T = any>(
   const fetchData = useCallback(async (force = false) => {
     // Prevent duplicate calls
     if (isFetchingRef.current) {
-      console.log(`[Cache] Already fetching ${key}, skipping...`);
+
       return;
     }
 
     // Check if offline
     if (!navigator.onLine) {
-      console.warn(`[Cache] Offline - cannot fetch ${key}`);
+
 
       // If we have cached data (even if stale), use it
       if (cache.data) {
-        console.log(`[Cache] Using stale cached data for ${key} (offline mode)`);
-        setCache(prev => ({
+
+        setCache((prev) => ({
           ...prev,
           isOffline: true,
           usingStaleCache: true,
@@ -88,7 +88,7 @@ export const useDataCache = <T = any>(
       }
 
       // No cached data and offline
-      setCache(prev => ({
+      setCache((prev) => ({
         ...prev,
         isOffline: true,
         error: new Error('No internet connection. Please check your network.')
@@ -99,15 +99,15 @@ export const useDataCache = <T = any>(
     // Check if cache is still valid
     const age = Date.now() - cache.timestamp;
     if (!force && cache.data && age < ttl) {
-      console.log(`[Cache] Using cached data for ${key} (age: ${Math.round(age / 1000)}s)`);
+
       return;
     }
 
     isFetchingRef.current = true;
-    setCache(prev => ({ ...prev, isLoading: true, error: null, isOffline: false, usingStaleCache: false }));
+    setCache((prev) => ({ ...prev, isLoading: true, error: null, isOffline: false, usingStaleCache: false }));
 
     try {
-      console.log(`[Cache] Fetching fresh data for ${key}...`);
+
       const data = await fetchFunction();
 
       if (!mountedRef.current) return;
@@ -130,10 +130,10 @@ export const useDataCache = <T = any>(
           timestamp: newCache.timestamp
         }));
       } catch (e) {
-        console.warn('Failed to cache in localStorage:', e);
+
       }
 
-      console.log(`[Cache] Successfully cached ${key}`);
+
     } catch (error) {
       if (!mountedRef.current) return;
 
@@ -141,15 +141,15 @@ export const useDataCache = <T = any>(
 
       // If error occurred but we have cached data, use stale cache
       if (cache.data) {
-        console.warn(`[Cache] Error fetching ${key}, using stale cache`, err);
-        setCache(prev => ({
+
+        setCache((prev) => ({
           ...prev,
           isLoading: false,
           usingStaleCache: true,
           error: null // Don't show error if we have fallback data
         }));
       } else {
-        setCache(prev => ({
+        setCache((prev) => ({
           ...prev,
           isLoading: false,
           error: err
@@ -160,7 +160,7 @@ export const useDataCache = <T = any>(
         onError(err);
       }
 
-      console.error(`[Cache] Error fetching ${key}:`, err);
+
     } finally {
       isFetchingRef.current = false;
     }
@@ -197,12 +197,12 @@ export const useDataCache = <T = any>(
       error: null
     });
     localStorage.removeItem(`cache_${key}`);
-    console.log(`[Cache] Cleared cache for ${key}`);
+
   }, [key]);
 
   // Refresh data
   const refresh = useCallback(() => {
-    console.log(`[Cache] Manual refresh for ${key}`);
+
     return fetchData(true);
   }, [fetchData, key]);
 

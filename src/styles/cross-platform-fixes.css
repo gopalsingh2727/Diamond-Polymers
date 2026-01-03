@@ -84,6 +84,31 @@ select::-ms-expand {
   display: none;
 }
 
+/* Force option element visibility on macOS/Electron */
+select option {
+  color: #1F2937 !important;
+  background-color: #FFFFFF !important;
+  padding: 8px 12px !important;
+  font-size: 14px !important;
+  min-height: 1.5em !important;
+}
+
+/* Checked/selected option styling */
+select option:checked,
+select option:hover {
+  background-color: #F3F4F6 !important;
+  color: #0c214e !important;
+  font-weight: 500 !important;
+}
+
+/* macOS specific dropdown fix */
+@supports (-webkit-appearance: none) {
+  select option {
+    color: #000000 !important;
+    background: #FFFFFF !important;
+  }
+}
+
 /* ============================================
    INPUT & TEXTAREA - Consistent Styling
    ============================================ */
@@ -401,6 +426,35 @@ html {
 
   /* Prevent overscroll bounce on Windows */
   overscroll-behavior: none;
+}
+
+/* ============================================
+   ELECTRON MULTI-SCREEN SCROLL FIX
+   ============================================ */
+
+html,
+body {
+  /* Fix scroll on multiple monitors */
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+#root {
+  height: 100%;
+  width: 100%;
+  overflow: auto;
+}
+
+/* Fix table scroll in Electron */
+.orders-table-container,
+.table-container,
+[class*="table-container"] {
+  overflow-x: auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 /* ============================================

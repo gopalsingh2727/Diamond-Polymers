@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { getOptions } from '../../../../redux/option/optionActions';
-import { getOptionSpecs } from '../../../../redux/create/optionSpec/optionSpecActions';
 import { Eye, Printer, FileSpreadsheet } from 'lucide-react';
+import { useOrderFormData } from '../useOrderFormData';
 
 import './optionsSection.css';
 
@@ -25,7 +23,7 @@ export type OptionItem = {
   optionTypeName: string;
   optionId: string;
   optionName: string;
-  specificationValues: { [key: string]: any };
+  specificationValues: {[key: string]: any;};
 };
 
 // Export type for backward compatibility - now returns array
@@ -54,9 +52,14 @@ interface InlineOptionsInputProps {
   onDataChange: (data: OptionItem[]) => void;
   initialData?: OptionItem[];
   isEditMode?: boolean;
+  isBillingOrder?: boolean;
   allowedOptionTypes?: AllowedOptionType[];
   orderId?: string;
   customerInfo?: CustomerInfo;
+  createdByName?: string;
+  createdAt?: string;
+  dynamicCalculations?: any[];
+  calculatedValues?: {[key: string]: number | string;};
   onBackspace?: () => void;
 }
 
@@ -88,47 +91,47 @@ const isFileValue = (value: any): boolean => {
 
 // Helper function to get file URL for preview
 const getFilePreviewUrl = (value: any): string | null => {
-  console.log('📍 getFilePreviewUrl called with:', {
-    value,
-    hasFileUrl: !!value?.fileUrl,
-    hasUrl: !!value?.url,
-    hasFile: value?.file instanceof File,
-    fileType: value?.fileType,
-    fileName: value?.fileName
-  });
+
+
+
+
+
+
+
+
 
   if (!value) {
-    console.log('❌ No value provided');
+
     return null;
   }
 
   // Priority 1: If it has a fileUrl (Base64 or server URL)
   if (value.fileUrl) {
-    console.log('✅ Found fileUrl:', value.fileUrl.substring(0, 50) + '...');
+
     return value.fileUrl;
   }
 
   // Priority 2: If it has a url property
   if (value.url) {
-    console.log('✅ Found url:', value.url.substring(0, 50) + '...');
+
     return value.url;
   }
 
   // Priority 3: If it's a File object, create object URL
   if (value.file instanceof File) {
     const objectUrl = URL.createObjectURL(value.file);
-    console.log('✅ Created object URL from File:', objectUrl);
+
     return objectUrl;
   }
 
   // Priority 4: If value itself is a File object
   if (value instanceof File) {
     const objectUrl = URL.createObjectURL(value);
-    console.log('✅ Created object URL from direct File:', objectUrl);
+
     return objectUrl;
   }
 
-  console.log('❌ No valid URL source found in value');
+
   return null;
 };
 
@@ -207,14 +210,22 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
   onDataChange,
   initialData = [],
   isEditMode = false,
+  isBillingOrder = false,
   allowedOptionTypes = [],
   orderId,
   customerInfo,
-  onBackspace,
+  createdByName,
+  createdAt,
+  dynamicCalculations = [],
+  calculatedValues = {},
+  onBackspace
 }, ref) => {
-  const dispatch = useDispatch();
-  const { options } = useSelector((state: any) => state.option || { options: [] });
-  const { optionSpecs } = useSelector((state: any) => state.optionSpec || { optionSpecs: [] });
+  // ✅ OPTIMIZED: Use cached form data instead of making separate API calls
+  const { options: cachedOptions, optionSpecs: cachedOptionSpecs } = useOrderFormData();
+
+  // Use cached data (already filtered by branch)
+  const options = cachedOptions || [];
+  const optionSpecs = cachedOptionSpecs || [];
 
   // Saved options list
   const [selectedOptions, setSelectedOptions] = useState<OptionItem[]>([]);
@@ -233,7 +244,7 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
   const [selectedBackendOption, setSelectedBackendOption] = useState<any>(null);
 
   // File preview modal state
-  const [filePreview, setFilePreview] = useState<{ url: string; name: string; type: string } | null>(null);
+  const [filePreview, setFilePreview] = useState<{url: string;name: string;type: string;} | null>(null);
 
   // Option type view popup state
   const [viewOptionTypePopup, setViewOptionTypePopup] = useState<{
@@ -265,82 +276,43 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
     }
   }));
 
-  // Fetch options for this order type
-  useEffect(() => {
-    const branchId = localStorage.getItem('branchId') || '';
-    dispatch(getOptions({ orderTypeId, branchId }) as any);
-  }, [dispatch, orderTypeId]);
+  // ✅ REMOVED: No longer need to fetch options/optionSpecs separately
+  // Data is now provided by useOrderFormData() hook which uses cached data from /order/form-data API
 
-  // Fetch optionSpecs for fallback lookup
-  useEffect(() => {
-    const branchId = localStorage.getItem('branchId') || '';
-    dispatch(getOptionSpecs({ branchId }) as any);
-  }, [dispatch]);
-
-  // Listen for WebSocket updates to refetch options and optionSpecs in real-time
-  useEffect(() => {
-    const branchId = localStorage.getItem('branchId') || '';
-
-    const handleWebSocketMessage = (event: CustomEvent) => {
-      const { type, data } = event.detail;
-
-      if (type === 'referenceData:invalidate') {
-        const entityType = data?.entity || data?.entityType;
-        console.log('🔄 [InlineOptionsInput] WebSocket invalidate received for:', entityType);
-
-        // Refetch options when option or optionType is updated
-        if (entityType === 'option' || entityType === 'optionType') {
-          console.log('📥 [InlineOptionsInput] Refetching options...');
-          dispatch(getOptions({ orderTypeId, branchId }) as any);
-        }
-
-        // Refetch optionSpecs when optionSpec is updated
-        if (entityType === 'optionSpec') {
-          console.log('📥 [InlineOptionsInput] Refetching optionSpecs...');
-          dispatch(getOptionSpecs({ branchId }) as any);
-        }
-      }
-    };
-
-    // Add event listener for WebSocket messages
-    window.addEventListener('websocket:message', handleWebSocketMessage as EventListener);
-
-    return () => {
-      window.removeEventListener('websocket:message', handleWebSocketMessage as EventListener);
-    };
-  }, [dispatch, orderTypeId]);
+  // ✅ REMOVED: WebSocket updates are now handled by useOrderFormData() hook
+  // which automatically refetches all form data when reference data is invalidated
 
   // Debug: Log options data
   useEffect(() => {
-    console.log('📦 Options data received:', options);
+
     if (options.length > 0) {
-      console.log('📦 First option structure:', options[0]);
-      console.log('📦 First option optionTypeId:', options[0]?.optionTypeId);
-      console.log('📦 First option specifications:', options[0]?.optionTypeId?.specifications);
+
+
+
     }
   }, [options]);
 
   // Load initial data for edit mode (only once)
   useEffect(() => {
-    console.log('🔍 InlineOptionsInput - Edit mode check:', {
-      isEditMode,
-      initialDataLength: initialData?.length || 0,
-      initialData: initialData,
-      hasLoadedInitialData: hasLoadedInitialData.current
-    });
+
+
+
+
+
+
 
     // Only load initial data once in edit mode
     if (isEditMode && initialData && initialData.length > 0 && !hasLoadedInitialData.current) {
-      console.log('✅ Loading options in edit mode (ONCE):', initialData);
+
       setSelectedOptions(initialData);
       hasLoadedInitialData.current = true;
     } else {
-      console.log('❌ Not loading options:', {
-        isEditMode,
-        hasInitialData: !!initialData,
-        initialDataLength: initialData?.length || 0,
-        alreadyLoaded: hasLoadedInitialData.current
-      });
+
+
+
+
+
+
     }
   }, [isEditMode, initialData]);
 
@@ -352,23 +324,23 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
       return;
     }
 
-    console.log('📤 Notifying parent of data change:', selectedOptions.length, 'options');
+
     onDataChange(selectedOptions);
   }, [selectedOptions, onDataChange]);
 
   // Get unique option types - prioritize allowedOptionTypes from order type config
-  console.log('🎯 allowedOptionTypes received:', allowedOptionTypes);
-  console.log('🎯 allowedOptionTypes length:', allowedOptionTypes.length);
 
-  const optionTypes = allowedOptionTypes.length > 0
-    ? allowedOptionTypes.map((ot) => ot.name).filter(Boolean) as string[]
-    : Array.from(
-        new Set(
-          options.map((opt: any) => opt.optionTypeId?.name || '')
-        )
-      ).filter(Boolean) as string[];
 
-  console.log('🎯 Final optionTypes:', optionTypes);
+
+  const optionTypes = allowedOptionTypes.length > 0 ?
+  allowedOptionTypes.map((ot) => ot.name).filter(Boolean) as string[] :
+  Array.from(
+    new Set(
+      options.map((opt: any) => opt.optionTypeId?.name || '')
+    )
+  ).filter(Boolean) as string[];
+
+
 
   // Get option type data by name (for specs from allowedOptionTypes)
   const getOptionTypeByName = (typeName: string): AllowedOptionType | undefined => {
@@ -377,9 +349,27 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
 
   // Filter options by type name
   const getOptionsByType = (typeName: string) => {
-    return options.filter(
-      (opt: any) => opt.optionTypeId?.name === typeName
-    );
+
+
+
+
+    const filtered = options.filter((opt: any) => {
+      const hasMatch = opt.optionTypeId?.name === typeName;
+      if (!hasMatch && options.length > 0) {
+
+
+
+
+
+
+
+
+      }
+      return hasMatch;
+    });
+
+
+    return filtered;
   };
 
   // Open popup
@@ -405,7 +395,7 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
           setShowPopup(false);
         } else if (currentOption.optionTypeName && currentOption.optionName) {
           // Save current option and start new row
-          setSelectedOptions(prev => {
+          setSelectedOptions((prev) => {
             const updated = [...prev, { ...currentOption, id: generateId() }];
             // onDataChange will be called by useEffect
             return updated;
@@ -428,12 +418,12 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
 
   // Update current option field
   const updateCurrentOption = (field: keyof OptionItem, value: any) => {
-    setCurrentOption(prev => ({ ...prev, [field]: value }));
+    setCurrentOption((prev) => ({ ...prev, [field]: value }));
   };
 
   // Update specification value
   const updateSpecificationValue = (dimensionName: string, value: any) => {
-    setCurrentOption(prev => ({
+    setCurrentOption((prev) => ({
       ...prev,
       specificationValues: {
         ...prev.specificationValues,
@@ -446,7 +436,7 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
   const handleTypeSelect = (selectedType: any) => {
     const typeName = selectedType.name || selectedType.optionTypeName || selectedType;
 
-    setCurrentOption(prev => ({
+    setCurrentOption((prev) => ({
       ...prev,
       optionTypeName: typeName,
       optionId: '',
@@ -461,12 +451,12 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
 
   // Option Name Selection Handler
   const handleNameSelect = (selectedOption: any) => {
-    console.log('🎯 Option selected:', selectedOption);
-    console.log('🎯 Option name:', selectedOption.name);
-    console.log('🎯 Option optionTypeId:', selectedOption.optionTypeId);
-    console.log('🎯 Option optionSpecId:', selectedOption.optionSpecId);
-    console.log('🎯 Option dimensions:', selectedOption.dimensions);
-    console.log('🎯 Available optionSpecs:', optionSpecs);
+
+
+
+
+
+
 
     const optName = selectedOption.name || selectedOption.optionName || '';
     const optId = selectedOption._id || selectedOption.optionId || '';
@@ -487,7 +477,7 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
         if (!specNames.has(spec.name)) {
           specs.push(spec);
           specNames.add(spec.name);
-          console.log(`🎯 Added spec "${spec.name}" from ${source}`);
+
         }
       });
     };
@@ -503,12 +493,12 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
     }
 
     // 3. Add OptionSpec matching the same OptionType
-    const matchingOptionSpec = Array.isArray(optionSpecs)
-      ? optionSpecs.find((spec: any) => {
-          const specTypeId = spec.optionTypeId?._id || spec.optionTypeId;
-          return specTypeId === typeId;
-        })
-      : null;
+    const matchingOptionSpec = Array.isArray(optionSpecs) ?
+    optionSpecs.find((spec: any) => {
+      const specTypeId = spec.optionTypeId?._id || spec.optionTypeId;
+      return specTypeId === typeId;
+    }) :
+    null;
 
     if (matchingOptionSpec?.specifications && matchingOptionSpec.specifications.length > 0) {
       addSpecs(matchingOptionSpec.specifications, `OptionSpec "${matchingOptionSpec.name}"`);
@@ -519,7 +509,7 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
       addSpecs(selectedOption.optionTypeId.specifications, 'OptionType template');
     }
 
-    console.log('🎯 Final merged specs:', specs.length, 'specs from', specNames.size, 'unique names');
+
 
     // Initialize spec values from template or dimensions
     // For dimensions: use 'value' field directly
@@ -527,14 +517,14 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
     // For OptionType: use 'defaultValue' (template)
     const specValues = specs.reduce((acc: any, spec: any) => {
       // Use 'value' field if it exists (from dimensions or OptionSpec), otherwise use 'defaultValue' (from template)
-      acc[spec.name] = spec.value !== undefined ? spec.value : (spec.defaultValue || '');
+      acc[spec.name] = spec.value !== undefined ? spec.value : spec.defaultValue || '';
       return acc;
     }, {});
 
-    console.log('🎯 Spec values created:', specValues);
-    console.log('🎯 Setting selectedBackendOption to:', selectedOption);
 
-    setCurrentOption(prev => ({
+
+
+    setCurrentOption((prev) => ({
       ...prev,
       optionId: optId,
       optionName: optName,
@@ -556,9 +546,7 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
 
   // Double-click to reopen popup
   const handleListDoubleClick = () => {
-    if (!isEditMode) {
-      openPopup();
-    }
+    openPopup();
   };
 
   // Handle print for option type view using iframe (no popup blocker issues)
@@ -649,6 +637,7 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
             ${orderId ? `<div class="order-badge">${orderId}</div>` : ''}
             <h1>${typeName}</h1>
             <div class="date">${currentDate}</div>
+            ${createdByName ? `<div class="date" style="margin-top: 5px;"><strong>${createdByName}</strong></div>` : ''}
           </div>
           ${customerInfo ? `
             <div class="customer-info">
@@ -665,7 +654,7 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
             <tr>
               <th style="width: 30px">#</th>
               <th>Option Name</th>
-              ${specKeys.map(key => `<th>${key}</th>`).join('')}
+              ${specKeys.map((key) => `<th>${key}</th>`).join('')}
             </tr>
           </thead>
           <tbody>
@@ -673,54 +662,54 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
               <tr>
                 <td>${idx + 1}</td>
                 <td><strong>${opt.optionName}</strong></td>
-                ${specKeys.map(key => {
-                  const value = opt.specificationValues?.[key];
-                  const displayValue = isFileValue(value) ? '📎 File' : renderSpecValue(value);
-                  return `<td>${displayValue}</td>`;
-                }).join('')}
+                ${specKeys.map((key) => {
+      const value = opt.specificationValues?.[key];
+      const displayValue = isFileValue(value) ? '📎 File' : renderSpecValue(value);
+      return `<td>${displayValue}</td>`;
+    }).join('')}
               </tr>
             `).join('')}
           </tbody>
           ${(() => {
-            // Calculate totals for print
-            const firstOpt = optionsToPrint[0];
-            const backendOpt = options.find((o: any) => o._id === firstOpt?.optionId);
-            const specDefs: Record<string, any> = {};
-            backendOpt?.dimensions?.forEach((d: any) => { if (!specDefs[d.name]) specDefs[d.name] = { ...d }; });
-            backendOpt?.optionSpecId?.specifications?.forEach((s: any) => {
-              if (specDefs[s.name]) { specDefs[s.name].includeInTotal = s.includeInTotal; specDefs[s.name].dataType = s.dataType; }
-              else specDefs[s.name] = { ...s };
-            });
-            const tId = backendOpt?.optionTypeId?._id || backendOpt?.optionTypeId || firstOpt?.optionTypeId;
-            const mSpec = Array.isArray(optionSpecs) ? optionSpecs.find((s: any) => (s.optionTypeId?._id || s.optionTypeId) === tId) : null;
-            mSpec?.specifications?.forEach((s: any) => {
-              if (specDefs[s.name] && specDefs[s.name].includeInTotal === undefined) specDefs[s.name].includeInTotal = s.includeInTotal;
-              if (!specDefs[s.name]) specDefs[s.name] = { ...s };
-            });
+      // Calculate totals for print
+      const firstOpt = optionsToPrint[0];
+      const backendOpt = options.find((o: any) => o._id === firstOpt?.optionId);
+      const specDefs: Record<string, any> = {};
+      backendOpt?.dimensions?.forEach((d: any) => {if (!specDefs[d.name]) specDefs[d.name] = { ...d };});
+      backendOpt?.optionSpecId?.specifications?.forEach((s: any) => {
+        if (specDefs[s.name]) {specDefs[s.name].includeInTotal = s.includeInTotal;specDefs[s.name].dataType = s.dataType;} else
+        specDefs[s.name] = { ...s };
+      });
+      const tId = backendOpt?.optionTypeId?._id || backendOpt?.optionTypeId || firstOpt?.optionTypeId;
+      const mSpec = Array.isArray(optionSpecs) ? optionSpecs.find((s: any) => (s.optionTypeId?._id || s.optionTypeId) === tId) : null;
+      mSpec?.specifications?.forEach((s: any) => {
+        if (specDefs[s.name] && specDefs[s.name].includeInTotal === undefined) specDefs[s.name].includeInTotal = s.includeInTotal;
+        if (!specDefs[s.name]) specDefs[s.name] = { ...s };
+      });
 
-            const hasTotal = specKeys.some(k => {
-              const sp = specDefs[k];
-              const isNum = sp?.dataType === 'number' || (!sp?.dataType && !isNaN(parseFloat(optionsToPrint[0]?.specificationValues?.[k])));
-              return isNum && sp?.includeInTotal !== false;
-            });
-            if (!hasTotal) return '';
+      const hasTotal = specKeys.some((k) => {
+        const sp = specDefs[k];
+        const isNum = sp?.dataType === 'number' || !sp?.dataType && !isNaN(parseFloat(optionsToPrint[0]?.specificationValues?.[k]));
+        return isNum && sp?.includeInTotal !== false;
+      });
+      if (!hasTotal) return '';
 
-            const totals: Record<string, number> = {};
-            const showT: Record<string, boolean> = {};
-            specKeys.forEach(k => {
-              const sp = specDefs[k];
-              const isNum = sp?.dataType === 'number' || (!sp?.dataType && !isNaN(parseFloat(optionsToPrint[0]?.specificationValues?.[k])));
-              if (isNum && sp?.includeInTotal !== false) {
-                showT[k] = true;
-                totals[k] = optionsToPrint.reduce((sum, o) => sum + (parseFloat(o.specificationValues?.[k]) || 0), 0);
-              }
-            });
+      const totals: Record<string, number> = {};
+      const showT: Record<string, boolean> = {};
+      specKeys.forEach((k) => {
+        const sp = specDefs[k];
+        const isNum = sp?.dataType === 'number' || !sp?.dataType && !isNaN(parseFloat(optionsToPrint[0]?.specificationValues?.[k]));
+        if (isNum && sp?.includeInTotal !== false) {
+          showT[k] = true;
+          totals[k] = optionsToPrint.reduce((sum, o) => sum + (parseFloat(o.specificationValues?.[k]) || 0), 0);
+        }
+      });
 
-            return `<tfoot><tr style="background:#fef3c7;border-top:2px solid #f59e0b;font-weight:700;color:#92400e;">
+      return `<tfoot><tr style="background:#fef3c7;border-top:2px solid #f59e0b;font-weight:700;color:#92400e;">
               <td></td><td>Total</td>
-              ${specKeys.map(k => `<td>${showT[k] ? (totals[k]?.toLocaleString() || '0') : '-'}</td>`).join('')}
+              ${specKeys.map((k) => `<td>${showT[k] ? totals[k]?.toLocaleString() || '0' : '-'}</td>`).join('')}
             </tr></tfoot>`;
-          })()}
+    })()}
         </table>
       </body>
       </html>
@@ -749,15 +738,9 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
           iframe.contentWindow?.focus();
           iframe.contentWindow?.print();
         } catch (e) {
-          console.error('Print error:', e);
-          // Fallback: open in new window
-          const printWin = window.open('', '_blank');
-          if (printWin) {
-            printWin.document.write(printContent);
-            printWin.document.close();
-            printWin.focus();
-            printWin.print();
-          }
+
+          // Don't use window.open as it's blocked in Electron
+          alert('Print failed. Please try again.');
         }
         // Remove iframe after printing
         setTimeout(() => {
@@ -774,23 +757,23 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
     // Create CSV content
     const headers = ['#', 'Option Name', ...specKeys];
     const rows = optionsToExport.map((opt, idx) => [
-      idx + 1,
-      opt.optionName,
-      ...specKeys.map(key => {
-        const value = opt.specificationValues?.[key];
-        if (isFileValue(value)) return '📎 File';
-        return renderSpecValue(value);
-      })
-    ]);
+    idx + 1,
+    opt.optionName,
+    ...specKeys.map((key) => {
+      const value = opt.specificationValues?.[key];
+      if (isFileValue(value)) return '📎 File';
+      return renderSpecValue(value);
+    })]
+    );
 
     // Calculate Total row
     const firstOpt = optionsToExport[0];
     const backendOpt = options.find((o: any) => o._id === firstOpt?.optionId);
     const specDefs: Record<string, any> = {};
-    backendOpt?.dimensions?.forEach((d: any) => { if (!specDefs[d.name]) specDefs[d.name] = { ...d }; });
+    backendOpt?.dimensions?.forEach((d: any) => {if (!specDefs[d.name]) specDefs[d.name] = { ...d };});
     backendOpt?.optionSpecId?.specifications?.forEach((s: any) => {
-      if (specDefs[s.name]) { specDefs[s.name].includeInTotal = s.includeInTotal; specDefs[s.name].dataType = s.dataType; }
-      else specDefs[s.name] = { ...s };
+      if (specDefs[s.name]) {specDefs[s.name].includeInTotal = s.includeInTotal;specDefs[s.name].dataType = s.dataType;} else
+      specDefs[s.name] = { ...s };
     });
     const tId = backendOpt?.optionTypeId?._id || backendOpt?.optionTypeId || firstOpt?.optionTypeId;
     const mSpec = Array.isArray(optionSpecs) ? optionSpecs.find((s: any) => (s.optionTypeId?._id || s.optionTypeId) === tId) : null;
@@ -799,9 +782,9 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
       if (!specDefs[s.name]) specDefs[s.name] = { ...s };
     });
 
-    const hasTotal = specKeys.some(k => {
+    const hasTotal = specKeys.some((k) => {
       const sp = specDefs[k];
-      const isNum = sp?.dataType === 'number' || (!sp?.dataType && !isNaN(parseFloat(optionsToExport[0]?.specificationValues?.[k])));
+      const isNum = sp?.dataType === 'number' || !sp?.dataType && !isNaN(parseFloat(optionsToExport[0]?.specificationValues?.[k]));
       return isNum && sp?.includeInTotal !== false;
     });
 
@@ -809,41 +792,41 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
     if (hasTotal) {
       const totals: Record<string, number> = {};
       const showT: Record<string, boolean> = {};
-      specKeys.forEach(k => {
+      specKeys.forEach((k) => {
         const sp = specDefs[k];
-        const isNum = sp?.dataType === 'number' || (!sp?.dataType && !isNaN(parseFloat(optionsToExport[0]?.specificationValues?.[k])));
+        const isNum = sp?.dataType === 'number' || !sp?.dataType && !isNaN(parseFloat(optionsToExport[0]?.specificationValues?.[k]));
         if (isNum && sp?.includeInTotal !== false) {
           showT[k] = true;
           totals[k] = optionsToExport.reduce((sum, o) => sum + (parseFloat(o.specificationValues?.[k]) || 0), 0);
         }
       });
-      totalRow = ['', 'TOTAL', ...specKeys.map(k => showT[k] ? String(totals[k] || 0) : '-')];
+      totalRow = ['', 'TOTAL', ...specKeys.map((k) => showT[k] ? String(totals[k] || 0) : '-')];
     }
 
     // Add header info
     const headerInfo = [
-      [`${typeName} - Options Export`],
-      [''],
-      orderId ? ['Order ID:', orderId] : [],
-      customerInfo?.name ? ['Customer:', customerInfo.name] : [],
-      customerInfo?.companyName ? ['Company:', customerInfo.companyName] : [],
-      customerInfo?.address ? ['Address:', customerInfo.address] : [],
-      ['Generated:', new Date().toLocaleString()],
-      [''],
-      headers,
-      ...rows,
-      ...(totalRow.length > 0 ? [totalRow] : [])
-    ].filter(row => row.length > 0);
+    [`${typeName} - Options Export`],
+    [''],
+    orderId ? ['Order ID:', orderId] : [],
+    customerInfo?.name ? ['Customer:', customerInfo.name] : [],
+    customerInfo?.companyName ? ['Company:', customerInfo.companyName] : [],
+    customerInfo?.address ? ['Address:', customerInfo.address] : [],
+    ['Generated:', new Date().toLocaleString()],
+    [''],
+    headers,
+    ...rows,
+    ...(totalRow.length > 0 ? [totalRow] : [])].
+    filter((row) => row.length > 0);
 
     // Convert to CSV
-    const csvContent = headerInfo.map(row =>
-      row.map(cell => {
-        const cellStr = String(cell);
-        if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
-          return `"${cellStr.replace(/"/g, '""')}"`;
-        }
-        return cellStr;
-      }).join(',')
+    const csvContent = headerInfo.map((row) =>
+    row.map((cell) => {
+      const cellStr = String(cell);
+      if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
+        return `"${cellStr.replace(/"/g, '""')}"`;
+      }
+      return cellStr;
+    }).join(',')
     ).join('\n');
 
     // Create and download file
@@ -862,17 +845,17 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
 
   // Handle file preview
   const handleViewFile = (value: any) => {
-    console.log('🔍 handleViewFile called with:', value);
+
     const url = getFilePreviewUrl(value);
-    console.log('🔍 Generated URL:', url);
+
     const name = getFileName(value);
-    console.log('🔍 File name:', name);
+
     const type = getFileType(value);
-    console.log('🔍 File type:', type);
+
     if (url) {
       setFilePreview({ url, name, type });
     } else {
-      console.error('❌ No URL available for file:', value);
+
       const errorDetails = `
 File Preview Error:
 - Has fileUrl: ${!!value?.fileUrl}
@@ -886,20 +869,20 @@ For files uploaded in this session, they should work.
 For old files, you need to re-upload them.
       `.trim();
       alert(errorDetails);
-      console.table({
-        'Has fileUrl': !!value?.fileUrl,
-        'Has url': !!value?.url,
-        'Has File object': value?.file instanceof File,
-        'File name': name,
-        'File type': type,
-        'fileName property': value?.fileName,
-        'fileSize property': value?.fileSize
-      });
+
+
+
+
+
+
+
+
+
     }
   };
 
   const getOptionData = (): OptionData => {
-    return selectedOptions.map(option => ({
+    return selectedOptions.map((option) => ({
       id: option.id,
       optionTypeId: option.optionTypeId,
       optionTypeName: option.optionTypeName,
@@ -912,25 +895,25 @@ For old files, you need to re-upload them.
   return (
     <div>
       {/* Show trigger only when no options */}
-      {selectedOptions.length === 0 && (
-        <div
-          onClick={() => !isEditMode && openPopup()}
-          style={{
-            cursor: isEditMode ? 'default' : 'pointer',
-            padding: '10px 15px',
-            color: '#666',
-            fontSize: '14px'
-          }}
-        >
+      {selectedOptions.length === 0 &&
+      <div
+        onClick={openPopup}
+        style={{
+          cursor: 'pointer',
+          padding: '10px 15px',
+          color: '#666',
+          fontSize: '14px'
+        }}>
+
           Click to add options
         </div>
-      )}
+      }
 
       {/* Options list display - grouped by Option Type */}
       {selectedOptions.length > 0 && (() => {
         // Group options by optionTypeId
         const groupedOptions: Record<string, OptionItem[]> = {};
-        selectedOptions.forEach(option => {
+        selectedOptions.forEach((option) => {
           const typeKey = option.optionTypeId;
           if (!groupedOptions[typeKey]) {
             groupedOptions[typeKey] = [];
@@ -939,7 +922,7 @@ For old files, you need to re-upload them.
         });
 
         return (
-          <div onDoubleClick={handleListDoubleClick} style={{ cursor: isEditMode ? 'default' : 'pointer' }}>
+          <div onDoubleClick={handleListDoubleClick} style={{ cursor: 'pointer' }}>
             {/* View All Options Header */}
             <div style={{
               display: 'flex',
@@ -985,8 +968,8 @@ For old files, you need to re-upload them.
                   fontSize: '11px',
                   fontWeight: '500'
                 }}
-                title="View all options details"
-              >
+                title="View all options details">
+
                 <Eye size={14} />
                 View All
               </button>
@@ -995,7 +978,7 @@ For old files, you need to re-upload them.
               // Get unique specification keys for THIS group only
               const groupSpecKeys = Array.from(
                 new Set(
-                  optionsInGroup.flatMap(opt => Object.keys(opt.specificationValues || {}))
+                  optionsInGroup.flatMap((opt) => Object.keys(opt.specificationValues || {}))
                 )
               );
 
@@ -1012,8 +995,8 @@ For old files, you need to re-upload them.
                     border: '1px solid #e5e7eb',
                     borderRadius: '6px',
                     padding: '0'
-                  }}
-                >
+                  }}>
+
                   {/* Option Type Header */}
                   <div style={{
                     display: 'flex',
@@ -1072,8 +1055,8 @@ For old files, you need to re-upload them.
                         fontSize: '11px',
                         fontWeight: '500'
                       }}
-                      title={`View ${optionTypeName} specifications`}
-                    >
+                      title={`View ${optionTypeName} specifications`}>
+
                       <Eye size={14} />
                       View
                     </button>
@@ -1083,7 +1066,7 @@ For old files, you need to re-upload them.
                     {/* Table Header */}
                     <div className="SaveMixingHeaderRow" style={{
                       display: 'grid',
-                      gridTemplateColumns: `30px 100px 100px ${groupSpecKeys.map(() => '90px').join(' ')} ${!isEditMode ? '30px' : ''}`,
+                      gridTemplateColumns: `30px 100px 100px ${groupSpecKeys.map(() => '90px').join(' ')} 30px`,
                       gap: '4px',
                       padding: '6px 8px',
                       background: '#f8fafc',
@@ -1093,20 +1076,20 @@ For old files, you need to re-upload them.
                       <strong>#</strong>
                       <strong>Type</strong>
                       <strong>Name</strong>
-                      {groupSpecKeys.map(key => (
-                        <strong key={key} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{key}</strong>
-                      ))}
-                      {!isEditMode && <strong></strong>}
+                      {groupSpecKeys.map((key) =>
+                      <strong key={key} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{key}</strong>
+                      )}
+                      <strong></strong>
                     </div>
 
                     {optionsInGroup.map((option, groupRowIndex) => {
                       // Find original index for delete functionality
-                      const originalIndex = selectedOptions.findIndex(o => o.id === option.id);
+                      const originalIndex = selectedOptions.findIndex((o) => o.id === option.id);
 
                       return (
                         <div key={option.id} className="SaveMixingstepRow" style={{
                           display: 'grid',
-                          gridTemplateColumns: `30px 100px 100px ${groupSpecKeys.map(() => '90px').join(' ')} ${!isEditMode ? '30px' : ''}`,
+                          gridTemplateColumns: `30px 100px 100px ${groupSpecKeys.map(() => '90px').join(' ')} 30px`,
                           gap: '4px',
                           padding: '4px 8px',
                           fontSize: '12px',
@@ -1115,75 +1098,73 @@ For old files, you need to re-upload them.
                           <span>{groupRowIndex + 1}</span>
                           <span>{option.optionTypeName}</span>
                           <span>{option.optionName}</span>
-                          {groupSpecKeys.map(key => {
+                          {groupSpecKeys.map((key) => {
                             const value = option.specificationValues?.[key];
                             const isFile = isFileValue(value);
 
                             // Debug: Log the value structure
                             if (isFile) {
-                              console.log('🔍 File cell for key:', key, 'Value:', value);
+
                             }
 
                             return (
                               <span key={key} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                {isFile ? (
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      console.log('👁️ Eye icon clicked for:', key, 'Value:', value);
-                                      handleViewFile(value);
-                                    }}
-                                    style={{
-                                      background: 'transparent',
-                                      border: 'none',
-                                      cursor: 'pointer',
-                                      color: '#3b82f6',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      padding: '4px'
-                                    }}
-                                    title="View file"
-                                  >
+                                {isFile ?
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+
+                                    handleViewFile(value);
+                                  }}
+                                  style={{
+                                    background: 'transparent',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    color: '#3b82f6',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    padding: '4px'
+                                  }}
+                                  title="View file">
+
                                     <Eye size={18} />
-                                  </button>
-                                ) : (
-                                  renderSpecValue(value)
-                                )}
-                              </span>
-                            );
+                                  </button> :
+
+                                renderSpecValue(value)
+                                }
+                              </span>);
+
                           })}
-                          {!isEditMode && (
-                            <span style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleRemoveOption(originalIndex);
-                                }}
-                                style={{
-                                  background: '#fee2e2',
-                                  border: '1px solid #fecaca',
-                                  borderRadius: '4px',
-                                  cursor: 'pointer',
-                                  color: '#dc2626',
-                                  fontSize: '14px',
-                                  fontWeight: 'bold',
-                                  width: '24px',
-                                  height: '24px',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  padding: 0
-                                }}
-                                title="Remove"
-                              >
-                                ×
-                              </button>
-                            </span>
-                          )}
-                        </div>
-                      );
+                          <span style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRemoveOption(originalIndex);
+                              }}
+                              style={{
+                                background: '#fee2e2',
+                                border: '1px solid #fecaca',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                color: '#dc2626',
+                                fontSize: '14px',
+                                fontWeight: 'bold',
+                                width: '24px',
+                                height: '24px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                padding: 0
+                              }}
+                              title="Remove">
+
+                              ×
+                            </button>
+                          </span>
+                        </div>);
+
                     })}
 
                     {/* Total Row - Calculate totals for number specs with includeInTotal */}
@@ -1220,9 +1201,9 @@ For old files, you need to re-upload them.
 
                         // 3. From OptionSpec by OptionType match - MERGE includeInTotal
                         const typeId = backendOption?.optionTypeId?._id || backendOption?.optionTypeId || firstSelectedOption?.optionTypeId;
-                        const matchingSpec = Array.isArray(optionSpecs)
-                          ? optionSpecs.find((spec: any) => (spec.optionTypeId?._id || spec.optionTypeId) === typeId)
-                          : null;
+                        const matchingSpec = Array.isArray(optionSpecs) ?
+                        optionSpecs.find((spec: any) => (spec.optionTypeId?._id || spec.optionTypeId) === typeId) :
+                        null;
                         matchingSpec?.specifications?.forEach((spec: any) => {
                           if (specDefs[spec.name]) {
                             // Merge: OptionSpec has includeInTotal setting, copy it if not already set
@@ -1251,34 +1232,34 @@ For old files, you need to re-upload them.
                       };
 
                       const specDefs = getSpecDefinitions();
-                      console.log('📊 Total Row - specDefs (with includeInTotal):', specDefs);
-                      console.log('📊 Total Row - groupSpecKeys:', groupSpecKeys);
+
+
 
                       // Check if any spec should show total (number type with includeInTotal !== false)
                       // includeInTotal: true = show total, false = hide total, undefined = default to true
-                      const hasAnyTotal = groupSpecKeys.some(key => {
+                      const hasAnyTotal = groupSpecKeys.some((key) => {
                         const spec = specDefs[key];
                         // For specs without dataType defined, check if value looks numeric
                         const isNumeric = spec?.dataType === 'number' ||
-                          (spec?.dataType === undefined && !isNaN(parseFloat(optionsInGroup[0]?.specificationValues?.[key])));
+                        spec?.dataType === undefined && !isNaN(parseFloat(optionsInGroup[0]?.specificationValues?.[key]));
                         // Only show total if includeInTotal is true or undefined (default true), NOT if false
                         const shouldInclude = spec?.includeInTotal !== false;
-                        console.log(`📊 Spec "${key}": dataType=${spec?.dataType}, isNumeric=${isNumeric}, includeInTotal=${spec?.includeInTotal} (${typeof spec?.includeInTotal}), shouldShow=${isNumeric && shouldInclude}`);
+
                         return isNumeric && shouldInclude;
                       });
 
-                      console.log('📊 hasAnyTotal:', hasAnyTotal, 'optionsCount:', optionsInGroup.length);
+
                       if (!hasAnyTotal) return null;
 
                       // Calculate totals - track which specs should show totals
                       const totals: Record<string, number> = {};
                       const showTotalFor: Record<string, boolean> = {};
 
-                      groupSpecKeys.forEach(key => {
+                      groupSpecKeys.forEach((key) => {
                         const spec = specDefs[key];
                         // Same logic as hasAnyTotal check
                         const isNumeric = spec?.dataType === 'number' ||
-                          (spec?.dataType === undefined && !isNaN(parseFloat(optionsInGroup[0]?.specificationValues?.[key])));
+                        spec?.dataType === undefined && !isNaN(parseFloat(optionsInGroup[0]?.specificationValues?.[key]));
                         const shouldInclude = spec?.includeInTotal !== false;
 
                         if (isNumeric && shouldInclude) {
@@ -1290,12 +1271,12 @@ For old files, you need to re-upload them.
                         }
                       });
 
-                      console.log('📊 Totals calculated:', totals);
+
 
                       return (
                         <div className="SaveMixingstepRow" style={{
                           display: 'grid',
-                          gridTemplateColumns: `30px 100px 100px ${groupSpecKeys.map(() => '90px').join(' ')} ${!isEditMode ? '30px' : ''}`,
+                          gridTemplateColumns: `30px 100px 100px ${groupSpecKeys.map(() => '90px').join(' ')} 30px`,
                           gap: '4px',
                           padding: '6px 8px',
                           fontSize: '12px',
@@ -1306,80 +1287,80 @@ For old files, you need to re-upload them.
                           <span></span>
                           <span></span>
                           <span style={{ color: '#92400e' }}>Total</span>
-                          {groupSpecKeys.map(key => (
-                            <span key={key} style={{ color: '#92400e' }}>
+                          {groupSpecKeys.map((key) =>
+                          <span key={key} style={{ color: '#92400e' }}>
                               {showTotalFor[key] ? totals[key]?.toLocaleString() || '0' : '-'}
                             </span>
-                          ))}
-                          {!isEditMode && <span></span>}
-                        </div>
-                      );
+                          )}
+                          <span></span>
+                        </div>);
+
                     })()}
 
                   </div>
-                </div>
-              );
+                </div>);
+
             })}
-          </div>
-        );
+          </div>);
+
       })()}
 
       {/* Popup for adding options */}
-      {showPopup && (
-        <div
-          className="createorderstartsections-popup-overlay"
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 9999
-          }}
-          onClick={() => setShowPopup(false)}
-        >
+      {showPopup &&
+      <div
+        className="createorderstartsections-popup-overlay"
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 9999
+        }}
+        onClick={() => setShowPopup(false)}>
+
           <div
-            className="createorderstartsections-popup"
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              backgroundColor: 'white',
-              borderRadius: '10px',
-              padding: '25px',
-              minWidth: '800px',
-              width: '95vw',
-              maxHeight: '90vh',
-              overflowY: 'auto',
-              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
-              position: 'relative'
-            }}
-          >
+          className="createorderstartsections-popup"
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            backgroundColor: 'white',
+            borderRadius: '10px',
+            padding: '25px',
+            minWidth: '800px',
+            width: '95vw',
+            maxHeight: '90vh',
+            overflowY: 'auto',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
+            position: 'relative'
+          }}>
+
               {/* Close Button */}
               <button
-                type="button"
-                onClick={() => setShowPopup(false)}
-                style={{
-                  position: 'absolute',
-                  top: '10px',
-                  right: '10px',
-                  background: 'white',
-                  border: '1px solid #ddd',
-                  borderRadius: '50%',
-                  width: '30px',
-                  height: '30px',
-                  fontSize: '20px',
-                  cursor: 'pointer',
-                  color: '#666',
-                  lineHeight: 1,
-                  zIndex: 1001,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-              >
+            type="button"
+            onClick={() => setShowPopup(false)}
+            style={{
+              position: 'absolute',
+              top: '10px',
+              right: '10px',
+              background: 'white',
+              border: '1px solid #ddd',
+              borderRadius: '50%',
+              width: '30px',
+              height: '30px',
+              fontSize: '20px',
+              cursor: 'pointer',
+              color: '#666',
+              lineHeight: 1,
+              zIndex: 1001,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+
                 ×
               </button>
               <h3 style={{ marginBottom: '10px', color: '#1e293b', textAlign: 'center', fontSize: '18px', fontWeight: '600' }}>
@@ -1388,459 +1369,459 @@ For old files, you need to re-upload them.
 
               {/* Info Box */}
               <div style={{
-                padding: '10px 15px',
-                backgroundColor: '#e3f2fd',
-                border: '1px solid #90caf9',
-                borderRadius: '4px',
-                marginBottom: '15px',
-                fontSize: '12px',
-                color: '#1565c0'
-              }}>
+            padding: '10px 15px',
+            backgroundColor: '#e3f2fd',
+            border: '1px solid #90caf9',
+            borderRadius: '4px',
+            marginBottom: '15px',
+            fontSize: '12px',
+            color: '#1565c0'
+          }}>
                 Press Enter to move to next field. Enter on empty row to finish.
               </div>
 
               {/* Saved Options Rows */}
               <div style={{ maxHeight: '200px', overflowY: 'auto', marginBottom: '10px' }}>
-                {selectedOptions.map((option, index) => (
-                  <div key={option.id} className="createorderstartsections-popupitemall" style={{
-                    gridTemplateColumns: '150px 150px auto 40px',
-                    padding: '8px 0',
-                    borderBottom: '1px solid #e5e7eb',
-                    alignItems: 'center'
-                  }}>
+                {selectedOptions.map((option, index) =>
+            <div key={option.id} className="createorderstartsections-popupitemall" style={{
+              gridTemplateColumns: '150px 150px auto 40px',
+              padding: '8px 0',
+              borderBottom: '1px solid #e5e7eb',
+              alignItems: 'center'
+            }}>
                     <span style={{ fontSize: '13px' }}>{option.optionTypeName}</span>
                     <span style={{ fontSize: '13px' }}>{option.optionName}</span>
                     <span style={{ fontSize: '12px', color: '#6b7280' }}>
-                      {Object.entries(option.specificationValues || {}).map(([key, value]) => (
-                        <span key={key} style={{ marginRight: '10px' }}>
+                      {Object.entries(option.specificationValues || {}).map(([key, value]) =>
+                <span key={key} style={{ marginRight: '10px' }}>
                           {key}: <strong>{renderSpecValue(value)}</strong>
                         </span>
-                      ))}
+                )}
                     </span>
                     <button
-                      type="button"
-                      onClick={() => handleRemoveOption(index)}
-                      className="createorderstartsections-btn-remove"
-                      title="Remove"
-                    >
+                type="button"
+                onClick={() => handleRemoveOption(index)}
+                className="createorderstartsections-btn-remove"
+                title="Remove">
+
                       ×
                     </button>
                   </div>
-                ))}
+            )}
               </div>
 
               {/* Current Input Row */}
               <div style={{
-                display: 'grid',
-                gridTemplateColumns: '150px 150px auto',
-                gap: '10px',
-                padding: '15px',
-                backgroundColor: '#f9fafb',
-                borderRadius: '6px',
-                marginBottom: '15px'
-              }}>
+            display: 'grid',
+            gridTemplateColumns: '150px 150px auto',
+            gap: '10px',
+            padding: '15px',
+            backgroundColor: '#f9fafb',
+            borderRadius: '6px',
+            marginBottom: '15px'
+          }}>
                 {/* Option Type */}
                 <div style={{ position: 'relative' }}>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '4px', color: '#374151' }}>Type</label>
                   <input
-                    ref={typeRef}
-                    type="text"
-                    value={currentOption.optionTypeName}
-                    onChange={(e) => updateCurrentOption('optionTypeName', e.target.value)}
-                    onKeyDown={(e) => handleKeyDown(e, 'type')}
-                    placeholder="Select type"
-                    onFocus={() => setShowTypeSuggestions(true)}
-                    onBlur={() => setTimeout(() => setShowTypeSuggestions(false), 200)}
-                    className="createorderstartsections-tableInput"
-                  />
-                  {showTypeSuggestions && (
-                    <div className="createorderstartsections-suggestion-list">
-                      {optionTypes.length === 0 ? (
-                        <div className="createorderstartsections-suggestionItem" style={{ color: '#999', fontStyle: 'italic' }}>
+                ref={typeRef}
+                type="text"
+                value={currentOption.optionTypeName}
+                onChange={(e) => updateCurrentOption('optionTypeName', e.target.value)}
+                onKeyDown={(e) => handleKeyDown(e, 'type')}
+                placeholder="Select type"
+                onFocus={() => setShowTypeSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowTypeSuggestions(false), 200)}
+                className="createorderstartsections-tableInput" />
+
+                  {showTypeSuggestions &&
+              <div className="createorderstartsections-suggestion-list">
+                      {optionTypes.length === 0 ?
+                <div className="createorderstartsections-suggestionItem" style={{ color: '#999', fontStyle: 'italic' }}>
                           No option types available
-                        </div>
-                      ) : (
-                        optionTypes
-                          .filter(type =>
-                            !currentOption.optionTypeName ||
-                            type.toLowerCase().includes(currentOption.optionTypeName.toLowerCase())
-                          )
-                          .map((type, i) => (
-                            <div
-                              key={i}
-                              className="createorderstartsections-suggestionItem"
-                              onMouseDown={() => handleTypeSelect({ name: type })}
-                            >
+                        </div> :
+
+                optionTypes.
+                filter((type) =>
+                !currentOption.optionTypeName ||
+                type.toLowerCase().includes(currentOption.optionTypeName.toLowerCase())
+                ).
+                map((type, i) =>
+                <div
+                  key={i}
+                  className="createorderstartsections-suggestionItem"
+                  onMouseDown={() => handleTypeSelect({ name: type })}>
+
                               {type}
                             </div>
-                          ))
-                      )}
+                )
+                }
                     </div>
-                  )}
+              }
                 </div>
 
                 {/* Option Name */}
                 <div style={{ position: 'relative' }}>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '4px', color: '#374151' }}>Name</label>
                   <input
-                    ref={nameRef}
-                    type="text"
-                    value={currentOption.optionName}
-                    onChange={(e) => updateCurrentOption('optionName', e.target.value)}
-                    onKeyDown={(e) => handleKeyDown(e, 'name')}
-                    placeholder="Select option"
-                    onFocus={() => setShowNameSuggestions(true)}
-                    onBlur={() => setTimeout(() => setShowNameSuggestions(false), 200)}
-                    className="createorderstartsections-tableInput"
-                  />
-                  {showNameSuggestions && currentOption.optionTypeName && (
-                    <div className="createorderstartsections-suggestion-list">
-                      {getOptionsByType(currentOption.optionTypeName).length === 0 ? (
-                        <div className="createorderstartsections-suggestionItem" style={{ color: '#999', fontStyle: 'italic' }}>
+                ref={nameRef}
+                type="text"
+                value={currentOption.optionName}
+                onChange={(e) => updateCurrentOption('optionName', e.target.value)}
+                onKeyDown={(e) => handleKeyDown(e, 'name')}
+                placeholder="Select option"
+                onFocus={() => setShowNameSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowNameSuggestions(false), 200)}
+                className="createorderstartsections-tableInput" />
+
+                  {showNameSuggestions && currentOption.optionTypeName &&
+              <div className="createorderstartsections-suggestion-list">
+                      {getOptionsByType(currentOption.optionTypeName).length === 0 ?
+                <div className="createorderstartsections-suggestionItem" style={{ color: '#999', fontStyle: 'italic' }}>
                           No options available for this type
-                        </div>
-                      ) : (
-                        getOptionsByType(currentOption.optionTypeName)
-                          .filter((opt: any) =>
-                            !currentOption.optionName ||
-                            opt.name.toLowerCase().includes(currentOption.optionName.toLowerCase())
-                          )
-                          .slice(0, 10)
-                          .map((opt: any, i: number) => (
-                            <div
-                              key={i}
-                              className="createorderstartsections-suggestionItem"
-                              onMouseDown={() => handleNameSelect(opt)}
-                            >
+                        </div> :
+
+                getOptionsByType(currentOption.optionTypeName).
+                filter((opt: any) =>
+                !currentOption.optionName ||
+                opt.name.toLowerCase().includes(currentOption.optionName.toLowerCase())
+                ).
+                slice(0, 10).
+                map((opt: any, i: number) =>
+                <div
+                  key={i}
+                  className="createorderstartsections-suggestionItem"
+                  onMouseDown={() => handleNameSelect(opt)}>
+
                               <div style={{ fontWeight: 500 }}>{opt.name}</div>
-                              {opt.code && (
-                                <div style={{ fontSize: '11px', color: '#666' }}>Code: {opt.code}</div>
-                              )}
+                              {opt.code &&
+                  <div style={{ fontSize: '11px', color: '#666' }}>Code: {opt.code}</div>
+                  }
                             </div>
-                          ))
-                      )}
+                )
+                }
                     </div>
-                  )}
+              }
                 </div>
 
                 {/* Specifications Section - dynamically loaded */}
                 {/* MERGE: Option dimensions + OptionSpec specs + OptionType specs */}
                 <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
                   {selectedBackendOption && (() => {
-                    // Merge specs from all sources (same logic as handleNameSelect)
-                    const getMergedSpecs = () => {
-                      const specs: any[] = [];
-                      const specNames = new Set<string>();
+                // Merge specs from all sources (same logic as handleNameSelect)
+                const getMergedSpecs = () => {
+                  const specs: any[] = [];
+                  const specNames = new Set<string>();
 
-                      const addSpecs = (newSpecs: any[]) => {
-                        if (!newSpecs || !Array.isArray(newSpecs)) return;
-                        newSpecs.forEach((spec: any) => {
-                          if (!specNames.has(spec.name)) {
-                            specs.push(spec);
-                            specNames.add(spec.name);
-                          }
-                        });
-                      };
+                  const addSpecs = (newSpecs: any[]) => {
+                    if (!newSpecs || !Array.isArray(newSpecs)) return;
+                    newSpecs.forEach((spec: any) => {
+                      if (!specNames.has(spec.name)) {
+                        specs.push(spec);
+                        specNames.add(spec.name);
+                      }
+                    });
+                  };
 
-                      // 1. Add Option's dimensions
-                      addSpecs(selectedBackendOption.dimensions);
+                  // 1. Add Option's dimensions
+                  addSpecs(selectedBackendOption.dimensions);
 
-                      // 2. Add linked OptionSpec specs
-                      addSpecs(selectedBackendOption.optionSpecId?.specifications);
+                  // 2. Add linked OptionSpec specs
+                  addSpecs(selectedBackendOption.optionSpecId?.specifications);
 
-                      // 3. Add OptionSpec by OptionType match
-                      const typeId = selectedBackendOption.optionTypeId?._id || selectedBackendOption.optionTypeId;
-                      const matchingSpec = Array.isArray(optionSpecs)
-                        ? optionSpecs.find((spec: any) => (spec.optionTypeId?._id || spec.optionTypeId) === typeId)
-                        : null;
-                      addSpecs(matchingSpec?.specifications);
+                  // 3. Add OptionSpec by OptionType match
+                  const typeId = selectedBackendOption.optionTypeId?._id || selectedBackendOption.optionTypeId;
+                  const matchingSpec = Array.isArray(optionSpecs) ?
+                  optionSpecs.find((spec: any) => (spec.optionTypeId?._id || spec.optionTypeId) === typeId) :
+                  null;
+                  addSpecs(matchingSpec?.specifications);
 
-                      // 4. Add OptionType template specs
-                      addSpecs(selectedBackendOption.optionTypeId?.specifications);
+                  // 4. Add OptionType template specs
+                  addSpecs(selectedBackendOption.optionTypeId?.specifications);
 
-                      return specs;
-                    };
-                    const specs = getMergedSpecs();
-                    return specs && specs.length > 0;
-                  })() && (
-                    <>
+                  return specs;
+                };
+                const specs = getMergedSpecs();
+                return specs && specs.length > 0;
+              })() &&
+              <>
                       {(() => {
-                        // Same merge logic for rendering
-                        const getMergedSpecs = () => {
-                          const specs: any[] = [];
-                          const specNames = new Set<string>();
+                  // Same merge logic for rendering
+                  const getMergedSpecs = () => {
+                    const specs: any[] = [];
+                    const specNames = new Set<string>();
 
-                          const addSpecs = (newSpecs: any[]) => {
-                            if (!newSpecs || !Array.isArray(newSpecs)) return;
-                            newSpecs.forEach((spec: any) => {
-                              if (!specNames.has(spec.name)) {
-                                specs.push(spec);
-                                specNames.add(spec.name);
-                              }
-                            });
-                          };
+                    const addSpecs = (newSpecs: any[]) => {
+                      if (!newSpecs || !Array.isArray(newSpecs)) return;
+                      newSpecs.forEach((spec: any) => {
+                        if (!specNames.has(spec.name)) {
+                          specs.push(spec);
+                          specNames.add(spec.name);
+                        }
+                      });
+                    };
 
-                          addSpecs(selectedBackendOption.dimensions);
-                          addSpecs(selectedBackendOption.optionSpecId?.specifications);
+                    addSpecs(selectedBackendOption.dimensions);
+                    addSpecs(selectedBackendOption.optionSpecId?.specifications);
 
-                          const typeId = selectedBackendOption.optionTypeId?._id || selectedBackendOption.optionTypeId;
-                          const matchingSpec = Array.isArray(optionSpecs)
-                            ? optionSpecs.find((spec: any) => (spec.optionTypeId?._id || spec.optionTypeId) === typeId)
-                            : null;
-                          addSpecs(matchingSpec?.specifications);
-                          addSpecs(selectedBackendOption.optionTypeId?.specifications);
+                    const typeId = selectedBackendOption.optionTypeId?._id || selectedBackendOption.optionTypeId;
+                    const matchingSpec = Array.isArray(optionSpecs) ?
+                    optionSpecs.find((spec: any) => (spec.optionTypeId?._id || spec.optionTypeId) === typeId) :
+                    null;
+                    addSpecs(matchingSpec?.specifications);
+                    addSpecs(selectedBackendOption.optionTypeId?.specifications);
 
-                          return specs;
-                        };
-                        return getMergedSpecs();
-                      })().map((spec: SpecificationTemplate, index: number) => (
-                        <div key={index} style={{ minWidth: '120px', flex: '1' }}>
+                    return specs;
+                  };
+                  return getMergedSpecs();
+                })().map((spec: SpecificationTemplate, index: number) =>
+                <div key={index} style={{ minWidth: '120px', flex: '1' }}>
                           <label style={{ display: 'block', fontSize: '11px', fontWeight: '600', marginBottom: '4px', color: '#374151' }}>
                             {spec.name} {spec.unit ? `(${spec.unit})` : ''}
                           </label>
-                          {spec.dataType === 'number' ? (
-                            <input
-                              type="number"
-                              value={currentOption.specificationValues[spec.name] || ''}
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                if (value === '' || value === '-' || !isNaN(parseFloat(value))) {
-                                  updateSpecificationValue(spec.name, value === '' ? '' : parseFloat(value) || value);
-                                }
-                              }}
-                              onKeyDown={(e) => handleKeyDown(e, 'spec')}
-                              placeholder={spec.name}
-                              className="createorderstartsections-tableInput"
-                            />
-                          ) : spec.dataType === 'boolean' ? (
-                            <select
-                              value={currentOption.specificationValues[spec.name]?.toString() || 'false'}
-                              onChange={(e) => updateSpecificationValue(spec.name, e.target.value === 'true')}
-                              onKeyDown={(e) => handleKeyDown(e, 'spec')}
-                              className="createorderstartsections-tableInput"
-                            >
+                          {spec.dataType === 'number' ?
+                  <input
+                    type="number"
+                    value={currentOption.specificationValues[spec.name] || ''}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === '' || value === '-' || !isNaN(parseFloat(value))) {
+                        updateSpecificationValue(spec.name, value === '' ? '' : parseFloat(value) || value);
+                      }
+                    }}
+                    onKeyDown={(e) => handleKeyDown(e, 'spec')}
+                    placeholder={spec.name}
+                    className="createorderstartsections-tableInput" /> :
+
+                  spec.dataType === 'boolean' ?
+                  <select
+                    value={currentOption.specificationValues[spec.name]?.toString() || 'false'}
+                    onChange={(e) => updateSpecificationValue(spec.name, e.target.value === 'true')}
+                    onKeyDown={(e) => handleKeyDown(e, 'spec')}
+                    className="createorderstartsections-tableInput">
+
                               <option value="false">No</option>
                               <option value="true">Yes</option>
-                            </select>
-                          ) : spec.dataType === 'date' ? (
-                            <input
-                              type="date"
-                              value={currentOption.specificationValues[spec.name] || ''}
-                              onChange={(e) => updateSpecificationValue(spec.name, e.target.value)}
-                              onKeyDown={(e) => handleKeyDown(e, 'spec')}
-                              className="createorderstartsections-tableInput"
-                            />
-                          ) : spec.dataType === 'file' ? (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            </select> :
+                  spec.dataType === 'date' ?
+                  <input
+                    type="date"
+                    value={currentOption.specificationValues[spec.name] || ''}
+                    onChange={(e) => updateSpecificationValue(spec.name, e.target.value)}
+                    onKeyDown={(e) => handleKeyDown(e, 'spec')}
+                    className="createorderstartsections-tableInput" /> :
+
+                  spec.dataType === 'file' ?
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                               <input
-                                type="file"
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  if (!file) return;
-                                  const maxSizeInBytes = 50 * 1024 * 1024;
-                                  if (file.size > maxSizeInBytes) {
-                                    alert(`File too large! Max 50MB.`);
-                                    e.target.value = '';
-                                    return;
-                                  }
-                                  updateSpecificationValue(spec.name, file);
-                                }}
-                                style={{ display: 'none' }}
-                                id={`file-${spec.name}-${index}`}
-                              />
+                      type="file"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        const maxSizeInBytes = 50 * 1024 * 1024;
+                        if (file.size > maxSizeInBytes) {
+                          alert(`File too large! Max 50MB.`);
+                          e.target.value = '';
+                          return;
+                        }
+                        updateSpecificationValue(spec.name, file);
+                      }}
+                      style={{ display: 'none' }}
+                      id={`file-${spec.name}-${index}`} />
+
                               <label
-                                htmlFor={`file-${spec.name}-${index}`}
-                                className="createorderstartsections-addProductBtn"
-                                style={{ cursor: 'pointer' }}
-                              >
+                      htmlFor={`file-${spec.name}-${index}`}
+                      className="createorderstartsections-addProductBtn"
+                      style={{ cursor: 'pointer' }}>
+
                                 Choose
                               </label>
-                              {currentOption.specificationValues[spec.name]?.name && (
-                                <span style={{ fontSize: '11px', color: '#64748b' }}>
+                              {currentOption.specificationValues[spec.name]?.name &&
+                    <span style={{ fontSize: '11px', color: '#64748b' }}>
                                   {currentOption.specificationValues[spec.name].name.substring(0, 15)}...
                                 </span>
-                              )}
-                            </div>
-                          ) : spec.dataType === 'link' ? (
-                            <input
-                              type="url"
-                              value={currentOption.specificationValues[spec.name] || ''}
-                              onChange={(e) => updateSpecificationValue(spec.name, e.target.value)}
-                              onKeyDown={(e) => handleKeyDown(e, 'spec')}
-                              placeholder="https://..."
-                              className="createorderstartsections-tableInput"
-                            />
-                          ) : spec.dataType === 'dropdown' ? (
-                            <select
-                              value={currentOption.specificationValues[spec.name] || ''}
-                              onChange={(e) => updateSpecificationValue(spec.name, e.target.value)}
-                              onKeyDown={(e) => handleKeyDown(e, 'spec')}
-                              className="createorderstartsections-tableInput"
-                            >
+                    }
+                            </div> :
+                  spec.dataType === 'link' ?
+                  <input
+                    type="url"
+                    value={currentOption.specificationValues[spec.name] || ''}
+                    onChange={(e) => updateSpecificationValue(spec.name, e.target.value)}
+                    onKeyDown={(e) => handleKeyDown(e, 'spec')}
+                    placeholder="https://..."
+                    className="createorderstartsections-tableInput" /> :
+
+                  spec.dataType === 'dropdown' ?
+                  <select
+                    value={currentOption.specificationValues[spec.name] || ''}
+                    onChange={(e) => updateSpecificationValue(spec.name, e.target.value)}
+                    onKeyDown={(e) => handleKeyDown(e, 'spec')}
+                    className="createorderstartsections-tableInput">
+
                               <option value="">Select</option>
-                              {spec.dropdownOptions?.map((option: any, idx: number) => (
-                                <option key={idx} value={typeof option === 'object' ? option.value : option}>
+                              {spec.dropdownOptions?.map((option: any, idx: number) =>
+                    <option key={idx} value={typeof option === 'object' ? option.value : option}>
                                   {typeof option === 'object' ? option.label : option}
                                 </option>
-                              ))}
-                            </select>
-                          ) : (
-                            <input
-                              type="text"
-                              value={currentOption.specificationValues[spec.name] || ''}
-                              onChange={(e) => updateSpecificationValue(spec.name, e.target.value)}
-                              onKeyDown={(e) => handleKeyDown(e, 'spec')}
-                              placeholder={spec.name}
-                              className="createorderstartsections-tableInput"
-                            />
-                          )}
+                    )}
+                            </select> :
+
+                  <input
+                    type="text"
+                    value={currentOption.specificationValues[spec.name] || ''}
+                    onChange={(e) => updateSpecificationValue(spec.name, e.target.value)}
+                    onKeyDown={(e) => handleKeyDown(e, 'spec')}
+                    placeholder={spec.name}
+                    className="createorderstartsections-tableInput" />
+
+                  }
                         </div>
-                      ))}
+                )}
                     </>
-                  )}
+              }
                 </div>
               </div>
 
               {/* Add Option Button */}
               <button
-                type="button"
-                onClick={() => {
-                  if (currentOption.optionTypeName && currentOption.optionName) {
-                    setSelectedOptions(prev => [...prev, { ...currentOption, id: generateId() }]);
-                    setCurrentOption(createEmptyOption());
-                    setSelectedBackendOption(null);
-                    typeRef.current?.focus();
-                  }
-                }}
-                className="createorderstartsections-addProductBtn"
-                style={{ alignSelf: 'center', padding: '8px 20px', fontSize: '13px', marginBottom: '15px' }}
-              >
+            type="button"
+            onClick={() => {
+              if (currentOption.optionTypeName && currentOption.optionName) {
+                setSelectedOptions((prev) => [...prev, { ...currentOption, id: generateId() }]);
+                setCurrentOption(createEmptyOption());
+                setSelectedBackendOption(null);
+                typeRef.current?.focus();
+              }
+            }}
+            className="createorderstartsections-addProductBtn"
+            style={{ alignSelf: 'center', padding: '8px 20px', fontSize: '13px', marginBottom: '15px' }}>
+
                 + Add Option
               </button>
 
           </div>
         </div>
-      )}
+      }
 
       {/* Option Type View Popup */}
-      {viewOptionTypePopup?.show && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 10000,
-            padding: '20px'
-          }}
-          onClick={() => setViewOptionTypePopup(null)}
-        >
+      {viewOptionTypePopup?.show &&
+      <div
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10000,
+          padding: '20px'
+        }}
+        onClick={() => setViewOptionTypePopup(null)}>
+
           <div
-            style={{
-              backgroundColor: 'white',
-              borderRadius: '12px',
-              maxWidth: '95vw',
-              maxHeight: '85vh',
-              overflow: 'hidden',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-              display: 'flex',
-              flexDirection: 'column'
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
+          style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            maxWidth: '95vw',
+            maxHeight: '85vh',
+            overflow: 'hidden',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            display: 'flex',
+            flexDirection: 'column'
+          }}
+          onClick={(e) => e.stopPropagation()}>
+
             {/* Header */}
             <div
-              style={{
-                padding: '16px 20px',
-                borderBottom: '1px solid #e5e7eb',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                backgroundColor: '#f8fafc'
-              }}
-            >
+            style={{
+              padding: '16px 20px',
+              borderBottom: '1px solid #e5e7eb',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              backgroundColor: '#f8fafc'
+            }}>
+
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <h3 style={{ margin: 0, fontSize: '16px', color: '#1e293b', fontWeight: '600' }}>
                   {viewOptionTypePopup.typeName}
                 </h3>
                 <span style={{
-                  background: '#dbeafe',
-                  color: '#1d4ed8',
-                  padding: '4px 10px',
-                  borderRadius: '12px',
-                  fontSize: '12px',
-                  fontWeight: '500'
-                }}>
+                background: '#dbeafe',
+                color: '#1d4ed8',
+                padding: '4px 10px',
+                borderRadius: '12px',
+                fontSize: '12px',
+                fontWeight: '500'
+              }}>
                   {viewOptionTypePopup.options.length} item{viewOptionTypePopup.options.length > 1 ? 's' : ''} • {viewOptionTypePopup.specKeys.length} specifications
                 </span>
               </div>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button
-                  onClick={() => handlePrintOptionType(
-                    viewOptionTypePopup.typeName,
-                    viewOptionTypePopup.options,
-                    viewOptionTypePopup.specKeys
-                  )}
-                  style={{
-                    background: '#f59e0b',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    padding: '6px 12px',
-                    fontSize: '14px',
-                    color: 'white',
-                    fontWeight: '500',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px'
-                  }}
-                  title="Print this table"
-                >
+                onClick={() => handlePrintOptionType(
+                  viewOptionTypePopup.typeName,
+                  viewOptionTypePopup.options,
+                  viewOptionTypePopup.specKeys
+                )}
+                style={{
+                  background: '#f59e0b',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  padding: '6px 12px',
+                  fontSize: '14px',
+                  color: 'white',
+                  fontWeight: '500',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+                title="Print this table">
+
                   <Printer size={16} />
                   Print
                 </button>
                 <button
-                  onClick={() => handleExportExcelOptionType(
-                    viewOptionTypePopup.typeName,
-                    viewOptionTypePopup.options,
-                    viewOptionTypePopup.specKeys
-                  )}
-                  style={{
-                    background: '#10b981',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    padding: '6px 12px',
-                    fontSize: '14px',
-                    color: 'white',
-                    fontWeight: '500',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px'
-                  }}
-                  title="Export to Excel (CSV)"
-                >
+                onClick={() => handleExportExcelOptionType(
+                  viewOptionTypePopup.typeName,
+                  viewOptionTypePopup.options,
+                  viewOptionTypePopup.specKeys
+                )}
+                style={{
+                  background: '#10b981',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  padding: '6px 12px',
+                  fontSize: '14px',
+                  color: 'white',
+                  fontWeight: '500',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+                title="Export to Excel (CSV)">
+
                   <FileSpreadsheet size={16} />
                   Excel
                 </button>
                 <button
-                  onClick={() => setViewOptionTypePopup(null)}
-                  style={{
-                    background: '#f1f5f9',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    padding: '6px 12px',
-                    fontSize: '14px',
-                    color: '#64748b',
-                    fontWeight: '500'
-                  }}
-                >
+                onClick={() => setViewOptionTypePopup(null)}
+                style={{
+                  background: '#f1f5f9',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  padding: '6px 12px',
+                  fontSize: '14px',
+                  color: '#64748b',
+                  fontWeight: '500'
+                }}>
+
                   ✕ Close
                 </button>
               </div>
@@ -1853,195 +1834,195 @@ For old files, you need to re-upload them.
                   <tr style={{ backgroundColor: '#f1f5f9' }}>
                     <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: '600', color: '#475569', borderBottom: '2px solid #e2e8f0' }}>#</th>
                     <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: '600', color: '#475569', borderBottom: '2px solid #e2e8f0' }}>Name</th>
-                    {viewOptionTypePopup.specKeys.map(key => (
-                      <th key={key} style={{ padding: '10px 12px', textAlign: 'left', fontWeight: '600', color: '#475569', borderBottom: '2px solid #e2e8f0', whiteSpace: 'nowrap' }}>
+                    {viewOptionTypePopup.specKeys.map((key) =>
+                  <th key={key} style={{ padding: '10px 12px', textAlign: 'left', fontWeight: '600', color: '#475569', borderBottom: '2px solid #e2e8f0', whiteSpace: 'nowrap' }}>
                         {key}
                       </th>
-                    ))}
+                  )}
                   </tr>
                 </thead>
                 <tbody>
-                  {viewOptionTypePopup.options.map((option, index) => (
-                    <tr key={option.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                  {viewOptionTypePopup.options.map((option, index) =>
+                <tr key={option.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                       <td style={{ padding: '10px 12px', color: '#64748b' }}>{index + 1}</td>
                       <td style={{ padding: '10px 12px', fontWeight: '500', color: '#1e293b' }}>{option.optionName}</td>
-                      {viewOptionTypePopup.specKeys.map(key => {
-                        const value = option.specificationValues?.[key];
-                        const isFile = isFileValue(value);
-                        return (
-                          <td key={key} style={{ padding: '10px 12px', color: '#334155' }}>
-                            {isFile ? (
-                              <button
-                                type="button"
-                                onClick={() => handleViewFile(value)}
-                                style={{
-                                  background: '#eff6ff',
-                                  border: '1px solid #bfdbfe',
-                                  borderRadius: '4px',
-                                  cursor: 'pointer',
-                                  color: '#2563eb',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '4px',
-                                  padding: '4px 8px',
-                                  fontSize: '12px'
-                                }}
-                              >
+                      {viewOptionTypePopup.specKeys.map((key) => {
+                    const value = option.specificationValues?.[key];
+                    const isFile = isFileValue(value);
+                    return (
+                      <td key={key} style={{ padding: '10px 12px', color: '#334155' }}>
+                            {isFile ?
+                        <button
+                          type="button"
+                          onClick={() => handleViewFile(value)}
+                          style={{
+                            background: '#eff6ff',
+                            border: '1px solid #bfdbfe',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            color: '#2563eb',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            padding: '4px 8px',
+                            fontSize: '12px'
+                          }}>
+
                                 <Eye size={14} /> View
-                              </button>
-                            ) : (
-                              renderSpecValue(value)
-                            )}
-                          </td>
-                        );
-                      })}
+                              </button> :
+
+                        renderSpecValue(value)
+                        }
+                          </td>);
+
+                  })}
                     </tr>
-                  ))}
+                )}
                 </tbody>
                 {/* Total Row for viewOptionTypePopup */}
                 {(() => {
-                  const popupOptions = viewOptionTypePopup.options;
-                  const popupSpecKeys = viewOptionTypePopup.specKeys;
-                  const firstOpt = popupOptions[0];
-                  const backendOpt = options.find((opt: any) => opt._id === firstOpt?.optionId);
+                const popupOptions = viewOptionTypePopup.options;
+                const popupSpecKeys = viewOptionTypePopup.specKeys;
+                const firstOpt = popupOptions[0];
+                const backendOpt = options.find((opt: any) => opt._id === firstOpt?.optionId);
 
-                  // Get spec definitions with includeInTotal
-                  const specDefs: Record<string, any> = {};
-                  backendOpt?.dimensions?.forEach((dim: any) => { if (!specDefs[dim.name]) specDefs[dim.name] = { ...dim }; });
-                  backendOpt?.optionSpecId?.specifications?.forEach((spec: any) => {
-                    if (specDefs[spec.name]) {
-                      specDefs[spec.name].includeInTotal = spec.includeInTotal;
-                      specDefs[spec.name].dataType = spec.dataType;
-                    } else specDefs[spec.name] = { ...spec };
-                  });
-                  const typeId = backendOpt?.optionTypeId?._id || backendOpt?.optionTypeId || firstOpt?.optionTypeId;
-                  const matchingSpec = Array.isArray(optionSpecs) ? optionSpecs.find((s: any) => (s.optionTypeId?._id || s.optionTypeId) === typeId) : null;
-                  matchingSpec?.specifications?.forEach((spec: any) => {
-                    if (specDefs[spec.name] && specDefs[spec.name].includeInTotal === undefined) specDefs[spec.name].includeInTotal = spec.includeInTotal;
-                    if (!specDefs[spec.name]) specDefs[spec.name] = { ...spec };
-                  });
+                // Get spec definitions with includeInTotal
+                const specDefs: Record<string, any> = {};
+                backendOpt?.dimensions?.forEach((dim: any) => {if (!specDefs[dim.name]) specDefs[dim.name] = { ...dim };});
+                backendOpt?.optionSpecId?.specifications?.forEach((spec: any) => {
+                  if (specDefs[spec.name]) {
+                    specDefs[spec.name].includeInTotal = spec.includeInTotal;
+                    specDefs[spec.name].dataType = spec.dataType;
+                  } else specDefs[spec.name] = { ...spec };
+                });
+                const typeId = backendOpt?.optionTypeId?._id || backendOpt?.optionTypeId || firstOpt?.optionTypeId;
+                const matchingSpec = Array.isArray(optionSpecs) ? optionSpecs.find((s: any) => (s.optionTypeId?._id || s.optionTypeId) === typeId) : null;
+                matchingSpec?.specifications?.forEach((spec: any) => {
+                  if (specDefs[spec.name] && specDefs[spec.name].includeInTotal === undefined) specDefs[spec.name].includeInTotal = spec.includeInTotal;
+                  if (!specDefs[spec.name]) specDefs[spec.name] = { ...spec };
+                });
 
-                  // Check if any totals
-                  const hasTotal = popupSpecKeys.some(key => {
-                    const spec = specDefs[key];
-                    const isNumeric = spec?.dataType === 'number' || (!spec?.dataType && !isNaN(parseFloat(popupOptions[0]?.specificationValues?.[key])));
-                    return isNumeric && spec?.includeInTotal !== false;
-                  });
+                // Check if any totals
+                const hasTotal = popupSpecKeys.some((key) => {
+                  const spec = specDefs[key];
+                  const isNumeric = spec?.dataType === 'number' || !spec?.dataType && !isNaN(parseFloat(popupOptions[0]?.specificationValues?.[key]));
+                  return isNumeric && spec?.includeInTotal !== false;
+                });
 
-                  if (!hasTotal) return null;
+                if (!hasTotal) return null;
 
-                  // Calculate totals
-                  const totals: Record<string, number> = {};
-                  const showTotal: Record<string, boolean> = {};
-                  popupSpecKeys.forEach(key => {
-                    const spec = specDefs[key];
-                    const isNumeric = spec?.dataType === 'number' || (!spec?.dataType && !isNaN(parseFloat(popupOptions[0]?.specificationValues?.[key])));
-                    if (isNumeric && spec?.includeInTotal !== false) {
-                      showTotal[key] = true;
-                      totals[key] = popupOptions.reduce((sum, opt) => sum + (parseFloat(opt.specificationValues?.[key]) || 0), 0);
-                    }
-                  });
+                // Calculate totals
+                const totals: Record<string, number> = {};
+                const showTotal: Record<string, boolean> = {};
+                popupSpecKeys.forEach((key) => {
+                  const spec = specDefs[key];
+                  const isNumeric = spec?.dataType === 'number' || !spec?.dataType && !isNaN(parseFloat(popupOptions[0]?.specificationValues?.[key]));
+                  if (isNumeric && spec?.includeInTotal !== false) {
+                    showTotal[key] = true;
+                    totals[key] = popupOptions.reduce((sum, opt) => sum + (parseFloat(opt.specificationValues?.[key]) || 0), 0);
+                  }
+                });
 
-                  return (
-                    <tfoot>
+                return (
+                  <tfoot>
                       <tr style={{ backgroundColor: '#fef3c7', borderTop: '2px solid #f59e0b' }}>
                         <td style={{ padding: '10px 12px', fontWeight: '700', color: '#92400e' }}></td>
                         <td style={{ padding: '10px 12px', fontWeight: '700', color: '#92400e' }}>Total</td>
-                        {popupSpecKeys.map(key => (
-                          <td key={key} style={{ padding: '10px 12px', fontWeight: '700', color: '#92400e' }}>
+                        {popupSpecKeys.map((key) =>
+                      <td key={key} style={{ padding: '10px 12px', fontWeight: '700', color: '#92400e' }}>
                             {showTotal[key] ? totals[key]?.toLocaleString() || '0' : '-'}
                           </td>
-                        ))}
+                      )}
                       </tr>
-                    </tfoot>
-                  );
-                })()}
+                    </tfoot>);
+
+              })()}
               </table>
             </div>
           </div>
         </div>
-      )}
+      }
 
       {/* File Preview Modal */}
-      {filePreview && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 10000,
-            padding: '20px'
-          }}
-          onClick={() => setFilePreview(null)}
-        >
+      {filePreview &&
+      <div
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10000,
+          padding: '20px'
+        }}
+        onClick={() => setFilePreview(null)}>
+
           <div
-            style={{
-              position: 'relative',
-              width: isPdfFile(filePreview.type) ? '90vw' : 'auto',
-              maxWidth: '90vw',
-              height: isPdfFile(filePreview.type) ? '90vh' : 'auto',
-              maxHeight: '90vh',
-              backgroundColor: 'white',
-              borderRadius: '8px',
-              overflow: 'hidden',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-              display: 'flex',
-              flexDirection: 'column'
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
+          style={{
+            position: 'relative',
+            width: isPdfFile(filePreview.type) ? '90vw' : 'auto',
+            maxWidth: '90vw',
+            height: isPdfFile(filePreview.type) ? '90vh' : 'auto',
+            maxHeight: '90vh',
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            overflow: 'hidden',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            flexDirection: 'column'
+          }}
+          onClick={(e) => e.stopPropagation()}>
+
             {/* Header */}
             <div
-              style={{
-                padding: '16px 20px',
-                borderBottom: '1px solid #e5e7eb',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                backgroundColor: '#f9fafb',
-                flexShrink: 0
-              }}
-            >
+            style={{
+              padding: '16px 20px',
+              borderBottom: '1px solid #e5e7eb',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              backgroundColor: '#f9fafb',
+              flexShrink: 0
+            }}>
+
               <h3 style={{ margin: 0, fontSize: '16px', color: '#1f2937' }}>
                 {filePreview.name}
               </h3>
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 {/* Download button */}
                 <a
-                  href={filePreview.url}
-                  download={filePreview.name}
-                  style={{
-                    padding: '6px 12px',
-                    background: '#10b981',
-                    color: 'white',
-                    borderRadius: '4px',
-                    textDecoration: 'none',
-                    fontSize: '14px',
-                    cursor: 'pointer'
-                  }}
-                  title="Download file"
-                >
+                href={filePreview.url}
+                download={filePreview.name}
+                style={{
+                  padding: '6px 12px',
+                  background: '#10b981',
+                  color: 'white',
+                  borderRadius: '4px',
+                  textDecoration: 'none',
+                  fontSize: '14px',
+                  cursor: 'pointer'
+                }}
+                title="Download file">
+
                   Download
                 </a>
                 <button
-                  onClick={() => setFilePreview(null)}
-                  style={{
-                    background: 'transparent',
-                    border: 'none',
-                    fontSize: '24px',
-                    cursor: 'pointer',
-                    color: '#6b7280',
-                    padding: '4px 8px',
-                    lineHeight: 1
-                  }}
-                  title="Close"
-                >
+                onClick={() => setFilePreview(null)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  color: '#6b7280',
+                  padding: '4px 8px',
+                  lineHeight: 1
+                }}
+                title="Close">
+
                   ×
                 </button>
               </div>
@@ -2049,45 +2030,45 @@ For old files, you need to re-upload them.
 
             {/* File content */}
             <div
+            style={{
+              padding: isImageFile(filePreview.type) ? '20px' : '0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flex: 1,
+              overflow: 'auto',
+              minHeight: 0
+            }}>
+
+              {isImageFile(filePreview.type) ?
+            // Image preview
+            <img
+              src={filePreview.url}
+              alt={filePreview.name}
               style={{
-                padding: isImageFile(filePreview.type) ? '20px' : '0',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flex: 1,
-                overflow: 'auto',
-                minHeight: 0
-              }}
-            >
-              {isImageFile(filePreview.type) ? (
-                // Image preview
-                <img
-                  src={filePreview.url}
-                  alt={filePreview.name}
-                  style={{
-                    maxWidth: '100%',
-                    maxHeight: '100%',
-                    objectFit: 'contain'
-                  }}
-                />
-              ) : isPdfFile(filePreview.type) ? (
-                // PDF preview using iframe
-                <iframe
-                  src={filePreview.url}
-                  title={filePreview.name}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    border: 'none'
-                  }}
-                />
-              ) : (
-                // Other file types - show message and download option
-                <div style={{
-                  padding: '40px',
-                  textAlign: 'center',
-                  color: '#6b7280'
-                }}>
+                maxWidth: '100%',
+                maxHeight: '100%',
+                objectFit: 'contain'
+              }} /> :
+
+            isPdfFile(filePreview.type) ?
+            // PDF preview using iframe
+            <iframe
+              src={filePreview.url}
+              title={filePreview.name}
+              style={{
+                width: '100%',
+                height: '100%',
+                border: 'none'
+              }} /> :
+
+
+            // Other file types - show message and download option
+            <div style={{
+              padding: '40px',
+              textAlign: 'center',
+              color: '#6b7280'
+            }}>
                   <div style={{ fontSize: '48px', marginBottom: '16px' }}>📄</div>
                   <p style={{ fontSize: '16px', marginBottom: '8px', color: '#1f2937' }}>
                     {filePreview.name}
@@ -2096,32 +2077,32 @@ For old files, you need to re-upload them.
                     Preview not available for this file type
                   </p>
                   <a
-                    href={filePreview.url}
-                    download={filePreview.name}
-                    style={{
-                      padding: '10px 20px',
-                      background: '#3b82f6',
-                      color: 'white',
-                      borderRadius: '6px',
-                      textDecoration: 'none',
-                      fontSize: '14px',
-                      display: 'inline-block'
-                    }}
-                  >
+                href={filePreview.url}
+                download={filePreview.name}
+                style={{
+                  padding: '10px 20px',
+                  background: '#3b82f6',
+                  color: 'white',
+                  borderRadius: '6px',
+                  textDecoration: 'none',
+                  fontSize: '14px',
+                  display: 'inline-block'
+                }}>
+
                     Download File
                   </a>
                 </div>
-              )}
+            }
             </div>
           </div>
         </div>
-      )}
+      }
 
       {/* View All Options Popup */}
       {showAllOptionsPopup && selectedOptions.length > 0 && (() => {
         // Group options by optionTypeId for the popup
         const groupedOptions: Record<string, OptionItem[]> = {};
-        selectedOptions.forEach(option => {
+        selectedOptions.forEach((option) => {
           const typeKey = option.optionTypeId;
           if (!groupedOptions[typeKey]) {
             groupedOptions[typeKey] = [];
@@ -2144,8 +2125,8 @@ For old files, you need to re-upload them.
               zIndex: 10000,
               padding: '20px'
             }}
-            onClick={() => setShowAllOptionsPopup(false)}
-          >
+            onClick={() => setShowAllOptionsPopup(false)}>
+
             <div
               style={{
                 backgroundColor: 'white',
@@ -2158,8 +2139,8 @@ For old files, you need to re-upload them.
                 flexDirection: 'column',
                 minWidth: '600px'
               }}
-              onClick={(e) => e.stopPropagation()}
-            >
+              onClick={(e) => e.stopPropagation()}>
+
               {/* Header */}
               <div
                 style={{
@@ -2169,21 +2150,21 @@ For old files, you need to re-upload them.
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   backgroundColor: '#fef3c7'
-                }}
-              >
+                }}>
+
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  {orderId && (
-                    <span style={{
-                      background: '#f59e0b',
-                      color: 'white',
-                      padding: '4px 10px',
-                      borderRadius: '4px',
-                      fontSize: '12px',
-                      fontWeight: '600'
-                    }}>
+                  {orderId &&
+                  <span style={{
+                    background: '#f59e0b',
+                    color: 'white',
+                    padding: '4px 10px',
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                    fontWeight: '600'
+                  }}>
                       {orderId}
                     </span>
-                  )}
+                  }
                   <h3 style={{ margin: 0, fontSize: '16px', color: '#92400e', fontWeight: '600' }}>
                     All Options Summary
                   </h3>
@@ -2234,11 +2215,17 @@ For old files, you need to re-upload them.
                                 ${customerInfo.phone || customerInfo.whatsapp ? `<br/>Ph: ${customerInfo.phone || customerInfo.whatsapp}` : ''}
                               </div>
                             ` : ''}
+                            ${createdByName || createdAt ? `
+                              <div class="customer-info" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #e5e7eb;">
+                                ${createdByName ? `<strong>${createdByName}</strong>` : ''}
+                                ${createdAt ? `${createdByName ? ' | ' : ''}${new Date(createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}` : ''}
+                              </div>
+                            ` : ''}
                           </div>
                           ${Object.entries(groupedOptions).map(([typeId, opts]) => {
-                            const typeName = opts[0]?.optionTypeName || 'Unknown';
-                            const specKeys = Array.from(new Set(opts.flatMap(o => Object.keys(o.specificationValues || {}))));
-                            return `
+                        const typeName = opts[0]?.optionTypeName || 'Unknown';
+                        const specKeys = Array.from(new Set(opts.flatMap((o) => Object.keys(o.specificationValues || {}))));
+                        return `
                               <div class="type-section">
                                 <div class="type-header">${typeName} (${opts.length} items)</div>
                                 <table>
@@ -2246,7 +2233,7 @@ For old files, you need to re-upload them.
                                     <tr>
                                       <th>#</th>
                                       <th>Option Name</th>
-                                      ${specKeys.map(k => `<th>${k}</th>`).join('')}
+                                      ${specKeys.map((k) => `<th>${k}</th>`).join('')}
                                     </tr>
                                   </thead>
                                   <tbody>
@@ -2254,57 +2241,93 @@ For old files, you need to re-upload them.
                                       <tr>
                                         <td>${idx + 1}</td>
                                         <td><strong>${opt.optionName}</strong></td>
-                                        ${specKeys.map(k => {
-                                          const val = opt.specificationValues?.[k];
-                                          return `<td>${isFileValue(val) ? '📎 File' : renderSpecValue(val)}</td>`;
-                                        }).join('')}
+                                        ${specKeys.map((k) => {
+                          const val = opt.specificationValues?.[k];
+                          return `<td>${isFileValue(val) ? '📎 File' : renderSpecValue(val)}</td>`;
+                        }).join('')}
                                       </tr>
                                     `).join('')}
                                   </tbody>
                                   ${(() => {
-                                    // Calculate totals for print
-                                    const firstOpt = opts[0];
-                                    const backendOpt = options.find((o: any) => o._id === firstOpt?.optionId);
-                                    const specDefs: Record<string, any> = {};
-                                    backendOpt?.dimensions?.forEach((d: any) => { if (!specDefs[d.name]) specDefs[d.name] = { ...d }; });
-                                    backendOpt?.optionSpecId?.specifications?.forEach((s: any) => {
-                                      if (specDefs[s.name]) { specDefs[s.name].includeInTotal = s.includeInTotal; specDefs[s.name].dataType = s.dataType; }
-                                      else specDefs[s.name] = { ...s };
-                                    });
-                                    const tId = backendOpt?.optionTypeId?._id || backendOpt?.optionTypeId || firstOpt?.optionTypeId;
-                                    const mSpec = Array.isArray(optionSpecs) ? optionSpecs.find((s: any) => (s.optionTypeId?._id || s.optionTypeId) === tId) : null;
-                                    mSpec?.specifications?.forEach((s: any) => {
-                                      if (specDefs[s.name] && specDefs[s.name].includeInTotal === undefined) specDefs[s.name].includeInTotal = s.includeInTotal;
-                                      if (!specDefs[s.name]) specDefs[s.name] = { ...s };
-                                    });
+                          // Calculate totals for print
+                          const firstOpt = opts[0];
+                          const backendOpt = options.find((o: any) => o._id === firstOpt?.optionId);
+                          const specDefs: Record<string, any> = {};
+                          backendOpt?.dimensions?.forEach((d: any) => {if (!specDefs[d.name]) specDefs[d.name] = { ...d };});
+                          backendOpt?.optionSpecId?.specifications?.forEach((s: any) => {
+                            if (specDefs[s.name]) {specDefs[s.name].includeInTotal = s.includeInTotal;specDefs[s.name].dataType = s.dataType;} else
+                            specDefs[s.name] = { ...s };
+                          });
+                          const tId = backendOpt?.optionTypeId?._id || backendOpt?.optionTypeId || firstOpt?.optionTypeId;
+                          const mSpec = Array.isArray(optionSpecs) ? optionSpecs.find((s: any) => (s.optionTypeId?._id || s.optionTypeId) === tId) : null;
+                          mSpec?.specifications?.forEach((s: any) => {
+                            if (specDefs[s.name] && specDefs[s.name].includeInTotal === undefined) specDefs[s.name].includeInTotal = s.includeInTotal;
+                            if (!specDefs[s.name]) specDefs[s.name] = { ...s };
+                          });
 
-                                    const hasTotal = specKeys.some(k => {
-                                      const sp = specDefs[k];
-                                      const isNum = sp?.dataType === 'number' || (!sp?.dataType && !isNaN(parseFloat(opts[0]?.specificationValues?.[k])));
-                                      return isNum && sp?.includeInTotal !== false;
-                                    });
-                                    if (!hasTotal) return '';
+                          const hasTotal = specKeys.some((k) => {
+                            const sp = specDefs[k];
+                            const isNum = sp?.dataType === 'number' || !sp?.dataType && !isNaN(parseFloat(opts[0]?.specificationValues?.[k]));
+                            return isNum && sp?.includeInTotal !== false;
+                          });
+                          if (!hasTotal) return '';
 
-                                    const totals: Record<string, number> = {};
-                                    const showT: Record<string, boolean> = {};
-                                    specKeys.forEach(k => {
-                                      const sp = specDefs[k];
-                                      const isNum = sp?.dataType === 'number' || (!sp?.dataType && !isNaN(parseFloat(opts[0]?.specificationValues?.[k])));
-                                      if (isNum && sp?.includeInTotal !== false) {
-                                        showT[k] = true;
-                                        totals[k] = opts.reduce((sum, o) => sum + (parseFloat(o.specificationValues?.[k]) || 0), 0);
-                                      }
-                                    });
+                          const totals: Record<string, number> = {};
+                          const showT: Record<string, boolean> = {};
+                          specKeys.forEach((k) => {
+                            const sp = specDefs[k];
+                            const isNum = sp?.dataType === 'number' || !sp?.dataType && !isNaN(parseFloat(opts[0]?.specificationValues?.[k]));
+                            if (isNum && sp?.includeInTotal !== false) {
+                              showT[k] = true;
+                              totals[k] = opts.reduce((sum, o) => sum + (parseFloat(o.specificationValues?.[k]) || 0), 0);
+                            }
+                          });
 
-                                    return `<tfoot><tr style="background:#fef3c7;border-top:2px solid #f59e0b;font-weight:700;color:#92400e;">
+                          return `<tfoot><tr style="background:#fef3c7;border-top:2px solid #f59e0b;font-weight:700;color:#92400e;">
                                       <td></td><td>Total</td>
-                                      ${specKeys.map(k => `<td>${showT[k] ? (totals[k]?.toLocaleString() || '0') : '-'}</td>`).join('')}
+                                      ${specKeys.map((k) => `<td>${showT[k] ? totals[k]?.toLocaleString() || '0' : '-'}</td>`).join('')}
                                     </tr></tfoot>`;
-                                  })()}
+                        })()}
                                 </table>
                               </div>
                             `;
-                          }).join('')}
+                      }).join('')}
+
+                          ${dynamicCalculations && dynamicCalculations.length > 0 ? `
+                            <div class="type-section" style="margin-top: 24px; border-top: 2px solid #e5e7eb; padding-top: 16px;">
+                              <div class="type-header">📊 Dynamic Calculations (${dynamicCalculations.filter((c) => c.enabled).length} calculations)</div>
+                              <table>
+                                <thead>
+                                  <tr>
+                                    <th style="width: 40px">#</th>
+                                    <th>Calculation Name</th>
+                                    <th style="width: 150px; text-align: right;">Value</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  ${dynamicCalculations.
+                      filter((c) => c.enabled).
+                      sort((a, b) => (a.order || 0) - (b.order || 0)).
+                      map((calc, idx) => {
+                        const value = calculatedValues[calc.name] || '-';
+                        const rowBg = calc.columnFormat === 'highlight' ? '#fef3c7' :
+                        calc.columnFormat === 'summary' ? '#dbeafe' :
+                        idx % 2 === 0 ? '#ffffff' : '#f9fafb';
+                        return `
+                                        <tr style="background: ${rowBg};">
+                                          <td>${idx + 1}</td>
+                                          <td>
+                                            ${calc.name}
+                                            ${calc.unit ? `<span style="font-size: 10px; color: #6b7280;"> (${calc.unit})</span>` : ''}
+                                          </td>
+                                          <td style="text-align: right; font-weight: 700;">${value}</td>
+                                        </tr>
+                                      `;
+                      }).join('')}
+                                </tbody>
+                              </table>
+                            </div>
+                          ` : ''}
                         </body>
                         </html>
                       `;
@@ -2336,8 +2359,8 @@ For old files, you need to re-upload them.
                       display: 'flex',
                       alignItems: 'center',
                       gap: '6px'
-                    }}
-                  >
+                    }}>
+
                     <Printer size={14} />
                     Print All
                   </button>
@@ -2345,41 +2368,41 @@ For old files, you need to re-upload them.
                     onClick={() => {
                       // Export all options to Excel
                       const csvRows: string[][] = [
-                        ['All Options Export'],
-                        [''],
-                        orderId ? ['Order ID:', orderId] : [],
-                        customerInfo?.name ? ['Customer:', customerInfo.name] : [],
-                        customerInfo?.companyName ? ['Company:', customerInfo.companyName] : [],
-                        ['Generated:', new Date().toLocaleString()],
-                        ['']
-                      ].filter(r => r.length > 0);
+                      ['All Options Export'],
+                      [''],
+                      orderId ? ['Order ID:', orderId] : [],
+                      customerInfo?.name ? ['Customer:', customerInfo.name] : [],
+                      customerInfo?.companyName ? ['Company:', customerInfo.companyName] : [],
+                      ['Generated:', new Date().toLocaleString()],
+                      ['']].
+                      filter((r) => r.length > 0);
 
                       Object.entries(groupedOptions).forEach(([typeId, opts]) => {
                         const typeName = opts[0]?.optionTypeName || 'Unknown';
-                        const specKeys = Array.from(new Set(opts.flatMap(o => Object.keys(o.specificationValues || {}))));
+                        const specKeys = Array.from(new Set(opts.flatMap((o) => Object.keys(o.specificationValues || {}))));
 
                         csvRows.push([`--- ${typeName} (${opts.length} items) ---`]);
                         csvRows.push(['#', 'Option Name', ...specKeys]);
 
                         opts.forEach((opt, idx) => {
                           csvRows.push([
-                            String(idx + 1),
-                            opt.optionName,
-                            ...specKeys.map(k => {
-                              const val = opt.specificationValues?.[k];
-                              return isFileValue(val) ? 'File' : renderSpecValue(val);
-                            })
-                          ]);
+                          String(idx + 1),
+                          opt.optionName,
+                          ...specKeys.map((k) => {
+                            const val = opt.specificationValues?.[k];
+                            return isFileValue(val) ? 'File' : renderSpecValue(val);
+                          })]
+                          );
                         });
 
                         // Add Total row to Excel
                         const firstOpt = opts[0];
                         const backendOpt = options.find((o: any) => o._id === firstOpt?.optionId);
                         const specDefs: Record<string, any> = {};
-                        backendOpt?.dimensions?.forEach((d: any) => { if (!specDefs[d.name]) specDefs[d.name] = { ...d }; });
+                        backendOpt?.dimensions?.forEach((d: any) => {if (!specDefs[d.name]) specDefs[d.name] = { ...d };});
                         backendOpt?.optionSpecId?.specifications?.forEach((s: any) => {
-                          if (specDefs[s.name]) { specDefs[s.name].includeInTotal = s.includeInTotal; specDefs[s.name].dataType = s.dataType; }
-                          else specDefs[s.name] = { ...s };
+                          if (specDefs[s.name]) {specDefs[s.name].includeInTotal = s.includeInTotal;specDefs[s.name].dataType = s.dataType;} else
+                          specDefs[s.name] = { ...s };
                         });
                         const tId = backendOpt?.optionTypeId?._id || backendOpt?.optionTypeId || firstOpt?.optionTypeId;
                         const mSpec = Array.isArray(optionSpecs) ? optionSpecs.find((s: any) => (s.optionTypeId?._id || s.optionTypeId) === tId) : null;
@@ -2388,18 +2411,18 @@ For old files, you need to re-upload them.
                           if (!specDefs[s.name]) specDefs[s.name] = { ...s };
                         });
 
-                        const hasTotal = specKeys.some(k => {
+                        const hasTotal = specKeys.some((k) => {
                           const sp = specDefs[k];
-                          const isNum = sp?.dataType === 'number' || (!sp?.dataType && !isNaN(parseFloat(opts[0]?.specificationValues?.[k])));
+                          const isNum = sp?.dataType === 'number' || !sp?.dataType && !isNaN(parseFloat(opts[0]?.specificationValues?.[k]));
                           return isNum && sp?.includeInTotal !== false;
                         });
 
                         if (hasTotal) {
                           const totals: Record<string, number> = {};
                           const showT: Record<string, boolean> = {};
-                          specKeys.forEach(k => {
+                          specKeys.forEach((k) => {
                             const sp = specDefs[k];
-                            const isNum = sp?.dataType === 'number' || (!sp?.dataType && !isNaN(parseFloat(opts[0]?.specificationValues?.[k])));
+                            const isNum = sp?.dataType === 'number' || !sp?.dataType && !isNaN(parseFloat(opts[0]?.specificationValues?.[k]));
                             if (isNum && sp?.includeInTotal !== false) {
                               showT[k] = true;
                               totals[k] = opts.reduce((sum, o) => sum + (parseFloat(o.specificationValues?.[k]) || 0), 0);
@@ -2407,22 +2430,43 @@ For old files, you need to re-upload them.
                           });
 
                           csvRows.push([
-                            '',
-                            'TOTAL',
-                            ...specKeys.map(k => showT[k] ? String(totals[k] || 0) : '-')
-                          ]);
+                          '',
+                          'TOTAL',
+                          ...specKeys.map((k) => showT[k] ? String(totals[k] || 0) : '-')]
+                          );
                         }
 
                         csvRows.push(['']);
                       });
 
-                      const csvContent = csvRows.map(row =>
-                        row.map(cell => {
-                          const s = String(cell);
-                          return s.includes(',') || s.includes('"') || s.includes('\n')
-                            ? `"${s.replace(/"/g, '""')}"`
-                            : s;
-                        }).join(',')
+                      // Add Dynamic Calculations to Excel export
+                      if (dynamicCalculations && dynamicCalculations.length > 0) {
+                        csvRows.push(['--- Dynamic Calculations ---']);
+                        csvRows.push(['#', 'Calculation Name', 'Value']);
+
+                        dynamicCalculations.
+                        filter((c) => c.enabled).
+                        sort((a, b) => (a.order || 0) - (b.order || 0)).
+                        forEach((calc, idx) => {
+                          const value = calculatedValues[calc.name] || '';
+                          const nameWithUnit = calc.unit ? `${calc.name} (${calc.unit})` : calc.name;
+                          csvRows.push([
+                          String(idx + 1),
+                          nameWithUnit,
+                          String(value)]
+                          );
+                        });
+
+                        csvRows.push(['']);
+                      }
+
+                      const csvContent = csvRows.map((row) =>
+                      row.map((cell) => {
+                        const s = String(cell);
+                        return s.includes(',') || s.includes('"') || s.includes('\n') ?
+                        `"${s.replace(/"/g, '""')}"` :
+                        s;
+                      }).join(',')
                       ).join('\n');
 
                       const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -2444,8 +2488,8 @@ For old files, you need to re-upload them.
                       display: 'flex',
                       alignItems: 'center',
                       gap: '6px'
-                    }}
-                  >
+                    }}>
+
                     <FileSpreadsheet size={14} />
                     Excel All
                   </button>
@@ -2460,8 +2504,8 @@ For old files, you need to re-upload them.
                       fontSize: '13px',
                       color: '#64748b',
                       fontWeight: '500'
-                    }}
-                  >
+                    }}>
+
                     ✕ Close
                   </button>
                 </div>
@@ -2470,47 +2514,77 @@ For old files, you need to re-upload them.
               {/* Content - Grouped by Type */}
               <div style={{ padding: '16px', overflowY: 'auto', maxHeight: 'calc(90vh - 80px)' }}>
                 {/* Customer Info Card */}
-                {customerInfo && (
-                  <div style={{
-                    background: '#f0f9ff',
-                    border: '1px solid #bae6fd',
-                    borderRadius: '8px',
-                    padding: '12px 16px',
-                    marginBottom: '16px'
-                  }}>
+                {customerInfo &&
+                <div style={{
+                  background: '#f0f9ff',
+                  border: '1px solid #bae6fd',
+                  borderRadius: '8px',
+                  padding: '12px 16px',
+                  marginBottom: '16px'
+                }}>
                     <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
-                      {customerInfo.name && (
-                        <div>
+                      {customerInfo.name &&
+                    <div>
                           <div style={{ fontSize: '10px', color: '#0369a1', fontWeight: '600', textTransform: 'uppercase' }}>Customer</div>
                           <div style={{ fontSize: '13px', color: '#0c4a6e', fontWeight: '500' }}>{customerInfo.name}</div>
                         </div>
-                      )}
-                      {customerInfo.companyName && (
-                        <div>
+                    }
+                      {customerInfo.companyName &&
+                    <div>
                           <div style={{ fontSize: '10px', color: '#0369a1', fontWeight: '600', textTransform: 'uppercase' }}>Company</div>
                           <div style={{ fontSize: '13px', color: '#0c4a6e' }}>{customerInfo.companyName}</div>
                         </div>
-                      )}
-                      {customerInfo.address && (
-                        <div>
+                    }
+                      {customerInfo.address &&
+                    <div>
                           <div style={{ fontSize: '10px', color: '#0369a1', fontWeight: '600', textTransform: 'uppercase' }}>Address</div>
                           <div style={{ fontSize: '13px', color: '#0c4a6e' }}>{customerInfo.address}</div>
                         </div>
-                      )}
-                      {(customerInfo.phone || customerInfo.whatsapp) && (
-                        <div>
+                    }
+                      {(customerInfo.phone || customerInfo.whatsapp) &&
+                    <div>
                           <div style={{ fontSize: '10px', color: '#0369a1', fontWeight: '600', textTransform: 'uppercase' }}>Phone</div>
                           <div style={{ fontSize: '13px', color: '#0c4a6e' }}>{customerInfo.phone || customerInfo.whatsapp}</div>
                         </div>
-                      )}
+                    }
                     </div>
                   </div>
-                )}
+                }
+
+                {/* Creator Info Card */}
+                {(createdByName || createdAt) &&
+                <div style={{
+                  background: '#f3f4f6',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '8px',
+                  padding: '12px 16px',
+                  marginBottom: '16px'
+                }}>
+                    <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+                      {createdByName &&
+                    <div>
+                          <div style={{ fontSize: '13px', color: '#374151', fontWeight: '600' }}>{createdByName}</div>
+                        </div>
+                    }
+                      {createdAt &&
+                    <div>
+                          <div style={{ fontSize: '13px', color: '#6b7280' }}>
+                            {new Date(createdAt).toLocaleDateString('en-IN', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric'
+                        })}
+                          </div>
+                        </div>
+                    }
+                    </div>
+                  </div>
+                }
 
                 {/* Options by Type */}
                 {Object.entries(groupedOptions).map(([typeId, opts], groupIdx) => {
                   const typeName = opts[0]?.optionTypeName || 'Unknown';
-                  const specKeys = Array.from(new Set(opts.flatMap(o => Object.keys(o.specificationValues || {}))));
+                  const specKeys = Array.from(new Set(opts.flatMap((o) => Object.keys(o.specificationValues || {}))));
 
                   return (
                     <div key={typeId} style={{ marginBottom: groupIdx < Object.keys(groupedOptions).length - 1 ? '20px' : 0 }}>
@@ -2541,50 +2615,50 @@ For old files, you need to re-upload them.
                             <tr style={{ backgroundColor: '#f8fafc' }}>
                               <th style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '600', color: '#475569', borderBottom: '2px solid #e2e8f0' }}>#</th>
                               <th style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '600', color: '#475569', borderBottom: '2px solid #e2e8f0' }}>Name</th>
-                              {specKeys.map(key => (
-                                <th key={key} style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '600', color: '#475569', borderBottom: '2px solid #e2e8f0', whiteSpace: 'nowrap' }}>
+                              {specKeys.map((key) =>
+                              <th key={key} style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '600', color: '#475569', borderBottom: '2px solid #e2e8f0', whiteSpace: 'nowrap' }}>
                                   {key}
                                 </th>
-                              ))}
+                              )}
                             </tr>
                           </thead>
                           <tbody>
-                            {opts.map((opt, idx) => (
-                              <tr key={opt.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                            {opts.map((opt, idx) =>
+                            <tr key={opt.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                                 <td style={{ padding: '8px 10px', color: '#64748b' }}>{idx + 1}</td>
                                 <td style={{ padding: '8px 10px', fontWeight: '500', color: '#1e293b' }}>{opt.optionName}</td>
-                                {specKeys.map(key => {
-                                  const value = opt.specificationValues?.[key];
-                                  const isFile = isFileValue(value);
-                                  return (
-                                    <td key={key} style={{ padding: '8px 10px', color: '#334155' }}>
-                                      {isFile ? (
-                                        <button
-                                          type="button"
-                                          onClick={() => handleViewFile(value)}
-                                          style={{
-                                            background: '#eff6ff',
-                                            border: '1px solid #bfdbfe',
-                                            borderRadius: '4px',
-                                            cursor: 'pointer',
-                                            color: '#2563eb',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '4px',
-                                            padding: '3px 6px',
-                                            fontSize: '11px'
-                                          }}
-                                        >
+                                {specKeys.map((key) => {
+                                const value = opt.specificationValues?.[key];
+                                const isFile = isFileValue(value);
+                                return (
+                                  <td key={key} style={{ padding: '8px 10px', color: '#334155' }}>
+                                      {isFile ?
+                                    <button
+                                      type="button"
+                                      onClick={() => handleViewFile(value)}
+                                      style={{
+                                        background: '#eff6ff',
+                                        border: '1px solid #bfdbfe',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer',
+                                        color: '#2563eb',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '4px',
+                                        padding: '3px 6px',
+                                        fontSize: '11px'
+                                      }}>
+
                                           <Eye size={12} /> View
-                                        </button>
-                                      ) : (
-                                        renderSpecValue(value)
-                                      )}
-                                    </td>
-                                  );
-                                })}
+                                        </button> :
+
+                                    renderSpecValue(value)
+                                    }
+                                    </td>);
+
+                              })}
                               </tr>
-                            ))}
+                            )}
                           </tbody>
                           {/* Total Row for showAllOptionsPopup */}
                           {(() => {
@@ -2593,10 +2667,10 @@ For old files, you need to re-upload them.
 
                             // Get spec definitions
                             const specDefs: Record<string, any> = {};
-                            backendOpt?.dimensions?.forEach((d: any) => { if (!specDefs[d.name]) specDefs[d.name] = { ...d }; });
+                            backendOpt?.dimensions?.forEach((d: any) => {if (!specDefs[d.name]) specDefs[d.name] = { ...d };});
                             backendOpt?.optionSpecId?.specifications?.forEach((s: any) => {
-                              if (specDefs[s.name]) { specDefs[s.name].includeInTotal = s.includeInTotal; specDefs[s.name].dataType = s.dataType; }
-                              else specDefs[s.name] = { ...s };
+                              if (specDefs[s.name]) {specDefs[s.name].includeInTotal = s.includeInTotal;specDefs[s.name].dataType = s.dataType;} else
+                              specDefs[s.name] = { ...s };
                             });
                             const tId = backendOpt?.optionTypeId?._id || backendOpt?.optionTypeId || firstOpt?.optionTypeId;
                             const mSpec = Array.isArray(optionSpecs) ? optionSpecs.find((s: any) => (s.optionTypeId?._id || s.optionTypeId) === tId) : null;
@@ -2605,18 +2679,18 @@ For old files, you need to re-upload them.
                               if (!specDefs[s.name]) specDefs[s.name] = { ...s };
                             });
 
-                            const hasTotal = specKeys.some(k => {
+                            const hasTotal = specKeys.some((k) => {
                               const sp = specDefs[k];
-                              const isNum = sp?.dataType === 'number' || (!sp?.dataType && !isNaN(parseFloat(opts[0]?.specificationValues?.[k])));
+                              const isNum = sp?.dataType === 'number' || !sp?.dataType && !isNaN(parseFloat(opts[0]?.specificationValues?.[k]));
                               return isNum && sp?.includeInTotal !== false;
                             });
                             if (!hasTotal) return null;
 
                             const totals: Record<string, number> = {};
                             const showT: Record<string, boolean> = {};
-                            specKeys.forEach(k => {
+                            specKeys.forEach((k) => {
                               const sp = specDefs[k];
-                              const isNum = sp?.dataType === 'number' || (!sp?.dataType && !isNaN(parseFloat(opts[0]?.specificationValues?.[k])));
+                              const isNum = sp?.dataType === 'number' || !sp?.dataType && !isNaN(parseFloat(opts[0]?.specificationValues?.[k]));
                               if (isNum && sp?.includeInTotal !== false) {
                                 showT[k] = true;
                                 totals[k] = opts.reduce((sum, o) => sum + (parseFloat(o.specificationValues?.[k]) || 0), 0);
@@ -2628,27 +2702,171 @@ For old files, you need to re-upload them.
                                 <tr style={{ backgroundColor: '#fef3c7', borderTop: '2px solid #f59e0b' }}>
                                   <td style={{ padding: '8px 10px', fontWeight: '700', color: '#92400e' }}></td>
                                   <td style={{ padding: '8px 10px', fontWeight: '700', color: '#92400e' }}>Total</td>
-                                  {specKeys.map(k => (
-                                    <td key={k} style={{ padding: '8px 10px', fontWeight: '700', color: '#92400e' }}>
+                                  {specKeys.map((k) =>
+                                  <td key={k} style={{ padding: '8px 10px', fontWeight: '700', color: '#92400e' }}>
                                       {showT[k] ? totals[k]?.toLocaleString() || '0' : '-'}
                                     </td>
-                                  ))}
+                                  )}
                                 </tr>
-                              </tfoot>
-                            );
+                              </tfoot>);
+
                           })()}
                         </table>
                       </div>
-                    </div>
-                  );
+                    </div>);
+
                 })}
+
+                {/* Dynamic Calculations Section */}
+                {dynamicCalculations && dynamicCalculations.length > 0 &&
+                <div style={{ marginTop: '20px' }}>
+                    <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    marginBottom: '8px',
+                    padding: '8px 12px',
+                    background: '#f0f9ff',
+                    borderRadius: '6px'
+                  }}>
+                      <span style={{
+                      background: '#0ea5e9',
+                      color: 'white',
+                      padding: '4px 10px',
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      fontWeight: '600'
+                    }}>
+                        📊
+                      </span>
+                      <span style={{
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      color: '#0369a1'
+                    }}>
+                        Dynamic Calculations
+                      </span>
+                      <span style={{
+                      background: '#bae6fd',
+                      color: '#0c4a6e',
+                      padding: '3px 8px',
+                      borderRadius: '10px',
+                      fontSize: '11px',
+                      fontWeight: '500'
+                    }}>
+                        {dynamicCalculations.filter((c) => c.enabled).length} calculations
+                      </span>
+                    </div>
+
+                    <div style={{
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px',
+                    overflow: 'hidden'
+                  }}>
+                      <table style={{
+                      width: '100%',
+                      borderCollapse: 'collapse'
+                    }}>
+                        <thead>
+                          <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e5e7eb' }}>
+                            <th style={{
+                            padding: '8px 10px',
+                            textAlign: 'left',
+                            fontSize: '11px',
+                            fontWeight: '600',
+                            color: '#475569',
+                            width: '40px'
+                          }}>
+                              #
+                            </th>
+                            <th style={{
+                            padding: '8px 10px',
+                            textAlign: 'left',
+                            fontSize: '11px',
+                            fontWeight: '600',
+                            color: '#475569'
+                          }}>
+                              Calculation Name
+                            </th>
+                            <th style={{
+                            padding: '8px 10px',
+                            textAlign: 'right',
+                            fontSize: '11px',
+                            fontWeight: '600',
+                            color: '#475569',
+                            width: '150px'
+                          }}>
+                              Value
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {dynamicCalculations.
+                        filter((c) => c.enabled).
+                        sort((a, b) => (a.order || 0) - (b.order || 0)).
+                        map((calc, idx) => {
+                          const value = calculatedValues[calc.name] || '-';
+                          const rowBg = calc.columnFormat === 'highlight' ? '#fef3c7' :
+                          calc.columnFormat === 'summary' ? '#dbeafe' :
+                          idx % 2 === 0 ? '#ffffff' : '#f9fafb';
+
+                          return (
+                            <tr
+                              key={idx}
+                              style={{
+                                backgroundColor: rowBg,
+                                borderBottom: idx < dynamicCalculations.filter((c) => c.enabled).length - 1 ? '1px solid #e5e7eb' : 'none'
+                              }}>
+
+                                  <td style={{
+                                padding: '8px 10px',
+                                fontSize: '11px',
+                                color: '#64748b',
+                                fontWeight: '500'
+                              }}>
+                                    {idx + 1}
+                                  </td>
+                                  <td style={{
+                                padding: '8px 10px',
+                                fontSize: '12px',
+                                color: '#1f2937',
+                                fontWeight: '500'
+                              }}>
+                                    {calc.name}
+                                    {calc.unit &&
+                                <span style={{
+                                  fontSize: '10px',
+                                  color: '#6b7280',
+                                  marginLeft: '6px'
+                                }}>
+                                        ({calc.unit})
+                                      </span>
+                                }
+                                  </td>
+                                  <td style={{
+                                padding: '8px 10px',
+                                fontSize: '13px',
+                                color: '#0f172a',
+                                fontWeight: '700',
+                                textAlign: 'right'
+                              }}>
+                                    {value}
+                                  </td>
+                                </tr>);
+
+                        })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                }
               </div>
             </div>
-          </div>
-        );
+          </div>);
+
       })()}
-    </div>
-  );
+    </div>);
+
 });
 
 InlineOptionsInput.displayName = 'InlineOptionsInput';

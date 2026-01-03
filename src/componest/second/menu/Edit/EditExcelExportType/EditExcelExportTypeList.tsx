@@ -1,7 +1,9 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { getExcelExportTypes } from '../../../../redux/create/excelExportType/excelExportTypeActions';
+import { getExcelExportTypesV2 } from '../../../../redux/unifiedV2';
 import { AppDispatch } from '../../../../../store';
+import { useCRUD } from '../../../../../hooks/useCRUD';
+import { ToastContainer } from '../../../../../components/shared/Toast';
 import CreateExcelExportType from '../../create/excelExportType/CreateExcelExportType';
 import '../EditMachineType/EditMachineyType.css';
 
@@ -18,14 +20,18 @@ interface ExcelExportType {
 
 const EditExcelExportTypeList = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { excelExportTypes, loading, error } = useSelector((state: any) => state.excelExportTypeList);
+  const { list: excelExportTypes, loading, error } = useSelector((state: any) => state.v2.excelExportType || {});
+  const { handleSave, handleUpdate, handleDelete: crudDelete, saveState, updateState, deleteState, confirmDialog, closeConfirmDialog, toast } = useCRUD();
   const [selectedExportType, setSelectedExportType] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRow, setSelectedRow] = useState(0);
 
+  // Get selected branch to refetch when it changes
+  const selectedBranch = useSelector((state: any) => state.auth?.userData?.selectedBranch);
+
   useEffect(() => {
-    dispatch(getExcelExportTypes());
-  }, [dispatch]);
+    dispatch(getExcelExportTypesV2());
+  }, [dispatch, selectedBranch]);
 
   const handleEdit = (exportType: any) => {
     setSelectedExportType(exportType);
@@ -33,7 +39,7 @@ const EditExcelExportTypeList = () => {
 
   const handleBackToList = () => {
     setSelectedExportType(null);
-    dispatch(getExcelExportTypes());
+    dispatch(getExcelExportTypesV2());
   };
 
   const filteredItems = excelExportTypes?.filter((et: ExcelExportType) =>
@@ -138,6 +144,7 @@ const EditExcelExportTypeList = () => {
           <div className="editsectionsTable-empty">No excel export types found</div>
         )}
       </div>
+      <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
     </div>
   );
 };

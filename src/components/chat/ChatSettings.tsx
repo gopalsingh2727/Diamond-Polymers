@@ -60,7 +60,7 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({ isOpen, onClose }) => {
       const status = offlineSpeech.getStatus();
       if (status.isInitialized && status.hasModel) {
         const currentLang = offlineSpeech.getLanguage();
-        setModelStatus(prev => ({
+        setModelStatus((prev) => ({
           ...prev,
           [currentLang === 'en' ? 'english' : 'hindi']: 'loaded'
         }));
@@ -70,18 +70,18 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({ isOpen, onClose }) => {
 
   const handleLoadModel = async (language: 'en' | 'hi') => {
     const key = language === 'en' ? 'english' : 'hindi';
-    setModelStatus(prev => ({ ...prev, [key]: 'loading' }));
+    setModelStatus((prev) => ({ ...prev, [key]: 'loading' }));
     setLoadingModels(true);
 
     try {
       const success = await offlineSpeech.initializeOfflineSpeech(language);
-      setModelStatus(prev => ({
+      setModelStatus((prev) => ({
         ...prev,
         [key]: success ? 'loaded' : 'error'
       }));
     } catch (error) {
-      console.error(`Failed to load ${language} model:`, error);
-      setModelStatus(prev => ({ ...prev, [key]: 'error' }));
+
+      setModelStatus((prev) => ({ ...prev, [key]: 'error' }));
     }
 
     setLoadingModels(false);
@@ -111,15 +111,16 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({ isOpen, onClose }) => {
           className="px-6 py-4 border-b"
           style={{
             background: 'linear-gradient(135deg, #FF6B00 0%, #FF8C00 100%)'
-          }}
-        >
+          }}>
+
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-white">Chat Settings</h2>
             <button
               onClick={onClose}
               className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30
-                         flex items-center justify-center transition-colors"
-            >
+                         flex items-center justify-center transition-colors">
+
+
               <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -135,14 +136,14 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({ isOpen, onClose }) => {
             <button
               onClick={() => setFormData({ ...formData, isEnabled: !formData.isEnabled })}
               className={`w-12 h-6 rounded-full transition-colors ${
-                formData.isEnabled ? 'bg-orange-500' : 'bg-gray-300'
-              }`}
-            >
+              formData.isEnabled ? 'bg-orange-500' : 'bg-gray-300'}`
+              }>
+
               <div
                 className={`w-5 h-5 bg-white rounded-full shadow transform transition-transform ${
-                  formData.isEnabled ? 'translate-x-6' : 'translate-x-0.5'
-                }`}
-              />
+                formData.isEnabled ? 'translate-x-6' : 'translate-x-0.5'}`
+                } />
+
             </button>
           </div>
 
@@ -158,8 +159,10 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({ isOpen, onClose }) => {
               placeholder="e.g., KALESHI, RIYA, ARJUN"
               className="w-full px-3 py-2 border border-gray-200 rounded-lg
                          focus:outline-none focus:border-orange-400 focus:ring-2
-                         focus:ring-orange-100"
-            />
+                         focus:ring-orange-100" />
+
+
+
           </div>
 
           {/* Voice Gender */}
@@ -171,21 +174,21 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({ isOpen, onClose }) => {
               <button
                 onClick={() => setFormData({ ...formData, voiceGender: 'female' })}
                 className={`flex-1 py-2 px-4 rounded-lg border-2 transition-all ${
-                  formData.voiceGender === 'female'
-                    ? 'border-orange-500 bg-orange-50 text-orange-700'
-                    : 'border-gray-200 text-gray-600 hover:border-gray-300'
-                }`}
-              >
+                formData.voiceGender === 'female' ?
+                'border-orange-500 bg-orange-50 text-orange-700' :
+                'border-gray-200 text-gray-600 hover:border-gray-300'}`
+                }>
+
                 Girl
               </button>
               <button
                 onClick={() => setFormData({ ...formData, voiceGender: 'male' })}
                 className={`flex-1 py-2 px-4 rounded-lg border-2 transition-all ${
-                  formData.voiceGender === 'male'
-                    ? 'border-orange-500 bg-orange-50 text-orange-700'
-                    : 'border-gray-200 text-gray-600 hover:border-gray-300'
-                }`}
-              >
+                formData.voiceGender === 'male' ?
+                'border-orange-500 bg-orange-50 text-orange-700' :
+                'border-gray-200 text-gray-600 hover:border-gray-300'}`
+                }>
+
                 Boy
               </button>
             </div>
@@ -200,8 +203,9 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({ isOpen, onClose }) => {
               value={formData.language}
               onChange={(e) => setFormData({ ...formData, language: e.target.value })}
               className="w-full px-3 py-2 border border-gray-200 rounded-lg
-                         focus:outline-none focus:border-orange-400"
-            >
+                         focus:outline-none focus:border-orange-400">
+
+
               <option value="en-IN">English (India)</option>
               <option value="hi-IN">Hindi</option>
               <option value="en-US">English (US)</option>
@@ -219,14 +223,14 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({ isOpen, onClose }) => {
             <button
               onClick={() => setFormData({ ...formData, autoSpeak: !formData.autoSpeak })}
               className={`w-12 h-6 rounded-full transition-colors ${
-                formData.autoSpeak ? 'bg-orange-500' : 'bg-gray-300'
-              }`}
-            >
+              formData.autoSpeak ? 'bg-orange-500' : 'bg-gray-300'}`
+              }>
+
               <div
                 className={`w-5 h-5 bg-white rounded-full shadow transform transition-transform ${
-                  formData.autoSpeak ? 'translate-x-6' : 'translate-x-0.5'
-                }`}
-              />
+                formData.autoSpeak ? 'translate-x-6' : 'translate-x-0.5'}`
+                } />
+
             </button>
           </div>
 
@@ -242,8 +246,8 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({ isOpen, onClose }) => {
               step="0.1"
               value={formData.speechRate}
               onChange={(e) => setFormData({ ...formData, speechRate: parseFloat(e.target.value) })}
-              className="w-full accent-orange-500"
-            />
+              className="w-full accent-orange-500" />
+
           </div>
 
           {/* Use Offline Voice */}
@@ -255,14 +259,14 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({ isOpen, onClose }) => {
             <button
               onClick={() => setFormData({ ...formData, useOfflineVoice: !formData.useOfflineVoice })}
               className={`w-12 h-6 rounded-full transition-colors ${
-                formData.useOfflineVoice ? 'bg-orange-500' : 'bg-gray-300'
-              }`}
-            >
+              formData.useOfflineVoice ? 'bg-orange-500' : 'bg-gray-300'}`
+              }>
+
               <div
                 className={`w-5 h-5 bg-white rounded-full shadow transform transition-transform ${
-                  formData.useOfflineVoice ? 'translate-x-6' : 'translate-x-0.5'
-                }`}
-              />
+                formData.useOfflineVoice ? 'translate-x-6' : 'translate-x-0.5'}`
+                } />
+
             </button>
           </div>
 
@@ -272,34 +276,34 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({ isOpen, onClose }) => {
               Offline Voice Input Models
             </label>
             <p className="text-xs text-gray-500 mb-3">
-              {formData.useOfflineVoice
-                ? 'Load voice models for offline use (required for voice input)'
-                : 'Load voice models for offline use (works without internet)'}
+              {formData.useOfflineVoice ?
+              'Load voice models for offline use (required for voice input)' :
+              'Load voice models for offline use (works without internet)'}
             </p>
 
             {/* English Model */}
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-600">English</span>
-                {modelStatus.english === 'loaded' && (
-                  <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded">Ready</span>
-                )}
-                {modelStatus.english === 'loading' && (
-                  <span className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded animate-pulse">Loading...</span>
-                )}
-                {modelStatus.english === 'error' && (
-                  <span className="text-xs text-red-600 bg-red-50 px-2 py-0.5 rounded">Error</span>
-                )}
+                {modelStatus.english === 'loaded' &&
+                <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded">Ready</span>
+                }
+                {modelStatus.english === 'loading' &&
+                <span className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded animate-pulse">Loading...</span>
+                }
+                {modelStatus.english === 'error' &&
+                <span className="text-xs text-red-600 bg-red-50 px-2 py-0.5 rounded">Error</span>
+                }
               </div>
               <button
                 onClick={() => handleLoadModel('en')}
                 disabled={loadingModels || modelStatus.english === 'loaded'}
                 className={`px-3 py-1 text-sm rounded-lg transition-all ${
-                  modelStatus.english === 'loaded'
-                    ? 'bg-green-100 text-green-700 cursor-default'
-                    : 'bg-orange-100 text-orange-700 hover:bg-orange-200 disabled:opacity-50'
-                }`}
-              >
+                modelStatus.english === 'loaded' ?
+                'bg-green-100 text-green-700 cursor-default' :
+                'bg-orange-100 text-orange-700 hover:bg-orange-200 disabled:opacity-50'}`
+                }>
+
                 {modelStatus.english === 'loaded' ? '✓ Loaded' : 'Load'}
               </button>
             </div>
@@ -308,52 +312,52 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({ isOpen, onClose }) => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-600">Hindi (हिंदी)</span>
-                {modelStatus.hindi === 'loaded' && (
-                  <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded">Ready</span>
-                )}
-                {modelStatus.hindi === 'loading' && (
-                  <span className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded animate-pulse">Loading...</span>
-                )}
-                {modelStatus.hindi === 'error' && (
-                  <span className="text-xs text-red-600 bg-red-50 px-2 py-0.5 rounded">Error</span>
-                )}
+                {modelStatus.hindi === 'loaded' &&
+                <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded">Ready</span>
+                }
+                {modelStatus.hindi === 'loading' &&
+                <span className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded animate-pulse">Loading...</span>
+                }
+                {modelStatus.hindi === 'error' &&
+                <span className="text-xs text-red-600 bg-red-50 px-2 py-0.5 rounded">Error</span>
+                }
               </div>
               <button
                 onClick={() => handleLoadModel('hi')}
                 disabled={loadingModels || modelStatus.hindi === 'loaded'}
                 className={`px-3 py-1 text-sm rounded-lg transition-all ${
-                  modelStatus.hindi === 'loaded'
-                    ? 'bg-green-100 text-green-700 cursor-default'
-                    : 'bg-orange-100 text-orange-700 hover:bg-orange-200 disabled:opacity-50'
-                }`}
-              >
+                modelStatus.hindi === 'loaded' ?
+                'bg-green-100 text-green-700 cursor-default' :
+                'bg-orange-100 text-orange-700 hover:bg-orange-200 disabled:opacity-50'}`
+                }>
+
                 {modelStatus.hindi === 'loaded' ? '✓ Loaded' : 'Load'}
               </button>
             </div>
           </div>
 
           {/* Rules acceptance */}
-          {settings && !settings.rulesAccepted && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+          {settings && !settings.rulesAccepted &&
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
               <p className="text-sm text-yellow-800 mb-2">
                 Please accept the usage rules to continue.
               </p>
               <button
-                onClick={handleAcceptRules}
-                className="text-sm text-orange-600 font-medium hover:underline"
-              >
+              onClick={handleAcceptRules}
+              className="text-sm text-orange-600 font-medium hover:underline">
+
                 View and Accept Rules
               </button>
             </div>
-          )}
+          }
         </div>
 
         {/* Footer */}
         <div className="px-6 py-4 border-t bg-gray-50 flex justify-end gap-3">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
-          >
+            className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors">
+
             Cancel
           </button>
           <button
@@ -361,16 +365,17 @@ const ChatSettings: React.FC<ChatSettingsProps> = ({ isOpen, onClose }) => {
             disabled={saving}
             className="px-6 py-2 rounded-lg text-white font-medium
                        transition-all disabled:opacity-50"
+
             style={{
               background: 'linear-gradient(135deg, #FF6B00 0%, #FF8C00 100%)'
-            }}
-          >
+            }}>
+
             {saving ? 'Saving...' : 'Save'}
           </button>
         </div>
       </div>
-    </div>
-  );
+    </div>);
+
 };
 
 export default ChatSettings;

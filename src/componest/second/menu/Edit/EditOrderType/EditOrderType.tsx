@@ -8,6 +8,8 @@ import {
 } from "../../../../redux/create/orderType/orderTypeActions";
 import { useFormDataCache } from "../hooks/useFormDataCache";
 import { formatDate } from "../../../../../utils/dateUtils";
+import { useCRUD } from "../../../../../hooks/useCRUD";
+import { ToastContainer } from "../../../../../components/shared/Toast";
 import "../../create/CreateStep/createStep.css";
 
 interface OrderType {
@@ -34,6 +36,7 @@ interface OrderType {
 
 const EditOrderType: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const { handleUpdate, handleDelete: crudDelete, updateState, deleteState, confirmDialog, closeConfirmDialog, toast } = useCRUD();
 
   // 🚀 OPTIMIZED: Get product/material types from cache for restrictions display
   const { productTypes, materialTypes, loading: cacheLoading } = useFormDataCache();
@@ -122,37 +125,39 @@ const EditOrderType: React.FC = () => {
     setEditForm({ ...editForm, [field]: value });
   };
 
-  const handleUpdate = async () => {
+  const handleUpdateClick = async () => {
     if (!selectedOrderType) return;
 
     if (!editForm.name.trim()) {
-      alert("Order type name is required");
+      toast.error('Validation Error', 'Order type name is required');
       return;
     }
 
-    try {
-      await dispatch(
+    await handleUpdate(
+      () => dispatch(
         updateOrderType(selectedOrderType._id, {
           name: editForm.name.trim(),
           description: editForm.description.trim(),
           orderNumberFormat: editForm.orderNumberFormat.trim(),
         })
-      );
-
-      alert("Order type updated successfully!");
-      setSelectedOrderType(null);
-
-      // Refresh order types list
-      const result = await dispatch(getOrderTypes());
-      setOrderTypes(result.data || []);
-    } catch (err: any) {
-      alert(err.message || "Failed to update order type");
-    }
+      ),
+      {
+        successMessage: 'Order type updated successfully!',
+        onSuccess: async () => {
+          setTimeout(async () => {
+            setSelectedOrderType(null);
+            // Refresh order types list
+            const result = await dispatch(getOrderTypes());
+            setOrderTypes(result.data || []);
+          }, 1500);
+        }
+      }
+    );
   };
 
   const handleDeleteClick = () => {
     if (selectedOrderType?.isDefault) {
-      alert("❌ Cannot delete the default order type");
+      toast.error('Cannot Delete', 'Cannot delete the default order type');
       return;
     }
     setDeleteInput("");
@@ -161,14 +166,14 @@ const EditOrderType: React.FC = () => {
 
   const confirmDelete = async () => {
     if (deleteInput !== "DELETE" || !selectedOrderType) {
-      alert("❌ Type DELETE to confirm deletion");
+      toast.error('Confirmation Required', 'Type DELETE to confirm deletion');
       return;
     }
 
     try {
       await dispatch(deleteOrderType(selectedOrderType._id));
 
-      alert("Order type deleted successfully!");
+      toast.success('Deleted!', 'Order type deleted successfully!');
       setShowDeleteConfirm(false);
       setSelectedOrderType(null);
 
@@ -176,7 +181,7 @@ const EditOrderType: React.FC = () => {
       const result = await dispatch(getOrderTypes());
       setOrderTypes(result.data || []);
     } catch (err: any) {
-      alert(err.message || "Failed to delete order type");
+      toast.error('Delete Failed', err.message || 'Failed to delete order type');
     }
   };
 
@@ -454,22 +459,22 @@ const EditOrderType: React.FC = () => {
 
             <div className="flex gap-3 mt-4">
               <button
-                onClick={handleUpdate}
+                onClick={handleUpdateClick}
                 className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-                disabled={!editForm.name.trim()}
+                disabled={updateState === 'loading' || !editForm.name.trim()}
               >
-                💾 Save Changes
+                {updateState === 'loading' ? 'Saving...' : 'Save Changes'}
               </button>
               <button
                 onClick={handleDeleteClick}
                 className={`px-4 py-2 rounded ${
-                  selectedOrderType.isDefault
+                  selectedOrderType.isDefault || deleteState === 'loading'
                     ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                     : "bg-red-500 text-white hover:bg-red-600"
                 }`}
-                disabled={selectedOrderType.isDefault}
+                disabled={selectedOrderType.isDefault || deleteState === 'loading'}
               >
-                🗑️ Delete
+                {deleteState === 'loading' ? 'Deleting...' : 'Delete'}
               </button>
               <button
                 onClick={() => setSelectedOrderType(null)}
@@ -524,6 +529,7 @@ const EditOrderType: React.FC = () => {
           </div>
         </div>
       )}
+      <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
     </div>
   );
 };

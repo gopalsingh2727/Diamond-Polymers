@@ -20,7 +20,7 @@ interface CustomerData {
 }
 
 export interface CustomerNameRef {
-  getCustomerData: () => CustomerData & { status: string };
+  getCustomerData: () => CustomerData & {status: string;};
   resetCustomerData: () => void;
   focus: () => void;
 }
@@ -57,20 +57,20 @@ const CustomerName = forwardRef<CustomerNameRef, CustomerNameProps>(({ initialDa
     pinCode: '',
     state: '',
     imageUrl: '',
-    gstNumber: '',
+    gstNumber: ''
   });
 
   const [status, setStatus] = useState<string>('Wait for Approval');
   const [showCustomerSuggestions, setShowCustomerSuggestions] = useState(false);
   const [showCustomerDetails, setShowCustomerDetails] = useState(false);
 
-  console.log('🔍 CustomerName - Initial data:', initialData);
-  console.log('🔍 CustomerName - Is edit mode:', isEditMode);
+
+
 
   // FIXED: Load initial data if in edit mode with comprehensive mapping
   useEffect(() => {
     if (isEditMode && initialData) {
-      console.log('🔄 Loading customer data for edit:', initialData);
+
 
       // Handle different possible data structures
       const customer = initialData.customer || initialData;
@@ -78,27 +78,27 @@ const CustomerName = forwardRef<CustomerNameRef, CustomerNameProps>(({ initialDa
       setCustomerData({
         _id: customer._id || initialData.customerId || '',
         name: customer.name ||
-              customer.companyName ||
-              initialData.companyName ||
-              (customer.firstName && customer.lastName ? `${customer.firstName} ${customer.lastName}`.trim() : '') ||
-              '',
+        customer.companyName ||
+        initialData.companyName || (
+        customer.firstName && customer.lastName ? `${customer.firstName} ${customer.lastName}`.trim() : '') ||
+        '',
         companyName: customer.companyName || initialData.companyName || '',
         address: customer.address ||
-                 customer.address1 ||
-                 (customer.address1 && customer.address2 ? `${customer.address1} ${customer.address2}`.trim() : customer.address1 || '') ||
-                 '',
+        customer.address1 || (
+        customer.address1 && customer.address2 ? `${customer.address1} ${customer.address2}`.trim() : customer.address1 || '') ||
+        '',
         phone: customer.phone ||
-               customer.phone1 ||
-               customer.telephone ||
-               initialData.customerPhone ||
-               '',
+        customer.phone1 ||
+        customer.telephone ||
+        initialData.customerPhone ||
+        '',
         whatsapp: customer.whatsapp || '',
         email: customer.email || '',
         phone2: customer.phone2 || '',
         pinCode: customer.pinCode || '',
         state: customer.state || '',
         imageUrl: customer.imageUrl || '',
-        gstNumber: customer.gstNumber || '',
+        gstNumber: customer.gstNumber || ''
       });
 
       // Set status from initial data
@@ -108,57 +108,57 @@ const CustomerName = forwardRef<CustomerNameRef, CustomerNameProps>(({ initialDa
     }
   }, [isEditMode, initialData]);
 
-// Replace your handleCustomerSelect function in CustomerName.tsx with this:
+  // Replace your handleCustomerSelect function in CustomerName.tsx with this:
 
-const handleCustomerSelect = (account: any) => {
-  console.log('Customer selected:', account);
+  const handleCustomerSelect = (account: any) => {
 
-  // Extract username from email as fallback for name
-  const emailUsername = account.email
-    ? account.email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())
-    : '';
 
-  setCustomerData({
-    _id: account._id || '',
-    // Handle incomplete backend data with multiple fallbacks
-    name: account.accountName ||
-          (account.firstName && account.lastName ? `${account.firstName} ${account.lastName}`.trim() : '') ||
-          account.firstName ||
-          account.companyName ||
-          emailUsername ||
-          `Customer ${account._id?.slice(-6) || ''}` ||
-          '',
-    companyName: account.companyName || account.company || "",
-    address: account.address ||
-             (account.address1 && account.address2 ? `${account.address1} ${account.address2}`.trim() : account.address1 || '') ||
-             "",
-    phone: account.phoneNumber ||
-           account.phone1 ||
-           account.phone ||
-           account.telephone ||
-           account.mobile ||
-           "",
-    whatsapp: account.whatsapp || "",
-    email: account.email || "",
-    phone2: account.phone2 || "",
-    pinCode: account.pinCode || "",
-    state: account.state || "",
-    imageUrl: account.imageUrl || "",
-    gstNumber: account.gstNumber || "",
-  });
-  setShowCustomerSuggestions(false);
-  // Notify parent that customer was selected (for auto-focus on next field)
-  if (onCustomerSelect) {
-    onCustomerSelect();
-  }
-};
+    // Extract username from email as fallback for name
+    const emailUsername = account.email ?
+    account.email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()) :
+    '';
+
+    setCustomerData({
+      _id: account._id || '',
+      // Handle incomplete backend data with multiple fallbacks
+      name: account.accountName || (
+      account.firstName && account.lastName ? `${account.firstName} ${account.lastName}`.trim() : '') ||
+      account.firstName ||
+      account.companyName ||
+      emailUsername ||
+      `Customer ${account._id?.slice(-6) || ''}` ||
+      '',
+      companyName: account.companyName || account.company || "",
+      address: account.address || (
+      account.address1 && account.address2 ? `${account.address1} ${account.address2}`.trim() : account.address1 || '') ||
+      "",
+      phone: account.phoneNumber ||
+      account.phone1 ||
+      account.phone ||
+      account.telephone ||
+      account.mobile ||
+      "",
+      whatsapp: account.whatsapp || "",
+      email: account.email || "",
+      phone2: account.phone2 || "",
+      pinCode: account.pinCode || "",
+      state: account.state || "",
+      imageUrl: account.imageUrl || "",
+      gstNumber: account.gstNumber || ""
+    });
+    setShowCustomerSuggestions(false);
+    // Notify parent that customer was selected (for auto-focus on next field)
+    if (onCustomerSelect) {
+      onCustomerSelect();
+    }
+  };
 
   const handleCustomerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setCustomerData(prev => ({ ...prev, [name]: value }));
+    setCustomerData((prev) => ({ ...prev, [name]: value }));
     // Reset selection when typing
     setSuggestionSelectedIndex(-1);
-    console.log('Customer input changed:', { name, value });
+
   };
 
   // Handle keyboard navigation for suggestions
@@ -168,14 +168,14 @@ const handleCustomerSelect = (account: any) => {
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
-        setSuggestionSelectedIndex(prev =>
-          prev < currentSuggestions.length - 1 ? prev + 1 : 0
+        setSuggestionSelectedIndex((prev) =>
+        prev < currentSuggestions.length - 1 ? prev + 1 : 0
         );
         break;
       case 'ArrowUp':
         e.preventDefault();
-        setSuggestionSelectedIndex(prev =>
-          prev > 0 ? prev - 1 : currentSuggestions.length - 1
+        setSuggestionSelectedIndex((prev) =>
+        prev > 0 ? prev - 1 : currentSuggestions.length - 1
         );
         break;
       case 'Enter':
@@ -214,7 +214,7 @@ const handleCustomerSelect = (account: any) => {
       pinCode: '',
       state: '',
       imageUrl: '',
-      gstNumber: '',
+      gstNumber: ''
     });
     setStatus('Wait for Approval');
   };
@@ -233,33 +233,47 @@ const handleCustomerSelect = (account: any) => {
       <div className="OrderIDanddata">
         {/* Left side: Order ID (only in edit mode) */}
         <div className="OrderIDCreate">
-          {isEditMode && initialData?.orderId && (
-            <span className="OrderIDBadge">{initialData.orderId}</span>
-          )}
+          {isEditMode && initialData?.orderId &&
+          <span className="OrderIDBadge">{initialData.orderId}</span>
+          }
         </div>
 
         {/* Right side: Date and Customer Image */}
         <div className="customerInputRow">
-          {isEditMode && initialData?.createdAt ? (
-            <div className="createDateAndupdateDate">
-              <span>{initialData.createdAt}</span>
-            </div>
-          ) : (
-            <Data />
-          )}
-          {customerData.imageUrl && (
-            <div className="customerImage">
+          {isEditMode && initialData?.createdAt ?
+          <div className="createDateAndupdateDate">
+              <span>
+                {new Date(initialData.createdAt).toLocaleString("en-US", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                  weekday: "long"
+                })}
+                {" | "}
+                {new Date(initialData.createdAt).toLocaleString("en-US", {
+                  hour: "numeric",
+                  minute: "numeric",
+                  second: "numeric",
+                  hour12: true
+                })}
+              </span>
+            </div> :
+
+          <Data />
+          }
+          {customerData.imageUrl &&
+          <div className="customerImage">
               <div className="customerImageDiv">
                 <img
-                  src={customerData.imageUrl}
-                  alt="Customer"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                  }}
-                />
+                src={customerData.imageUrl}
+                alt="Customer"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }} />
+
               </div>
             </div>
-          )}
+          }
         </div>
       </div>
 
@@ -281,34 +295,34 @@ const handleCustomerSelect = (account: any) => {
             required
             readOnly={isEditMode}
             style={{ cursor: customerData._id ? 'pointer' : 'text' }}
-            title={customerData._id ? 'Double-click to view customer details' : ''}
-          />
-          {!isEditMode && (
-            <OptimizedSuggestions
-              searchTerm={customerData.name}
-              onSelect={handleCustomerSelect}
-              suggestionType="customer"
-              showSuggestions={showCustomerSuggestions && customerData.name.length > 0}
-              selectedIndex={suggestionSelectedIndex}
-              onSuggestionsChange={handleSuggestionsChange}
-            />
-          )}
+            title={customerData._id ? 'Double-click to view customer details' : ''} />
+
+          {!isEditMode &&
+          <OptimizedSuggestions
+            searchTerm={customerData.name}
+            onSelect={handleCustomerSelect}
+            suggestionType="customer"
+            showSuggestions={showCustomerSuggestions && customerData.name.length > 0}
+            selectedIndex={suggestionSelectedIndex}
+            onSuggestionsChange={handleSuggestionsChange} />
+
+          }
         </div>
 
         <div>
           <input
             type="hidden"
             name="customerId"
-            value={customerData._id}
-          />
+            value={customerData._id} />
+
           <input
             name="address"
             className="CurstomerAddressInput"
             value={customerData.address}
             onChange={handleCustomerChange}
             type="text"
-            placeholder="Enter Customer Address"
-          />
+            placeholder="Enter Customer Address" />
+
         </div>
 
         <input
@@ -318,8 +332,8 @@ const handleCustomerSelect = (account: any) => {
           onChange={handleCustomerChange}
           type="tel"
           placeholder="WhatsApp Number"
-          pattern="[0-9\-\+\s\(\)]+"
-        />
+          pattern="[0-9\-\+\s\(\)]+" />
+
 
         <input
           name="email"
@@ -327,8 +341,8 @@ const handleCustomerSelect = (account: any) => {
           value={customerData.email}
           onChange={handleCustomerChange}
           type="email"
-          placeholder="Email"
-        />
+          placeholder="Email" />
+
 
         <input
           name="companyName"
@@ -336,8 +350,8 @@ const handleCustomerSelect = (account: any) => {
           value={customerData.companyName}
           onChange={handleCustomerChange}
           type="text"
-          placeholder="Company Name"
-        />
+          placeholder="Company Name" />
+
 
         <input
           name="gstNumber"
@@ -346,8 +360,8 @@ const handleCustomerSelect = (account: any) => {
           onChange={handleCustomerChange}
           type="text"
           placeholder="GST Number"
-          pattern="^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$"
-        />
+          pattern="^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$" />
+
 
         <input
           name="pinCode"
@@ -356,8 +370,8 @@ const handleCustomerSelect = (account: any) => {
           onChange={handleCustomerChange}
           type="text"
           placeholder="Pin Code"
-          pattern="[0-9]{6}"
-        />
+          pattern="[0-9]{6}" />
+
 
         <input
           name="state"
@@ -365,37 +379,37 @@ const handleCustomerSelect = (account: any) => {
           value={customerData.state}
           onChange={handleCustomerChange}
           type="text"
-          placeholder="State"
-        />
+          placeholder="State" />
+
       </div>
 
       {/* Customer Details Popup */}
-      {showCustomerDetails && customerData._id && (
-        <div className="customer-details-overlay" onClick={() => setShowCustomerDetails(false)}>
+      {showCustomerDetails && customerData._id &&
+      <div className="customer-details-overlay" onClick={() => setShowCustomerDetails(false)}>
           <div className="customer-details-popup" onClick={(e) => e.stopPropagation()}>
             <div className="customer-details-header">
               <h3>Customer Details</h3>
               <button
-                className="customer-details-close"
-                onClick={() => setShowCustomerDetails(false)}
-              >
+              className="customer-details-close"
+              onClick={() => setShowCustomerDetails(false)}>
+
                 ×
               </button>
             </div>
 
             <div className="customer-details-content">
               {/* Customer Image */}
-              {customerData.imageUrl && (
-                <div className="customer-details-image">
+              {customerData.imageUrl &&
+            <div className="customer-details-image">
                   <img
-                    src={customerData.imageUrl}
-                    alt="Customer"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                    }}
-                  />
+                src={customerData.imageUrl}
+                alt="Customer"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }} />
+
                 </div>
-              )}
+            }
 
               {/* Customer Info Grid */}
               <div className="customer-details-grid">
@@ -452,9 +466,9 @@ const handleCustomerSelect = (account: any) => {
             </div>
           </div>
         </div>
-      )}
-    </div>
-  );
+      }
+    </div>);
+
 });
 
 CustomerName.displayName = 'CustomerName';

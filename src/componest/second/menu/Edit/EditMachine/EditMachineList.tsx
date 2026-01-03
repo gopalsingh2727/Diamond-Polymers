@@ -9,6 +9,8 @@
 
 import React, { useState, useCallback, useEffect } from "react";
 import { useFormDataCache } from "../hooks/useFormDataCache";
+import { useCRUD } from "../../../../../hooks/useCRUD";
+import { ToastContainer } from "../../../../../components/shared/Toast";
 import "./editMachines.css";
 
 interface Machine {
@@ -35,6 +37,7 @@ interface EditMachineListProps {
 
 const EditMachineList: React.FC<EditMachineListProps> = ({ onEdit }) => {
   const { machines, loading, error } = useFormDataCache();
+  const { handleSave, handleUpdate, handleDelete: crudDelete, saveState, updateState, deleteState, confirmDialog, closeConfirmDialog, toast } = useCRUD();
 
   const [selectedRow, setSelectedRow] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
@@ -149,6 +152,7 @@ const EditMachineList: React.FC<EditMachineListProps> = ({ onEdit }) => {
           </div>
         )}
       </div>
+      <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
     </div>
   );
 };

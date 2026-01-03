@@ -1,10 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { RootState } from "../../../../redux/rootReducer";
 import OrderTypeSelector from "../../../../../components/orderType/OrderTypeSelector";
-import SearchableSelect from "../../../../../components/shared/SearchableSelect";
+import SearchableSelect, { SearchableSelectHandle } from "../../../../../components/shared/SearchableSelect";
 import { Parser } from "expr-eval";
+import { useKeyboardNavigation } from "../../../../../hooks/useKeyboardNavigation";
+import KeyboardShortcutsGuide from "../../../../../components/shared/KeyboardShortcutsGuide";
 import "./createOrder.css";
 
 interface ProductType {
@@ -70,9 +72,31 @@ interface FormSection {
 const CreateOrder = () => {
   // ✅ Get location state for edit mode
   const location = useLocation();
-  const locationState = location.state as { isEdit?: boolean; orderData?: any } | null;
+  const navigate = useNavigate();
+  const locationState = location.state as {isEdit?: boolean;orderData?: any;} | null;
   const isEditMode = locationState?.isEdit || false;
   const editOrderData = locationState?.orderData;
+
+  // Refs for keyboard navigation
+  const orderTypeRef = useRef<SearchableSelectHandle>(null);
+  const statusRef = useRef<HTMLSelectElement>(null);
+  const priorityRef = useRef<HTMLSelectElement>(null);
+  const productTypeRef = useRef<SearchableSelectHandle>(null);
+  const productNameRef = useRef<SearchableSelectHandle>(null);
+  const quantityRef = useRef<HTMLInputElement>(null);
+  const productSpecRef = useRef<SearchableSelectHandle>(null);
+  const materialTypeRef = useRef<SearchableSelectHandle>(null);
+  const materialNameRef = useRef<SearchableSelectHandle>(null);
+  const mixingRef = useRef<HTMLSelectElement>(null);
+  const printEnabledRef = useRef<HTMLSelectElement>(null);
+  const printLengthRef = useRef<HTMLInputElement>(null);
+  const printWidthRef = useRef<HTMLInputElement>(null);
+  const printTypeRef = useRef<HTMLSelectElement>(null);
+  const printColorRef = useRef<HTMLInputElement>(null);
+  const printImageRef = useRef<HTMLInputElement>(null);
+  const stepNameRef = useRef<HTMLInputElement>(null);
+  const notesRef = useRef<HTMLTextAreaElement>(null);
+  const submitButtonRef = useRef<HTMLButtonElement>(null);
 
   // Data states
   const [productTypes, setProductTypes] = useState<ProductType[]>([]);
@@ -83,20 +107,20 @@ const CreateOrder = () => {
 
   // Form values - dynamic based on field names
   // ✅ Initialize with edit data if in edit mode
-  const [formValues, setFormValues] = useState<{ [key: string]: any }>(() => {
+  const [formValues, setFormValues] = useState<{[key: string]: any;}>(() => {
     if (isEditMode && editOrderData) {
       return {
         overallStatus: editOrderData.overallStatus || editOrderData.status || 'Wait for Approval',
         priority: editOrderData.priority || 'normal',
-        orderType: editOrderData.orderTypeId || editOrderData.orderType?._id || '',
+        orderType: editOrderData.orderTypeId || editOrderData.orderType?._id || ''
         // Add other fields as needed
       };
     }
     return {};
   });
-  const [productSpecValues, setProductSpecValues] = useState<{ [key: string]: string | number }>({});
-  const [materialSpecValues, setMaterialSpecValues] = useState<{ [key: string]: string | number }>({});
-  const [calculatedDimensions, setCalculatedDimensions] = useState<{ [key: string]: number }>({});
+  const [productSpecValues, setProductSpecValues] = useState<{[key: string]: string | number;}>({});
+  const [materialSpecValues, setMaterialSpecValues] = useState<{[key: string]: string | number;}>({});
+  const [calculatedDimensions, setCalculatedDimensions] = useState<{[key: string]: number;}>({});
   const [calculatedMaterialWeight, setCalculatedMaterialWeight] = useState<number>(0);
 
   const [loading, setLoading] = useState(false);
@@ -119,53 +143,53 @@ const CreateOrder = () => {
 
   // Default sections when order type has no sections configured
   const defaultSections: FormSection[] = [
-    {
-      id: "product",
-      name: "Product Information",
-      enabled: true,
-      order: 1,
-      fields: [
-        { name: "productType", label: "Product Type", type: "suggestions", required: true, enabled: true },
-        { name: "productName", label: "Product Name", type: "suggestions", required: true, enabled: true },
-        { name: "quantity", label: "Quantity", type: "number", required: true, enabled: true }
-      ]
-    },
-    {
-      id: "material",
-      name: "Material Information",
-      enabled: true,
-      order: 2,
-      fields: [
-        { name: "materialType", label: "Material Type", type: "suggestions", required: true, enabled: true },
-        { name: "materialName", label: "Material Specification", type: "suggestions", required: true, enabled: true },
-        { name: "mixing", label: "Mixing", type: "select", required: false, enabled: true }
-      ]
-    },
-    {
-      id: "printing",
-      name: "Printing Options",
-      enabled: true,
-      order: 3,
-      fields: [
-        { name: "printEnabled", label: "Enable Printing", type: "select", required: false, enabled: true },
-        { name: "printLength", label: "Print Length", type: "number", required: false, enabled: true },
-        { name: "printWidth", label: "Print Width", type: "number", required: false, enabled: true },
-        { name: "printType", label: "Print Type", type: "select", required: false, enabled: true },
-        { name: "printColor", label: "Print Color", type: "text", required: false, enabled: true },
-        { name: "printImage", label: "Print Image/Notes", type: "text", required: false, enabled: true }
-      ]
-    },
-    {
-      id: "steps",
-      name: "Manufacturing Steps",
-      enabled: true,
-      order: 4,
-      fields: [
-        { name: "stepName", label: "Step Name", type: "suggestions", required: false, enabled: true },
-        { name: "notes", label: "Notes", type: "text", required: false, enabled: true }
-      ]
-    }
-  ];
+  {
+    id: "product",
+    name: "Product Information",
+    enabled: true,
+    order: 1,
+    fields: [
+    { name: "productType", label: "Product Type", type: "suggestions", required: true, enabled: true },
+    { name: "productName", label: "Product Name", type: "suggestions", required: true, enabled: true },
+    { name: "quantity", label: "Quantity", type: "number", required: true, enabled: true }]
+
+  },
+  {
+    id: "material",
+    name: "Material Information",
+    enabled: true,
+    order: 2,
+    fields: [
+    { name: "materialType", label: "Material Type", type: "suggestions", required: true, enabled: true },
+    { name: "materialName", label: "Material Specification", type: "suggestions", required: true, enabled: true },
+    { name: "mixing", label: "Mixing", type: "select", required: false, enabled: true }]
+
+  },
+  {
+    id: "printing",
+    name: "Printing Options",
+    enabled: true,
+    order: 3,
+    fields: [
+    { name: "printEnabled", label: "Enable Printing", type: "select", required: false, enabled: true },
+    { name: "printLength", label: "Print Length", type: "number", required: false, enabled: true },
+    { name: "printWidth", label: "Print Width", type: "number", required: false, enabled: true },
+    { name: "printType", label: "Print Type", type: "select", required: false, enabled: true },
+    { name: "printColor", label: "Print Color", type: "text", required: false, enabled: true },
+    { name: "printImage", label: "Print Image/Notes", type: "text", required: false, enabled: true }]
+
+  },
+  {
+    id: "steps",
+    name: "Manufacturing Steps",
+    enabled: true,
+    order: 4,
+    fields: [
+    { name: "stepName", label: "Step Name", type: "suggestions", required: false, enabled: true },
+    { name: "notes", label: "Notes", type: "text", required: false, enabled: true }]
+
+  }];
+
 
   // Get enabled sections from order type
   // IMPORTANT: Only use sections from database if they exist, otherwise use defaults
@@ -176,16 +200,16 @@ const CreateOrder = () => {
 
     // If order type has sections configured, use ONLY those sections
     if (dbSections && Array.isArray(dbSections) && dbSections.length > 0) {
-      return dbSections
-        .filter((s: any) => s.enabled !== false)
-        .sort((a: any, b: any) => (a.order || 0) - (b.order || 0))
-        .map((s: any) => ({
-          id: s.id,
-          name: s.name,
-          enabled: s.enabled !== false,
-          order: s.order || 0,
-          fields: s.fields || []
-        }));
+      return dbSections.
+      filter((s: any) => s.enabled !== false).
+      sort((a: any, b: any) => (a.order || 0) - (b.order || 0)).
+      map((s: any) => ({
+        id: s.id,
+        name: s.name,
+        enabled: s.enabled !== false,
+        order: s.order || 0,
+        fields: s.fields || []
+      }));
     }
 
     // No sections configured - use defaults
@@ -194,22 +218,121 @@ const CreateOrder = () => {
 
   const sections = getSections();
 
+  // 🎹 Keyboard Navigation Setup
+  const buildFieldRegistry = () => {
+    const fields: Array<{
+      id: string;
+      ref: React.RefObject<any>;
+      onEnter?: () => void;
+      isEnabled?: boolean;
+      nextFieldId?: string;
+    }> = [];
+
+    // Always add order type, status, priority
+    fields.push(
+      { id: 'orderType', ref: orderTypeRef, isEnabled: true },
+      { id: 'status', ref: statusRef, isEnabled: true },
+      { id: 'priority', ref: priorityRef, isEnabled: true }
+    );
+
+    // Add fields based on enabled sections
+    sections.forEach((section) => {
+      if (section.id === 'product') {
+        if (isFieldEnabled('product', 'productType')) {
+          fields.push({ id: 'productType', ref: productTypeRef, isEnabled: true });
+        }
+        if (isFieldEnabled('product', 'productName')) {
+          fields.push({ id: 'productName', ref: productNameRef, isEnabled: !!formValues.productType });
+        }
+        if (isFieldEnabled('product', 'quantity')) {
+          fields.push({ id: 'quantity', ref: quantityRef, isEnabled: true });
+        }
+        if (formValues.productName && productSpecs.length > 0) {
+          fields.push({ id: 'productSpec', ref: productSpecRef, isEnabled: true });
+        }
+      }
+
+      if (section.id === 'material') {
+        if (isFieldEnabled('material', 'materialType')) {
+          fields.push({ id: 'materialType', ref: materialTypeRef, isEnabled: true });
+        }
+        if (isFieldEnabled('material', 'materialName')) {
+          fields.push({ id: 'materialName', ref: materialNameRef, isEnabled: !!formValues.materialType });
+        }
+        if (isFieldEnabled('material', 'mixing')) {
+          fields.push({ id: 'mixing', ref: mixingRef, isEnabled: true });
+        }
+      }
+
+      if (section.id === 'printing') {
+        if (isFieldEnabled('printing', 'printEnabled')) {
+          fields.push({ id: 'printEnabled', ref: printEnabledRef, isEnabled: true });
+        }
+        if (isFieldEnabled('printing', 'printLength')) {
+          fields.push({ id: 'printLength', ref: printLengthRef, isEnabled: true });
+        }
+        if (isFieldEnabled('printing', 'printWidth')) {
+          fields.push({ id: 'printWidth', ref: printWidthRef, isEnabled: true });
+        }
+        if (isFieldEnabled('printing', 'printType')) {
+          fields.push({ id: 'printType', ref: printTypeRef, isEnabled: true });
+        }
+        if (isFieldEnabled('printing', 'printColor')) {
+          fields.push({ id: 'printColor', ref: printColorRef, isEnabled: true });
+        }
+        if (isFieldEnabled('printing', 'printImage')) {
+          fields.push({ id: 'printImage', ref: printImageRef, isEnabled: true });
+        }
+      }
+
+      if (section.id === 'steps') {
+        if (isFieldEnabled('steps', 'stepName')) {
+          fields.push({ id: 'stepName', ref: stepNameRef, isEnabled: true });
+        }
+        if (isFieldEnabled('steps', 'notes')) {
+          fields.push({ id: 'notes', ref: notesRef, isEnabled: true });
+        }
+      }
+    });
+
+    // Add submit button at the end
+    fields.push({ id: 'submit', ref: submitButtonRef, isEnabled: true });
+
+    return fields;
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleGoBack = () => {
+    navigate('/dashboard');
+  };
+
+  const { focusNextField, focusPreviousField, focusField, setCurrentField } = useKeyboardNavigation({
+    onSave: handleSubmit,
+    onPrint: handlePrint,
+    onBack: handleGoBack,
+    enableGlobalShortcuts: true,
+    fields: buildFieldRegistry()
+  });
+
   // Debug: Log sections when order type changes
   useEffect(() => {
     if (selectedOrderType && selectedOrderTypeData) {
-      console.log('=== Order Type Debug ===');
-      console.log('Selected Order Type:', selectedOrderTypeData.typeName);
-      console.log('DB Sections:', selectedOrderTypeData.sections);
-      console.log('DB Sections Count:', selectedOrderTypeData.sections?.length || 0);
-      console.log('Active Sections Count:', sections.length);
-      console.log('Section IDs:', sections.map(s => s.id).join(', '));
-      console.log('========================');
+
+
+
+
+
+
+
     }
   }, [selectedOrderType, selectedOrderTypeData, sections]);
 
   // Helper to check if a field is enabled in the current order type
   const isFieldEnabled = (sectionId: string, fieldName: string): boolean => {
-    const section = sections.find(s => s.id === sectionId);
+    const section = sections.find((s) => s.id === sectionId);
     if (!section) return false;
 
     // If section has no fields configured, show all fields (backward compatibility)
@@ -218,7 +341,7 @@ const CreateOrder = () => {
     }
 
     // Find the field in section's fields
-    const field = section.fields.find(f => f.name === fieldName);
+    const field = section.fields.find((f) => f.name === fieldName);
 
     // If field not found, it's not configured for this order type
     if (!field) return false;
@@ -228,7 +351,7 @@ const CreateOrder = () => {
 
   // Helper to check if a field is required
   const isFieldRequired = (sectionId: string, fieldName: string): boolean => {
-    const section = sections.find(s => s.id === sectionId);
+    const section = sections.find((s) => s.id === sectionId);
     if (!section) return false;
 
     // If section has no fields configured, use default required values
@@ -238,13 +361,13 @@ const CreateOrder = () => {
       return defaultRequired.includes(fieldName);
     }
 
-    const field = section.fields.find(f => f.name === fieldName);
+    const field = section.fields.find((f) => f.name === fieldName);
     return field?.required ?? false;
   };
 
   // Helper to get field label
   const getFieldLabel = (sectionId: string, fieldName: string, defaultLabel: string): string => {
-    const section = sections.find(s => s.id === sectionId);
+    const section = sections.find((s) => s.id === sectionId);
     if (!section) return defaultLabel;
 
     // If section has no fields configured, use default label
@@ -252,7 +375,7 @@ const CreateOrder = () => {
       return defaultLabel;
     }
 
-    const field = section.fields.find(f => f.name === fieldName);
+    const field = section.fields.find((f) => f.name === fieldName);
     return field?.label || defaultLabel;
   };
 
@@ -270,7 +393,7 @@ const CreateOrder = () => {
   useEffect(() => {
     if (selectedOrderType) {
       // Keep order type, reset other values
-      setFormValues(prev => ({ orderType: prev.orderType }));
+      setFormValues((prev) => ({ orderType: prev.orderType }));
       setProducts([]);
       setProductSpecs([]);
       setMaterialSpecs([]);
@@ -286,12 +409,12 @@ const CreateOrder = () => {
     if (formValues.productType) {
       const filteredProducts = cachedProducts.filter(
         (product: any) => product.productType?._id === formValues.productType ||
-                          product.productTypeId === formValues.productType
+        product.productTypeId === formValues.productType
       );
       setProducts(filteredProducts);
     } else {
       setProducts([]);
-      setFormValues(prev => ({ ...prev, productName: "", productSpec: "" }));
+      setFormValues((prev) => ({ ...prev, productName: "", productSpec: "" }));
     }
   }, [formValues.productType, cachedProducts]);
 
@@ -300,22 +423,22 @@ const CreateOrder = () => {
     if (formValues.productName) {
       const filteredSpecs = cachedProductSpecs.filter(
         (spec: any) => spec.productId === formValues.productName ||
-                      spec.product?._id === formValues.productName
+        spec.product?._id === formValues.productName
       );
       setProductSpecs(filteredSpecs);
     } else {
       setProductSpecs([]);
-      setFormValues(prev => ({ ...prev, productSpec: "" }));
+      setFormValues((prev) => ({ ...prev, productSpec: "" }));
     }
   }, [formValues.productName, cachedProductSpecs]);
 
   // Initialize product spec values when selected
   useEffect(() => {
     if (formValues.productSpec) {
-      const spec = productSpecs.find(s => s._id === formValues.productSpec);
+      const spec = productSpecs.find((s) => s._id === formValues.productSpec);
       if (spec) {
-        const initialValues: { [key: string]: string | number } = {};
-        spec.dimensions.forEach(dim => {
+        const initialValues: {[key: string]: string | number;} = {};
+        spec.dimensions.forEach((dim) => {
           if (!dim.isCalculated) {
             initialValues[dim.name] = dim.dataType === 'number' ? 0 : "";
           }
@@ -331,23 +454,23 @@ const CreateOrder = () => {
       setLoadingMaterialSpecs(true);
       const filteredSpecs = cachedMaterials.filter(
         (material: any) => material.materialTypeId === formValues.materialType ||
-                          material.materialType?._id === formValues.materialType
+        material.materialType?._id === formValues.materialType
       );
       setMaterialSpecs(filteredSpecs);
       setLoadingMaterialSpecs(false);
     } else {
       setMaterialSpecs([]);
-      setFormValues(prev => ({ ...prev, materialName: "" }));
+      setFormValues((prev) => ({ ...prev, materialName: "" }));
     }
   }, [formValues.materialType, cachedMaterials]);
 
   // Initialize material spec values when selected
   useEffect(() => {
     if (formValues.materialName) {
-      const spec = materialSpecs.find(s => s._id === formValues.materialName);
+      const spec = materialSpecs.find((s) => s._id === formValues.materialName);
       if (spec) {
-        const initialValues: { [key: string]: string | number } = {};
-        spec.dimensions.forEach(dim => {
+        const initialValues: {[key: string]: string | number;} = {};
+        spec.dimensions.forEach((dim) => {
           if (!dim.isCalculated) {
             initialValues[dim.name] = dim.dataType === 'number' ? 0 : "";
           }
@@ -368,15 +491,15 @@ const CreateOrder = () => {
 
   const calculateCombinedDimensions = () => {
     try {
-      const productSpec = productSpecs.find(s => s._id === formValues.productSpec);
-      const materialSpec = materialSpecs.find(s => s._id === formValues.materialName);
+      const productSpec = productSpecs.find((s) => s._id === formValues.productSpec);
+      const materialSpec = materialSpecs.find((s) => s._id === formValues.materialName);
       if (!productSpec || !materialSpec) return;
 
-      const context: { [key: string]: number } = {
+      const context: {[key: string]: number;} = {
         quantity: Number(formValues.quantity) || 0,
         mol: materialSpec.mol || 0,
         weightPerPiece: materialSpec.weightPerPiece || 0,
-        density: materialSpec.density || 0,
+        density: materialSpec.density || 0
       };
 
       Object.entries(productSpecValues).forEach(([key, value]) => {
@@ -386,14 +509,14 @@ const CreateOrder = () => {
         context[key] = Number(value) || 0;
       });
 
-      const calculated: { [key: string]: number } = {};
+      const calculated: {[key: string]: number;} = {};
       const parser = new Parser();
       const allDimensions = [
-        ...(productSpec.dimensions || []),
-        ...(materialSpec.dimensions || [])
-      ];
+      ...(productSpec.dimensions || []),
+      ...(materialSpec.dimensions || [])];
 
-      allDimensions.forEach(dim => {
+
+      allDimensions.forEach((dim) => {
         if (dim.formula && dim.isCalculated) {
           try {
             const expr = parser.parse(dim.formula);
@@ -401,7 +524,7 @@ const CreateOrder = () => {
             calculated[dim.name] = result;
             context[dim.name] = result;
           } catch (err) {
-            console.error(`Error calculating ${dim.name}:`, err);
+
           }
         }
       });
@@ -418,43 +541,43 @@ const CreateOrder = () => {
       }
       setCalculatedMaterialWeight(weight);
     } catch (err) {
-      console.error("Error in combined calculations:", err);
+
     }
   };
 
   const handleFormValueChange = (fieldName: string, value: any) => {
-    setFormValues(prev => ({ ...prev, [fieldName]: value }));
+    setFormValues((prev) => ({ ...prev, [fieldName]: value }));
   };
 
   const handleProductSpecValueChange = (dimName: string, value: string) => {
-    setProductSpecValues(prev => ({ ...prev, [dimName]: value }));
+    setProductSpecValues((prev) => ({ ...prev, [dimName]: value }));
   };
 
   const handleMaterialSpecValueChange = (dimName: string, value: string) => {
-    setMaterialSpecValues(prev => ({ ...prev, [dimName]: value }));
+    setMaterialSpecValues((prev) => ({ ...prev, [dimName]: value }));
   };
 
   const handleSubmit = async () => {
-    console.log("🚀 handleSubmit called");
-    console.log("📝 Form values:", formValues);
-    console.log("📋 Selected order type:", selectedOrderType);
+
+
+
 
     // Validate required fields based on enabled sections
     const missingFields: string[] = [];
 
-    sections.forEach(section => {
-      section.fields?.filter(f => f.enabled && f.required).forEach(field => {
+    sections.forEach((section) => {
+      section.fields?.filter((f) => f.enabled && f.required).forEach((field) => {
         if (!formValues[field.name]) {
           missingFields.push(field.label);
         }
       });
     });
 
-    console.log("⚠️ Missing fields:", missingFields);
+
 
     if (missingFields.length > 0) {
       setError(`Please fill in required fields: ${missingFields.join(", ")}`);
-      console.log("❌ Validation failed - missing required fields");
+
       return;
     }
 
@@ -481,10 +604,10 @@ const CreateOrder = () => {
       const apiKey = import.meta.env.VITE_API_KEY;
 
       // Get branchId from localStorage (set during login)
-      const branchId = localStorage.getItem("selectedBranch") || localStorage.getItem("branchId");
+      const branchId = localStorage.getItem("selectedBranch") || localStorage.getItem('selectedBranch');
 
       const orderData: any = {
-        orderTypeId: selectedOrderType,
+        orderTypeId: selectedOrderType
       };
 
       // Add branchId to order data
@@ -537,28 +660,28 @@ const CreateOrder = () => {
       if (formValues.priority) orderData.priority = formValues.priority;
 
       // Debug: Log order data being sent
-      console.log(isEditMode ? "📋 Updating order with data:" : "📋 Creating order with data:", orderData);
-      console.log("🔑 Token present:", !!token);
-      console.log("🏢 BranchId:", branchId);
+
+
+
 
       // ✅ Debug: Log edit data details
       if (isEditMode) {
-        console.log("🔧 EDIT MODE DEBUG:");
-        console.log("  editOrderData._id:", editOrderData._id);
-        console.log("  editOrderData.orderId:", editOrderData.orderId);
-        console.log("  formValues.overallStatus:", formValues.overallStatus);
-        console.log("  Full editOrderData:", editOrderData);
+
+
+
+
+
       }
 
       // ✅ Handle both create and update modes
       // Use _id if it's a valid MongoDB ObjectId, otherwise use orderId
-      const orderIdentifier = isEditMode
-        ? (editOrderData._id && editOrderData._id.length === 24 ? editOrderData._id : editOrderData.orderId)
-        : null;
+      const orderIdentifier = isEditMode ?
+      editOrderData._id && editOrderData._id.length === 24 ? editOrderData._id : editOrderData.orderId :
+      null;
 
-      const url = isEditMode
-        ? `${import.meta.env.VITE_API_27INFINITY_IN}/orders/${orderIdentifier}`
-        : `${import.meta.env.VITE_API_27INFINITY_IN}/orders`;
+      const url = isEditMode ?
+      `${import.meta.env.VITE_API_27INFINITY_IN}/orders/${orderIdentifier}` :
+      `${import.meta.env.VITE_API_27INFINITY_IN}/orders`;
 
       const method = isEditMode ? "PUT" : "POST";
 
@@ -567,9 +690,9 @@ const CreateOrder = () => {
         headers: {
           "Content-Type": "application/json",
           "x-api-key": apiKey || "",
-          "Authorization": `Bearer ${token}`,
+          "Authorization": `Bearer ${token}`
         },
-        body: JSON.stringify(orderData),
+        body: JSON.stringify(orderData)
       });
 
       const data = await response.json();
@@ -577,9 +700,9 @@ const CreateOrder = () => {
         throw new Error(data.message || `Failed to ${isEditMode ? 'update' : 'create'} order`);
       }
 
-      setSuccess(isEditMode
-        ? `Order updated successfully!`
-        : `Order created successfully! Order ID: ${data.order?.orderId || data.orderId || ''}`
+      setSuccess(isEditMode ?
+      `Order updated successfully!` :
+      `Order created successfully! Order ID: ${data.order?.orderId || data.orderId || ''}`
       );
 
       // Reset form only for create mode
@@ -597,16 +720,22 @@ const CreateOrder = () => {
     }
   };
 
-  const selectedProductSpecData = productSpecs.find(s => s._id === formValues.productSpec);
-  const selectedMaterialSpecData = materialSpecs.find(s => s._id === formValues.materialName);
+  const selectedProductSpecData = productSpecs.find((s) => s._id === formValues.productSpec);
+  const selectedMaterialSpecData = materialSpecs.find((s) => s._id === formValues.materialName);
 
   // Check if a section is enabled
   const isSectionEnabled = (sectionId: string): boolean => {
-    return sections.some(s => s.id === sectionId);
+    return sections.some((s) => s.id === sectionId);
   };
 
   // Render a dynamic field based on its configuration
-  const renderField = (sectionId: string, fieldName: string, defaultLabel: string, renderFn: () => JSX.Element) => {
+  const renderField = (
+  sectionId: string,
+  fieldName: string,
+  defaultLabel: string,
+  renderFn: () => JSX.Element,
+  fieldRef?: React.RefObject<any>) =>
+  {
     if (!isFieldEnabled(sectionId, fieldName)) return null;
 
     const label = getFieldLabel(sectionId, fieldName, defaultLabel);
@@ -618,286 +747,389 @@ const CreateOrder = () => {
           {label} {required && <span className="required-mark">*</span>}
         </label>
         {renderFn()}
-      </div>
-    );
+      </div>);
+
   };
 
   // Render Product Section
-  const renderProductSection = (section: FormSection) => (
-    <div className="form-section" key={section.id}>
+  const renderProductSection = (section: FormSection) =>
+  <div className="form-section" key={section.id}>
       <h3 className="section-title">{section.name}</h3>
       <div className="form-grid">
-        {renderField("product", "productType", "Product Type", () => (
-          <SearchableSelect
-            options={productTypes.map(type => ({
-              value: type._id,
-              label: type.productTypeName
-            }))}
-            value={formValues.productType || ""}
-            onChange={(value) => handleFormValueChange("productType", value)}
-            placeholder="Select product type"
-            required={isFieldRequired("product", "productType")}
-          />
-        ))}
+        {renderField("product", "productType", "Product Type", () =>
+      <SearchableSelect
+        ref={productTypeRef}
+        options={productTypes.map((type) => ({
+          value: type._id,
+          label: type.productTypeName
+        }))}
+        value={formValues.productType || ""}
+        onChange={(value) => handleFormValueChange("productType", value)}
+        placeholder="Select product type"
+        required={isFieldRequired("product", "productType")}
+        onSelectionComplete={focusNextField}
+        onFocus={() => setCurrentField('productType')}
+        onSpaceBack={focusPreviousField} />,
 
-        {renderField("product", "productName", "Product Name", () => (
-          <SearchableSelect
-            options={products.map(product => ({
-              value: product._id,
-              label: product.productName
-            }))}
-            value={formValues.productName || ""}
-            onChange={(value) => handleFormValueChange("productName", value)}
-            placeholder={formValues.productType ? "Select product" : "Select Product Type first"}
-            disabled={!formValues.productType}
-            required={isFieldRequired("product", "productName")}
-          />
-        ))}
+      productTypeRef)}
 
-        {renderField("product", "quantity", "Quantity", () => (
-          <input
-            type="number"
-            value={formValues.quantity || ""}
-            onChange={(e) => handleFormValueChange("quantity", e.target.value)}
-            className="form-input"
-            placeholder="Enter quantity"
-            min={selectedOrderTypeData?.validationRules?.minQuantity || 1}
-            max={selectedOrderTypeData?.validationRules?.maxQuantity}
-          />
-        ))}
+        {renderField("product", "productName", "Product Name", () =>
+      <SearchableSelect
+        ref={productNameRef}
+        options={products.map((product) => ({
+          value: product._id,
+          label: product.productName
+        }))}
+        value={formValues.productName || ""}
+        onChange={(value) => handleFormValueChange("productName", value)}
+        placeholder={formValues.productType ? "Select product" : "Select Product Type first"}
+        disabled={!formValues.productType}
+        required={isFieldRequired("product", "productName")}
+        onSelectionComplete={focusNextField}
+        onFocus={() => setCurrentField('productName')}
+        onSpaceBack={focusPreviousField} />,
+
+      productNameRef)}
+
+        {renderField("product", "quantity", "Quantity", () =>
+      <input
+        ref={quantityRef}
+        type="number"
+        value={formValues.quantity || ""}
+        onChange={(e) => handleFormValueChange("quantity", e.target.value)}
+        onFocus={() => setCurrentField('quantity')}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            focusNextField();
+          }
+        }}
+        className="form-input"
+        placeholder="Enter quantity"
+        min={selectedOrderTypeData?.validationRules?.minQuantity || 1}
+        max={selectedOrderTypeData?.validationRules?.maxQuantity} />,
+
+      quantityRef)}
 
         {/* Product Spec */}
-        {formValues.productName && productSpecs.length > 0 && (
-          <div className="form-column">
+        {formValues.productName && productSpecs.length > 0 &&
+      <div className="form-column">
             <label className="input-label">Product Specification</label>
             <SearchableSelect
-              options={productSpecs.map(spec => ({
-                value: spec._id,
-                label: spec.specName,
-                description: `${spec.dimensions.length} dimensions`
-              }))}
-              value={formValues.productSpec || ""}
-              onChange={(value) => handleFormValueChange("productSpec", value)}
-              placeholder="Select specification"
-            />
+          ref={productSpecRef}
+          options={productSpecs.map((spec) => ({
+            value: spec._id,
+            label: spec.specName,
+            description: `${spec.dimensions.length} dimensions`
+          }))}
+          value={formValues.productSpec || ""}
+          onChange={(value) => handleFormValueChange("productSpec", value)}
+          placeholder="Select specification"
+          onSelectionComplete={focusNextField}
+          onFocus={() => setCurrentField('productSpec')}
+          onSpaceBack={focusPreviousField} />
+
           </div>
-        )}
+      }
       </div>
 
       {/* Product Spec Dimensions */}
-      {selectedProductSpecData && selectedProductSpecData.dimensions.length > 0 && (
-        <div className="dimensions-section">
+      {selectedProductSpecData && selectedProductSpecData.dimensions.length > 0 &&
+    <div className="dimensions-section">
           <h4 className="subsection-title">Product Dimensions</h4>
           <div className="form-grid">
-            {selectedProductSpecData.dimensions
-              .filter(dim => !dim.isCalculated)
-              .map((dim) => (
-                <div key={dim.name} className="form-column">
+            {selectedProductSpecData.dimensions.
+        filter((dim) => !dim.isCalculated).
+        map((dim) =>
+        <div key={dim.name} className="form-column">
                   <label className="input-label">
                     {dim.name} {dim.unit ? `(${dim.unit})` : ""}
                   </label>
                   <input
-                    type={dim.dataType === "number" ? "number" : "text"}
-                    value={productSpecValues[dim.name] || ""}
-                    onChange={(e) => handleProductSpecValueChange(dim.name, e.target.value)}
-                    className="form-input"
-                    placeholder={`Enter ${dim.name}`}
-                  />
+            type={dim.dataType === "number" ? "number" : "text"}
+            value={productSpecValues[dim.name] || ""}
+            onChange={(e) => handleProductSpecValueChange(dim.name, e.target.value)}
+            className="form-input"
+            placeholder={`Enter ${dim.name}`} />
+
                 </div>
-              ))}
+        )}
           </div>
         </div>
-      )}
-    </div>
-  );
+    }
+    </div>;
+
 
   // Render Material Section
-  const renderMaterialSection = (section: FormSection) => (
-    <div className="form-section" key={section.id}>
+  const renderMaterialSection = (section: FormSection) =>
+  <div className="form-section" key={section.id}>
       <h3 className="section-title">{section.name}</h3>
       <div className="form-grid">
-        {renderField("material", "materialType", "Material Type", () => (
-          <SearchableSelect
-            options={materialTypes.map(type => ({
-              value: type._id,
-              label: type.name
-            }))}
-            value={formValues.materialType || ""}
-            onChange={(value) => handleFormValueChange("materialType", value)}
-            placeholder="Select material type"
-            required={isFieldRequired("material", "materialType")}
-          />
-        ))}
+        {renderField("material", "materialType", "Material Type", () =>
+      <SearchableSelect
+        ref={materialTypeRef}
+        options={materialTypes.map((type) => ({
+          value: type._id,
+          label: type.name
+        }))}
+        value={formValues.materialType || ""}
+        onChange={(value) => handleFormValueChange("materialType", value)}
+        placeholder="Select material type"
+        required={isFieldRequired("material", "materialType")}
+        onSelectionComplete={focusNextField}
+        onFocus={() => setCurrentField('materialType')}
+        onSpaceBack={focusPreviousField} />,
 
-        {renderField("material", "materialName", "Material Specification", () => (
-          <SearchableSelect
-            options={materialSpecs.map(spec => ({
-              value: spec._id,
-              label: spec.specName,
-              description: spec.density ? `Density: ${spec.density}` : undefined
-            }))}
-            value={formValues.materialName || ""}
-            onChange={(value) => handleFormValueChange("materialName", value)}
-            placeholder={formValues.materialType ? "Select material" : "Select Material Type first"}
-            disabled={!formValues.materialType}
-            loading={loadingMaterialSpecs}
-            required={isFieldRequired("material", "materialName")}
-          />
-        ))}
+      materialTypeRef)}
 
-        {renderField("material", "mixing", "Mixing", () => (
-          <select
-            value={formValues.mixing || ""}
-            onChange={(e) => handleFormValueChange("mixing", e.target.value)}
-            className="form-input"
-          >
+        {renderField("material", "materialName", "Material Specification", () =>
+      <SearchableSelect
+        ref={materialNameRef}
+        options={materialSpecs.map((spec) => ({
+          value: spec._id,
+          label: spec.specName,
+          description: spec.density ? `Density: ${spec.density}` : undefined
+        }))}
+        value={formValues.materialName || ""}
+        onChange={(value) => handleFormValueChange("materialName", value)}
+        placeholder={formValues.materialType ? "Select material" : "Select Material Type first"}
+        disabled={!formValues.materialType}
+        loading={loadingMaterialSpecs}
+        required={isFieldRequired("material", "materialName")}
+        onSelectionComplete={focusNextField}
+        onFocus={() => setCurrentField('materialName')}
+        onSpaceBack={focusPreviousField} />,
+
+      materialNameRef)}
+
+        {renderField("material", "mixing", "Mixing", () =>
+      <select
+        ref={mixingRef}
+        value={formValues.mixing || ""}
+        onChange={(e) => handleFormValueChange("mixing", e.target.value)}
+        onFocus={() => setCurrentField('mixing')}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            focusNextField();
+          } else if (e.key === ' ' && !e.currentTarget.value) {
+            e.preventDefault();
+            focusPreviousField();
+          }
+        }}
+        className="form-input">
+
             <option value="">Select</option>
             <option value="yes">Yes</option>
             <option value="no">No</option>
-          </select>
-        ))}
+          </select>,
+      mixingRef)}
       </div>
 
       {/* Material Spec Dimensions */}
-      {selectedMaterialSpecData && selectedMaterialSpecData.dimensions.length > 0 && (
-        <div className="dimensions-section">
+      {selectedMaterialSpecData && selectedMaterialSpecData.dimensions.length > 0 &&
+    <div className="dimensions-section">
           <h4 className="subsection-title">Material Properties</h4>
           <div className="form-grid">
-            {selectedMaterialSpecData.mol !== undefined && selectedMaterialSpecData.mol > 0 && (
-              <div className="form-column">
+            {selectedMaterialSpecData.mol !== undefined && selectedMaterialSpecData.mol > 0 &&
+        <div className="form-column">
                 <label className="input-label">MOL</label>
                 <input type="text" value={selectedMaterialSpecData.mol} disabled className="form-input disabled-input" />
               </div>
-            )}
-            {selectedMaterialSpecData.density !== undefined && selectedMaterialSpecData.density > 0 && (
-              <div className="form-column">
+        }
+            {selectedMaterialSpecData.density !== undefined && selectedMaterialSpecData.density > 0 &&
+        <div className="form-column">
                 <label className="input-label">Density (g/cm³)</label>
                 <input type="text" value={selectedMaterialSpecData.density} disabled className="form-input disabled-input" />
               </div>
-            )}
-            {selectedMaterialSpecData.dimensions
-              .filter(dim => !dim.isCalculated)
-              .map((dim) => (
-                <div key={dim.name} className="form-column">
+        }
+            {selectedMaterialSpecData.dimensions.
+        filter((dim) => !dim.isCalculated).
+        map((dim) =>
+        <div key={dim.name} className="form-column">
                   <label className="input-label">
                     {dim.name} {dim.unit ? `(${dim.unit})` : ""}
                   </label>
                   <input
-                    type={dim.dataType === "number" ? "number" : "text"}
-                    value={materialSpecValues[dim.name] || ""}
-                    onChange={(e) => handleMaterialSpecValueChange(dim.name, e.target.value)}
-                    className="form-input"
-                    placeholder={`Enter ${dim.name}`}
-                  />
+            type={dim.dataType === "number" ? "number" : "text"}
+            value={materialSpecValues[dim.name] || ""}
+            onChange={(e) => handleMaterialSpecValueChange(dim.name, e.target.value)}
+            className="form-input"
+            placeholder={`Enter ${dim.name}`} />
+
                 </div>
-              ))}
+        )}
           </div>
         </div>
-      )}
-    </div>
-  );
+    }
+    </div>;
+
 
   // Render Printing Section
-  const renderPrintingSection = (section: FormSection) => (
-    <div className="form-section" key={section.id}>
+  const renderPrintingSection = (section: FormSection) =>
+  <div className="form-section" key={section.id}>
       <h3 className="section-title">{section.name}</h3>
       <div className="form-grid">
-        {renderField("printing", "printEnabled", "Enable Printing", () => (
-          <select
-            value={formValues.printEnabled || ""}
-            onChange={(e) => handleFormValueChange("printEnabled", e.target.value)}
-            className="form-input"
-          >
+        {renderField("printing", "printEnabled", "Enable Printing", () =>
+      <select
+        ref={printEnabledRef}
+        value={formValues.printEnabled || ""}
+        onChange={(e) => handleFormValueChange("printEnabled", e.target.value)}
+        onFocus={() => setCurrentField('printEnabled')}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            focusNextField();
+          }
+        }}
+        className="form-input">
+
             <option value="">Select</option>
             <option value="true">Yes</option>
             <option value="false">No</option>
-          </select>
-        ))}
+          </select>,
+      printEnabledRef)}
 
-        {renderField("printing", "printLength", "Print Length", () => (
-          <input
-            type="number"
-            value={formValues.printLength || ""}
-            onChange={(e) => handleFormValueChange("printLength", e.target.value)}
-            className="form-input"
-            placeholder="Enter print length"
-          />
-        ))}
+        {renderField("printing", "printLength", "Print Length", () =>
+      <input
+        ref={printLengthRef}
+        type="number"
+        value={formValues.printLength || ""}
+        onChange={(e) => handleFormValueChange("printLength", e.target.value)}
+        onFocus={() => setCurrentField('printLength')}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            focusNextField();
+          }
+        }}
+        className="form-input"
+        placeholder="Enter print length" />,
 
-        {renderField("printing", "printWidth", "Print Width", () => (
-          <input
-            type="number"
-            value={formValues.printWidth || ""}
-            onChange={(e) => handleFormValueChange("printWidth", e.target.value)}
-            className="form-input"
-            placeholder="Enter print width"
-          />
-        ))}
+      printLengthRef)}
 
-        {renderField("printing", "printType", "Print Type", () => (
-          <select
-            value={formValues.printType || ""}
-            onChange={(e) => handleFormValueChange("printType", e.target.value)}
-            className="form-input"
-          >
+        {renderField("printing", "printWidth", "Print Width", () =>
+      <input
+        ref={printWidthRef}
+        type="number"
+        value={formValues.printWidth || ""}
+        onChange={(e) => handleFormValueChange("printWidth", e.target.value)}
+        onFocus={() => setCurrentField('printWidth')}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            focusNextField();
+          }
+        }}
+        className="form-input"
+        placeholder="Enter print width" />,
+
+      printWidthRef)}
+
+        {renderField("printing", "printType", "Print Type", () =>
+      <select
+        ref={printTypeRef}
+        value={formValues.printType || ""}
+        onChange={(e) => handleFormValueChange("printType", e.target.value)}
+        onFocus={() => setCurrentField('printType')}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            focusNextField();
+          }
+        }}
+        className="form-input">
+
             <option value="">Select</option>
             <option value="flexo">Flexo</option>
             <option value="gravure">Gravure</option>
             <option value="digital">Digital</option>
             <option value="offset">Offset</option>
-          </select>
-        ))}
+          </select>,
+      printTypeRef)}
 
-        {renderField("printing", "printColor", "Print Color", () => (
-          <input
-            type="text"
-            value={formValues.printColor || ""}
-            onChange={(e) => handleFormValueChange("printColor", e.target.value)}
-            className="form-input"
-            placeholder="Enter color"
-          />
-        ))}
+        {renderField("printing", "printColor", "Print Color", () =>
+      <input
+        ref={printColorRef}
+        type="text"
+        value={formValues.printColor || ""}
+        onChange={(e) => handleFormValueChange("printColor", e.target.value)}
+        onFocus={() => setCurrentField('printColor')}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            focusNextField();
+          }
+        }}
+        className="form-input"
+        placeholder="Enter color" />,
 
-        {renderField("printing", "printImage", "Print Image/Notes", () => (
-          <input
-            type="text"
-            value={formValues.printImage || ""}
-            onChange={(e) => handleFormValueChange("printImage", e.target.value)}
-            className="form-input"
-            placeholder="Enter image reference or notes"
-          />
-        ))}
+      printColorRef)}
+
+        {renderField("printing", "printImage", "Print Image/Notes", () =>
+      <input
+        ref={printImageRef}
+        type="text"
+        value={formValues.printImage || ""}
+        onChange={(e) => handleFormValueChange("printImage", e.target.value)}
+        onFocus={() => setCurrentField('printImage')}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            focusNextField();
+          }
+        }}
+        className="form-input"
+        placeholder="Enter image reference or notes" />,
+
+      printImageRef)}
       </div>
-    </div>
-  );
+    </div>;
+
 
   // Render Steps Section
-  const renderStepsSection = (section: FormSection) => (
-    <div className="form-section" key={section.id}>
+  const renderStepsSection = (section: FormSection) =>
+  <div className="form-section" key={section.id}>
       <h3 className="section-title">{section.name}</h3>
       <div className="form-grid">
-        {renderField("steps", "stepName", "Step Name", () => (
-          <input
-            type="text"
-            value={formValues.stepName || ""}
-            onChange={(e) => handleFormValueChange("stepName", e.target.value)}
-            className="form-input"
-            placeholder="Enter step name"
-          />
-        ))}
+        {renderField("steps", "stepName", "Step Name", () =>
+      <input
+        ref={stepNameRef}
+        type="text"
+        value={formValues.stepName || ""}
+        onChange={(e) => handleFormValueChange("stepName", e.target.value)}
+        onFocus={() => setCurrentField('stepName')}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            focusNextField();
+          }
+        }}
+        className="form-input"
+        placeholder="Enter step name" />,
 
-        {renderField("steps", "notes", "Notes", () => (
-          <textarea
-            value={formValues.notes || ""}
-            onChange={(e) => handleFormValueChange("notes", e.target.value)}
-            className="form-input form-textarea"
-            placeholder="Enter notes"
-            rows={3}
-          />
-        ))}
+      stepNameRef)}
+
+        {renderField("steps", "notes", "Notes", () =>
+      <textarea
+        ref={notesRef}
+        value={formValues.notes || ""}
+        onChange={(e) => handleFormValueChange("notes", e.target.value)}
+        onFocus={() => setCurrentField('notes')}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && e.ctrlKey) {
+            e.preventDefault();
+            focusNextField();
+          }
+        }}
+        className="form-input form-textarea"
+        placeholder="Enter notes (Ctrl+Enter to proceed)"
+        rows={3} />,
+
+      notesRef)}
       </div>
-    </div>
-  );
+    </div>;
+
 
   // Render section based on id
   const renderSection = (section: FormSection) => {
@@ -924,21 +1156,36 @@ const CreateOrder = () => {
         <div className="form-grid">
           <div className="form-column">
             <OrderTypeSelector
+              ref={orderTypeRef}
               value={selectedOrderType}
               onChange={(value) => handleFormValueChange("orderType", value)}
               label="Order Type"
               showDescription={true}
               required
-            />
+              onSelectionComplete={focusNextField}
+              onFocus={() => setCurrentField('orderType')}
+              onSpaceBack={focusPreviousField} />
+
           </div>
           <div className="form-column">
             <label className="input-label">Status</label>
             <select
+              ref={statusRef}
               name="overallStatus"
               value={formValues.overallStatus || "Wait for Approval"}
               onChange={(e) => handleFormValueChange("overallStatus", e.target.value)}
-              className="form-input"
-            >
+              onFocus={() => setCurrentField('status')}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  focusNextField();
+                } else if (e.key === ' ' && !e.currentTarget.value) {
+                  e.preventDefault();
+                  focusPreviousField();
+                }
+              }}
+              className="form-input">
+
               <option value="Wait for Approval">Wait for Approval</option>
               <option value="pending">Pending</option>
               <option value="approved">Approved</option>
@@ -952,11 +1199,22 @@ const CreateOrder = () => {
           <div className="form-column">
             <label className="input-label">Priority</label>
             <select
+              ref={priorityRef}
               name="priority"
               value={formValues.priority || "normal"}
               onChange={(e) => handleFormValueChange("priority", e.target.value)}
-              className="form-input"
-            >
+              onFocus={() => setCurrentField('priority')}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  focusNextField();
+                } else if (e.key === ' ' && !e.currentTarget.value) {
+                  e.preventDefault();
+                  focusPreviousField();
+                }
+              }}
+              className="form-input">
+
               <option value="low">Low</option>
               <option value="normal">Normal</option>
               <option value="high">High</option>
@@ -967,87 +1225,92 @@ const CreateOrder = () => {
       </div>
 
       {/* Show form only when order type is selected */}
-      {selectedOrderType ? (
-        <>
+      {selectedOrderType ?
+      <>
           {/* Debug info - shows enabled sections */}
-          {selectedOrderTypeData && (
-            <div className="form-section" style={{ backgroundColor: '#f0f9ff', borderColor: '#bfdbfe' }}>
+          {selectedOrderTypeData &&
+        <div className="form-section" style={{ backgroundColor: '#f0f9ff', borderColor: '#bfdbfe' }}>
               <p style={{ margin: 0, fontSize: '0.875rem', color: '#1e40af' }}>
                 <strong>{selectedOrderTypeData.typeName}</strong> - Sections (in order):{' '}
-                {sections.map(s => s.name).join(' → ') || 'None'}
+                {sections.map((s) => s.name).join(' → ') || 'None'}
               </p>
             </div>
-          )}
+        }
 
           {/* Render sections dynamically based on order */}
-          {sections.map(section => renderSection(section))}
+          {sections.map((section) => renderSection(section))}
 
           {/* Calculated Dimensions Display */}
-          {Object.keys(calculatedDimensions).length > 0 && (
-            <div className="form-section">
+          {Object.keys(calculatedDimensions).length > 0 &&
+        <div className="form-section">
               <h3 className="section-title">Calculated Values</h3>
               <div className="form-grid">
                 {Object.entries(calculatedDimensions).map(([name, value]) => {
-                  const allDims = [
-                    ...(selectedProductSpecData?.dimensions || []),
-                    ...(selectedMaterialSpecData?.dimensions || [])
-                  ];
-                  const dim = allDims.find(d => d.name === name);
-                  return (
-                    <div key={name} className="form-column">
+              const allDims = [
+              ...(selectedProductSpecData?.dimensions || []),
+              ...(selectedMaterialSpecData?.dimensions || [])];
+
+              const dim = allDims.find((d) => d.name === name);
+              return (
+                <div key={name} className="form-column">
                       <label className="input-label">
                         {name} {dim?.unit ? `(${dim.unit})` : ""}
                         <span className="calculated-mark">(Calculated)</span>
                       </label>
                       <input
-                        type="text"
-                        value={typeof value === 'number' ? value.toFixed(4) : value}
-                        disabled
-                        className="form-input calculated-input"
-                      />
-                    </div>
-                  );
-                })}
-                {calculatedMaterialWeight > 0 && (
-                  <div className="form-column">
+                    type="text"
+                    value={typeof value === 'number' ? value.toFixed(4) : value}
+                    disabled
+                    className="form-input calculated-input" />
+
+                    </div>);
+
+            })}
+                {calculatedMaterialWeight > 0 &&
+            <div className="form-column">
                     <label className="input-label">
                       Total Material Weight (g)
                       <span className="calculated-mark">(Calculated)</span>
                     </label>
                     <input
-                      type="text"
-                      value={calculatedMaterialWeight.toFixed(2)}
-                      disabled
-                      className="form-input calculated-input weight-input"
-                    />
+                type="text"
+                value={calculatedMaterialWeight.toFixed(2)}
+                disabled
+                className="form-input calculated-input weight-input" />
+
                   </div>
-                )}
+            }
               </div>
             </div>
-          )}
+        }
 
           {/* Submit Button */}
           <button
-            onClick={handleSubmit}
-            className="submit-button"
-            disabled={loading}
-          >
-            {loading
-              ? (isEditMode ? "Updating Order..." : "Creating Order...")
-              : (isEditMode ? "Update Order" : "Create Order")}
+          ref={submitButtonRef}
+          onClick={handleSubmit}
+          onFocus={() => setCurrentField('submit')}
+          className="submit-button"
+          disabled={loading}>
+
+            {loading ?
+          isEditMode ? "Updating Order..." : "Creating Order..." :
+          isEditMode ? "Update Order" : "Create Order"}
           </button>
-        </>
-      ) : (
-        <div className="select-order-type-message">
+        </> :
+
+      <div className="select-order-type-message">
           <p>Please select an Order Type to see the form fields.</p>
         </div>
-      )}
+      }
 
       {/* Messages */}
       {error && <div className="error-message">{error}</div>}
       {success && <div className="success-message">{success}</div>}
-    </div>
-  );
+
+      {/* Keyboard Shortcuts Guide */}
+      <KeyboardShortcutsGuide context={isEditMode ? "edit-order" : "create-order"} />
+    </div>);
+
 };
 
 export default CreateOrder;

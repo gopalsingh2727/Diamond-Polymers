@@ -2862,13 +2862,19 @@ function createWindow() {
     height: 800,
     icon: path.join(process.env.VITE_PUBLIC, "electron-vite.svg"),
     autoHideMenuBar: true,
+    // Performance optimizations
+    backgroundColor: "#f9fafb",
+    // Match app background - faster first paint
     webPreferences: {
       preload: path.join(__dirname$1, "preload.mjs"),
-      // Enable features required for speech recognition and WASM
       webSecurity: true,
       allowRunningInsecureContent: false,
       contextIsolation: true,
-      nodeIntegration: false
+      nodeIntegration: false,
+      // Performance: cache compiled JS
+      v8CacheOptions: "bypassHeatCheck",
+      // Performance: enable hardware acceleration
+      backgroundThrottling: false
     }
   });
   win.webContents.on("did-finish-load", () => {
@@ -3022,7 +3028,7 @@ app.whenReady().then(() => {
       }
       win2?.webContents.send("update-can-available", result);
     }
-  }, 3e3);
+  }, 1e4);
   ipcMain.handle("check-update", async () => {
     return await checkForUpdatesViaGitHub();
   });
@@ -3178,7 +3184,6 @@ app.on("will-quit", () => {
   globalShortcut.unregisterAll();
   log.info("All global shortcuts unregistered");
 });
-console.log(`App root: ${process.env.APP_ROOT}`);
 export {
   MAIN_DIST,
   RENDERER_DIST,

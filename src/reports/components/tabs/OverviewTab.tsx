@@ -13,7 +13,7 @@ interface OverviewTabProps {
 
 const OverviewTab: React.FC<OverviewTabProps> = ({ dateRange }) => {
   const dispatch = useDispatch<AppDispatch>();
-  const branchId = localStorage.getItem('branchId') || '';
+  const branchId = localStorage.getItem('selectedBranch') || localStorage.getItem('branchId') || localStorage.getItem('selectedBranchId') || '';
   const { dashboard, exporting } = useSelector((state: RootState) => state.reports);
 
   const handleExport = () => {

@@ -5,24 +5,34 @@ import { getOptions, updateOption } from '../../../../redux/option/optionActions
 import { getOptionTypes } from '../../../../redux/option/optionTypeActions';
 import { RootState } from '../../../../redux/rootReducer';
 import { AppDispatch } from '../../../../../store';
+import { useCRUD } from '../../../../../hooks/useCRUD';
+import { ToastContainer } from '../../../../../components/shared/Toast';
 import '../../create/option/createOption.css';
 
 const EditOption = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams<{id: string;}>();
+  const { handleUpdate, updateState, toast } = useCRUD();
 
   // Redux selectors
-  const { options } = useSelector((state: RootState) => state.option);
-  const { optionTypes, loading: optionTypesLoading } = useSelector((state: RootState) => state.optionType);
+  const optionState = useSelector((state: RootState) => state.v2.option);
+  const rawOptions = optionState?.list;
+  const options = Array.isArray(rawOptions) ? rawOptions : [];
+  const optionTypeState = useSelector((state: RootState) => state.v2.optionType);
+  const rawOptionTypes = optionTypeState?.list;
+  const optionTypes = Array.isArray(rawOptionTypes) ? rawOptionTypes : [];
+  const optionTypesLoading = optionTypeState?.loading;
 
   // Form state
   const [name, setName] = useState('');
   const [optionTypeId, setOptionTypeId] = useState('');
-  const [loading, setLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load option data and option types on mount
+  // Get selected branch to refetch when it changes
+  const selectedBranch = useSelector((state: RootState) => state.auth?.userData?.selectedBranch);
+
+  // Load option data and option types on mount and when branch changes
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
@@ -30,14 +40,14 @@ const EditOption = () => {
         await dispatch(getOptions({}));
         await dispatch(getOptionTypes({}));
       } catch (error) {
-        console.error('Error loading data:', error);
+
       } finally {
         setIsLoading(false);
       }
     };
 
     loadData();
-  }, [dispatch]);
+  }, [dispatch, selectedBranch]);
 
   // Populate form when option data is loaded
   useEffect(() => {
@@ -52,33 +62,33 @@ const EditOption = () => {
 
   const handleSubmit = async () => {
     if (!name || !optionTypeId) {
-      alert('Option Type and Option Name are required');
+      toast.error('Validation Error', 'Option Type and Option Name are required');
       return;
     }
 
     if (!id) {
-      alert('Option ID is missing');
+      toast.error('Error', 'Option ID is missing');
       return;
     }
 
-    setLoading(true);
+    const branchId = localStorage.getItem('selectedBranch') || '';
 
-    try {
-      const branchId = localStorage.getItem('branchId') || '';
-
-      await dispatch(updateOption(id, {
+    handleUpdate(
+      () => dispatch(updateOption(id, {
         name,
         optionTypeId,
         branchId
-      }));
-
-      alert('Option updated successfully!');
-      navigate('/menu/edit/option');
-    } catch (err: any) {
-      alert(err.message || 'Failed to update option');
-    } finally {
-      setLoading(false);
-    }
+      })),
+      {
+        successMessage: 'Option updated successfully!',
+        errorMessage: 'Failed to update option',
+        onSuccess: () => {
+          setTimeout(() => {
+            navigate('/menu/edit/option');
+          }, 1500);
+        }
+      }
+    );
   };
 
   const handleCancel = () => {
@@ -89,8 +99,8 @@ const EditOption = () => {
     return (
       <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
         Loading option data...
-      </div>
-    );
+      </div>);
+
   }
 
   return (
@@ -108,9 +118,9 @@ const EditOption = () => {
             cursor: 'pointer',
             fontSize: '14px',
             fontWeight: 500
-          }}
-        >
-          ← Back to List
+          }}>
+
+          &larr; Back to List
         </button>
       </div>
 
@@ -120,14 +130,14 @@ const EditOption = () => {
           <select
             value={optionTypeId}
             onChange={(e) => setOptionTypeId(e.target.value)}
-            className="inputBox"
-          >
+            className="inputBox">
+
             <option value="">Select option type</option>
-            {Array.isArray(optionTypes) && optionTypes.map((type: any) => (
-              <option key={type._id} value={type._id}>
+            {Array.isArray(optionTypes) && optionTypes.map((type: any) =>
+            <option key={type._id} value={type._id}>
                 {type.name}
               </option>
-            ))}
+            )}
           </select>
         </div>
 
@@ -138,32 +148,32 @@ const EditOption = () => {
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="inputBox"
-            placeholder="e.g., LDPE Bag 500x300, Standard Printing"
-          />
+            placeholder="e.g., LDPE Bag 500x300, Standard Printing" />
+
         </div>
 
         <div style={{ display: 'flex', gap: '12px' }}>
           <button
             onClick={handleSubmit}
-            disabled={loading || optionTypesLoading}
+            disabled={updateState === 'loading' || optionTypesLoading}
             style={{
               flex: 1,
               padding: '14px',
-              background: loading ? '#94a3b8' : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+              background: updateState === 'loading' ? '#94a3b8' : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
               color: 'white',
               border: 'none',
               borderRadius: '8px',
-              cursor: loading ? 'not-allowed' : 'pointer',
+              cursor: updateState === 'loading' ? 'not-allowed' : 'pointer',
               fontSize: '16px',
               fontWeight: 600
-            }}
-          >
-            {loading ? 'Updating...' : 'Update Option'}
+            }}>
+
+            {updateState === 'loading' ? 'Updating...' : updateState === 'success' ? 'Updated!' : 'Update Option'}
           </button>
 
           <button
             onClick={handleCancel}
-            disabled={loading}
+            disabled={updateState === 'loading'}
             style={{
               flex: 1,
               padding: '14px',
@@ -171,17 +181,18 @@ const EditOption = () => {
               color: '#dc2626',
               border: 'none',
               borderRadius: '8px',
-              cursor: loading ? 'not-allowed' : 'pointer',
+              cursor: updateState === 'loading' ? 'not-allowed' : 'pointer',
               fontSize: '16px',
               fontWeight: 600
-            }}
-          >
+            }}>
+
             Cancel
           </button>
         </div>
       </div>
-    </div>
-  );
+      <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
+    </div>);
+
 };
 
 export default EditOption;

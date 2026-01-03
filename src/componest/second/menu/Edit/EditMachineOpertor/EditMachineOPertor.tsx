@@ -1,13 +1,11 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  listOperators,
-  updateOperator,
-  deleteOperator,
-} from "../../../../redux/create/CreateMachineOpertor/MachineOpertorActions";
+import { getOperatorsV2, updateOperatorV2, deleteOperatorV2 } from "../../../../redux/unifiedV2";
 import { useFormDataCache } from "../hooks/useFormDataCache";
+import { useCRUD } from "../../../../../hooks/useCRUD";
 import { RootState } from "../../../../redux/rootReducer";
 import { AppDispatch } from "../../../../../store";
+import { ToastContainer } from "../../../../../components/shared/Toast";
 import "./EditMachineOpertor.css";
 
 interface Operator {
@@ -21,14 +19,19 @@ interface Operator {
 
 const EditMachineOpertor: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const { handleSave, handleUpdate, handleDelete: crudDelete, saveState, updateState, deleteState, confirmDialog, closeConfirmDialog, toast } = useCRUD();
 
   // 🚀 OPTIMIZED: Get machines from cached form data (no API call!)
   const { machines } = useFormDataCache();
 
   // Keep operators from Redux (operators list needs separate fetch)
-  const { operators = [], loading, error } = useSelector(
-    (state: RootState) => state.operatorList || {}
+  const operatorState = useSelector(
+    (state: RootState) => state.v2.operator
   );
+  const rawOperators = operatorState?.list;
+  const operators = Array.isArray(rawOperators) ? rawOperators : [];
+  const loading = operatorState?.loading;
+  const error = operatorState?.error;
 
   const [selectedRow, setSelectedRow] = useState(0);
   const [showDetail, setShowDetail] = useState(false);
@@ -76,7 +79,7 @@ const EditMachineOpertor: React.FC = () => {
 
   useEffect(() => {
     // ✅ OPTIMIZED: Machines come from cache, only fetch operators
-    dispatch(listOperators());
+    dispatch(getOperatorsV2());
   }, [dispatch]);
 
   useEffect(() => {
@@ -110,21 +113,21 @@ const EditMachineOpertor: React.FC = () => {
     setEditForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleUpdate = async () => {
+  const handleUpdateOperator = async () => {
     if (!selectedOperator) return;
-    
+
     if (!editForm.username.trim()) {
-      alert("Username is required");
+      toast.error("Validation Error", "Username is required");
       return;
     }
 
     if (editForm.pin && editForm.pin !== editForm.confirmPin) {
-      alert("PIN and Confirm PIN do not match");
+      toast.error("Validation Error", "PIN and Confirm PIN do not match");
       return;
     }
 
     if (editForm.pin && editForm.pin.length !== 4) {
-      alert("PIN must be exactly 4 digits");
+      toast.error("Validation Error", "PIN must be exactly 4 digits");
       return;
     }
 
@@ -137,32 +140,39 @@ const EditMachineOpertor: React.FC = () => {
       payload.pin = editForm.pin;
     }
 
-    try {
-      await dispatch(updateOperator(selectedOperator._id, payload));
-      alert("Operator updated successfully!");
-      setShowDetail(false);
-      setSelectedOperator(null);
-      dispatch(listOperators());
-    } catch (err) {
-      alert("Failed to update operator.");
-    }
+    await handleUpdate(
+      () => dispatch(updateOperatorV2(selectedOperator._id, payload)),
+      {
+        successMessage: "Operator updated successfully!",
+        errorMessage: "Failed to update operator.",
+        onSuccess: () => {
+          setTimeout(() => {
+            setShowDetail(false);
+            setSelectedOperator(null);
+            dispatch(getOperatorsV2());
+          }, 1500);
+        }
+      }
+    );
   };
 
-  const handleDelete = async () => {
+  const handleDeleteClick = async () => {
     if (!selectedOperator) return;
 
-    if (!window.confirm("Are you sure you want to delete this operator?"))
-      return;
-
-    try {
-      await dispatch(deleteOperator(selectedOperator._id));
-      alert("Deleted successfully.");
-      setShowDetail(false);
-      setSelectedOperator(null);
-      dispatch(listOperators());
-    } catch (err) {
-      alert("Failed to delete.");
-    }
+    await crudDelete(
+      () => dispatch(deleteOperatorV2(selectedOperator._id)),
+      {
+        confirmTitle: "Delete Operator",
+        confirmMessage: "Are you sure you want to delete this operator?",
+        successMessage: "Deleted successfully.",
+        errorMessage: "Failed to delete.",
+        onSuccess: () => {
+          setShowDetail(false);
+          setSelectedOperator(null);
+          dispatch(getOperatorsV2());
+        }
+      }
+    );
   };
 
   const handleRowClick = (index: number, operator: Operator) => {
@@ -252,8 +262,8 @@ const EditMachineOpertor: React.FC = () => {
         <div className="detail-container">
           <div className="TopButtonEdit">
             <button onClick={() => setShowDetail(false)}>Back</button>
-            <button onClick={handleDelete} className="Delete">
-              Delete
+            <button onClick={handleDeleteClick} className="Delete" disabled={deleteState === 'loading'}>
+              {deleteState === 'loading' ? 'Deleting...' : 'Delete'}
             </button>
           </div>
 
@@ -361,15 +371,16 @@ const EditMachineOpertor: React.FC = () => {
           </div>
 
          <button
-  onClick={handleUpdate}
+  onClick={handleUpdateOperator}
   className="save-button"
   disabled={
+    updateState === 'loading' ||
     !editForm.username.trim() ||
     (!!editForm.pin && editForm.pin !== editForm.confirmPin) ||
     (!!editForm.pin && editForm.pin.length !== 4)
   }
 >
-  Save
+  {updateState === 'loading' ? 'Saving...' : 'Save'}
 </button>
 
           <div className="info-section">
@@ -385,6 +396,61 @@ const EditMachineOpertor: React.FC = () => {
       ) : (
         !loading && <p>No operators available.</p>
       )}
+
+      {/* Confirmation Modal */}
+      {confirmDialog.isOpen && (
+        <div className="modal-overlay" style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div className="modal-content" style={{
+            backgroundColor: 'white',
+            padding: '24px',
+            borderRadius: '8px',
+            maxWidth: '400px',
+            width: '90%'
+          }}>
+            <h3 style={{ marginTop: 0, marginBottom: '16px' }}>{confirmDialog.title}</h3>
+            <p style={{ marginBottom: '24px', color: '#666' }}>{confirmDialog.message}</p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={closeConfirmDialog}
+                style={{
+                  padding: '8px 16px',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  background: 'white',
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDialog.onConfirm}
+                style={{
+                  padding: '8px 16px',
+                  border: 'none',
+                  borderRadius: '4px',
+                  background: '#dc2626',
+                  color: 'white',
+                  cursor: 'pointer'
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
     </div>
   );
 };

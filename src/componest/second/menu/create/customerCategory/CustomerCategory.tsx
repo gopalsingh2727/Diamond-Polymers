@@ -1,14 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
-import {
-  createCustomerCategory,
-  updateCustomerCategory,
-  deleteCustomerCategory,
-  getCustomerCategories,
-} from "../../../../redux/create/customerCategory/CustomerCategoryActions";
+import { createCustomerCategoryV2, updateCustomerCategoryV2, deleteCustomerCategoryV2 } from "../../../../redux/unifiedV2";
 import { RootState, AppDispatch } from "../../../../../store";
 import { useInternalBackNavigation } from "../../../../allCompones/BackButton";
+import { useCRUD } from "../../../../../hooks/useCRUD";
+import { ToastContainer } from "../../../../../components/shared/Toast";
 import "./CustomerCategory.css";
 
 type CategoryFormData = {
@@ -43,14 +40,15 @@ const CustomerCategory: React.FC<Props> = ({
   const dispatch = useDispatch<AppDispatch>();
   const location = useLocation();
   const navigate = useNavigate();
+  const { handleSave, handleDelete: crudDelete, saveState, deleteState, confirmDialog, closeConfirmDialog, toast } = useCRUD();
 
   const locationState = location.state as LocationState | null;
   const initialData: CategoryData = locationState?.initialData || propInitialData;
   const itemId = locationState?.itemId || initialData?._id;
   const editMode = locationState?.editMode || !!initialData?._id;
 
-  const { loading, error: reduxError } = useSelector(
-    (state: RootState) => state.createCustomerCategory || { loading: false }
+  const { error: reduxError } = useSelector(
+    (state: RootState) => state.v2.customerCategory
   );
 
   const [formValues, setFormValues] = useState<CategoryFormData>({
@@ -59,8 +57,6 @@ const CustomerCategory: React.FC<Props> = ({
   });
 
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleting, setDeleting] = useState(false);
 
   const handleBackToList = () => {
     if (onSaveSuccess) {
@@ -72,7 +68,7 @@ const CustomerCategory: React.FC<Props> = ({
     }
   };
 
-  useInternalBackNavigation(editMode && !showDeleteConfirm, handleBackToList);
+  useInternalBackNavigation(editMode && !confirmDialog.isOpen, handleBackToList);
 
   useEffect(() => {
     if (initialData && initialData._id) {
@@ -84,14 +80,14 @@ const CustomerCategory: React.FC<Props> = ({
   }, [initialData]);
 
   useEffect(() => {
-    if (!loading && !reduxError && formRef.current && !editMode) {
+    if (saveState === 'success' && !reduxError && formRef.current && !editMode) {
       formRef.current.reset();
       setFormValues({
         name: "",
         description: "",
       });
     }
-  }, [loading, reduxError, editMode]);
+  }, [saveState, reduxError, editMode]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -119,53 +115,66 @@ const CustomerCategory: React.FC<Props> = ({
       return;
     }
 
-    try {
-      if (editMode && itemId) {
-        await dispatch(
-          updateCustomerCategory(itemId, {
+    if (editMode && itemId) {
+      handleSave(
+        () => dispatch(
+          updateCustomerCategoryV2(itemId, {
             name: formValues.name.trim(),
             description: formValues.description.trim(),
           })
-        );
-
-        if (onSaveSuccess) {
-          onSaveSuccess();
-        } else {
-          navigate("/menu/edit", { state: { activeComponent: "customerCategory" } });
+        ),
+        {
+          successMessage: 'Category updated successfully',
+          onSuccess: () => {
+            setTimeout(() => {
+              if (onSaveSuccess) {
+                onSaveSuccess();
+              } else {
+                navigate("/menu/edit", { state: { activeComponent: "customerCategory" } });
+              }
+            }, 1500);
+          }
         }
-      } else {
-        await dispatch(
-          createCustomerCategory({
+      );
+    } else {
+      handleSave(
+        () => dispatch(
+          createCustomerCategoryV2({
             name: formValues.name.trim(),
             description: formValues.description.trim(),
           })
-        );
-
-        // Reset form after successful creation
-        setFormValues({ name: "", description: "" });
-      }
-    } catch (err) {
-      console.error("Error:", err);
+        ),
+        {
+          successMessage: 'Category created successfully',
+          onSuccess: () => {
+            setFormValues({ name: "", description: "" });
+          }
+        }
+      );
     }
   };
 
-  const handleDelete = async () => {
+  const handleDeleteClick = () => {
     if (!itemId) return;
 
-    setDeleting(true);
-    try {
-      await dispatch(deleteCustomerCategory(itemId));
-      setShowDeleteConfirm(false);
-      if (onSaveSuccess) {
-        onSaveSuccess();
-      } else {
-        navigate("/menu/edit", { state: { activeComponent: "customerCategory" } });
+    crudDelete(
+      () => dispatch(deleteCustomerCategoryV2(itemId)),
+      {
+        confirmTitle: 'Delete Category?',
+        confirmMessage: 'Are you sure you want to delete this category? This action cannot be undone.',
+        successMessage: 'Category deleted successfully',
+        onSuccess: () => {
+          // Delay navigation to show toast
+          setTimeout(() => {
+            if (onSaveSuccess) {
+              onSaveSuccess();
+            } else {
+              navigate("/menu/edit", { state: { activeComponent: "customerCategory" } });
+            }
+          }, 1500);
+        }
       }
-    } catch (err) {
-      console.error("Delete failed:", err);
-    } finally {
-      setDeleting(false);
-    }
+    );
   };
 
   return (
@@ -173,7 +182,7 @@ const CustomerCategory: React.FC<Props> = ({
       <div className="customerCategory-form">
 
         {/* Delete Confirmation Modal */}
-        {showDeleteConfirm && (
+        {confirmDialog.isOpen && (
           <div
             style={{
               position: "fixed",
@@ -199,14 +208,14 @@ const CustomerCategory: React.FC<Props> = ({
               }}
             >
               <div style={{ fontSize: "48px", marginBottom: "16px" }}>Warning</div>
-              <h3 style={{ margin: "0 0 8px 0", color: "#1f2937" }}>Delete Category?</h3>
+              <h3 style={{ margin: "0 0 8px 0", color: "#1f2937" }}>{confirmDialog.title}</h3>
               <p style={{ color: "#6b7280", marginBottom: "24px" }}>
-                Are you sure you want to delete this category? This action cannot be undone.
+                {confirmDialog.message}
               </p>
               <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
                 <button
                   type="button"
-                  onClick={() => setShowDeleteConfirm(false)}
+                  onClick={closeConfirmDialog}
                   style={{
                     padding: "10px 24px",
                     background: "#e5e7eb",
@@ -220,8 +229,8 @@ const CustomerCategory: React.FC<Props> = ({
                 </button>
                 <button
                   type="button"
-                  onClick={handleDelete}
-                  disabled={deleting}
+                  onClick={confirmDialog.onConfirm}
+                  disabled={deleteState === 'loading'}
                   style={{
                     padding: "10px 24px",
                     background: "#ef4444",
@@ -231,7 +240,7 @@ const CustomerCategory: React.FC<Props> = ({
                     cursor: "pointer",
                   }}
                 >
-                  {deleting ? "Deleting..." : "Delete"}
+                  {deleteState === 'loading' ? "Deleting..." : "Delete"}
                 </button>
               </div>
             </div>
@@ -260,7 +269,8 @@ const CustomerCategory: React.FC<Props> = ({
             <h2 className="customerCategory-header-title">Edit Customer Category</h2>
             <button
               type="button"
-              onClick={() => setShowDeleteConfirm(true)}
+              onClick={handleDeleteClick}
+              disabled={deleteState === 'loading'}
               style={{
                 padding: "8px 16px",
                 background: "#ef4444",
@@ -277,7 +287,7 @@ const CustomerCategory: React.FC<Props> = ({
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14zM10 11v6M14 11v6" />
               </svg>
-              Delete
+              {deleteState === 'loading' ? "Deleting..." : "Delete"}
             </button>
           </div>
         )}
@@ -312,11 +322,12 @@ const CustomerCategory: React.FC<Props> = ({
 
           {reduxError && <div className="customerCategory-error">{reduxError}</div>}
 
-          <button className="customerCategory-button" type="submit" disabled={loading}>
-            {loading ? "Saving..." : editMode ? "Update Category" : "Create Category"}
+          <button className="customerCategory-button" type="submit" disabled={saveState === 'loading'}>
+            {saveState === 'loading' ? "Saving..." : editMode ? "Update Category" : "Create Category"}
           </button>
         </form>
       </div>
+      <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
     </div>
   );
 };

@@ -24,7 +24,7 @@ const SecretBranches = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const baseUrl = import.meta.env.VITE_API_27INFINITY_IN || "http://localhost:4000/dev";
+  const baseUrl = import.meta.env.VITE_API_27INFINITY_IN || "https://api.27infinity.in";
   const apiKey = import.meta.env.VITE_API_KEY;
 
   useEffect(() => {
@@ -39,13 +39,13 @@ const SecretBranches = () => {
       const response = await axios.get(`${baseUrl}/branch/branches`, {
         headers: {
           "x-api-key": apiKey,
-          Authorization: `Bearer ${token}`,
-        },
+          Authorization: `Bearer ${token}`
+        }
       });
 
       setBranches(response.data || []);
     } catch (err: any) {
-      console.error("Failed to fetch branches:", err);
+
       setError(err.response?.data?.message || "Failed to load branches");
     } finally {
       setLoading(false);
@@ -66,13 +66,13 @@ const SecretBranches = () => {
           <p className="text-gray-600 mb-4">You don't have permission to view this page.</p>
           <button
             onClick={() => navigate("/")}
-            className="bg-[#FF6B35] hover:bg-[#E55A2B] text-white font-medium py-2 px-6 rounded-lg transition"
-          >
+            className="bg-[#FF6B35] hover:bg-[#E55A2B] text-white font-medium py-2 px-6 rounded-lg transition">
+
             Go Back
           </button>
         </div>
-      </div>
-    );
+      </div>);
+
   }
 
   return (
@@ -83,8 +83,8 @@ const SecretBranches = () => {
           <div className="flex items-center gap-4">
             <button
               onClick={() => navigate(-1)}
-              className="p-2 hover:bg-gray-200 rounded-lg transition"
-            >
+              className="p-2 hover:bg-gray-200 rounded-lg transition">
+
               <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
@@ -97,8 +97,8 @@ const SecretBranches = () => {
 
           <button
             onClick={() => navigate("/create-branch")}
-            className="bg-[#FF6B35] hover:bg-[#E55A2B] text-white font-medium py-2 px-4 rounded-lg transition flex items-center gap-2"
-          >
+            className="bg-[#FF6B35] hover:bg-[#E55A2B] text-white font-medium py-2 px-4 rounded-lg transition flex items-center gap-2">
+
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
@@ -107,24 +107,24 @@ const SecretBranches = () => {
         </div>
 
         {/* Content */}
-        {loading ? (
-          <div className="flex flex-col items-center justify-center py-16">
+        {loading ?
+        <div className="flex flex-col items-center justify-center py-16">
             <InfinitySpinner size="lg" />
             <p className="text-gray-600 mt-4">Loading branches...</p>
-          </div>
-        ) : error ? (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+          </div> :
+        error ?
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
             <div className="text-red-600 font-medium mb-2">Error Loading Branches</div>
             <p className="text-red-500 text-sm mb-4">{error}</p>
             <button
-              onClick={fetchAllBranches}
-              className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition"
-            >
+            onClick={fetchAllBranches}
+            className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition">
+
               Retry
             </button>
-          </div>
-        ) : branches.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
+          </div> :
+        branches.length === 0 ?
+        <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -133,19 +133,19 @@ const SecretBranches = () => {
             <h2 className="text-xl font-bold text-gray-800 mb-2">No Branches Found</h2>
             <p className="text-gray-600 mb-4">Create your first branch to get started.</p>
             <button
-              onClick={() => navigate("/create-branch")}
-              className="bg-[#FF6B35] hover:bg-[#E55A2B] text-white font-medium py-2 px-6 rounded-lg transition"
-            >
+            onClick={() => navigate("/create-branch")}
+            className="bg-[#FF6B35] hover:bg-[#E55A2B] text-white font-medium py-2 px-6 rounded-lg transition">
+
               Create Branch
             </button>
-          </div>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {branches.map((branch) => (
-              <div
-                key={branch._id}
-                className="bg-white rounded-xl shadow-md p-6 border border-gray-100 hover:shadow-lg transition"
-              >
+          </div> :
+
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {branches.map((branch) =>
+          <div
+            key={branch._id}
+            className="bg-white rounded-xl shadow-md p-6 border border-gray-100 hover:shadow-lg transition">
+
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-gradient-to-r from-[#FF6B35] to-[#FFA500] rounded-lg flex items-center justify-center">
@@ -157,12 +157,12 @@ const SecretBranches = () => {
                     </div>
                   </div>
                   <span
-                    className={`px-2 py-1 text-xs font-medium rounded-full ${
-                      branch.isActive
-                        ? "bg-green-100 text-green-700"
-                        : "bg-red-100 text-red-700"
-                    }`}
-                  >
+                className={`px-2 py-1 text-xs font-medium rounded-full ${
+                branch.isActive ?
+                "bg-green-100 text-green-700" :
+                "bg-red-100 text-red-700"}`
+                }>
+
                     {branch.isActive ? "Active" : "Inactive"}
                   </span>
                 </div>
@@ -176,23 +176,23 @@ const SecretBranches = () => {
                     <span>{branch.location}</span>
                   </div>
 
-                  {branch.phone && (
-                    <div className="flex items-center gap-2 text-gray-600">
+                  {branch.phone &&
+              <div className="flex items-center gap-2 text-gray-600">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                       </svg>
                       <span>{branch.phone}</span>
                     </div>
-                  )}
+              }
 
-                  {branch.email && (
-                    <div className="flex items-center gap-2 text-gray-600">
+                  {branch.email &&
+              <div className="flex items-center gap-2 text-gray-600">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                       </svg>
                       <span>{branch.email}</span>
                     </div>
-                  )}
+              }
                 </div>
 
                 <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
@@ -201,12 +201,12 @@ const SecretBranches = () => {
                   </span>
                 </div>
               </div>
-            ))}
+          )}
           </div>
-        )}
+        }
       </div>
-    </div>
-  );
+    </div>);
+
 };
 
 export default SecretBranches;

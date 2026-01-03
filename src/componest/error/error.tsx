@@ -3,9 +3,9 @@ import React from "react";
 import { BackButton } from "../allCompones/BackButton";
 
 class ErrorBoundary extends React.Component<
-  { children: React.ReactNode },
-  { hasError: boolean }
-> {
+  {children: React.ReactNode;},
+  {hasError: boolean;}>
+{
   constructor(props: any) {
     super(props);
     this.state = { hasError: false };
@@ -16,13 +16,13 @@ class ErrorBoundary extends React.Component<
   }
 
   componentDidCatch(error: any, info: any) {
-    console.error("Error Boundary Caught:", error, info);
+
   }
 
   render() {
     if (this.state.hasError) {
       return <div>
-        <BackButton/>
+        <BackButton />
         <h1>Something went wrong.</h1>
         <p>Please try again later.</p>
          <p>Please Call This Number Also Take Picture</p>
@@ -30,7 +30,7 @@ class ErrorBoundary extends React.Component<
         <p>If the problem persists, contact support.</p>
         <p></p>
         <p>We apologize for the inconvenience.</p>
-      </div>
+      </div>;
     }
     return this.props.children;
   }

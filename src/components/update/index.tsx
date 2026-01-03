@@ -96,7 +96,7 @@ const Update = () => {
         setStatus('idle');
       }
     } catch (err) {
-      console.error('Download failed:', err);
+
       setUpdateError({ message: 'Download failed' });
       setStatus('idle');
     }
@@ -113,7 +113,7 @@ const Update = () => {
       }
       // If successful, app will quit
     } catch (err) {
-      console.error('Installation failed:', err);
+
       setUpdateError({ message: 'Installation failed' });
       setStatus('downloaded');
     }
@@ -123,7 +123,7 @@ const Update = () => {
     try {
       await window.ipcRenderer.invoke('open-download-page');
     } catch (err) {
-      console.error('Failed to open download page:', err);
+
     }
   };
 
@@ -201,31 +201,31 @@ const Update = () => {
         cancelText={modalButtons.cancelText}
         okText={modalButtons.okText}
         onCancel={modalButtons.onCancel}
-        onOk={modalButtons.onOk}
-      >
+        onOk={modalButtons.onOk}>
+
         <div className="modal-slot">
-          {updateError ? (
-            <div>
+          {updateError ?
+          <div>
               <p>Error checking for updates.</p>
               <p>{updateError.message}</p>
               <p className="website-fallback">
                 <span
-                  className="website-link"
-                  onClick={openDownloadPage}
-                >
+                className="website-link"
+                onClick={openDownloadPage}>
+
                   Download from website instead
                 </span>
               </p>
-            </div>
-          ) : status === 'downloading' ? (
-            <div>
+            </div> :
+          status === 'downloading' ?
+          <div>
               <div className="update-available-title">Downloading Update...</div>
               <div className="download-progress-container">
                 <div className="progress-bar">
                   <div
-                    className="progress-fill"
-                    style={{ width: `${downloadProgress.progress}%` }}
-                  />
+                  className="progress-fill"
+                  style={{ width: `${downloadProgress.progress}%` }} />
+
                 </div>
                 <div className="progress-text">
                   {downloadProgress.progress}% - {formatBytes(downloadProgress.downloaded)} / {formatBytes(downloadProgress.total)}
@@ -237,9 +237,9 @@ const Update = () => {
               <p className="website-fallback">
                 Having issues? <span className="website-link" onClick={openDownloadPage}>Download from website</span>
               </p>
-            </div>
-          ) : status === 'downloaded' ? (
-            <div>
+            </div> :
+          status === 'downloaded' ?
+          <div>
               <div className="update-available-title">Download Complete!</div>
               <div className="new-version__target">
                 v{versionInfo?.version} → v{versionInfo?.newVersion}
@@ -248,16 +248,16 @@ const Update = () => {
                 Click "Install Now" to close the app and run the installer.
                 The new version will replace the current version.
               </p>
-            </div>
-          ) : status === 'installing' ? (
-            <div>
+            </div> :
+          status === 'installing' ?
+          <div>
               <div className="update-available-title">Installing Update...</div>
               <p className="update-instruction">
                 The installer is starting. The app will close automatically.
               </p>
-            </div>
-          ) : updateAvailable ? (
-            <div>
+            </div> :
+          updateAvailable ?
+          <div>
               <div className="update-available-title">New Update Available!</div>
               <div className="new-version__target">
                 v{versionInfo?.version} → v{versionInfo?.newVersion}
@@ -268,22 +268,22 @@ const Update = () => {
               <p className="website-fallback">
                 Or <span className="website-link" onClick={openDownloadPage}>download from website</span>
               </p>
+            </div> :
+
+          <div className="can-not-available">
+              {versionInfo?.version ?
+            `You are on the latest version: v${versionInfo.version}` :
+            `Checking version...`}
             </div>
-          ) : (
-            <div className="can-not-available">
-              {versionInfo?.version
-                ? `You are on the latest version: v${versionInfo.version}`
-                : `Checking version...`}
-            </div>
-          )}
+          }
         </div>
       </Modal>
 
       <button disabled={status === 'checking'} onClick={checkUpdate}>
         {status === 'checking' ? 'Checking...' : 'Check for Updates'}
       </button>
-    </>
-  );
+    </>);
+
 };
 
 export default Update;

@@ -20,10 +20,10 @@ const CreateBranch = () => {
     location: "",
     code: "",
     phone: "",
-    email: "",
+    email: ""
   });
 
-  const baseUrl = import.meta.env.VITE_API_27INFINITY_IN || "http://localhost:4000/dev";
+  const baseUrl = import.meta.env.VITE_API_27INFINITY_IN || "https://api.27infinity.in";
   const apiKey = import.meta.env.VITE_API_KEY;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -74,18 +74,18 @@ const CreateBranch = () => {
           location: formData.location.trim(),
           code: formData.code.trim().toUpperCase(),
           phone: formData.phone.trim(),
-          email: formData.email.trim(),
+          email: formData.email.trim()
         },
         {
           headers: {
             "x-api-key": apiKey,
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
+            Authorization: `Bearer ${token}`
+          }
         }
       );
 
-      console.log("Branch created:", response.data);
+
 
       // Set the newly created branch as selected
       const newBranchId = response.data.branch?._id || response.data._id;
@@ -100,7 +100,7 @@ const CreateBranch = () => {
         navigate("/");
       }, 2000);
     } catch (err: any) {
-      console.error("Failed to create branch:", err);
+
       setError(
         err.response?.data?.message || "Failed to create branch. Please try again."
       );
@@ -123,13 +123,13 @@ const CreateBranch = () => {
           <p className="text-gray-600 mb-4">Only Admins and Master Admins can create branches.</p>
           <button
             onClick={() => navigate("/")}
-            className="bg-[#FF6B35] hover:bg-[#E55A2B] text-white font-medium py-2 px-6 rounded-lg transition"
-          >
+            className="bg-[#FF6B35] hover:bg-[#E55A2B] text-white font-medium py-2 px-6 rounded-lg transition">
+
             Go Back
           </button>
         </div>
-      </div>
-    );
+      </div>);
+
   }
 
   // Success state
@@ -152,8 +152,8 @@ const CreateBranch = () => {
             <InfinitySpinner size="md" />
           </div>
         </div>
-      </div>
-    );
+      </div>);
+
   }
 
   return (
@@ -172,36 +172,36 @@ const CreateBranch = () => {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6">
-          {/* Branch Name */}
-          <div className="mb-4">
-            <label className="block text-gray-700 font-medium mb-2">
-              Branch Name *
-            </label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleInputChange}
-              placeholder="e.g., Main Factory"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF6B35] focus:border-transparent transition"
-              required
-            />
-          </div>
+          {/* Branch Name and Location - Same Line */}
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">
+                Branch Name *
+              </label>
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                placeholder="e.g., Main Factory"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF6B35] focus:border-transparent transition"
+                required />
 
-          {/* Location */}
-          <div className="mb-4">
-            <label className="block text-gray-700 font-medium mb-2">
-              Location *
-            </label>
-            <input
-              type="text"
-              name="location"
-              value={formData.location}
-              onChange={handleInputChange}
-              placeholder="e.g., Mumbai, Maharashtra"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF6B35] focus:border-transparent transition"
-              required
-            />
+            </div>
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">
+                Location *
+              </label>
+              <input
+                type="text"
+                name="location"
+                value={formData.location}
+                onChange={handleInputChange}
+                placeholder="e.g., Mumbai, Maharashtra"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF6B35] focus:border-transparent transition"
+                required />
+
+            </div>
           </div>
 
           {/* Branch Code */}
@@ -217,91 +217,71 @@ const CreateBranch = () => {
               placeholder="e.g., MUM01"
               maxLength={20}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF6B35] focus:border-transparent transition uppercase"
-              required
-            />
+              required />
+
             <p className="text-gray-500 text-xs mt-1">Max 20 characters, will be converted to uppercase</p>
           </div>
 
-          {/* Phone */}
-          <div className="mb-4">
-            <label className="block text-gray-700 font-medium mb-2">
-              Phone (Optional)
-            </label>
-            <input
-              type="tel"
-              name="phone"
-              value={formData.phone}
-              onChange={handleInputChange}
-              placeholder="e.g., +91 9876543210"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF6B35] focus:border-transparent transition"
-            />
-          </div>
+          {/* Phone and Email - Same Line */}
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">
+                Phone (Optional)
+              </label>
+              <input
+                type="tel"
+                name="phone"
+                value={formData.phone}
+                onChange={handleInputChange}
+                placeholder="e.g., +91 9876543210"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF6B35] focus:border-transparent transition" />
 
-          {/* Email */}
-          <div className="mb-6">
-            <label className="block text-gray-700 font-medium mb-2">
-              Email (Optional)
-            </label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              placeholder="e.g., branch@company.com"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF6B35] focus:border-transparent transition"
-            />
+            </div>
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">
+                Email (Optional)
+              </label>
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                placeholder="e.g., branch@company.com"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF6B35] focus:border-transparent transition" />
+
+            </div>
           </div>
 
           {/* Error Message */}
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+          {error &&
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-red-600 text-sm text-center">{error}</p>
             </div>
-          )}
+          }
 
           {/* Submit Button */}
           <button
             type="submit"
             disabled={loading}
             className={`w-full py-3 px-4 rounded-lg font-medium text-white shadow-md transition-all duration-300 ${
-              loading
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-[#FF6B35] hover:bg-[#E55A2B] hover:shadow-lg"
-            }`}
-          >
-            {loading ? (
-              <span className="flex items-center justify-center gap-2">
+            loading ?
+            "bg-gray-400 cursor-not-allowed" :
+            "bg-[#FF6B35] hover:bg-[#E55A2B] hover:shadow-lg"}`
+            }>
+
+            {loading ?
+            <span className="flex items-center justify-center gap-2">
                 <InfinitySpinner size="sm" />
                 Creating Branch...
-              </span>
-            ) : (
-              "Create Branch"
-            )}
-          </button>
+              </span> :
 
-          {/* Divider */}
-          <div className="relative my-4">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">or</span>
-            </div>
-          </div>
-
-          {/* Select Existing Branch Button */}
-          <button
-            type="button"
-            onClick={() => navigate("/select-branch")}
-            disabled={loading}
-            className="w-full py-3 px-4 rounded-lg font-medium text-[#FF6B35] border-2 border-[#FF6B35] hover:bg-[#FF6B35] hover:text-white transition-all duration-300"
-          >
-            Select Existing Branch
+            "Create Branch"
+            }
           </button>
         </form>
       </div>
-    </div>
-  );
+    </div>);
+
 };
 
 export default CreateBranch;

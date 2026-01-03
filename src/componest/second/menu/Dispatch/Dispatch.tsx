@@ -5,13 +5,14 @@ import { BackButton } from "../../../allCompones/BackButton";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import "../Dispatch/Dispatch.css";
-import "../Oders/indexAllOders.css";  // ✅ Import All Orders styling
+import "../Oders/indexAllOders.css"; // ✅ Import All Orders styling
 import { fetchOrders, updateOrder } from "../../../redux/oders/OdersActions";
 import { RootState } from "../../../../store";
-import { useDispatchUpdates, useWebSocketStatus } from "../../../../hooks/useWebSocket";  // ✅ WebSocket real-time updates
+import { useDispatchUpdates, useWebSocketStatus } from "../../../../hooks/useWebSocket"; // ✅ WebSocket real-time updates
 import ExcelExportSelector from "../../../../components/shared/ExcelExportSelector";
-import { Download, Printer, RefreshCw, Tag, Wifi, WifiOff } from "lucide-react";  // ✅ Icons
-import { useFormDataCache } from "../Edit/hooks/useFormDataCache";  // ✅ For order types lookup
+import { ArrowDownTrayIcon, PrinterIcon, ArrowPathIcon, TagIcon, SignalIcon, SignalSlashIcon, CheckCircleIcon, XMarkIcon, ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
+import { Tag } from "lucide-react";
+import { useFormDataCache } from "../Edit/hooks/useFormDataCache"; // ✅ For order types lookup
 
 interface Order {
   _id: string;
@@ -19,9 +20,9 @@ interface Order {
   customerId: string;
   materialId: string;
   materialWeight?: number;
-  Width?: number;        
-  Height?: number;       
-  Thickness?: number;  
+  Width?: number;
+  Height?: number;
+  Thickness?: number;
   SealingType?: string;
   BottomGusset?: string;
   Flap?: string;
@@ -82,7 +83,7 @@ interface Order {
   completedSteps?: number;
   progressPercentage?: number;
   Notes?: string;
-  
+
   // Dispatch-specific fields
   dispatchDate?: string;
   dispatchStatus?: string;
@@ -91,7 +92,7 @@ interface Order {
   deliveryDate?: string;
   deliveryStatus?: string;
   deliveryNotes?: string;
-  
+
   // Computed properties for component compatibility
   id?: string;
   companyName?: string;
@@ -134,8 +135,8 @@ const defaultOrdersState = {
 // Backend status values: 'Wait for Approval', 'pending', 'approved', 'in_progress', 'completed', 'dispatched', 'cancelled', 'issue'
 // Dispatch-specific status values - ONLY orders with these statuses should appear in Dispatch view
 const DISPATCH_STATUSES = [
-  'completed',      // Production completed, ready for dispatch
-  'dispatched'      // Already dispatched
+'completed', // Production completed, ready for dispatch
+'dispatched' // Already dispatched
 ];
 
 export default function Dispatch() {
@@ -143,18 +144,37 @@ export default function Dispatch() {
   const location = useLocation();
   const dispatch = useDispatch();
 
+  // ✅ Date helper functions for one-week default view
+  const getTodayDate = () => new Date().toISOString().split('T')[0];
+  const getOneWeekAgo = () => {
+    const date = new Date();
+    date.setDate(date.getDate() - 7);
+    return date.toISOString().split('T')[0];
+  };
+
   // State declarations
   const [selectedOrderIndex, setSelectedOrderIndex] = useState(0);
   const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set()); // Multi-select for printing
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
+  // ✅ UPDATED: Default to one week of data (7 days ago to today)
+  const [fromDate, setFromDate] = useState(getOneWeekAgo());
+  const [toDate, setToDate] = useState(getTodayDate());
   const [showPeriodModal, setShowPeriodModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+
+  // ✅ Multi-select filters (arrays instead of single values)
+  const [statusFilters, setStatusFilters] = useState<string[]>([]);
+  const [orderTypeFilters, setOrderTypeFilters] = useState<string[]>([]);
+  const [priorityFilters, setPriorityFilters] = useState<string[]>([]);
+  const [createdByFilters, setCreatedByFilters] = useState<string[]>([]);
+
   const [currentPage, setCurrentPage] = useState(1);
-  const [limit] = useState(50);
+  const [limit] = useState(50); // ✅ Load 50 orders per page for performance
   const [showExcelExportSelector, setShowExcelExportSelector] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0); // ✅ ADDED: Force refresh trigger
+
+  // Dropdown filter state
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [dropdownPosition, setDropdownPosition] = useState<{top: number;left: number;} | null>(null);
 
   // Dispatch status modal state
   const [showDispatchModal, setShowDispatchModal] = useState(false);
@@ -193,7 +213,23 @@ export default function Dispatch() {
   // Company info - safe access with type assertion
   const companyName = (authState as any)?.user?.companyName || "ABC Company";
   const branchName = (authState as any)?.user?.branchName || "Main Branch";
-  const branchId = (authState as any)?.user?.branchId || localStorage.getItem('branchId') || localStorage.getItem('selectedBranch') || null;  // ✅ For WebSocket subscription
+  const selectedBranch = useSelector((state: RootState) => state.auth.userData?.selectedBranch);
+  const branchId = selectedBranch || (authState as any)?.user?.branchId || localStorage.getItem('selectedBranch') || null; // ✅ For WebSocket subscription
+
+  // ✅ Listen for branch changes and refresh dispatch
+  useEffect(() => {
+    if (selectedBranch) {
+      console.log('🔄 Dispatch list refreshing for new branch:', selectedBranch);
+      // Reset filters
+      setSearchTerm('');
+      setStatusFilters([]);
+      setFromDate('');
+      setToDate('');
+      setCurrentPage(1);
+      // Fetch fresh data
+      dispatch(fetchOrders({}) as any);
+    }
+  }, [selectedBranch, dispatch]);
 
   // ✅ WebSocket status for real-time indicator
   const { isConnected: wsConnected, status: wsStatus } = useWebSocketStatus();
@@ -205,8 +241,8 @@ export default function Dispatch() {
       'pending': '#f59e0b',
       'approved': '#3b82f6',
       'in_progress': '#FF6B35',
-      'completed': '#10b981',      // Green - ready for dispatch
-      'dispatched': '#8b5cf6',     // Purple - already dispatched
+      'completed': '#10b981', // Green - ready for dispatch
+      'dispatched': '#8b5cf6', // Purple - already dispatched
       'cancelled': '#ef4444',
       'issue': '#ef4444',
       'unknown': '#6b7280'
@@ -241,75 +277,82 @@ export default function Dispatch() {
   }
 
   // Transform orders and filter for dispatch-relevant orders
-  const transformedOrders: Order[] = Array.isArray(reduxOrders)
-    ? reduxOrders
-        .filter((order: any) => {
-          // Filter for dispatch-relevant orders
-          const status = order.overallStatus || '';
+  const transformedOrders: Order[] = Array.isArray(reduxOrders) ?
+  reduxOrders.
+  filter((order: any) => {
+    // Filter for dispatch-relevant orders
+    const status = order.overallStatus || '';
 
-          // ONLY show orders with 'completed' or 'dispatched' status
-          // These are the only orders relevant for dispatch management
-          return DISPATCH_STATUSES.includes(status);
-        })
-        .map((order: any) => {
-          const customerName = order.customer?.companyName || order.customer?.firstName || 'Unknown Customer';
-          const customerPhone = order.customer?.phone1 || '';
+    // ONLY show orders with 'completed' or 'dispatched' status
+    // These are the only orders relevant for dispatch management
+    return DISPATCH_STATUSES.includes(status);
+  }).
+  map((order: any) => {
+    const customerName = order.customer?.companyName || order.customer?.firstName || 'Unknown Customer';
+    const customerPhone = order.customer?.phone1 || '';
 
-          // Determine dispatch status
-          let dispatchStatus = order.overallStatus || 'unknown';
-          if (order.completedSteps === order.totalSteps && order.totalSteps > 0 && order.overallStatus === 'completed') {
-            dispatchStatus = 'ready-for-dispatch';
-          }
+    // Determine dispatch status
+    let dispatchStatus = order.overallStatus || 'unknown';
+    if (order.completedSteps === order.totalSteps && order.totalSteps > 0 && order.overallStatus === 'completed') {
+      dispatchStatus = 'ready-for-dispatch';
+    }
 
-          // Get order type - could be populated object or ID
-          // Fallback: look up from cached orderTypes if not populated
-          let orderTypeObj = order.orderType;
-          if (!orderTypeObj && order.orderTypeId) {
-            const orderTypeId = typeof order.orderTypeId === 'object' ? (order.orderTypeId as any)?._id : order.orderTypeId;
-            orderTypeObj = orderTypes.find((ot: any) => ot._id === orderTypeId);
-          }
-          const orderTypeName = orderTypeObj?.typeName || orderTypeObj?.name || '';
-          const orderTypeCode = orderTypeObj?.typeCode || orderTypeObj?.code || '';
-          const orderTypeColor = orderTypeObj?.color || '#374151';
-          const priority = order.priority || 'normal';
+    // Get order type - could be populated object or ID
+    // Fallback: look up from cached orderTypes if not populated
+    let orderTypeObj = order.orderType;
+    if (!orderTypeObj && order.orderTypeId) {
+      const orderTypeId = typeof order.orderTypeId === 'object' ? (order.orderTypeId as any)?._id : order.orderTypeId;
+      orderTypeObj = orderTypes.find((ot: any) => ot._id === orderTypeId);
+    }
+    const orderTypeName = orderTypeObj?.typeName || orderTypeObj?.name || '';
+    const orderTypeCode = orderTypeObj?.typeCode || orderTypeObj?.code || '';
+    const orderTypeColor = orderTypeObj?.color || '#374151';
+    const priority = order.priority || 'normal';
 
-          return {
-            ...order,
-            id: order._id,
-            companyName: customerName,
-            name: customerName,
-            phone: customerPhone,
-            phone1: customerPhone,
-            status: dispatchStatus,
-            priority: priority,
-            orderType: orderTypeObj,
-            orderTypeName: orderTypeName,
-            orderTypeCode: orderTypeCode,
-            orderTypeColor: orderTypeColor,
-            date: order.createdAt ? new Date(order.createdAt).toISOString().split('T')[0] : '',
-            AllStatus: {
-              [dispatchStatus]: {
-                color: getStatusColor(dispatchStatus),
-                description: getStatusDescription(dispatchStatus)
-              }
-            }
-          };
-        })
-    : [];
+    return {
+      ...order,
+      id: order._id,
+      companyName: customerName,
+      name: customerName,
+      phone: customerPhone,
+      phone1: customerPhone,
+      status: dispatchStatus,
+      priority: priority,
+      orderType: orderTypeObj,
+      orderTypeName: orderTypeName,
+      orderTypeCode: orderTypeCode,
+      orderTypeColor: orderTypeColor,
+      date: order.createdAt ? new Date(order.createdAt).toISOString().split('T')[0] : '',
+      AllStatus: {
+        [dispatchStatus]: {
+          color: getStatusColor(dispatchStatus),
+          description: getStatusDescription(dispatchStatus)
+        }
+      }
+    };
+  }) :
+  [];
 
-  // Filter orders based on search and date criteria
-  const filteredOrders = transformedOrders.filter(order => {
-    if (!order.date) return false;
-    
-    const orderDate = new Date(order.date);
-    const from = fromDate ? new Date(fromDate) : null;
-    const to = toDate ? new Date(toDate) : null;
-    
-    if (from && orderDate < from) return false;
-    if (to && orderDate > to) return false;
-    
-    if (statusFilter && order.status !== statusFilter) return false;
-    
+  // ✅ Client-side filtering (for filters not handled by API)
+  const filteredOrders = transformedOrders.filter((order) => {
+    // ✅ Multi-select: Status filter (API handles first status, client handles multiple)
+    if (statusFilters.length > 1 && !statusFilters.includes(order.status || '')) return false;
+
+    // ✅ Multi-select: Priority filter
+    if (priorityFilters.length > 0 && !priorityFilters.includes((order as any).priority || 'normal')) return false;
+
+    // ✅ Multi-select: Order type filter
+    if (orderTypeFilters.length > 0) {
+      const orderTypeId = (order as any).orderType?._id || (order as any).orderTypeId;
+      if (!orderTypeFilters.includes(orderTypeId)) return false;
+    }
+
+    // ✅ Multi-select: Created by filter
+    if (createdByFilters.length > 0) {
+      const createdByName = (order as any).createdByName || (order as any).creator?.username || '';
+      if (!createdByFilters.includes(createdByName)) return false;
+    }
+
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
       const matchesOrderId = order.orderId?.toLowerCase().includes(searchLower);
@@ -317,48 +360,41 @@ export default function Dispatch() {
       const matchesPhone = order.customer?.phone1?.toLowerCase().includes(searchLower);
       const matchesNotes = order.Notes?.toLowerCase().includes(searchLower);
       const matchesTrackingNumber = order.trackingNumber?.toLowerCase().includes(searchLower);
-      
+
       if (!matchesOrderId && !matchesCustomer && !matchesPhone && !matchesNotes && !matchesTrackingNumber) {
         return false;
       }
     }
-    
+
     return true;
   });
 
-  // Create filters helper
-  const createFilters = (): OrderFilters => {
+  // Fetch orders helper - ✅ Server-side filtering for performance
+  const fetchOrdersData = useCallback(() => {
     const filters: OrderFilters = {
       page: currentPage,
-      limit,
+      limit: 50, // ✅ Load only 50 orders per call for performance
       sortBy: 'createdAt',
       sortOrder: 'desc'
     };
 
+    // ✅ Send date filters to API to reduce database load (server-side filtering)
     if (fromDate) filters.startDate = fromDate;
     if (toDate) filters.endDate = toDate;
     if (searchTerm) filters.search = searchTerm;
-    if (statusFilter) filters.status = statusFilter;
-
-    return filters;
-  };
-
-  // Fetch orders helper
-  const fetchOrdersData = () => {
-    const filters = createFilters();
-    console.log("🚚 Dispatch filters being sent:", filters);
+    if (statusFilters.length > 0) filters.status = statusFilters[0];
 
     if (typeof fetchOrders === 'function') {
       dispatch(fetchOrders(filters) as any);
     } else {
-      console.error("❌ fetchOrders function is not available");
+      console.error('❌ fetchOrders is not a function');
     }
-  };
+  }, [dispatch, currentPage, fromDate, toDate, searchTerm, statusFilters]);
 
   // Handle order click - navigate to order form with complete data
   const handleOrderClick = (order: Order) => {
-    console.log('🚚 Navigating to CreateOrders with dispatch order data:', order);
-    
+
+
     // Create comprehensive order data structure for edit mode
     const orderDataForEdit = {
       // Core order info
@@ -366,18 +402,18 @@ export default function Dispatch() {
       orderId: order.orderId,
       overallStatus: order.overallStatus,
       status: order.overallStatus,
-      
+
       // Timestamps
       createdAt: order.createdAt,
       updatedAt: order.updatedAt,
       date: order.date,
-      
+
       // Customer information - properly structured
       customer: {
         _id: order.customer?._id || order.customerId || '',
-        name: order.customer?.firstName && order.customer?.lastName 
-          ? `${order.customer.firstName} ${order.customer.lastName}`.trim()
-          : order.customer?.companyName || order.companyName || '',
+        name: order.customer?.firstName && order.customer?.lastName ?
+        `${order.customer.firstName} ${order.customer.lastName}`.trim() :
+        order.customer?.companyName || order.companyName || '',
         companyName: order.customer?.companyName || order.companyName || '',
         firstName: order.customer?.firstName || '',
         lastName: order.customer?.lastName || '',
@@ -394,7 +430,7 @@ export default function Dispatch() {
         pinCode: order.customer?.pinCode || '',
         imageUrl: order.customer?.imageUrl || ''
       },
-      
+
       // Legacy customer fields for backward compatibility
       customerId: order.customer?._id || order.customerId || '',
       companyName: order.customer?.companyName || order.companyName || '',
@@ -421,7 +457,7 @@ export default function Dispatch() {
       materialId: order.material?._id || order.materialId || '',
       materialType: order.material?.materialTypeName || '',
       materialName: order.material?.materialName || '',
-      
+
       // Physical specifications
       materialWeight: order.materialWeight || 0,
       Width: order.Width || 0,
@@ -431,19 +467,19 @@ export default function Dispatch() {
       height: order.Height?.toString() || '',
       gauge: order.Thickness?.toString() || '',
       totalWeight: order.materialWeight?.toString() || '',
-      
+
       // Additional product features
       SealingType: order.SealingType || '',
       BottomGusset: order.BottomGusset || '',
       Flap: order.Flap || '',
       AirHole: order.AirHole || '',
       Printing: order.Printing || false,
-      
+
       // Mixing materials
       mixMaterial: order.mixMaterial || [],
       mixingData: order.mixMaterial || [],
-      mixing: (order.mixMaterial && order.mixMaterial.length > 0) ? 'yes' : 'no',
-      
+      mixing: order.mixMaterial && order.mixMaterial.length > 0 ? 'yes' : 'no',
+
       // Steps and workflow
       steps: order.steps || [],
       currentStepIndex: order.currentStepIndex || 0,
@@ -452,7 +488,7 @@ export default function Dispatch() {
       completedSteps: order.completedSteps || 0,
       progressPercentage: order.progressPercentage || 0,
       totalSteps: order.totalSteps || 0,
-      
+
       // Branch information
       branch: order.branch ? {
         _id: order.branch._id,
@@ -460,16 +496,16 @@ export default function Dispatch() {
         code: order.branch.code
       } : null,
       branchId: order.branchId || order.branch?._id || '',
-      
+
       // Creator information
       createdBy: order.createdBy || '',
       createdByRole: order.createdByRole || '',
       creator: order.creator || null,
-      
+
       // Notes and additional info
       Notes: order.Notes || '',
       notes: order.Notes || '',
-      
+
       // Dispatch specific fields
       dispatchDate: order.dispatchDate || '',
       dispatchStatus: order.dispatchStatus || order.status,
@@ -478,7 +514,7 @@ export default function Dispatch() {
       deliveryDate: order.deliveryDate || '',
       deliveryStatus: order.deliveryStatus || '',
       deliveryNotes: order.deliveryNotes || '',
-      
+
       // Status tracking
       AllStatus: order.AllStatus || {
         [order.overallStatus]: {
@@ -488,7 +524,7 @@ export default function Dispatch() {
       }
     };
 
-    console.log('🚚 Complete order data for edit mode:', orderDataForEdit);
+
 
     // Navigate to CreateOrders with comprehensive state
     navigate("/menu/orderform", {
@@ -519,20 +555,54 @@ export default function Dispatch() {
     });
   };
 
-  // Effect hooks - Fetch orders on mount, filter changes, and navigation back to page
+  // Get unique creators from orders for filter dropdown
+  const uniqueCreators = [...new Set(transformedOrders.map((o) =>
+  (o as any).createdByName || (o as any).creator?.username || ''
+  ).filter(Boolean))];
+
+  // ✅ Multi-select toggle helpers
+  const toggleFilterValue = (currentFilters: string[], value: string, setter: React.Dispatch<React.SetStateAction<string[]>>) => {
+    if (currentFilters.includes(value)) {
+      setter(currentFilters.filter((f) => f !== value));
+    } else {
+      setter([...currentFilters, value]);
+    }
+    setCurrentPage(1);
+  };
+
+  // Toggle dropdown with position calculation
+  const toggleDropdown = (column: string, event?: React.MouseEvent<HTMLDivElement>) => {
+    if (openDropdown === column) {
+      setOpenDropdown(null);
+      setDropdownPosition(null);
+    } else {
+      setOpenDropdown(column);
+
+      // Calculate dropdown position
+      if (event) {
+        const target = event.currentTarget;
+        const rect = target.getBoundingClientRect();
+        setDropdownPosition({
+          top: rect.bottom + window.scrollY,
+          left: rect.left + window.scrollX
+        });
+      }
+    }
+  };
+
+  // ✅ Effect hooks - Fetch orders when filters change (server-side filtering)
   useEffect(() => {
-    console.log("🚚 Dispatch useEffect triggered - fetching orders (location.key:", location.key, ", refreshTrigger:", refreshTrigger, ")");
     fetchOrdersData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dispatch, currentPage, limit, fromDate, toDate, searchTerm, statusFilter, location.key, refreshTrigger]);
+  }, [dispatch, currentPage, fromDate, toDate, searchTerm, statusFilters, location.key, refreshTrigger]);
 
   // ✅ FIXED: Check for order updates on mount (using state trigger to avoid stale closures)
   useEffect(() => {
     const ordersUpdated = sessionStorage.getItem('orders_updated');
     if (ordersUpdated) {
-      console.log("📡 [Dispatch] Orders were updated on MOUNT - triggering refresh");
+
       sessionStorage.removeItem('orders_updated');
-      setRefreshTrigger(prev => prev + 1);
+      setRefreshTrigger((prev) => prev + 1);
     }
   }, []); // Run on mount
 
@@ -540,16 +610,16 @@ export default function Dispatch() {
   useEffect(() => {
     const ordersUpdated = sessionStorage.getItem('orders_updated');
     if (ordersUpdated) {
-      console.log("📡 [Dispatch] Orders were updated on LOCATION CHANGE - triggering refresh");
+
       sessionStorage.removeItem('orders_updated');
-      setRefreshTrigger(prev => prev + 1);
+      setRefreshTrigger((prev) => prev + 1);
     }
   }, [location]); // Trigger on any location change
 
   // ✅ WebSocket real-time subscription for instant order updates
   const handleOrderUpdate = useCallback(() => {
-    console.log("📡 WebSocket: Dispatch update received - triggering refresh");
-    setRefreshTrigger(prev => prev + 1);
+
+    setRefreshTrigger((prev) => prev + 1);
   }, []);
 
   // Subscribe to real-time dispatch updates via WebSocket
@@ -561,16 +631,27 @@ export default function Dispatch() {
       if (document.visibilityState === 'visible') {
         const ordersUpdated = sessionStorage.getItem('orders_updated');
         if (ordersUpdated) {
-          console.log("📡 Page visible + orders were updated - triggering Dispatch refresh");
+
           sessionStorage.removeItem('orders_updated');
-          setRefreshTrigger(prev => prev + 1);
+          setRefreshTrigger((prev) => prev + 1);
         }
       }
     };
 
+    const handleWindowFocus = () => {
+      const ordersUpdated = sessionStorage.getItem('orders_updated');
+      if (ordersUpdated) {
+
+        sessionStorage.removeItem('orders_updated');
+        setRefreshTrigger((prev) => prev + 1);
+      }
+    };
+
     document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleWindowFocus);
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleWindowFocus);
     };
   }, []);
 
@@ -586,7 +667,7 @@ export default function Dispatch() {
     if (selectedOrder) {
       selectedOrder.scrollIntoView({
         behavior: "smooth",
-        block: "nearest",
+        block: "nearest"
       });
     }
   }, [selectedOrderIndex]);
@@ -596,6 +677,11 @@ export default function Dispatch() {
       setSelectedOrderIndex(0);
     }
   }, [filteredOrders.length, selectedOrderIndex]);
+
+  // ✅ Reset page when date changes (for server-side filtering)
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [fromDate, toDate]);
 
   // Event handlers
   const handleDateFilter = () => {
@@ -608,13 +694,8 @@ export default function Dispatch() {
     setCurrentPage(1);
   };
 
-  const handleStatusFilter = (status: string) => {
-    setStatusFilter(status);
-    setCurrentPage(1);
-  };
-
   const handleRefresh = () => {
-    console.log("🚚 Dispatch manual refresh triggered");
+
     fetchOrdersData();
   };
 
@@ -622,8 +703,12 @@ export default function Dispatch() {
     setFromDate('');
     setToDate('');
     setSearchTerm('');
-    setStatusFilter('');
+    setStatusFilters([]);
+    setOrderTypeFilters([]);
+    setPriorityFilters([]);
+    setCreatedByFilters([]);
     setCurrentPage(1);
+    setOpenDropdown(null);
   };
 
   // Open dispatch status modal
@@ -660,7 +745,7 @@ export default function Dispatch() {
     try {
       const updateData: any = {
         overallStatus: newDispatchStatus,
-        dispatchStatus: newDispatchStatus,
+        dispatchStatus: newDispatchStatus
       };
 
       // Add dispatch date if status is 'dispatched' and not already set
@@ -689,10 +774,10 @@ export default function Dispatch() {
         updateData.Notes = dispatchNotes;
       }
 
-      console.log('🚚 Updating dispatch status:', {
-        orderId: selectedOrderForDispatch._id,
-        updateData
-      });
+
+
+
+
 
       const result = await dispatch(updateOrder(selectedOrderForDispatch._id, updateData) as any);
 
@@ -704,7 +789,7 @@ export default function Dispatch() {
         alert(`Failed to update order: ${result?.error || 'Unknown error'}`);
       }
     } catch (error: any) {
-      console.error('Error updating dispatch status:', error);
+
       alert(`Error updating dispatch status: ${error.message || 'Unknown error'}`);
     } finally {
       setIsUpdating(false);
@@ -719,12 +804,12 @@ export default function Dispatch() {
       case "Tab":
         if (!e.shiftKey) {
           e.preventDefault();
-          setSelectedOrderIndex(prev => (prev + 1) % filteredOrders.length);
+          setSelectedOrderIndex((prev) => (prev + 1) % filteredOrders.length);
         }
         break;
       case "ArrowUp":
         e.preventDefault();
-        setSelectedOrderIndex(prev => (prev - 1 + filteredOrders.length) % filteredOrders.length);
+        setSelectedOrderIndex((prev) => (prev - 1 + filteredOrders.length) % filteredOrders.length);
         break;
       case "Enter":
         handleOrderClick(filteredOrders[selectedOrderIndex]);
@@ -733,7 +818,7 @@ export default function Dispatch() {
         e.preventDefault();
         const currentOrder = filteredOrders[selectedOrderIndex];
         if (currentOrder?._id) {
-          setSelectedOrders(prev => {
+          setSelectedOrders((prev) => {
             const newSet = new Set(prev);
             if (newSet.has(currentOrder._id)) {
               newSet.delete(currentOrder._id);
@@ -751,13 +836,13 @@ export default function Dispatch() {
 
     if (e.key === "Tab" && e.shiftKey) {
       e.preventDefault();
-      setSelectedOrderIndex(prev => (prev - 1 + filteredOrders.length) % filteredOrders.length);
+      setSelectedOrderIndex((prev) => (prev - 1 + filteredOrders.length) % filteredOrders.length);
     }
   };
 
   // Toggle order selection
   const toggleOrderSelection = (orderId: string) => {
-    setSelectedOrders(prev => {
+    setSelectedOrders((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(orderId)) {
         newSet.delete(orderId);
@@ -770,7 +855,7 @@ export default function Dispatch() {
 
   // Select all orders
   const selectAllOrders = () => {
-    const allIds = filteredOrders.map(o => o._id);
+    const allIds = filteredOrders.map((o) => o._id);
     setSelectedOrders(new Set(allIds));
   };
 
@@ -786,9 +871,9 @@ export default function Dispatch() {
       return;
     }
 
-    const ordersToPrint = filteredOrders.filter(o => selectedOrders.has(o._id));
+    const ordersToPrint = filteredOrders.filter((o) => selectedOrders.has(o._id));
 
-    const labelContent = ordersToPrint.map(order => `
+    const labelContent = ordersToPrint.map((order) => `
       <div class="label" style="page-break-after: always; padding: 20px; border: 2px solid #000; margin: 10px; min-height: 200px;">
         <div style="font-size: 18px; font-weight: bold; margin-bottom: 10px; border-bottom: 2px solid #000; padding-bottom: 5px;">
           ${companyName}
@@ -842,7 +927,7 @@ export default function Dispatch() {
 
     const contentWindow = printFrame.contentWindow;
     if (!contentWindow) {
-      console.error("Failed to access print frame content window.");
+
       document.body.removeChild(printFrame);
       return;
     }
@@ -865,17 +950,17 @@ export default function Dispatch() {
   const handlePrint = () => {
     const currentDate = new Date().toLocaleDateString();
     const periodText =
-      fromDate && toDate
-        ? `Period: ${new Date(fromDate).toLocaleDateString()} - ${new Date(toDate).toLocaleDateString()}`
-        : fromDate
-        ? `From: ${new Date(fromDate).toLocaleDateString()}`
-        : toDate
-        ? `To: ${new Date(toDate).toLocaleDateString()}`
-        : "All Records";
+    fromDate && toDate ?
+    `Period: ${new Date(fromDate).toLocaleDateString()} - ${new Date(toDate).toLocaleDateString()}` :
+    fromDate ?
+    `From: ${new Date(fromDate).toLocaleDateString()}` :
+    toDate ?
+    `To: ${new Date(toDate).toLocaleDateString()}` :
+    "All Records";
 
-    const tableRows = filteredOrders
-      .map(
-        order => `
+    const tableRows = filteredOrders.
+    map(
+      (order) => `
         <tr>
           <td>${order.date || 'N/A'}</td>
           <td>${order.orderId || 'N/A'}</td>
@@ -885,8 +970,8 @@ export default function Dispatch() {
           <td>${order.materialWeight || 'N/A'}</td>
           <td>${order.branch?.name || 'N/A'}</td>
         </tr>`
-      )
-      .join("");
+    ).
+    join("");
 
     const printContent = `
       <html>
@@ -915,8 +1000,8 @@ export default function Dispatch() {
           <div class="summary">
             <strong>Dispatch Summary:</strong><br>
             Total Orders: ${summary?.totalOrders || filteredOrders.length}<br>
-            Completed (Ready for Dispatch): ${filteredOrders.filter(o => o.status === 'completed').length}<br>
-            Dispatched: ${filteredOrders.filter(o => o.status === 'dispatched').length}
+            Completed (Ready for Dispatch): ${filteredOrders.filter((o) => o.status === 'completed').length}<br>
+            Dispatched: ${filteredOrders.filter((o) => o.status === 'dispatched').length}
           </div>
 
           <table>
@@ -944,7 +1029,7 @@ export default function Dispatch() {
 
     const contentWindow = printFrame.contentWindow;
     if (!contentWindow) {
-      console.error("Failed to access print frame content window.");
+
       return;
     }
 
@@ -964,7 +1049,7 @@ export default function Dispatch() {
   };
 
   const handleExportExcel = () => {
-    const exportData = filteredOrders.map(order => ({
+    const exportData = filteredOrders.map((order) => ({
       Date: order.date || 'N/A',
       OrderID: order.orderId || 'N/A',
       CustomerName: order.companyName || 'N/A',
@@ -986,10 +1071,10 @@ export default function Dispatch() {
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Dispatch_Orders");
-    
+
     const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
     const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
-    
+
     const filename = `Dispatch_${fromDate || 'all'}_to_${toDate || 'all'}_${new Date().getTime()}.xlsx`;
     saveAs(blob, filename);
   };
@@ -999,7 +1084,7 @@ export default function Dispatch() {
     const currentDate = new Date().toLocaleDateString();
 
     // Generate address labels HTML
-    const addressLabels = filteredOrders.map(order => {
+    const addressLabels = filteredOrders.map((order) => {
       const customer = (order.customer || {}) as any;
       const customerName = order.companyName || customer?.companyName || `${customer?.firstName || ''} ${customer?.lastName || ''}`.trim() || 'Unknown';
       const address1 = customer?.address1 || '';
@@ -1124,7 +1209,7 @@ export default function Dispatch() {
 
     const contentWindow = printFrame.contentWindow;
     if (!contentWindow) {
-      console.error("Failed to access print frame content window.");
+
       return;
     }
 
@@ -1275,7 +1360,7 @@ export default function Dispatch() {
 
     const contentWindow = printFrame.contentWindow;
     if (!contentWindow) {
-      console.error("Failed to access print frame content window.");
+
       return;
     }
 
@@ -1314,112 +1399,104 @@ export default function Dispatch() {
               fontSize: '12px',
               fontWeight: 500
             }}
-            title={wsConnected ? 'Real-time updates active' : 'Not connected - updates require manual refresh'}
-          >
-            {wsConnected ? (
-              <>
-                <Wifi size={14} style={{ color: '#16a34a' }} />
+            title={wsConnected ? 'Real-time updates active' : 'Not connected - updates require manual refresh'}>
+
+            {wsConnected ?
+            <>
+                <SignalIcon style={{ width: '14px', height: '14px', color: '#16a34a' }} />
                 <span style={{ color: '#16a34a' }}>Live</span>
-              </>
-            ) : (
-              <>
-                <WifiOff size={14} style={{ color: '#dc2626' }} />
+              </> :
+
+            <>
+                <SignalSlashIcon style={{ width: '14px', height: '14px', color: '#dc2626' }} />
                 <span style={{ color: '#dc2626' }}>Offline</span>
               </>
-            )}
+            }
           </div>
         </div>
-        <div className="all-orders-header__actions">
+        <div className="all-orders-header__actions" style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          flexShrink: 0
+        }}>
           {/* Selection Controls */}
-          {selectedOrders.size > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: '12px', padding: '4px 12px', backgroundColor: '#dbeafe', borderRadius: '6px' }}>
-              <span style={{ fontWeight: 600, color: '#1d4ed8' }}>{selectedOrders.size} selected</span>
+          {selectedOrders.size > 0 &&
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '4px 10px', backgroundColor: '#e0e7ff', borderRadius: '6px' }}>
+              <span style={{ fontWeight: 600, color: '#4338ca', fontSize: '12px' }}>{selectedOrders.size} selected</span>
               <button
-                onClick={handlePrintSelectedLabels}
-                style={{ padding: '4px 8px', backgroundColor: '#FF6B35', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}
-              >
-                Print Labels
+              onClick={handlePrintSelectedLabels}
+              style={{ width: '32px', height: '32px', backgroundColor: '#4f46e5', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              title="Print Labels">
+
+                <PrinterIcon style={{ width: '18px', height: '18px' }} />
               </button>
               <button
-                onClick={clearSelections}
-                style={{ padding: '4px 8px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}
-              >
-                Clear
+              onClick={clearSelections}
+              style={{ width: '32px', height: '32px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              title="Clear Selection">
+
+                <XMarkIcon style={{ width: '18px', height: '18px' }} />
               </button>
             </div>
-          )}
+          }
           <button
-            className="action-btn"
-            style={{ backgroundColor: '#10b981', color: 'white' }}
+            style={{ width: '40px', height: '40px', backgroundColor: 'transparent', color: '#10b981', border: '1px solid #e5e7eb', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             onClick={selectAllOrders}
             disabled={loading || filteredOrders.length === 0}
-          >
-            Select All
-          </button>
-          <button className="action-btn action-btn--export" onClick={() => setShowExcelExportSelector(true)} disabled={loading}>
-            <Download size={16} /> Export
-          </button>
-          <button className="action-btn action-btn--print" onClick={handlePrint} disabled={loading}>
-            <Printer size={16} /> Print Report
-          </button>
-          <button className="action-btn" onClick={handlePrintAddressLabels} disabled={loading || filteredOrders.length === 0}>
-            <Tag size={16} /> Print All Labels
-          </button>
-          <button className="action-btn" onClick={handleRefresh} disabled={loading}>
-            <RefreshCw size={16} className={loading ? 'spin' : ''} /> {loading ? 'Refreshing...' : 'Refresh'}
-          </button>
-        </div>
-      </div>
+            title="Select All Orders">
 
-      {/* Filters */}
-      <div className="all-orders-filters">
-        <div className="filter-row">
-          <div className="filter-group">
-            <label>Search</label>
-            <input
-              type="text"
-              className="filter-input"
-              placeholder="Order ID, Customer, Phone..."
-              value={searchTerm}
-              onChange={e => handleSearch(e.target.value)}
-            />
-          </div>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+              <polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
+          </button>
+          <button
+            style={{ width: '40px', height: '40px', backgroundColor: 'transparent', color: '#3b82f6', border: '1px solid #e5e7eb', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            onClick={() => setShowExcelExportSelector(true)}
+            disabled={loading}
+            title="Export to Excel">
 
-          <div className="filter-group">
-            <label>Status</label>
-            <select
-              className="filter-select"
-              value={statusFilter}
-              onChange={e => handleStatusFilter(e.target.value)}
-            >
-              <option value="">All Status</option>
-              <option value="completed">Completed (Ready)</option>
-              <option value="dispatched">Dispatched</option>
-            </select>
-          </div>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+          </button>
+          <button
+            style={{ width: '40px', height: '40px', backgroundColor: 'transparent', color: '#8b5cf6', border: '1px solid #e5e7eb', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            onClick={handlePrint}
+            disabled={loading}
+            title="Print Report">
 
-          <div className="filter-group">
-            <label>From Date</label>
-            <input
-              type="date"
-              className="filter-input"
-              value={fromDate}
-              onChange={e => setFromDate(e.target.value)}
-            />
-          </div>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="6 9 6 2 18 2 18 9" />
+              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+              <rect x="6" y="14" width="12" height="8" />
+            </svg>
+          </button>
+          <button
+            style={{ width: '40px', height: '40px', backgroundColor: 'transparent', color: '#ec4899', border: '1px solid #e5e7eb', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            onClick={handlePrintAddressLabels}
+            disabled={loading || filteredOrders.length === 0}
+            title="Print Address Labels">
 
-          <div className="filter-group">
-            <label>To Date</label>
-            <input
-              type="date"
-              className="filter-input"
-              value={toDate}
-              onChange={e => setToDate(e.target.value)}
-            />
-          </div>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+              <line x1="7" y1="7" x2="7.01" y2="7" />
+            </svg>
+          </button>
+          <button
+            style={{ width: '40px', height: '40px', backgroundColor: 'transparent', color: '#f59e0b', border: '1px solid #e5e7eb', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            onClick={handleRefresh}
+            disabled={loading}
+            title="Refresh Orders">
 
-          <button className="filter-reset-btn" onClick={handleClearFilters}>
-            Reset Filters
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={loading ? 'spin' : ''}>
+              <polyline points="23 4 23 10 17 10" />
+              <polyline points="1 20 1 14 7 14" />
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+            </svg>
           </button>
         </div>
       </div>
@@ -1431,79 +1508,291 @@ export default function Dispatch() {
           <div className="summary-card__label">Total</div>
         </div>
         <div className="summary-card summary-card--mini summary-card--completed">
-          <div className="summary-card__value">{filteredOrders.filter(o => o.status === 'completed' || o.status === 'ready-for-dispatch').length}</div>
+          <div className="summary-card__value">{filteredOrders.filter((o) => o.status === 'completed' || o.status === 'ready-for-dispatch').length}</div>
           <div className="summary-card__label">Ready</div>
         </div>
         <div className="summary-card summary-card--mini summary-card--dispatched">
-          <div className="summary-card__value">{filteredOrders.filter(o => o.status === 'dispatched').length}</div>
+          <div className="summary-card__value">{filteredOrders.filter((o) => o.status === 'dispatched').length}</div>
           <div className="summary-card__label">Dispatched</div>
         </div>
       </div>
 
       {/* Loading & Error States */}
-      {loading && (
-        <div className="orders-loading">
+      {loading &&
+      <div className="orders-loading">
           <div className="loading-spinner"></div>
           <p>Loading dispatch orders...</p>
         </div>
-      )}
+      }
       {error && <div className="orders-error">Error: {error}</div>}
 
       {/* Orders Table */}
-      {!loading && filteredOrders.length === 0 && (
-        <div className="orders-empty">
+      {!loading && filteredOrders.length === 0 &&
+      <div className="orders-empty">
           <p>No dispatch orders found for the selected criteria.</p>
         </div>
-      )}
+      }
 
-      {!loading && filteredOrders.length > 0 && (
-        <div
-          className="orders-table-container"
-          ref={contentRef}
-          tabIndex={0}
-          onKeyDown={handleKeyNavigation}
-          onClick={() => contentRef.current?.focus()}
-          style={{ outline: 'none' }}
-        >
+      {!loading && filteredOrders.length > 0 &&
+      <div
+        className="orders-table-container"
+        ref={contentRef}
+        tabIndex={0}
+        onKeyDown={handleKeyNavigation}
+        onClick={() => contentRef.current?.focus()}
+        style={{ outline: 'none' }}>
+
           <table className="orders-table">
             <thead>
               <tr>
                 <th style={{ width: '40px', textAlign: 'center' }}>
                   <input
-                    type="checkbox"
-                    checked={selectedOrders.size === filteredOrders.length && filteredOrders.length > 0}
-                    onChange={(e) => e.target.checked ? selectAllOrders() : clearSelections()}
-                    title="Select all"
-                  />
+                  type="checkbox"
+                  checked={selectedOrders.size === filteredOrders.length && filteredOrders.length > 0}
+                  onChange={(e) => e.target.checked ? selectAllOrders() : clearSelections()}
+                  title="Select all" />
+
                 </th>
                 <th style={{ width: '50px' }}>No</th>
-                <th style={{ width: '100px' }}>Created</th>
-                <th style={{ width: '120px' }}>Order ID</th>
-                <th>Company</th>
-                <th style={{ width: '140px' }}>Order Status</th>
-                <th style={{ width: '100px' }}>Priority</th>
-                <th style={{ width: '150px' }}>Order Type</th>
+
+                {/* Created - Date Filter */}
+                <th className={`filter-header ${fromDate || toDate ? 'has-filter' : ''}`} style={{ width: '100px' }}>
+                  <div className="header-filter-btn" onClick={(e) => toggleDropdown('created', e)}>
+                    <span>Created</span>
+                    <span className="filter-icon">{fromDate || toDate ? '✓' : '▼'}</span>
+                  </div>
+                  {openDropdown === 'created' && dropdownPosition &&
+                <div
+                  className="header-dropdown header-dropdown--fixed"
+                  style={{ top: `${dropdownPosition.top}px`, left: `${dropdownPosition.left}px` }}
+                  onClick={(e) => e.stopPropagation()}>
+
+                      <div className="dropdown-title">Filter by Date</div>
+                      <div className="dropdown-item">
+                        <label>From:</label>
+                        <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
+                      </div>
+                      <div className="dropdown-item">
+                        <label>To:</label>
+                        <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} />
+                      </div>
+                      <div className="dropdown-actions">
+                        <button onClick={() => {setFromDate('');setToDate('');}}>Clear</button>
+                        <button className="apply-btn" onClick={() => setOpenDropdown(null)}>Apply</button>
+                      </div>
+                    </div>
+                }
+                </th>
+
+                {/* Order ID - Search Filter */}
+                <th className={`filter-header ${searchTerm ? 'has-filter' : ''}`} style={{ width: '120px' }}>
+                  <div className="header-filter-btn" onClick={(e) => toggleDropdown('orderId', e)}>
+                    <span>Order ID</span>
+                    <span className="filter-icon">{searchTerm ? '✓' : '▼'}</span>
+                  </div>
+                  {openDropdown === 'orderId' && dropdownPosition &&
+                <div
+                  className="header-dropdown header-dropdown--fixed"
+                  style={{ top: `${dropdownPosition.top}px`, left: `${dropdownPosition.left}px` }}
+                  onClick={(e) => e.stopPropagation()}>
+
+                      <div className="dropdown-title">Search</div>
+                      <div className="dropdown-item">
+                        <input
+                      type="text"
+                      placeholder="Search Order ID, Company..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      autoFocus />
+
+                      </div>
+                      <div className="dropdown-actions">
+                        <button onClick={() => setSearchTerm('')}>Clear</button>
+                        <button className="apply-btn" onClick={() => setOpenDropdown(null)}>Apply</button>
+                      </div>
+                    </div>
+                }
+                </th>
+
+                {/* Company - Search Filter */}
+                <th className={`filter-header ${searchTerm ? 'has-filter' : ''}`}>
+                  <div className="header-filter-btn" onClick={(e) => toggleDropdown('company', e)}>
+                    <span>Company</span>
+                    <span className="filter-icon">{searchTerm ? '✓' : '▼'}</span>
+                  </div>
+                  {openDropdown === 'company' && dropdownPosition &&
+                <div
+                  className="header-dropdown header-dropdown--fixed"
+                  style={{ top: `${dropdownPosition.top}px`, left: `${dropdownPosition.left}px` }}
+                  onClick={(e) => e.stopPropagation()}>
+
+                      <div className="dropdown-title">Search Company</div>
+                      <div className="dropdown-item">
+                        <input
+                      type="text"
+                      placeholder="Search company name..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      autoFocus />
+
+                      </div>
+                      <div className="dropdown-actions">
+                        <button onClick={() => setSearchTerm('')}>Clear</button>
+                        <button className="apply-btn" onClick={() => setOpenDropdown(null)}>Apply</button>
+                      </div>
+                    </div>
+                }
+                </th>
+
+                {/* Order Status - Multi-Select Dropdown Filter */}
+                <th className={`filter-header ${statusFilters.length > 0 ? 'has-filter' : ''}`} style={{ width: '140px' }}>
+                  <div className="header-filter-btn" onClick={(e) => toggleDropdown('status', e)}>
+                    <span>Order Status {statusFilters.length > 0 && `(${statusFilters.length})`}</span>
+                    <span className="filter-icon">{statusFilters.length > 0 ? '✓' : '▼'}</span>
+                  </div>
+                  {openDropdown === 'status' && dropdownPosition &&
+                <div
+                  className="header-dropdown header-dropdown--fixed"
+                  style={{ top: `${dropdownPosition.top}px`, left: `${dropdownPosition.left}px` }}
+                  onClick={(e) => e.stopPropagation()}>
+
+                      <div className="dropdown-title">Filter by Status (Multi-Select)</div>
+                      <div className="dropdown-options">
+                        {[
+                    { value: 'completed', label: 'Completed (Ready for Dispatch)' },
+                    { value: 'dispatched', label: 'Dispatched' }].
+                    map((status) =>
+                    <div
+                      key={status.value}
+                      className={`dropdown-option ${statusFilters.includes(status.value) ? 'selected' : ''}`}
+                      onClick={() => toggleFilterValue(statusFilters, status.value, setStatusFilters)}
+                      style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+
+                            <input
+                        type="checkbox"
+                        checked={statusFilters.includes(status.value)}
+                        onChange={() => {}}
+                        onClick={(e) => e.stopPropagation()}
+                        style={{ width: '16px', height: '16px', cursor: 'pointer' }} />
+
+                            <span>{status.label}</span>
+                          </div>
+                    )}
+                      </div>
+                      <div className="dropdown-actions">
+                        <button onClick={() => setStatusFilters([])}>Clear All</button>
+                        <button className="apply-btn" onClick={() => setOpenDropdown(null)}>Apply</button>
+                      </div>
+                    </div>
+                }
+                </th>
+
+                {/* Priority - Multi-Select Dropdown Filter */}
+                <th className={`filter-header ${priorityFilters.length > 0 ? 'has-filter' : ''}`} style={{ width: '100px' }}>
+                  <div className="header-filter-btn" onClick={(e) => toggleDropdown('priority', e)}>
+                    <span>Priority {priorityFilters.length > 0 && `(${priorityFilters.length})`}</span>
+                    <span className="filter-icon">{priorityFilters.length > 0 ? '✓' : '▼'}</span>
+                  </div>
+                  {openDropdown === 'priority' && dropdownPosition &&
+                <div
+                  className="header-dropdown header-dropdown--fixed"
+                  style={{ top: `${dropdownPosition.top}px`, left: `${dropdownPosition.left}px` }}
+                  onClick={(e) => e.stopPropagation()}>
+
+                      <div className="dropdown-title">Filter by Priority (Multi-Select)</div>
+                      <div className="dropdown-options">
+                        {[
+                    { value: 'urgent', label: 'Urgent' },
+                    { value: 'high', label: 'High' },
+                    { value: 'normal', label: 'Normal' },
+                    { value: 'low', label: 'Low' }].
+                    map((priority) =>
+                    <div
+                      key={priority.value}
+                      className={`dropdown-option ${priorityFilters.includes(priority.value) ? 'selected' : ''}`}
+                      onClick={() => toggleFilterValue(priorityFilters, priority.value, setPriorityFilters)}
+                      style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+
+                            <input
+                        type="checkbox"
+                        checked={priorityFilters.includes(priority.value)}
+                        onChange={() => {}}
+                        onClick={(e) => e.stopPropagation()}
+                        style={{ width: '16px', height: '16px', cursor: 'pointer' }} />
+
+                            <span>{priority.label}</span>
+                          </div>
+                    )}
+                      </div>
+                      <div className="dropdown-actions">
+                        <button onClick={() => setPriorityFilters([])}>Clear All</button>
+                        <button className="apply-btn" onClick={() => setOpenDropdown(null)}>Apply</button>
+                      </div>
+                    </div>
+                }
+                </th>
+
+                {/* Order Type - Multi-Select Dropdown Filter */}
+                <th className={`filter-header ${orderTypeFilters.length > 0 ? 'has-filter' : ''}`} style={{ width: '150px' }}>
+                  <div className="header-filter-btn" onClick={(e) => toggleDropdown('orderType', e)}>
+                    <span>Order Type {orderTypeFilters.length > 0 && `(${orderTypeFilters.length})`}</span>
+                    <span className="filter-icon">{orderTypeFilters.length > 0 ? '✓' : '▼'}</span>
+                  </div>
+                  {openDropdown === 'orderType' && dropdownPosition &&
+                <div
+                  className="header-dropdown header-dropdown--fixed"
+                  style={{ top: `${dropdownPosition.top}px`, left: `${dropdownPosition.left}px` }}
+                  onClick={(e) => e.stopPropagation()}>
+
+                      <div className="dropdown-title">Filter by Order Type (Multi-Select)</div>
+                      <div className="dropdown-options">
+                        {Array.isArray(orderTypes) && orderTypes.map((type: any) =>
+                    <div
+                      key={type._id}
+                      className={`dropdown-option ${orderTypeFilters.includes(type._id) ? 'selected' : ''}`}
+                      onClick={() => toggleFilterValue(orderTypeFilters, type._id, setOrderTypeFilters)}
+                      style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+
+                            <input
+                        type="checkbox"
+                        checked={orderTypeFilters.includes(type._id)}
+                        onChange={() => {}}
+                        onClick={(e) => e.stopPropagation()}
+                        style={{ width: '16px', height: '16px', cursor: 'pointer' }} />
+
+                            <span>{type.typeName}</span>
+                          </div>
+                    )}
+                      </div>
+                      <div className="dropdown-actions">
+                        <button onClick={() => setOrderTypeFilters([])}>Clear All</button>
+                        <button className="apply-btn" onClick={() => setOpenDropdown(null)}>Apply</button>
+                      </div>
+                    </div>
+                }
+                </th>
+
                 <th style={{ width: '100px' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredOrders.map((order, index) => {
-                const isSelected = selectedOrders.has(order._id);
-                return (
+              const isSelected = selectedOrders.has(order._id);
+              return (
                 <tr
                   key={order._id || index}
-                  ref={el => ordersRef.current[index] = el as any}
+                  ref={(el) => ordersRef.current[index] = el as any}
                   className={`clickable-row ${selectedOrderIndex === index ? 'row-expanded' : ''} ${isSelected ? 'row-selected' : ''}`}
                   onClick={() => handleOrderClick(order)}
-                  style={isSelected ? { backgroundColor: '#dbeafe' } : undefined}
-                >
+                  style={isSelected ? { backgroundColor: '#dbeafe' } : undefined}>
+
                   <td style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
                     <input
                       type="checkbox"
                       checked={isSelected}
                       onChange={() => toggleOrderSelection(order._id)}
-                      onClick={(e) => e.stopPropagation()}
-                    />
+                      onClick={(e) => e.stopPropagation()} />
+
                   </td>
                   <td style={{ textAlign: 'center', fontWeight: 500 }}>{index + 1}</td>
                   <td className="date-cell">
@@ -1518,43 +1807,43 @@ export default function Dispatch() {
                   <td>
                     <span
                       className="status-badge"
-                      style={{ backgroundColor: getStatusColor(order.status || '') }}
-                    >
+                      style={{ backgroundColor: getStatusColor(order.status || '') }}>
+
                       {order.status === 'completed' ? 'Ready' : order.status?.replace(/_/g, ' ') || 'Unknown'}
                     </span>
                   </td>
                   <td>
                     <span
                       className="priority-badge"
-                      style={{ backgroundColor: getPriorityBadgeColor(order.priority || 'normal') }}
-                    >
+                      style={{ backgroundColor: getPriorityBadgeColor(order.priority || 'normal') }}>
+
                       {order.priority || 'normal'}
                     </span>
                   </td>
                   <td>
-                    {order.orderTypeName ? (
-                      <span style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        fontSize: '12px',
-                        padding: '4px 8px',
-                        background: `${order.orderTypeColor || '#374151'}15`,
-                        borderRadius: '4px',
-                        border: `1px solid ${order.orderTypeColor || '#374151'}30`
-                      }}>
+                    {order.orderTypeName ?
+                    <span style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      fontSize: '12px',
+                      padding: '4px 8px',
+                      background: `${order.orderTypeColor || '#374151'}15`,
+                      borderRadius: '4px',
+                      border: `1px solid ${order.orderTypeColor || '#374151'}30`
+                    }}>
                         <span style={{ fontWeight: 600, color: order.orderTypeColor || '#374151' }}>
                           {order.orderTypeName}
                         </span>
-                        {order.orderTypeCode && (
-                          <span style={{ color: order.orderTypeColor || '#374151', fontSize: '10px', opacity: 0.7 }}>
+                        {order.orderTypeCode &&
+                      <span style={{ color: order.orderTypeColor || '#374151', fontSize: '10px', opacity: 0.7 }}>
                             ({order.orderTypeCode})
                           </span>
-                        )}
-                      </span>
-                    ) : (
-                      <span style={{ color: '#94a3b8', fontSize: '12px' }}>-</span>
-                    )}
+                      }
+                      </span> :
+
+                    <span style={{ color: '#94a3b8', fontSize: '12px' }}>-</span>
+                    }
                   </td>
                   <td>
                     <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
@@ -1572,8 +1861,8 @@ export default function Dispatch() {
                           border: 'none',
                           borderRadius: '4px',
                           cursor: 'pointer'
-                        }}
-                      >
+                        }}>
+
                         {order.status === 'completed' ? 'Dispatch' : 'View'}
                       </button>
                       <button
@@ -1590,83 +1879,85 @@ export default function Dispatch() {
                           borderRadius: '4px',
                           cursor: 'pointer'
                         }}
-                        title="Print shipping label"
-                      >
+                        title="Print shipping label">
+
                         <Tag size={12} />
                       </button>
                     </div>
                   </td>
-                </tr>
-              );
-              })}
+                </tr>);
+
+            })}
             </tbody>
           </table>
 
           {/* Pagination */}
-          {pagination && pagination.totalPages > 1 && (
-            <div className="orders-pagination">
+          {pagination && pagination.totalPages > 1 &&
+        <div className="pagination">
               <button
-                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                disabled={currentPage === 1 || loading}
-                className="pagination-btn"
-              >
+            onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+            disabled={currentPage === 1 || loading}
+            className="pagination-btn">
+
+                <ChevronLeftIcon style={{ width: '16px', height: '16px' }} />
                 Previous
               </button>
               <span className="pagination-info">
                 Page {currentPage} of {pagination.totalPages}
               </span>
               <button
-                onClick={() => setCurrentPage(prev => Math.min(pagination.totalPages, prev + 1))}
-                disabled={currentPage === pagination.totalPages || loading}
-                className="pagination-btn"
-              >
+            onClick={() => setCurrentPage((prev) => Math.min(pagination.totalPages, prev + 1))}
+            disabled={currentPage === pagination.totalPages || loading}
+            className="pagination-btn">
+
                 Next
+                <ChevronRightIcon style={{ width: '16px', height: '16px' }} />
               </button>
             </div>
-          )}
+        }
         </div>
-      )}
+      }
 
       {/* Period Modal */}
-      {showPeriodModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+      {showPeriodModal &&
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white p-6 rounded shadow-lg w-80">
             <h2 className="text-lg font-semibold mb-4">Change Date Period</h2>
             <label className="block mb-2">
               From:
               <input
-                type="date"
-                value={fromDate}
-                onChange={e => setFromDate(e.target.value)}
-                className="border w-full p-2 rounded"
-              />
+              type="date"
+              value={fromDate}
+              onChange={(e) => setFromDate(e.target.value)}
+              className="border w-full p-2 rounded" />
+
             </label>
             <label className="block mb-4">
               To:
               <input
-                type="date"
-                value={toDate}
-                onChange={e => setToDate(e.target.value)}
-                className="border w-full p-2 rounded"
-              />
+              type="date"
+              value={toDate}
+              onChange={(e) => setToDate(e.target.value)}
+              className="border w-full p-2 rounded" />
+
             </label>
             <div className="flex justify-end gap-2">
               <button
-                onClick={() => setShowPeriodModal(false)}
-                className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500"
-              >
+              onClick={() => setShowPeriodModal(false)}
+              className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">
+
                 Cancel
               </button>
               <button
-                onClick={handleDateFilter}
-                className="bg-[#FF6B35] text-white px-4 py-2 rounded hover:bg-[#E55A2B]"
-              >
+              onClick={handleDateFilter}
+              className="bg-[#FF6B35] text-white px-4 py-2 rounded hover:bg-[#E55A2B]">
+
                 Apply
               </button>
             </div>
           </div>
         </div>
-      )}
+      }
 
       {/* Excel Export Selector */}
       <ExcelExportSelector
@@ -1675,13 +1966,13 @@ export default function Dispatch() {
         orders={filteredOrders}
         defaultFilename={`Dispatch_${fromDate || 'all'}_to_${toDate || 'all'}`}
         onExport={(data, filename) => {
-          console.log(`Exported ${data.length} orders to ${filename}`);
-        }}
-      />
+
+        }} />
+
 
       {/* Dispatch Status Update Modal */}
-      {showDispatchModal && selectedOrderForDispatch && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+      {showDispatchModal && selectedOrderForDispatch &&
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white p-6 rounded shadow-lg w-96">
             <h2 className="text-lg font-semibold mb-4">Update Dispatch Status</h2>
             <p className="text-sm text-gray-600 mb-4">
@@ -1692,11 +1983,11 @@ export default function Dispatch() {
             <label className="block mb-3">
               <span className="text-sm font-medium">Dispatch Status:</span>
               <select
-                value={newDispatchStatus}
-                onChange={e => setNewDispatchStatus(e.target.value)}
-                className="border w-full p-2 rounded mt-1"
-                style={{ background: '#fff', color: '#000' }}
-              >
+              value={newDispatchStatus}
+              onChange={(e) => setNewDispatchStatus(e.target.value)}
+              className="border w-full p-2 rounded mt-1"
+              style={{ background: '#fff', color: '#000' }}>
+
                 <option value="completed">Completed (Ready for Dispatch)</option>
                 <option value="dispatched">Dispatched</option>
               </select>
@@ -1705,68 +1996,68 @@ export default function Dispatch() {
             <label className="block mb-3">
               <span className="text-sm font-medium">Tracking Number:</span>
               <input
-                type="text"
-                value={newTrackingNumber}
-                onChange={e => setNewTrackingNumber(e.target.value)}
-                placeholder="Enter tracking number"
-                className="border w-full p-2 rounded mt-1"
-                style={{ background: '#fff', color: '#000' }}
-              />
+              type="text"
+              value={newTrackingNumber}
+              onChange={(e) => setNewTrackingNumber(e.target.value)}
+              placeholder="Enter tracking number"
+              className="border w-full p-2 rounded mt-1"
+              style={{ background: '#fff', color: '#000' }} />
+
             </label>
 
             <label className="block mb-3">
               <span className="text-sm font-medium">Carrier:</span>
               <input
-                type="text"
-                value={newCarrier}
-                onChange={e => setNewCarrier(e.target.value)}
-                placeholder="e.g., FedEx, DHL, BlueDart"
-                className="border w-full p-2 rounded mt-1"
-                style={{ background: '#fff', color: '#000' }}
-              />
+              type="text"
+              value={newCarrier}
+              onChange={(e) => setNewCarrier(e.target.value)}
+              placeholder="e.g., FedEx, DHL, BlueDart"
+              className="border w-full p-2 rounded mt-1"
+              style={{ background: '#fff', color: '#000' }} />
+
             </label>
 
             <label className="block mb-3">
               <span className="text-sm font-medium">Delivery Date:</span>
               <input
-                type="date"
-                value={newDeliveryDate}
-                onChange={e => setNewDeliveryDate(e.target.value)}
-                className="border w-full p-2 rounded mt-1"
-                style={{ background: '#fff', color: '#000' }}
-              />
+              type="date"
+              value={newDeliveryDate}
+              onChange={(e) => setNewDeliveryDate(e.target.value)}
+              className="border w-full p-2 rounded mt-1"
+              style={{ background: '#fff', color: '#000' }} />
+
             </label>
 
             <label className="block mb-4">
               <span className="text-sm font-medium">Notes:</span>
               <textarea
-                value={dispatchNotes}
-                onChange={e => setDispatchNotes(e.target.value)}
-                placeholder="Add any dispatch notes..."
-                className="border w-full p-2 rounded mt-1"
-                style={{ background: '#fff', color: '#000', minHeight: '60px' }}
-              />
+              value={dispatchNotes}
+              onChange={(e) => setDispatchNotes(e.target.value)}
+              placeholder="Add any dispatch notes..."
+              className="border w-full p-2 rounded mt-1"
+              style={{ background: '#fff', color: '#000', minHeight: '60px' }} />
+
             </label>
 
             <div className="flex justify-end gap-2">
               <button
-                onClick={handleCloseDispatchModal}
-                className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500"
-                disabled={isUpdating}
-              >
+              onClick={handleCloseDispatchModal}
+              className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500"
+              disabled={isUpdating}>
+
                 Cancel
               </button>
               <button
-                onClick={handleUpdateDispatchStatus}
-                className="bg-[#FF6B35] text-white px-4 py-2 rounded hover:bg-[#E55A2B]"
-                disabled={isUpdating}
-              >
+              onClick={handleUpdateDispatchStatus}
+              className="bg-[#FF6B35] text-white px-4 py-2 rounded hover:bg-[#E55A2B]"
+              disabled={isUpdating}>
+
                 {isUpdating ? 'Updating...' : 'Update Status'}
               </button>
             </div>
           </div>
         </div>
-      )}
-    </div>
-  );
+      }
+    </div>);
+
 }

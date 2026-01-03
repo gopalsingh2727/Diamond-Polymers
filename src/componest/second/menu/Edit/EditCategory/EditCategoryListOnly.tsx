@@ -1,12 +1,14 @@
 /**
  * EditCategoryListOnly - LIST ONLY
- * Click → Goes to CreateCategory for editing
+ * Click -> Goes to CreateCategory for editing
  */
 import React, { useState, useCallback, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getCategories } from "../../../../redux/category/categoryActions";
 import { RootState } from "../../../../redux/rootReducer";
 import { AppDispatch } from "../../../../../store";
+import { useCRUD } from "../../../../../hooks/useCRUD";
+import { ToastContainer } from "../../../../../components/shared/Toast";
 
 interface Category {
   _id: string;
@@ -21,7 +23,12 @@ interface Props {
 
 const EditCategoryListOnly: React.FC<Props> = ({ onEdit }) => {
   const dispatch = useDispatch<AppDispatch>();
-  const { categories = [], loading, error } = useSelector((state: RootState) => state.category || {});
+  const categoryState = useSelector((state: RootState) => state.v2.category);
+  const rawCategories = categoryState?.list;
+  const categories = Array.isArray(rawCategories) ? rawCategories : [];
+  const loading = categoryState?.loading;
+  const error = categoryState?.error;
+  const { toast } = useCRUD();
 
   // Fetch categories on mount
   useEffect(() => {
@@ -58,6 +65,13 @@ const EditCategoryListOnly: React.FC<Props> = ({ onEdit }) => {
 
   useEffect(() => { setSelectedRow(0); }, [searchTerm]);
 
+  // Show error via toast if any
+  useEffect(() => {
+    if (error) {
+      toast.error('Error', error);
+    }
+  }, [error, toast]);
+
   if (loading) return <p className="loadingAndError">Loading...</p>;
   if (error) return <p className="loadingAndError" style={{ color: "red" }}>{error}</p>;
 
@@ -73,8 +87,8 @@ const EditCategoryListOnly: React.FC<Props> = ({ onEdit }) => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-            <span className="editsectionsTable-searchIcon">🔍</span>
-            {searchTerm && <button onClick={() => setSearchTerm("")} className="editsectionsTable-clearButton">✕</button>}
+            <span className="editsectionsTable-searchIcon">&#128269;</span>
+            {searchTerm && <button onClick={() => setSearchTerm("")} className="editsectionsTable-clearButton">&#10005;</button>}
           </div>
           <div className="editsectionsTable-countBadge">{filteredItems.length} categories</div>
         </div>
@@ -110,6 +124,7 @@ const EditCategoryListOnly: React.FC<Props> = ({ onEdit }) => {
           <div className="editsectionsTable-empty">No categories found</div>
         )}
       </div>
+      <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
     </div>
   );
 };

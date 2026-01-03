@@ -1,14 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
-import {
-  createCustomerParentCompany,
-  updateCustomerParentCompany,
-  deleteCustomerParentCompany,
-  getCustomerParentCompanies,
-} from "../../../../redux/create/customerParentCompany/CustomerParentCompanyActions";
+import { createParentCompanyV2, updateParentCompanyV2, deleteParentCompanyV2 } from "../../../../redux/unifiedV2";
 import { RootState, AppDispatch } from "../../../../../store";
 import { useInternalBackNavigation } from "../../../../allCompones/BackButton";
+import { useCRUD } from "../../../../../hooks/useCRUD";
+import { ToastContainer } from "../../../../../components/shared/Toast";
 import "./CustomerParentCompany.css";
 
 type ParentCompanyFormData = {
@@ -49,9 +46,11 @@ const CustomerParentCompany: React.FC<Props> = ({
   const itemId = locationState?.itemId || initialData?._id;
   const editMode = locationState?.editMode || !!initialData?._id;
 
-  const { loading, error: reduxError } = useSelector(
-    (state: RootState) => state.createCustomerParentCompany || { loading: false }
+  const { error: reduxError } = useSelector(
+    (state: RootState) => state.v2.parentCompany
   );
+
+  const { handleSave, handleDelete: crudDelete, saveState, deleteState, confirmDialog, closeConfirmDialog, toast } = useCRUD();
 
   const [formValues, setFormValues] = useState<ParentCompanyFormData>({
     name: initialData.name || "",
@@ -59,8 +58,6 @@ const CustomerParentCompany: React.FC<Props> = ({
   });
 
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleting, setDeleting] = useState(false);
 
   const handleBackToList = () => {
     if (onSaveSuccess) {
@@ -72,7 +69,7 @@ const CustomerParentCompany: React.FC<Props> = ({
     }
   };
 
-  useInternalBackNavigation(editMode && !showDeleteConfirm, handleBackToList);
+  useInternalBackNavigation(editMode && !confirmDialog.isOpen, handleBackToList);
 
   useEffect(() => {
     if (initialData && initialData._id) {
@@ -84,14 +81,14 @@ const CustomerParentCompany: React.FC<Props> = ({
   }, [initialData]);
 
   useEffect(() => {
-    if (!loading && !reduxError && formRef.current && !editMode) {
+    if (saveState === 'success' && !reduxError && formRef.current && !editMode) {
       formRef.current.reset();
       setFormValues({
         name: "",
         description: "",
       });
     }
-  }, [loading, reduxError, editMode]);
+  }, [saveState, reduxError, editMode]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -119,53 +116,66 @@ const CustomerParentCompany: React.FC<Props> = ({
       return;
     }
 
-    try {
-      if (editMode && itemId) {
-        await dispatch(
-          updateCustomerParentCompany(itemId, {
+    if (editMode && itemId) {
+      handleSave(
+        () => dispatch(
+          updateParentCompanyV2(itemId, {
             name: formValues.name.trim(),
             description: formValues.description.trim(),
           })
-        );
-
-        if (onSaveSuccess) {
-          onSaveSuccess();
-        } else {
-          navigate("/menu/edit", { state: { activeComponent: "customerParentCompany" } });
+        ),
+        {
+          successMessage: 'Parent company updated successfully',
+          onSuccess: () => {
+            setTimeout(() => {
+              if (onSaveSuccess) {
+                onSaveSuccess();
+              } else {
+                navigate("/menu/edit", { state: { activeComponent: "customerParentCompany" } });
+              }
+            }, 1500);
+          }
         }
-      } else {
-        await dispatch(
-          createCustomerParentCompany({
+      );
+    } else {
+      handleSave(
+        () => dispatch(
+          createParentCompanyV2({
             name: formValues.name.trim(),
             description: formValues.description.trim(),
           })
-        );
-
-        // Reset form after successful creation
-        setFormValues({ name: "", description: "" });
-      }
-    } catch (err) {
-      console.error("Error:", err);
+        ),
+        {
+          successMessage: 'Parent company created successfully',
+          onSuccess: () => {
+            setFormValues({ name: "", description: "" });
+          }
+        }
+      );
     }
   };
 
-  const handleDelete = async () => {
+  const handleDeleteClick = () => {
     if (!itemId) return;
 
-    setDeleting(true);
-    try {
-      await dispatch(deleteCustomerParentCompany(itemId));
-      setShowDeleteConfirm(false);
-      if (onSaveSuccess) {
-        onSaveSuccess();
-      } else {
-        navigate("/menu/edit", { state: { activeComponent: "customerParentCompany" } });
+    crudDelete(
+      () => dispatch(deleteParentCompanyV2(itemId)),
+      {
+        confirmTitle: 'Delete Parent Company?',
+        confirmMessage: 'Are you sure you want to delete this parent company? This action cannot be undone.',
+        successMessage: 'Parent company deleted successfully',
+        onSuccess: () => {
+          // Delay navigation to show toast
+          setTimeout(() => {
+            if (onSaveSuccess) {
+              onSaveSuccess();
+            } else {
+              navigate("/menu/edit", { state: { activeComponent: "customerParentCompany" } });
+            }
+          }, 1500);
+        }
       }
-    } catch (err) {
-      console.error("Delete failed:", err);
-    } finally {
-      setDeleting(false);
-    }
+    );
   };
 
   return (
@@ -173,7 +183,7 @@ const CustomerParentCompany: React.FC<Props> = ({
       <div className="customerParentCompany-form">
 
         {/* Delete Confirmation Modal */}
-        {showDeleteConfirm && (
+        {confirmDialog.isOpen && (
           <div
             style={{
               position: "fixed",
@@ -199,14 +209,14 @@ const CustomerParentCompany: React.FC<Props> = ({
               }}
             >
               <div style={{ fontSize: "48px", marginBottom: "16px" }}>Warning</div>
-              <h3 style={{ margin: "0 0 8px 0", color: "#1f2937" }}>Delete Parent Company?</h3>
+              <h3 style={{ margin: "0 0 8px 0", color: "#1f2937" }}>{confirmDialog.title}</h3>
               <p style={{ color: "#6b7280", marginBottom: "24px" }}>
-                Are you sure you want to delete this parent company? This action cannot be undone.
+                {confirmDialog.message}
               </p>
               <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
                 <button
                   type="button"
-                  onClick={() => setShowDeleteConfirm(false)}
+                  onClick={closeConfirmDialog}
                   style={{
                     padding: "10px 24px",
                     background: "#e5e7eb",
@@ -220,8 +230,8 @@ const CustomerParentCompany: React.FC<Props> = ({
                 </button>
                 <button
                   type="button"
-                  onClick={handleDelete}
-                  disabled={deleting}
+                  onClick={confirmDialog.onConfirm}
+                  disabled={deleteState === 'loading'}
                   style={{
                     padding: "10px 24px",
                     background: "#ef4444",
@@ -231,7 +241,7 @@ const CustomerParentCompany: React.FC<Props> = ({
                     cursor: "pointer",
                   }}
                 >
-                  {deleting ? "Deleting..." : "Delete"}
+                  {deleteState === 'loading' ? "Deleting..." : "Delete"}
                 </button>
               </div>
             </div>
@@ -260,7 +270,8 @@ const CustomerParentCompany: React.FC<Props> = ({
             <h2 className="customerParentCompany-header-title">Edit Parent Company</h2>
             <button
               type="button"
-              onClick={() => setShowDeleteConfirm(true)}
+              onClick={handleDeleteClick}
+              disabled={deleteState === 'loading'}
               style={{
                 padding: "8px 16px",
                 background: "#ef4444",
@@ -277,7 +288,7 @@ const CustomerParentCompany: React.FC<Props> = ({
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14zM10 11v6M14 11v6" />
               </svg>
-              Delete
+              {deleteState === 'loading' ? "Deleting..." : "Delete"}
             </button>
           </div>
         )}
@@ -312,11 +323,12 @@ const CustomerParentCompany: React.FC<Props> = ({
 
           {reduxError && <div className="customerParentCompany-error">{reduxError}</div>}
 
-          <button className="customerParentCompany-button" type="submit" disabled={loading}>
-            {loading ? "Saving..." : editMode ? "Update Parent Company" : "Create Parent Company"}
+          <button className="customerParentCompany-button" type="submit" disabled={saveState === 'loading'}>
+            {saveState === 'loading' ? "Saving..." : editMode ? "Update Parent Company" : "Create Parent Company"}
           </button>
         </form>
       </div>
+      <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
     </div>
   );
 };

@@ -2,63 +2,62 @@ import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   getDeviceAccessList,
-  updateDeviceAccess,
-  resetDeviceAccessState
+  updateDeviceAccess
 } from "../../../../redux/deviceAccess/deviceAccessActions";
 import { RootState } from "../../../../redux/rootReducer";
 import { AppDispatch } from "../../../../../store";
 import { useFormDataCache } from '../../Edit/hooks/useFormDataCache';
+import { useCRUD } from '../../../../../hooks/useCRUD';
+import { ToastContainer } from '../../../../../components/shared/Toast';
 import "./deviceaccess.css";
 
 const DeviceAccess: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const { handleSave, saveState, toast } = useCRUD();
   const [selectedDeviceId, setSelectedDeviceId] = useState("");
   const [machineId, setMachineId] = useState("");
-  const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
   // 🚀 OPTIMIZED: Get machines from cached form data (no API call!)
-  const { machines: machineList } = useFormDataCache();
+  const { machines = [] } = useFormDataCache();
+  const machineList = Array.isArray(machines) ? machines : [];
 
-  const { devices: deviceList, loading, success, error } = useSelector(
-    (state: RootState) => state.deviceAccess
+  const rawDeviceList = useSelector(
+    (state: RootState) => state.v2.deviceAccess?.list
   );
+  const deviceList = Array.isArray(rawDeviceList) ? rawDeviceList : [];
+
+  // Get selected branch to refetch when it changes
+  const selectedBranch = useSelector((state: RootState) => state.auth?.userData?.selectedBranch);
 
   useEffect(() => {
     // Only fetch device-specific data
     dispatch(getDeviceAccessList());
-  }, [dispatch]);
-
-  // Show success/error messages
-  useEffect(() => {
-    if (success) {
-      setMessage({ type: 'success', text: 'Machine assigned successfully!' });
-      dispatch(resetDeviceAccessState());
-      setTimeout(() => setMessage(null), 3000);
-    }
-    if (error) {
-      setMessage({ type: 'error', text: error });
-      dispatch(resetDeviceAccessState());
-      setTimeout(() => setMessage(null), 5000);
-    }
-  }, [success, error, dispatch]);
+  }, [dispatch, selectedBranch]);
 
   // ✅ Assign machine
-  const handleAssignMachine = () => {
+  const handleAssignMachine = async () => {
     if (!selectedDeviceId || !machineId) return;
 
     const selectedMachine = machineList.find((m: any) => m._id === machineId);
 
-    dispatch(
-      updateDeviceAccess(selectedDeviceId, "assignMachine", {
-        machineId,
-        machineName: selectedMachine?.machineName,
-        machineType:
-          selectedMachine?.machineType?.type || selectedMachine?.machineType,
-      })
-    );
+    const saveAction = async () => {
+      return dispatch(
+        updateDeviceAccess(selectedDeviceId, {
+          machineId,
+          machineName: selectedMachine?.machineName,
+          machineType:
+            selectedMachine?.machineType?.type || selectedMachine?.machineType,
+        })
+      );
+    };
 
-    setSelectedDeviceId("");
-    setMachineId("");
+    handleSave(saveAction, {
+      successMessage: 'Machine assigned successfully',
+      onSuccess: () => {
+        setSelectedDeviceId("");
+        setMachineId("");
+      }
+    });
   };
 
 
@@ -68,12 +67,6 @@ const DeviceAccess: React.FC = () => {
     <div className="deviceAccess-container">
       <div className="deviceAccess-form">
         <h2 className="deviceAccess-title">Assign Machine to Device</h2>
-
-        {message && (
-          <div className={`deviceAccess-message ${message.type}`}>
-            {message.text}
-          </div>
-        )}
 
         <div className="deviceAccess-group">
           <label className="deviceAccess-label">Select Device</label>
@@ -110,11 +103,13 @@ const DeviceAccess: React.FC = () => {
         <button
           className="deviceAccess-button"
           onClick={handleAssignMachine}
-          disabled={!selectedDeviceId || !machineId || loading}
+          disabled={!selectedDeviceId || !machineId || saveState === 'loading'}
+          style={{ opacity: saveState === 'loading' ? 0.7 : 1, transition: "all 0.2s ease" }}
         >
-          {loading ? "ASSIGNING..." : "ASSIGN MACHINE"}
+          {saveState === 'loading' ? "ASSIGNING..." : "ASSIGN MACHINE"}
         </button>
       </div>
+      <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
     </div>
   );
 };

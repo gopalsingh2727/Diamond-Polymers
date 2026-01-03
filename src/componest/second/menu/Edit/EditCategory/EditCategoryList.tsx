@@ -1,27 +1,27 @@
-import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '../../../../redux/rootReducer';
+import React, { useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { AppDispatch } from '../../../../../store';
-import { getCategories, deleteCategory, updateCategory } from '../../../../redux/category/categoryActions';
-import { getOptionTypes } from '../../../../redux/option/optionTypeActions';
+import { deleteCategory, updateCategory } from '../../../../redux/category/categoryActions';
+import { useCRUD } from '../../../../../hooks/useCRUD';
+import { useFormDataCache } from '../hooks/useFormDataCache';
+import { ToastContainer } from '../../../../../components/shared/Toast';
 import './EditCategoryList.css';
 
 const EditCategoryList: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const { handleUpdate, handleDelete: crudDelete, updateState, deleteState, confirmDialog, closeConfirmDialog, toast } = useCRUD();
 
-  const { categories, loading } = useSelector((state: RootState) => state.category);
-  const { optionTypes } = useSelector((state: RootState) => state.optionType);
+  // Use unified form data cache (same as Account and Daybook)
+  const { categories: rawCategories, optionTypes: rawOptionTypes, loading } = useFormDataCache();
+  const categories = Array.isArray(rawCategories) ? rawCategories : [];
+  const optionTypes = Array.isArray(rawOptionTypes) ? rawOptionTypes : [];
+
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRow, setSelectedRow] = useState(0);
   const [showDetail, setShowDetail] = useState(false);
   const [editName, setEditName] = useState('');
   const [editDescription, setEditDescription] = useState('');
   const [editId, setEditId] = useState<string | null>(null);
-
-  useEffect(() => {
-    dispatch(getCategories({}));
-    dispatch(getOptionTypes({}));
-  }, [dispatch]);
 
   // Count option types for each category
   const getOptionTypeCount = (categoryId: string) => {
@@ -50,43 +50,48 @@ const EditCategoryList: React.FC = () => {
 
   const handleEditSave = async () => {
     if (!editName.trim()) {
-      alert('Category Name cannot be empty');
+      toast.error('Validation Error', 'Category Name cannot be empty');
       return;
     }
 
     if (!editId) return;
 
-    const branchId = localStorage.getItem('branchId') || '';
+    const branchId = localStorage.getItem('selectedBranch') || '';
 
-    try {
-      await dispatch(updateCategory(editId, {
+    handleUpdate(
+      () => dispatch(updateCategory(editId, {
         name: editName,
         description: editDescription,
         branchId,
         isActive: true
-      }));
-      alert('Category updated successfully!');
-      setShowDetail(false);
-      dispatch(getCategories({}));
-    } catch (err) {
-      alert('Failed to update Category.');
-    }
+      })),
+      {
+        successMessage: 'Category updated successfully!',
+        errorMessage: 'Failed to update Category.',
+        onSuccess: () => {
+          setTimeout(() => {
+            setShowDetail(false);
+          }, 1500);
+        }
+      }
+    );
   };
 
   const handleDelete = async () => {
     if (!editId) return;
 
-    if (!window.confirm('Are you sure you want to delete this category?'))
-      return;
-
-    try {
-      await dispatch(deleteCategory(editId));
-      alert('Deleted successfully.');
-      setShowDetail(false);
-      dispatch(getCategories({}));
-    } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to delete.');
-    }
+    crudDelete(
+      () => dispatch(deleteCategory(editId)),
+      {
+        confirmTitle: 'Delete Category',
+        confirmMessage: 'Are you sure you want to delete this category?',
+        successMessage: 'Deleted successfully.',
+        errorMessage: 'Failed to delete.',
+        onSuccess: () => {
+          setShowDetail(false);
+        }
+      }
+    );
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -108,6 +113,61 @@ const EditCategoryList: React.FC = () => {
 
   return (
     <div className="EditCategory EditMachineType">
+      {/* Confirmation Dialog */}
+      {confirmDialog.isOpen && (
+        <div className="modal-overlay" style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div className="modal-content" style={{
+            backgroundColor: 'white',
+            padding: '24px',
+            borderRadius: '8px',
+            maxWidth: '400px',
+            width: '90%'
+          }}>
+            <h3 style={{ margin: '0 0 16px 0' }}>{confirmDialog.title}</h3>
+            <p style={{ margin: '0 0 24px 0', color: '#64748b' }}>{confirmDialog.message}</p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={closeConfirmDialog}
+                style={{
+                  padding: '8px 16px',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '6px',
+                  background: 'white',
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDialog.onConfirm}
+                disabled={deleteState === 'loading'}
+                style={{
+                  padding: '8px 16px',
+                  border: 'none',
+                  borderRadius: '6px',
+                  background: '#dc2626',
+                  color: 'white',
+                  cursor: deleteState === 'loading' ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {deleteState === 'loading' ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {!showDetail && !loading && categories.length > 0 ? (
         <div className="editsectionsTable-container">
           {/* Search Bar */}
@@ -176,8 +236,12 @@ const EditCategoryList: React.FC = () => {
         <div className="detail-container">
           <div className="TopButtonEdit">
             <button onClick={() => setShowDetail(false)}>Back</button>
-            <button onClick={handleDelete} className="Delete">
-              Delete
+            <button
+              onClick={handleDelete}
+              className="Delete"
+              disabled={deleteState === 'loading'}
+            >
+              {deleteState === 'loading' ? 'Deleting...' : 'Delete'}
             </button>
           </div>
 
@@ -203,11 +267,12 @@ const EditCategoryList: React.FC = () => {
             onClick={handleEditSave}
             className="save-button"
             disabled={
-              editName === selectedItem.name &&
-              editDescription === selectedItem.description
+              updateState === 'loading' ||
+              (editName === selectedItem.name &&
+              editDescription === selectedItem.description)
             }
           >
-            Save
+            {updateState === 'loading' ? 'Saving...' : updateState === 'success' ? 'Saved!' : 'Save'}
           </button>
 
           <div className="info-section">
@@ -231,6 +296,7 @@ const EditCategoryList: React.FC = () => {
       ) : (
         !loading && <p>No categories available.</p>
       )}
+      <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
     </div>
   );
 };

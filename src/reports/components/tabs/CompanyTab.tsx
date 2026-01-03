@@ -13,7 +13,7 @@ interface CompanyTabProps {
 
 const CompanyTab: React.FC<CompanyTabProps> = ({ dateRange }) => {
   const dispatch = useDispatch<AppDispatch>();
-  const branchId = localStorage.getItem('branchId') || '';
+  const branchId = localStorage.getItem('selectedBranch') || localStorage.getItem('branchId') || localStorage.getItem('selectedBranchId') || '';
   const { companyReport, exporting } = useSelector((state: RootState) => state.reports);
   const [selectedCompany, setSelectedCompany] = useState<any>(null);
 

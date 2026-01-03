@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { loadChatSettings, updateChatSettings } from '../../componest/redux/chat/chatActions';
 import { setSelectedBranchInAuth } from '../../componest/redux/login/authActions';
 import Modal from '../update/Modal/index';
+import MobileQRModal from './MobileQRModal';
 import './Settings.css';
 
 // Dropdown Menu Component using createPortal
@@ -12,12 +13,12 @@ const DropdownMenu = ({
   onClose,
   buttonRef,
   children
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-  buttonRef: React.RefObject<HTMLButtonElement>;
-  children: React.ReactNode;
-}) => {
+
+
+
+
+
+}: {isOpen: boolean;onClose: () => void;buttonRef: React.RefObject<HTMLButtonElement>;children: React.ReactNode;}) => {
   const [position, setPosition] = useState({ top: 0, left: 0 });
 
   useEffect(() => {
@@ -68,8 +69,8 @@ const DropdownMenu = ({
         left: position.left,
         zIndex: 999999,
         minWidth: '200px'
-      }}
-    >
+      }}>
+
       <div className="settings-dropdown-menu">
         {children}
       </div>
@@ -135,6 +136,7 @@ const Settings = ({ branchName, onBranchClick, showBranchOption = false, userBra
   const [isOpen, setIsOpen] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
   const [showChatSettings, setShowChatSettings] = useState(false);
+  const [showQRModal, setShowQRModal] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   // Chat settings local state
@@ -269,7 +271,7 @@ const Settings = ({ branchName, onBranchClick, showBranchOption = false, userBra
         setStatus('idle');
       }
     } catch (err) {
-      console.error('Download failed:', err);
+
       setUpdateError({ message: 'Download failed' });
       setStatus('idle');
     }
@@ -285,7 +287,7 @@ const Settings = ({ branchName, onBranchClick, showBranchOption = false, userBra
         setStatus('downloaded');
       }
     } catch (err) {
-      console.error('Installation failed:', err);
+
       setUpdateError({ message: 'Installation failed' });
       setStatus('downloaded');
     }
@@ -295,7 +297,7 @@ const Settings = ({ branchName, onBranchClick, showBranchOption = false, userBra
     try {
       await window.ipcRenderer.invoke('open-download-page');
     } catch (err) {
-      console.error('Failed to open download page:', err);
+
     }
   };
 
@@ -373,8 +375,8 @@ const Settings = ({ branchName, onBranchClick, showBranchOption = false, userBra
         ref={buttonRef}
         className="settings-icon-btn"
         onClick={() => setIsOpen(!isOpen)}
-        title="Settings"
-      >
+        title="Settings">
+
         <svg
           viewBox="0 0 24 24"
           fill="none"
@@ -383,8 +385,8 @@ const Settings = ({ branchName, onBranchClick, showBranchOption = false, userBra
           strokeLinecap="round"
           strokeLinejoin="round"
           width="20"
-          height="20"
-        >
+          height="20">
+
           <circle cx="12" cy="12" r="3"></circle>
           <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
         </svg>
@@ -394,11 +396,11 @@ const Settings = ({ branchName, onBranchClick, showBranchOption = false, userBra
       <DropdownMenu
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
-        buttonRef={buttonRef}
-      >
+        buttonRef={buttonRef}>
+
         {showBranchOption && (
-          userBranches.length > 0 ? (
-            <div className="settings-branch-selector">
+        userBranches.length > 0 ?
+        <div className="settings-branch-selector">
               <div className="settings-branch-label">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
                   <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
@@ -407,165 +409,88 @@ const Settings = ({ branchName, onBranchClick, showBranchOption = false, userBra
                 <span>Branch</span>
               </div>
               <select
-                className="settings-branch-dropdown"
-                value={selectedBranchId}
-                onChange={(e) => {
-                  dispatch(setSelectedBranchInAuth(e.target.value) as any);
-                }}
-              >
-                {!selectedBranchId && (
-                  <option value="" disabled>Select Branch</option>
-                )}
-                {userBranches.map((branch) => (
-                  <option key={branch._id} value={branch._id}>
+            className="settings-branch-dropdown"
+            value={selectedBranchId}
+            onChange={(e) => {
+              dispatch(setSelectedBranchInAuth(e.target.value) as any);
+            }}>
+
+                {!selectedBranchId &&
+            <option value="" disabled>Select Branch</option>
+            }
+                {userBranches.map((branch) =>
+            <option key={branch._id} value={branch._id}>
                     {branch.name} {branch.code ? `(${branch.code})` : ''}
                   </option>
-                ))}
+            )}
               </select>
-            </div>
-          ) : userRole === 'master_admin' ? (
-            <div className="settings-menu-item settings-no-branches">
+            </div> :
+        userRole === 'master_admin' ?
+        <div className="settings-menu-item settings-no-branches">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                 <circle cx="12" cy="10" r="3"></circle>
               </svg>
               No branches - Create in Settings
-            </div>
-          ) : (
-            <button
-              className="settings-menu-item"
-              onClick={() => {
-                if (onBranchClick) onBranchClick();
-                setIsOpen(false);
-              }}
-            >
+            </div> :
+
+        <button
+          className="settings-menu-item"
+          onClick={() => {
+            if (onBranchClick) onBranchClick();
+            setIsOpen(false);
+          }}>
+
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                 <circle cx="12" cy="10" r="3"></circle>
               </svg>
               {branchName || 'Select Branch'}
-            </button>
-          )
-        )}
+            </button>)
+
+        }
 
         {/* Master Admin Only - Create & Management Section */}
-        {userRole === 'master_admin' && (
-          <>
+        {userRole === 'master_admin' &&
+        <>
             <div className="settings-section-divider">
               <span className="settings-section-label">Create & Manage</span>
             </div>
             <button
-              className="settings-menu-item"
-              onClick={() => {
-                window.location.hash = '/menu/SystemSetting';
-                setIsOpen(false);
-              }}
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                <circle cx="12" cy="10" r="3"></circle>
-              </svg>
-              Create Branch
-            </button>
-            <button
-              className="settings-menu-item"
-              onClick={() => {
-                window.location.hash = '/menu/SystemSetting';
-                setIsOpen(false);
-              }}
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
-                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                <circle cx="8.5" cy="7" r="4"></circle>
-                <line x1="20" y1="8" x2="20" y2="14"></line>
-                <line x1="23" y1="11" x2="17" y2="11"></line>
-              </svg>
-              Create Manager
-            </button>
-            <button
-              className="settings-menu-item"
-              onClick={() => {
-                window.location.hash = '/menu/SystemSetting';
-                setIsOpen(false);
-              }}
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                <circle cx="9" cy="7" r="4"></circle>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-              </svg>
-              Create Admin
-            </button>
-            <button
-              className="settings-menu-item"
-              onClick={() => {
-                window.location.hash = '/menu/SystemSetting';
-                setIsOpen(false);
-              }}
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-              </svg>
-              Access Management
-            </button>
+            className="settings-menu-item"
+            onClick={() => {
+              window.location.hash = '/menu/SystemSetting';
+              setIsOpen(false);
+            }}>
 
-            <div className="settings-section-divider">
-              <span className="settings-section-label">Edit & View</span>
-            </div>
-            <button
-              className="settings-menu-item"
-              onClick={() => {
-                window.location.hash = '/menu/SystemSetting';
-                setIsOpen(false);
-              }}
-            >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-              </svg>
-              Edit Branch
+  <line x1="4" y1="21" x2="4" y2="14"></line>
+  <line x1="4" y1="10" x2="4" y2="3"></line>
+  <line x1="12" y1="21" x2="12" y2="12"></line>
+  <line x1="12" y1="8" x2="12" y2="3"></line>
+  <line x1="20" y1="21" x2="20" y2="16"></line>
+  <line x1="20" y1="12" x2="20" y2="3"></line>
+  <line x1="1" y1="14" x2="7" y2="14"></line>
+  <line x1="9" y1="8" x2="15" y2="8"></line>
+  <line x1="17" y1="16" x2="23" y2="16"></line>
+            </svg>
+              Create and Manage 
             </button>
-            <button
-              className="settings-menu-item"
-              onClick={() => {
-                window.location.hash = '/menu/SystemSetting';
-                setIsOpen(false);
-              }}
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                <circle cx="9" cy="7" r="4"></circle>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-              </svg>
-              Edit Manager
-            </button>
-            <button
-              className="settings-menu-item"
-              onClick={() => {
-                window.location.hash = '/menu/SystemSetting';
-                setIsOpen(false);
-              }}
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
-                <path d="M12 20h9"></path>
-                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-              </svg>
-              Edit Admin
-            </button>
+        
+
+       
+     
 
             <div className="settings-section-divider">
               <span className="settings-section-label">Integrations</span>
             </div>
             <button
-              className="settings-menu-item"
-              onClick={() => {
-                window.location.hash = '/settings/master';
-                setIsOpen(false);
-              }}
-            >
+            className="settings-menu-item"
+            onClick={() => {
+              window.location.hash = '/settings/master';
+              setIsOpen(false);
+            }}>
+
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
                 <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
                 <polyline points="22,6 12,13 2,6"></polyline>
@@ -573,24 +498,24 @@ const Settings = ({ branchName, onBranchClick, showBranchOption = false, userBra
               Email Settings
             </button>
             <button
-              className="settings-menu-item"
-              onClick={() => {
-                window.location.hash = '/settings/master';
-                setIsOpen(false);
-              }}
-            >
+            className="settings-menu-item"
+            onClick={() => {
+              window.location.hash = '/settings/master';
+              setIsOpen(false);
+            }}>
+
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
                 <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
               </svg>
               WhatsApp Settings
             </button>
             <button
-              className="settings-menu-item"
-              onClick={() => {
-                window.location.hash = '/settings/master';
-                setIsOpen(false);
-              }}
-            >
+            className="settings-menu-item"
+            onClick={() => {
+              window.location.hash = '/settings/master';
+              setIsOpen(false);
+            }}>
+
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                 <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
@@ -599,15 +524,75 @@ const Settings = ({ branchName, onBranchClick, showBranchOption = false, userBra
             </button>
 
             <div className="settings-section-divider">
+              <span className="settings-section-label">Payroll & Employees</span>
+            </div>
+            <button
+            className="settings-menu-item"
+            onClick={() => {
+              window.location.hash = '/menu/create-employee';
+              setIsOpen(false);
+            }}>
+
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="8.5" cy="7" r="4"></circle>
+                <line x1="20" y1="8" x2="20" y2="14"></line>
+                <line x1="23" y1="11" x2="17" y2="11"></line>
+              </svg>
+              Create Employee
+            </button>
+            <button
+            className="settings-menu-item"
+            onClick={() => {
+              window.location.hash = '/menu/edit-employee';
+              setIsOpen(false);
+            }}>
+
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+              Edit Employee
+            </button>
+            <button
+            className="settings-menu-item"
+            onClick={() => {
+              window.location.hash = '/menu/payroll';
+              setIsOpen(false);
+            }}>
+
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                <line x1="1" y1="10" x2="23" y2="10"></line>
+              </svg>
+              Payroll Management
+            </button>
+            <button
+            className="settings-menu-item"
+            onClick={() => {
+              window.location.hash = '/menu/payroll-settings';
+              setIsOpen(false);
+            }}>
+
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24"></path>
+              </svg>
+              Payroll Settings
+            </button>
+
+            <div className="settings-section-divider">
               <span className="settings-section-label">Billing</span>
             </div>
             <button
-              className="settings-menu-item"
-              onClick={() => {
-                window.location.hash = '/menu/Account';
-                setIsOpen(false);
-              }}
-            >
+            className="settings-menu-item"
+            onClick={() => {
+              window.location.hash = '/menu/Account';
+              setIsOpen(false);
+            }}>
+
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
                 <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
                 <line x1="1" y1="10" x2="23" y2="10"></line>
@@ -615,12 +600,12 @@ const Settings = ({ branchName, onBranchClick, showBranchOption = false, userBra
               Current Bill
             </button>
             <button
-              className="settings-menu-item"
-              onClick={() => {
-                window.location.hash = '/menu/AccountInfo';
-                setIsOpen(false);
-              }}
-            >
+            className="settings-menu-item"
+            onClick={() => {
+              window.location.hash = '/menu/AccountInfo';
+              setIsOpen(false);
+            }}>
+
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
                 <circle cx="12" cy="12" r="10"></circle>
                 <polyline points="12 6 12 12 16 14"></polyline>
@@ -628,18 +613,110 @@ const Settings = ({ branchName, onBranchClick, showBranchOption = false, userBra
               Payment History
             </button>
           </>
-        )}
+        }
+
+        {/* Manager Only - Create & Edit Section */}
+        {userRole === 'manager' &&
+        <>
+            <div className="settings-section-divider">
+              <span className="settings-section-label">Create & Manage</span>
+            </div>
+            <button
+            className="settings-menu-item"
+            onClick={() => {
+              window.location.hash = '/menu/create-employee';
+              setIsOpen(false);
+            }}>
+
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="8.5" cy="7" r="4"></circle>
+                <line x1="20" y1="8" x2="20" y2="14"></line>
+                <line x1="23" y1="11" x2="17" y2="11"></line>
+              </svg>
+              Create Employee
+            </button>
+
+            <div className="settings-section-divider">
+              <span className="settings-section-label">Payroll & Employees</span>
+            </div>
+            <button
+            className="settings-menu-item"
+            onClick={() => {
+              window.location.hash = '/menu/edit-employee';
+              setIsOpen(false);
+            }}>
+
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+              Edit Employee
+            </button>
+            <button
+            className="settings-menu-item"
+            onClick={() => {
+              window.location.hash = '/menu/payroll';
+              setIsOpen(false);
+            }}>
+
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                <line x1="1" y1="10" x2="23" y2="10"></line>
+              </svg>
+              Payroll Management
+            </button>
+            <button
+            className="settings-menu-item"
+            onClick={() => {
+              window.location.hash = '/menu/payroll-settings';
+              setIsOpen(false);
+            }}>
+
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24"></path>
+              </svg>
+              Payroll Settings
+            </button>
+          </>
+        }
 
         <div className="settings-section-divider">
           <span className="settings-section-label">General</span>
         </div>
+
+        {/* Mobile QR Login - Admin Only */}
+        {(userRole === 'master_admin' || userRole === 'admin') &&
+        <button
+          className="settings-menu-item"
+          onClick={() => {
+            setShowQRModal(true);
+            setIsOpen(false);
+          }}>
+
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
+              <rect x="14" y="14" width="3" height="3"></rect>
+              <rect x="18" y="14" width="3" height="3"></rect>
+              <rect x="14" y="18" width="3" height="3"></rect>
+              <rect x="18" y="18" width="3" height="3"></rect>
+            </svg>
+            Mobile QR Login
+          </button>
+        }
+
         <button
           className="settings-menu-item"
           onClick={() => {
             setShowAbout(true);
             setIsOpen(false);
-          }}
-        >
+          }}>
+
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
             <circle cx="12" cy="12" r="10"></circle>
             <line x1="12" y1="16" x2="12" y2="12"></line>
@@ -652,8 +729,8 @@ const Settings = ({ branchName, onBranchClick, showBranchOption = false, userBra
           onClick={() => {
             setShowChatSettings(true);
             setIsOpen(false);
-          }}
-        >
+          }}>
+
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
           </svg>
@@ -662,32 +739,32 @@ const Settings = ({ branchName, onBranchClick, showBranchOption = false, userBra
         <button
           className="settings-menu-item"
           onClick={checkUpdate}
-          disabled={status === 'checking'}
-        >
+          disabled={status === 'checking'}>
+
           <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
-            <path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+            <path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" />
           </svg>
           {status === 'checking' ? 'Checking...' : 'Check for Updates'}
         </button>
         <button
           className="settings-menu-item"
-          onClick={toggleTheme}
-        >
-          {isDark ? (
-            <>
+          onClick={toggleTheme}>
+
+          {isDark ?
+          <>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
               </svg>
               Switch to Light Mode
-            </>
-          ) : (
-            <>
+            </> :
+
+          <>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
               </svg>
               Switch to Dark Mode
             </>
-          )}
+          }
         </button>
       </DropdownMenu>
 
@@ -697,8 +774,8 @@ const Settings = ({ branchName, onBranchClick, showBranchOption = false, userBra
         okText="OK"
         cancelText=""
         onOk={() => setShowAbout(false)}
-        onCancel={() => setShowAbout(false)}
-      >
+        onCancel={() => setShowAbout(false)}>
+
         <div style={{ textAlign: 'center', padding: '10px' }}>
           <div style={{
             width: '80px',
@@ -749,8 +826,8 @@ const Settings = ({ branchName, onBranchClick, showBranchOption = false, userBra
         okText="Save Settings"
         cancelText="Cancel"
         onOk={handleSaveChatSettings}
-        onCancel={() => setShowChatSettings(false)}
-      >
+        onCancel={() => setShowChatSettings(false)}>
+
         <div style={{ padding: '10px' }}>
           <h3 style={{ margin: '0 0 16px', fontSize: '16px', fontWeight: '600', color: '#FF6B35' }}>
             Chat Assistant Settings
@@ -763,8 +840,8 @@ const Settings = ({ branchName, onBranchClick, showBranchOption = false, userBra
                 type="checkbox"
                 checked={localChatSettings.isEnabled}
                 onChange={(e) => setLocalChatSettings({ ...localChatSettings, isEnabled: e.target.checked })}
-                style={{ width: '18px', height: '18px', accentColor: '#FF6B00' }}
-              />
+                style={{ width: '18px', height: '18px', accentColor: '#FF6B00' }} />
+
               <span style={{ fontWeight: '500' }}>Enable Chat Assistant</span>
             </label>
           </div>
@@ -786,8 +863,8 @@ const Settings = ({ branchName, onBranchClick, showBranchOption = false, userBra
                 border: '1px solid #e5e7eb',
                 fontSize: '14px',
                 boxSizing: 'border-box'
-              }}
-            />
+              }} />
+
           </div>
 
           {/* Voice Gender */}
@@ -802,8 +879,8 @@ const Settings = ({ branchName, onBranchClick, showBranchOption = false, userBra
                   name="voiceGender"
                   checked={localChatSettings.voiceGender === 'female'}
                   onChange={() => setLocalChatSettings({ ...localChatSettings, voiceGender: 'female' })}
-                  style={{ accentColor: '#FF6B00' }}
-                />
+                  style={{ accentColor: '#FF6B00' }} />
+
                 Female
               </label>
               <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
@@ -812,8 +889,8 @@ const Settings = ({ branchName, onBranchClick, showBranchOption = false, userBra
                   name="voiceGender"
                   checked={localChatSettings.voiceGender === 'male'}
                   onChange={() => setLocalChatSettings({ ...localChatSettings, voiceGender: 'male' })}
-                  style={{ accentColor: '#FF6B00' }}
-                />
+                  style={{ accentColor: '#FF6B00' }} />
+
                 Male
               </label>
             </div>
@@ -834,8 +911,8 @@ const Settings = ({ branchName, onBranchClick, showBranchOption = false, userBra
                 border: '1px solid #e5e7eb',
                 fontSize: '14px',
                 boxSizing: 'border-box'
-              }}
-            >
+              }}>
+
               <option value="en-IN">English (India)</option>
               <option value="en-US">English (US)</option>
               <option value="hi-IN">Hindi</option>
@@ -849,8 +926,8 @@ const Settings = ({ branchName, onBranchClick, showBranchOption = false, userBra
                 type="checkbox"
                 checked={localChatSettings.autoSpeak}
                 onChange={(e) => setLocalChatSettings({ ...localChatSettings, autoSpeak: e.target.checked })}
-                style={{ width: '18px', height: '18px', accentColor: '#FF6B00' }}
-              />
+                style={{ width: '18px', height: '18px', accentColor: '#FF6B00' }} />
+
               <span style={{ fontWeight: '500' }}>Auto-speak responses</span>
             </label>
           </div>
@@ -867,8 +944,8 @@ const Settings = ({ branchName, onBranchClick, showBranchOption = false, userBra
               step="0.1"
               value={localChatSettings.speechRate}
               onChange={(e) => setLocalChatSettings({ ...localChatSettings, speechRate: parseFloat(e.target.value) })}
-              style={{ width: '100%', accentColor: '#FF6B00' }}
-            />
+              style={{ width: '100%', accentColor: '#FF6B00' }} />
+
           </div>
         </div>
       </Modal>
@@ -879,31 +956,31 @@ const Settings = ({ branchName, onBranchClick, showBranchOption = false, userBra
         cancelText={modalButtons.cancelText}
         okText={modalButtons.okText}
         onCancel={modalButtons.onCancel}
-        onOk={modalButtons.onOk}
-      >
+        onOk={modalButtons.onOk}>
+
         <div className="modal-slot">
-          {updateError ? (
-            <div>
+          {updateError ?
+          <div>
               <p>Error checking for updates.</p>
               <p>{updateError.message}</p>
               <p className="website-fallback">
                 <span
-                  className="website-link"
-                  onClick={openDownloadPage}
-                >
+                className="website-link"
+                onClick={openDownloadPage}>
+
                   Download from website instead
                 </span>
               </p>
-            </div>
-          ) : status === 'downloading' ? (
-            <div>
+            </div> :
+          status === 'downloading' ?
+          <div>
               <div className="update-available-title">Downloading Update...</div>
               <div className="download-progress-container">
                 <div className="progress-bar">
                   <div
-                    className="progress-fill"
-                    style={{ width: `${downloadProgress.progress}%` }}
-                  />
+                  className="progress-fill"
+                  style={{ width: `${downloadProgress.progress}%` }} />
+
                 </div>
                 <div className="progress-text">
                   {downloadProgress.progress}% - {formatBytes(downloadProgress.downloaded)} / {formatBytes(downloadProgress.total)}
@@ -915,9 +992,9 @@ const Settings = ({ branchName, onBranchClick, showBranchOption = false, userBra
               <p className="website-fallback">
                 Having issues? <span className="website-link" onClick={openDownloadPage}>Download from website</span>
               </p>
-            </div>
-          ) : status === 'downloaded' ? (
-            <div>
+            </div> :
+          status === 'downloaded' ?
+          <div>
               <div className="update-available-title">Download Complete!</div>
               <div className="new-version__target">
                 v{versionInfo?.version} → v{versionInfo?.newVersion}
@@ -926,16 +1003,16 @@ const Settings = ({ branchName, onBranchClick, showBranchOption = false, userBra
                 Click "Install Now" to close the app and run the installer.
                 The new version will replace the current version.
               </p>
-            </div>
-          ) : status === 'installing' ? (
-            <div>
+            </div> :
+          status === 'installing' ?
+          <div>
               <div className="update-available-title">Installing Update...</div>
               <p className="update-instruction">
                 The installer is starting. The app will close automatically.
               </p>
-            </div>
-          ) : updateAvailable ? (
-            <div>
+            </div> :
+          updateAvailable ?
+          <div>
               <div className="update-available-title">New Update Available!</div>
               <div className="new-version__target">
                 v{versionInfo?.version} → v{versionInfo?.newVersion}
@@ -946,18 +1023,24 @@ const Settings = ({ branchName, onBranchClick, showBranchOption = false, userBra
               <p className="website-fallback">
                 Or <span className="website-link" onClick={openDownloadPage}>download from website</span>
               </p>
+            </div> :
+
+          <div className="can-not-available">
+              {versionInfo?.version ?
+            `You are on the latest version: v${versionInfo.version}` :
+            `Checking version...`}
             </div>
-          ) : (
-            <div className="can-not-available">
-              {versionInfo?.version
-                ? `You are on the latest version: v${versionInfo.version}`
-                : `Checking version...`}
-            </div>
-          )}
+          }
         </div>
       </Modal>
-    </div>
-  );
+
+      {/* Mobile QR Login Modal */}
+      <MobileQRModal
+        isOpen={showQRModal}
+        onClose={() => setShowQRModal(false)} />
+
+    </div>);
+
 };
 
 export default Settings;

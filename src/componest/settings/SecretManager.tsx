@@ -39,7 +39,7 @@ const SecretManager = () => {
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState<"managers" | "admins">("managers");
 
-  const baseUrl = import.meta.env.VITE_API_27INFINITY_IN || "http://localhost:4000/dev";
+  const baseUrl = import.meta.env.VITE_API_27INFINITY_IN || "https://api.27infinity.in";
   const apiKey = import.meta.env.VITE_API_KEY;
 
   useEffect(() => {
@@ -52,24 +52,24 @@ const SecretManager = () => {
 
     try {
       const [managersRes, adminsRes] = await Promise.all([
-        axios.get(`${baseUrl}/manager/all`, {
-          headers: {
-            "x-api-key": apiKey,
-            Authorization: `Bearer ${token}`,
-          },
-        }).catch(() => ({ data: [] })),
-        axios.get(`${baseUrl}/admin/all`, {
-          headers: {
-            "x-api-key": apiKey,
-            Authorization: `Bearer ${token}`,
-          },
-        }).catch(() => ({ data: [] })),
-      ]);
+      axios.get(`${baseUrl}/manager/all`, {
+        headers: {
+          "x-api-key": apiKey,
+          Authorization: `Bearer ${token}`
+        }
+      }).catch(() => ({ data: [] })),
+      axios.get(`${baseUrl}/admin/all`, {
+        headers: {
+          "x-api-key": apiKey,
+          Authorization: `Bearer ${token}`
+        }
+      }).catch(() => ({ data: [] }))]
+      );
 
       setManagers(managersRes.data?.managers || managersRes.data || []);
       setAdmins(adminsRes.data?.admins || adminsRes.data || []);
     } catch (err: any) {
-      console.error("Failed to fetch data:", err);
+
       setError(err.response?.data?.message || "Failed to load data");
     } finally {
       setLoading(false);
@@ -90,13 +90,13 @@ const SecretManager = () => {
           <p className="text-gray-600 mb-4">You don't have permission to view this page.</p>
           <button
             onClick={() => navigate("/")}
-            className="bg-[#FF6B35] hover:bg-[#E55A2B] text-white font-medium py-2 px-6 rounded-lg transition"
-          >
+            className="bg-[#FF6B35] hover:bg-[#E55A2B] text-white font-medium py-2 px-6 rounded-lg transition">
+
             Go Back
           </button>
         </div>
-      </div>
-    );
+      </div>);
+
   }
 
   return (
@@ -107,8 +107,8 @@ const SecretManager = () => {
           <div className="flex items-center gap-4">
             <button
               onClick={() => navigate(-1)}
-              className="p-2 hover:bg-gray-200 rounded-lg transition"
-            >
+              className="p-2 hover:bg-gray-200 rounded-lg transition">
+
               <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
@@ -125,49 +125,49 @@ const SecretManager = () => {
           <button
             onClick={() => setActiveTab("managers")}
             className={`px-4 py-2 rounded-lg font-medium transition ${
-              activeTab === "managers"
-                ? "bg-[#FF6B35] text-white"
-                : "bg-white text-gray-600 hover:bg-gray-100"
-            }`}
-          >
+            activeTab === "managers" ?
+            "bg-[#FF6B35] text-white" :
+            "bg-white text-gray-600 hover:bg-gray-100"}`
+            }>
+
             Managers ({managers.length})
           </button>
           <button
             onClick={() => setActiveTab("admins")}
             className={`px-4 py-2 rounded-lg font-medium transition ${
-              activeTab === "admins"
-                ? "bg-[#FF6B35] text-white"
-                : "bg-white text-gray-600 hover:bg-gray-100"
-            }`}
-          >
+            activeTab === "admins" ?
+            "bg-[#FF6B35] text-white" :
+            "bg-white text-gray-600 hover:bg-gray-100"}`
+            }>
+
             Admins ({admins.length})
           </button>
         </div>
 
         {/* Content */}
-        {loading ? (
-          <div className="flex flex-col items-center justify-center py-16">
+        {loading ?
+        <div className="flex flex-col items-center justify-center py-16">
             <InfinitySpinner size="lg" />
             <p className="text-gray-600 mt-4">Loading users...</p>
-          </div>
-        ) : error ? (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+          </div> :
+        error ?
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
             <div className="text-red-600 font-medium mb-2">Error Loading Data</div>
             <p className="text-red-500 text-sm mb-4">{error}</p>
             <button
-              onClick={fetchData}
-              className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition"
-            >
+            onClick={fetchData}
+            className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition">
+
               Retry
             </button>
-          </div>
-        ) : (
-          <>
+          </div> :
+
+        <>
             {/* Managers Tab */}
-            {activeTab === "managers" && (
-              <>
-                {managers.length === 0 ? (
-                  <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
+            {activeTab === "managers" &&
+          <>
+                {managers.length === 0 ?
+            <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
                     <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                       <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -175,14 +175,14 @@ const SecretManager = () => {
                     </div>
                     <h2 className="text-xl font-bold text-gray-800 mb-2">No Managers Found</h2>
                     <p className="text-gray-600 mb-4">Create your first manager to get started.</p>
-                  </div>
-                ) : (
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {managers.map((manager) => (
-                      <div
-                        key={manager._id}
-                        className="bg-white rounded-xl shadow-md p-6 border border-gray-100 hover:shadow-lg transition"
-                      >
+                  </div> :
+
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {managers.map((manager) =>
+              <div
+                key={manager._id}
+                className="bg-white rounded-xl shadow-md p-6 border border-gray-100 hover:shadow-lg transition">
+
                         <div className="flex items-start justify-between mb-4">
                           <div className="flex items-center gap-3">
                             <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
@@ -196,12 +196,12 @@ const SecretManager = () => {
                             </div>
                           </div>
                           <span
-                            className={`px-2 py-1 text-xs font-medium rounded-full ${
-                              manager.isActive
-                                ? "bg-green-100 text-green-700"
-                                : "bg-red-100 text-red-700"
-                            }`}
-                          >
+                    className={`px-2 py-1 text-xs font-medium rounded-full ${
+                    manager.isActive ?
+                    "bg-green-100 text-green-700" :
+                    "bg-red-100 text-red-700"}`
+                    }>
+
                             {manager.isActive ? "Active" : "Inactive"}
                           </span>
                         </div>
@@ -214,14 +214,14 @@ const SecretManager = () => {
                             <span className="capitalize">{manager.role}</span>
                           </div>
 
-                          {manager.branchId && (
-                            <div className="flex items-center gap-2 text-gray-600">
+                          {manager.branchId &&
+                  <div className="flex items-center gap-2 text-gray-600">
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                               </svg>
                               <span>{manager.branchId.name} ({manager.branchId.code})</span>
                             </div>
-                          )}
+                  }
                         </div>
 
                         <div className="mt-4 pt-4 border-t border-gray-100">
@@ -230,17 +230,17 @@ const SecretManager = () => {
                           </span>
                         </div>
                       </div>
-                    ))}
+              )}
                   </div>
-                )}
+            }
               </>
-            )}
+          }
 
             {/* Admins Tab */}
-            {activeTab === "admins" && (
-              <>
-                {admins.length === 0 ? (
-                  <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
+            {activeTab === "admins" &&
+          <>
+                {admins.length === 0 ?
+            <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
                     <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                       <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -248,14 +248,14 @@ const SecretManager = () => {
                     </div>
                     <h2 className="text-xl font-bold text-gray-800 mb-2">No Admins Found</h2>
                     <p className="text-gray-600 mb-4">No admins have been created yet.</p>
-                  </div>
-                ) : (
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {admins.map((admin) => (
-                      <div
-                        key={admin._id}
-                        className="bg-white rounded-xl shadow-md p-6 border border-gray-100 hover:shadow-lg transition"
-                      >
+                  </div> :
+
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {admins.map((admin) =>
+              <div
+                key={admin._id}
+                className="bg-white rounded-xl shadow-md p-6 border border-gray-100 hover:shadow-lg transition">
+
                         <div className="flex items-start justify-between mb-4">
                           <div className="flex items-center gap-3">
                             <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full flex items-center justify-center">
@@ -269,12 +269,12 @@ const SecretManager = () => {
                             </div>
                           </div>
                           <span
-                            className={`px-2 py-1 text-xs font-medium rounded-full ${
-                              admin.isActive
-                                ? "bg-green-100 text-green-700"
-                                : "bg-red-100 text-red-700"
-                            }`}
-                          >
+                    className={`px-2 py-1 text-xs font-medium rounded-full ${
+                    admin.isActive ?
+                    "bg-green-100 text-green-700" :
+                    "bg-red-100 text-red-700"}`
+                    }>
+
                             {admin.isActive ? "Active" : "Inactive"}
                           </span>
                         </div>
@@ -294,16 +294,16 @@ const SecretManager = () => {
                           </span>
                         </div>
                       </div>
-                    ))}
+              )}
                   </div>
-                )}
+            }
               </>
-            )}
+          }
           </>
-        )}
+        }
       </div>
-    </div>
-  );
+    </div>);
+
 };
 
 export default SecretManager;

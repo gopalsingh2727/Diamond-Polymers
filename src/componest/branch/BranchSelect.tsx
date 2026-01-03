@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { fetchBranches } from "../redux/Branch/BranchActions";
+import { fetchBranchesIfNeeded } from "../redux/Branch/BranchActions";
 import { setSelectedBranchInAuth } from "../redux/login/authActions";
 import type { RootState, AppDispatch } from "../../store";
 
@@ -15,13 +15,13 @@ const BranchSelect = () => {
   const [selectedBranch, setSelectedBranch] = useState("");
   const [isSelecting, setIsSelecting] = useState(false);
 
-  // ✅ Fetch branches for both admin and master_admin if no branch selected
+  // ✅ Fetch branches for both admin and master_admin if no branch selected (uses cache if available)
   useEffect(() => {
     const role = userData?.role;
     const needsBranchSelection = (role === "admin" || role === "master_admin") && !userData?.selectedBranch;
 
     if (isAuthenticated && needsBranchSelection) {
-      dispatch(fetchBranches());
+      dispatch(fetchBranchesIfNeeded());
     }
   }, [isAuthenticated, userData?.role, userData?.selectedBranch, dispatch]);
 
@@ -41,7 +41,7 @@ const BranchSelect = () => {
       await dispatch(setSelectedBranchInAuth(selectedBranch));
       navigate("/");
     } catch (error) {
-      console.error("Failed to select branch:", error);
+
       setIsSelecting(false);
     }
   };
@@ -63,52 +63,52 @@ const BranchSelect = () => {
         </div>
 
         <div className="p-6">
-          {loading ? (
-            <div className="flex flex-col items-center py-8">
+          {loading ?
+          <div className="flex flex-col items-center py-8">
               <div className="w-12 h-12 border-4 border-[#FF6B35] border-t-transparent rounded-full animate-spin mb-4"></div>
               <p className="text-gray-600">Loading branches...</p>
-            </div>
-          ) : error ? (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
+            </div> :
+          error ?
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
               <div className="text-red-600 font-medium mb-2">Error Loading Branches</div>
               <p className="text-red-500 text-sm">{error}</p>
-            </div>
-          ) : (
-            <>
+            </div> :
+
+          <>
               <div className="mb-6">
                 <label className="block text-gray-700 font-medium mb-2">Available Branches</label>
                 <div className="relative">
                   <svg
-                    className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor">
+
                     <path
-                      fillRule="evenodd"
-                      d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
-                      clipRule="evenodd"
-                    />
+                    fillRule="evenodd"
+                    d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
+                    clipRule="evenodd" />
+
                   </svg>
                   <select
-                    className={`w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF6B35] focus:border-transparent appearance-none text-gray-800 ${isSelecting ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    value={selectedBranch}
-                    onChange={(e) => setSelectedBranch(e.target.value)}
-                    disabled={isSelecting}
-                  >
+                  className={`w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF6B35] focus:border-transparent appearance-none text-gray-800 ${isSelecting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  value={selectedBranch}
+                  onChange={(e) => setSelectedBranch(e.target.value)}
+                  disabled={isSelecting}>
+
                     <option value="">-- Select a branch --</option>
-                    {branches.map((branch: any) => (
-                      <option key={branch._id} value={branch._id}>
+                    {branches.map((branch: any) =>
+                  <option key={branch._id} value={branch._id}>
                         {branch.name} • {branch.location}
                       </option>
-                    ))}
+                  )}
                   </select>
                   <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
                     <svg
-                      className="fill-current h-4 w-4"
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 20 20"
-                    >
+                    className="fill-current h-4 w-4"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20">
+
                       <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
                     </svg>
                   </div>
@@ -116,27 +116,27 @@ const BranchSelect = () => {
               </div>
 
               <button
-                className={`w-full py-3 px-4 rounded-lg font-medium text-white shadow-md transition-all duration-300 ${
-                  !selectedBranch || isSelecting
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-[#FF6B35] hover:bg-[#E55A2B] hover:shadow-lg"
-                }`}
-                onClick={handleBranchSelect}
-                disabled={!selectedBranch || isSelecting}
-              >
-                {isSelecting ? (
-                  <span className="flex items-center justify-center gap-2">
+              className={`w-full py-3 px-4 rounded-lg font-medium text-white shadow-md transition-all duration-300 ${
+              !selectedBranch || isSelecting ?
+              "bg-gray-400 cursor-not-allowed" :
+              "bg-[#FF6B35] hover:bg-[#E55A2B] hover:shadow-lg"}`
+              }
+              onClick={handleBranchSelect}
+              disabled={!selectedBranch || isSelecting}>
+
+                {isSelecting ?
+              <span className="flex items-center justify-center gap-2">
                     <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
                     Loading Data...
-                  </span>
-                ) : (
-                  'Continue to Dashboard'
-                )}
+                  </span> :
+
+              'Continue to Dashboard'
+              }
               </button>
 
               {/* Create Branch Button - Only for master_admin */}
-              {role === "master_admin" && (
-                <>
+              {role === "master_admin" &&
+            <>
                   <div className="relative my-4">
                     <div className="absolute inset-0 flex items-center">
                       <div className="w-full border-t border-gray-300"></div>
@@ -147,24 +147,24 @@ const BranchSelect = () => {
                   </div>
 
                   <button
-                    type="button"
-                    onClick={() => navigate("/create-branch")}
-                    className="w-full py-3 px-4 rounded-lg font-medium text-[#FF6B35] border-2 border-[#FF6B35] hover:bg-[#FF6B35] hover:text-white transition-all duration-300"
-                  >
+                type="button"
+                onClick={() => navigate("/create-branch")}
+                className="w-full py-3 px-4 rounded-lg font-medium text-[#FF6B35] border-2 border-[#FF6B35] hover:bg-[#FF6B35] hover:text-white transition-all duration-300">
+
                     + Create New Branch
                   </button>
                 </>
-              )}
+            }
             </>
-          )}
+          }
         </div>
 
         <div className="bg-gray-50 px-6 py-4 text-center border-t border-gray-100">
           <p className="text-gray-500 text-xs">You can change your branch later from the dashboard</p>
         </div>
       </div>
-    </div>
-  );
+    </div>);
+
 };
 
 export default BranchSelect;

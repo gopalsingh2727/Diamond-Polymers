@@ -1,10 +1,114 @@
 import { BackButton } from "../../../allCompones/BackButton";
 import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "../../../redux/rootReducer";
-import { fetchOrders } from "../../../redux/oders/OdersActions";
+import { useFormDataCache } from "../Edit/hooks/useFormDataCache";
 import './Account.css';
+
+// Quick Send Modal Component
+const QuickSendModal: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  account: any;
+  mode: 'email' | 'whatsapp';
+}> = ({ isOpen, onClose, account, mode }) => {
+  const [message, setMessage] = useState('');
+  const [subject, setSubject] = useState('');
+
+  useEffect(() => {
+    if (account) {
+      const name = account.companyName || `${account.firstName || ''} ${account.lastName || ''}`.trim() || 'Customer';
+      setSubject(`Hello from 27 Infinity - ${name}`);
+      setMessage(`Dear ${name},\n\nThank you for your business with 27 Infinity!\n\nBest regards,\n27 Infinity Team`);
+    }
+  }, [account]);
+
+  if (!isOpen || !account) return null;
+
+  const handleSend = () => {
+    if (mode === 'whatsapp') {
+      const phone = (account.whatsapp || account.phone1 || '').replace(/\D/g, '');
+      const formattedPhone = phone.startsWith('91') ? phone : `91${phone}`;
+      const encodedMessage = encodeURIComponent(message);
+      window.open(`https://wa.me/${formattedPhone}?text=${encodedMessage}`, '_blank');
+    } else {
+      const encodedSubject = encodeURIComponent(subject);
+      const encodedBody = encodeURIComponent(message);
+      window.open(`mailto:${account.email}?subject=${encodedSubject}&body=${encodedBody}`, '_blank');
+    }
+    onClose();
+  };
+
+  return (
+    <div style={{
+      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+      backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
+    }}>
+      <div style={{
+        backgroundColor: 'white', borderRadius: '16px', width: '100%', maxWidth: '450px', boxShadow: '0 25px 50px rgba(0,0,0,0.25)'
+      }}>
+        <div style={{ padding: '20px 24px', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h3 style={{ margin: 0, color: mode === 'email' ? '#FF6B35' : '#25D366', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {mode === 'email' ?
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                <polyline points="22,6 12,13 2,6" />
+              </svg> :
+
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
+              </svg>
+            }
+            {mode === 'email' ? 'Send Email' : 'Send WhatsApp'}
+          </h3>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '24px', color: '#6b7280' }}>×</button>
+        </div>
+        <div style={{ padding: '24px' }}>
+          <div style={{ marginBottom: '16px', padding: '12px', backgroundColor: '#f9fafb', borderRadius: '8px' }}>
+            <div style={{ fontWeight: 600, color: '#111827' }}>{account.companyName}</div>
+            <div style={{ fontSize: '13px', color: '#6b7280', marginTop: '4px' }}>
+              {mode === 'email' ? account.email : account.whatsapp || account.phone1}
+            </div>
+          </div>
+          {mode === 'email' &&
+          <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, marginBottom: '6px', color: '#374151' }}>Subject</label>
+              <input type="text" value={subject} onChange={(e) => setSubject(e.target.value)}
+            style={{ width: '100%', padding: '10px 14px', border: '1px solid #d1d5db', borderRadius: '8px', boxSizing: 'border-box', fontSize: '14px' }} />
+            </div>
+          }
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, marginBottom: '6px', color: '#374151' }}>Message</label>
+            <textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={5}
+            style={{ width: '100%', padding: '10px 14px', border: '1px solid #d1d5db', borderRadius: '8px', resize: 'vertical', boxSizing: 'border-box', fontSize: '14px' }} />
+          </div>
+          <button onClick={handleSend}
+          style={{
+            width: '100%', padding: '12px', backgroundColor: mode === 'email' ? '#FF6B35' : '#25D366',
+            color: 'white', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', fontSize: '15px',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
+          }}>
+            {mode === 'email' ?
+            <>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="22" y1="2" x2="11" y2="13" />
+                  <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                </svg>
+                Open Email Client
+              </> :
+
+            <>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
+                </svg>
+                Open WhatsApp
+              </>
+            }
+          </button>
+        </div>
+      </div>
+    </div>);
+
+};
 
 export interface AccountData {
   _id: string;
@@ -26,142 +130,67 @@ export interface AccountData {
 }
 
 const Account: React.FC = () => {
-  const dispatch = useDispatch();
   const navigate = useNavigate();
-  const ordersList = useSelector((state: RootState) => state.orders?.list);
-  const orders = ordersList?.orders || [];
-  const loading = ordersList?.loading || false;
+
+  // 🚀 OPTIMIZED: Get data from cached form data (no API calls!)
+  const { customers: rawAccounts, loading, error } = useFormDataCache();
+
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(-1);
 
-  // Fetch orders if not already loaded (orders are stored locally after fetch)
-  useEffect(() => {
-    if (orders.length === 0 && !loading) {
-      dispatch(fetchOrders() as any);
-    }
-  }, [dispatch, orders.length, loading]);
+  // Quick send modal state
+  const [showSendModal, setShowSendModal] = useState(false);
+  const [sendModalMode, setSendModalMode] = useState<'email' | 'whatsapp'>('email');
+  const [sendModalAccount, setSendModalAccount] = useState<AccountData | null>(null);
 
-  // Extract unique accounts from orders data (stored locally)
+  // Open send modal for an account
+  const handleQuickSend = (e: React.MouseEvent, account: AccountData, mode: 'email' | 'whatsapp') => {
+    e.stopPropagation();
+    setSendModalAccount(account);
+    setSendModalMode(mode);
+    setShowSendModal(true);
+  };
+
+  // Transform cached customers to AccountData format
   const accounts = useMemo(() => {
-    const customerMap = new Map<string, AccountData>();
-    const customerOrderTypes = new Map<string, Set<string>>();
-    const customerOrderCount = new Map<string, number>();
-
-    console.log('📦 Total orders:', orders.length);
-
-    orders.forEach((order: any, index: number) => {
-      // Get customer - could be object or just ID string
-      let customer = order.customer;
-      let customerId = '';
-
-      // If customer is a string (just ID), use customerId from order
-      if (typeof customer === 'string') {
-        customerId = customer;
-        customer = null; // No customer object available
-      } else if (customer && typeof customer === 'object') {
-        // Customer is an object
-        customerId = customer._id || customer.id || order.customerId || '';
-      } else {
-        // No customer object, try to get customerId directly
-        customerId = order.customerId || '';
-      }
-
-      // Get order type name
-      const orderTypeName = order.orderType?.typeName || order.orderType?.name || '';
-
-      console.log(`📋 Order ${index}:`, {
-        orderId: order._id || order.orderId,
-        customerId,
-        hasCustomerObject: !!customer,
-        customerName: customer?.companyName || customer?.name || 'N/A',
-        orderType: orderTypeName
-      });
-
-      if (customerId) {
-        // Track order types for this customer
-        if (!customerOrderTypes.has(customerId)) {
-          customerOrderTypes.set(customerId, new Set());
-        }
-        if (orderTypeName) {
-          customerOrderTypes.get(customerId)?.add(orderTypeName);
-        }
-
-        // Track order count
-        customerOrderCount.set(customerId, (customerOrderCount.get(customerId) || 0) + 1);
-
-        // Add customer if not exists
-        if (!customerMap.has(customerId)) {
-          if (customer && typeof customer === 'object') {
-            customerMap.set(customerId, {
-              _id: customerId,
-              companyName: customer.companyName || customer.name || '',
-              firstName: customer.firstName || customer.name?.split(' ')[0] || '',
-              lastName: customer.lastName || customer.name?.split(' ').slice(1).join(' ') || '',
-              phone1: customer.phone1 || customer.phone || '',
-              phone2: customer.phone2 || '',
-              whatsapp: customer.whatsapp || '',
-              telephone: customer.telephone || '',
-              address1: customer.address1 || customer.address || '',
-              address2: customer.address2 || '',
-              state: customer.state || '',
-              pinCode: customer.pinCode || customer.zipCode || '',
-              email: customer.email || '',
-              branchId: customer.branchId || '',
-              orderTypes: [],
-              totalOrders: 0,
-            });
-          } else {
-            customerMap.set(customerId, {
-              _id: customerId,
-              companyName: `Customer ${customerId.slice(-4)}`,
-              firstName: '',
-              lastName: '',
-              phone1: '',
-              phone2: '',
-              whatsapp: '',
-              telephone: '',
-              address1: '',
-              address2: '',
-              state: '',
-              pinCode: '',
-              email: '',
-              branchId: '',
-              orderTypes: [],
-              totalOrders: 0,
-            });
-          }
-        }
-      }
-    });
-
-    // Add order types and counts to each customer
-    customerMap.forEach((account, customerId) => {
-      account.orderTypes = Array.from(customerOrderTypes.get(customerId) || []);
-      account.totalOrders = customerOrderCount.get(customerId) || 0;
-    });
-
-    console.log('👥 Unique accounts found:', customerMap.size);
-    return Array.from(customerMap.values());
-  }, [orders]);
+    return rawAccounts.map((customer: any) => ({
+      _id: customer._id,
+      companyName: customer.companyName || '',
+      firstName: customer.firstName || '',
+      lastName: customer.lastName || '',
+      phone1: customer.phone1 || '',
+      phone2: customer.phone2 || '',
+      whatsapp: customer.whatsapp || '',
+      telephone: customer.telephone || '',
+      address1: customer.address1 || '',
+      address2: customer.address2 || '',
+      state: customer.state || '',
+      pinCode: customer.pinCode || '',
+      email: customer.email || '',
+      branchId: customer.branchId || '',
+      orderTypes: [], // Note: Order types not available in customer data
+      totalOrders: 0  // Note: Order count not available in customer data
+    }));
+  }, [rawAccounts]);
 
   const displayedAccounts = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     if (!query) return accounts || [];
 
-    return (accounts || []).filter(acc =>
-      acc.companyName?.toLowerCase().includes(query) ||
-      acc.firstName?.toLowerCase().includes(query) ||
-      acc.lastName?.toLowerCase().includes(query) ||
-      (`${acc.firstName || ''} ${acc.lastName || ''}`).toLowerCase().includes(query) ||
-      acc.email?.toLowerCase().includes(query) ||
-      acc.phone1?.includes(query) ||
-      acc.phone2?.includes(query) ||
-      acc.whatsapp?.includes(query) ||
-      acc.telephone?.includes(query) ||
-      acc.state?.toLowerCase().includes(query) ||
-      acc.pinCode?.includes(query) ||
-      acc.address1?.toLowerCase().includes(query) ||
-      acc.address2?.toLowerCase().includes(query)
+    return (accounts || []).filter((acc) =>
+    acc.companyName?.toLowerCase().includes(query) ||
+    acc.firstName?.toLowerCase().includes(query) ||
+    acc.lastName?.toLowerCase().includes(query) ||
+    `${acc.firstName || ''} ${acc.lastName || ''}`.toLowerCase().includes(query) ||
+    acc.email?.toLowerCase().includes(query) ||
+    acc.phone1?.includes(query) ||
+    acc.phone2?.includes(query) ||
+    acc.whatsapp?.includes(query) ||
+    acc.telephone?.includes(query) ||
+    acc.state?.toLowerCase().includes(query) ||
+    acc.pinCode?.includes(query) ||
+    acc.address1?.toLowerCase().includes(query) ||
+    acc.address2?.toLowerCase().includes(query)
     );
   }, [searchQuery, accounts]);
 
@@ -178,11 +207,11 @@ const Account: React.FC = () => {
     switch (e.key) {
       case "ArrowDown":
         e.preventDefault();
-        setSelectedIndex(prev => (prev + 1) % displayedAccounts.length);
+        setSelectedIndex((prev) => (prev + 1) % displayedAccounts.length);
         break;
       case "ArrowUp":
         e.preventDefault();
-        setSelectedIndex(prev => (prev > 0 ? prev - 1 : displayedAccounts.length - 1));
+        setSelectedIndex((prev) => prev > 0 ? prev - 1 : displayedAccounts.length - 1);
         break;
       case "Enter":
         if (selectedIndex >= 0) {
@@ -206,7 +235,7 @@ const Account: React.FC = () => {
 
   const getFullName = (a: AccountData) => `${a.firstName || ''} ${a.lastName || ''}`.trim();
   const getFullAddress = (a: AccountData) =>
-    [a.address1, a.address2, a.state, a.pinCode].filter(Boolean).join(', ');
+  [a.address1, a.address2, a.state, a.pinCode].filter(Boolean).join(', ');
 
   if (loading) {
     return (
@@ -216,8 +245,19 @@ const Account: React.FC = () => {
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FF6B35] mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading accounts...</p>
         </div>
-      </div>
-    );
+      </div>);
+
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <BackButton />
+        <div className="max-w-4xl mx-auto text-center py-6">
+          <p className="text-red-600">{error}</p>
+        </div>
+      </div>);
+
   }
 
   return (
@@ -233,58 +273,44 @@ const Account: React.FC = () => {
           <input
             type="text"
             value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
+            onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Search by company, name, email, phone..."
-            className="w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-[#FF6B35] transition-all"
-          />
+            className="w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-[#FF6B35] transition-all" />
+
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-          <div className="px-4 py-2 border-b bg-gray-50 rounded-t-lg">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <div className="px-4 py-2 border-b bg-gray-50 rounded-t-lg sticky top-0 z-10">
             <h2 className="text-lg font-semibold text-gray-800">
               {searchQuery ? 'Search Results' : 'All Accounts'}
             </h2>
             <p className="text-sm text-gray-600 mt-1">
               {displayedAccounts.length} {displayedAccounts.length === 1 ? 'account' : 'accounts'}
               {searchQuery && ` found for "${searchQuery}"`}
-              {displayedAccounts.length > 0 && (
-                <span className="ml-2 text-[#FF6B35]">Use ↑↓ keys to navigate, Enter to select</span>
-              )}
+              {displayedAccounts.length > 0 &&
+              <span className="ml-2 text-[#FF6B35]">Use ↑↓ keys to navigate, Enter to select</span>
+              }
             </p>
           </div>
 
-          <div className="divide-y divide-gray-200">
-            {displayedAccounts.length > 0 ? displayedAccounts.map((acc, idx) => (
-              <div
-                key={acc._id}
-                id={`account-${idx}`}
-                className={`px-4 py-2 hover:bg-orange-50 cursor-pointer transition-colors ${
-                  selectedIndex === idx ? 'bg-orange-100 border-l-4 border-[#FF6B35]' : ''
-                }`}
-                onClick={() => handleAccountSelect(acc)}
-              >
+          <div className="accounts-list divide-y divide-gray-200">
+            {displayedAccounts.length > 0 ? displayedAccounts.map((acc, idx) =>
+            <div
+              key={acc._id}
+              id={`account-${idx}`}
+              className={`px-4 py-2 hover:bg-orange-50 cursor-pointer transition-colors ${
+              selectedIndex === idx ? 'bg-orange-100 border-l-4 border-[#FF6B35]' : ''}`
+              }
+              onClick={() => handleAccountSelect(acc)}>
+
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <div className="flex items-baseline flex-wrap gap-2">
                       <h3 className="text-lg font-semibold text-gray-800">{acc.companyName}</h3>
                       {acc.state && <span className="text-xs px-2 py-1 bg-orange-100 text-[#FF6B35] rounded-full">{acc.state}</span>}
-                      <span className="text-xs px-2 py-1 bg-blue-100 text-blue-600 rounded-full">
-                        {acc.totalOrders || 0} orders
-                      </span>
                     </div>
                     <p className="text-gray-600 mt-1 font-medium">{getFullName(acc)}</p>
-
-                    {/* Order Types */}
-                    {acc.orderTypes && acc.orderTypes.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-1">
-                        {acc.orderTypes.map((type, i) => (
-                          <span key={i} className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded">
-                            {type}
-                          </span>
-                        ))}
-                      </div>
-                    )}
 
                     <div className="mt-2 text-sm text-gray-500 space-y-1">
                       {acc.email && <div>{acc.email}</div>}
@@ -294,19 +320,56 @@ const Account: React.FC = () => {
                       {getFullAddress(acc) && <div>{getFullAddress(acc)}</div>}
                     </div>
                   </div>
+
+                  {/* Quick Send Buttons */}
+                  <div className="flex gap-2 ml-3">
+                    {acc.email &&
+                  <button
+                    onClick={(e) => handleQuickSend(e, acc, 'email')}
+                    title="Send Email"
+                    className="w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 bg-white hover:bg-[#FF6B35] hover:border-[#FF6B35] hover:text-white transition-colors"
+                    style={{ color: '#FF6B35' }}>
+
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                          <polyline points="22,6 12,13 2,6" />
+                        </svg>
+                      </button>
+                  }
+                    {(acc.whatsapp || acc.phone1) &&
+                  <button
+                    onClick={(e) => handleQuickSend(e, acc, 'whatsapp')}
+                    title="Send WhatsApp"
+                    className="w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 bg-white hover:bg-[#25D366] hover:border-[#25D366] hover:text-white transition-colors"
+                    style={{ color: '#25D366' }}>
+
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
+                        </svg>
+                      </button>
+                  }
+                  </div>
                 </div>
               </div>
-            )) : (
-              <div className="px-4 py-6 text-center">
+            ) :
+            <div className="px-4 py-6 text-center">
                 <h3 className="text-lg font-medium text-gray-700 mb-2">No results found</h3>
                 <p className="text-gray-500">No accounts match your search term "{searchQuery}"</p>
               </div>
-            )}
+            }
           </div>
         </div>
       </div>
-    </div>
-  );
+
+      {/* Quick Send Modal */}
+      <QuickSendModal
+        isOpen={showSendModal}
+        onClose={() => setShowSendModal(false)}
+        account={sendModalAccount}
+        mode={sendModalMode} />
+
+    </div>);
+
 };
 
 export default Account;

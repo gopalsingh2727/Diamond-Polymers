@@ -3,17 +3,24 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { RootState } from '../../../../redux/rootReducer';
 import { AppDispatch } from '../../../../../store';
-import { getOptionSpecs, deleteOptionSpec, updateOptionSpec } from '../../../../redux/create/optionSpec/optionSpecActions';
-import { getOptionTypes } from '../../../../redux/option/optionTypeActions';
+import { getOptionSpecsV2, deleteOptionSpecV2, updateOptionSpecV2, getOptionTypesV2 } from '../../../../redux/unifiedV2';
+import { useCRUD } from '../../../../../hooks/useCRUD';
+import { ToastContainer } from '../../../../../components/shared/Toast';
 import './EditOptionSpecList.css';
 import '../EditMachineType/EditMachineyType.css';
 
 const EditOptionSpecList: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
+  const { handleSave, handleUpdate, handleDelete: crudDelete, saveState, updateState, deleteState, confirmDialog, closeConfirmDialog, toast } = useCRUD();
 
-  const { optionSpecs, loading } = useSelector((state: RootState) => state.optionSpec);
-  const { optionTypes } = useSelector((state: RootState) => state.optionType);
+  const optionSpecState = useSelector((state: RootState) => state.v2.optionSpec);
+  const rawOptionSpecs = optionSpecState?.list;
+  const optionSpecs = Array.isArray(rawOptionSpecs) ? rawOptionSpecs : [];
+  const loading = optionSpecState?.loading;
+  const optionTypeState = useSelector((state: RootState) => state.v2.optionType);
+  const rawOptionTypes = optionTypeState?.list;
+  const optionTypes = Array.isArray(rawOptionTypes) ? rawOptionTypes : [];
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRow, setSelectedRow] = useState(0);
   const [showDetail, setShowDetail] = useState(false);
@@ -23,8 +30,8 @@ const EditOptionSpecList: React.FC = () => {
   const [editId, setEditId] = useState<string | null>(null);
 
   useEffect(() => {
-    dispatch(getOptionSpecs({}));
-    dispatch(getOptionTypes({}));
+    dispatch(getOptionSpecsV2());
+    dispatch(getOptionTypesV2());
   }, [dispatch]);
 
   // Get option type name - handles both populated object and string ID
@@ -68,44 +75,51 @@ const EditOptionSpecList: React.FC = () => {
 
   const handleEditSave = async () => {
     if (!editName.trim()) {
-      alert('Option Spec Name cannot be empty');
+      toast.error('Validation Error', 'Option Spec Name cannot be empty');
       return;
     }
 
     if (!editId) return;
 
-    const branchId = localStorage.getItem('branchId') || '';
+    const branchId = localStorage.getItem('selectedBranch') || '';
 
-    try {
-      await dispatch(updateOptionSpec(editId, {
+    await handleUpdate(
+      () => dispatch(updateOptionSpecV2(editId, {
         name: editName,
         code: editCode,
         description: editDescription,
         branchId,
         specifications: selectedItem.specifications || []
-      }));
-      alert('Option Spec updated successfully!');
-      setShowDetail(false);
-      dispatch(getOptionSpecs({}));
-    } catch (err) {
-      alert('Failed to update Option Spec.');
-    }
+      })),
+      {
+        successMessage: 'Option Spec updated successfully!',
+        errorMessage: 'Failed to update Option Spec.',
+        onSuccess: () => {
+          setTimeout(() => {
+            setShowDetail(false);
+            dispatch(getOptionSpecsV2());
+          }, 1500);
+        }
+      }
+    );
   };
 
-  const handleDelete = async () => {
+  const handleDeleteClick = async () => {
     if (!editId) return;
 
-    if (!window.confirm('Are you sure you want to delete this option spec?'))
-      return;
-
-    try {
-      await dispatch(deleteOptionSpec(editId));
-      alert('Deleted successfully.');
-      setShowDetail(false);
-      dispatch(getOptionSpecs({}));
-    } catch (err) {
-      alert('Failed to delete.');
-    }
+    await crudDelete(
+      () => dispatch(deleteOptionSpecV2(editId)),
+      {
+        confirmTitle: 'Delete Option Spec',
+        confirmMessage: 'Are you sure you want to delete this option spec?',
+        successMessage: 'Deleted successfully.',
+        errorMessage: 'Failed to delete.',
+        onSuccess: () => {
+          setShowDetail(false);
+          dispatch(getOptionSpecsV2());
+        }
+      }
+    );
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -200,8 +214,8 @@ const EditOptionSpecList: React.FC = () => {
         <div className="detail-container">
           <div className="TopButtonEdit">
             <button onClick={() => setShowDetail(false)}>Back</button>
-            <button onClick={handleDelete} className="Delete">
-              Delete
+            <button onClick={handleDeleteClick} className="Delete" disabled={deleteState === 'loading'}>
+              {deleteState === 'loading' ? 'Deleting...' : 'Delete'}
             </button>
           </div>
 
@@ -236,12 +250,13 @@ const EditOptionSpecList: React.FC = () => {
             onClick={handleEditSave}
             className="save-button"
             disabled={
-              editName === selectedItem.name &&
+              updateState === 'loading' ||
+              (editName === selectedItem.name &&
               editCode === selectedItem.code &&
-              editDescription === selectedItem.description
+              editDescription === selectedItem.description)
             }
           >
-            Save
+            {updateState === 'loading' ? 'Saving...' : 'Save'}
           </button>
 
           <div className="info-section">
@@ -288,6 +303,61 @@ const EditOptionSpecList: React.FC = () => {
       ) : (
         !loading && <p>No option specs available.</p>
       )}
+
+      {/* Confirmation Modal */}
+      {confirmDialog.isOpen && (
+        <div className="modal-overlay" style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div className="modal-content" style={{
+            backgroundColor: 'white',
+            padding: '24px',
+            borderRadius: '8px',
+            maxWidth: '400px',
+            width: '90%'
+          }}>
+            <h3 style={{ marginTop: 0, marginBottom: '16px' }}>{confirmDialog.title}</h3>
+            <p style={{ marginBottom: '24px', color: '#666' }}>{confirmDialog.message}</p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={closeConfirmDialog}
+                style={{
+                  padding: '8px 16px',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  background: 'white',
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDialog.onConfirm}
+                style={{
+                  padding: '8px 16px',
+                  border: 'none',
+                  borderRadius: '4px',
+                  background: '#dc2626',
+                  color: 'white',
+                  cursor: 'pointer'
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
     </div>
   );
 };

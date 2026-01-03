@@ -3,8 +3,8 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   getAllAdmins,
   updateAdmin,
-  deleteAdmin,
-} from "../../../../redux/Admin/AdminActions";
+  deleteAdmin } from
+"../../../../redux/Admin/AdminActions";
 import { listBranches } from "../../../../redux/createBranchAndManager/branchActions";
 import { RootState } from "../../../../redux/rootReducer";
 import "./editStyles.css";
@@ -43,7 +43,7 @@ const SeeAllAdminAndEdit: React.FC = () => {
     username: "",
     password: "",
     branchIds: [] as string[],
-    isActive: true,
+    isActive: true
   });
   const [searchTerm, setSearchTerm] = useState("");
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
@@ -54,8 +54,8 @@ const SeeAllAdminAndEdit: React.FC = () => {
   }, [dispatch]);
 
   const filteredAdmins = admins.filter((admin: Admin) =>
-    admin.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    admin.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  admin.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  admin.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const openEditor = (admin: Admin) => {
@@ -63,8 +63,8 @@ const SeeAllAdminAndEdit: React.FC = () => {
     setEditForm({
       username: admin.username || "",
       password: "",
-      branchIds: admin.branchIds?.map(b => b._id) || [],
-      isActive: admin.isActive !== false,
+      branchIds: admin.branchIds?.map((b) => b._id) || [],
+      isActive: admin.isActive !== false
     });
   };
 
@@ -73,9 +73,9 @@ const SeeAllAdminAndEdit: React.FC = () => {
   };
 
   const handleBranchToggle = (branchId: string) => {
-    const newBranchIds = editForm.branchIds.includes(branchId)
-      ? editForm.branchIds.filter(id => id !== branchId)
-      : [...editForm.branchIds, branchId];
+    const newBranchIds = editForm.branchIds.includes(branchId) ?
+    editForm.branchIds.filter((id) => id !== branchId) :
+    [...editForm.branchIds, branchId];
     handleEditChange("branchIds", newBranchIds);
   };
 
@@ -90,7 +90,7 @@ const SeeAllAdminAndEdit: React.FC = () => {
     try {
       const updateData: any = {
         username: editForm.username.trim(),
-        isActive: editForm.isActive,
+        isActive: editForm.isActive
       };
 
       if (editForm.password.trim()) {
@@ -105,7 +105,7 @@ const SeeAllAdminAndEdit: React.FC = () => {
       dispatch(getAllAdmins() as any);
       setSelectedAdmin(null);
     } catch (err) {
-      console.error("Update failed:", err);
+
     }
   };
 
@@ -115,7 +115,7 @@ const SeeAllAdminAndEdit: React.FC = () => {
       dispatch(getAllAdmins() as any);
       setDeleteConfirm(null);
     } catch (err) {
-      console.error("Delete failed:", err);
+
     }
   };
 
@@ -124,12 +124,12 @@ const SeeAllAdminAndEdit: React.FC = () => {
       await dispatch(
         updateAdmin(admin._id, {
           username: admin.username,
-          isActive: !(admin.isActive !== false),
+          isActive: !(admin.isActive !== false)
         }) as any
       );
       dispatch(getAllAdmins() as any);
     } catch (err) {
-      console.error("Toggle active failed:", err);
+
     }
   };
 
@@ -143,22 +143,19 @@ const SeeAllAdminAndEdit: React.FC = () => {
 
   return (
     <div className="edit-container">
-      <div className="edit-header">
-        <h2>Admin Management</h2>
-        <p className="edit-subtitle">View, edit, and manage all admins</p>
-      </div>
+  
 
-      {!selectedAdmin ? (
-        <>
+      {!selectedAdmin ?
+      <>
           <div className="edit-toolbar">
             <div className="search-box">
               <input
-                type="text"
-                placeholder="Search admins..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="search-input"
-              />
+              type="text"
+              placeholder="Search admins..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="search-input" />
+
             </div>
             <div className="toolbar-stats">
               Total: {filteredAdmins.length} admins
@@ -178,79 +175,79 @@ const SeeAllAdminAndEdit: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredAdmins.length === 0 ? (
-                  <tr>
+                {filteredAdmins.length === 0 ?
+              <tr>
                     <td colSpan={6} className="no-data">
                       No admins found
                     </td>
-                  </tr>
-                ) : (
-                  filteredAdmins.map((admin: Admin) => (
-                    <tr key={admin._id}>
+                  </tr> :
+
+              filteredAdmins.map((admin: Admin) =>
+              <tr key={admin._id}>
                       <td className="cell-name">{admin.username}</td>
                       <td>{admin.email || "-"}</td>
                       <td>
-                        {admin.branchIds?.map(b => b.name).join(", ") || "-"}
+                        {admin.branchIds?.map((b) => b.name).join(", ") || "-"}
                       </td>
                       <td className="cell-date">
                         {new Date(admin.createdAt).toLocaleDateString()}
                       </td>
                       <td>
                         <span
-                          className={`status-badge ${
-                            admin.isActive !== false ? "active" : "inactive"
-                          }`}
-                          onClick={() => handleToggleActive(admin)}
-                        >
+                    className={`status-badge ${
+                    admin.isActive !== false ? "active" : "inactive"}`
+                    }
+                    onClick={() => handleToggleActive(admin)}>
+
                           {admin.isActive !== false ? "Active" : "Inactive"}
                         </span>
                       </td>
                       <td className="cell-actions">
                         <button
-                          className="btn-edit"
-                          onClick={() => openEditor(admin)}
-                        >
+                    className="btn-edit"
+                    onClick={() => openEditor(admin)}>
+
                           Edit
                         </button>
-                        {deleteConfirm === admin._id ? (
-                          <div className="delete-confirm">
+                        {deleteConfirm === admin._id ?
+                  <div className="delete-confirm">
                             <button
-                              className="btn-confirm-delete"
-                              onClick={() => handleDelete(admin._id)}
-                            >
+                      className="btn-confirm-delete"
+                      onClick={() => handleDelete(admin._id)}>
+
                               Confirm
                             </button>
                             <button
-                              className="btn-cancel-delete"
-                              onClick={() => setDeleteConfirm(null)}
-                            >
+                      className="btn-cancel-delete"
+                      onClick={() => setDeleteConfirm(null)}>
+
                               Cancel
                             </button>
-                          </div>
-                        ) : (
-                          <button
-                            className="btn-delete"
-                            onClick={() => setDeleteConfirm(admin._id)}
-                          >
+                          </div> :
+
+                  <button
+                    className="btn-delete"
+                    onClick={() => setDeleteConfirm(admin._id)}>
+
                             Delete
                           </button>
-                        )}
+                  }
                       </td>
                     </tr>
-                  ))
-                )}
+              )
+              }
               </tbody>
             </table>
           </div>
-        </>
-      ) : (
-        <div className="edit-form-container">
+        </> :
+
+      <div className="edit-form-container">
           <div className="edit-form-header">
             <h3>Edit Admin</h3>
             <button
-              className="btn-close"
-              onClick={() => setSelectedAdmin(null)}
-            >
+            className="btn-close"
+            onClick={() => setSelectedAdmin(null)}>
+
               X
             </button>
           </div>
@@ -259,50 +256,50 @@ const SeeAllAdminAndEdit: React.FC = () => {
             <div className="form-group">
               <label>Username *</label>
               <input
-                type="text"
-                value={editForm.username}
-                onChange={(e) => handleEditChange("username", e.target.value)}
-                placeholder="Enter username"
-              />
+              type="text"
+              value={editForm.username}
+              onChange={(e) => handleEditChange("username", e.target.value)}
+              placeholder="Enter username" />
+
             </div>
 
             <div className="form-group">
               <label>New Password</label>
               <input
-                type="password"
-                value={editForm.password}
-                onChange={(e) => handleEditChange("password", e.target.value)}
-                placeholder="Leave empty to keep current"
-              />
+              type="password"
+              value={editForm.password}
+              onChange={(e) => handleEditChange("password", e.target.value)}
+              placeholder="Leave empty to keep current" />
+
               <small className="form-hint">Only fill if you want to change the password</small>
             </div>
 
             <div className="form-group">
               <label>Assigned Branches</label>
               <div className="branch-checkboxes">
-                {branches.map((branch: Branch) => (
-                  <label key={branch._id} className="branch-checkbox-label">
+                {branches.map((branch: Branch) =>
+              <label key={branch._id} className="branch-checkbox-label">
                     <input
-                      type="checkbox"
-                      checked={editForm.branchIds.includes(branch._id)}
-                      onChange={() => handleBranchToggle(branch._id)}
-                    />
+                  type="checkbox"
+                  checked={editForm.branchIds.includes(branch._id)}
+                  onChange={() => handleBranchToggle(branch._id)} />
+
                     <span>{branch.name}</span>
                   </label>
-                ))}
-              </div>
-              {branches.length === 0 && (
-                <small className="form-hint">No branches available</small>
               )}
+              </div>
+              {branches.length === 0 &&
+            <small className="form-hint">No branches available</small>
+            }
             </div>
 
             <div className="form-group checkbox-group">
               <label className="checkbox-label">
                 <input
-                  type="checkbox"
-                  checked={editForm.isActive}
-                  onChange={(e) => handleEditChange("isActive", e.target.checked)}
-                />
+                type="checkbox"
+                checked={editForm.isActive}
+                onChange={(e) => handleEditChange("isActive", e.target.checked)} />
+
                 <span>Active</span>
               </label>
             </div>
@@ -312,17 +309,17 @@ const SeeAllAdminAndEdit: React.FC = () => {
                 Save Changes
               </button>
               <button
-                className="btn-cancel"
-                onClick={() => setSelectedAdmin(null)}
-              >
+              className="btn-cancel"
+              onClick={() => setSelectedAdmin(null)}>
+
                 Cancel
               </button>
             </div>
           </div>
         </div>
-      )}
-    </div>
-  );
+      }
+    </div>);
+
 };
 
 export default SeeAllAdminAndEdit;

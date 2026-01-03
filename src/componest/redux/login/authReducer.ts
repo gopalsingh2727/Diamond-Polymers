@@ -5,6 +5,8 @@ import {
   LOGOUT,
   LOGIN_REQUIRES_VERIFICATION,
   CLEAR_VERIFICATION_STATE,
+  BRANCH_SWITCHING,
+  BRANCH_SWITCH_COMPLETE,
 } from "./authConstants";
 import {
   SET_SELECTED_BRANCH_IN_AUTH,
@@ -33,6 +35,7 @@ interface AuthState {
   verificationUserType?: 'admin' | 'manager' | 'master_admin';
   tokenRefreshing?: boolean;
   sessionExpired?: boolean;
+  branchSwitching?: boolean;
   // Phone OTP login states
   phoneOtpSending?: boolean;
   phoneOtpSent?: boolean;
@@ -56,6 +59,7 @@ const initialState: AuthState = {
   verificationUserType: undefined,
   tokenRefreshing: false,
   sessionExpired: false,
+  branchSwitching: false,
   // Phone OTP initial states
   phoneOtpSending: false,
   phoneOtpSent: false,
@@ -170,6 +174,18 @@ const authReducer = (state = initialState, action: any): AuthState => {
           // Auto-select the new branch if none is selected
           selectedBranch: state.userData?.selectedBranch || action.payload._id,
         },
+      };
+
+    case BRANCH_SWITCHING:
+      return {
+        ...state,
+        branchSwitching: true,
+      };
+
+    case BRANCH_SWITCH_COMPLETE:
+      return {
+        ...state,
+        branchSwitching: false,
       };
 
     case SESSION_EXPIRED:

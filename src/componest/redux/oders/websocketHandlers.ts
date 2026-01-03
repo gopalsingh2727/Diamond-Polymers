@@ -36,43 +36,43 @@ export const handleOrderWebSocketEvent = {
   /**
    * Handle order created via WebSocket
    */
-  orderCreated: (state: OrderState, action: { payload: Order }): OrderState => {
+  orderCreated: (state: OrderState, action: {payload: Order;}): OrderState => {
     const newOrder = action.payload;
 
     // Check if order already exists (prevent duplicates)
-    const exists = state.allOrders.some(order => order._id === newOrder._id);
+    const exists = state.allOrders.some((order) => order._id === newOrder._id);
 
     if (exists) {
-      console.warn('Order already exists, skipping duplicate:', newOrder._id);
+
       return state;
     }
 
-    console.log('📦 Order created via WebSocket:', newOrder.orderNumber || newOrder._id);
+
 
     return {
       ...state,
-      allOrders: [newOrder, ...state.allOrders], // Add to beginning
+      allOrders: [newOrder, ...state.allOrders] // Add to beginning
     };
   },
 
   /**
    * Handle order status changed via WebSocket
    */
-  statusChanged: (state: OrderState, action: { payload: { _id: string; status: string; updatedAt?: string } }): OrderState => {
+  statusChanged: (state: OrderState, action: {payload: {_id: string;status: string;updatedAt?: string;};}): OrderState => {
     const { _id, status, updatedAt } = action.payload;
 
-    console.log('📦 Order status changed via WebSocket:', _id, '→', status);
+
 
     return {
       ...state,
-      allOrders: state.allOrders.map(order =>
-        order._id === _id
-          ? {
-              ...order,
-              status,
-              ...(updatedAt && { updatedAt })
-            }
-          : order
+      allOrders: state.allOrders.map((order) =>
+      order._id === _id ?
+      {
+        ...order,
+        status,
+        ...(updatedAt && { updatedAt })
+      } :
+      order
       ),
       // Update selected order if it's the one being changed
       ...(state.selectedOrder?._id === _id && {
@@ -88,21 +88,21 @@ export const handleOrderWebSocketEvent = {
   /**
    * Handle order priority changed via WebSocket
    */
-  priorityChanged: (state: OrderState, action: { payload: { _id: string; priority: string; updatedAt?: string } }): OrderState => {
+  priorityChanged: (state: OrderState, action: {payload: {_id: string;priority: string;updatedAt?: string;};}): OrderState => {
     const { _id, priority, updatedAt } = action.payload;
 
-    console.log('📦 Order priority changed via WebSocket:', _id, '→', priority);
+
 
     return {
       ...state,
-      allOrders: state.allOrders.map(order =>
-        order._id === _id
-          ? {
-              ...order,
-              priority,
-              ...(updatedAt && { updatedAt })
-            }
-          : order
+      allOrders: state.allOrders.map((order) =>
+      order._id === _id ?
+      {
+        ...order,
+        priority,
+        ...(updatedAt && { updatedAt })
+      } :
+      order
       ),
       ...(state.selectedOrder?._id === _id && {
         selectedOrder: {
@@ -117,17 +117,17 @@ export const handleOrderWebSocketEvent = {
   /**
    * Handle order updated via WebSocket (full update)
    */
-  orderUpdated: (state: OrderState, action: { payload: Order }): OrderState => {
+  orderUpdated: (state: OrderState, action: {payload: Order;}): OrderState => {
     const updatedOrder = action.payload;
 
-    console.log('📦 Order updated via WebSocket:', updatedOrder._id);
+
 
     return {
       ...state,
-      allOrders: state.allOrders.map(order =>
-        order._id === updatedOrder._id
-          ? { ...order, ...updatedOrder }
-          : order
+      allOrders: state.allOrders.map((order) =>
+      order._id === updatedOrder._id ?
+      { ...order, ...updatedOrder } :
+      order
       ),
       ...(state.selectedOrder?._id === updatedOrder._id && {
         selectedOrder: { ...state.selectedOrder, ...updatedOrder }
@@ -138,14 +138,14 @@ export const handleOrderWebSocketEvent = {
   /**
    * Handle order deleted via WebSocket
    */
-  orderDeleted: (state: OrderState, action: { payload: { _id: string } }): OrderState => {
+  orderDeleted: (state: OrderState, action: {payload: {_id: string;};}): OrderState => {
     const { _id } = action.payload;
 
-    console.log('📦 Order deleted via WebSocket:', _id);
+
 
     return {
       ...state,
-      allOrders: state.allOrders.filter(order => order._id !== _id),
+      allOrders: state.allOrders.filter((order) => order._id !== _id),
       ...(state.selectedOrder?._id === _id && {
         selectedOrder: null
       })
@@ -155,22 +155,22 @@ export const handleOrderWebSocketEvent = {
   /**
    * Handle order assignment changed via WebSocket
    */
-  assignmentChanged: (state: OrderState, action: { payload: { _id: string; machineId?: string; operatorId?: string; updatedAt?: string } }): OrderState => {
+  assignmentChanged: (state: OrderState, action: {payload: {_id: string;machineId?: string;operatorId?: string;updatedAt?: string;};}): OrderState => {
     const { _id, machineId, operatorId, updatedAt } = action.payload;
 
-    console.log('📦 Order assignment changed via WebSocket:', _id);
+
 
     return {
       ...state,
-      allOrders: state.allOrders.map(order =>
-        order._id === _id
-          ? {
-              ...order,
-              ...(machineId !== undefined && { machineId }),
-              ...(operatorId !== undefined && { operatorId }),
-              ...(updatedAt && { updatedAt })
-            }
-          : order
+      allOrders: state.allOrders.map((order) =>
+      order._id === _id ?
+      {
+        ...order,
+        ...(machineId !== undefined && { machineId }),
+        ...(operatorId !== undefined && { operatorId }),
+        ...(updatedAt && { updatedAt })
+      } :
+      order
       ),
       ...(state.selectedOrder?._id === _id && {
         selectedOrder: {

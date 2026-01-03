@@ -1,8 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../../componest/redux/rootReducer';
 import { AppDispatch } from '../../../store';
 import { getOrderTypeReport, exportExcel } from '../../../componest/redux/reports/reportActions';
+import OrdersListModal from '../OrdersListModal';
 
 interface OrderTypeTabProps {
   dateRange: {
@@ -13,8 +14,15 @@ interface OrderTypeTabProps {
 
 const OrderTypeTab: React.FC<OrderTypeTabProps> = ({ dateRange }) => {
   const dispatch = useDispatch<AppDispatch>();
-  const branchId = localStorage.getItem('branchId') || '';
+  const branchId = localStorage.getItem('selectedBranch') ||
+                   localStorage.getItem('branchId') ||
+                   localStorage.getItem('selectedBranchId') ||
+                   '';
   const { orderTypeReport, exporting } = useSelector((state: RootState) => state.reports);
+
+  // Modal state
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedOrderType, setSelectedOrderType] = useState<any>(null);
 
   useEffect(() => {
     if (branchId) {
@@ -50,6 +58,11 @@ const OrderTypeTab: React.FC<OrderTypeTabProps> = ({ dateRange }) => {
   };
 
   const formulas = data ? calculateFormulas(data.byOrderType || []) : null;
+
+  const handleOrderTypeClick = (orderType: any) => {
+    setSelectedOrderType(orderType);
+    setModalOpen(true);
+  };
 
   return (
     <div className="ordertype-tab">
@@ -131,7 +144,12 @@ const OrderTypeTab: React.FC<OrderTypeTabProps> = ({ dateRange }) => {
               </thead>
               <tbody>
                 {data.byOrderType.map((item: any, index: number) => (
-                  <tr key={item.orderTypeId}>
+                  <tr
+                    key={item.orderTypeId}
+                    onClick={() => handleOrderTypeClick(item)}
+                    style={{ cursor: 'pointer' }}
+                    className="clickable-row"
+                  >
                     <td>{index + 1}</td>
                     <td>{item.orderTypeName}</td>
                     <td>{item.count}</td>
@@ -175,6 +193,25 @@ const OrderTypeTab: React.FC<OrderTypeTabProps> = ({ dateRange }) => {
             </table>
           </div>
         </>
+      )}
+
+      {/* Orders List Modal */}
+      {selectedOrderType && (
+        <OrdersListModal
+          isOpen={modalOpen}
+          onClose={() => setModalOpen(false)}
+          title={`Orders for ${selectedOrderType.orderTypeName}`}
+          filters={{
+            branchId,
+            startDate: dateRange.fromDate,
+            endDate: dateRange.toDate,
+          }}
+          customFilter={(order: any) => {
+            // Filter by order type - check orderTypeId field
+            return order.orderTypeId === selectedOrderType.orderTypeId ||
+                   order.orderTypeId?._id === selectedOrderType.orderTypeId;
+          }}
+        />
       )}
     </div>
   );

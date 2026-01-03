@@ -98,7 +98,7 @@ const CreateOptionSpec = () => {
           spec.isCalculated = true;
           context[spec.name] = result;
         } catch (error) {
-          console.error(`Formula evaluation error for ${spec.name}:`, error);
+
           spec.isCalculated = false;
         }
       }
@@ -108,9 +108,9 @@ const CreateOptionSpec = () => {
 
   const addDimension = () => {
     setSpecifications([
-      ...specifications,
-      { name: "", value: "", unit: "", dataType: "string", formula: "", isCalculated: false },
-    ]);
+    ...specifications,
+    { name: "", value: "", unit: "", dataType: "string", formula: "", isCalculated: false }]
+    );
   };
 
   const updateDimension = (index: number, field: keyof Specification, value: any) => {
@@ -137,9 +137,9 @@ const CreateOptionSpec = () => {
   };
 
   const calculateTotal = (dimName: string): number => {
-    return specifications
-      .filter((s) => s.name === dimName && s.dataType === 'number')
-      .reduce((sum, s) => sum + (Number(s.value) || 0), 0);
+    return specifications.
+    filter((s) => s.name === dimName && s.dataType === 'number').
+    reduce((sum, s) => sum + (Number(s.value) || 0), 0);
   };
 
   const handleSubmit = async () => {
@@ -201,21 +201,21 @@ const CreateOptionSpec = () => {
     switch (template) {
       case "plasticBag":
         setSpecifications([
-          { name: "length", value: 30, unit: "cm", dataType: "number", formula: "", isCalculated: false },
-          { name: "width", value: 20, unit: "cm", dataType: "number", formula: "", isCalculated: false },
-          { name: "thickness", value: 0.05, unit: "mm", dataType: "number", formula: "", isCalculated: false },
-          { name: "area", value: "", unit: "cm²", dataType: "number", formula: "length * width", isCalculated: true },
-          { name: "volume", value: "", unit: "cm³", dataType: "number", formula: "area * thickness / 10", isCalculated: true },
-        ]);
+        { name: "length", value: 30, unit: "cm", dataType: "number", formula: "", isCalculated: false },
+        { name: "width", value: 20, unit: "cm", dataType: "number", formula: "", isCalculated: false },
+        { name: "thickness", value: 0.05, unit: "mm", dataType: "number", formula: "", isCalculated: false },
+        { name: "area", value: "", unit: "cm²", dataType: "number", formula: "length * width", isCalculated: true },
+        { name: "volume", value: "", unit: "cm³", dataType: "number", formula: "area * thickness / 10", isCalculated: true }]
+        );
         break;
       case "container":
         setSpecifications([
-          { name: "diameter", value: 10, unit: "cm", dataType: "number", formula: "", isCalculated: false },
-          { name: "height", value: 15, unit: "cm", dataType: "number", formula: "", isCalculated: false },
-          { name: "thickness", value: 2, unit: "mm", dataType: "number", formula: "", isCalculated: false },
-          { name: "radius", value: "", unit: "cm", dataType: "number", formula: "diameter / 2", isCalculated: true },
-          { name: "volume", value: "", unit: "cm³", dataType: "number", formula: "3.14159 * radius * radius * height", isCalculated: true },
-        ]);
+        { name: "diameter", value: 10, unit: "cm", dataType: "number", formula: "", isCalculated: false },
+        { name: "height", value: 15, unit: "cm", dataType: "number", formula: "", isCalculated: false },
+        { name: "thickness", value: 2, unit: "mm", dataType: "number", formula: "", isCalculated: false },
+        { name: "radius", value: "", unit: "cm", dataType: "number", formula: "diameter / 2", isCalculated: true },
+        { name: "volume", value: "", unit: "cm³", dataType: "number", formula: "3.14159 * radius * radius * height", isCalculated: true }]
+        );
         break;
     }
   };
@@ -227,14 +227,14 @@ const CreateOptionSpec = () => {
       <div className="specTemplateButtons">
         <button
           onClick={() => loadTemplate("plasticBag")}
-          className="specTemplateBtn"
-        >
+          className="specTemplateBtn">
+
           📄 Load Bag Template
         </button>
         <button
           onClick={() => loadTemplate("container")}
-          className="specTemplateBtn"
-        >
+          className="specTemplateBtn">
+
           🥫 Load Container Template
         </button>
       </div>
@@ -248,8 +248,8 @@ const CreateOptionSpec = () => {
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="specFormInput"
-              placeholder="e.g., LDPE 500x300x50"
-            />
+              placeholder="e.g., LDPE 500x300x50" />
+
           </div>
 
           <div className="specFormColumn">
@@ -258,8 +258,8 @@ const CreateOptionSpec = () => {
               value={code}
               onChange={(e) => setCode(e.target.value.toUpperCase())}
               className="specFormInput"
-              placeholder="e.g., LDPE-500-300"
-            />
+              placeholder="e.g., LDPE-500-300" />
+
           </div>
         </div>
 
@@ -268,14 +268,14 @@ const CreateOptionSpec = () => {
           <select
             value={optionTypeId}
             onChange={(e) => setOptionTypeId(e.target.value)}
-            className="specFormInput"
-          >
+            className="specFormInput">
+
             <option value="">Select option type</option>
-            {Array.isArray(optionTypes) && optionTypes.map((type: any) => (
-              <option key={type._id} value={type._id}>
+            {Array.isArray(optionTypes) && optionTypes.map((type: any) =>
+            <option key={type._id} value={type._id}>
                 {type.name} ({type.category})
               </option>
-            ))}
+            )}
           </select>
         </div>
 
@@ -286,8 +286,8 @@ const CreateOptionSpec = () => {
             onChange={(e) => setDescription(e.target.value)}
             className="specFormInput"
             rows={2}
-            placeholder="Optional description"
-          />
+            placeholder="Optional description" />
+
         </div>
 
         {/* Reference OptionSpec Dimension Browser */}
@@ -307,28 +307,28 @@ const CreateOptionSpec = () => {
               <select
                 value={selectedReferenceSpecId}
                 onChange={(e) => setSelectedReferenceSpecId(e.target.value)}
-                className="specFormInput"
-              >
+                className="specFormInput">
+
                 <option value="">-- Select Option Spec to see dimension names --</option>
-                {Array.isArray(optionSpecs) && optionSpecs.map((spec: any) => (
-                  <option key={spec._id} value={spec._id}>
+                {Array.isArray(optionSpecs) && optionSpecs.map((spec: any) =>
+                <option key={spec._id} value={spec._id}>
                     {spec.name} - {spec.code}
                   </option>
-                ))}
+                )}
               </select>
             </div>
 
-            {referenceDimensionNames.length > 0 && (
-              <div>
+            {referenceDimensionNames.length > 0 &&
+            <div>
                 <div className="specReferenceLabel" style={{ marginBottom: '0.5rem' }}>
                   Available dimension names from "{Array.isArray(optionSpecs) ? optionSpecs.find((s: any) => s._id === selectedReferenceSpecId)?.name : ''}":
                 </div>
                 <div className="specDimensionTags">
-                  {referenceDimensionNames.map((name, idx) => (
-                    <span key={idx} className="specDimensionTag">
+                  {referenceDimensionNames.map((name, idx) =>
+                <span key={idx} className="specDimensionTag">
                       {name}
                     </span>
-                  ))}
+                )}
                 </div>
                 <div className="specReferenceHint">
                   💡 <strong>How to use:</strong> Copy these dimension names and paste them into your formulas below.
@@ -337,13 +337,13 @@ const CreateOptionSpec = () => {
                   <strong>Note:</strong> These are NAME references only. Actual values come from the selected Option Spec at runtime.
                 </div>
               </div>
-            )}
+            }
 
-            {!selectedReferenceSpecId && (
-              <div className="specReferenceEmpty">
+            {!selectedReferenceSpecId &&
+            <div className="specReferenceEmpty">
                 ℹ️ Select an Option Spec above to see available dimension names that you can use in formulas
               </div>
-            )}
+            }
           </div>
         </div>
 
@@ -352,127 +352,127 @@ const CreateOptionSpec = () => {
             <label className="specInputLabel">Specifications</label>
             <button
               onClick={addDimension}
-              className="specAddDimensionBtn"
-            >
+              className="specAddDimensionBtn">
+
               + Add Dimension
             </button>
           </div>
 
-          {specifications.map((spec, index) => (
-            <div
-              key={index}
-              className="specDimensionRow"
-              style={{
-                backgroundColor: spec.isCalculated ? '#e8f5e9' : 'transparent'
-              }}
-            >
+          {specifications.map((spec, index) =>
+          <div
+            key={index}
+            className="specDimensionRow"
+            style={{
+              backgroundColor: spec.isCalculated ? '#e8f5e9' : 'transparent'
+            }}>
+
               <div className="specDimensionFields">
                 <input
-                  placeholder="Name"
-                  value={spec.name}
-                  onChange={(e) =>
-                    updateDimension(index, "name", e.target.value)
-                  }
-                />
+                placeholder="Name"
+                value={spec.name}
+                onChange={(e) =>
+                updateDimension(index, "name", e.target.value)
+                } />
+
 
                 <input
-                  placeholder={spec.isCalculated ? "Auto-calculated" : "Value"}
-                  value={spec.value.toString()}
-                  onChange={(e) =>
-                    updateDimension(index, "value", e.target.value)
-                  }
-                  disabled={spec.isCalculated}
-                  style={{
-                    backgroundColor: spec.isCalculated ? '#c8e6c9' : 'white'
-                  }}
-                />
+                placeholder={spec.isCalculated ? "Auto-calculated" : "Value"}
+                value={spec.value.toString()}
+                onChange={(e) =>
+                updateDimension(index, "value", e.target.value)
+                }
+                disabled={spec.isCalculated}
+                style={{
+                  backgroundColor: spec.isCalculated ? '#c8e6c9' : 'white'
+                }} />
+
 
                 <input
-                  placeholder="Unit"
-                  value={spec.unit || ""}
-                  onChange={(e) =>
-                    updateDimension(index, "unit", e.target.value)
-                  }
-                />
+                placeholder="Unit"
+                value={spec.unit || ""}
+                onChange={(e) =>
+                updateDimension(index, "unit", e.target.value)
+                } />
+
 
                 <select
-                  value={spec.dataType}
-                  onChange={(e) =>
-                    updateDimension(
-                      index,
-                      "dataType",
-                      e.target.value as Specification["dataType"]
-                    )
-                  }
-                >
+                value={spec.dataType}
+                onChange={(e) =>
+                updateDimension(
+                  index,
+                  "dataType",
+                  e.target.value as Specification["dataType"]
+                )
+                }>
+
                   <option value="string">String</option>
                   <option value="number">Number</option>
                   <option value="boolean">Boolean</option>
                 </select>
 
                 <button
-                  onClick={() => removeDimension(index)}
-                  className="specRemoveDimensionBtn"
-                >
+                onClick={() => removeDimension(index)}
+                className="specRemoveDimensionBtn">
+
                   ✕
                 </button>
               </div>
 
               {/* Formula field - only for number type */}
-              {spec.dataType === 'number' && (
-                <div className="specFormulaRow">
+              {spec.dataType === 'number' &&
+            <div className="specFormulaRow">
                   <span className="specFormulaLabel">Formula:</span>
                   <input
-                    placeholder="e.g., length * width (leave empty for manual value)"
-                    value={spec.formula || ""}
-                    onChange={(e) =>
-                      updateDimension(index, "formula", e.target.value)
-                    }
-                    className="specFormulaInput"
-                  />
-                  {spec.isCalculated && (
-                    <span className="specFormulaBadge">
+                placeholder="e.g., length * width (leave empty for manual value)"
+                value={spec.formula || ""}
+                onChange={(e) =>
+                updateDimension(index, "formula", e.target.value)
+                }
+                className="specFormulaInput" />
+
+                  {spec.isCalculated &&
+              <span className="specFormulaBadge">
                       🧮 Auto
                     </span>
-                  )}
+              }
                 </div>
-              )}
+            }
             </div>
-          ))}
+          )}
 
-          {specifications.length === 0 && (
-            <p className="specEmptyState">
+          {specifications.length === 0 &&
+          <p className="specEmptyState">
               No specifications added. Select an Option Type to load template, or click "+ Add Dimension" to start.
             </p>
-          )}
+          }
 
           {/* Total Row */}
-          {specifications.length > 0 && specifications.some(s => s.dataType === 'number') && (
-            <div className="specTotalRow">
+          {specifications.length > 0 && specifications.some((s) => s.dataType === 'number') &&
+          <div className="specTotalRow">
               <strong>Total:</strong>
-              {specifications
-                .filter((s, idx, arr) => s.dataType === 'number' && arr.findIndex(x => x.name === s.name) === idx)
-                .map((spec, idx) => (
-                  <span key={idx} className="specTotalItem">
+              {specifications.
+            filter((s, idx, arr) => s.dataType === 'number' && arr.findIndex((x) => x.name === s.name) === idx).
+            map((spec, idx) =>
+            <span key={idx} className="specTotalItem">
                     {spec.name}: {calculateTotal(spec.name).toFixed(2)} {spec.unit}
                   </span>
-                ))}
+            )}
             </div>
-          )}
+          }
         </div>
 
         <div className="specFormColumn">
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className="specSaveButton"
-          >
+            className="specSaveButton">
+
             {loading ? "Saving..." : "💾 Save Option Spec"}
           </button>
         </div>
       </div>
-    </div>
-  );
+    </div>);
+
 };
 
 export default CreateOptionSpec;

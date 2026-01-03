@@ -29,13 +29,11 @@ try {
      */
     on: (channel: string, listener: (event: IpcRendererEvent, ...args: any[]) => void) => {
       if (!ALLOWED_RECEIVE_CHANNELS.includes(channel)) {
-        console.warn(`Blocked IPC receive on unauthorized channel: ${channel}`);
         return;
       }
       try {
         ipcRenderer.on(channel, listener);
       } catch (err) {
-        console.error('ipcRenderer.on error:', err);
       }
     },
 
@@ -49,7 +47,6 @@ try {
       try {
         ipcRenderer.off(channel, listener);
       } catch (err) {
-        console.error('ipcRenderer.off error:', err);
       }
     },
 
@@ -58,13 +55,11 @@ try {
      */
     send: (channel: string, ...args: any[]) => {
       if (!ALLOWED_SEND_CHANNELS.includes(channel)) {
-        console.warn(`Blocked IPC send on unauthorized channel: ${channel}`);
         return;
       }
       try {
         ipcRenderer.send(channel, ...args);
       } catch (err) {
-        console.error('ipcRenderer.send error:', err);
       }
     },
 
@@ -73,13 +68,11 @@ try {
      */
     invoke: (channel: string, ...args: any[]) => {
       if (!ALLOWED_INVOKE_CHANNELS.includes(channel)) {
-        console.warn(`Blocked IPC invoke on unauthorized channel: ${channel}`);
         return Promise.reject(new Error(`Unauthorized channel: ${channel}`));
       }
       try {
         return ipcRenderer.invoke(channel, ...args);
       } catch (err) {
-        console.error('ipcRenderer.invoke error:', err);
         return Promise.reject(err);
       }
     },
@@ -89,21 +82,17 @@ try {
      */
     once: (channel: string, listener: (event: IpcRendererEvent, ...args: any[]) => void) => {
       if (!ALLOWED_RECEIVE_CHANNELS.includes(channel)) {
-        console.warn(`Blocked IPC once on unauthorized channel: ${channel}`);
         return;
       }
       try {
         ipcRenderer.once(channel, listener);
       } catch (err) {
-        console.error('ipcRenderer.once error:', err);
       }
     }
   });
 } catch (e) {
-  console.error("contextBridge expose error:", e);
 }
 
 // ✅ Uncaught exception handler added outside
 process.on('uncaughtException', (error) => {
-  console.error('Uncaught Exception in preload:', error);
 });

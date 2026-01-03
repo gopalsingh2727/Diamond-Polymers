@@ -11,8 +11,8 @@ import {
   Package,
   Boxes,
   ArrowRight,
-  Command as CommandIcon
-} from 'lucide-react';
+  Command as CommandIcon } from
+'lucide-react';
 import { useGroupedSearchResults } from './useUniversalSearch';
 import { SEARCH_CONFIG, SEARCH_SHORTCUT } from './searchConfig';
 import { debounce } from '../../componest/Utils/searchUtils';
@@ -43,14 +43,14 @@ export const UniversalSearchModal: React.FC = () => {
 
   // Log component mount
   useEffect(() => {
-    console.log('🔍 Universal Search: Component mounted');
-    return () => console.log('🔍 Universal Search: Component unmounted');
+
+    return () => {};
   }, []);
 
   // Log search results changes
   useEffect(() => {
-    console.log('🔍 Universal Search: Results updated:', results.length, 'items');
-    console.log('🔍 Universal Search: Grouped results:', grouped);
+
+
   }, [results, grouped]);
 
   // Debounce search input for performance
@@ -63,18 +63,18 @@ export const UniversalSearchModal: React.FC = () => {
 
   // Handle search input change
   const handleSearchChange = (value: string) => {
-    console.log('🔍 Universal Search: Input changed:', value);
+
     setSearchTerm(value);
     debouncedSetSearch(value);
   };
 
   // Handle result selection
   const handleSelect = (result: any) => {
-    console.log('🔍 Universal Search: Opening result:', result.type, result.title);
+
 
     // For orders, navigate to the order form with the order data
     if (result.type === 'order') {
-      console.log('🔍 Universal Search: Navigating to order form with order data:', result.data);
+
       navigate('/menu/orderform', {
         state: {
           isEdit: true,
@@ -88,7 +88,7 @@ export const UniversalSearchModal: React.FC = () => {
       });
     } else {
       // For other entities, just navigate to the route
-      console.log('🔍 Universal Search: Navigating to route:', result.route);
+
       navigate(result.route);
     }
 
@@ -110,25 +110,25 @@ export const UniversalSearchModal: React.FC = () => {
       // Cmd+K (Mac) or Ctrl+K (Windows/Linux)
       if ((e.metaKey || e.ctrlKey) && e.key === SEARCH_SHORTCUT.key) {
         e.preventDefault();
-        console.log('🔍 Universal Search: Toggling modal via keyboard shortcut');
-        setIsOpen(prev => {
-          console.log('🔍 Universal Search: Modal state changing from', prev, 'to', !prev);
+
+        setIsOpen((prev) => {
+
           return !prev;
         });
       }
 
       // Escape to close
       if (e.key === 'Escape' && isOpen) {
-        console.log('🔍 Universal Search: Closing modal via ESC key');
+
         handleClose();
       }
     };
 
     document.addEventListener('keydown', handleKeyDown);
-    console.log('🔍 Universal Search: Keyboard listener attached');
+
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
-      console.log('🔍 Universal Search: Keyboard listener removed');
+
     };
   }, [isOpen]);
 
@@ -159,8 +159,8 @@ export const UniversalSearchModal: React.FC = () => {
               onValueChange={handleSearchChange}
               placeholder="Search orders, machines, operators, and more..."
               className="universal-search-input"
-              autoFocus
-            />
+              autoFocus />
+
             <div className="universal-search-shortcut-hint">
               <kbd className="universal-search-kbd">ESC</kbd>
             </div>
@@ -169,8 +169,8 @@ export const UniversalSearchModal: React.FC = () => {
           {/* Results List */}
           <Command.List className="universal-search-list">
             {/* Empty State */}
-            {searchTerm.trim().length === 0 && (
-              <div className="universal-search-empty">
+            {searchTerm.trim().length === 0 &&
+            <div className="universal-search-empty">
                 <CommandIcon size={48} className="universal-search-empty-icon" />
                 <p className="universal-search-empty-title">Universal Search</p>
                 <p className="universal-search-empty-subtitle">
@@ -180,33 +180,33 @@ export const UniversalSearchModal: React.FC = () => {
                   <kbd>{SEARCH_SHORTCUT.mac}</kbd> to toggle
                 </div>
               </div>
-            )}
+            }
 
             {/* No Results State */}
-            {searchTerm.trim().length > 0 && results.length === 0 && (
-              <Command.Empty className="universal-search-empty">
+            {searchTerm.trim().length > 0 && results.length === 0 &&
+            <Command.Empty className="universal-search-empty">
                 <Search size={48} className="universal-search-empty-icon" />
                 <p className="universal-search-empty-title">No results found</p>
                 <p className="universal-search-empty-subtitle">
                   Try searching with different keywords
                 </p>
               </Command.Empty>
-            )}
+            }
 
             {/* Results Grouped by Type */}
             {Object.entries(grouped).map(([type, items]) => {
-              const config = SEARCH_CONFIG.find(c => c.type === type);
+              const config = SEARCH_CONFIG.find((c) => c.type === type);
               if (!config || items.length === 0) return null;
 
               return (
                 <Command.Group key={type} heading={config.label} className="universal-search-group">
-                  {items.map((result) => (
-                    <Command.Item
-                      key={result.id}
-                      value={`${result.type}-${result.id}-${result.title}`}
-                      onSelect={() => handleSelect(result)}
-                      className="universal-search-item"
-                    >
+                  {items.map((result) =>
+                  <Command.Item
+                    key={result.id}
+                    value={`${result.type}-${result.id}-${result.title}`}
+                    onSelect={() => handleSelect(result)}
+                    className="universal-search-item">
+
                       <div className="universal-search-item-icon">
                         {ICON_MAP[result.type]}
                       </div>
@@ -214,30 +214,30 @@ export const UniversalSearchModal: React.FC = () => {
                         <div className="universal-search-item-title">
                           {result.title}
                         </div>
-                        {result.subtitle && (
-                          <div className="universal-search-item-subtitle">
+                        {result.subtitle &&
+                      <div className="universal-search-item-subtitle">
                             {result.subtitle}
                           </div>
-                        )}
-                        {result.description && (
-                          <div className="universal-search-item-description">
+                      }
+                        {result.description &&
+                      <div className="universal-search-item-description">
                             {result.description}
                           </div>
-                        )}
+                      }
                       </div>
                       <div className="universal-search-item-arrow">
                         <ArrowRight size={16} />
                       </div>
                     </Command.Item>
-                  ))}
-                </Command.Group>
-              );
+                  )}
+                </Command.Group>);
+
             })}
           </Command.List>
 
           {/* Footer */}
-          {results.length > 0 && (
-            <div className="universal-search-footer">
+          {results.length > 0 &&
+          <div className="universal-search-footer">
               <div className="universal-search-footer-hint">
                 <kbd className="universal-search-kbd">↑↓</kbd> to navigate
                 <kbd className="universal-search-kbd">↵</kbd> to select
@@ -247,20 +247,20 @@ export const UniversalSearchModal: React.FC = () => {
                 {results.length} result{results.length !== 1 ? 's' : ''}
               </div>
             </div>
-          )}
+          }
         </Command>
       </div>
-    </div>
-  );
+    </div>);
+
 };
 
 /**
  * Universal Search Trigger Button
  * Can be placed in navbar or toolbar to open search modal
  */
-export const UniversalSearchTrigger: React.FC<{ className?: string }> = ({ className = '' }) => {
+export const UniversalSearchTrigger: React.FC<{className?: string;}> = ({ className = '' }) => {
   const handleClick = () => {
-    console.log('🔍 Universal Search: Trigger button clicked');
+
     // Dispatch a keyboard event to trigger the modal
     const event = new KeyboardEvent('keydown', {
       key: 'k',
@@ -297,8 +297,8 @@ export const UniversalSearchTrigger: React.FC<{ className?: string }> = ({ class
       onMouseLeave={(e) => {
         e.currentTarget.style.transform = 'translateY(0)';
         e.currentTarget.style.boxShadow = '0 2px 8px rgba(255, 107, 53, 0.25)';
-      }}
-    >
+      }}>
+
       <Search size={16} />
       <span>Search</span>
       <kbd style={{
@@ -310,8 +310,8 @@ export const UniversalSearchTrigger: React.FC<{ className?: string }> = ({ class
       }}>
         Ctrl+K
       </kbd>
-    </button>
-  );
+    </button>);
+
 };
 
 export default UniversalSearchModal;

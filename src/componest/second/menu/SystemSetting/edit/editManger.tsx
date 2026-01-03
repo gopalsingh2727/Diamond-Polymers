@@ -3,8 +3,8 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   getAllManagers,
   updateManager,
-  deleteManager,
-} from "../../../../redux/Manger/MangerActions";
+  deleteManager } from
+"../../../../redux/Manger/MangerActions";
 import { listBranches } from "../../../../redux/createBranchAndManager/branchActions";
 import { RootState } from "../../../../redux/rootReducer";
 import "./editStyles.css";
@@ -43,7 +43,7 @@ const AllSeeMangerAndEdit: React.FC = () => {
     username: "",
     password: "",
     branchId: "",
-    isActive: true,
+    isActive: true
   });
   const [searchTerm, setSearchTerm] = useState("");
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
@@ -54,9 +54,9 @@ const AllSeeMangerAndEdit: React.FC = () => {
   }, [dispatch]);
 
   const filteredManagers = managers.filter((manager: Manager) =>
-    manager.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    manager.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    manager.branchId?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+  manager.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  manager.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  manager.branchId?.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const openEditor = (manager: Manager) => {
@@ -65,7 +65,7 @@ const AllSeeMangerAndEdit: React.FC = () => {
       username: manager.username || "",
       password: "",
       branchId: manager.branchId?._id || "",
-      isActive: manager.isActive !== false,
+      isActive: manager.isActive !== false
     });
   };
 
@@ -83,7 +83,7 @@ const AllSeeMangerAndEdit: React.FC = () => {
 
     try {
       const updateData: any = {
-        username: editForm.username.trim(),
+        username: editForm.username.trim()
       };
 
       if (editForm.password.trim()) {
@@ -98,7 +98,7 @@ const AllSeeMangerAndEdit: React.FC = () => {
       dispatch(getAllManagers() as any);
       setSelectedManager(null);
     } catch (err) {
-      console.error("Update failed:", err);
+
     }
   };
 
@@ -108,7 +108,7 @@ const AllSeeMangerAndEdit: React.FC = () => {
       dispatch(getAllManagers() as any);
       setDeleteConfirm(null);
     } catch (err) {
-      console.error("Delete failed:", err);
+
     }
   };
 
@@ -116,12 +116,12 @@ const AllSeeMangerAndEdit: React.FC = () => {
     try {
       await dispatch(
         updateManager(manager._id, {
-          username: manager.username,
+          username: manager.username
         }) as any
       );
       dispatch(getAllManagers() as any);
     } catch (err) {
-      console.error("Toggle active failed:", err);
+
     }
   };
 
@@ -135,22 +135,22 @@ const AllSeeMangerAndEdit: React.FC = () => {
 
   return (
     <div className="edit-container">
-      <div className="edit-header">
-        <h2>Manager Management</h2>
-        <p className="edit-subtitle">View, edit, and manage all managers</p>
-      </div>
+      {/* <div className="edit-header">
+         <h2>Manager Management</h2>
+         <p className="edit-subtitle">View, edit, and manage all managers</p>
+        </div> */}
 
-      {!selectedManager ? (
-        <>
+      {!selectedManager ?
+      <>
           <div className="edit-toolbar">
             <div className="search-box">
               <input
-                type="text"
-                placeholder="Search managers..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="search-input"
-              />
+              type="text"
+              placeholder="Search managers..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="search-input" />
+
             </div>
             <div className="toolbar-stats">
               Total: {filteredManagers.length} managers
@@ -170,15 +170,15 @@ const AllSeeMangerAndEdit: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredManagers.length === 0 ? (
-                  <tr>
+                {filteredManagers.length === 0 ?
+              <tr>
                     <td colSpan={6} className="no-data">
                       No managers found
                     </td>
-                  </tr>
-                ) : (
-                  filteredManagers.map((manager: Manager) => (
-                    <tr key={manager._id}>
+                  </tr> :
+
+              filteredManagers.map((manager: Manager) =>
+              <tr key={manager._id}>
                       <td className="cell-name">{manager.username}</td>
                       <td>{manager.email || "-"}</td>
                       <td>{manager.branchId?.name || "-"}</td>
@@ -187,60 +187,60 @@ const AllSeeMangerAndEdit: React.FC = () => {
                       </td>
                       <td>
                         <span
-                          className={`status-badge ${
-                            manager.isActive !== false ? "active" : "inactive"
-                          }`}
-                          onClick={() => handleToggleActive(manager)}
-                        >
+                    className={`status-badge ${
+                    manager.isActive !== false ? "active" : "inactive"}`
+                    }
+                    onClick={() => handleToggleActive(manager)}>
+
                           {manager.isActive !== false ? "Active" : "Inactive"}
                         </span>
                       </td>
                       <td className="cell-actions">
                         <button
-                          className="btn-edit"
-                          onClick={() => openEditor(manager)}
-                        >
+                    className="btn-edit"
+                    onClick={() => openEditor(manager)}>
+
                           Edit
                         </button>
-                        {deleteConfirm === manager._id ? (
-                          <div className="delete-confirm">
+                        {deleteConfirm === manager._id ?
+                  <div className="delete-confirm">
                             <button
-                              className="btn-confirm-delete"
-                              onClick={() => handleDelete(manager._id)}
-                            >
+                      className="btn-confirm-delete"
+                      onClick={() => handleDelete(manager._id)}>
+
                               Confirm
                             </button>
                             <button
-                              className="btn-cancel-delete"
-                              onClick={() => setDeleteConfirm(null)}
-                            >
+                      className="btn-cancel-delete"
+                      onClick={() => setDeleteConfirm(null)}>
+
                               Cancel
                             </button>
-                          </div>
-                        ) : (
-                          <button
-                            className="btn-delete"
-                            onClick={() => setDeleteConfirm(manager._id)}
-                          >
+                          </div> :
+
+                  <button
+                    className="btn-delete"
+                    onClick={() => setDeleteConfirm(manager._id)}>
+
                             Delete
                           </button>
-                        )}
+                  }
                       </td>
                     </tr>
-                  ))
-                )}
+              )
+              }
               </tbody>
             </table>
           </div>
-        </>
-      ) : (
-        <div className="edit-form-container">
+        </> :
+
+      <div className="edit-form-container">
           <div className="edit-form-header">
             <h3>Edit Manager</h3>
             <button
-              className="btn-close"
-              onClick={() => setSelectedManager(null)}
-            >
+            className="btn-close"
+            onClick={() => setSelectedManager(null)}>
+
               X
             </button>
           </div>
@@ -249,46 +249,46 @@ const AllSeeMangerAndEdit: React.FC = () => {
             <div className="form-group">
               <label>Username *</label>
               <input
-                type="text"
-                value={editForm.username}
-                onChange={(e) => handleEditChange("username", e.target.value)}
-                placeholder="Enter username"
-              />
+              type="text"
+              value={editForm.username}
+              onChange={(e) => handleEditChange("username", e.target.value)}
+              placeholder="Enter username" />
+
             </div>
 
             <div className="form-group">
               <label>New Password</label>
               <input
-                type="password"
-                value={editForm.password}
-                onChange={(e) => handleEditChange("password", e.target.value)}
-                placeholder="Leave empty to keep current"
-              />
+              type="password"
+              value={editForm.password}
+              onChange={(e) => handleEditChange("password", e.target.value)}
+              placeholder="Leave empty to keep current" />
+
               <small className="form-hint">Only fill if you want to change the password</small>
             </div>
 
             <div className="form-group">
               <label>Branch</label>
               <select
-                value={editForm.branchId}
-                onChange={(e) => handleEditChange("branchId", e.target.value)}
-              >
+              value={editForm.branchId}
+              onChange={(e) => handleEditChange("branchId", e.target.value)}>
+
                 <option value="">Select Branch</option>
-                {branches.map((branch: Branch) => (
-                  <option key={branch._id} value={branch._id}>
+                {branches.map((branch: Branch) =>
+              <option key={branch._id} value={branch._id}>
                     {branch.name}
                   </option>
-                ))}
+              )}
               </select>
             </div>
 
             <div className="form-group checkbox-group">
               <label className="checkbox-label">
                 <input
-                  type="checkbox"
-                  checked={editForm.isActive}
-                  onChange={(e) => handleEditChange("isActive", e.target.checked)}
-                />
+                type="checkbox"
+                checked={editForm.isActive}
+                onChange={(e) => handleEditChange("isActive", e.target.checked)} />
+
                 <span>Active</span>
               </label>
             </div>
@@ -298,17 +298,17 @@ const AllSeeMangerAndEdit: React.FC = () => {
                 Save Changes
               </button>
               <button
-                className="btn-cancel"
-                onClick={() => setSelectedManager(null)}
-              >
+              className="btn-cancel"
+              onClick={() => setSelectedManager(null)}>
+
                 Cancel
               </button>
             </div>
           </div>
         </div>
-      )}
-    </div>
-  );
+      }
+    </div>);
+
 };
 
 export default AllSeeMangerAndEdit;

@@ -4,18 +4,22 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getOptionTypes, updateOptionType } from '../../../../redux/option/optionTypeActions';
 import { RootState } from '../../../../redux/rootReducer';
 import { AppDispatch } from '../../../../../store';
+import { useCRUD } from '../../../../../hooks/useCRUD';
+import { ToastContainer } from '../../../../../components/shared/Toast';
 import '../../create/optionType/createOptionType.css';
 
 const EditOptionType: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams<{id: string;}>();
+  const { handleUpdate, updateState, toast } = useCRUD();
 
-  const { optionTypes } = useSelector((state: RootState) => state.optionType);
+  const optionTypeState = useSelector((state: RootState) => state.v2.optionType);
+  const rawOptionTypes = optionTypeState?.list;
+  const optionTypes = Array.isArray(rawOptionTypes) ? rawOptionTypes : [];
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [loading, setLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   // Load option types on mount
@@ -25,7 +29,7 @@ const EditOptionType: React.FC = () => {
       try {
         await dispatch(getOptionTypes({}));
       } catch (error) {
-        console.error('Error loading data:', error);
+
       } finally {
         setIsLoading(false);
       }
@@ -49,36 +53,36 @@ const EditOptionType: React.FC = () => {
     e.preventDefault();
 
     if (!name) {
-      alert('Option Type Name is required');
+      toast.error('Validation Error', 'Option Type Name is required');
       return;
     }
 
     if (!id) {
-      alert('Option Type ID is missing');
+      toast.error('Error', 'Option Type ID is missing');
       return;
     }
 
-    setLoading(true);
-
-    const branchId = localStorage.getItem('branchId') || '';
+    const branchId = localStorage.getItem('selectedBranch') || '';
 
     const optionTypeData = {
       name,
       description,
       branchId,
-      isActive: true,
+      isActive: true
     };
 
-    try {
-      await dispatch(updateOptionType(id, optionTypeData));
-      alert('Option Type updated successfully!');
-      navigate('/menu/edit/optionType');
-    } catch (error) {
-      console.error('Error updating Option Type:', error);
-      alert('Failed to update Option Type');
-    } finally {
-      setLoading(false);
-    }
+    handleUpdate(
+      () => dispatch(updateOptionType(id, optionTypeData)),
+      {
+        successMessage: 'Option Type updated successfully!',
+        errorMessage: 'Failed to update Option Type',
+        onSuccess: () => {
+          setTimeout(() => {
+            navigate('/menu/edit/optionType');
+          }, 1500);
+        }
+      }
+    );
   };
 
   const handleCancel = () => {
@@ -89,8 +93,8 @@ const EditOptionType: React.FC = () => {
     return (
       <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
         Loading option type data...
-      </div>
-    );
+      </div>);
+
   }
 
   return (
@@ -108,9 +112,9 @@ const EditOptionType: React.FC = () => {
             cursor: 'pointer',
             fontSize: '14px',
             fontWeight: 500
-          }}
-        >
-          ← Back to List
+          }}>
+
+          &larr; Back to List
         </button>
       </div>
 
@@ -124,8 +128,8 @@ const EditOptionType: React.FC = () => {
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., Plastic Bag, Printing Type, Material Type"
               required
-              className="inputBox"
-            />
+              className="inputBox" />
+
           </div>
 
           <div className="formGroup">
@@ -135,29 +139,29 @@ const EditOptionType: React.FC = () => {
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Optional description for this option type"
               rows={4}
-              className="inputBox"
-            />
+              className="inputBox" />
+
           </div>
         </div>
 
         <div className="formActions">
           <button
             type="submit"
-            disabled={loading}
+            disabled={updateState === 'loading'}
             style={{
               width: '100%',
               padding: '14px',
-              background: loading ? '#94a3b8' : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+              background: updateState === 'loading' ? '#94a3b8' : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
               color: 'white',
               border: 'none',
               borderRadius: '8px',
-              cursor: loading ? 'not-allowed' : 'pointer',
+              cursor: updateState === 'loading' ? 'not-allowed' : 'pointer',
               fontSize: '16px',
               fontWeight: 600,
               marginBottom: '10px'
-            }}
-          >
-            {loading ? 'Updating...' : 'Update Option Type'}
+            }}>
+
+            {updateState === 'loading' ? 'Updating...' : updateState === 'success' ? 'Updated!' : 'Update Option Type'}
           </button>
           <button
             type="button"
@@ -172,14 +176,15 @@ const EditOptionType: React.FC = () => {
               cursor: 'pointer',
               fontSize: '16px',
               fontWeight: 600
-            }}
-          >
+            }}>
+
             Cancel
           </button>
         </div>
       </form>
-    </div>
-  );
+      <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
+    </div>);
+
 };
 
 export default EditOptionType;

@@ -3,7 +3,14 @@
  * Works without internet - perfect for firewall/VPN/corporate environments
  */
 
-import { createModel, KaldiRecognizer } from 'vosk-browser';
+// Lazy import to avoid breaking app if vosk-browser has issues
+let voskModule: any = null;
+const getVosk = async () => {
+  if (!voskModule) {
+    voskModule = await import('vosk-browser');
+  }
+  return voskModule.default || voskModule;
+};
 
 // Vosk model URLs - try local bundled file first (works offline)
 // Then fall back to your server (whitelisted in corporate networks)
@@ -19,23 +26,19 @@ const getBaseUrl = (): string => {
   return '';
 };
 
-// English model sources
+// English model sources - CDN first for faster app startup (models not bundled)
 const getEnglishModelUrls = (): string[] => {
-  const baseUrl = getBaseUrl();
   return [
-    `${baseUrl}/vosk-model-small-en-us-0.15.zip`, // Local bundled (works offline)
-    'https://27infinity.in/assets/vosk-model-small-en-us-0.15.zip', // Your server (whitelisted)
-    'https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip' // Official backup
+  'https://27infinity.in/assets/vosk-model-small-en-us-0.15.zip', // Your server (whitelisted)
+  'https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip' // Official backup
   ];
 };
 
-// Hindi model sources
+// Hindi model sources - CDN first for faster app startup (models not bundled)
 const getHindiModelUrls = (): string[] => {
-  const baseUrl = getBaseUrl();
   return [
-    `${baseUrl}/vosk-model-small-hi-0.22.zip`, // Local bundled (works offline)
-    'https://27infinity.in/assets/vosk-model-small-hi-0.22.zip', // Your server (whitelisted)
-    'https://alphacephei.com/vosk/models/vosk-model-small-hi-0.22.zip' // Official backup
+  'https://27infinity.in/assets/vosk-model-small-hi-0.22.zip', // Your server (whitelisted)
+  'https://alphacephei.com/vosk/models/vosk-model-small-hi-0.22.zip' // Official backup
   ];
 };
 
@@ -43,7 +46,7 @@ const getHindiModelUrls = (): string[] => {
 let currentLanguage: 'en' | 'hi' = 'en';
 
 let model: any = null;
-let recognizer: KaldiRecognizer | null = null;
+let recognizer: any = null;
 let mediaRecorder: MediaRecorder | null = null;
 let audioContext: AudioContext | null = null;
 let isInitialized = false;
@@ -65,7 +68,7 @@ export const setLanguage = (language: 'en' | 'hi'): void => {
     isInitialized = false;
     model = null;
     recognizer = null;
-    console.log(`Language set to: ${language === 'hi' ? 'Hindi' : 'English'}`);
+
   }
 };
 
@@ -85,25 +88,26 @@ export const initializeOfflineSpeech = async (language?: 'en' | 'hi'): Promise<b
   }
 
   if (isInitialized && model) {
-    console.log('Vosk already initialized');
+
     return true;
   }
 
   const langName = currentLanguage === 'hi' ? 'Hindi' : 'English';
-  console.log(`Initializing Vosk offline speech recognition (${langName})...`);
+
 
   // Get URLs for current language (local bundled first, then remote sources)
   const urlsToTry = currentLanguage === 'hi' ? getHindiModelUrls() : getEnglishModelUrls();
   let lastError: any = null;
 
-  console.log('Will try these URLs in order:', urlsToTry);
+
 
   for (const url of urlsToTry) {
     try {
-      console.log(`Trying to load model from: ${url}`);
+
 
       // Create model from URL (cached in IndexedDB)
-      model = await createModel(url);
+      const vosk = await getVosk();
+      model = await vosk.createModel(url);
 
       // Create recognizer with sample rate
       recognizer = new model.KaldiRecognizer(16000);
@@ -112,7 +116,7 @@ export const initializeOfflineSpeech = async (language?: 'en' | 'hi'): Promise<b
       recognizer.on('result', (message: any) => {
         const result = message.result;
         if (result && result.text && result.text.trim()) {
-          console.log('Vosk result:', result.text);
+
           if (onResultCallback) {
             onResultCallback(result.text);
           }
@@ -120,21 +124,21 @@ export const initializeOfflineSpeech = async (language?: 'en' | 'hi'): Promise<b
       });
 
       recognizer.on('partialresult', (message: any) => {
-        console.log('Vosk partial:', message.result?.partial);
+
       });
 
       isInitialized = true;
-      console.log(`Vosk initialized successfully from: ${url}`);
+
       return true;
     } catch (error: any) {
-      console.warn(`Failed to load from ${url}:`, error.message);
+
       lastError = error;
       // Continue to next URL
     }
   }
 
   // All sources failed
-  console.error('Failed to initialize Vosk from all sources:', lastError);
+
 
   // Provide helpful error message
   let errorMessage = 'Failed to load speech model.\n\n';
@@ -142,9 +146,9 @@ export const initializeOfflineSpeech = async (language?: 'en' | 'hi'): Promise<b
   if (lastError?.message?.includes('fetch') || lastError?.message?.includes('network')) {
     errorMessage += 'Network error - please check your connection.\n\n';
     errorMessage += 'The model should be in the public folder:\n';
-    errorMessage += currentLanguage === 'hi'
-      ? '• vosk-model-small-hi-0.22.zip'
-      : '• vosk-model-small-en-us-0.15.zip';
+    errorMessage += currentLanguage === 'hi' ?
+    '• vosk-model-small-hi-0.22.zip' :
+    '• vosk-model-small-en-us-0.15.zip';
   } else if (lastError?.message?.includes('404') || lastError?.message?.includes('Not Found')) {
     errorMessage += 'Model file not found.\n\n';
     errorMessage += 'Please ensure the voice model is in the public folder.';
@@ -169,7 +173,7 @@ export const startRecording = async (): Promise<boolean> => {
   }
 
   if (isRecording) {
-    console.log('Already recording');
+
     return true;
   }
 
@@ -207,7 +211,7 @@ export const startRecording = async (): Promise<boolean> => {
     processor.connect(audioContext.destination);
 
     isRecording = true;
-    console.log('Vosk recording started');
+
 
     if (onStartCallback) {
       onStartCallback();
@@ -215,7 +219,7 @@ export const startRecording = async (): Promise<boolean> => {
 
     return true;
   } catch (error: any) {
-    console.error('Failed to start Vosk recording:', error);
+
     if (onErrorCallback) {
       onErrorCallback('Failed to access microphone: ' + error.message);
     }
@@ -242,7 +246,7 @@ export const stopRecording = (): void => {
     recognizer.retrieveFinalResult();
   }
 
-  console.log('Vosk recording stopped');
+
 
   if (onEndCallback) {
     onEndCallback();
@@ -269,7 +273,7 @@ export const setCallbacks = (callbacks: {
  */
 export const isVoskAvailable = (): boolean => {
   return typeof AudioContext !== 'undefined' &&
-         typeof navigator.mediaDevices !== 'undefined';
+  typeof navigator.mediaDevices !== 'undefined';
 };
 
 /**

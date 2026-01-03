@@ -8,19 +8,19 @@
  * @param searchFields - Array of field paths to search in (supports nested fields with dot notation)
  * @returns Filtered array
  */
-export const searchData = <T extends Record<string, any>>(
-  data: T[],
-  searchTerm: string,
-  searchFields: string[]
-): T[] => {
+export const searchData = <T extends Record<string, any>,>(
+data: T[],
+searchTerm: string,
+searchFields: string[])
+: T[] => {
   if (!searchTerm || !searchTerm.trim()) {
     return data;
   }
 
   const normalizedSearch = searchTerm.toLowerCase().trim();
-  console.log('🔎 searchData: Searching for:', normalizedSearch);
-  console.log('🔎 searchData: In fields:', searchFields);
-  console.log('🔎 searchData: Data count:', data.length);
+
+
+
 
   const results = data.filter((item, index) => {
     const matches = searchFields.some((field) => {
@@ -34,7 +34,7 @@ export const searchData = <T extends Record<string, any>>(
       const match = stringValue.includes(normalizedSearch);
 
       if (index === 0) {
-        console.log(`🔎 searchData: Field "${field}" value:`, value, 'Match:', match);
+
       }
 
       return match;
@@ -43,7 +43,7 @@ export const searchData = <T extends Record<string, any>>(
     return matches;
   });
 
-  console.log('🔎 searchData: Found', results.length, 'matches');
+
   return results;
 };
 
@@ -78,10 +78,10 @@ export const highlightSearchTerm = (text: string, searchTerm: string): string =>
  * @param delay - Delay in milliseconds
  * @returns Debounced function
  */
-export const debounce = <T extends (...args: any[]) => any>(
-  func: T,
-  delay: number
-): ((...args: Parameters<T>) => void) => {
+export const debounce = <T extends (...args: any[]) => any,>(
+func: T,
+delay: number)
+: ((...args: Parameters<T>) => void) => {
   let timeoutId: NodeJS.Timeout;
 
   return (...args: Parameters<T>) => {

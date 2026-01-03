@@ -19,7 +19,7 @@ interface ColumnConfig {
     expression: string;
     dependencies: string[];
   };
-  dropdownOptions?: { label: string; value: string }[];
+  dropdownOptions?: {label: string;value: string;}[];
   sourceType: 'manual' | 'order' | 'customer' | 'optionSpec' | 'calculated';
 }
 
@@ -83,9 +83,9 @@ interface RowData {
 interface OperatorEntryViewProps {
   template?: TemplateConfig;
   orderInfo?: OrderInfo;
-  operators?: { id: string; name: string }[];
-  helpers?: { id: string; name: string }[];
-  machines?: { id: string; name: string }[];
+  operators?: {id: string;name: string;}[];
+  helpers?: {id: string;name: string;}[];
+  machines?: {id: string;name: string;}[];
   onSave?: (data: RowData[], metadata: any) => void;
   existingData?: RowData[];
 }
@@ -93,40 +93,40 @@ interface OperatorEntryViewProps {
 // Default template for demo - showing ALL data types
 const defaultTemplate: TemplateConfig = {
   columns: [
-    // NUMBER - Auto serial number
-    { id: '1', name: 'slNo', label: 'Sl.No', dataType: 'number', isRequired: false, isReadOnly: true, isVisible: true, order: 0, width: 60, sourceType: 'calculated' },
+  // NUMBER - Auto serial number
+  { id: '1', name: 'slNo', label: 'Sl.No', dataType: 'number', isRequired: false, isReadOnly: true, isVisible: true, order: 0, width: 60, sourceType: 'calculated' },
 
-    // NUMBER - Manual entry with unit
-    { id: '2', name: 'grossWt', label: 'Gross Wt', dataType: 'number', isRequired: true, isReadOnly: false, isVisible: true, order: 1, width: 100, unit: 'kg', sourceType: 'manual' },
+  // NUMBER - Manual entry with unit
+  { id: '2', name: 'grossWt', label: 'Gross Wt', dataType: 'number', isRequired: true, isReadOnly: false, isVisible: true, order: 1, width: 100, unit: 'kg', sourceType: 'manual' },
 
-    // NUMBER - Manual entry with unit
-    { id: '3', name: 'coreWt', label: 'Core Wt', dataType: 'number', isRequired: true, isReadOnly: false, isVisible: true, order: 2, width: 100, unit: 'kg', sourceType: 'manual' },
+  // NUMBER - Manual entry with unit
+  { id: '3', name: 'coreWt', label: 'Core Wt', dataType: 'number', isRequired: true, isReadOnly: false, isVisible: true, order: 2, width: 100, unit: 'kg', sourceType: 'manual' },
 
-    // FORMULA - Auto calculated (Gross - Core)
-    { id: '4', name: 'netWt', label: 'Net Wt', dataType: 'formula', isRequired: false, isReadOnly: true, isVisible: true, order: 3, width: 100, unit: 'kg', sourceType: 'calculated', formula: { type: 'CUSTOM', expression: 'grossWt - coreWt', dependencies: ['grossWt', 'coreWt'] } },
+  // FORMULA - Auto calculated (Gross - Core)
+  { id: '4', name: 'netWt', label: 'Net Wt', dataType: 'formula', isRequired: false, isReadOnly: true, isVisible: true, order: 3, width: 100, unit: 'kg', sourceType: 'calculated', formula: { type: 'CUSTOM', expression: 'grossWt - coreWt', dependencies: ['grossWt', 'coreWt'] } },
 
-    // FORMULA - Auto calculated difference
-    { id: '5', name: 'diffQty', label: 'Diff Qty', dataType: 'formula', isRequired: false, isReadOnly: true, isVisible: true, order: 4, width: 100, sourceType: 'calculated', formula: { type: 'CUSTOM', expression: 'targetQty - netWt', dependencies: ['netWt'] } },
+  // FORMULA - Auto calculated difference
+  { id: '5', name: 'diffQty', label: 'Diff Qty', dataType: 'formula', isRequired: false, isReadOnly: true, isVisible: true, order: 4, width: 100, sourceType: 'calculated', formula: { type: 'CUSTOM', expression: 'targetQty - netWt', dependencies: ['netWt'] } },
 
-    // DROPDOWN - Selection list
-    { id: '6', name: 'quality', label: 'Quality', dataType: 'dropdown', isRequired: true, isReadOnly: false, isVisible: true, order: 5, width: 100, sourceType: 'manual', dropdownOptions: [
-      { label: 'A Grade', value: 'a_grade' },
-      { label: 'B Grade', value: 'b_grade' },
-      { label: 'Rejected', value: 'rejected' }
-    ]},
+  // DROPDOWN - Selection list
+  { id: '6', name: 'quality', label: 'Quality', dataType: 'dropdown', isRequired: true, isReadOnly: false, isVisible: true, order: 5, width: 100, sourceType: 'manual', dropdownOptions: [
+    { label: 'A Grade', value: 'a_grade' },
+    { label: 'B Grade', value: 'b_grade' },
+    { label: 'Rejected', value: 'rejected' }]
+  },
 
-    // BOOLEAN - Yes/No checkbox
-    { id: '7', name: 'gaugeChecked', label: 'Gauge OK', dataType: 'boolean', isRequired: false, isReadOnly: false, isVisible: true, order: 6, width: 80, sourceType: 'manual' },
+  // BOOLEAN - Yes/No checkbox
+  { id: '7', name: 'gaugeChecked', label: 'Gauge OK', dataType: 'boolean', isRequired: false, isReadOnly: false, isVisible: true, order: 6, width: 80, sourceType: 'manual' },
 
-    // TEXT - String input
-    { id: '8', name: 'remarks', label: 'Remarks', dataType: 'text', isRequired: false, isReadOnly: false, isVisible: true, order: 7, width: 150, sourceType: 'manual' },
+  // TEXT - String input
+  { id: '8', name: 'remarks', label: 'Remarks', dataType: 'text', isRequired: false, isReadOnly: false, isVisible: true, order: 7, width: 150, sourceType: 'manual' },
 
-    // DATE - Date picker
-    { id: '9', name: 'productionDate', label: 'Date', dataType: 'date', isRequired: false, isReadOnly: false, isVisible: true, order: 8, width: 120, sourceType: 'manual' },
+  // DATE - Date picker
+  { id: '9', name: 'productionDate', label: 'Date', dataType: 'date', isRequired: false, isReadOnly: false, isVisible: true, order: 8, width: 120, sourceType: 'manual' },
 
-    // IMAGE - Camera/upload
-    { id: '10', name: 'image', label: 'Image', dataType: 'image', isRequired: false, isReadOnly: false, isVisible: true, order: 9, width: 80, sourceType: 'manual' },
-  ],
+  // IMAGE - Camera/upload
+  { id: '10', name: 'image', label: 'Image', dataType: 'image', isRequired: false, isReadOnly: false, isVisible: true, order: 9, width: 80, sourceType: 'manual' }],
+
   customerFields: {
     showName: true,
     showAlias: true,
@@ -140,11 +140,11 @@ const defaultTemplate: TemplateConfig = {
     showInstructions: true
   },
   totalsConfig: [
-    { columnName: 'grossWt', formula: 'SUM', label: 'Total' },
-    { columnName: 'coreWt', formula: 'SUM', label: 'Total' },
-    { columnName: 'netWt', formula: 'SUM', label: 'Total' },
-    { columnName: 'diffQty', formula: 'SUM', label: 'Total' }
-  ],
+  { columnName: 'grossWt', formula: 'SUM', label: 'Total' },
+  { columnName: 'coreWt', formula: 'SUM', label: 'Total' },
+  { columnName: 'netWt', formula: 'SUM', label: 'Total' },
+  { columnName: 'diffQty', formula: 'SUM', label: 'Total' }],
+
   settings: {
     autoStartTime: true,
     autoEndTime: true,
@@ -213,20 +213,20 @@ const OperatorEntryView: React.FC<OperatorEntryViewProps> = ({
   // Add new row
   const addRow = () => {
     const newRow: RowData = { id: generateId() };
-    template.columns.forEach(col => {
+    template.columns.forEach((col) => {
       if (col.name === 'slNo') {
         newRow[col.name] = rows.length + 1;
       } else {
         newRow[col.name] = col.dataType === 'number' || col.dataType === 'formula' ? '' : '';
       }
     });
-    setRows(prev => [...prev, newRow]);
+    setRows((prev) => [...prev, newRow]);
   };
 
   // Remove row
   const removeRow = (index: number) => {
     if (rows.length <= 1) return;
-    setRows(prev => {
+    setRows((prev) => {
       const newRows = prev.filter((_, i) => i !== index);
       // Recalculate serial numbers
       return newRows.map((row, i) => ({ ...row, slNo: i + 1 }));
@@ -243,7 +243,7 @@ const OperatorEntryView: React.FC<OperatorEntryViewProps> = ({
       calcExpression = calcExpression.replace(/targetQty/g, String(targetQty));
 
       // Replace column values
-      Object.keys(rowData).forEach(key => {
+      Object.keys(rowData).forEach((key) => {
         const value = parseFloat(rowData[key]) || 0;
         calcExpression = calcExpression.replace(new RegExp(key, 'g'), String(value));
       });
@@ -259,12 +259,12 @@ const OperatorEntryView: React.FC<OperatorEntryViewProps> = ({
 
   // Update cell value
   const updateCell = (rowIndex: number, columnName: string, value: any) => {
-    setRows(prev => {
+    setRows((prev) => {
       const newRows = [...prev];
       newRows[rowIndex] = { ...newRows[rowIndex], [columnName]: value };
 
       // Recalculate formula columns for this row
-      template.columns.forEach(col => {
+      template.columns.forEach((col) => {
         if (col.dataType === 'formula' && col.formula?.expression) {
           newRows[rowIndex][col.name] = calculateFormula(
             col.formula.expression,
@@ -280,7 +280,7 @@ const OperatorEntryView: React.FC<OperatorEntryViewProps> = ({
 
   // Calculate totals
   const calculateTotal = (columnName: string, formula: 'SUM' | 'AVERAGE' | 'COUNT'): number => {
-    const values = rows.map(row => parseFloat(row[columnName]) || 0);
+    const values = rows.map((row) => parseFloat(row[columnName]) || 0);
 
     switch (formula) {
       case 'SUM':
@@ -288,7 +288,7 @@ const OperatorEntryView: React.FC<OperatorEntryViewProps> = ({
       case 'AVERAGE':
         return values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0;
       case 'COUNT':
-        return values.filter(v => v > 0).length;
+        return values.filter((v) => v > 0).length;
       default:
         return 0;
     }
@@ -318,10 +318,10 @@ const OperatorEntryView: React.FC<OperatorEntryViewProps> = ({
       if (onSave) {
         await onSave(rows, metadata);
       }
-      console.log('Saved data:', { rows, metadata });
+
       alert('Data saved successfully!');
     } catch (error) {
-      console.error('Save error:', error);
+
       alert('Failed to save data');
     } finally {
       setIsSaving(false);
@@ -342,9 +342,9 @@ const OperatorEntryView: React.FC<OperatorEntryViewProps> = ({
             onChange={(e) => updateCell(rowIndex, column.name, e.target.value)}
             disabled={isDisabled}
             className={isDisabled ? 'calculated' : ''}
-            step="0.01"
-          />
-        );
+            step="0.01" />);
+
+
 
       case 'boolean':
         return (
@@ -352,23 +352,23 @@ const OperatorEntryView: React.FC<OperatorEntryViewProps> = ({
             type="checkbox"
             checked={!!value}
             onChange={(e) => updateCell(rowIndex, column.name, e.target.checked)}
-            disabled={isDisabled}
-          />
-        );
+            disabled={isDisabled} />);
+
+
 
       case 'dropdown':
         return (
           <select
             value={value || ''}
             onChange={(e) => updateCell(rowIndex, column.name, e.target.value)}
-            disabled={isDisabled}
-          >
+            disabled={isDisabled}>
+
             <option value="">Select</option>
-            {column.dropdownOptions?.map(opt => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
-        );
+            {column.dropdownOptions?.map((opt) =>
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+            )}
+          </select>);
+
 
       case 'date':
         return (
@@ -376,38 +376,38 @@ const OperatorEntryView: React.FC<OperatorEntryViewProps> = ({
             type="date"
             value={value || ''}
             onChange={(e) => updateCell(rowIndex, column.name, e.target.value)}
-            disabled={isDisabled}
-          />
-        );
+            disabled={isDisabled} />);
+
+
 
       case 'image':
         return (
           <div className="operatorEntry-imageCell">
-            {value ? (
-              <img src={value} alt="Uploaded" className="operatorEntry-thumbnail" />
-            ) : (
-              <label className="operatorEntry-uploadBtn">
+            {value ?
+            <img src={value} alt="Uploaded" className="operatorEntry-thumbnail" /> :
+
+            <label className="operatorEntry-uploadBtn">
                 <Camera size={16} />
                 <input
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      const reader = new FileReader();
-                      reader.onload = (ev) => {
-                        updateCell(rowIndex, column.name, ev.target?.result);
-                      };
-                      reader.readAsDataURL(file);
-                    }
-                  }}
-                  hidden
-                />
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                      updateCell(rowIndex, column.name, ev.target?.result);
+                    };
+                    reader.readAsDataURL(file);
+                  }
+                }}
+                hidden />
+
               </label>
-            )}
-          </div>
-        );
+            }
+          </div>);
+
 
       default:
         return (
@@ -415,16 +415,16 @@ const OperatorEntryView: React.FC<OperatorEntryViewProps> = ({
             type="text"
             value={value || ''}
             onChange={(e) => updateCell(rowIndex, column.name, e.target.value)}
-            disabled={isDisabled}
-          />
-        );
+            disabled={isDisabled} />);
+
+
     }
   };
 
   // Get visible columns sorted by order
-  const visibleColumns = template.columns
-    .filter(col => col.isVisible)
-    .sort((a, b) => a.order - b.order);
+  const visibleColumns = template.columns.
+  filter((col) => col.isVisible).
+  sort((a, b) => a.order - b.order);
 
   return (
     <div className="operatorEntry">
@@ -433,109 +433,109 @@ const OperatorEntryView: React.FC<OperatorEntryViewProps> = ({
         <div className="operatorEntry-orderInfo">
           {/* Left side - Text info */}
           <div className="operatorEntry-infoGrid">
-            {template.customerFields.showOrderId && (
-              <div className="operatorEntry-infoItem">
+            {template.customerFields.showOrderId &&
+            <div className="operatorEntry-infoItem">
                 <span className="label">Order No:</span>
                 <span className="value">{orderInfo.orderId}</span>
               </div>
-            )}
-            {template.customerFields.showOrderDate && (
-              <div className="operatorEntry-infoItem">
+            }
+            {template.customerFields.showOrderDate &&
+            <div className="operatorEntry-infoItem">
                 <span className="label">Order Date:</span>
                 <span className="value">{orderInfo.orderDate}</span>
               </div>
-            )}
-            {template.customerFields.showAlias && (
-              <div className="operatorEntry-infoItem">
+            }
+            {template.customerFields.showAlias &&
+            <div className="operatorEntry-infoItem">
                 <span className="label">Customer:</span>
                 <span className="value">{orderInfo.customerAlias}</span>
               </div>
-            )}
+            }
             <div className="operatorEntry-infoItem">
               <span className="label">Production Date:</span>
               <span className="value">{orderInfo.productionDate}</span>
             </div>
-            {orderInfo.rollSize && (
-              <div className="operatorEntry-infoItem">
+            {orderInfo.rollSize &&
+            <div className="operatorEntry-infoItem">
                 <span className="label">Roll Size:</span>
                 <span className="value">{orderInfo.rollSize}</span>
               </div>
-            )}
-            {orderInfo.cuttingSize && (
-              <div className="operatorEntry-infoItem">
+            }
+            {orderInfo.cuttingSize &&
+            <div className="operatorEntry-infoItem">
                 <span className="label">Cutting Size:</span>
                 <span className="value">{orderInfo.cuttingSize}</span>
               </div>
-            )}
-            {orderInfo.cuttingType && (
-              <div className="operatorEntry-infoItem">
+            }
+            {orderInfo.cuttingType &&
+            <div className="operatorEntry-infoItem">
                 <span className="label">Cutting Type:</span>
                 <span className="value">{orderInfo.cuttingType}</span>
               </div>
-            )}
-            {template.customerFields.showQuantity && (
-              <div className="operatorEntry-infoItem highlight">
+            }
+            {template.customerFields.showQuantity &&
+            <div className="operatorEntry-infoItem highlight">
                 <span className="label">Qty:</span>
                 <span className="value">{orderInfo.quantity} kg</span>
               </div>
-            )}
+            }
           </div>
 
           {/* Right side - Image */}
-          {template.customerFields.showImage && orderInfo.orderImage && (
-            <div className="operatorEntry-orderImage">
+          {template.customerFields.showImage && orderInfo.orderImage &&
+          <div className="operatorEntry-orderImage">
               <img src={orderInfo.orderImage} alt="Order" />
             </div>
-          )}
+          }
         </div>
 
         {/* Instructions */}
-        {template.customerFields.showInstructions && orderInfo.instructions && (
-          <div className="operatorEntry-instructions">
+        {template.customerFields.showInstructions && orderInfo.instructions &&
+        <div className="operatorEntry-instructions">
             <strong>Instructions:</strong> {orderInfo.instructions}
           </div>
-        )}
+        }
       </div>
 
       {/* Operator Selection */}
       <div className="operatorEntry-operators">
-        {template.settings.requireOperator && (
-          <div className="operatorEntry-selectGroup">
+        {template.settings.requireOperator &&
+        <div className="operatorEntry-selectGroup">
             <label>Operator *</label>
             <select value={selectedOperator} onChange={(e) => setSelectedOperator(e.target.value)}>
               <option value="">Select Operator</option>
-              {operators.map(op => (
-                <option key={op.id} value={op.id}>{op.name}</option>
-              ))}
+              {operators.map((op) =>
+            <option key={op.id} value={op.id}>{op.name}</option>
+            )}
             </select>
           </div>
-        )}
-        {template.settings.requireHelper && (
-          <div className="operatorEntry-selectGroup">
+        }
+        {template.settings.requireHelper &&
+        <div className="operatorEntry-selectGroup">
             <label>Helper</label>
             <select value={selectedHelper} onChange={(e) => setSelectedHelper(e.target.value)}>
               <option value="">Select Helper</option>
-              {helpers.map(h => (
-                <option key={h.id} value={h.id}>{h.name}</option>
-              ))}
+              {helpers.map((h) =>
+            <option key={h.id} value={h.id}>{h.name}</option>
+            )}
             </select>
           </div>
-        )}
+        }
         <div className="operatorEntry-selectGroup">
           <label>Machine</label>
           <select value={selectedMachine} onChange={(e) => setSelectedMachine(e.target.value)}>
             <option value="">Select Machine</option>
-            {machines.map(m => (
-              <option key={m.id} value={m.id}>{m.name}</option>
-            ))}
+            {machines.map((m) =>
+            <option key={m.id} value={m.id}>{m.name}</option>
+            )}
           </select>
         </div>
-        {startTime && (
-          <div className="operatorEntry-time">
+        {startTime &&
+        <div className="operatorEntry-time">
             <span className="label">Start Time:</span>
             <span className="value">{startTime}</span>
           </div>
-        )}
+        }
       </div>
 
       {/* Data Entry Table */}
@@ -543,58 +543,58 @@ const OperatorEntryView: React.FC<OperatorEntryViewProps> = ({
         <table className="operatorEntry-table">
           <thead>
             <tr>
-              {visibleColumns.map(col => (
-                <th key={col.id} style={{ width: col.width }}>
+              {visibleColumns.map((col) =>
+              <th key={col.id} style={{ width: col.width }}>
                   {col.label}
                   {col.unit && <span className="unit">({col.unit})</span>}
                   {col.isRequired && <span className="required">*</span>}
                 </th>
-              ))}
+              )}
               <th className="actions">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((row, rowIndex) => (
-              <tr key={row.id}>
-                {visibleColumns.map(col => (
-                  <td key={col.id} className={col.dataType === 'formula' ? 'formula-cell' : ''}>
+            {rows.map((row, rowIndex) =>
+            <tr key={row.id}>
+                {visibleColumns.map((col) =>
+              <td key={col.id} className={col.dataType === 'formula' ? 'formula-cell' : ''}>
                     {renderCellInput(col, rowIndex, row[col.name])}
                   </td>
-                ))}
+              )}
                 <td className="actions">
                   <button
-                    type="button"
-                    className="operatorEntry-deleteBtn"
-                    onClick={() => removeRow(rowIndex)}
-                    disabled={rows.length <= 1}
-                    title="Delete row"
-                  >
+                  type="button"
+                  className="operatorEntry-deleteBtn"
+                  onClick={() => removeRow(rowIndex)}
+                  disabled={rows.length <= 1}
+                  title="Delete row">
+
                     <Trash2 size={16} />
                   </button>
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
           {/* Totals Row */}
-          {template.totalsConfig.length > 0 && (
-            <tfoot>
+          {template.totalsConfig.length > 0 &&
+          <tfoot>
               <tr className="totals-row">
                 {visibleColumns.map((col, index) => {
-                  const totalConfig = template.totalsConfig.find(tc => tc.columnName === col.name);
-                  return (
-                    <td key={col.id}>
-                      {index === 0 ? (
-                        <strong>Total</strong>
-                      ) : totalConfig ? (
-                        <strong>{calculateTotal(col.name, totalConfig.formula).toFixed(2)}</strong>
-                      ) : null}
-                    </td>
-                  );
-                })}
+                const totalConfig = template.totalsConfig.find((tc) => tc.columnName === col.name);
+                return (
+                  <td key={col.id}>
+                      {index === 0 ?
+                    <strong>Total</strong> :
+                    totalConfig ?
+                    <strong>{calculateTotal(col.name, totalConfig.formula).toFixed(2)}</strong> :
+                    null}
+                    </td>);
+
+              })}
                 <td></td>
               </tr>
             </tfoot>
-          )}
+          }
         </table>
       </div>
 
@@ -604,27 +604,27 @@ const OperatorEntryView: React.FC<OperatorEntryViewProps> = ({
       </button>
 
       {/* Voice Note */}
-      {template.settings.allowVoiceNote && (
-        <div className="operatorEntry-voiceNote">
+      {template.settings.allowVoiceNote &&
+      <div className="operatorEntry-voiceNote">
           <label>Voice Note / Instructions for next stage:</label>
           <div className="operatorEntry-voiceInput">
             <textarea
-              value={voiceNote}
-              onChange={(e) => setVoiceNote(e.target.value)}
-              placeholder="Enter notes or instructions..."
-              rows={2}
-            />
+            value={voiceNote}
+            onChange={(e) => setVoiceNote(e.target.value)}
+            placeholder="Enter notes or instructions..."
+            rows={2} />
+
             <button
-              type="button"
-              className={`operatorEntry-micBtn ${isRecording ? 'recording' : ''}`}
-              onClick={() => setIsRecording(!isRecording)}
-              title={isRecording ? 'Stop recording' : 'Start voice recording'}
-            >
+            type="button"
+            className={`operatorEntry-micBtn ${isRecording ? 'recording' : ''}`}
+            onClick={() => setIsRecording(!isRecording)}
+            title={isRecording ? 'Stop recording' : 'Start voice recording'}>
+
               <Mic size={20} />
             </button>
           </div>
         </div>
-      )}
+      }
 
       {/* Save Button */}
       <div className="operatorEntry-footer">
@@ -632,19 +632,19 @@ const OperatorEntryView: React.FC<OperatorEntryViewProps> = ({
           type="button"
           className="operatorEntry-saveBtn"
           onClick={handleSave}
-          disabled={isSaving || (template.settings.requireOperator && !selectedOperator)}
-        >
-          {isSaving ? (
-            'Saving...'
-          ) : (
-            <>
+          disabled={isSaving || template.settings.requireOperator && !selectedOperator}>
+
+          {isSaving ?
+          'Saving...' :
+
+          <>
               <Save size={18} /> Save Data
             </>
-          )}
+          }
         </button>
       </div>
-    </div>
-  );
+    </div>);
+
 };
 
 export default OperatorEntryView;

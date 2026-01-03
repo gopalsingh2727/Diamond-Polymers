@@ -11,35 +11,35 @@ import { crudAPI } from '../utils/crudHelpers';
  */
 const extractArray = (data: any, key: string): any[] => {
   if (!data) {
-    console.warn(`[useOrderFormData] No data for ${key}`);
+
     return [];
   }
 
   // If data is already an array
   if (Array.isArray(data)) {
-    console.log(`[useOrderFormData] ${key}: Array format`, data.length, 'items');
+
     return data;
   }
 
   // If data has the key directly (e.g., { branches: [...] })
   if (data[key] && Array.isArray(data[key])) {
-    console.log(`[useOrderFormData] ${key}: Object with key format`, data[key].length, 'items');
+
     return data[key];
   }
 
   // If data has nested structure (e.g., { data: { branches: [...] } })
   if (data.data && data.data[key] && Array.isArray(data.data[key])) {
-    console.log(`[useOrderFormData] ${key}: Nested data format`, data.data[key].length, 'items');
+
     return data.data[key];
   }
 
   // If data.data is an array
   if (data.data && Array.isArray(data.data)) {
-    console.log(`[useOrderFormData] ${key}: data as array format`, data.data.length, 'items');
+
     return data.data;
   }
 
-  console.warn(`[useOrderFormData] ${key}: Unknown format, returning empty array. Data:`, data);
+
   return [];
 };
 
@@ -141,27 +141,27 @@ export const useOrderFormData = () => {
   // Combined loading state
   const isLoading = useMemo(() => {
     return branchesLoading ||
-      customersLoading ||
-      machinesLoading ||
-      productsLoading ||
-      materialsLoading ||
-      materialTypesLoading ||
-      productTypesLoading ||
-      machineTypesLoading;
+    customersLoading ||
+    machinesLoading ||
+    productsLoading ||
+    materialsLoading ||
+    materialTypesLoading ||
+    productTypesLoading ||
+    machineTypesLoading;
   }, [
-    branchesLoading,
-    customersLoading,
-    machinesLoading,
-    productsLoading,
-    materialsLoading,
-    materialTypesLoading,
-    productTypesLoading,
-    machineTypesLoading
-  ]);
+  branchesLoading,
+  customersLoading,
+  machinesLoading,
+  productsLoading,
+  materialsLoading,
+  materialTypesLoading,
+  productTypesLoading,
+  machineTypesLoading]
+  );
 
   // Refresh all data
   const refreshAll = () => {
-    console.log('[OrderFormData] Refreshing all cached data...');
+
     refreshBranches();
     refreshCustomers();
     refreshMachines();
@@ -175,19 +175,19 @@ export const useOrderFormData = () => {
   // Check if all data is loaded
   const isReady = useMemo(() => {
     return !isLoading &&
-      branchesData !== null &&
-      customersData !== null &&
-      machinesData !== null &&
-      productsData !== null &&
-      materialsData !== null;
+    branchesData !== null &&
+    customersData !== null &&
+    machinesData !== null &&
+    productsData !== null &&
+    materialsData !== null;
   }, [isLoading, branchesData, customersData, machinesData, productsData, materialsData]);
 
   // Log errors
-  if (branchesError) console.error('[OrderFormData] Branches error:', branchesError);
-  if (customersError) console.error('[OrderFormData] Customers error:', customersError);
-  if (machinesError) console.error('[OrderFormData] Machines error:', machinesError);
-  if (productsError) console.error('[OrderFormData] Products error:', productsError);
-  if (materialsError) console.error('[OrderFormData] Materials error:', materialsError);
+  if (branchesError) {}
+  if (customersError) {}
+  if (machinesError) {}
+  if (productsError) {}
+  if (materialsError) {}
 
   return {
     // Data (guaranteed to be arrays)

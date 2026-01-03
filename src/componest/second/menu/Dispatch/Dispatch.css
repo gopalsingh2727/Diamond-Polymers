@@ -119,3 +119,20 @@
 .status-list::-ms-expand {
   display: none;
 }
+
+/* ✅ Fixed pagination at bottom - same as All Orders */
+.pagination {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: white;
+  padding: 12px 16px;
+  border-top: 2px solid #e2e8f0;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+}

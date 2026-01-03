@@ -52,7 +52,7 @@
 
 .report-dashboard__apply-btn {
   padding: 8px 16px;
-  background-color: #3b82f6;
+  background-color: var(--color-primary, #FF6B35);
   color: white;
   border: none;
   border-radius: 6px;
@@ -62,7 +62,23 @@
 }
 
 .report-dashboard__apply-btn:hover {
-  background-color: #2563eb;
+  background-color: var(--color-primary-hover, #E55A2B);
+}
+
+.report-dashboard__custom-btn {
+  padding: 8px 16px;
+  background-color: #8b5cf6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.report-dashboard__custom-btn:hover {
+  background-color: #7c3aed;
 }
 
 .report-dashboard__tabs {
@@ -94,7 +110,7 @@
 
 .report-dashboard__tab--active {
   background-color: white;
-  color: #3b82f6;
+  color: var(--color-primary, #FF6B35);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
@@ -199,7 +215,7 @@
 }
 
 .report-table__formula-label {
-  color: #3b82f6;
+  color: var(--color-primary, #FF6B35);
 }
 
 /* Groups List */
@@ -243,8 +259,8 @@
 }
 
 .report-groups__create-btn:hover {
-  border-color: #3b82f6;
-  color: #3b82f6;
+  border-color: var(--color-primary, #FF6B35);
+  color: var(--color-primary, #FF6B35);
 }
 
 /* Export Button */
@@ -325,7 +341,7 @@
 }
 
 .report-drilldown__breadcrumb-item {
-  color: #3b82f6;
+  color: var(--color-primary, #FF6B35);
   cursor: pointer;
 }
 
@@ -415,13 +431,13 @@
 }
 
 .group-card:hover {
-  border-color: #3b82f6;
+  border-color: var(--color-primary, #FF6B35);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .group-card--selected {
-  border-color: #3b82f6;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+  border-color: var(--color-primary, #FF6B35);
+  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.2);
 }
 
 .group-card__color-bar {
@@ -518,7 +534,7 @@
 .formula-card__value {
   font-size: 18px;
   font-weight: 600;
-  color: #3b82f6;
+  color: var(--color-primary, #FF6B35);
   margin-top: 4px;
 }
 
@@ -653,7 +669,7 @@
 }
 
 .breadcrumb-item.clickable {
-  color: #3b82f6;
+  color: var(--color-primary, #FF6B35);
   cursor: pointer;
 }
 
@@ -684,7 +700,7 @@
 }
 
 .option-type-card:hover {
-  border-color: #3b82f6;
+  border-color: var(--color-primary, #FF6B35);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
@@ -739,7 +755,7 @@
 }
 
 .clickable-row:hover {
-  background-color: #eff6ff !important;
+  background-color: rgba(255, 107, 53, 0.05) !important;
 }
 
 .cell-with-icon {
@@ -1046,7 +1062,7 @@
 
 .btn-primary {
   padding: 10px 20px;
-  background-color: #3b82f6;
+  background-color: var(--color-primary, #FF6B35);
   color: white;
   border: none;
   border-radius: 6px;
@@ -1056,7 +1072,7 @@
 }
 
 .btn-primary:hover {
-  background-color: #2563eb;
+  background-color: var(--color-primary-hover, #E55A2B);
 }
 
 .btn-secondary {
@@ -1118,8 +1134,8 @@
 }
 
 .company-card--selected {
-  border-color: #3b82f6;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+  border-color: var(--color-primary, #FF6B35);
+  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.2);
 }
 
 .company-card__header {
@@ -1185,7 +1201,7 @@
 }
 
 .selected-row {
-  background-color: #eff6ff !important;
+  background-color: rgba(255, 107, 53, 0.1) !important;
 }
 
 /* All Orders Tab */
@@ -1235,8 +1251,8 @@
 .filter-input:focus,
 .filter-select:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: var(--color-primary, #FF6B35);
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
 }
 
 .filter-select:disabled {
@@ -1300,8 +1316,8 @@
 .pagination-btn {
   padding: 8px 16px;
   background-color: white;
-  color: #3b82f6;
-  border: 1px solid #3b82f6;
+  color: var(--color-primary, #FF6B35);
+  border: 1px solid var(--color-primary, #FF6B35);
   border-radius: 6px;
   font-size: 14px;
   cursor: pointer;
@@ -1309,7 +1325,7 @@
 }
 
 .pagination-btn:hover:not(:disabled) {
-  background-color: #3b82f6;
+  background-color: var(--color-primary, #FF6B35);
   color: white;
 }
 
@@ -1351,4 +1367,53 @@
   .flow-arrow {
     transform: rotate(90deg);
   }
+}
+
+/* Clickable Row Styling */
+.clickable-row {
+  transition: background-color 0.15s ease;
+}
+
+.clickable-row:hover {
+  background-color: rgba(255, 107, 53, 0.05) !important;
+}
+
+/* Report Table Enhancements */
+.report-table tbody tr {
+  transition: all 0.15s ease;
+}
+
+.flow-box {
+  transition: all 0.2s ease;
+}
+
+.flow-box:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.category-card {
+  transition: all 0.2s ease;
+}
+
+.category-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.status-summary-card {
+  transition: all 0.2s ease;
+}
+
+.status-summary-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.status-bar {
+  transition: all 0.15s ease;
+}
+
+.status-bar:hover {
+  background-color: rgba(255, 107, 53, 0.05);
 }

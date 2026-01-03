@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { getCustomerParentCompanies } from "../../../../redux/create/customerParentCompany/CustomerParentCompanyActions";
+import { getParentCompaniesV2 } from "../../../../redux/unifiedV2";
 import { RootState, AppDispatch } from "../../../../../store";
 import CustomerParentCompany from "../../create/customerParentCompany/CustomerParentCompany";
 import { useListNavigation } from "../../../../allCompones/BackButton";
@@ -13,21 +13,28 @@ interface Props {
 const EditParentCompanyList: React.FC<Props> = ({ onEdit }) => {
   const dispatch = useDispatch<AppDispatch>();
 
-  const { parentCompanies, loading, error } = useSelector(
-    (state: RootState) => state.getCustomerParentCompanies || { parentCompanies: [], loading: false, error: null }
+  const parentCompanyState = useSelector(
+    (state: RootState) => state.v2.parentCompany
   );
+  const rawParentCompanies = parentCompanyState?.list;
+  const parentCompanies = Array.isArray(rawParentCompanies) ? rawParentCompanies : [];
+  const loading = parentCompanyState?.loading;
+  const error = parentCompanyState?.error;
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRow, setSelectedRow] = useState(0);
   const [selectedItem, setSelectedItem] = useState<any>(null);
 
+  // Get selected branch to refetch when it changes
+  const selectedBranch = useSelector((state: any) => state.auth?.userData?.selectedBranch);
+
   useEffect(() => {
-    dispatch(getCustomerParentCompanies());
-  }, [dispatch]);
+    dispatch(getParentCompaniesV2());
+  }, [dispatch, selectedBranch]);
 
   const handleBackToList = () => {
     setSelectedItem(null);
-    dispatch(getCustomerParentCompanies());
+    dispatch(getParentCompaniesV2());
   };
 
   if (selectedItem) {

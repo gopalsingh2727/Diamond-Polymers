@@ -17,7 +17,7 @@ const Signup: React.FC<SignupProps> = ({
   userType,
   onSignupSuccess,
   onBack,
-  branchId,
+  branchId
 }) => {
   const [currentStep, setCurrentStep] = useState<SignupStep>('details');
   const [loading, setLoading] = useState(false);
@@ -30,10 +30,10 @@ const Signup: React.FC<SignupProps> = ({
     password: '',
     confirmPassword: '',
     phone: '',
-    fullName: '',
+    fullName: ''
   });
 
-  const baseUrl = import.meta.env.VITE_API_27INFINITY_IN || 'http://localhost:4000/dev';
+  const baseUrl = import.meta.env.VITE_API_27INFINITY_IN || 'https://api.27infinity.in';
   const apiKey = import.meta.env.VITE_API_KEY;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -94,22 +94,22 @@ const Signup: React.FC<SignupProps> = ({
         {
           email: formData.email,
           phone: formData.phone,
-          userType: userType,
+          userType: userType
         },
         {
           headers: {
             'x-api-key': apiKey,
-            'Content-Type': 'application/json',
-          },
+            'Content-Type': 'application/json'
+          }
         }
       );
 
-      console.log('✅ Email OTP sent, moving to verification...');
+
 
       // Step 2: Move to email verification
       setCurrentStep('email-verification');
     } catch (err: any) {
-      console.error('❌ Failed to send OTP:', err);
+
       setError(
         err.response?.data?.message || 'Failed to send verification email. Please try again.'
       );
@@ -119,7 +119,7 @@ const Signup: React.FC<SignupProps> = ({
   };
 
   const handleEmailVerificationSuccess = async () => {
-    console.log('✅ Email verified! Now creating user account...');
+
     setLoading(true);
     setError('');
 
@@ -134,17 +134,17 @@ const Signup: React.FC<SignupProps> = ({
           phone: formData.phone,
           fullName: formData.fullName,
           userType: userType,
-          ...(branchId && { branchId }),
+          ...(branchId && { branchId })
         },
         {
           headers: {
             'x-api-key': apiKey,
-            'Content-Type': 'application/json',
-          },
+            'Content-Type': 'application/json'
+          }
         }
       );
 
-      console.log('✅ User account created successfully!');
+
       setCurrentStep('complete');
 
       // Redirect to login after 2 seconds
@@ -152,7 +152,7 @@ const Signup: React.FC<SignupProps> = ({
         onSignupSuccess();
       }, 2000);
     } catch (err: any) {
-      console.error('❌ Failed to create account:', err);
+
       setError(
         err.response?.data?.message || 'Failed to create account. Please try again.'
       );
@@ -172,8 +172,8 @@ const Signup: React.FC<SignupProps> = ({
       <div className="flex justify-center items-center min-h-screen">
         <form
           onSubmit={handleSignup}
-          className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md"
-        >
+          className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
+
           {/* Header */}
           <div className="text-center mb-6">
             <div className="w-16 h-16 bg-gradient-to-r from-[#FF6B35] to-[#FFA500] rounded-full flex items-center justify-center mx-auto mb-4">
@@ -181,14 +181,14 @@ const Signup: React.FC<SignupProps> = ({
                 className="w-8 h-8 text-white"
                 fill="none"
                 stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
+                viewBox="0 0 24 24">
+
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
-                  d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-                />
+                  d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+
               </svg>
             </div>
             <h2 className="text-2xl font-bold text-gray-800 mb-2">
@@ -212,8 +212,8 @@ const Signup: React.FC<SignupProps> = ({
               placeholder="Enter your full name"
               value={formData.fullName}
               onChange={handleInputChange}
-              required
-            />
+              required />
+
           </div>
 
           {/* Username */}
@@ -229,8 +229,8 @@ const Signup: React.FC<SignupProps> = ({
               placeholder="Choose a username"
               value={formData.username}
               onChange={handleInputChange}
-              required
-            />
+              required />
+
           </div>
 
           {/* Email */}
@@ -246,8 +246,8 @@ const Signup: React.FC<SignupProps> = ({
               placeholder="Enter your email"
               value={formData.email}
               onChange={handleInputChange}
-              required
-            />
+              required />
+
           </div>
 
           {/* Phone (Optional) */}
@@ -266,8 +266,8 @@ const Signup: React.FC<SignupProps> = ({
                 className="flex-1 px-4 py-3 border border-gray-300 rounded-r-lg focus:outline-none focus:ring-2 focus:ring-[#FF6B35] transition"
                 placeholder="Enter your phone number"
                 value={formData.phone}
-                onChange={handleInputChange}
-              />
+                onChange={handleInputChange} />
+
             </div>
           </div>
 
@@ -284,8 +284,8 @@ const Signup: React.FC<SignupProps> = ({
               placeholder="Enter your password"
               value={formData.password}
               onChange={handleInputChange}
-              required
-            />
+              required />
+
           </div>
 
           {/* Confirm Password */}
@@ -301,31 +301,31 @@ const Signup: React.FC<SignupProps> = ({
               placeholder="Re-enter your password"
               value={formData.confirmPassword}
               onChange={handleInputChange}
-              required
-            />
+              required />
+
           </div>
 
           {/* Error Message */}
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+          {error &&
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-red-600 text-sm text-center">{error}</p>
             </div>
-          )}
+          }
 
           {/* Submit Button */}
           <button
             type="submit"
             className="w-full bg-gradient-to-r from-[#FF6B35] to-[#FFA500] hover:opacity-90 text-white font-medium py-3 px-4 rounded-lg transition duration-300 shadow-md hover:shadow-lg mb-4"
-            disabled={loading}
-          >
-            {loading ? (
-              <span className="flex items-center justify-center gap-2">
+            disabled={loading}>
+
+            {loading ?
+            <span className="flex items-center justify-center gap-2">
                 <InfinitySpinner size="sm" />
                 Creating Account...
-              </span>
-            ) : (
-              'Create Account'
-            )}
+              </span> :
+
+            'Create Account'
+            }
           </button>
 
           {/* Back to Login */}
@@ -333,8 +333,8 @@ const Signup: React.FC<SignupProps> = ({
             type="button"
             onClick={onBack}
             className="w-full text-gray-600 hover:text-gray-800 text-sm font-medium py-2 transition"
-            disabled={loading}
-          >
+            disabled={loading}>
+
             ← Back to Login
           </button>
 
@@ -345,8 +345,8 @@ const Signup: React.FC<SignupProps> = ({
             </p>
           </div>
         </form>
-      </div>
-    );
+      </div>);
+
   }
 
   // Step 2: Email OTP Verification
@@ -356,9 +356,9 @@ const Signup: React.FC<SignupProps> = ({
         email={formData.email}
         userType={userType}
         onVerificationSuccess={handleEmailVerificationSuccess}
-        onBack={handleBackToDetails}
-      />
-    );
+        onBack={handleBackToDetails} />);
+
+
   }
 
   // Step 3: Complete
@@ -371,14 +371,14 @@ const Signup: React.FC<SignupProps> = ({
               className="w-12 h-12 text-green-600"
               fill="none"
               stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
+              viewBox="0 0 24 24">
+
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M5 13l4 4L19 7"
-              />
+                d="M5 13l4 4L19 7" />
+
             </svg>
           </div>
 
@@ -396,8 +396,8 @@ const Signup: React.FC<SignupProps> = ({
             <InfinitySpinner size="md" />
           </div>
         </div>
-      </div>
-    );
+      </div>);
+
   }
 
   return null;

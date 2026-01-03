@@ -50,13 +50,23 @@ const CreateAdmin = () => {
     email: '',
     password: '',
     phone: '',
-    fullName: '',
   });
 
   const [selectedBranches, setSelectedBranches] = useState<string[]>([]);
 
+  // Generate random password
+  const generatePassword = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+    let password = '';
+    for (let i = 0; i < 10; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
   };
 
   const handleBranchToggle = (branchId: string) => {
@@ -78,23 +88,23 @@ const CreateAdmin = () => {
   // Step 1: Send OTP
   const handleSendOTP = async () => {
     if (!formData.email.trim()) {
-      toast.addToast('error', 'Email is required');
+      toast.error('Validation Error', 'Email is required');
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
-      toast.addToast('error', 'Please enter a valid email address');
+      toast.error('Validation Error', 'Please enter a valid email address');
       return;
     }
 
     setOtpSending(true);
     try {
       await dispatch(sendAdminEmailOTP(formData.email));
-      toast.addToast('success', 'OTP sent to email! Please check your inbox.');
+      toast.success('Success', 'OTP sent to email! Please check your inbox.');
       setStep('otp');
     } catch (error: any) {
-      toast.addToast('error', error.response?.data?.message || 'Failed to send OTP');
+      toast.error('Error', error.response?.data?.message || 'Failed to send OTP');
     } finally {
       setOtpSending(false);
     }
@@ -103,23 +113,27 @@ const CreateAdmin = () => {
   // Step 2: Verify OTP
   const handleVerifyOTP = async () => {
     if (!otp.trim()) {
-      toast.addToast('error', 'Please enter the OTP');
+      toast.error('Error', 'Please enter the OTP');
       return;
     }
 
     if (otp.length !== 6) {
-      toast.addToast('error', 'OTP must be 6 digits');
+      toast.error('Error', 'OTP must be 6 digits');
       return;
     }
 
     setOtpVerifying(true);
     try {
       await dispatch(verifyAdminEmailOTP(formData.email, otp));
-      toast.addToast('success', 'Email verified successfully!');
+      toast.success('Success', 'Email verified successfully!');
       setEmailVerified(true);
       setStep('details');
+      // Auto-generate password when moving to details step
+      if (!formData.password) {
+        setFormData(prev => ({ ...prev, password: generatePassword() }));
+      }
     } catch (error: any) {
-      toast.addToast('error', error.response?.data?.message || 'Invalid OTP');
+      toast.error('Error', error.response?.data?.message || 'Invalid OTP');
     } finally {
       setOtpVerifying(false);
     }
@@ -130,10 +144,10 @@ const CreateAdmin = () => {
     setOtpSending(true);
     try {
       await dispatch(sendAdminEmailOTP(formData.email));
-      toast.addToast('success', 'OTP resent! Please check your inbox.');
+      toast.success('Success', 'OTP resent! Please check your inbox.');
       setOtp('');
     } catch (error: any) {
-      toast.addToast('error', error.response?.data?.message || 'Failed to resend OTP');
+      toast.error('Error', error.response?.data?.message || 'Failed to resend OTP');
     } finally {
       setOtpSending(false);
     }
@@ -144,17 +158,17 @@ const CreateAdmin = () => {
     e?.preventDefault();
 
     if (!emailVerified) {
-      toast.addToast('error', 'Please verify your email first');
+      toast.error('Error', 'Please verify your email first');
       return;
     }
 
     if (selectedBranches.length === 0) {
-      toast.addToast('error', 'Please select at least one branch');
+      toast.error('Error', 'Please select at least one branch');
       return;
     }
 
     if (!product27InfinityId) {
-      toast.addToast('error', 'Missing product27InfinityId. Please re-login.');
+      toast.error('Error', 'Missing product27InfinityId. Please re-login.');
       return;
     }
 
@@ -173,7 +187,6 @@ const CreateAdmin = () => {
             email: '',
             password: '',
             phone: '',
-            fullName: '',
           });
           setSelectedBranches([]);
           setStep('email');
@@ -307,18 +320,6 @@ const CreateAdmin = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-            <input
-              type="text"
-              name="fullName"
-              placeholder="Full Name"
-              className="w-full p-2 border rounded"
-              value={formData.fullName}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Username *</label>
             <input
               type="text"
@@ -345,16 +346,27 @@ const CreateAdmin = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Password *</label>
-            <input
-              type="password"
-              name="password"
-              placeholder="Password (min 8 chars)"
-              className="w-full p-2 border rounded"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              minLength={8}
-            />
+            <div className="flex gap-2">
+              <input
+                type="text"
+                name="password"
+                placeholder="Password (min 8 chars)"
+                className="flex-1 p-2 border rounded"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                minLength={8}
+              />
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, password: generatePassword() })}
+                className="px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded text-sm"
+                title="Generate random password"
+              >
+                🔄
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">Password will be sent to the admin's email</p>
           </div>
 
           {/* Branch Selection */}

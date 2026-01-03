@@ -213,13 +213,20 @@ const CreateReportType: React.FC<CreateReportTypeProps> = ({
   const userRole = useSelector((state: any) => state.auth?.userData?.role);
 
   // Get data from Redux
-  const orderTypes = useSelector((state: any) => state.orderTypeList?.orderTypes || []);
-  const optionTypes = useSelector((state: any) => state.optionType?.optionTypes || []);
-  const options = useSelector((state: any) => state.option?.options || []);
-  const machines = useSelector((state: any) => state.machineList?.machines || []);
-  const operators = useSelector((state: any) => state.operatorList?.operators || []);
-  const customerCategories = useSelector((state: any) => state.getCustomerCategories?.customerCategories || []);
-  const parentCompanies = useSelector((state: any) => state.getCustomerParentCompanies?.customerParentCompanies || []);
+  const rawOrderTypes = useSelector((state: any) => state.v2.orderType?.list);
+  const orderTypes = Array.isArray(rawOrderTypes) ? rawOrderTypes : [];
+  const rawOptionTypes = useSelector((state: any) => state.v2.optionType?.list);
+  const optionTypes = Array.isArray(rawOptionTypes) ? rawOptionTypes : [];
+  const rawOptions = useSelector((state: any) => state.v2.option?.list);
+  const options = Array.isArray(rawOptions) ? rawOptions : [];
+  const rawMachines = useSelector((state: any) => state.v2.machine?.list);
+  const machines = Array.isArray(rawMachines) ? rawMachines : [];
+  const rawOperators = useSelector((state: any) => state.v2.operator?.list);
+  const operators = Array.isArray(rawOperators) ? rawOperators : [];
+  const rawCustomerCategories = useSelector((state: any) => state.v2.customerCategory?.list);
+  const customerCategories = Array.isArray(rawCustomerCategories) ? rawCustomerCategories : [];
+  const rawParentCompanies = useSelector((state: any) => state.v2.parentCompany?.list);
+  const parentCompanies = Array.isArray(rawParentCompanies) ? rawParentCompanies : [];
 
   // Fetch data on mount
   useEffect(() => {
@@ -444,11 +451,13 @@ const CreateReportType: React.FC<CreateReportTypeProps> = ({
         {
           successMessage: "Report type updated successfully!",
           onSuccess: () => {
-            if (onSaveSuccess) {
-              onSaveSuccess();
-            } else {
-              navigate(-1);
-            }
+            setTimeout(() => {
+              if (onSaveSuccess) {
+                onSaveSuccess();
+              } else {
+                navigate(-1);
+              }
+            }, 1500);
           }
         }
       );

@@ -6,8 +6,10 @@ import {
   deleteDeviceAccess,
 } from "../../../../redux/deviceAccess/deviceAccessActions";
 import { useFormDataCache } from "../hooks/useFormDataCache";
+import { useCRUD } from "../../../../../hooks/useCRUD";
 import { RootState } from "../../../../redux/rootReducer";
 import { AppDispatch } from "../../../../../store";
+import { ToastContainer } from "../../../../../components/shared/Toast";
 
 interface Device {
   _id: string;
@@ -27,14 +29,19 @@ interface Device {
 
 const EditDeviceAccess: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const { handleSave, handleUpdate, handleDelete: crudDelete, saveState, updateState, deleteState, confirmDialog, closeConfirmDialog, toast } = useCRUD();
 
   // 🚀 OPTIMIZED: Get machines from cached form data (no API call!)
   const { machines: machineList } = useFormDataCache();
 
   // Keep device access from Redux (not in cache)
-  const { devices: deviceList, loading, error } = useSelector(
-    (state: RootState) => state.deviceAccess
+  const deviceAccessState = useSelector(
+    (state: RootState) => state.v2.deviceAccess
   );
+  const rawDeviceList = deviceAccessState?.list;
+  const deviceList = Array.isArray(rawDeviceList) ? rawDeviceList : [];
+  const loading = deviceAccessState?.loading;
+  const error = deviceAccessState?.error;
 
   const [selectedRow, setSelectedRow] = useState(0);
   const [showDetail, setShowDetail] = useState(false);
@@ -80,10 +87,13 @@ const EditDeviceAccess: React.FC = () => {
     [filteredDevices, selectedRow, showDetail]
   );
 
+  // Get selected branch to refetch when it changes
+  const selectedBranch = useSelector((state: RootState) => state.auth?.userData?.selectedBranch);
+
   useEffect(() => {
     // ✅ OPTIMIZED: Machines come from cache, only fetch device access
     dispatch(getDeviceAccessList());
-  }, [dispatch]);
+  }, [dispatch, selectedBranch]);
 
   useEffect(() => {
     window.addEventListener("keydown", handleKeyDown);
@@ -106,54 +116,62 @@ const EditDeviceAccess: React.FC = () => {
 
     const selectedMachine = machineList.find((m: any) => m._id === machineId);
 
-    try {
-      await dispatch(
+    await handleSave(
+      () => dispatch(
         updateDeviceAccess(selectedDevice._id, "assignMachine", {
           machineId,
           machineName: selectedMachine?.machineName,
           machineType:
             selectedMachine?.machineType?.type || selectedMachine?.machineType,
         })
-      );
-      alert("Machine added successfully!");
-      dispatch(getDeviceAccessList());
-      setMachineId("");
-    } catch (err) {
-      alert("Failed to add machine.");
-    }
+      ),
+      {
+        successMessage: "Machine added successfully!",
+        errorMessage: "Failed to add machine.",
+        onSuccess: () => {
+          dispatch(getDeviceAccessList());
+          setMachineId("");
+        }
+      }
+    );
   };
 
-  const handleRemoveMachine = async (machineId: string) => {
+  const handleRemoveMachine = async (machineIdToRemove: string) => {
     if (!selectedDevice) return;
-    
-    if (!window.confirm("Remove this machine from device?")) return;
 
-    try {
-      await dispatch(
-        updateDeviceAccess(selectedDevice._id, "removeMachine", { machineId })
-      );
-      alert("Machine removed successfully!");
-      dispatch(getDeviceAccessList());
-    } catch (err) {
-      alert("Failed to remove machine.");
-    }
+    await crudDelete(
+      () => dispatch(
+        updateDeviceAccess(selectedDevice._id, "removeMachine", { machineId: machineIdToRemove })
+      ),
+      {
+        confirmTitle: "Remove Machine",
+        confirmMessage: "Remove this machine from device?",
+        successMessage: "Machine removed successfully!",
+        errorMessage: "Failed to remove machine.",
+        onSuccess: () => {
+          dispatch(getDeviceAccessList());
+        }
+      }
+    );
   };
 
-  const handleDelete = async () => {
+  const handleDeleteClick = async () => {
     if (!selectedDevice) return;
 
-    if (!window.confirm(`Are you sure you want to delete device "${selectedDevice.deviceName}"?`))
-      return;
-
-    try {
-      await dispatch(deleteDeviceAccess(selectedDevice._id));
-      alert("Deleted successfully.");
-      setShowDetail(false);
-      setSelectedDevice(null);
-      dispatch(getDeviceAccessList());
-    } catch (err) {
-      alert("Failed to delete.");
-    }
+    await crudDelete(
+      () => dispatch(deleteDeviceAccess(selectedDevice._id)),
+      {
+        confirmTitle: "Delete Device",
+        confirmMessage: `Are you sure you want to delete device "${selectedDevice.deviceName}"?`,
+        successMessage: "Deleted successfully.",
+        errorMessage: "Failed to delete.",
+        onSuccess: () => {
+          setShowDetail(false);
+          setSelectedDevice(null);
+          dispatch(getDeviceAccessList());
+        }
+      }
+    );
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -248,8 +266,8 @@ const EditDeviceAccess: React.FC = () => {
         <div className="detail-container">
           <div className="TopButtonEdit">
             <button onClick={() => setShowDetail(false)}>Back</button>
-            <button onClick={handleDelete} className="Delete">
-              Delete Device
+            <button onClick={handleDeleteClick} className="Delete" disabled={deleteState === 'loading'}>
+              {deleteState === 'loading' ? 'Deleting...' : 'Delete Device'}
             </button>
           </div>
 
@@ -272,17 +290,17 @@ const EditDeviceAccess: React.FC = () => {
               </div>
               <button
                 onClick={handleAddMachine}
-                disabled={!machineId || loading}
+                disabled={!machineId || saveState === 'loading'}
                 style={{
                   padding: '8px 16px',
-                  background: machineId ? '#FF6B35' : '#ccc',
+                  background: machineId && saveState !== 'loading' ? '#FF6B35' : '#ccc',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
-                  cursor: machineId ? 'pointer' : 'not-allowed',
+                  cursor: machineId && saveState !== 'loading' ? 'pointer' : 'not-allowed',
                 }}
               >
-                Add Machine
+                {saveState === 'loading' ? 'Adding...' : 'Add Machine'}
               </button>
             </div>
           </div>
@@ -359,6 +377,61 @@ const EditDeviceAccess: React.FC = () => {
       ) : (
         !loading && <p>No devices available.</p>
       )}
+
+      {/* Confirmation Modal */}
+      {confirmDialog.isOpen && (
+        <div className="modal-overlay" style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div className="modal-content" style={{
+            backgroundColor: 'white',
+            padding: '24px',
+            borderRadius: '8px',
+            maxWidth: '400px',
+            width: '90%'
+          }}>
+            <h3 style={{ marginTop: 0, marginBottom: '16px' }}>{confirmDialog.title}</h3>
+            <p style={{ marginBottom: '24px', color: '#666' }}>{confirmDialog.message}</p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={closeConfirmDialog}
+                style={{
+                  padding: '8px 16px',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  background: 'white',
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDialog.onConfirm}
+                style={{
+                  padding: '8px 16px',
+                  border: 'none',
+                  borderRadius: '4px',
+                  background: '#dc2626',
+                  color: 'white',
+                  cursor: 'pointer'
+                }}
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
     </div>
   );
 };

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { getCustomerCategories } from "../../../../redux/create/customerCategory/CustomerCategoryActions";
+import { getCustomerCategoriesV2 } from "../../../../redux/unifiedV2";
 import { RootState, AppDispatch } from "../../../../../store";
 import CustomerCategory from "../../create/customerCategory/CustomerCategory";
 import { useListNavigation } from "../../../../allCompones/BackButton";
@@ -13,21 +13,28 @@ interface Props {
 const EditCustomerCategoryList: React.FC<Props> = ({ onEdit }) => {
   const dispatch = useDispatch<AppDispatch>();
 
-  const { categories, loading, error } = useSelector(
-    (state: RootState) => state.getCustomerCategories || { categories: [], loading: false, error: null }
+  const customerCategoryState = useSelector(
+    (state: RootState) => state.v2.customerCategory
   );
+  const rawCategories = customerCategoryState?.list;
+  const categories = Array.isArray(rawCategories) ? rawCategories : [];
+  const loading = customerCategoryState?.loading;
+  const error = customerCategoryState?.error;
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRow, setSelectedRow] = useState(0);
   const [selectedItem, setSelectedItem] = useState<any>(null);
 
+  // Get selected branch to refetch when it changes
+  const selectedBranch = useSelector((state: any) => state.auth?.userData?.selectedBranch);
+
   useEffect(() => {
-    dispatch(getCustomerCategories());
-  }, [dispatch]);
+    dispatch(getCustomerCategoriesV2());
+  }, [dispatch, selectedBranch]);
 
   const handleBackToList = () => {
     setSelectedItem(null);
-    dispatch(getCustomerCategories());
+    dispatch(getCustomerCategoriesV2());
   };
 
   if (selectedItem) {

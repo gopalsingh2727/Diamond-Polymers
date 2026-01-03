@@ -1,29 +1,29 @@
-import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import React, { useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { RootState } from '../../../../redux/rootReducer';
 import { AppDispatch } from '../../../../../store';
-import { getOptions, deleteOption, updateOption } from '../../../../redux/option/optionActions';
-import { getOptionTypes } from '../../../../redux/option/optionTypeActions';
+import { deleteOption, updateOption } from '../../../../redux/option/optionActions';
+import { useCRUD } from '../../../../../hooks/useCRUD';
+import { useFormDataCache } from '../hooks/useFormDataCache';
+import { ToastContainer } from '../../../../../components/shared/Toast';
 import './EditOptionList.css';
 
 const EditOptionList: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
+  const { handleUpdate, handleDelete: crudDelete, updateState, deleteState, confirmDialog, closeConfirmDialog, toast } = useCRUD();
 
-  const { options, loading } = useSelector((state: RootState) => state.option);
-  const { optionTypes } = useSelector((state: RootState) => state.optionType);
+  // Use unified form data cache (same as Account and Daybook)
+  const { options: rawOptions, optionTypes: rawOptionTypes, loading } = useFormDataCache();
+  const options = Array.isArray(rawOptions) ? rawOptions : [];
+  const optionTypes = Array.isArray(rawOptionTypes) ? rawOptionTypes : [];
+
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRow, setSelectedRow] = useState(0);
   const [showDetail, setShowDetail] = useState(false);
   const [editName, setEditName] = useState('');
   const [editOptionTypeId, setEditOptionTypeId] = useState('');
   const [editId, setEditId] = useState<string | null>(null);
-
-  useEffect(() => {
-    dispatch(getOptions({}));
-    dispatch(getOptionTypes({}));
-  }, [dispatch]);
 
   // Get option type name by ID
   const getOptionTypeName = (optionTypeId: string) => {
@@ -52,47 +52,52 @@ const EditOptionList: React.FC = () => {
 
   const handleEditSave = async () => {
     if (!editName.trim()) {
-      alert('Option Name cannot be empty');
+      toast.error('Validation Error', 'Option Name cannot be empty');
       return;
     }
 
     if (!editOptionTypeId) {
-      alert('Please select an Option Type');
+      toast.error('Validation Error', 'Please select an Option Type');
       return;
     }
 
     if (!editId) return;
 
-    const branchId = localStorage.getItem('branchId') || '';
+    const branchId = localStorage.getItem('selectedBranch') || '';
 
-    try {
-      await dispatch(updateOption(editId, {
+    handleUpdate(
+      () => dispatch(updateOption(editId, {
         name: editName,
         optionTypeId: editOptionTypeId,
         branchId
-      }));
-      alert('Option updated successfully!');
-      setShowDetail(false);
-      dispatch(getOptions({}));
-    } catch (err) {
-      alert('Failed to update Option.');
-    }
+      })),
+      {
+        successMessage: 'Option updated successfully!',
+        errorMessage: 'Failed to update Option.',
+        onSuccess: () => {
+          setTimeout(() => {
+            setShowDetail(false);
+          }, 1500);
+        }
+      }
+    );
   };
 
   const handleDelete = async () => {
     if (!editId) return;
 
-    if (!window.confirm('Are you sure you want to delete this option?'))
-      return;
-
-    try {
-      await dispatch(deleteOption(editId));
-      alert('Deleted successfully.');
-      setShowDetail(false);
-      dispatch(getOptions({}));
-    } catch (err) {
-      alert('Failed to delete.');
-    }
+    crudDelete(
+      () => dispatch(deleteOption(editId)),
+      {
+        confirmTitle: 'Delete Option',
+        confirmMessage: 'Are you sure you want to delete this option?',
+        successMessage: 'Deleted successfully.',
+        errorMessage: 'Failed to delete.',
+        onSuccess: () => {
+          setShowDetail(false);
+        }
+      }
+    );
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -114,6 +119,61 @@ const EditOptionList: React.FC = () => {
 
   return (
     <div className="EditOption EditMachineType">
+      {/* Confirmation Dialog */}
+      {confirmDialog.isOpen && (
+        <div className="modal-overlay" style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div className="modal-content" style={{
+            backgroundColor: 'white',
+            padding: '24px',
+            borderRadius: '8px',
+            maxWidth: '400px',
+            width: '90%'
+          }}>
+            <h3 style={{ margin: '0 0 16px 0' }}>{confirmDialog.title}</h3>
+            <p style={{ margin: '0 0 24px 0', color: '#64748b' }}>{confirmDialog.message}</p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={closeConfirmDialog}
+                style={{
+                  padding: '8px 16px',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '6px',
+                  background: 'white',
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDialog.onConfirm}
+                disabled={deleteState === 'loading'}
+                style={{
+                  padding: '8px 16px',
+                  border: 'none',
+                  borderRadius: '6px',
+                  background: '#dc2626',
+                  color: 'white',
+                  cursor: deleteState === 'loading' ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {deleteState === 'loading' ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {!showDetail && !loading && options.length > 0 ? (
         <div className="editsectionsTable-container">
           {/* Search Bar */}
@@ -126,14 +186,14 @@ const EditOptionList: React.FC = () => {
                 className="editsectionsTable-searchInput"
                 onChange={handleSearchChange}
               />
-              <span className="editsectionsTable-searchIcon">🔍</span>
+              <span className="editsectionsTable-searchIcon">&#128269;</span>
               {searchTerm && (
                 <button
                   onClick={clearSearch}
                   className="editsectionsTable-clearButton"
                   title="Clear search"
                 >
-                  ✕
+                  &#10005;
                 </button>
               )}
             </div>
@@ -184,8 +244,12 @@ const EditOptionList: React.FC = () => {
         <div className="detail-container">
           <div className="TopButtonEdit">
             <button onClick={() => setShowDetail(false)}>Back</button>
-            <button onClick={handleDelete} className="Delete">
-              Delete
+            <button
+              onClick={handleDelete}
+              className="Delete"
+              disabled={deleteState === 'loading'}
+            >
+              {deleteState === 'loading' ? 'Deleting...' : 'Delete'}
             </button>
           </div>
 
@@ -227,11 +291,12 @@ const EditOptionList: React.FC = () => {
             onClick={handleEditSave}
             className="save-button"
             disabled={
-              editName === selectedItem.name &&
-              editOptionTypeId === selectedItem.optionTypeId
+              updateState === 'loading' ||
+              (editName === selectedItem.name &&
+              editOptionTypeId === selectedItem.optionTypeId)
             }
           >
-            Save
+            {updateState === 'loading' ? 'Saving...' : updateState === 'success' ? 'Saved!' : 'Save'}
           </button>
 
           <div className="info-section">
@@ -254,6 +319,7 @@ const EditOptionList: React.FC = () => {
       ) : (
         !loading && <p>No options available.</p>
       )}
+      <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
     </div>
   );
 };

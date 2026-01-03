@@ -73,13 +73,13 @@ class WebSocketClient {
           url.searchParams.set('deviceId', this.config.deviceId);
         }
 
-        console.log('🔌 Connecting to WebSocket:', url.toString());
-        console.log('🔍 [WS] Full URL with params:', { origin: url.origin, pathname: url.pathname, search: url.search });
+
+
 
         this.ws = new WebSocket(url.toString());
 
         this.ws.onopen = () => {
-          console.log('✅ WebSocket connected');
+
           this.isConnected = true;
           this.isReconnecting = false;
           this.reconnectAttempts = 0;
@@ -98,20 +98,20 @@ class WebSocketClient {
           try {
             const message = JSON.parse(event.data);
             // 🔍 DEBUG: Log ALL incoming WebSocket messages
-            console.log('📨 [WS] Message received:', message.type || message.action, message);
+
             this.handleMessage(message);
           } catch (error) {
-            console.error('❌ Error parsing WebSocket message:', error);
+
           }
         };
 
-        this.ws.onerror = (error) => {
-          console.error('❌ WebSocket error:', error);
-          reject(error);
+        this.ws.onerror = () => {
+          // Silently reject - don't spam console
+          reject(new Error('WebSocket connection failed'));
         };
 
         this.ws.onclose = () => {
-          console.log('🔌 WebSocket disconnected');
+
           this.isConnected = false;
           this.stopHeartbeat();
           this.updateConnectionState('disconnected');
@@ -123,7 +123,7 @@ class WebSocketClient {
         };
 
       } catch (error) {
-        console.error('❌ Error creating WebSocket:', error);
+
         reject(error);
       }
     });
@@ -134,7 +134,7 @@ class WebSocketClient {
    */
   disconnect(): void {
     if (this.ws) {
-      console.log('🔌 Disconnecting WebSocket...');
+
       this.config.autoReconnect = false; // Disable auto-reconnect
       this.stopHeartbeat();
       this.clearReconnectTimer();
@@ -152,13 +152,13 @@ class WebSocketClient {
       try {
         this.ws.send(JSON.stringify(message));
       } catch (error) {
-        console.error('❌ Error sending WebSocket message:', error);
+
         // Queue message for retry
         this.queueMessage(message);
       }
     } else {
       // Queue message for when connection is restored
-      console.log('📥 Queueing message (not connected)');
+
       this.queueMessage(message);
     }
   }
@@ -440,11 +440,11 @@ class WebSocketClient {
     // Emit to event handlers
     const handlers = this.eventHandlers.get(eventType);
     if (handlers) {
-      handlers.forEach(handler => {
+      handlers.forEach((handler) => {
         try {
           handler(message);
         } catch (error) {
-          console.error(`❌ Error in event handler for ${eventType}:`, error);
+
         }
       });
     }
@@ -452,11 +452,11 @@ class WebSocketClient {
     // Also emit to wildcard handlers
     const wildcardHandlers = this.eventHandlers.get('*');
     if (wildcardHandlers) {
-      wildcardHandlers.forEach(handler => {
+      wildcardHandlers.forEach((handler) => {
         try {
           handler(message);
         } catch (error) {
-          console.error('❌ Error in wildcard event handler:', error);
+
         }
       });
     }
@@ -467,12 +467,12 @@ class WebSocketClient {
    * @private
    */
   private handleForceLogout(data: any): void {
-    console.warn('⚠️ Force logout received:', data.message);
+
 
     // Emit force logout event
     const handlers = this.eventHandlers.get('session:force_logout');
     if (handlers) {
-      handlers.forEach(handler => handler(data));
+      handlers.forEach((handler) => handler(data));
     }
 
     // Disconnect
@@ -515,7 +515,7 @@ class WebSocketClient {
 
     // Limit queue size to prevent memory issues
     if (this.messageQueue.length > 100) {
-      console.warn('⚠️ Message queue is full, removing oldest messages');
+
       this.messageQueue = this.messageQueue.slice(-100);
     }
   }
@@ -526,7 +526,7 @@ class WebSocketClient {
    */
   private processMessageQueue(): void {
     if (this.messageQueue.length > 0) {
-      console.log(`📤 Processing ${this.messageQueue.length} queued messages`);
+
 
       while (this.messageQueue.length > 0) {
         const message = this.messageQueue.shift();
@@ -540,27 +540,49 @@ class WebSocketClient {
    * @private
    */
   private scheduleReconnect(): void {
-    if (this.reconnectAttempts >= (this.config.maxReconnectAttempts || 10)) {
-      console.error('❌ Max reconnection attempts reached');
+    // Don't reconnect if disabled
+    if (!this.config.autoReconnect) {
+
       this.updateConnectionState('disconnected');
       return;
     }
 
+    // ✅ FIXED: Check BEFORE incrementing
+    if (this.reconnectAttempts >= (this.config.maxReconnectAttempts || 10)) {
+
+
+
+
+
+      this.updateConnectionState('disconnected');
+      this.isReconnecting = false;
+      this.config.autoReconnect = false; // ✅ Stop trying to reconnect
+      return;
+    }
+
     this.isReconnecting = true;
+    this.reconnectAttempts++; // ✅ FIXED: Increment BEFORE calculating delay
     this.updateConnectionState('reconnecting');
 
-    // Exponential backoff: 3s, 6s, 12s, 24s, etc.
-    const delay = this.config.reconnectInterval! * Math.pow(2, this.reconnectAttempts);
-    const maxDelay = 60000; // Max 1 minute
+    // Exponential backoff: 5s, 10s, 20s, 40s...
+    const delay = this.config.reconnectInterval! * Math.pow(2, this.reconnectAttempts - 1);
+    const maxDelay = 30000; // Max 30 seconds
     const actualDelay = Math.min(delay, maxDelay);
 
-    console.log(`🔄 Reconnecting in ${actualDelay / 1000}s (attempt ${this.reconnectAttempts + 1}/${this.config.maxReconnectAttempts})...`);
+
 
     this.reconnectTimer = setTimeout(() => {
-      this.reconnectAttempts++;
       this.connect().catch((error) => {
-        console.error('❌ Reconnection failed:', error);
-        this.scheduleReconnect();
+
+        // ✅ FIXED: Only schedule if we haven't hit max attempts
+        if (this.reconnectAttempts < (this.config.maxReconnectAttempts || 10) && this.config.autoReconnect) {
+          this.scheduleReconnect();
+        } else {
+
+          this.isReconnecting = false;
+          this.config.autoReconnect = false;
+          this.updateConnectionState('disconnected');
+        }
       });
     }, actualDelay);
   }
@@ -581,11 +603,11 @@ class WebSocketClient {
    * @private
    */
   private updateConnectionState(state: 'connecting' | 'connected' | 'disconnected' | 'reconnecting'): void {
-    this.connectionStateHandlers.forEach(handler => {
+    this.connectionStateHandlers.forEach((handler) => {
       try {
         handler(state);
       } catch (error) {
-        console.error('❌ Error in connection state handler:', error);
+
       }
     });
   }

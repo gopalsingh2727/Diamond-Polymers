@@ -38,7 +38,7 @@ const OptionsSection: React.FC<OptionsSectionProps> = ({
   category,
   title,
   onDataChange,
-  initialData = [],
+  initialData = []
 }) => {
   const dispatch = useDispatch();
   const { options } = useSelector((state: any) => state.option || { options: [] });
@@ -54,24 +54,24 @@ const OptionsSection: React.FC<OptionsSectionProps> = ({
 
   // Fetch options for this category
   useEffect(() => {
-    const branchId = localStorage.getItem('branchId') || '';
+    const branchId = localStorage.getItem('selectedBranch') || '';
     dispatch(getOptions({ category, branchId }) as any);
   }, [dispatch, category]);
 
   // Listen for WebSocket updates to refetch options in real-time
   useEffect(() => {
-    const branchId = localStorage.getItem('branchId') || '';
+    const branchId = localStorage.getItem('selectedBranch') || '';
 
     const handleWebSocketMessage = (event: CustomEvent) => {
       const { type, data } = event.detail;
 
       if (type === 'referenceData:invalidate') {
         const entityType = data?.entity || data?.entityType;
-        console.log('🔄 [OptionsSection] WebSocket invalidate received for:', entityType);
+
 
         // Refetch options when option or optionType is updated
         if (entityType === 'option' || entityType === 'optionType') {
-          console.log('📥 [OptionsSection] Refetching options for category:', category);
+
           dispatch(getOptions({ category, branchId }) as any);
         }
       }
@@ -87,9 +87,9 @@ const OptionsSection: React.FC<OptionsSectionProps> = ({
 
   // Filter options by search term
   const filteredOptions = options.filter((opt: any) =>
-    opt.optionTypeId?.category === category &&
-    (opt.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      opt.code.toLowerCase().includes(searchTerm.toLowerCase()))
+  opt.optionTypeId?.category === category && (
+  opt.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  opt.code.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const handleAddOption = () => {
@@ -115,23 +115,23 @@ const OptionsSection: React.FC<OptionsSectionProps> = ({
       specificationValues: option.specifications.map((spec: any) => ({
         name: spec.name,
         value: spec.value,
-        unit: spec.unit || '',
+        unit: spec.unit || ''
       })),
-      mixingData: option.mixingConfig?.enabled
-        ? {
-            enabled: true,
-            components: option.mixingConfig.mixComponents.map((comp: any) => ({
-              optionId: comp.optionId,
-              optionName: comp.optionName,
-              percentage: comp.percentage,
-              weight: comp.weight,
-            })),
-            totalWeight: option.mixingConfig.mixComponents.reduce(
-              (sum: number, comp: any) => sum + comp.weight,
-              0
-            ),
-          }
-        : undefined,
+      mixingData: option.mixingConfig?.enabled ?
+      {
+        enabled: true,
+        components: option.mixingConfig.mixComponents.map((comp: any) => ({
+          optionId: comp.optionId,
+          optionName: comp.optionName,
+          percentage: comp.percentage,
+          weight: comp.weight
+        })),
+        totalWeight: option.mixingConfig.mixComponents.reduce(
+          (sum: number, comp: any) => sum + comp.weight,
+          0
+        )
+      } :
+      undefined
     };
 
     const updated = [...selectedOptions, optionItem];
@@ -206,8 +206,8 @@ const OptionsSection: React.FC<OptionsSectionProps> = ({
       </div>
 
       {/* Selected Options List */}
-      {selectedOptions.length > 0 && (
-        <div className="selectedOptionsList">
+      {selectedOptions.length > 0 &&
+      <div className="selectedOptionsList">
           <table>
             <thead>
               <tr>
@@ -221,122 +221,122 @@ const OptionsSection: React.FC<OptionsSectionProps> = ({
               </tr>
             </thead>
             <tbody>
-              {selectedOptions.map((item, index) => (
-                <tr key={item._id}>
+              {selectedOptions.map((item, index) =>
+            <tr key={item._id}>
                   <td>{index + 1}</td>
                   <td>
-                    {editingIndex === index && editingField === 'name' ? (
-                      <input
-                        type="text"
-                        value={editValue}
-                        onChange={(e) => setEditValue(e.target.value)}
-                        onBlur={handleSaveEdit}
-                        onKeyDown={handleEditKeyDown}
-                        className="editableInput"
-                        autoFocus
-                      />
-                    ) : (
-                      <div className="editableCell">
+                    {editingIndex === index && editingField === 'name' ?
+                <input
+                  type="text"
+                  value={editValue}
+                  onChange={(e) => setEditValue(e.target.value)}
+                  onBlur={handleSaveEdit}
+                  onKeyDown={handleEditKeyDown}
+                  className="editableInput"
+                  autoFocus /> :
+
+
+                <div className="editableCell">
                         <span
-                          className="editableText"
-                          onClick={() => handleStartEdit(index, 'name', item.optionName)}
-                          onDoubleClick={() => handleStartEdit(index, 'name', item.optionName)}
-                          title="Click to edit"
-                        >
+                    className="editableText"
+                    onClick={() => handleStartEdit(index, 'name', item.optionName)}
+                    onDoubleClick={() => handleStartEdit(index, 'name', item.optionName)}
+                    title="Click to edit">
+
                           {item.optionName}
                         </span>
                         <button
-                          type="button"
-                          onClick={() => handleStartEdit(index, 'name', item.optionName)}
-                          className="editIconButton"
-                          title="Edit"
-                        >
+                    type="button"
+                    onClick={() => handleStartEdit(index, 'name', item.optionName)}
+                    className="editIconButton"
+                    title="Edit">
+
                           ✏️
                         </button>
                       </div>
-                    )}
+                }
                   </td>
                   <td>
-                    {editingIndex === index && editingField === 'code' ? (
-                      <input
-                        type="text"
-                        value={editValue}
-                        onChange={(e) => setEditValue(e.target.value)}
-                        onBlur={handleSaveEdit}
-                        onKeyDown={handleEditKeyDown}
-                        className="editableInput"
-                        autoFocus
-                      />
-                    ) : (
-                      <div className="editableCell">
+                    {editingIndex === index && editingField === 'code' ?
+                <input
+                  type="text"
+                  value={editValue}
+                  onChange={(e) => setEditValue(e.target.value)}
+                  onBlur={handleSaveEdit}
+                  onKeyDown={handleEditKeyDown}
+                  className="editableInput"
+                  autoFocus /> :
+
+
+                <div className="editableCell">
                         <span
-                          className="editableText"
-                          onClick={() => handleStartEdit(index, 'code', item.optionCode)}
-                          onDoubleClick={() => handleStartEdit(index, 'code', item.optionCode)}
-                          title="Click to edit"
-                        >
+                    className="editableText"
+                    onClick={() => handleStartEdit(index, 'code', item.optionCode)}
+                    onDoubleClick={() => handleStartEdit(index, 'code', item.optionCode)}
+                    title="Click to edit">
+
                           {item.optionCode}
                         </span>
                         <button
-                          type="button"
-                          onClick={() => handleStartEdit(index, 'code', item.optionCode)}
-                          className="editIconButton"
-                          title="Edit"
-                        >
+                    type="button"
+                    onClick={() => handleStartEdit(index, 'code', item.optionCode)}
+                    className="editIconButton"
+                    title="Edit">
+
                           ✏️
                         </button>
                       </div>
-                    )}
+                }
                   </td>
                   <td>
                     <input
-                      type="number"
-                      value={item.quantity}
-                      onChange={(e) => handleQuantityChange(index, parseInt(e.target.value) || 1)}
-                      min="1"
-                      className="quantityInput"
-                    />
+                  type="number"
+                  value={item.quantity}
+                  onChange={(e) => handleQuantityChange(index, parseInt(e.target.value) || 1)}
+                  min="1"
+                  className="quantityInput" />
+
                   </td>
                   <td>
                     <div className="specificationsList">
-                      {item.specificationValues.slice(0, 3).map((spec, i) => (
-                        <span key={i} className="specChip">
+                      {item.specificationValues.slice(0, 3).map((spec, i) =>
+                  <span key={i} className="specChip">
                           {spec.name}: {spec.value} {spec.unit}
                         </span>
-                      ))}
-                      {item.specificationValues.length > 3 && (
-                        <span className="specMore">+{item.specificationValues.length - 3} more</span>
-                      )}
+                  )}
+                      {item.specificationValues.length > 3 &&
+                  <span className="specMore">+{item.specificationValues.length - 3} more</span>
+                  }
                     </div>
                   </td>
                   <td>
-                    {item.mixingData?.enabled ? (
-                      <span className="mixingBadge">
+                    {item.mixingData?.enabled ?
+                <span className="mixingBadge">
                         {item.mixingData.components.length} components
-                      </span>
-                    ) : (
-                      <span className="noMixing">-</span>
-                    )}
+                      </span> :
+
+                <span className="noMixing">-</span>
+                }
                   </td>
                   <td>
                     <button
-                      type="button"
-                      onClick={() => handleRemoveOption(index)}
-                      className="removeButton"
-                    >
+                  type="button"
+                  onClick={() => handleRemoveOption(index)}
+                  className="removeButton">
+
                       Remove
                     </button>
                   </td>
                 </tr>
-              ))}
+            )}
             </tbody>
           </table>
         </div>
-      )}
+      }
 
       {/* Add Option Popup */}
-      {showPopup && (
-        <div className="popupOverlay" onClick={() => setShowPopup(false)}>
+      {showPopup &&
+      <div className="popupOverlay" onClick={() => setShowPopup(false)}>
           <div className="popupContent" onClick={(e) => e.stopPropagation()}>
             <div className="popupHeader">
               <h3>Select {title}</h3>
@@ -349,119 +349,119 @@ const OptionsSection: React.FC<OptionsSectionProps> = ({
               {/* Search */}
               <div className="searchBox">
                 <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search by name or code..."
-                  className="searchInput"
-                />
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search by name or code..."
+                className="searchInput" />
+
               </div>
 
               {/* Option Selection */}
               <div className="optionSelection">
                 <label>Select Option</label>
                 <select
-                  value={selectedOptionId}
-                  onChange={(e) => setSelectedOptionId(e.target.value)}
-                  className="optionSelect"
-                >
+                value={selectedOptionId}
+                onChange={(e) => setSelectedOptionId(e.target.value)}
+                className="optionSelect">
+
                   <option value="">-- Select an option --</option>
-                  {filteredOptions.map((opt: any) => (
-                    <option key={opt._id} value={opt._id}>
+                  {filteredOptions.map((opt: any) =>
+                <option key={opt._id} value={opt._id}>
                       {opt.name} ({opt.code})
                       {opt.optionTypeId?.name ? ` - ${opt.optionTypeId.name}` : ''}
                     </option>
-                  ))}
+                )}
                 </select>
               </div>
 
               {/* Option Preview */}
-              {selectedOptionId && (
-                <div className="optionPreview">
+              {selectedOptionId &&
+            <div className="optionPreview">
                   {(() => {
-                    const selectedOption = options.find((o: any) => o._id === selectedOptionId);
-                    if (!selectedOption) return null;
+                const selectedOption = options.find((o: any) => o._id === selectedOptionId);
+                if (!selectedOption) return null;
 
-                    return (
-                      <div className="previewCard">
+                return (
+                  <div className="previewCard">
                         <h4>{selectedOption.name}</h4>
                         <p className="optionCode">Code: {selectedOption.code}</p>
 
                         {/* Specifications */}
-                        {selectedOption.specifications && selectedOption.specifications.length > 0 && (
-                          <div className="previewSection">
+                        {selectedOption.specifications && selectedOption.specifications.length > 0 &&
+                    <div className="previewSection">
                             <strong>Specifications:</strong>
                             <div className="specGrid">
-                              {selectedOption.specifications.map((spec: any, i: number) => (
-                                <div key={i} className="specItem">
+                              {selectedOption.specifications.map((spec: any, i: number) =>
+                        <div key={i} className="specItem">
                                   <span className="specName">{spec.name}:</span>
                                   <span className="specValue">
                                     {spec.value} {spec.unit}
                                     {spec.isCalculated && <span className="calcBadge">🧮</span>}
                                   </span>
                                 </div>
-                              ))}
+                        )}
                             </div>
                           </div>
-                        )}
+                    }
 
                         {/* Mixing Info */}
-                        {selectedOption.mixingConfig?.enabled && (
-                          <div className="previewSection">
+                        {selectedOption.mixingConfig?.enabled &&
+                    <div className="previewSection">
                             <strong>Mixing Components:</strong>
                             <ul className="mixComponentsList">
-                              {selectedOption.mixingConfig.mixComponents.map((comp: any, i: number) => (
-                                <li key={i}>
+                              {selectedOption.mixingConfig.mixComponents.map((comp: any, i: number) =>
+                        <li key={i}>
                                   {comp.optionName} - {comp.percentage}% ({comp.weight} units)
                                 </li>
-                              ))}
+                        )}
                             </ul>
                           </div>
-                        )}
+                    }
 
                         {/* Files */}
-                        {selectedOption.files && selectedOption.files.length > 0 && (
-                          <div className="previewSection">
+                        {selectedOption.files && selectedOption.files.length > 0 &&
+                    <div className="previewSection">
                             <strong>Files:</strong>
                             <ul className="filesList">
-                              {selectedOption.files.map((file: any, i: number) => (
-                                <li key={i}>{file.originalFileName}</li>
-                              ))}
+                              {selectedOption.files.map((file: any, i: number) =>
+                        <li key={i}>{file.originalFileName}</li>
+                        )}
                             </ul>
                           </div>
-                        )}
+                    }
 
                         {/* Links */}
-                        {selectedOption.links && selectedOption.links.length > 0 && (
-                          <div className="previewSection">
+                        {selectedOption.links && selectedOption.links.length > 0 &&
+                    <div className="previewSection">
                             <strong>Links:</strong>
                             <ul className="linksList">
-                              {selectedOption.links.map((link: any, i: number) => (
-                                <li key={i}>
+                              {selectedOption.links.map((link: any, i: number) =>
+                        <li key={i}>
                                   <a href={link.url} target="_blank" rel="noopener noreferrer">
                                     {link.title}
                                   </a>
                                 </li>
-                              ))}
+                        )}
                             </ul>
                           </div>
-                        )}
-                      </div>
-                    );
-                  })()}
+                    }
+                      </div>);
+
+              })()}
                 </div>
-              )}
+            }
 
               {/* Quantity */}
               <div className="quantitySection">
                 <label>Quantity</label>
                 <input
-                  type="number"
-                  value={quantity}
-                  onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                  min="1"
-                  className="quantityInput"
-                />
+                type="number"
+                value={quantity}
+                onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+                min="1"
+                className="quantityInput" />
+
               </div>
 
               {/* Actions */}
@@ -476,9 +476,9 @@ const OptionsSection: React.FC<OptionsSectionProps> = ({
             </div>
           </div>
         </div>
-      )}
-    </div>
-  );
+      }
+    </div>);
+
 };
 
 export default OptionsSection;

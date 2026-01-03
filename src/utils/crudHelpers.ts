@@ -1,12 +1,12 @@
 import axios, { AxiosRequestConfig } from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_27INFINITY_IN || 'http://localhost:4000/dev';
+const API_BASE_URL = import.meta.env.VITE_API_27INFINITY_IN || 'https://api.27infinity.in';
 // SECURITY FIX: Removed hardcoded API key fallback - must be provided via environment variable
 const API_KEY = import.meta.env.VITE_API_KEY;
 
 if (!API_KEY) {
-  console.error('CRITICAL: VITE_API_KEY environment variable is not set. API calls will fail.');
-  console.error('Please create a .env file with VITE_API_KEY=your_api_key_here');
+
+
 }
 
 /**
@@ -28,19 +28,35 @@ const getSelectedBranch = (): string | null => {
       return parsed.selectedBranch || null;
     }
   } catch {
+
     // Ignore parse errors
-  }
-  return null;
+  }return null;
+};
+
+/**
+ * Detect if running on mobile platform
+ */
+const isMobilePlatform = (): boolean => {
+  if (typeof navigator === 'undefined') return false;
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 };
 
 /**
  * Create axios instance with default configuration
+ * Includes mobile-friendly CORS headers
  */
 const createAPIClient = (token?: string) => {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    'x-api-key': API_KEY
+    'x-api-key': API_KEY,
+    'Accept': 'application/json'
   };
+
+  // Mobile-specific headers
+  if (isMobilePlatform()) {
+    headers['X-Platform'] = 'mobile';
+    headers['X-Requested-With'] = 'XMLHttpRequest';
+  }
 
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
@@ -55,9 +71,25 @@ const createAPIClient = (token?: string) => {
   return axios.create({
     baseURL: API_BASE_URL,
     headers,
-    timeout: 30000
+    timeout: 30000,
+    // Enable credentials for cross-origin requests
+    withCredentials: false // Set to true if using cookies
   });
 };
+
+/**
+ * Get API configuration for mobile apps
+ */
+export const getMobileAPIConfig = () => ({
+  baseURL: API_BASE_URL,
+  apiKey: API_KEY,
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+    'x-api-key': API_KEY,
+    'X-Platform': 'mobile'
+  }
+});
 
 /**
  * Generic CRUD API Helper Functions
@@ -66,11 +98,11 @@ export const crudAPI = {
   /**
    * Create a new resource
    */
-  create: async <T = any>(
-    endpoint: string,
-    data: any,
-    config?: AxiosRequestConfig
-  ): Promise<T> => {
+  create: async <T = any,>(
+  endpoint: string,
+  data: any,
+  config?: AxiosRequestConfig)
+  : Promise<T> => {
     const token = localStorage.getItem('authToken') || localStorage.getItem('token');
     const client = createAPIClient(token || undefined);
 
@@ -85,10 +117,10 @@ export const crudAPI = {
   /**
    * Read/Get a resource or list of resources
    */
-  read: async <T = any>(
-    endpoint: string,
-    config?: AxiosRequestConfig
-  ): Promise<T> => {
+  read: async <T = any,>(
+  endpoint: string,
+  config?: AxiosRequestConfig)
+  : Promise<T> => {
     const token = localStorage.getItem('authToken') || localStorage.getItem('token');
     const client = createAPIClient(token || undefined);
 
@@ -103,11 +135,11 @@ export const crudAPI = {
   /**
    * Update an existing resource
    */
-  update: async <T = any>(
-    endpoint: string,
-    data: any,
-    config?: AxiosRequestConfig
-  ): Promise<T> => {
+  update: async <T = any,>(
+  endpoint: string,
+  data: any,
+  config?: AxiosRequestConfig)
+  : Promise<T> => {
     const token = localStorage.getItem('authToken') || localStorage.getItem('token');
     const client = createAPIClient(token || undefined);
 
@@ -122,11 +154,11 @@ export const crudAPI = {
   /**
    * Partially update a resource
    */
-  patch: async <T = any>(
-    endpoint: string,
-    data: any,
-    config?: AxiosRequestConfig
-  ): Promise<T> => {
+  patch: async <T = any,>(
+  endpoint: string,
+  data: any,
+  config?: AxiosRequestConfig)
+  : Promise<T> => {
     const token = localStorage.getItem('authToken') || localStorage.getItem('token');
     const client = createAPIClient(token || undefined);
 
@@ -141,10 +173,10 @@ export const crudAPI = {
   /**
    * Delete a resource
    */
-  delete: async <T = any>(
-    endpoint: string,
-    config?: AxiosRequestConfig
-  ): Promise<T> => {
+  delete: async <T = any,>(
+  endpoint: string,
+  config?: AxiosRequestConfig)
+  : Promise<T> => {
     const token = localStorage.getItem('authToken') || localStorage.getItem('token');
     const client = createAPIClient(token || undefined);
 
@@ -252,7 +284,45 @@ export const branchSettingsAPI = {
   getByBranch: (branchId: string) => crudAPI.read(`/branch-settings/${branchId}`),
   update: (branchId: string, data: any) => crudAPI.update(`/branch-settings/${branchId}`, data),
   testEmail: (branchId: string, email: string) => crudAPI.create(`/branch-settings/${branchId}/test-email`, { email }),
-  testWhatsApp: (branchId: string, phone: string) => crudAPI.create(`/branch-settings/${branchId}/test-whatsapp`, { phone })
+  testWhatsApp: (branchId: string, phone: string) => crudAPI.create(`/branch-settings/${branchId}/test-whatsapp`, { phone }),
+  // Global settings (same config for all branches)
+  getGlobal: () => crudAPI.read('/branch-settings/global'),
+  updateGlobal: (data: any) => crudAPI.update('/branch-settings/global', data)
+};
+
+// Email Template CRUD (Master Admin only)
+export const emailTemplateAPI = {
+  create: (data: any) => crudAPI.create('/email-templates', data),
+  getAll: () => crudAPI.read('/email-templates'),
+  getByBranch: (branchId: string) => crudAPI.read(`/email-templates/branch/${branchId}`),
+  getGlobal: () => crudAPI.read('/email-templates/global'),
+  getById: (id: string) => crudAPI.read(`/email-templates/${id}`),
+  update: (id: string, data: any) => crudAPI.update(`/email-templates/${id}`, data),
+  delete: (id: string) => crudAPI.delete(`/email-templates/${id}`),
+  preview: (id: string, data: any) => crudAPI.create(`/email-templates/${id}/preview`, data)
+};
+
+// WhatsApp Template CRUD (Master Admin only)
+export const whatsappTemplateAPI = {
+  create: (data: any) => crudAPI.create('/whatsapp-templates', data),
+  getAll: () => crudAPI.read('/whatsapp-templates'),
+  getByBranch: (branchId: string) => crudAPI.read(`/whatsapp-templates/branch/${branchId}`),
+  getGlobal: () => crudAPI.read('/whatsapp-templates/global'),
+  getById: (id: string) => crudAPI.read(`/whatsapp-templates/${id}`),
+  update: (id: string, data: any) => crudAPI.update(`/whatsapp-templates/${id}`, data),
+  delete: (id: string) => crudAPI.delete(`/whatsapp-templates/${id}`),
+  preview: (id: string, data: any) => crudAPI.create(`/whatsapp-templates/${id}/preview`, data)
+};
+
+// Send Order Communication API
+export const sendOrderAPI = {
+  sendEmail: (orderId: string, data: {templateId: string;to: string;variables?: Record<string, string>;}) =>
+  crudAPI.create(`/orders/${orderId}/send-email`, data),
+  sendWhatsApp: (orderId: string, data: {templateId: string;to: string;variables?: Record<string, string>;}) =>
+  crudAPI.create(`/orders/${orderId}/send-whatsapp`, data),
+  sendSMS: (orderId: string, data: {message: string;to: string;}) =>
+  crudAPI.create(`/orders/${orderId}/send-sms`, data),
+  getHistory: (orderId: string) => crudAPI.read(`/orders/${orderId}/communication-history`)
 };
 
 /**

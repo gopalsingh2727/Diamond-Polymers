@@ -1,6 +1,8 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { RootState } from "../redux/rootReducer";
+
+// Direct imports for Electron app
 import IndexComponentes from "../IndexComponents";
 import IndexMenuRoute from "../main/sidebar/indexMenuRoute";
 import LoginForm from "../login/login";
@@ -12,12 +14,7 @@ import SecretBranches from "../settings/SecretBranches";
 import SecretManager from "../settings/SecretManager";
 import SeeAll from "../settings/SeeAll";
 import ExternalAPIKeys from "../settings/ExternalAPIKeys";
-import BranchSettings from "../settings/BranchSettings";
 import MasterSettings from "../settings/MasterSettings";
-
-
-
-
 
 const MainRount = () => {
   const { isAuthenticated, userData } = useSelector(
@@ -143,17 +140,6 @@ const MainRount = () => {
       />
 
       <Route
-        path="/settings/branch-settings"
-        element={
-          isAuthenticated && userData?.role === "master_admin" ? (
-            <BranchSettings />
-          ) : (
-            <Navigate to="/login" />
-          )
-        }
-      />
-
-      <Route
         path="/settings/master"
         element={
           isAuthenticated && userData?.role === "master_admin" ? (
@@ -163,11 +149,6 @@ const MainRount = () => {
           )
         }
       />
-
-      {/* Marketing Pages - Public Access */}
-      {/* <Route path="/landing" element={<LandingPage />} /> */}
-
-  
     </Routes>
   );
 };

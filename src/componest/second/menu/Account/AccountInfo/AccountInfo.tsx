@@ -7,9 +7,10 @@ import { RootState } from "../../../../redux/rootReducer";
 
 import { BackButton } from "../../../../allCompones/BackButton";
 import { getAccountOrders } from "../../../../redux/oders/OdersActions";
-import { useDaybookUpdates } from "../../../../../hooks/useWebSocket";  // ✅ WebSocket real-time updates
-import "../../Oders/indexAllOders.css";  // ✅ Import All Orders styling
-import { Download, Printer, RefreshCw } from "lucide-react";  // ✅ Icons
+import { useDaybookUpdates } from "../../../../../hooks/useWebSocket"; // ✅ WebSocket real-time updates
+import "../../Oders/indexAllOders.css"; // ✅ Import All Orders styling
+import "./accountInfo.css"; // ✅ Import AccountInfo specific styling
+import { Download, Printer, RefreshCw } from "lucide-react"; // ✅ Icons
 
 // Define Order interface
 interface Order {
@@ -75,7 +76,7 @@ interface Order {
     firstName?: string;
     lastName?: string;
   };
-  AllStatus?: Record<string, { color: string; description: string }>;
+  AllStatus?: Record<string, {color: string;description: string;}>;
   // Order type and options - for edit mode
   orderType?: any;
   orderTypeId?: string;
@@ -136,7 +137,7 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
       try {
         return JSON.parse(storedData);
       } catch (e) {
-        console.error('Failed to parse stored account data:', e);
+
       }
     }
     return null;
@@ -151,6 +152,7 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
   const [toDate, setToDate] = useState(propToDate || "");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [currentPage, setCurrentPage] = useState(1); // ✅ Pagination state
   const [refreshTrigger, setRefreshTrigger] = useState(0); // ✅ ADDED: Force refresh trigger
 
   // Refs - must be declared before useEffect
@@ -160,7 +162,7 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
 
   // Redux selectors
   const ordersState = useSelector((state: RootState) => {
-    console.log("🔍 Account Orders Redux state:", state.accountOrders);
+
     return state.accountOrders || defaultOrdersState;
   });
 
@@ -170,23 +172,20 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
   const {
     orders: reduxOrders = [],
     loading = false,
-    error = null,
-    pagination = null,
-    summary = null,
-    statusCounts = null
+    error = null
   } = ordersState;
 
-  console.log("📊 Account Info Component state values:", {
-    accountId: accountData?._id,
-    ordersCount: reduxOrders.length,
-    loading,
-    error,
-  });
+
+
+
+
+
+
 
   // Company info with safe access
   const companyName = (authState as any)?.user?.companyName || "ABC Company";
   const branchName = (authState as any)?.user?.branchName || "Main Branch";
-  const branchId = (authState as any)?.user?.branchId || localStorage.getItem('branchId') || localStorage.getItem('selectedBranch') || null;  // ✅ For WebSocket subscription
+  const branchId = (authState as any)?.user?.branchId || localStorage.getItem('selectedBranch') || null; // ✅ For WebSocket subscription
 
   // Check if accountData exists
   if (!accountData) {
@@ -197,8 +196,8 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
           <h2>No Account Selected</h2>
           <p>Please select an account to view orders.</p>
         </div>
-      </div>
-    );
+      </div>);
+
   }
 
   // Status color and description functions
@@ -288,7 +287,7 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
   }) : [];
 
   // Filter orders based on search and status
-  const filteredOrders = transformedOrders.filter(order => {
+  const filteredOrders = transformedOrders.filter((order) => {
     // Date filtering
     if (!order.date) return false;
 
@@ -322,8 +321,8 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
   const createFilters = (): OrderFilters => {
     const filters: OrderFilters = {
       accountId: accountData._id,
-      page: 1,
-      limit: 100,
+      page: currentPage, // ✅ Use current page for pagination
+      limit: 50, // ✅ Load only 50 orders per page for performance
       sortBy: 'createdAt',
       sortOrder: 'desc'
     };
@@ -340,27 +339,31 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
   const fetchAccountOrdersData = () => {
     if (accountData?._id) {
       const filters = createFilters();
-      console.log("📋 Account Orders - Filters being sent:", filters);
+
       dispatch(getAccountOrders(accountData._id, filters) as any);
     }
   };
 
   // useEffect hooks - AFTER all state and selectors are declared
 
+  // ✅ Reset page to 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [fromDate, toDate, searchTerm, statusFilter]);
+
   // Fetch orders when component mounts, filters change, or navigation back to page
   useEffect(() => {
-    console.log("🔄 AccountInfo useEffect triggered - fetching account orders (location.key:", location.key, ", refreshTrigger:", refreshTrigger, ")");
     fetchAccountOrdersData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dispatch, accountData?._id, fromDate, toDate, searchTerm, statusFilter, location.key, refreshTrigger]);
+  }, [dispatch, accountData?._id, currentPage, fromDate, toDate, searchTerm, statusFilter, location.key, refreshTrigger]);
 
   // ✅ FIXED: Check for order updates on mount (using state trigger to avoid stale closures)
   useEffect(() => {
     const ordersUpdated = sessionStorage.getItem('orders_updated');
     if (ordersUpdated) {
-      console.log("📡 [AccountInfo] Orders were updated on MOUNT - triggering refresh");
+
       sessionStorage.removeItem('orders_updated');
-      setRefreshTrigger(prev => prev + 1);
+      setRefreshTrigger((prev) => prev + 1);
     }
   }, []); // Run on mount
 
@@ -368,16 +371,16 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
   useEffect(() => {
     const ordersUpdated = sessionStorage.getItem('orders_updated');
     if (ordersUpdated) {
-      console.log("📡 [AccountInfo] Orders were updated on LOCATION CHANGE - triggering refresh");
+
       sessionStorage.removeItem('orders_updated');
-      setRefreshTrigger(prev => prev + 1);
+      setRefreshTrigger((prev) => prev + 1);
     }
   }, [location]); // Trigger on any location change
 
   // ✅ WebSocket real-time subscription for instant order updates
   const handleOrderUpdate = useCallback(() => {
-    console.log("📡 WebSocket: Account orders update received - triggering refresh");
-    setRefreshTrigger(prev => prev + 1);
+
+    setRefreshTrigger((prev) => prev + 1);
   }, []);
 
   // Subscribe to real-time daybook updates via WebSocket
@@ -389,16 +392,27 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
       if (document.visibilityState === 'visible') {
         const ordersUpdated = sessionStorage.getItem('orders_updated');
         if (ordersUpdated) {
-          console.log("📡 Page visible + orders were updated - triggering Account orders refresh");
+
           sessionStorage.removeItem('orders_updated');
-          setRefreshTrigger(prev => prev + 1);
+          setRefreshTrigger((prev) => prev + 1);
         }
       }
     };
 
+    const handleWindowFocus = () => {
+      const ordersUpdated = sessionStorage.getItem('orders_updated');
+      if (ordersUpdated) {
+
+        sessionStorage.removeItem('orders_updated');
+        setRefreshTrigger((prev) => prev + 1);
+      }
+    };
+
     document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleWindowFocus);
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleWindowFocus);
     };
   }, []);
 
@@ -415,7 +429,7 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
     if (selectedOrder) {
       selectedOrder.scrollIntoView({
         behavior: "smooth",
-        block: "nearest",
+        block: "nearest"
       });
     }
   }, [selectedOrderIndex]);
@@ -429,7 +443,7 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
 
   // Handle order click to navigate to edit
   const handleOrderClick = (order: Order) => {
-    console.log('🔄 Navigating to CreateOrders with account order data:', order);
+
 
     const orderDataForEdit = {
       _id: order._id,
@@ -568,7 +582,7 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
   };
 
   const handleRefresh = () => {
-    console.log("🔄 Account Orders Manual refresh triggered");
+
     fetchAccountOrdersData();
   };
 
@@ -583,17 +597,17 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
   const handlePrint = () => {
     const currentDate = new Date().toLocaleDateString();
     const periodText =
-      fromDate && toDate
-        ? `Period: ${new Date(fromDate).toLocaleDateString()} - ${new Date(toDate).toLocaleDateString()}`
-        : fromDate
-        ? `From: ${new Date(fromDate).toLocaleDateString()}`
-        : toDate
-        ? `To: ${new Date(toDate).toLocaleDateString()}`
-        : "All Records";
+    fromDate && toDate ?
+    `Period: ${new Date(fromDate).toLocaleDateString()} - ${new Date(toDate).toLocaleDateString()}` :
+    fromDate ?
+    `From: ${new Date(fromDate).toLocaleDateString()}` :
+    toDate ?
+    `To: ${new Date(toDate).toLocaleDateString()}` :
+    "All Records";
 
-    const tableRows = filteredOrders
-      .map(
-        order => `
+    const tableRows = filteredOrders.
+    map(
+      (order) => `
         <tr>
           <td>${order.date || 'N/A'}</td>
           <td>${order.orderId || 'N/A'}</td>
@@ -603,8 +617,8 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
           <td>${order.createdBy || 'N/A'}</td>
           <td>${order.materialWeight || 'N/A'}</td>
         </tr>`
-      )
-      .join("");
+    ).
+    join("");
 
     const printContent = `
       <html>
@@ -642,9 +656,9 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
 
           <div class="summary">
             <strong>Summary:</strong><br>
-            Total Orders: ${summary?.totalOrders || filteredOrders.length}<br>
-            Total Weight: ${summary?.totalWeight || 'N/A'}<br>
-            Average Weight: ${summary?.avgWeight ? summary.avgWeight.toFixed(2) : 'N/A'}
+            Total Orders: ${filteredOrders.length}<br>
+            Total Weight: ${'N/A'}<br>
+            Average Weight: ${'N/A'}
           </div>
 
           <table>
@@ -672,7 +686,7 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
 
     const contentWindow = printFrame.contentWindow;
     if (!contentWindow) {
-      console.error("Failed to access print frame content window.");
+
       return;
     }
 
@@ -693,7 +707,7 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
 
   // Export to Excel
   const handleExportExcel = () => {
-    const exportData = filteredOrders.map(order => ({
+    const exportData = filteredOrders.map((order) => ({
       Date: order.date || 'N/A',
       OrderID: order.orderId || 'N/A',
       Product: order.productName || order.materialName || 'N/A',
@@ -741,13 +755,13 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
     switch (event.key) {
       case "ArrowUp":
         event.preventDefault();
-        setSelectedOrderIndex(prev => Math.max(prev - 1, 0));
+        setSelectedOrderIndex((prev) => Math.max(prev - 1, 0));
         break;
       case "ArrowDown":
       case "Tab":
         if (!event.shiftKey) {
           event.preventDefault();
-          setSelectedOrderIndex(prev => Math.min(prev + 1, filteredOrders.length - 1));
+          setSelectedOrderIndex((prev) => Math.min(prev + 1, filteredOrders.length - 1));
         }
         break;
       case "Enter":
@@ -757,7 +771,7 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
         event.preventDefault();
         const currentOrder = filteredOrders[selectedOrderIndex];
         if (currentOrder?._id) {
-          setSelectedOrders(prev => {
+          setSelectedOrders((prev) => {
             const newSet = new Set(prev);
             if (newSet.has(currentOrder._id)) {
               newSet.delete(currentOrder._id);
@@ -775,13 +789,13 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
 
     if (event.key === "Tab" && event.shiftKey) {
       event.preventDefault();
-      setSelectedOrderIndex(prev => Math.max(prev - 1, 0));
+      setSelectedOrderIndex((prev) => Math.max(prev - 1, 0));
     }
   };
 
   // Toggle order selection
   const toggleOrderSelection = (orderId: string) => {
-    setSelectedOrders(prev => {
+    setSelectedOrders((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(orderId)) {
         newSet.delete(orderId);
@@ -794,7 +808,7 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
 
   // Select all orders
   const selectAllOrders = () => {
-    const allIds = filteredOrders.map(o => o._id);
+    const allIds = filteredOrders.map((o) => o._id);
     setSelectedOrders(new Set(allIds));
   };
 
@@ -810,9 +824,9 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
       return;
     }
 
-    const ordersToPrint = filteredOrders.filter(o => selectedOrders.has(o._id));
+    const ordersToPrint = filteredOrders.filter((o) => selectedOrders.has(o._id));
 
-    const labelContent = ordersToPrint.map(order => `
+    const labelContent = ordersToPrint.map((order) => `
       <div class="label" style="page-break-after: always; padding: 20px; border: 2px solid #000; margin: 10px; min-height: 200px;">
         <div style="font-size: 18px; font-weight: bold; margin-bottom: 10px; border-bottom: 2px solid #000; padding-bottom: 5px;">
           ${companyName}
@@ -866,7 +880,7 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
 
     const contentWindow = printFrame.contentWindow;
     if (!contentWindow) {
-      console.error("Failed to access print frame content window.");
+
       document.body.removeChild(printFrame);
       return;
     }
@@ -899,79 +913,69 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
         </div>
         <div className="all-orders-header__actions">
           <button className="action-btn action-btn--export" onClick={handleExportExcel} disabled={loading}>
-            <Download size={16} /> Export
+            <Download /> Export
           </button>
           <button className="action-btn action-btn--print" onClick={handlePrint} disabled={loading}>
-            <Printer size={16} /> Print
+            <Printer /> Print
           </button>
           <button className="action-btn" onClick={handleRefresh} disabled={loading}>
-            <RefreshCw size={16} className={loading ? 'spin' : ''} /> {loading ? 'Refreshing...' : 'Refresh'}
+            <RefreshCw className={loading ? 'spin' : ''} /> {loading ? 'Refreshing...' : 'Refresh'}
           </button>
         </div>
       </div>
 
       {/* Account Info Banner */}
-      <div className="account-info-banner" style={{
-        background: '#f8fafc',
-        padding: '12px 16px',
-        borderRadius: '8px',
-        marginBottom: '16px',
-        display: 'flex',
-        gap: '24px',
-        flexWrap: 'wrap',
-        fontSize: '14px'
-      }}>
-        <span><strong>Company:</strong> {accountData.companyName || 'N/A'}</span>
-        <span><strong>Name:</strong> {accountData.firstName} {accountData.lastName}</span>
-        <span><strong>Phone:</strong> {accountData.phone || accountData.phone1 || 'N/A'}</span>
-        <span><strong>Email:</strong> {accountData.email || 'N/A'}</span>
+      <div className="accountinfoorders__banner">
+        <div className="accountinfoorders__banner-item">
+          <strong>Company:</strong> <span>{accountData.companyName || 'N/A'}</span>
+        </div>
+        <div className="accountinfoorders__banner-item">
+          <strong>Name:</strong> <span>{accountData.firstName} {accountData.lastName}</span>
+        </div>
+        <div className="accountinfoorders__banner-item">
+          <strong>Phone:</strong> <span>{accountData.phone || accountData.phone1 || 'N/A'}</span>
+        </div>
+        <div className="accountinfoorders__banner-item">
+          <strong>Email:</strong> <span>{accountData.email || 'N/A'}</span>
+        </div>
       </div>
 
       {/* Selection Controls */}
-      {filteredOrders.length > 0 && (
-        <div className="selection-controls" style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          marginBottom: '16px',
-          padding: '10px 16px',
-          background: selectedOrders.size > 0 ? '#fef3c7' : '#f1f5f9',
-          borderRadius: '8px',
-          transition: 'background 0.2s'
-        }}>
-          <span style={{ fontSize: '14px', color: '#475569' }}>
-            {selectedOrders.size > 0
-              ? `${selectedOrders.size} order${selectedOrders.size > 1 ? 's' : ''} selected`
-              : 'Use Tab/Arrow keys to navigate, Space to select'}
+      {filteredOrders.length > 0 &&
+      <div className={`accountinfoorders__selection ${selectedOrders.size > 0 ? 'accountinfoorders__selection--active' : ''}`}>
+          <span className="accountinfoorders__selection-text">
+            {selectedOrders.size > 0 ?
+          `${selectedOrders.size} order${selectedOrders.size > 1 ? 's' : ''} selected` :
+          'Use Tab/Arrow keys to navigate, Space to select'}
           </span>
-          <div style={{ flex: 1 }}></div>
+          <div className="accountinfoorders__selection-spacer"></div>
           <button
-            onClick={selectAllOrders}
-            className="action-btn"
-            style={{ padding: '6px 12px', fontSize: '13px' }}
-          >
-            Select All ({filteredOrders.length})
+          onClick={selectAllOrders}
+          className="accountinfoorders__btn accountinfoorders__btn--select">
+
+            Select All
+            <span className="accountinfoorders__btn-badge">{filteredOrders.length}</span>
           </button>
-          {selectedOrders.size > 0 && (
-            <>
+          {selectedOrders.size > 0 &&
+        <>
               <button
-                onClick={handlePrintSelectedLabels}
-                className="action-btn action-btn--print"
-                style={{ padding: '6px 12px', fontSize: '13px' }}
-              >
-                <Printer size={14} /> Print Labels ({selectedOrders.size})
+            onClick={handlePrintSelectedLabels}
+            className="accountinfoorders__btn accountinfoorders__btn--print">
+
+                <Printer />
+                Print Labels
+                <span className="accountinfoorders__btn-badge">{selectedOrders.size}</span>
               </button>
               <button
-                onClick={clearSelections}
-                className="action-btn"
-                style={{ padding: '6px 12px', fontSize: '13px', background: '#ef4444', color: 'white' }}
-              >
+            onClick={clearSelections}
+            className="accountinfoorders__btn accountinfoorders__btn--clear">
+
                 Clear
               </button>
             </>
-          )}
+        }
         </div>
-      )}
+      }
 
       {/* Filters */}
       <div className="all-orders-filters">
@@ -983,8 +987,8 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
               className="filter-input"
               placeholder="Order ID, Customer, Phone..."
               value={searchTerm}
-              onChange={e => handleSearch(e.target.value)}
-            />
+              onChange={(e) => handleSearch(e.target.value)} />
+
           </div>
 
           <div className="filter-group">
@@ -992,8 +996,8 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
             <select
               className="filter-select"
               value={statusFilter}
-              onChange={e => handleStatusFilter(e.target.value)}
-            >
+              onChange={(e) => handleStatusFilter(e.target.value)}>
+
               <option value="">All Status</option>
               <option value="Wait for Approval">Wait for Approval</option>
               <option value="pending">Pending</option>
@@ -1012,8 +1016,8 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
               type="date"
               className="filter-input"
               value={fromDate}
-              onChange={e => setFromDate(e.target.value)}
-            />
+              onChange={(e) => setFromDate(e.target.value)} />
+
           </div>
 
           <div className="filter-group">
@@ -1022,8 +1026,8 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
               type="date"
               className="filter-input"
               value={toDate}
-              onChange={e => setToDate(e.target.value)}
-            />
+              onChange={(e) => setToDate(e.target.value)} />
+
           </div>
 
           <button className="filter-reset-btn" onClick={handleClearFilters}>
@@ -1032,76 +1036,49 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
         </div>
       </div>
 
-      {/* Status Summary Cards */}
-      {statusCounts && (
-        <div className="summary-cards summary-cards--compact">
-          <div className="summary-card summary-card--mini">
-            <div className="summary-card__value">{summary?.totalOrders || filteredOrders.length}</div>
-            <div className="summary-card__label">Total</div>
-          </div>
-          {Object.entries(statusCounts).map(([status, count]) => {
-            const statusClassMap: Record<string, string> = {
-              'Wait for Approval': 'waiting',
-              'pending': 'pending',
-              'approved': 'approved',
-              'in_progress': 'progress',
-              'completed': 'completed',
-              'dispatched': 'dispatched',
-              'issue': 'issue',
-              'cancelled': 'cancelled'
-            };
-            const statusClass = statusClassMap[status] || '';
-            return (
-              <div key={status} className={`summary-card summary-card--mini summary-card--${statusClass}`}>
-                <div className="summary-card__value">{count as number}</div>
-                <div className="summary-card__label">{status.replace(/_/g, ' ')}</div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+      {/* Status Summary Cards - Removed (not available in accountOrders reducer) */}
 
       {/* Loading & Error States */}
-      {loading && (
-        <div className="orders-loading">
+      {loading &&
+      <div className="orders-loading">
           <div className="loading-spinner"></div>
           <p>Loading orders...</p>
         </div>
-      )}
+      }
       {error && <div className="orders-error">Error: {error}</div>}
 
       {/* Orders Table */}
-      {!loading && filteredOrders.length === 0 && (
-        <div className="orders-empty">
+      {!loading && filteredOrders.length === 0 &&
+      <div className="orders-empty">
           <p>No orders found for this account with the selected criteria.</p>
         </div>
-      )}
+      }
 
-      {!loading && filteredOrders.length > 0 && (
-        <div
-          className="orders-table-container"
-          ref={contentRef}
-          tabIndex={0}
-          onKeyDown={handleKeyNavigation}
-          onClick={() => contentRef.current?.focus()}
-          style={{ outline: 'none' }}
-        >
+      {!loading && filteredOrders.length > 0 &&
+      <div
+        className="orders-table-container"
+        ref={contentRef}
+        tabIndex={0}
+        onKeyDown={handleKeyNavigation}
+        onClick={() => contentRef.current?.focus()}
+        style={{ outline: 'none' }}>
+
           <table className="orders-table">
             <thead>
               <tr>
                 <th style={{ width: '40px', textAlign: 'center' }}>
                   <input
-                    type="checkbox"
-                    checked={selectedOrders.size === filteredOrders.length && filteredOrders.length > 0}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        selectAllOrders();
-                      } else {
-                        clearSelections();
-                      }
-                    }}
-                    style={{ cursor: 'pointer', width: '16px', height: '16px' }}
-                  />
+                  type="checkbox"
+                  checked={selectedOrders.size === filteredOrders.length && filteredOrders.length > 0}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      selectAllOrders();
+                    } else {
+                      clearSelections();
+                    }
+                  }}
+                  className="accountinfoorders__checkbox" />
+
                 </th>
                 <th style={{ width: '50px' }}>No</th>
                 <th style={{ width: '100px' }}>Created</th>
@@ -1113,69 +1090,93 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
               </tr>
             </thead>
             <tbody>
-              {filteredOrders.map((order, index) => (
-                <tr
-                  key={order._id || index}
-                  ref={el => ordersRef.current[index] = el as any}
-                  className={`clickable-row ${selectedOrderIndex === index ? 'row-expanded' : ''} ${selectedOrders.has(order._id) ? 'row-selected' : ''}`}
-                  onClick={() => handleOrderClick(order)}
-                  style={selectedOrders.has(order._id) ? { backgroundColor: '#fef3c7' } : {}}
-                >
+              {filteredOrders.map((order, index) =>
+            <tr
+              key={order._id || index}
+              ref={(el) => ordersRef.current[index] = el as any}
+              className={`clickable-row ${selectedOrderIndex === index ? 'row-expanded' : ''} ${selectedOrders.has(order._id) ? 'accountinfoorders__row--selected' : ''}`}
+              onClick={() => handleOrderClick(order)}>
+
                   <td style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
                     <input
-                      type="checkbox"
-                      checked={selectedOrders.has(order._id)}
-                      onChange={() => toggleOrderSelection(order._id)}
-                      style={{ cursor: 'pointer', width: '16px', height: '16px' }}
-                    />
+                  type="checkbox"
+                  checked={selectedOrders.has(order._id)}
+                  onChange={() => toggleOrderSelection(order._id)}
+                  className="accountinfoorders__checkbox" />
+
                   </td>
                   <td style={{ textAlign: 'center', fontWeight: 500 }}>{index + 1}</td>
                   <td className="date-cell">
                     {order.createdAt ? new Date(order.createdAt as string).toLocaleDateString('en-IN', {
-                      day: '2-digit',
-                      month: 'short',
-                      year: '2-digit'
-                    }) : 'N/A'}
+                  day: '2-digit',
+                  month: 'short',
+                  year: '2-digit'
+                }) : 'N/A'}
                   </td>
                   <td className="order-id-cell">{order.orderId || 'N/A'}</td>
                   <td style={{ fontWeight: 500 }}>{order.companyName || 'N/A'}</td>
                   <td>
                     <span
-                      className="status-badge"
-                      style={{ backgroundColor: getStatusColor(order.status || '') }}
-                    >
+                  className="status-badge"
+                  style={{ backgroundColor: getStatusColor(order.status || '') }}>
+
                       {order.status?.replace(/_/g, ' ') || 'Unknown'}
                     </span>
                   </td>
                   <td>
                     <span
-                      className="priority-badge"
-                      style={{ backgroundColor: getPriorityBadgeColor(order.priority || 'normal') }}
-                    >
+                  className="priority-badge"
+                  style={{ backgroundColor: getPriorityBadgeColor(order.priority || 'normal') }}>
+
                       {order.priority || 'normal'}
                     </span>
                   </td>
                   <td>
-                    {order.orderTypeName ? (
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}>
+                    {order.orderTypeName ?
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}>
                         <span style={{ fontWeight: 500 }}>{order.orderTypeName}</span>
-                        {order.orderTypeCode && (
-                          <span style={{ color: '#94a3b8', fontSize: '11px' }}>({order.orderTypeCode})</span>
-                        )}
-                      </span>
-                    ) : (
-                      <span style={{ color: '#94a3b8', fontSize: '12px' }}>-</span>
-                    )}
+                        {order.orderTypeCode &&
+                  <span style={{ color: '#94a3b8', fontSize: '11px' }}>({order.orderTypeCode})</span>
+                  }
+                      </span> :
+
+                <span style={{ color: '#94a3b8', fontSize: '12px' }}>-</span>
+                }
                   </td>
                 </tr>
-              ))}
+            )}
             </tbody>
           </table>
 
+          {/* ✅ Pagination Controls */}
+          {filteredOrders.length > 0 && (
+            <div className="accountinfoorders__pagination">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1 || loading}
+                className={`accountinfoorders__pagination-btn ${currentPage === 1 || loading ? 'accountinfoorders__pagination-btn--disabled' : 'accountinfoorders__pagination-btn--active'}`}
+              >
+                ← Previous
+              </button>
+
+              <span className="accountinfoorders__pagination-info">
+                Page {currentPage}
+              </span>
+
+              <button
+                onClick={() => setCurrentPage(prev => prev + 1)}
+                disabled={filteredOrders.length < 50 || loading}
+                className={`accountinfoorders__pagination-btn ${filteredOrders.length < 50 || loading ? 'accountinfoorders__pagination-btn--disabled' : 'accountinfoorders__pagination-btn--active'}`}
+              >
+                Next →
+              </button>
+            </div>
+          )}
+
         </div>
-      )}
-    </div>
-  );
+      }
+    </div>);
+
 };
 
 export default AccountInfo;

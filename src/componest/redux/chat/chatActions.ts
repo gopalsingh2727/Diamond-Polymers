@@ -25,11 +25,11 @@ import {
   setPosition,
   ChatMessage,
   Reminder,
-  ChatSettings
-} from './chatSlice';
+  ChatSettings } from
+'./chatSlice';
 
 // API Configuration
-const API_URL = import.meta.env.VITE_API_27INFINITY_IN || 'http://localhost:4000/dev';
+const API_URL = import.meta.env.VITE_API_27INFINITY_IN || 'https://api.27infinity.in';
 const API_KEY = import.meta.env.VITE_API_KEY || '27infinity.in_5f84c89315f74a2db149c06a93cf4820';
 
 // Helper to get auth headers
@@ -116,7 +116,7 @@ export const loadChatHistory = (limit: number = 50) => async (dispatch: Dispatch
     }
   } catch (error: any) {
     // Silent failure - use empty history
-    console.warn('Chat history load failed:', error.message);
+
     dispatch(loadHistorySuccess([]));
   }
 };
@@ -155,7 +155,7 @@ export const loadChatSettings = () => async (dispatch: Dispatch) => {
     }
   } catch (error: any) {
     // Silent failure - use default settings instead of showing error
-    console.warn('Chat settings load failed, using defaults:', error.message);
+
     dispatch(loadSettingsSuccess({
       isEnabled: true,
       assistantName: 'Assistant',
@@ -202,8 +202,8 @@ export const updateChatPosition = (x: number, y: number) => async (dispatch: Dis
       { headers: getHeaders() }
     );
   } catch (error) {
-    // Silent fail - position saved locally
-    console.error('Failed to save position:', error);
+
+
   }
 };
 
@@ -222,7 +222,7 @@ export const updateHardwareInfo = (ramGB: number) => async (dispatch: Dispatch) 
       return response.data.data;
     }
   } catch (error) {
-    console.error('Failed to update hardware info:', error);
+
   }
 };
 
@@ -274,7 +274,7 @@ export const loadReminders = (status: string = 'pending') => async (dispatch: Di
     }
   } catch (error: any) {
     // Silent failure - use empty reminders
-    console.warn('Reminders load failed:', error.message);
+
     dispatch(loadRemindersSuccess([]));
   }
 };
@@ -294,7 +294,7 @@ export const checkDueReminders = () => async (dispatch: Dispatch) => {
       return response.data.data.reminders;
     }
   } catch (error) {
-    console.error('Failed to check due reminders:', error);
+
     return [];
   }
 };
@@ -416,7 +416,7 @@ export const markReminderNotified = (reminderId: string) => async () => {
       { headers: getHeaders() }
     );
   } catch (error) {
-    console.error('Failed to mark reminder as notified:', error);
+
   }
 };
 

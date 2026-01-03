@@ -1,0 +1,640 @@
+/* ===================================
+   Account Info Orders Page CSS
+   ================================== */
+
+/* Main container for account info orders page */
+.accountinfoorders {
+  padding: 16px 20px;
+  background-color: #f8fafc;
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  position: relative;
+}
+
+/* ===================================
+   Header Action Buttons Fix
+   ================================== */
+
+/* Override action buttons with fixed width and padding */
+.all-orders-header__actions .action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 18px;
+  min-width: 120px;
+  height: 40px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  background-color: #f1f5f9;
+  color: #64748b;
+}
+
+.all-orders-header__actions .action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.all-orders-header__actions .action-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.all-orders-header__actions .action-btn:disabled {
+  background: #e2e8f0;
+  color: #94a3b8;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.all-orders-header__actions .action-btn:disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* Export Button - Green */
+.all-orders-header__actions .action-btn--export {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  color: #ffffff;
+  border: 2px solid #16a34a;
+}
+
+.all-orders-header__actions .action-btn--export:hover {
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+  border-color: #15803d;
+}
+
+.all-orders-header__actions .action-btn--export svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2.5;
+}
+
+/* Print Button - Orange */
+.all-orders-header__actions .action-btn--print {
+  background: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%);
+  color: #ffffff;
+  border: 2px solid #E55A2B;
+}
+
+.all-orders-header__actions .action-btn--print:hover {
+  background: linear-gradient(135deg, #E55A2B 0%, #D14E1F 100%);
+  border-color: #D14E1F;
+}
+
+.all-orders-header__actions .action-btn--print svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2.5;
+}
+
+/* Refresh Button - Gray/Blue */
+.all-orders-header__actions .action-btn:not(.action-btn--export):not(.action-btn--print) {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: #ffffff;
+  border: 2px solid #2563eb;
+}
+
+.all-orders-header__actions .action-btn:not(.action-btn--export):not(.action-btn--print):hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  border-color: #1d4ed8;
+}
+
+.all-orders-header__actions .action-btn:not(.action-btn--export):not(.action-btn--print) svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2.5;
+}
+
+/* Spin animation for refresh icon */
+.all-orders-header__actions .action-btn svg.spin {
+  animation: headerButtonSpin 1s linear infinite;
+}
+
+@keyframes headerButtonSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Account Info Banner */
+.accountinfoorders__banner {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  padding: 16px 20px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  font-size: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e2e8f0;
+}
+
+.accountinfoorders__banner-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #475569;
+  font-size: 14px;
+}
+
+.accountinfoorders__banner-item strong {
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.accountinfoorders__banner-item span {
+  color: #64748b;
+}
+
+/* Selection Controls Bar */
+.accountinfoorders__selection {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  background: #ffffff;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 2px solid #e2e8f0;
+}
+
+.accountinfoorders__selection--active {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-color: #fbbf24;
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.2);
+}
+
+.accountinfoorders__selection-text {
+  font-size: 14px;
+  color: #475569;
+  font-weight: 500;
+  flex: 1;
+}
+
+.accountinfoorders__selection--active .accountinfoorders__selection-text {
+  color: #92400e;
+  font-weight: 600;
+}
+
+.accountinfoorders__selection-spacer {
+  flex: 1;
+}
+
+/* Selection Control Buttons */
+.accountinfoorders__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.accountinfoorders__btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.accountinfoorders__btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Select All Button */
+.accountinfoorders__btn--select {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: #ffffff;
+  border: 2px solid #2563eb;
+}
+
+.accountinfoorders__btn--select:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  border-color: #1d4ed8;
+}
+
+/* Print Labels Button */
+.accountinfoorders__btn--print {
+  background: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%);
+  color: #ffffff;
+  border: 2px solid #E55A2B;
+}
+
+.accountinfoorders__btn--print:hover {
+  background: linear-gradient(135deg, #E55A2B 0%, #D14E1F 100%);
+  border-color: #D14E1F;
+}
+
+.accountinfoorders__btn--print svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2.5;
+}
+
+/* Clear Button */
+.accountinfoorders__btn--clear {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: #ffffff;
+  border: 2px solid #dc2626;
+}
+
+.accountinfoorders__btn--clear:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  border-color: #b91c1c;
+}
+
+/* Disabled state for buttons */
+.accountinfoorders__btn:disabled {
+  background: #e2e8f0;
+  color: #94a3b8;
+  border-color: #cbd5e1;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.accountinfoorders__btn:disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* Button badge (count indicator) */
+.accountinfoorders__btn-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  margin-left: 4px;
+}
+
+/* Table Row Selection States */
+.accountinfoorders__row--selected {
+  background-color: #fef3c7 !important;
+  border-left: 4px solid #fbbf24 !important;
+}
+
+.accountinfoorders__row--selected:hover {
+  background-color: #fde68a !important;
+}
+
+/* Checkbox Styling */
+.accountinfoorders__checkbox {
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+  accent-color: #3b82f6;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.accountinfoorders__checkbox:hover {
+  transform: scale(1.1);
+}
+
+.accountinfoorders__checkbox:checked {
+  accent-color: #2563eb;
+}
+
+/* Pagination Fixed Bottom Bar */
+.accountinfoorders__pagination {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, #ffffff 0%, #f8fafc 100%);
+  padding: 14px 20px;
+  border-top: 3px solid #e2e8f0;
+  box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.12);
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+}
+
+.accountinfoorders__pagination-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  min-width: 120px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.accountinfoorders__pagination-btn--active {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: #ffffff;
+  border: 2px solid #2563eb;
+}
+
+.accountinfoorders__pagination-btn--active:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  border-color: #1d4ed8;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.accountinfoorders__pagination-btn--disabled {
+  background: #e2e8f0;
+  color: #94a3b8;
+  border: 2px solid #cbd5e1;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.accountinfoorders__pagination-btn--disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.accountinfoorders__pagination-info {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  min-width: 100px;
+  text-align: center;
+  padding: 8px 16px;
+  background: #f1f5f9;
+  border-radius: 8px;
+  border: 2px solid #e2e8f0;
+}
+
+/* Responsive Design for Account Info Orders */
+@media (max-width: 1440px) {
+  .accountinfoorders {
+    padding: 14px 18px;
+  }
+
+  .accountinfoorders__banner {
+    padding: 14px 18px;
+    gap: 20px;
+    font-size: 13px;
+  }
+
+  .accountinfoorders__selection {
+    padding: 10px 14px;
+    gap: 10px;
+  }
+
+  .accountinfoorders__btn {
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+
+  .accountinfoorders__pagination {
+    padding: 12px 18px;
+    gap: 16px;
+  }
+
+  .accountinfoorders__pagination-btn {
+    padding: 8px 16px;
+    font-size: 13px;
+    min-width: 100px;
+  }
+
+  /* Header buttons responsive */
+  .all-orders-header__actions .action-btn {
+    padding: 8px 14px;
+    min-width: 110px;
+    height: 38px;
+    font-size: 13px;
+  }
+
+  .all-orders-header__actions .action-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+@media (max-width: 1366px) {
+  .accountinfoorders {
+    padding: 12px 16px;
+  }
+
+  .accountinfoorders__banner {
+    padding: 12px 16px;
+    gap: 18px;
+    font-size: 12px;
+  }
+
+  .accountinfoorders__selection {
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  .accountinfoorders__btn {
+    padding: 7px 12px;
+    font-size: 12px;
+  }
+
+  .accountinfoorders__btn-badge {
+    min-width: 20px;
+    height: 20px;
+    font-size: 11px;
+  }
+
+  .accountinfoorders__pagination {
+    padding: 10px 16px;
+    gap: 14px;
+  }
+
+  .accountinfoorders__pagination-btn {
+    padding: 7px 14px;
+    font-size: 12px;
+    min-width: 90px;
+  }
+
+  .accountinfoorders__pagination-info {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+
+  /* Header buttons responsive */
+  .all-orders-header__actions .action-btn {
+    padding: 7px 12px;
+    min-width: 100px;
+    height: 36px;
+    font-size: 12px;
+  }
+
+  .all-orders-header__actions .action-btn svg {
+    width: 15px;
+    height: 15px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .accountinfoorders__banner {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .accountinfoorders__selection {
+    flex-wrap: wrap;
+  }
+
+  .accountinfoorders__btn {
+    flex: 1;
+    min-width: 140px;
+  }
+
+  /* Header buttons responsive */
+  .all-orders-header__actions {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .all-orders-header__actions .action-btn {
+    padding: 6px 10px;
+    min-width: 90px;
+    height: 34px;
+    font-size: 11px;
+  }
+
+  .all-orders-header__actions .action-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+@media (max-width: 768px) {
+  .accountinfoorders {
+    padding: 10px 12px;
+  }
+
+  .accountinfoorders__banner {
+    padding: 10px 12px;
+    gap: 10px;
+    font-size: 11px;
+  }
+
+  .accountinfoorders__selection {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .accountinfoorders__btn {
+    width: 100%;
+    min-width: auto;
+  }
+
+  .accountinfoorders__pagination {
+    padding: 8px 12px;
+    gap: 10px;
+  }
+
+  .accountinfoorders__pagination-btn {
+    padding: 6px 12px;
+    font-size: 11px;
+    min-width: 80px;
+  }
+
+  .accountinfoorders__pagination-info {
+    font-size: 11px;
+    padding: 5px 10px;
+  }
+
+  /* Header buttons responsive */
+  .all-orders-header__actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .all-orders-header__actions .action-btn {
+    flex: 1;
+    padding: 6px 8px;
+    min-width: 70px;
+    height: 32px;
+    font-size: 10px;
+  }
+
+  .all-orders-header__actions .action-btn svg {
+    width: 13px;
+    height: 13px;
+  }
+}
+
+/* Animation for selection state change */
+@keyframes selectionPulse {
+  0% {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+  50% {
+    box-shadow: 0 4px 16px rgba(251, 191, 36, 0.3);
+  }
+  100% {
+    box-shadow: 0 4px 12px rgba(251, 191, 36, 0.2);
+  }
+}
+
+.accountinfoorders__selection--active {
+  animation: selectionPulse 0.5s ease-out;
+}
+
+/* Loading state for buttons */
+@keyframes buttonSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.accountinfoorders__btn--loading svg {
+  animation: buttonSpin 1s linear infinite;
+}
+
+/* Focus states for accessibility */
+.accountinfoorders__btn:focus-visible {
+  outline: 3px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.accountinfoorders__checkbox:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.accountinfoorders__pagination-btn:focus-visible {
+  outline: 3px solid #3b82f6;
+  outline-offset: 2px;
+}
