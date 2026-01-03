@@ -33,16 +33,18 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
 
-      - name: Install dependencies
-        run: |
-          npm ci || (rm -rf node_modules package-lock.json && npm install)
-
-      - name: Install rollup optional dependencies (Windows fix)
+      - name: Clean install (Windows)
         if: runner.os == 'Windows'
-        run: npm install --no-save @rollup/rollup-win32-x64-msvc
-        continue-on-error: true
+        run: |
+          if (Test-Path package-lock.json) { Remove-Item package-lock.json }
+          if (Test-Path node_modules) { Remove-Item -Recurse -Force node_modules }
+          npm install
+        shell: pwsh
+
+      - name: Install dependencies (non-Windows)
+        if: runner.os != 'Windows'
+        run: npm ci
 
       - name: Install additional dependencies (optional)
         run: npm install -D postcss-import @tailwindcss/nesting
