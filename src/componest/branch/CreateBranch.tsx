@@ -68,7 +68,7 @@ const CreateBranch = () => {
 
     try {
       const response = await axios.post(
-        `${baseUrl}/branch/create`,
+        `${baseUrl}/v2/branch`,
         {
           name: formData.name.trim(),
           location: formData.location.trim(),
@@ -88,8 +88,15 @@ const CreateBranch = () => {
 
 
       // Set the newly created branch as selected
-      const newBranchId = response.data.branch?._id || response.data._id;
+      const newBranch = response.data.branch || response.data.data || response.data;
+      const newBranchId = newBranch?._id;
+
       if (newBranchId) {
+        // Save to localStorage
+        localStorage.setItem('selectedBranch', newBranchId);
+        localStorage.setItem('branchId', newBranchId);
+
+        // Update Redux state
         dispatch(setSelectedBranchInAuth(newBranchId));
       }
 
@@ -97,7 +104,7 @@ const CreateBranch = () => {
 
       // Redirect to main menu after 2 seconds
       setTimeout(() => {
-        navigate("/");
+        navigate("/menu");
       }, 2000);
     } catch (err: any) {
 

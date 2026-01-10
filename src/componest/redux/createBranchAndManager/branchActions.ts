@@ -23,11 +23,20 @@ const getToken = (getState: () => RootState): string | null => {
 
 const getHeaders = (token: string | null) => {
   const apiKey = import.meta.env.VITE_API_KEY;
-  return {
+  const selectedBranch = localStorage.getItem("selectedBranch");
+
+  const headers: Record<string, string> = {
     "Content-Type": "application/json",
     Authorization: token ? `Bearer ${token}` : "",
     "x-api-key": apiKey,
   };
+
+  // ✅ CRITICAL FIX: Add x-selected-branch header for multi-branch users
+  if (selectedBranch) {
+    headers["x-selected-branch"] = selectedBranch;
+  }
+
+  return headers;
 };
 
 const baseUrl = import.meta.env.VITE_API_27INFINITY_IN;
@@ -63,7 +72,7 @@ export const createBranch = (data: {
       };
 
       const response = await axios.post(
-        `${baseUrl}/branch/create`,
+        `${baseUrl}/v2/branch`,
         payload,
         { headers: getHeaders(token) }
       );
@@ -100,11 +109,12 @@ export const listBranches = () => {
 
       const token = getToken(getState);
 
-      const { data } = await axios.get(`${baseUrl}/branch/branches`, {
+      const { data } = await axios.get(`${baseUrl}/v2/branch`, {
         headers: getHeaders(token),
       });
 
-      dispatch({ type: BRANCH_LIST_SUCCESS, payload: data.branches || data });
+      const branches = data.data?.data || data.data || data.branches || data;
+      dispatch({ type: BRANCH_LIST_SUCCESS, payload: branches });
 
     } catch (error: any) {
       dispatch({
@@ -129,7 +139,7 @@ export const updateBranch = (branchId: string, data: { name?: string; location?:
       };
 
       const response = await axios.put(
-        `${baseUrl}/branch/branches/${branchId}`,
+        `${baseUrl}/v2/branch/${branchId}`,
         payload,
         { headers: getHeaders(token) }
       );
@@ -153,7 +163,7 @@ export const deleteBranch = (branchId: string) => {
 
       const token = getToken(getState);
 
-      await axios.delete(`${baseUrl}/branch/branches/${branchId}`, {
+      await axios.delete(`${baseUrl}/v2/branch/${branchId}`, {
         headers: getHeaders(token),
       });
 

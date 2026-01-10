@@ -2,9 +2,9 @@ import React, { useEffect, useState, useCallback } from "react";
 import { useDispatch } from "react-redux";
 import { Parser } from "expr-eval";
 import {
-  updateMachine,
-  deleteMachine,
-} from "../../../../redux/create/machine/MachineActions";
+  updateMachineV2 as updateMachine,
+  deleteMachineV2 as deleteMachine,
+} from "../../../../redux/unifiedV2/machineActions";
 import { useFormDataCache } from "../hooks/useFormDataCache";
 import { useCRUD } from "../../../../../hooks/useCRUD";
 import { ToastContainer } from "../../../../../components/shared/Toast";

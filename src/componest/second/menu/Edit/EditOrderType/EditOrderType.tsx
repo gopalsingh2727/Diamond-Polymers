@@ -2,10 +2,10 @@ import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "../../../../../store";
 import {
-  updateOrderType,
-  deleteOrderType,
-  getOrderTypes,
-} from "../../../../redux/create/orderType/orderTypeActions";
+  updateOrderTypeV2 as updateOrderType,
+  deleteOrderTypeV2 as deleteOrderType,
+  getOrderTypesV2 as getOrderTypes,
+} from "../../../../redux/unifiedV2/orderTypeActions";
 import { useFormDataCache } from "../hooks/useFormDataCache";
 import { formatDate } from "../../../../../utils/dateUtils";
 import { useCRUD } from "../../../../../hooks/useCRUD";

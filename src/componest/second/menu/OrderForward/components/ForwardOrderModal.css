@@ -1,0 +1,153 @@
+/**
+ * Forward Order Modal Styles
+ */
+
+@import '../OrderForwardCommon.css';
+
+.forward-order-modal {
+  max-width: 600px;
+}
+
+/* ============= ORDER SUMMARY ============= */
+
+.order-summary {
+  background: #f8f9fa;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+}
+
+.order-summary h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 8px 0;
+}
+
+.order-summary .help-text {
+  color: #6c757d;
+  line-height: 1.5;
+}
+
+/* ============= NO CONNECTIONS WARNING ============= */
+
+.no-connections-warning {
+  background: #fff3cd;
+  border: 1px solid #ffeeba;
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 8px;
+}
+
+.no-connections-warning p {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: #856404;
+}
+
+.no-connections-warning p:last-child {
+  margin-bottom: 0;
+  font-size: 13px;
+}
+
+.no-connections-warning .help-text {
+  color: #856404;
+}
+
+/* ============= CONFIRMATION NOTICE ============= */
+
+.confirmation-notice {
+  background: #e7f3ff;
+  border: 1px solid #b3d9ff;
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 20px;
+}
+
+.confirmation-notice strong {
+  display: block;
+  color: #004085;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.confirmation-notice ul {
+  margin: 0;
+  padding-left: 20px;
+  list-style: none;
+}
+
+.confirmation-notice li {
+  color: #004085;
+  font-size: 13px;
+  line-height: 1.6;
+  margin-bottom: 6px;
+  position: relative;
+}
+
+.confirmation-notice li:last-child {
+  margin-bottom: 0;
+}
+
+/* ============= FORM ELEMENTS ============= */
+
+.forward-order-modal .form-group {
+  margin-bottom: 24px;
+}
+
+.forward-order-modal select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+
+.forward-order-modal select:disabled {
+  background-color: #e9ecef;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.forward-order-modal textarea:disabled {
+  background-color: #e9ecef;
+  cursor: not-allowed;
+}
+
+/* Character counter for textarea */
+.forward-order-modal .help-text {
+  text-align: right;
+  margin-top: 4px;
+}
+
+/* ============= MODAL FOOTER ============= */
+
+.forward-order-modal .modal-footer {
+  background: #f8f9fa;
+}
+
+.forward-order-modal .modal-footer button:last-child {
+  min-width: 160px;
+}
+
+/* ============= RESPONSIVE ============= */
+
+@media (max-width: 640px) {
+  .forward-order-modal {
+    max-width: 100%;
+    margin: 0;
+    border-radius: 0;
+  }
+
+  .confirmation-notice ul {
+    padding-left: 16px;
+  }
+
+  .modal-footer {
+    flex-direction: column-reverse;
+  }
+
+  .modal-footer button {
+    width: 100%;
+  }
+}

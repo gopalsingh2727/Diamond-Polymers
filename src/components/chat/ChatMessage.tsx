@@ -9,14 +9,13 @@ interface ChatMessageProps {
   role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp: string;
-  assistantName: string;
+  assistantName?: string; // Optional - no longer displayed
 }
 
 const ChatMessage: React.FC<ChatMessageProps> = ({
   role,
   content,
-  timestamp,
-  assistantName
+  timestamp
 }) => {
   const isUser = role === 'user';
   const time = new Date(timestamp).toLocaleTimeString('en-IN', {
@@ -71,13 +70,6 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
             : 'bg-white text-gray-800 shadow-sm border border-gray-100 rounded-bl-sm'
         }`}
       >
-        {/* Assistant name label */}
-        {!isUser && (
-          <div className="text-xs font-medium text-orange-500 mb-1">
-            {assistantName}
-          </div>
-        )}
-
         {/* Message content */}
         <div
           className={`text-sm leading-relaxed ${isUser ? 'text-white' : 'text-gray-700'}`}

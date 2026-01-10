@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../../componest/redux/rootReducer';
 import { AppDispatch } from '../../../store';
 import { fetchOrders } from '../../../componest/redux/oders/OdersActions';
-import { getAllMachineTypes } from '../../../componest/redux/create/machineType/machineTypeActions';
+import { getMachineTypesV2 as getAllMachineTypes } from '../../../componest/redux/unifiedV2/machineTypeActions';
 import { exportExcel } from '../../../componest/redux/reports/reportActions';
 import { useDaybookUpdates, useWebSocketStatus } from '../../../hooks/useWebSocket';
 

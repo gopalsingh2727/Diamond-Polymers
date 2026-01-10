@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import { Eye, Printer, FileSpreadsheet } from 'lucide-react';
 import { useOrderFormData } from '../useOrderFormData';
+import { Parser } from 'expr-eval';
 
 import './optionsSection.css';
 
@@ -328,6 +329,126 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
     onDataChange(selectedOptions);
   }, [selectedOptions, onDataChange]);
 
+  // ✅ RECALCULATE ALL OPTIONS when a new option is added (cross-option dependencies)
+  // Track previous options count to detect when a new option is added
+  const prevOptionsCountRef = useRef(0);
+
+  useEffect(() => {
+    // Skip on initial mount
+    if (isInitialMount.current) {
+      prevOptionsCountRef.current = selectedOptions.length;
+      return;
+    }
+
+    // Only recalculate when a NEW option is added (count changed)
+    if (selectedOptions.length === prevOptionsCountRef.current) {
+      return; // No new options added, skip
+    }
+
+    prevOptionsCountRef.current = selectedOptions.length;
+    console.log('🔄 New option added, recalculating ALL options...');
+
+    // Build global context from ALL options
+    const globalContext: {[key: string]: number} = {};
+
+    selectedOptions.forEach((opt: OptionItem) => {
+      if (opt.specificationValues) {
+        Object.entries(opt.specificationValues).forEach(([key, val]) => {
+          if (typeof val === 'number' || !isNaN(parseFloat(String(val)))) {
+            // Use optionTypeName prefix for the variable name
+            const varName = opt.optionTypeName ? `${opt.optionTypeName}_${key}` : key;
+            globalContext[varName] = parseFloat(String(val)) || 0;
+            globalContext[key] = parseFloat(String(val)) || 0; // Also add without prefix
+          }
+        });
+      }
+
+      // Load OptionType specs (constants like purity, mc, wastage)
+      const optionType = allowedOptionTypes.find((ot) => ot._id === opt.optionTypeId);
+      if (optionType && optionType.specifications) {
+        optionType.specifications.forEach((spec: any) => {
+          if (spec.dataType === 'number' && spec.defaultValue != null) {
+            const varName = opt.optionTypeName ? `${opt.optionTypeName}_${spec.name}` : spec.name;
+            if (globalContext[varName] === undefined) {
+              globalContext[varName] = parseFloat(String(spec.defaultValue)) || 0;
+            }
+            if (globalContext[spec.name] === undefined) {
+              globalContext[spec.name] = parseFloat(String(spec.defaultValue)) || 0;
+            }
+          }
+        });
+      }
+    });
+
+    console.log('🌍 Global formula context for all options:', globalContext);
+
+    // Recalculate each option's formulas
+    let hasAnyChanges = false;
+    const recalculatedOptions = selectedOptions.map((opt: OptionItem) => {
+      const optionType = allowedOptionTypes.find((ot) => ot._id === opt.optionTypeId);
+      const matchingOptionSpec = Array.isArray(optionSpecs) ?
+        optionSpecs.find((spec: any) => {
+          const specTypeId = spec.optionTypeId?._id || spec.optionTypeId;
+          return specTypeId === opt.optionTypeId;
+        }) :
+        null;
+
+      // Get all specs with formulas
+      const allSpecs: any[] = [];
+      if (optionType && optionType.specifications) {
+        allSpecs.push(...optionType.specifications);
+      }
+      if (matchingOptionSpec && matchingOptionSpec.specifications) {
+        matchingOptionSpec.specifications.forEach((spec: any) => {
+          if (!allSpecs.find(s => s.name === spec.name)) {
+            allSpecs.push(spec);
+          }
+        });
+      }
+
+      const formulaSpecs = allSpecs.filter(s => s.formula && s.dataType === 'number');
+
+      if (formulaSpecs.length === 0) {
+        return opt; // No formulas, return unchanged
+      }
+
+      // Evaluate formulas
+      const updatedValues = { ...opt.specificationValues };
+      let optionChanged = false;
+
+      formulaSpecs.forEach((spec: any) => {
+        try {
+          const parser = new Parser();
+          const expr = parser.parse(spec.formula);
+          const result = expr.evaluate(globalContext);
+
+          if (isFinite(result)) {
+            const previousValue = updatedValues[spec.name];
+            if (previousValue !== result) {
+              updatedValues[spec.name] = result;
+              optionChanged = true;
+              hasAnyChanges = true;
+              console.log(`♻️ Recalculated ${opt.optionTypeName}.${spec.name} = ${result} (was ${previousValue})`);
+            }
+          }
+        } catch (err: any) {
+          // Formula can't be evaluated yet
+        }
+      });
+
+      if (optionChanged) {
+        return { ...opt, specificationValues: updatedValues };
+      }
+      return opt;
+    });
+
+    if (hasAnyChanges) {
+      console.log('♻️ Updating options with recalculated values');
+      setSelectedOptions(recalculatedOptions);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedOptions.length]);
+
   // Get unique option types - prioritize allowedOptionTypes from order type config
 
 
@@ -418,32 +539,254 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
 
   // Update current option field
   const updateCurrentOption = (field: keyof OptionItem, value: any) => {
+    console.log(`🔧 updateCurrentOption: ${field} = "${value}"`);
     setCurrentOption((prev) => ({ ...prev, [field]: value }));
   };
 
-  // Update specification value
+  // Update specification value and evaluate formulas
   const updateSpecificationValue = (dimensionName: string, value: any) => {
-    setCurrentOption((prev) => ({
-      ...prev,
-      specificationValues: {
+    setCurrentOption((prev) => {
+      // Update the changed value
+      const updatedValues = {
         ...prev.specificationValues,
         [dimensionName]: value
+      };
+
+      // Get all specifications (from OptionType and OptionSpec)
+      const optionType = allowedOptionTypes.find((ot) => ot._id === prev.optionTypeId);
+      const matchingOptionSpec = Array.isArray(optionSpecs) ?
+        optionSpecs.find((spec: any) => {
+          const specTypeId = spec.optionTypeId?._id || spec.optionTypeId;
+          return specTypeId === prev.optionTypeId;
+        }) :
+        null;
+
+      const selectedOption = options.find((o: any) => o._id === prev.optionId);
+
+      // Build context for formula evaluation
+      const context: {[key: string]: number} = {};
+
+      // ✅ STEP 1: Load values from ALL options in the order (for cross-option dependencies)
+      console.log('🔍 Loading values from all options in order...');
+
+      // Load from already saved options
+      selectedOptions.forEach((opt: any) => {
+        if (opt.specificationValues) {
+          Object.entries(opt.specificationValues).forEach(([key, val]) => {
+            if (typeof val === 'number' || !isNaN(parseFloat(String(val)))) {
+              context[key] = parseFloat(String(val)) || 0;
+            }
+          });
+        }
+      });
+
+      // Load from current option being edited (before the update)
+      if (prev.specificationValues) {
+        Object.entries(prev.specificationValues).forEach(([key, val]) => {
+          if (typeof val === 'number' || !isNaN(parseFloat(String(val)))) {
+            context[key] = parseFloat(String(val)) || 0;
+          }
+        });
       }
-    }));
+
+      // ✅ STEP 2: Add OptionType specifications (defaults like purity = 80, mc = 11)
+      if (optionType && optionType.specifications) {
+        optionType.specifications.forEach((spec: any) => {
+          if (spec.dataType === 'number' && spec.defaultValue != null) {
+            // Only add if not already in context (don't override user values)
+            if (context[spec.name] === undefined) {
+              context[spec.name] = parseFloat(String(spec.defaultValue)) || 0;
+            }
+          }
+        });
+      }
+
+      // ✅ STEP 3: Add OptionSpec specifications (instance values)
+      if (matchingOptionSpec && matchingOptionSpec.specifications) {
+        matchingOptionSpec.specifications.forEach((spec: any) => {
+          if (spec.dataType === 'number' && spec.value != null) {
+            // Only add if not already in context
+            if (context[spec.name] === undefined) {
+              context[spec.name] = parseFloat(String(spec.value)) || 0;
+            }
+          }
+        });
+      }
+
+      // ✅ STEP 4: Add Option dimensions (actual option values)
+      if (selectedOption && selectedOption.dimensions) {
+        selectedOption.dimensions.forEach((dim: any) => {
+          if (dim.dataType === 'number' && dim.value != null) {
+            // Only add if not already in context
+            if (context[dim.name] === undefined) {
+              context[dim.name] = parseFloat(String(dim.value)) || 0;
+            }
+          }
+        });
+      }
+
+      // ✅ STEP 5: Add/override with current values being updated
+      Object.entries(updatedValues).forEach(([key, val]) => {
+        if (typeof val === 'number' || !isNaN(parseFloat(String(val)))) {
+          context[key] = parseFloat(String(val)) || 0;
+        }
+      });
+
+      console.log('🧮 Formula evaluation context:', context);
+
+      // Evaluate formulas for all calculated specifications
+      const allSpecs: any[] = [];
+
+      if (optionType && optionType.specifications) {
+        console.log('📦 Loading OptionType specs:', optionType.specifications);
+        allSpecs.push(...optionType.specifications);
+      } else {
+        console.warn('⚠️ No OptionType or specifications found!');
+      }
+
+      if (matchingOptionSpec && matchingOptionSpec.specifications) {
+        console.log('📦 Loading OptionSpec specs:', matchingOptionSpec.specifications);
+        matchingOptionSpec.specifications.forEach((spec: any) => {
+          if (!allSpecs.find(s => s.name === spec.name)) {
+            allSpecs.push(spec);
+          }
+        });
+      } else {
+        console.warn('⚠️ No OptionSpec or specifications found!');
+      }
+
+      console.log('📊 Total specs available:', allSpecs.length);
+      console.log('📊 Specs with formulas:', allSpecs.filter(s => s.formula).map(s => `${s.name}: ${s.formula}`));
+
+      // ✅ EVALUATE FORMULAS IN DEPENDENCY ORDER
+      // Some formulas depend on other calculated fields, so we need multiple passes
+      const maxPasses = 5; // Prevent infinite loops
+      let pass = 0;
+      let hasChanges = true;
+
+      while (hasChanges && pass < maxPasses) {
+        hasChanges = false;
+        pass++;
+
+        allSpecs.forEach((spec: any) => {
+          if (spec.formula && spec.dataType === 'number') {
+            try {
+              const parser = new Parser();
+              const expr = parser.parse(spec.formula);
+              const result = expr.evaluate(context);
+
+              if (isFinite(result)) {
+                const previousValue = updatedValues[spec.name];
+                updatedValues[spec.name] = result;
+                context[spec.name] = result; // Add to context for chained formulas
+
+                // Track if we calculated something new (value changed)
+                if (previousValue !== result) {
+                  hasChanges = true;
+                }
+
+                console.log(`✅ [Pass ${pass}] Calculated ${spec.name} = ${result} from formula: ${spec.formula}`);
+              }
+            } catch (err: any) {
+              // Formula might depend on values not yet calculated - skip for now
+              console.log(`⏸️ [Pass ${pass}] Skipping ${spec.name}, dependencies not ready:`, err.message);
+            }
+          }
+        });
+      }
+
+      console.log(`✅ Formula evaluation completed in ${pass} passes`);
+
+      return {
+        ...prev,
+        specificationValues: updatedValues
+      };
+    });
   };
 
   // Option Type Selection Handler
   const handleTypeSelect = (selectedType: any) => {
     const typeName = selectedType.name || selectedType.optionTypeName || selectedType;
 
+    console.log('🔍 [handleTypeSelect] Selected type:', typeName);
+
+    // ✅ FIX: Find OptionType and load its specifications automatically
+    const optionType = allowedOptionTypes.find((ot) => ot.name === typeName);
+    const typeId = optionType?._id || '';
+
+    console.log('🔍 [handleTypeSelect] Found optionType:', optionType ? `${optionType.name} (${typeId})` : 'NOT FOUND');
+    console.log('🔍 [handleTypeSelect] Available optionSpecs:', optionSpecs?.length || 0);
+    if (optionSpecs && optionSpecs.length > 0) {
+      optionSpecs.forEach((spec: any, idx: number) => {
+        const specTypeId = spec.optionTypeId?._id || spec.optionTypeId;
+        console.log(`   [${idx}] OptionSpec: "${spec.name}", optionTypeId: ${specTypeId}, matches: ${specTypeId === typeId}`);
+      });
+    }
+
+    // ✅ FIX: Find matching OptionSpec for this OptionType
+    const matchingOptionSpec = Array.isArray(optionSpecs) ?
+      optionSpecs.find((spec: any) => {
+        const specTypeId = spec.optionTypeId?._id || spec.optionTypeId;
+        return specTypeId === typeId;
+      }) :
+      null;
+
+    console.log('🔍 [handleTypeSelect] Matching OptionSpec:', matchingOptionSpec ? `Found: "${matchingOptionSpec.name}"` : 'NOT FOUND');
+
+    // ✅ FIX: Merge specs from OptionSpec and OptionType template
+    const specs: any[] = [];
+    const specNames = new Set<string>();
+
+    const addSpecs = (newSpecs: any[], source: string) => {
+      if (!newSpecs || !Array.isArray(newSpecs)) return;
+      newSpecs.forEach((spec: any) => {
+        if (!specNames.has(spec.name)) {
+          specs.push(spec);
+          specNames.add(spec.name);
+        }
+      });
+    };
+
+    // Priority 1: OptionSpec specifications (if exists)
+    if (matchingOptionSpec?.specifications) {
+      console.log('✅ Adding specs from OptionSpec:', matchingOptionSpec.specifications.length);
+      addSpecs(matchingOptionSpec.specifications, 'OptionSpec');
+    }
+
+    // Priority 2: OptionType template specifications
+    if (optionType?.specifications) {
+      console.log('✅ Adding specs from OptionType template:', optionType.specifications.length);
+      addSpecs(optionType.specifications, 'OptionType');
+    }
+
+    console.log('📊 Total merged specs:', specs.length);
+
+    // ✅ FIX: Initialize spec values from default values
+    const specValues = specs.reduce((acc: any, spec: any) => {
+      acc[spec.name] = spec.value !== undefined ? spec.value : spec.defaultValue || '';
+      return acc;
+    }, {});
+
     setCurrentOption((prev) => ({
       ...prev,
       optionTypeName: typeName,
+      optionTypeId: typeId,
       optionId: '',
       optionName: '',
-      specificationValues: {}
+      specificationValues: specValues
     }));
-    setSelectedBackendOption(null);
+
+    // ✅ FIX: Set a "template" backend option so specs are shown
+    if (specs.length > 0) {
+      setSelectedBackendOption({
+        optionTypeId: optionType || typeId,
+        optionSpecId: matchingOptionSpec,
+        specifications: specs
+      });
+    } else {
+      setSelectedBackendOption(null);
+    }
+
     setShowTypeSuggestions(false);
     // Focus on name field
     setTimeout(() => nameRef.current?.focus(), 100);
@@ -1333,7 +1676,7 @@ For old files, you need to re-upload them.
             minWidth: '800px',
             width: '95vw',
             maxHeight: '90vh',
-            overflowY: 'auto',
+            overflow: 'visible',
             boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
             position: 'relative'
           }}>
@@ -1363,11 +1706,34 @@ For old files, you need to re-upload them.
 
                 ×
               </button>
+              <div style={{
+                 display:"flex",
+                 flexDirection:'row',
+                 gap:'20px',
+              }}>
+             
               <h3 style={{ marginBottom: '10px', color: '#1e293b', textAlign: 'center', fontSize: '18px', fontWeight: '600' }}>
                 Add Options
               </h3>
+                   <button
+            type="button"
+            onClick={() => {
+              if (currentOption.optionTypeName && currentOption.optionName) {
+                setSelectedOptions((prev) => [...prev, { ...currentOption, id: generateId() }]);
+                setCurrentOption(createEmptyOption());
+                setSelectedBackendOption(null);
+                typeRef.current?.focus();
+              }
+            }}
+            className="createorderstartsections-addProductBtn"
+            style={{ alignSelf: 'center', padding: '7px 15px', fontSize: '10px', marginBottom: '15px' }}>
 
-              {/* Info Box */}
+                + Add Option
+              </button>
+              </div>
+            
+
+      
               <div style={{
             padding: '10px 15px',
             backgroundColor: '#e3f2fd',
@@ -1418,10 +1784,11 @@ For old files, you need to re-upload them.
             padding: '15px',
             backgroundColor: '#f9fafb',
             borderRadius: '6px',
-            marginBottom: '15px'
+            marginBottom: '15px',
+            overflow: 'visible'
           }}>
                 {/* Option Type */}
-                <div style={{ position: 'relative' }}>
+                <div style={{ position: 'relative', zIndex: 100000 }}>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '4px', color: '#374151' }}>Type</label>
                   <input
                 ref={typeRef}
@@ -1429,24 +1796,50 @@ For old files, you need to re-upload them.
                 value={currentOption.optionTypeName}
                 onChange={(e) => updateCurrentOption('optionTypeName', e.target.value)}
                 onKeyDown={(e) => handleKeyDown(e, 'type')}
-                placeholder="Select type"
+                placeholder="Type or * for all"
                 onFocus={() => setShowTypeSuggestions(true)}
                 onBlur={() => setTimeout(() => setShowTypeSuggestions(false), 200)}
                 className="createorderstartsections-tableInput" />
 
-                  {showTypeSuggestions &&
-              <div className="createorderstartsections-suggestion-list">
+                  {showTypeSuggestions && (() => {
+                    console.log('🎯 IIFE EXECUTING - showTypeSuggestions is TRUE');
+                    console.log('📝 Current state:', {
+                      optionTypeName: currentOption.optionTypeName,
+                      isWildcard: currentOption.optionTypeName === '*',
+                      isEmpty: !currentOption.optionTypeName,
+                      totalTypes: optionTypes.length
+                    });
+
+                    const filtered = optionTypes.filter((type) => {
+                      const isEmpty = !currentOption.optionTypeName;
+                      const isWildcard = currentOption.optionTypeName === '*';
+                      const matchesSearch = type.toLowerCase().includes(currentOption.optionTypeName.toLowerCase());
+
+                      console.log(`  Checking type "${type}":`, { isEmpty, isWildcard, matchesSearch });
+
+                      return isEmpty || isWildcard || matchesSearch;
+                    });
+
+                    console.log('🔍 Type suggestions RESULT:', {
+                      showTypeSuggestions,
+                      totalTypes: optionTypes.length,
+                      searchValue: currentOption.optionTypeName,
+                      filteredCount: filtered.length,
+                      filteredTypes: filtered
+                    });
+
+                    return (
+              <div className="createorderstartsections-suggestion-list" style={{ position: 'absolute', zIndex: 99999 }}>
                       {optionTypes.length === 0 ?
                 <div className="createorderstartsections-suggestionItem" style={{ color: '#999', fontStyle: 'italic' }}>
                           No option types available
                         </div> :
+                      filtered.length === 0 ?
+                        <div className="createorderstartsections-suggestionItem" style={{ color: '#999', fontStyle: 'italic' }}>
+                          No matching types found (try typing "*" to see all)
+                        </div> :
 
-                optionTypes.
-                filter((type) =>
-                !currentOption.optionTypeName ||
-                type.toLowerCase().includes(currentOption.optionTypeName.toLowerCase())
-                ).
-                map((type, i) =>
+                filtered.map((type, i) =>
                 <div
                   key={i}
                   className="createorderstartsections-suggestionItem"
@@ -1457,7 +1850,8 @@ For old files, you need to re-upload them.
                 )
                 }
                     </div>
-              }
+                    );
+                  })()}
                 </div>
 
                 {/* Option Name */}
@@ -1469,25 +1863,55 @@ For old files, you need to re-upload them.
                 value={currentOption.optionName}
                 onChange={(e) => updateCurrentOption('optionName', e.target.value)}
                 onKeyDown={(e) => handleKeyDown(e, 'name')}
-                placeholder="Select option"
+                placeholder="Name or * for all"
                 onFocus={() => setShowNameSuggestions(true)}
                 onBlur={() => setTimeout(() => setShowNameSuggestions(false), 200)}
                 className="createorderstartsections-tableInput" />
 
-                  {showNameSuggestions && currentOption.optionTypeName &&
-              <div className="createorderstartsections-suggestion-list">
-                      {getOptionsByType(currentOption.optionTypeName).length === 0 ?
+                  {showNameSuggestions && currentOption.optionTypeName && (() => {
+                    console.log('🎯 Name IIFE EXECUTING - showNameSuggestions is TRUE');
+                    console.log('📝 Name state:', {
+                      optionName: currentOption.optionName,
+                      isWildcard: currentOption.optionName === '*',
+                      isEmpty: !currentOption.optionName,
+                      optionTypeName: currentOption.optionTypeName
+                    });
+
+                    const allOptions = getOptionsByType(currentOption.optionTypeName);
+
+                    console.log('📦 All options for type:', allOptions.length);
+
+                    const filtered = allOptions
+                      .filter((opt: any) => {
+                        const isEmpty = !currentOption.optionName;
+                        const isWildcard = currentOption.optionName === '*';
+                        const matchesSearch = opt.name.toLowerCase().includes(currentOption.optionName.toLowerCase());
+
+                        return isEmpty || isWildcard || matchesSearch;
+                      })
+                      .slice(0, 50);  // ✅ Show more results when using "*" wildcard
+
+                    console.log('🔍 Name suggestions RESULT:', {
+                      showNameSuggestions,
+                      optionTypeName: currentOption.optionTypeName,
+                      totalOptions: allOptions.length,
+                      searchValue: currentOption.optionName,
+                      filteredCount: filtered.length,
+                      filteredOptions: filtered.map((o: any) => o.name)
+                    });
+
+                    return (
+              <div className="createorderstartsections-suggestion-list" style={{ position: 'absolute', zIndex: 99999 }}>
+                      {allOptions.length === 0 ?
                 <div className="createorderstartsections-suggestionItem" style={{ color: '#999', fontStyle: 'italic' }}>
                           No options available for this type
                         </div> :
+                      filtered.length === 0 ?
+                        <div className="createorderstartsections-suggestionItem" style={{ color: '#999', fontStyle: 'italic' }}>
+                          No matching options found (try typing "*" to see all)
+                        </div> :
 
-                getOptionsByType(currentOption.optionTypeName).
-                filter((opt: any) =>
-                !currentOption.optionName ||
-                opt.name.toLowerCase().includes(currentOption.optionName.toLowerCase())
-                ).
-                slice(0, 10).
-                map((opt: any, i: number) =>
+                filtered.map((opt: any, i: number) =>
                 <div
                   key={i}
                   className="createorderstartsections-suggestionItem"
@@ -1501,14 +1925,15 @@ For old files, you need to re-upload them.
                 )
                 }
                     </div>
-              }
+                    );
+                  })()}
                 </div>
 
                 {/* Specifications Section - dynamically loaded */}
-                {/* MERGE: Option dimensions + OptionSpec specs + OptionType specs */}
+                {/* ✅ FIX: Show specs when option type is selected OR when backend option is selected */}
                 <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-                  {selectedBackendOption && (() => {
-                // Merge specs from all sources (same logic as handleNameSelect)
+                  {(currentOption.optionTypeName || selectedBackendOption) && (() => {
+                // ✅ FIX: Merge specs from all sources (same logic as handleNameSelect)
                 const getMergedSpecs = () => {
                   const specs: any[] = [];
                   const specNames = new Set<string>();
@@ -1523,21 +1948,42 @@ For old files, you need to re-upload them.
                     });
                   };
 
-                  // 1. Add Option's dimensions
-                  addSpecs(selectedBackendOption.dimensions);
+                  // 1. Add Option's dimensions (if specific option selected)
+                  if (selectedBackendOption?.dimensions) {
+                    addSpecs(selectedBackendOption.dimensions);
+                  }
 
-                  // 2. Add linked OptionSpec specs
-                  addSpecs(selectedBackendOption.optionSpecId?.specifications);
+                  // 2. Add linked OptionSpec specs (if specific option selected)
+                  if (selectedBackendOption?.optionSpecId?.specifications) {
+                    addSpecs(selectedBackendOption.optionSpecId.specifications);
+                  }
 
                   // 3. Add OptionSpec by OptionType match
-                  const typeId = selectedBackendOption.optionTypeId?._id || selectedBackendOption.optionTypeId;
+                  const typeId = selectedBackendOption?.optionTypeId?._id ||
+                                 selectedBackendOption?.optionTypeId ||
+                                 currentOption.optionTypeId;
                   const matchingSpec = Array.isArray(optionSpecs) ?
                   optionSpecs.find((spec: any) => (spec.optionTypeId?._id || spec.optionTypeId) === typeId) :
                   null;
-                  addSpecs(matchingSpec?.specifications);
+                  if (matchingSpec?.specifications) {
+                    addSpecs(matchingSpec.specifications);
+                  }
 
                   // 4. Add OptionType template specs
-                  addSpecs(selectedBackendOption.optionTypeId?.specifications);
+                  if (selectedBackendOption?.optionTypeId?.specifications) {
+                    addSpecs(selectedBackendOption.optionTypeId.specifications);
+                  } else if (currentOption.optionTypeName && !selectedBackendOption) {
+                    // ✅ FIX: If no backend option, get specs from allowedOptionTypes
+                    const optionType = allowedOptionTypes.find((ot) => ot.name === currentOption.optionTypeName);
+                    if (optionType?.specifications) {
+                      addSpecs(optionType.specifications);
+                    }
+                  }
+
+                  // 5. Add specs from selectedBackendOption.specifications (template case)
+                  if (selectedBackendOption?.specifications) {
+                    addSpecs(selectedBackendOption.specifications);
+                  }
 
                   return specs;
                 };
@@ -1546,7 +1992,7 @@ For old files, you need to re-upload them.
               })() &&
               <>
                       {(() => {
-                  // Same merge logic for rendering
+                  // ✅ FIX: Same merge logic for rendering (updated to match check above)
                   const getMergedSpecs = () => {
                     const specs: any[] = [];
                     const specNames = new Set<string>();
@@ -1561,15 +2007,37 @@ For old files, you need to re-upload them.
                       });
                     };
 
-                    addSpecs(selectedBackendOption.dimensions);
-                    addSpecs(selectedBackendOption.optionSpecId?.specifications);
+                    // Same order as check logic above
+                    if (selectedBackendOption?.dimensions) {
+                      addSpecs(selectedBackendOption.dimensions);
+                    }
+                    if (selectedBackendOption?.optionSpecId?.specifications) {
+                      addSpecs(selectedBackendOption.optionSpecId.specifications);
+                    }
 
-                    const typeId = selectedBackendOption.optionTypeId?._id || selectedBackendOption.optionTypeId;
+                    const typeId = selectedBackendOption?.optionTypeId?._id ||
+                                   selectedBackendOption?.optionTypeId ||
+                                   currentOption.optionTypeId;
                     const matchingSpec = Array.isArray(optionSpecs) ?
                     optionSpecs.find((spec: any) => (spec.optionTypeId?._id || spec.optionTypeId) === typeId) :
                     null;
-                    addSpecs(matchingSpec?.specifications);
-                    addSpecs(selectedBackendOption.optionTypeId?.specifications);
+                    if (matchingSpec?.specifications) {
+                      addSpecs(matchingSpec.specifications);
+                    }
+
+                    if (selectedBackendOption?.optionTypeId?.specifications) {
+                      addSpecs(selectedBackendOption.optionTypeId.specifications);
+                    } else if (currentOption.optionTypeName && !selectedBackendOption) {
+                      const optionType = allowedOptionTypes.find((ot) => ot.name === currentOption.optionTypeName);
+                      if (optionType?.specifications) {
+                        addSpecs(optionType.specifications);
+                      }
+                    }
+
+                    // Add specs from selectedBackendOption.specifications (template case)
+                    if (selectedBackendOption?.specifications) {
+                      addSpecs(selectedBackendOption.specifications);
+                    }
 
                     return specs;
                   };
@@ -1591,6 +2059,9 @@ For old files, you need to re-upload them.
                     }}
                     onKeyDown={(e) => handleKeyDown(e, 'spec')}
                     placeholder={spec.name}
+                    readOnly={spec.formula || spec.isCalculated}
+                    style={spec.formula || spec.isCalculated ? { backgroundColor: '#f3f4f6', cursor: 'not-allowed' } : {}}
+                    title={spec.formula ? `Calculated: ${spec.formula}` : ''}
                     className="createorderstartsections-tableInput" /> :
 
                   spec.dataType === 'boolean' ?
@@ -1682,22 +2153,7 @@ For old files, you need to re-upload them.
                 </div>
               </div>
 
-              {/* Add Option Button */}
-              <button
-            type="button"
-            onClick={() => {
-              if (currentOption.optionTypeName && currentOption.optionName) {
-                setSelectedOptions((prev) => [...prev, { ...currentOption, id: generateId() }]);
-                setCurrentOption(createEmptyOption());
-                setSelectedBackendOption(null);
-                typeRef.current?.focus();
-              }
-            }}
-            className="createorderstartsections-addProductBtn"
-            style={{ alignSelf: 'center', padding: '8px 20px', fontSize: '13px', marginBottom: '15px' }}>
-
-                + Add Option
-              </button>
+             
 
           </div>
         </div>

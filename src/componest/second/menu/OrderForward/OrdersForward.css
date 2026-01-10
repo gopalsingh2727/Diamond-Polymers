@@ -1,0 +1,1088 @@
+/* ============= ORANGE THEME VARIABLES ============= */
+:root {
+  --orange-primary: #f97316;
+  --orange-dark: #ea580c;
+  --orange-light: #fb923c;
+  --orange-lighter: #fed7aa;
+  --orange-bg: #fff7ed;
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+}
+
+/* Orders Forward Container */
+.orders-forward-container {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--gray-50);
+  overflow: hidden;
+}
+
+/* Header */
+.orders-forward-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  background: white;
+  border-bottom: 2px solid var(--orange-lighter);
+  box-shadow: 0 1px 3px rgba(249, 115, 22, 0.1);
+}
+
+.orders-forward-header .header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.orders-forward-header .header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.orders-forward-header h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--gray-800);
+}
+
+.btn-create-connection {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, var(--orange-primary) 0%, var(--orange-dark) 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-create-connection:hover {
+  background: #5568d3;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+}
+
+.btn-create-connection:active {
+  transform: translateY(0);
+}
+
+.btn-create-connection svg {
+  flex-shrink: 0;
+}
+
+/* Navigation Tabs */
+.orders-forward-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 16px 24px;
+  background: transparent;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: transparent;
+  border: none;
+  border-radius: 8px 8px 0 0;
+  font-size: 15px;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.tab-btn:hover {
+  background: rgba(102, 126, 234, 0.1);
+  color: #667eea;
+}
+
+.tab-btn.active {
+  background: white;
+  color: #667eea;
+  font-weight: 600;
+}
+
+.tab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #667eea;
+}
+
+.tab-btn svg {
+  flex-shrink: 0;
+}
+
+.tab-btn span {
+  font-weight: 500;
+}
+
+/* Content Area */
+.orders-forward-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+  background: transparent;
+}
+
+/* Orders View */
+.orders-view {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+}
+
+/* Empty State */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 48px;
+  text-align: center;
+  background: transparent;
+}
+
+.empty-state svg {
+  color: #bdbdbd;
+  opacity: 0.5;
+}
+
+.empty-state h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: 16px;
+  color: #666;
+  max-width: 400px;
+}
+
+/* Loading State */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 48px;
+  text-align: center;
+}
+
+.loading-state svg.spin {
+  animation: spin 1s linear infinite;
+  color: #667eea;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-state p {
+  margin: 0;
+  font-size: 16px;
+  color: #666;
+}
+
+/* Error State */
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 48px;
+  text-align: center;
+}
+
+.error-state p {
+  margin: 0;
+  font-size: 16px;
+  color: #dc2626;
+}
+
+.btn-retry {
+  padding: 10px 20px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-retry:hover {
+  background: #5568d3;
+}
+
+/* Orders Grid */
+.orders-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+  padding: 24px;
+  background: transparent;
+}
+
+/* Order Card */
+.order-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.order-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.order-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 12px;
+}
+
+.order-header svg {
+  color: #667eea;
+}
+
+.order-number {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.order-details {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.detail-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #666;
+}
+
+.detail-row svg {
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.detail-row strong {
+  color: #333;
+}
+
+.role-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  background: #ede9fe;
+  color: #667eea;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.order-notes {
+  margin-top: 8px;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #666;
+  line-height: 1.5;
+}
+
+.order-notes strong {
+  color: #333;
+  display: block;
+  margin-bottom: 4px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .orders-forward-header {
+    padding: 16px;
+    background: transparent;
+  }
+
+  .orders-forward-header h1 {
+    font-size: 20px;
+  }
+
+  .orders-forward-tabs {
+    padding: 12px 16px;
+    overflow-x: auto;
+    white-space: nowrap;
+    background: transparent;
+  }
+
+  .tab-btn {
+    padding: 10px 16px;
+    font-size: 14px;
+  }
+
+  .orders-forward-content {
+    padding: 0;
+    background: transparent;
+  }
+
+  .empty-state {
+    padding: 32px 16px;
+  }
+
+  .empty-state svg {
+    width: 48px;
+    height: 48px;
+  }
+
+  .empty-state h2 {
+    font-size: 20px;
+  }
+
+  .empty-state p {
+    font-size: 14px;
+  }
+
+  .orders-grid {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+
+  .order-card {
+    padding: 16px;
+  }
+
+  .order-number {
+    font-size: 14px;
+  }
+
+  .detail-row {
+    font-size: 13px;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .orders-forward-header,
+  .orders-forward-tabs {
+    display: none;
+  }
+
+  .orders-forward-container {
+    height: auto;
+  }
+
+  .orders-forward-content {
+    overflow: visible;
+  }
+}
+
+/* ============= ORDER ACCEPTANCE STYLES ============= */
+
+/* Pending/Accepted Order Cards */
+.order-card.pending-order {
+  border-left: 4px solid #f59e0b;
+}
+
+.order-card.accepted-order {
+  border-left: 4px solid #10b981;
+}
+
+.order-card.denied-order {
+  border-left: 4px solid #ef4444;
+}
+
+/* Forwarded order status colors */
+.order-card.forwarded-order.forwarded-pending {
+  border-left: 4px solid #f59e0b;
+}
+
+.order-card.forwarded-order.forwarded-accepted {
+  border-left: 4px solid #10b981;
+}
+
+.order-card.forwarded-order.forwarded-denied {
+  border-left: 4px solid #ef4444;
+}
+
+/* Status Badge */
+.status-badge {
+  margin-left: auto;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-badge.pending {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.status-badge.accepted {
+  background: #d1fae5;
+  color: #059669;
+}
+
+.status-badge.denied {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* Chain Info */
+.chain-info {
+  background: #f3f4f6;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-top: 4px;
+  font-size: 12px;
+}
+
+.chain-info svg {
+  color: #667eea;
+}
+
+/* Order Actions (Accept/Deny buttons) */
+.order-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.btn-accept,
+.btn-deny {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-accept {
+  background: #10b981;
+  color: white;
+}
+
+.btn-accept:hover:not(:disabled) {
+  background: #059669;
+}
+
+.btn-deny {
+  background: #ef4444;
+  color: white;
+}
+
+.btn-deny:hover:not(:disabled) {
+  background: #dc2626;
+}
+
+.btn-accept:disabled,
+.btn-deny:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-view-details,
+.btn-view {
+  padding: 10px 16px;
+  border: 1px solid #667eea;
+  background: white;
+  color: #667eea;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-view-details:hover,
+.btn-view:hover {
+  background: #667eea;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+}
+
+.btn-view-details:active,
+.btn-view:active {
+  transform: translateY(0);
+}
+
+/* Adjust order actions layout to accommodate 3 buttons */
+.order-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.order-actions .btn-view-details {
+  flex: 1 1 100%;
+  margin-bottom: 4px;
+}
+
+/* ============= DENY MODAL STYLES ============= */
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 480px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.deny-modal .modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.deny-modal .modal-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+.deny-modal .close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 4px 8px;
+  line-height: 1;
+  border-radius: 4px;
+}
+
+.deny-modal .close-btn:hover {
+  background: #f3f4f6;
+  color: #333;
+}
+
+.deny-modal .modal-body {
+  padding: 24px;
+}
+
+.deny-modal .modal-body p {
+  margin: 0 0 16px 0;
+  font-size: 14px;
+  color: #666;
+}
+
+.deny-reason-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.deny-reason-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.deny-modal .modal-footer {
+  display: flex;
+  gap: 12px;
+  padding: 16px 24px 24px;
+  justify-content: flex-end;
+}
+
+.btn-cancel {
+  padding: 10px 20px;
+  background: #f3f4f6;
+  color: #666;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-cancel:hover {
+  background: #e5e7eb;
+}
+
+.btn-confirm-deny {
+  padding: 10px 20px;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-confirm-deny:hover:not(:disabled) {
+  background: #dc2626;
+}
+
+.btn-confirm-deny:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ============= ADDITIONAL UTILITY STYLES ============= */
+
+/* Text colors */
+.text-green {
+  color: #10b981 !important;
+}
+
+.text-red {
+  color: #ef4444 !important;
+}
+
+/* Acceptance/Denial info rows */
+.acceptance-info {
+  background: #d1fae5;
+  padding: 6px 10px;
+  border-radius: 6px;
+  margin-top: 4px;
+}
+
+.acceptance-info svg {
+  color: #059669 !important;
+}
+
+.denial-info {
+  background: #fee2e2;
+  padding: 6px 10px;
+  border-radius: 6px;
+  margin-top: 4px;
+}
+
+.denial-info svg {
+  color: #dc2626 !important;
+}
+
+/* Denial reason styling */
+.denial-reason {
+  background: #fef2f2 !important;
+  border-left: 3px solid #ef4444;
+}
+
+/* ============= MY ORDERS FORWARD STATUS ============= */
+
+/* My Orders - Forwarded order cards */
+.order-card.my-order-forwarded {
+  position: relative;
+}
+
+.order-card.my-order-forward-pending {
+  border-left: 4px solid #f59e0b;
+}
+
+.order-card.my-order-forward-accepted {
+  border-left: 4px solid #10b981;
+}
+
+.order-card.my-order-forward-denied {
+  border-left: 4px solid #ef4444;
+}
+
+/* Forward status row in My Orders */
+.forward-status-row {
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-top: 8px;
+}
+
+.forward-status-row.pending {
+  background: #fef3c7;
+}
+
+.forward-status-row.pending svg {
+  color: #f59e0b !important;
+}
+
+.forward-status-row.accepted {
+  background: #d1fae5;
+}
+
+.forward-status-row.accepted svg {
+  color: #10b981 !important;
+}
+
+.forward-status-row.denied {
+  background: #fee2e2;
+}
+
+.forward-status-row.denied svg {
+  color: #ef4444 !important;
+}
+
+/* ============= TABLE LAYOUT - ORANGE THEME ============= */
+
+.orders-table-container {
+  flex: 1;
+  overflow: auto;
+  padding: 20px 24px;
+  position: relative;
+}
+
+/* Scrollbar styling for webkit browsers */
+.orders-table-container::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+
+.orders-table-container::-webkit-scrollbar-track {
+  background: var(--gray-100);
+  border-radius: 4px;
+}
+
+.orders-table-container::-webkit-scrollbar-thumb {
+  background: var(--orange-light);
+  border-radius: 4px;
+}
+
+.orders-table-container::-webkit-scrollbar-thumb:hover {
+  background: var(--orange-primary);
+}
+
+.orders-table {
+  width: 100%;
+  min-width: 1000px; /* Ensure table doesn't get too compressed with extra Chat button */
+  background: white;
+  border-radius: 12px;
+  overflow: visible;
+  box-shadow: 0 1px 3px rgba(249, 115, 22, 0.1);
+  border: 1px solid var(--orange-lighter);
+}
+
+.orders-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.orders-table thead {
+  background: linear-gradient(135deg, var(--orange-primary) 0%, var(--orange-dark) 100%);
+  color: white;
+}
+
+.orders-table thead th {
+  padding: 16px 12px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.orders-table thead th:last-child {
+  min-width: 280px; /* Ensure Actions column has enough space for multiple buttons */
+  text-align: center;
+}
+
+.orders-table tbody tr {
+  border-bottom: 1px solid var(--gray-200);
+  transition: all 0.2s ease;
+}
+
+.orders-table tbody tr:hover {
+  background: var(--orange-bg);
+}
+
+.orders-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.orders-table tbody td {
+  padding: 14px 12px;
+  font-size: 14px;
+  color: var(--gray-700);
+  vertical-align: middle;
+}
+
+.orders-table tbody td:last-child {
+  text-align: center; /* Center the actions column */
+}
+
+/* Status Badges - Orange Theme */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.status-badge.pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-badge.accepted {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status-badge.denied {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* Action Buttons - Orange Theme */
+.table-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: center; /* Center the action buttons */
+  min-width: 260px; /* Ensure actions column has enough space for multiple buttons */
+  flex-wrap: wrap; /* Allow wrapping if needed on smaller screens */
+}
+
+.btn-table-action {
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.btn-table-action:active {
+  transform: translateY(1px);
+}
+
+.btn-view {
+  background: var(--orange-lighter);
+  color: var(--orange-dark);
+  border: 1px solid var(--orange-light);
+}
+
+.btn-view:hover {
+  background: var(--orange-primary);
+  color: white;
+  box-shadow: 0 2px 4px rgba(249, 115, 22, 0.3);
+  transform: translateY(-1px);
+}
+
+.btn-accept {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #6ee7b7;
+}
+
+.btn-accept:hover {
+  background: #10b981;
+  color: white;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+  transform: translateY(-1px);
+}
+
+.btn-deny {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+
+.btn-deny:hover {
+  background: #ef4444;
+  color: white;
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+  transform: translateY(-1px);
+}
+
+.btn-accept:disabled,
+.btn-deny:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-chat {
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #7dd3fc;
+}
+
+.btn-chat:hover {
+  background: #0ea5e9;
+  color: white;
+  box-shadow: 0 2px 4px rgba(14, 165, 233, 0.3);
+  transform: translateY(-1px);
+}
+
+/* Tabs - Orange Theme Update */
+.orders-forward-tabs {
+  background: white;
+  border-bottom: 2px solid var(--orange-lighter);
+  box-shadow: 0 1px 2px rgba(249, 115, 22, 0.05);
+}
+
+.tab-btn.active {
+  background: var(--orange-bg);
+  color: var(--orange-primary);
+  border-bottom: 3px solid var(--orange-primary);
+}
+
+.tab-btn:hover {
+  background: var(--orange-bg);
+  color: var(--orange-primary);
+}
+
+/* Empty State - Orange Theme */
+.empty-state {
+  color: var(--gray-600);
+}
+
+.empty-state svg {
+  color: var(--orange-light);
+  opacity: 0.3;
+}
+
+/* Notes Column */
+.table-notes {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  color: var(--gray-600);
+  font-style: italic;
+}
+
+/* Date Column */
+.table-date {
+  color: var(--gray-600);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+/* Person/Customer Column */
+.table-person {
+  font-weight: 500;
+  color: var(--gray-800);
+}
+
+/* Order Number - Orange Highlight */
+.table-order-number {
+  font-weight: 600;
+  color: var(--orange-primary);
+  font-family: 'Monaco', 'Courier New', monospace;
+}
+
+/* Denial Reason Column */
+.table-denial-reason {
+  max-width: 250px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  color: var(--gray-700);
+}
+
+/* Sub Info (dates under status) */
+.table-sub-info {
+  font-size: 11px;
+  color: var(--gray-600);
+  margin-top: 4px;
+  font-style: italic;
+}

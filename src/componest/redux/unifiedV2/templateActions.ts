@@ -82,9 +82,9 @@ export const getTemplatesV2 = (params?: Record<string, any>) => async (dispatch:
       headers: getHeaders(),
     });
 
-    // Backend returns { data: { data: [...], count: X, user: {...} } }
-    // Extract the actual array from response.data.data.data
-    const result = response.data.data?.data || response.data.data || [];
+    // Backend returns { success: true, data: { message, count, templates } }
+    // Extract the templates array from response.data.data.templates
+    const result = response.data.data?.templates || [];
 
     dispatch({
       type: TEMPLATE_V2_LIST_SUCCESS,

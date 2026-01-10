@@ -24,11 +24,21 @@ import {
 const baseUrl = import.meta.env.VITE_API_27INFINITY_IN;
 const API_KEY = import.meta.env.VITE_API_KEY;
 
-const getAuthHeaders = (token: string) => ({
-  Authorization: `Bearer ${token}`,
-  "Content-Type": "application/json",
-  "x-api-key": API_KEY,
-});
+const getAuthHeaders = (token: string) => {
+  const selectedBranch = localStorage.getItem("selectedBranch");
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+    "x-api-key": API_KEY,
+  };
+
+  // ✅ CRITICAL FIX: Add x-selected-branch header for multi-branch users
+  if (selectedBranch) {
+    headers["x-selected-branch"] = selectedBranch;
+  }
+
+  return headers;
+};
 
 // ✅ Create Manager
 export const createManager = (data: {
@@ -46,7 +56,7 @@ export const createManager = (data: {
     if (!token) throw new Error("Authentication token not found");
 
     const response = await axios.post(
-      `${baseUrl}/manager/create`,
+      `${baseUrl}/v2/manager`,
       {
         username: data.username,
         email: data.email,
@@ -81,11 +91,12 @@ export const getAllManagers = () => async (dispatch: any, getState: any) => {
     const token = getState().auth?.token || localStorage.getItem("authToken");
     if (!token) throw new Error("Authentication token not found");
 
-    const { data } = await axios.get(`${baseUrl}/manager/all`, {
+    const { data } = await axios.get(`${baseUrl}/v2/manager`, {
       headers: getAuthHeaders(token),
     });
 
-    dispatch({ type: MANAGER_GET_ALL_SUCCESS, payload: data.managers || data });
+    const managers = data.data?.data || data.data || data.managers || data;
+    dispatch({ type: MANAGER_GET_ALL_SUCCESS, payload: managers });
   } catch (error: any) {
     dispatch({
       type: MANAGER_GET_ALL_FAIL,
@@ -111,7 +122,7 @@ export const updateManager = (
     if (!token) throw new Error("Authentication token not found");
 
     const { data } = await axios.put(
-      `${baseUrl}/manager/update`,
+      `${baseUrl}/v2/manager/${id}`,
       { managerId: id, ...updateData },
       { headers: getAuthHeaders(token) }
     );
@@ -136,9 +147,9 @@ export const deleteManager = (id: string) => async (
     const token = getState().auth?.token || localStorage.getItem("authToken");
     if (!token) throw new Error("Authentication token not found");
 
-    await axios.delete(`${baseUrl}/manager/delete`, {
+    await axios.delete(`${baseUrl}/v2/manager/${id}`, {
       headers: getAuthHeaders(token),
-      data: { managerId: id },
+      
     });
 
     dispatch({ type: MANAGER_DELETE_SUCCESS, payload: id });

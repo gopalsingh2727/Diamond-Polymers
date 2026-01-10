@@ -1632,7 +1632,7 @@
   border-radius: 6px;
   max-height: 250px;
   overflow-y: auto;
-  z-index: 1000;
+  z-index: 99999;
   width: 100%;
   margin-top: 4px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);

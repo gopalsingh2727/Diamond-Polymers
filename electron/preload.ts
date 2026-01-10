@@ -22,6 +22,8 @@ const ALLOWED_INVOKE_CHANNELS = [
   'install-update',
 ];
 
+console.log('[Preload] Loading preload script...');
+
 try {
   contextBridge.exposeInMainWorld('ipcRenderer', {
     /**
@@ -90,7 +92,10 @@ try {
       }
     }
   });
+
+  console.log('[Preload] IPC Renderer successfully exposed to window');
 } catch (e) {
+  console.error('[Preload] Failed to expose IPC Renderer:', e);
 }
 
 // ✅ Uncaught exception handler added outside

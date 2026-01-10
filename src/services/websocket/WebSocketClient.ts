@@ -98,10 +98,11 @@ class WebSocketClient {
           try {
             const message = JSON.parse(event.data);
             // 🔍 DEBUG: Log ALL incoming WebSocket messages
+            console.log('[WebSocket] Received message:', message);
 
             this.handleMessage(message);
           } catch (error) {
-
+            console.error('[WebSocket] Failed to parse message:', error);
           }
         };
 
@@ -420,6 +421,8 @@ class WebSocketClient {
     const { type, action } = message;
     const eventType = type || action;
 
+    console.log('[WebSocket] Handling message - eventType:', eventType, 'message:', message);
+
     // Handle special system messages
     if (eventType === 'session:force_logout') {
       this.handleForceLogout(message.data);
@@ -439,12 +442,14 @@ class WebSocketClient {
 
     // Emit to event handlers
     const handlers = this.eventHandlers.get(eventType);
+    console.log('[WebSocket] Found', handlers?.size || 0, 'handlers for eventType:', eventType);
     if (handlers) {
       handlers.forEach((handler) => {
         try {
+          console.log('[WebSocket] Calling handler for:', eventType);
           handler(message);
         } catch (error) {
-
+          console.error('[WebSocket] Handler error for', eventType, ':', error);
         }
       });
     }
@@ -456,7 +461,7 @@ class WebSocketClient {
         try {
           handler(message);
         } catch (error) {
-
+          console.error('[WebSocket] Wildcard handler error:', error);
         }
       });
     }

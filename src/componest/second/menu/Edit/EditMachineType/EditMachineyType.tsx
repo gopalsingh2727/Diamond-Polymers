@@ -2,9 +2,9 @@ import React, { useEffect, useState, useCallback, useMemo } from "react";
 import "./EditMachineyType.css";
 import { useDispatch } from "react-redux";
 import {
-  updateMachineType,
-  deleteMachineType,
-} from "../../../../redux/create/machineType/machineTypeActions";
+  updateMachineTypeV2 as updateMachineType,
+  deleteMachineTypeV2 as deleteMachineType,
+} from "../../../../redux/unifiedV2/machineTypeActions";
 import { useFormDataCache } from "../hooks/useFormDataCache";
 import { AppDispatch } from "../../../../../store";
 import { formatDate } from "../../../../../utils/dateUtils";

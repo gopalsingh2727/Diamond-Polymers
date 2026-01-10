@@ -40,11 +40,21 @@ interface CreateAdminData {
 const baseUrl = import.meta.env.VITE_API_27INFINITY_IN;
 const API_KEY = import.meta.env.VITE_API_KEY;
 
-const getAuthHeaders = (token: string) => ({
-  Authorization: `Bearer ${token}`,
-  "Content-Type": "application/json",
-  "x-api-key": API_KEY,
-});
+const getAuthHeaders = (token: string) => {
+  const selectedBranch = localStorage.getItem("selectedBranch");
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+    "x-api-key": API_KEY,
+  };
+
+  // ✅ CRITICAL FIX: Add x-selected-branch header for multi-branch users
+  if (selectedBranch) {
+    headers["x-selected-branch"] = selectedBranch;
+  }
+
+  return headers;
+};
 
 // Create Admin
 export const createAdmin = (adminData: CreateAdminData) => {
@@ -55,7 +65,7 @@ export const createAdmin = (adminData: CreateAdminData) => {
       const token = getState().auth?.token || localStorage.getItem("authToken");
 
       const response = await axios.post(
-        `${baseUrl}/admin/create`,
+        `${baseUrl}/v2/admin`,
         {
           username: adminData.username,
           email: adminData.email,
@@ -95,11 +105,12 @@ export const getAllAdmins = () => async (dispatch: any, getState: any) => {
     const token = getState().auth?.token || localStorage.getItem("authToken");
     if (!token) throw new Error("Authentication token not found");
 
-    const { data } = await axios.get(`${baseUrl}/admin/all`, {
+    const { data } = await axios.get(`${baseUrl}/v2/admin`, {
       headers: getAuthHeaders(token),
     });
 
-    dispatch({ type: ADMIN_LIST_SUCCESS, payload: data.admins || data });
+    const admins = data.data?.data || data.data || data.admins || data;
+    dispatch({ type: ADMIN_LIST_SUCCESS, payload: admins });
   } catch (error: any) {
     dispatch({
       type: ADMIN_LIST_FAIL,
@@ -125,7 +136,7 @@ export const updateAdmin = (
     if (!token) throw new Error("Authentication token not found");
 
     const { data } = await axios.put(
-      `${baseUrl}/admin/update`,
+      `${baseUrl}/v2/admin/${id}`,
       { adminId: id, ...updateData },
       { headers: getAuthHeaders(token) }
     );
@@ -150,9 +161,9 @@ export const deleteAdmin = (id: string) => async (
     const token = getState().auth?.token || localStorage.getItem("authToken");
     if (!token) throw new Error("Authentication token not found");
 
-    await axios.delete(`${baseUrl}/admin/delete`, {
+    await axios.delete(`${baseUrl}/v2/admin/${id}`, {
       headers: getAuthHeaders(token),
-      data: { adminId: id },
+      
     });
 
     dispatch({ type: ADMIN_DELETE_SUCCESS, payload: id });

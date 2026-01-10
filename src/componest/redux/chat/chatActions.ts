@@ -14,7 +14,6 @@ import {
   loadHistoryFailure,
   loadSettingsStart,
   loadSettingsSuccess,
-  loadSettingsFailure,
   loadRemindersStart,
   loadRemindersSuccess,
   loadRemindersFailure,
@@ -115,8 +114,11 @@ export const loadChatHistory = (limit: number = 50) => async (dispatch: Dispatch
       dispatch(loadHistorySuccess([]));
     }
   } catch (error: any) {
-    // Silent failure - use empty history
-
+    const errorMessage = error.response?.data?.message || error.message || 'Failed to load chat history';
+    // Silent failure - chat history is non-critical, will start with empty history
+    // console.error('Load chat history error:', errorMessage);
+    dispatch(loadHistoryFailure(errorMessage));
+    // Provide empty history as fallback
     dispatch(loadHistorySuccess([]));
   }
 };
@@ -143,27 +145,30 @@ export const loadChatSettings = () => async (dispatch: Dispatch) => {
     if (response.data.success) {
       dispatch(loadSettingsSuccess(response.data.data));
     } else {
-      // Use default settings on failure
-      dispatch(loadSettingsSuccess({
-        isEnabled: true,
+      // Settings not found - use defaults
+      const defaultSettings = {
         assistantName: 'Assistant',
-        voiceGender: 'female',
+        voiceGender: 'female' as const,
         language: 'en-IN',
         autoSpeak: true,
-        speechRate: 1.0
-      }));
+        speechRate: 1,
+        isEnabled: true,
+        useOfflineVoice: false
+      };
+      dispatch(loadSettingsSuccess(defaultSettings as any));
     }
   } catch (error: any) {
-    // Silent failure - use default settings instead of showing error
-
-    dispatch(loadSettingsSuccess({
-      isEnabled: true,
+    // Silent failure - use default settings
+    const defaultSettings = {
       assistantName: 'Assistant',
-      voiceGender: 'female',
+      voiceGender: 'female' as const,
       language: 'en-IN',
       autoSpeak: true,
-      speechRate: 1.0
-    }));
+      speechRate: 1,
+      isEnabled: true,
+      useOfflineVoice: false
+    };
+    dispatch(loadSettingsSuccess(defaultSettings as any));
   }
 };
 
@@ -201,9 +206,9 @@ export const updateChatPosition = (x: number, y: number) => async (dispatch: Dis
       { x, y },
       { headers: getHeaders() }
     );
-  } catch (error) {
-
-
+  } catch (error: any) {
+    // Silent failure - position update is non-critical
+    // console.error('Update chat position error:', error.response?.data?.message || error.message);
   }
 };
 
@@ -221,8 +226,9 @@ export const updateHardwareInfo = (ramGB: number) => async (dispatch: Dispatch) 
     if (response.data.success) {
       return response.data.data;
     }
-  } catch (error) {
-
+  } catch (error: any) {
+    // Silent failure - hardware info update is non-critical
+    // console.error('Update hardware info error:', error.response?.data?.message || error.message);
   }
 };
 
@@ -273,8 +279,11 @@ export const loadReminders = (status: string = 'pending') => async (dispatch: Di
       dispatch(loadRemindersSuccess([]));
     }
   } catch (error: any) {
-    // Silent failure - use empty reminders
-
+    const errorMessage = error.response?.data?.message || error.message || 'Failed to load reminders';
+    // Silent failure - reminders are non-critical feature
+    // console.error('Load reminders error:', errorMessage);
+    dispatch(loadRemindersFailure(errorMessage));
+    // Provide empty reminders as fallback
     dispatch(loadRemindersSuccess([]));
   }
 };
@@ -293,8 +302,9 @@ export const checkDueReminders = () => async (dispatch: Dispatch) => {
       dispatch(setDueReminders(response.data.data.reminders));
       return response.data.data.reminders;
     }
-  } catch (error) {
-
+  } catch (error: any) {
+    // Silent failure - reminders are non-critical feature
+    // console.error('Check due reminders error:', error.response?.data?.message || error.message);
     return [];
   }
 };
@@ -415,8 +425,9 @@ export const markReminderNotified = (reminderId: string) => async () => {
       {},
       { headers: getHeaders() }
     );
-  } catch (error) {
-
+  } catch (error: any) {
+    // Silent failure - reminder notification tracking is non-critical
+    // console.error('Mark reminder notified error:', error.response?.data?.message || error.message);
   }
 };
 

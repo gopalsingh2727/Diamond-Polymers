@@ -20,6 +20,7 @@ import { useOrderFormData } from "./useOrderFormData";
 import InlineOptionsInput, { InlineOptionsInputRef } from "./optionsSection/InlineOptionsInput";
 import PrintExcelModal from "./PrintExcelModal";
 import SendOrderModal from "./SendOrderModal";
+import ForwardOrderModal from "../OrderForward/components/ForwardOrderModal";
 import { AppDispatch } from "../../../../store";
 
 // Section configuration type
@@ -174,8 +175,9 @@ const CreateOrders = () => {
   const { toast } = useCRUD();
 
   // Enhanced edit mode detection
-  const { orderData, isEdit, isEditMode } = location.state || {};
+  const { orderData, isEdit, isEditMode, hideCustomerDetails, isReceivedForwardedOrder } = location.state || {};
   const editMode = Boolean(isEdit || isEditMode || orderData && orderData._id);
+  const shouldHideCustomerDetails = Boolean(hideCustomerDetails || isReceivedForwardedOrder);
 
   // Debug: Log order data to check createdByName
 
@@ -197,11 +199,15 @@ const CreateOrders = () => {
   // View Print modal state (separate from PrintExcelModal)
   const [showViewPrint, setShowViewPrint] = useState(false);
 
+  // Forward order modal state
+  const [showForwardModal, setShowForwardModal] = useState(false);
+
   // 🚀 OPTIMIZED: Single API call for all form data
   const {
     loading: formDataLoading,
     error: formDataError,
-    allData
+    allData,
+    optionTypes
   } = useOrderFormData();
 
 
@@ -218,9 +224,10 @@ const CreateOrders = () => {
   // Dynamic calculation values
   const [calculatedValues, setCalculatedValues] = useState<{[key: string]: number | string;}>({});
 
-  // Track status and priority changes for edit mode
+  // Track status, priority, and notes changes for edit mode
   const [currentStatus, setCurrentStatus] = useState<string>(orderData?.overallStatus || 'Wait for Approval');
   const [currentPriority, setCurrentPriority] = useState<string>(orderData?.priority || 'normal');
+  const [currentNotes, setCurrentNotes] = useState<string>(orderData?.Notes || '');
 
   // Get order types from form data (already loaded in useOrderFormData)
   const orderTypes = allData?.orderTypes || [];
@@ -289,6 +296,23 @@ const CreateOrders = () => {
         (ot: any) => ot._id === selectedOrderType || ot.typeCode === selectedOrderType
       );
       if (selectedConfig) {
+        // ✅ Enrich allowedOptionTypes with full data including specifications
+        if (selectedConfig.allowedOptionTypes && optionTypes.length > 0) {
+          selectedConfig.allowedOptionTypes = selectedConfig.allowedOptionTypes.map((allowedOT: any) => {
+            const fullOptionType = optionTypes.find((ot: any) => ot._id === allowedOT._id || ot._id === allowedOT);
+            if (fullOptionType) {
+              return fullOptionType; // Use full data with specifications
+            }
+            return allowedOT; // Fallback to original if not found
+          });
+        }
+
+        console.log('🔧 OrderType Config loaded:', {
+          typeName: selectedConfig.typeName,
+          hideManufacturingSteps: selectedConfig.hideManufacturingSteps,
+          orderCategory: selectedConfig.orderCategory
+        });
+
         setOrderTypeConfig(selectedConfig);
 
 
@@ -310,14 +334,51 @@ const CreateOrders = () => {
       setOrderTypeConfig(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedOrderType, orderTypes.length]);
+  }, [selectedOrderType, orderTypes.length, optionTypes.length]);
 
   // Helper function to check if a section is enabled
   const isSectionEnabled = (sectionId: string): boolean => {
-    // BILLING ORDER: Hide steps section if hideManufacturingSteps is true
-    if (sectionId === 'steps' && orderTypeConfig?.hideManufacturingSteps) {
+    console.log(`🔎 isSectionEnabled called for: "${sectionId}"`);
 
-      return false;
+    // BILLING ORDER: Hide steps section if hideManufacturingSteps is true
+    if (sectionId === 'steps') {
+      console.log('🔍 Checking steps section visibility:', {
+        hideManufacturingSteps: orderTypeConfig?.hideManufacturingSteps,
+        orderCategory: orderTypeConfig?.orderCategory,
+        typeCode: orderTypeConfig?.typeCode,
+        typeName: orderTypeConfig?.typeName,
+        shouldHide: !!orderTypeConfig?.hideManufacturingSteps
+      });
+
+      // ✅ FIX: Check hideManufacturingSteps field
+      if (orderTypeConfig?.hideManufacturingSteps === true) {
+        console.log('✅ HIDING manufacturing steps section (hideManufacturingSteps=true)');
+        return false;
+      }
+
+      // ✅ FIX: Hide for billing category orders
+      if (orderTypeConfig?.orderCategory === 'billing') {
+        console.log('✅ HIDING manufacturing steps section (billing category)');
+        return false;
+      }
+
+      // ✅ FALLBACK: Check specific order types that should hide steps (until API is fixed)
+      // This list includes order types where hideManufacturingSteps is true in DB but not returned by API
+      const hideStepsOrderTypes = ['SILVER_TEST', 'mrk', '99', '222', 'EWEWE'];
+      const isInFallbackList = hideStepsOrderTypes.includes(orderTypeConfig?.typeCode || '');
+
+      console.log('🔍 Fallback list check:', {
+        typeCode: orderTypeConfig?.typeCode,
+        hideStepsOrderTypes,
+        isInFallbackList
+      });
+
+      if (isInFallbackList) {
+        console.log('✅ HIDING manufacturing steps section (typeCode in fallback list)');
+        return false;
+      }
+
+      console.log('❌ NOT HIDING steps section - no conditions matched');
     }
 
     if (!orderTypeConfig || !orderTypeConfig.sections || orderTypeConfig.sections.length === 0) {
@@ -424,14 +485,61 @@ const CreateOrders = () => {
     const aggregated: {[key: string]: number[];} = {};
     const single: {[key: string]: number;} = {};
 
-    options.forEach((opt) => {
-      if (opt.specificationValues) {
-        // Clean option type name for variable naming
-        const cleanTypeName = (opt.optionTypeName || 'Option').
-        replace(/\s+/g, '_').
-        replace(/[.%]/g, '').
-        replace(/_+/g, '_');
+    console.log('🔍 Building formula context from options:', options);
+    console.log('🔍 All available option data:', allData?.options);
 
+    options.forEach((opt) => {
+      // Clean option type name for variable naming
+      const cleanTypeName = (opt.optionTypeName || 'Option').
+      replace(/\s+/g, '_').
+      replace(/[.%]/g, '').
+      replace(/_+/g, '_');
+
+      console.log(`🔍 Processing option: ${opt.optionName} (${cleanTypeName})`, opt);
+
+      // ✅ STEP 1: Load OptionType specifications (e.g., purity = 80%)
+      if (orderTypeConfig?.allowedOptionTypes && opt.optionTypeId) {
+        const optionType = orderTypeConfig.allowedOptionTypes.find(
+          (ot: any) => ot._id === opt.optionTypeId
+        );
+
+        if (optionType && optionType.specifications) {
+          optionType.specifications.forEach((spec: any) => {
+            if (spec.dataType === 'number' && spec.defaultValue != null) {
+              const cleanKey = spec.name.replace(/\s+/g, '_');
+              const varName = `${cleanTypeName}_${cleanKey}`;
+              const numValue = parseFloat(String(spec.defaultValue)) || 0;
+
+              // Add to single (OptionType specs are templates, not aggregated)
+              single[varName] = numValue;
+            }
+          });
+        }
+      }
+
+      // ✅ STEP 2: Load Option dimensions (actual option instance values like rate_value = 8000)
+      const optionData = allData?.options?.find((o: any) => o._id === opt.optionId);
+      console.log(`🔍 Found option data for ${opt.optionName}:`, optionData);
+
+      if (optionData && optionData.dimensions && Array.isArray(optionData.dimensions)) {
+        console.log(`✅ Loading ${optionData.dimensions.length} dimensions from option ${opt.optionName}`);
+        optionData.dimensions.forEach((dim: any) => {
+          if (dim.dataType === 'number' && dim.value != null) {
+            const cleanKey = dim.name.replace(/\s+/g, '_');
+            const varName = `${cleanTypeName}_${cleanKey}`;
+            const numValue = typeof dim.value === 'number' ? dim.value : parseFloat(String(dim.value)) || 0;
+
+            console.log(`  ✅ ${varName} = ${numValue}`);
+            // Add to single (Option dimensions are instance values, not aggregated)
+            single[varName] = numValue;
+          }
+        });
+      } else {
+        console.log(`⚠️ No dimensions found for option ${opt.optionName}`);
+      }
+
+      // ✅ STEP 3: Load specificationValues from the order (user input)
+      if (opt.specificationValues) {
         Object.entries(opt.specificationValues).forEach(([key, value]) => {
           const cleanKey = key.replace(/\s+/g, '_');
           const varName = `${cleanTypeName}_${cleanKey}`;
@@ -452,6 +560,9 @@ const CreateOrders = () => {
         });
       }
     });
+
+    console.log('✅ Final formula context - single values:', single);
+    console.log('✅ Final formula context - aggregated values:', aggregated);
 
     return { aggregated, single };
   };
@@ -904,6 +1015,22 @@ const CreateOrders = () => {
             </svg>
           </button>
 
+          {/* Forward Order Icon - Only show in edit mode */}
+          {editMode && orderData?._id && (
+            <button
+              type="button"
+              onClick={() => setShowForwardModal(true)}
+              style={{ width: '40px', height: '40px', backgroundColor: 'transparent', color: '#3b82f6', border: '1px solid #e5e7eb', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              title="Forward Order">
+
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="15 3 21 3 21 9" />
+                <polyline points="10 8 21 3" />
+                <path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5" />
+              </svg>
+            </button>
+          )}
+
           {/* View Print Icon */}
           <button
             type="button"
@@ -947,16 +1074,32 @@ const CreateOrders = () => {
 
       <div className="CreateOrdersBody">
         <div className="createOdersForm">
-          <CustomerName
-            ref={customerNameRef}
-            initialData={orderData}
-            isEditMode={editMode}
-            onCustomerSelect={() => {
-              // Directly focus the order type dropdown
-              setTimeout(() => {
-                orderTypeRef.current?.focus();
-              }, 50);
-            }} />
+          {!shouldHideCustomerDetails && (
+            <CustomerName
+              ref={customerNameRef}
+              initialData={orderData}
+              isEditMode={editMode}
+              onCustomerSelect={() => {
+                // Directly focus the order type dropdown
+                setTimeout(() => {
+                  orderTypeRef.current?.focus();
+                }, 50);
+              }} />
+          )}
+          {shouldHideCustomerDetails && (
+            <div className="customer-hidden-notice" style={{
+              padding: '16px',
+              background: '#f3f4f6',
+              border: '1px solid #e5e7eb',
+              borderRadius: '8px',
+              marginBottom: '16px',
+              color: '#6b7280',
+              fontSize: '14px'
+            }}>
+              <strong>ℹ️ Customer Details Hidden</strong>
+              <p style={{ margin: '8px 0 0 0' }}>You are viewing a forwarded order. Customer information is only visible to the person who forwarded this order.</p>
+            </div>
+          )}
 
 
           <OrderTypeSelect
@@ -1027,8 +1170,16 @@ const CreateOrders = () => {
                   // Check if this section should be shown
                   const isEnabled = isSectionEnabled(section.id);
 
+                  console.log(`📋 Section "${section.id}":`, {
+                    enabled: isEnabled,
+                    sectionName: section.name,
+                    willRender: isEnabled
+                  });
 
-                  if (!isEnabled) return null;
+                  if (!isEnabled) {
+                    console.log(`🚫 SKIPPING section "${section.id}" - not enabled`);
+                    return null;
+                  }
 
                   switch (section.id) {
                     case 'options':
@@ -1166,7 +1317,10 @@ const CreateOrders = () => {
         <div className="CreateOrdersFooter">
           <Notes
             initialNotes={orderData?.Notes || orderData?.notes}
-            isEditMode={editMode} />
+            isEditMode={editMode}
+            onNotesChange={(notes) => {
+              setCurrentNotes(notes);
+            }} />
 
           <Status
             initialStatus={orderData?.overallStatus || 'Wait for Approval'}
@@ -1191,7 +1345,8 @@ const CreateOrders = () => {
             orderData={{
               ...orderData,
               overallStatus: currentStatus,
-              priority: currentPriority
+              priority: currentPriority,
+              Notes: currentNotes
             }}
             optionsData={options} />
 
@@ -1218,6 +1373,7 @@ const CreateOrders = () => {
           ...orderData,
           overallStatus: currentStatus,
           priority: currentPriority,
+          Notes: currentNotes,
           options: options,
           createdByName: orderData?.createdByName,
           createdBy: orderData?.createdBy,
@@ -1236,11 +1392,26 @@ const CreateOrders = () => {
         orderData={{
           ...orderData,
           overallStatus: currentStatus,
-          priority: currentPriority
+          priority: currentPriority,
+          Notes: currentNotes
         }}
         customer={getCustomerForModal()}
         mode={sendModalMode}
         branchId={localStorage.getItem('selectedBranch') || orderData?.branchId || undefined} />
+
+      {/* Forward Order Modal */}
+      {editMode && orderData?._id && (
+        <ForwardOrderModal
+          isOpen={showForwardModal}
+          onClose={() => setShowForwardModal(false)}
+          orderId={orderData._id}
+          orderNumber={orderData.orderNumber || orderData.orderId || orderData._id?.slice(-8)}
+          onSuccess={() => {
+            toast.success('Success', 'Order forwarded successfully!');
+            setShowForwardModal(false);
+          }}
+        />
+      )}
 
     </div>);
 

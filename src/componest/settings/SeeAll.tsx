@@ -54,7 +54,7 @@ const SeeAll = () => {
       axios.get(`${baseUrl}/manager/all`, {
         headers: { "x-api-key": apiKey, Authorization: `Bearer ${token}` }
       }),
-      axios.get(`${baseUrl}/orders`, {
+      axios.get(`${baseUrl}/v2/orders?page=1&limit=1`, {
         headers: { "x-api-key": apiKey, Authorization: `Bearer ${token}` }
       }),
       axios.get(`${baseUrl}/customer`, {
@@ -88,7 +88,8 @@ const SeeAll = () => {
       }
       if (results[3].status === "fulfilled") {
         const data = results[3].value.data;
-        newStats.orders = data.orders?.length || (Array.isArray(data) ? data.length : 0);
+        // V2 API returns { success: true, data: { data: [], total: N } }
+        newStats.orders = data.data?.total || data.total || 0;
       }
       if (results[4].status === "fulfilled") {
         const data = results[4].value.data;

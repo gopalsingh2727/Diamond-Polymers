@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../../../store";
-import { getAccounts } from "../../../redux/create/createNewAccount/NewAccountActions";
+import { getAccountsV2 as getAccounts } from "../../../redux/unifiedV2/accountActions";
 
 import './adderss.css';
 import { BackButton, SearchBox } from "../../../allCompones/BackButton";

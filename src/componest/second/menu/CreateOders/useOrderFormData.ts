@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
+// ⚠️ TEMPORARILY using old actions until V2 backend issue is fixed
 import { getOrderFormDataIfNeeded, refreshOrderFormData } from "../../../redux/oders/orderFormDataActions";
 import { RootState } from "../../../redux/rootReducer";
 
@@ -22,7 +23,7 @@ export const useOrderFormData = () => {
   const [selectedProductType, setSelectedProductType] = useState<string>("");
   const [selectedMaterialType, setSelectedMaterialType] = useState<string>("");
 
-  // Fetch all data on mount (uses cache if available - no redundant API calls!)
+  // ⚠️ TEMPORARILY using old endpoint until V2 backend issue is fixed
   useEffect(() => {
     dispatch(getOrderFormDataIfNeeded() as any);
   }, [dispatch]);
@@ -49,7 +50,7 @@ export const useOrderFormData = () => {
           'step'            // Manufacturing steps
         ];
 
-        // Refetch order form data when any relevant entity is updated
+        // ⚠️ TEMPORARILY using old action until V2 backend issue is fixed
         if (refreshTriggers.includes(entityType)) {
           console.log(`🔄 WebSocket: Refreshing order form data due to ${entityType} update`);
           dispatch(refreshOrderFormData() as any);

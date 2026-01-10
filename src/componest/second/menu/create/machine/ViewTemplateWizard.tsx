@@ -3,8 +3,9 @@ import { useDispatch } from "react-redux";
 import { AppDispatch } from "../../../../../store";
 import { useFormDataCache } from "../../Edit/hooks/useFormDataCache";
 import { getOrderFormDataIfNeeded } from "../../../../redux/oders/orderFormDataActions";
-import { getOptionSpecs } from "../../../../redux/create/optionSpec/optionSpecActions";
-import { createMachineTemplate, updateMachineTemplate } from "../../../../redux/machineTemplate/machineTemplateActions";
+import { getOptionSpecsV2 as getOptionSpecs } from "../../../../redux/unifiedV2/optionSpecActions";
+// ✅ MIGRATED TO V2 API
+import { createTemplateV2, updateTemplateV2 } from "../../../../redux/unifiedV2/templateActions";
 import { ChevronLeft, ChevronRight, Plus, Trash2, Eye, Save, Copy, Loader2, AlertTriangle, Edit2, ChevronDown, ChevronUp, X, Layers } from 'lucide-react';
 import "./ViewTemplateWizard.css";
 
@@ -763,11 +764,13 @@ const ViewTemplateWizard: React.FC<ViewTemplateWizardProps> = ({ initialData, on
       if (isEditingExisting && existingTemplateForOrderType?._id || editMode && templateId) {
         const idToUpdate = existingTemplateForOrderType?._id || templateId;
 
-        await dispatch(updateMachineTemplate(idToUpdate, finalConfig as any));
+        // ✅ USING V2 API
+        await dispatch(updateTemplateV2(idToUpdate, finalConfig as any));
         alert('Template updated successfully!');
       } else {
 
-        await dispatch(createMachineTemplate(finalConfig as any));
+        // ✅ USING V2 API
+        await dispatch(createTemplateV2(finalConfig as any));
         alert('Template saved successfully!');
       }
 
@@ -804,7 +807,8 @@ const ViewTemplateWizard: React.FC<ViewTemplateWizardProps> = ({ initialData, on
 
 
       // Update the template with the section data
-      await dispatch(updateMachineTemplate(existingTemplateForOrderType._id, {
+      // ✅ USING V2 API
+      await dispatch(updateTemplateV2(existingTemplateForOrderType._id, {
         ...config,
         ...sectionData
       } as any));

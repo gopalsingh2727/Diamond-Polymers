@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
-import { createExcelExportType, updateExcelExportType, deleteExcelExportType } from "../../../../redux/create/excelExportType/excelExportTypeActions";
+import { createExcelExportTypeV2 as createExcelExportType, updateExcelExportTypeV2 as updateExcelExportType, deleteExcelExportTypeV2 as deleteExcelExportType } from "../../../../redux/unifiedV2/excelExportTypeActions";
 import { getOptionTypes } from "../../../../redux/option/optionTypeActions";
 import { AppDispatch } from "../../../../../store";
 import { RootState } from "../../../../redux/rootReducer";

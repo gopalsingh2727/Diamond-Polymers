@@ -6,6 +6,7 @@ import {
   deleteBranch } from
 "../../../../redux/createBranchAndManager/branchActions";
 import { RootState } from "../../../../redux/rootReducer";
+import DeletionOTPModal from "../../../../shared/DeletionOTPModal";
 import "./editStyles.css";
 
 interface Branch {
@@ -36,7 +37,7 @@ const SeeAllBranchAndEdit: React.FC = () => {
     isActive: true
   });
   const [searchTerm, setSearchTerm] = useState("");
-  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [deleteModal, setDeleteModal] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
     dispatch(listBranches() as any);
@@ -86,14 +87,8 @@ const SeeAllBranchAndEdit: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    try {
-      await dispatch(deleteBranch(id) as any);
-      dispatch(listBranches() as any);
-      setDeleteConfirm(null);
-    } catch (err) {
-
-    }
+  const handleDeleteClick = (id: string, name: string) => {
+    setDeleteModal({ id, name });
   };
 
   const handleToggleActive = async (branch: Branch) => {
@@ -184,29 +179,12 @@ const SeeAllBranchAndEdit: React.FC = () => {
 
                           Edit
                         </button>
-                        {deleteConfirm === branch._id ?
-                  <div className="delete-confirm">
-                            <button
-                      className="btn-confirm-delete"
-                      onClick={() => handleDelete(branch._id)}>
-
-                              Confirm
-                            </button>
-                            <button
-                      className="btn-cancel-delete"
-                      onClick={() => setDeleteConfirm(null)}>
-
-                              Cancel
-                            </button>
-                          </div> :
-
-                  <button
+                        <button
                     className="btn-delete"
-                    onClick={() => setDeleteConfirm(branch._id)}>
+                    onClick={() => handleDeleteClick(branch._id, branch.name)}>
 
-                            Delete
-                          </button>
-                  }
+                          Delete
+                        </button>
                       </td>
                     </tr>
               )
@@ -305,6 +283,19 @@ const SeeAllBranchAndEdit: React.FC = () => {
           </div>
         </div>
       }
+
+      {/* Deletion OTP Modal */}
+      <DeletionOTPModal
+        isOpen={!!deleteModal}
+        onClose={() => setDeleteModal(null)}
+        entityType="branch"
+        entityId={deleteModal?.id || ''}
+        entityName={deleteModal?.name || ''}
+        onSuccess={() => {
+          setDeleteModal(null);
+          dispatch(listBranches() as any);
+        }}
+      />
     </div>);
 
 };

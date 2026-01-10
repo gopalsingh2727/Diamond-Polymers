@@ -1,3 +1,10 @@
+/**
+ * Machine Template Actions
+ *
+ * ⚠️ DEPRECATED: This file now uses the unified v2 API
+ * Direct usage of v2 actions recommended: import from '../unifiedV2/templateActions'
+ */
+
 import axios from "axios";
 import {
   CREATE_MACHINE_TEMPLATE_REQUEST,
@@ -31,6 +38,30 @@ import {
 } from "./machineTemplateConstants";
 import { Dispatch } from "redux";
 import { RootState } from "../rootReducer";
+
+// Import v2 actions
+import {
+  createTemplateV2,
+  getTemplatesV2,
+  getTemplateV2,
+  updateTemplateV2,
+  deleteTemplateV2,
+  TEMPLATE_V2_CREATE_REQUEST,
+  TEMPLATE_V2_CREATE_SUCCESS,
+  TEMPLATE_V2_CREATE_FAILURE,
+  TEMPLATE_V2_LIST_REQUEST,
+  TEMPLATE_V2_LIST_SUCCESS,
+  TEMPLATE_V2_LIST_FAILURE,
+  TEMPLATE_V2_GET_REQUEST,
+  TEMPLATE_V2_GET_SUCCESS,
+  TEMPLATE_V2_GET_FAILURE,
+  TEMPLATE_V2_UPDATE_REQUEST,
+  TEMPLATE_V2_UPDATE_SUCCESS,
+  TEMPLATE_V2_UPDATE_FAILURE,
+  TEMPLATE_V2_DELETE_REQUEST,
+  TEMPLATE_V2_DELETE_SUCCESS,
+  TEMPLATE_V2_DELETE_FAILURE,
+} from "../unifiedV2/templateActions";
 
 // ENV
 const baseUrl = import.meta.env.VITE_API_27INFINITY_IN;
@@ -170,27 +201,17 @@ export interface MachineTemplateData {
 }
 
 // Create Machine Template
+// ⚠️ MIGRATED TO V2 API - calls /v2/template
 export const createMachineTemplate = (templateData: MachineTemplateData) =>
-  async (dispatch: Dispatch, getState: () => RootState) => {
+  async (dispatch: Dispatch) => {
   try {
     dispatch({ type: CREATE_MACHINE_TEMPLATE_REQUEST });
 
-    const token = getToken(getState);
-    const branchId = getBranchId(getState);
+    // Call the v2 action
+    const result = await dispatch(createTemplateV2(templateData) as any);
 
-    const dataToSend = {
-      ...templateData,
-      branchId: templateData.branchId || branchId
-    };
-
-    const { data } = await axios.post(
-      `${baseUrl}/machine-template`,
-      dataToSend,
-      { headers: getHeaders(token) }
-    );
-
-    dispatch({ type: CREATE_MACHINE_TEMPLATE_SUCCESS, payload: data });
-    return data;
+    dispatch({ type: CREATE_MACHINE_TEMPLATE_SUCCESS, payload: result });
+    return result;
   } catch (error: any) {
     const errorMessage = error.response?.data?.message || error.message || "Failed to create machine template";
     dispatch({ type: CREATE_MACHINE_TEMPLATE_FAIL, payload: errorMessage });
@@ -199,24 +220,17 @@ export const createMachineTemplate = (templateData: MachineTemplateData) =>
 };
 
 // Get All Machine Templates
-export const getMachineTemplates = () =>
-  async (dispatch: Dispatch, getState: () => RootState) => {
+// ⚠️ MIGRATED TO V2 API - calls /v2/template
+export const getMachineTemplates = (params?: Record<string, any>) =>
+  async (dispatch: Dispatch) => {
   try {
     dispatch({ type: GET_MACHINE_TEMPLATES_REQUEST });
 
-    const token = getToken(getState);
-    const branchId = getBranchId(getState);
+    // Call the v2 action
+    const result = await dispatch(getTemplatesV2(params) as any);
 
-    const url = branchId
-      ? `${baseUrl}/machine-template?branchId=${branchId}`
-      : `${baseUrl}/machine-template`;
-
-    const { data } = await axios.get(url, {
-      headers: getHeaders(token)
-    });
-
-    dispatch({ type: GET_MACHINE_TEMPLATES_SUCCESS, payload: data });
-    return data;
+    dispatch({ type: GET_MACHINE_TEMPLATES_SUCCESS, payload: result });
+    return result;
   } catch (error: any) {
     const errorMessage = error.response?.data?.message || error.message || "Failed to fetch machine templates";
     dispatch({ type: GET_MACHINE_TEMPLATES_FAIL, payload: errorMessage });
@@ -225,20 +239,17 @@ export const getMachineTemplates = () =>
 };
 
 // Get Machine Template by ID
+// ⚠️ MIGRATED TO V2 API - calls /v2/template/{id}
 export const getMachineTemplateById = (id: string) =>
-  async (dispatch: Dispatch, getState: () => RootState) => {
+  async (dispatch: Dispatch) => {
   try {
     dispatch({ type: GET_MACHINE_TEMPLATE_BY_ID_REQUEST });
 
-    const token = getToken(getState);
+    // Call the v2 action
+    const result = await dispatch(getTemplateV2(id) as any);
 
-    const { data } = await axios.get(
-      `${baseUrl}/machine-template/${id}`,
-      { headers: getHeaders(token) }
-    );
-
-    dispatch({ type: GET_MACHINE_TEMPLATE_BY_ID_SUCCESS, payload: data });
-    return data;
+    dispatch({ type: GET_MACHINE_TEMPLATE_BY_ID_SUCCESS, payload: result });
+    return result;
   } catch (error: any) {
     const errorMessage = error.response?.data?.message || error.message || "Failed to fetch machine template";
     dispatch({ type: GET_MACHINE_TEMPLATE_BY_ID_FAIL, payload: errorMessage });
@@ -273,21 +284,17 @@ export const getTemplatesByMachine = (machineId: string) =>
 };
 
 // Update Machine Template
+// ⚠️ MIGRATED TO V2 API - calls /v2/template/{id}
 export const updateMachineTemplate = (id: string, templateData: Partial<MachineTemplateData>) =>
-  async (dispatch: Dispatch, getState: () => RootState) => {
+  async (dispatch: Dispatch) => {
   try {
     dispatch({ type: UPDATE_MACHINE_TEMPLATE_REQUEST });
 
-    const token = getToken(getState);
+    // Call the v2 action
+    const result = await dispatch(updateTemplateV2(id, templateData) as any);
 
-    const { data } = await axios.put(
-      `${baseUrl}/machine-template/${id}`,
-      templateData,
-      { headers: getHeaders(token) }
-    );
-
-    dispatch({ type: UPDATE_MACHINE_TEMPLATE_SUCCESS, payload: data });
-    return data;
+    dispatch({ type: UPDATE_MACHINE_TEMPLATE_SUCCESS, payload: result });
+    return result;
   } catch (error: any) {
     const errorMessage = error.response?.data?.message || error.message || "Failed to update machine template";
     dispatch({ type: UPDATE_MACHINE_TEMPLATE_FAIL, payload: errorMessage });
@@ -296,20 +303,17 @@ export const updateMachineTemplate = (id: string, templateData: Partial<MachineT
 };
 
 // Delete Machine Template
+// ⚠️ MIGRATED TO V2 API - calls /v2/template/{id}
 export const deleteMachineTemplate = (id: string) =>
-  async (dispatch: Dispatch, getState: () => RootState) => {
+  async (dispatch: Dispatch) => {
   try {
     dispatch({ type: DELETE_MACHINE_TEMPLATE_REQUEST });
 
-    const token = getToken(getState);
+    // Call the v2 action
+    await dispatch(deleteTemplateV2(id) as any);
 
-    const { data } = await axios.delete(
-      `${baseUrl}/machine-template/${id}`,
-      { headers: getHeaders(token) }
-    );
-
-    dispatch({ type: DELETE_MACHINE_TEMPLATE_SUCCESS, payload: { id, ...data } });
-    return data;
+    dispatch({ type: DELETE_MACHINE_TEMPLATE_SUCCESS, payload: { id } });
+    return { id };
   } catch (error: any) {
     const errorMessage = error.response?.data?.message || error.message || "Failed to delete machine template";
     dispatch({ type: DELETE_MACHINE_TEMPLATE_FAIL, payload: errorMessage });

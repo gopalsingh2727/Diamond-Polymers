@@ -7,11 +7,12 @@ import {
   clearError,
   clearSuccessMessage } from
 "../../../redux/oders/OdersActions";
-import { getPrintTypes, getPrintTypesByOrderType } from "../../../redux/create/printType/printTypeActions";
+import { getPrintTypesV2 as getPrintTypes, getPrintTypesByOrderTypeV2 as getPrintTypesByOrderType } from "../../../redux/unifiedV2/printTypeActions";
 import { RootState } from "../../../redux/rootReducer";
 import { ActionButton } from "../../../../components/shared/ActionButton";
 import { ToastContainer } from "../../../../components/shared/Toast";
 import { useCRUD } from "../../../../hooks/useCRUD";
+import ForwardToPersonModal from "../OrderForward/components/ForwardToPersonModal";
 
 interface SaveOrdersProps {
   isEditMode?: boolean;
@@ -57,6 +58,10 @@ const SaveOrders: React.FC<SaveOrdersProps> = ({
   const [printTypes, setPrintTypes] = useState<PrintType[]>([]);
   const [selectedPrintType, setSelectedPrintType] = useState<PrintType | null>(null);
   const [loadingPrintTypes, setLoadingPrintTypes] = useState(false);
+
+  // Forward order states
+  const [showForwardModal, setShowForwardModal] = useState(false);
+  const [orderToForward, setOrderToForward] = useState<any>(null);
 
   // Redux state
   const orderState = useSelector((state: RootState) => {
@@ -215,6 +220,44 @@ const SaveOrders: React.FC<SaveOrdersProps> = ({
       setSavedOrderData(order);
     }
   }, [order, savedOrderData]);
+
+  // Handle forward order button
+  const handleForwardOrder = () => {
+    // Close the success popup first
+    setShowSuccessPopup(false);
+    // Set order data for forwarding
+    setOrderToForward(savedOrderData);
+    // Open forwarding modal
+    setShowForwardModal(true);
+  };
+
+  // Handle forward complete
+  const handleForwardComplete = async (personId: string, personRole: string, notes: string) => {
+    try {
+      // Import the forward action
+      const { forwardOrderToPerson } = await import('../../../redux/orderforward/orderForwardActions');
+
+      await dispatch(forwardOrderToPerson(
+        savedOrderData._id || savedOrderData.orderId,
+        personId,
+        personRole,
+        notes
+      ) as any);
+
+      // Show success message
+      toast.success('Order forwarded successfully!');
+
+      // Close modals
+      setShowForwardModal(false);
+      setShowSuccessPopup(false);
+      setSavedOrderData(null);
+
+      // Refresh orders
+      sessionStorage.setItem('orders_updated', Date.now().toString());
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to forward order');
+    }
+  };
 
   // Handle success popup close
   const handleCloseSuccess = () => {
@@ -624,6 +667,19 @@ const SaveOrders: React.FC<SaveOrdersProps> = ({
 
             <div style={successButtonsStyle}>
               <button
+              onClick={handleForwardOrder}
+              style={{
+                ...printButtonStyle,
+                backgroundColor: '#667eea',
+                border: 'none'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#5568d3'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#667eea'}>
+
+                📤 Forward Order
+              </button>
+
+              <button
               onClick={handlePrint}
               style={printButtonStyle}
               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#E55A2B'}
@@ -746,6 +802,18 @@ const SaveOrders: React.FC<SaveOrdersProps> = ({
 
       {/* Toast notifications from CRUD system */}
       <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
+
+      {/* Forward Order Modal */}
+      {showForwardModal && orderToForward && (
+        <ForwardToPersonModal
+          order={orderToForward}
+          onClose={() => {
+            setShowForwardModal(false);
+            setOrderToForward(null);
+          }}
+          onForward={handleForwardComplete}
+        />
+      )}
     </>);
 
 };
@@ -757,11 +825,11 @@ const overlayStyle: React.CSSProperties = {
   left: 0,
   right: 0,
   bottom: 0,
-  backgroundColor: "rgba(0,0,0,0.6)",
+  backgroundColor: "rgba(0,0,0,0.75)",
   display: "flex",
   justifyContent: "center",
   alignItems: "center",
-  zIndex: 9999,
+  zIndex: 10000,
   animation: "fadeIn 0.2s ease"
 };
 

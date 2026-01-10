@@ -205,9 +205,20 @@ const Settings = ({ branchName, onBranchClick, showBranchOption = false, userBra
 
 
   const checkUpdate = async () => {
+    console.log('Check update clicked, ipcRenderer available:', !!window.ipcRenderer);
+
+    if (!window.ipcRenderer) {
+      console.error('IPC Renderer not available. Make sure you are running in Electron.');
+      setUpdateError({ message: 'Update check is only available in desktop app' });
+      setModalOpen(true);
+      return;
+    }
+
     setIsOpen(false);
     setStatus('checking');
+    console.log('Invoking check-update...');
     const result = await window.ipcRenderer.invoke('check-update');
+    console.log('Check update result:', result);
     setStatus('idle');
     setModalOpen(true);
 
@@ -258,6 +269,10 @@ const Settings = ({ branchName, onBranchClick, showBranchOption = false, userBra
   );
 
   const startDownload = async () => {
+    if (!window.ipcRenderer) {
+      return;
+    }
+
     try {
       setStatus('downloading');
       setDownloadProgress({ progress: 0, downloaded: 0, total: 0 });
@@ -278,6 +293,10 @@ const Settings = ({ branchName, onBranchClick, showBranchOption = false, userBra
   };
 
   const installUpdate = async () => {
+    if (!window.ipcRenderer) {
+      return;
+    }
+
     try {
       setStatus('installing');
       const result = await window.ipcRenderer.invoke('install-update');
@@ -294,6 +313,10 @@ const Settings = ({ branchName, onBranchClick, showBranchOption = false, userBra
   };
 
   const openDownloadPage = async () => {
+    if (!window.ipcRenderer) {
+      return;
+    }
+
     try {
       await window.ipcRenderer.invoke('open-download-page');
     } catch (err) {
@@ -355,14 +378,21 @@ const Settings = ({ branchName, onBranchClick, showBranchOption = false, userBra
   };
 
   useEffect(() => {
+    // Only set up IPC listeners if running in Electron
+    if (!window.ipcRenderer) {
+      return;
+    }
+
     window.ipcRenderer.on('update-can-available', onUpdateCanAvailable);
     window.ipcRenderer.on('update-error', onUpdateError);
     window.ipcRenderer.on('download-progress', onDownloadProgress);
 
     return () => {
-      window.ipcRenderer.off('update-can-available', onUpdateCanAvailable);
-      window.ipcRenderer.off('update-error', onUpdateError);
-      window.ipcRenderer.off('download-progress', onDownloadProgress);
+      if (window.ipcRenderer) {
+        window.ipcRenderer.off('update-can-available', onUpdateCanAvailable);
+        window.ipcRenderer.off('update-error', onUpdateError);
+        window.ipcRenderer.off('download-progress', onDownloadProgress);
+      }
     };
   }, [onUpdateCanAvailable, onUpdateError, onDownloadProgress]);
 

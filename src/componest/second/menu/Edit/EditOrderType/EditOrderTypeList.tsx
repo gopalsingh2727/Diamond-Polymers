@@ -4,7 +4,7 @@
  */
 import React, { useState, useCallback, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { getOrderTypes } from "../../../../redux/create/orderType/orderTypeActions";
+import { getOrderTypesV2 as getOrderTypes } from "../../../../redux/unifiedV2/orderTypeActions";
 import { RootState } from "../../../../redux/rootReducer";
 import { AppDispatch } from "../../../../../store";
 

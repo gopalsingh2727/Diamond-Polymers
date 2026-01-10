@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { useDispatch } from "react-redux";
-import { updateMachine, deleteMachine } from "../../../../redux/create/machine/MachineActions";
+import { updateMachineV2 as updateMachine, deleteMachineV2 as deleteMachine } from "../../../../redux/unifiedV2/machineActions";
 import { useFormDataCache } from "../hooks/useFormDataCache";
 import { useCRUD } from "../../../../../hooks/useCRUD";
 import { ToastContainer } from "../../../../../components/shared/Toast";

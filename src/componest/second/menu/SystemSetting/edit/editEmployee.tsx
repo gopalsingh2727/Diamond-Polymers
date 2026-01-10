@@ -16,6 +16,7 @@ import { useCanManageEmployees } from '../../../../../hooks/usePermissions';
 import { useCRUD } from '../../../../../hooks/useCRUD';
 import { ToastContainer } from '../../../../../components/shared/Toast';
 import { BackButton } from '../../../../allCompones/BackButton';
+import DeletionOTPModal from '../../../../shared/DeletionOTPModal';
 
 const EditEmployeeList: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -30,6 +31,7 @@ const EditEmployeeList: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [departmentFilter, setDepartmentFilter] = useState<string>('all');
+  const [deleteModal, setDeleteModal] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
     dispatch(getEmployeesV2());
@@ -68,16 +70,8 @@ const EditEmployeeList: React.FC = () => {
     });
   };
 
-  const handleDelete = (id: string) => {
-    crudDelete(
-      () => dispatch(deleteEmployeeV2(id)),
-      {
-        confirmTitle: 'Confirm Delete',
-        confirmMessage: 'Are you sure you want to delete this employee? This action cannot be undone.',
-        successMessage: 'Employee deleted successfully',
-        errorMessage: 'Failed to delete employee',
-      }
-    );
+  const handleDeleteClick = (id: string, name: string) => {
+    setDeleteModal({ id, name });
   };
 
   const handleViewPayroll = (employeeId: string) => {
@@ -250,12 +244,11 @@ const EditEmployeeList: React.FC = () => {
                           Payroll
                         </button>
                         <button
-                          className="text-red-600 hover:text-red-800 font-medium disabled:opacity-50"
-                          onClick={() => handleDelete(employee._id)}
-                          disabled={deleteState === 'loading'}
+                          className="text-red-600 hover:text-red-800 font-medium"
+                          onClick={() => handleDeleteClick(employee._id, employee.fullName || employee.username)}
                           title="Delete"
                         >
-                          {deleteState === 'loading' ? 'Deleting...' : 'Delete'}
+                          Delete
                         </button>
                       </div>
                     </td>
@@ -267,31 +260,18 @@ const EditEmployeeList: React.FC = () => {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
-      {confirmDialog.isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
-            <h3 className="text-lg font-bold text-gray-800 mb-3">{confirmDialog.title}</h3>
-            <p className="text-gray-600 mb-6">{confirmDialog.message}</p>
-            <div className="flex gap-3 justify-end">
-              <button
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition-colors disabled:opacity-50"
-                onClick={closeConfirmDialog}
-                disabled={deleteState === 'loading'}
-              >
-                Cancel
-              </button>
-              <button
-                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors disabled:opacity-50"
-                onClick={confirmDialog.onConfirm}
-                disabled={deleteState === 'loading'}
-              >
-                {deleteState === 'loading' ? 'Deleting...' : 'Delete'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Deletion OTP Modal */}
+      <DeletionOTPModal
+        isOpen={!!deleteModal}
+        onClose={() => setDeleteModal(null)}
+        entityType="employee"
+        entityId={deleteModal?.id || ''}
+        entityName={deleteModal?.name || ''}
+        onSuccess={() => {
+          setDeleteModal(null);
+          dispatch(getEmployeesV2());
+        }}
+      />
       <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
     </div>
   );

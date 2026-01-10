@@ -51,6 +51,12 @@ import websocketReducer from "./websocket/websocketSlice";
 import reportReducer from "./reports/reportReducer";
 import reportGroupReducer from "./reportGroups/reportGroupReducer";
 
+// Order Forwarding
+import orderForwardReducer from "./orderforward/orderForwardReducer";
+
+// P2P Chat
+import p2pChatReducer from "./p2pChat/p2pChatSlice";
+
 const appReducer = combineReducers({
   // Auth
   auth: authReducer,
@@ -105,6 +111,12 @@ const appReducer = combineReducers({
   // Reports Dashboard
   reports: reportReducer,
   reportGroups: reportGroupReducer,
+
+  // Order Forwarding
+  orderForward: orderForwardReducer,
+
+  // P2P Chat
+  p2pChat: p2pChatReducer,
 
 });
 

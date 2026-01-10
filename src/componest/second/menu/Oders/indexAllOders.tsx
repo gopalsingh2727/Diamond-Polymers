@@ -3,9 +3,10 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useLocation } from "react-router-dom";
 import { BackButton } from "../../../allCompones/BackButton";
 import "./indexAllOders.css";
-import { ArrowDownTrayIcon, PrinterIcon, XMarkIcon, ChevronDownIcon, ChevronRightIcon, ChevronLeftIcon, ArrowPathIcon, SignalIcon, SignalSlashIcon } from "@heroicons/react/24/solid";
-import { CheckCircle2, Circle, PlayCircle, PauseCircle, AlertTriangle, Loader2, AlertCircle, Clock, X, RefreshCw } from "lucide-react";
+import { ArrowDownTrayIcon, PrinterIcon, XMarkIcon, ChevronDownIcon, ChevronRightIcon, ChevronLeftIcon, ArrowPathIcon, SignalIcon, SignalSlashIcon, ArrowRightCircleIcon } from "@heroicons/react/24/solid";
+import { CheckCircle2, Circle, PlayCircle, PauseCircle, AlertTriangle, Loader2, AlertCircle, Clock, X, RefreshCw, Share2 } from "lucide-react";
 import CustomSelect from "../../../../components/shared/CustomSelect";
+import ForwardOrderModal from "../OrderForward/components/ForwardOrderModal";
 
 // Import Redux actions
 import { fetchOrders } from "../../../redux/oders/OdersActions";
@@ -82,6 +83,10 @@ const IndexAllOders = () => {
 
   // Expanded rows for step details
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+
+  // Forward order modal state
+  const [forwardModalOpen, setForwardModalOpen] = useState(false);
+  const [selectedOrderForForward, setSelectedOrderForForward] = useState<{id: string; number: string} | null>(null);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -1332,6 +1337,7 @@ const IndexAllOders = () => {
                   <th>M. Status</th>
                   <th>Operator</th>
                   <th>Created</th>
+                  <th style={{ width: '80px', textAlign: 'center' }}>Forward</th>
                 </tr>
               </thead>
               <tbody>
@@ -1485,12 +1491,82 @@ const IndexAllOders = () => {
                         <td className="date-cell">
                           {isFirstRow ? new Date(order.createdAt).toLocaleDateString() : ''}
                         </td>
+                        <td style={{ textAlign: 'center' }} className={!isFirstRow ? 'cell-continuation' : ''}>
+                          {isFirstRow && (
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                              {/* Forward Status Indicator */}
+                              {order.isForwarded && (
+                                <div
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    padding: '4px 6px',
+                                    borderRadius: '4px',
+                                    backgroundColor: order.forwardAcceptanceStatus === 'accepted'
+                                      ? '#d1fae5'
+                                      : order.forwardAcceptanceStatus === 'denied'
+                                        ? '#fee2e2'
+                                        : '#fef3c7'
+                                  }}
+                                  title={`Forwarded: ${order.forwardAcceptanceStatus || 'Pending'}`}
+                                >
+                                  {order.forwardAcceptanceStatus === 'accepted' ? (
+                                    <CheckCircle2 size={14} className="text-green-500" style={{ color: '#10b981' }} />
+                                  ) : order.forwardAcceptanceStatus === 'denied' ? (
+                                    <X size={14} style={{ color: '#ef4444' }} />
+                                  ) : (
+                                    <Clock size={14} style={{ color: '#f59e0b' }} />
+                                  )}
+                                </div>
+                              )}
+                              {/* Forward Button */}
+                              <button
+                                className="forward-order-btn"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedOrderForForward({
+                                    id: order._id,
+                                    number: order.orderNumber || order.orderId || order._id?.slice(-8)
+                                  });
+                                  setForwardModalOpen(true);
+                                }}
+                                title="Forward this order to another branch"
+                                style={{
+                                  background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                                  border: 'none',
+                                  borderRadius: '6px',
+                                  padding: '6px 10px',
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  color: 'white',
+                                  fontSize: '13px',
+                                  fontWeight: '500',
+                                  transition: 'all 0.2s'
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.transform = 'scale(1.05)';
+                                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.4)';
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.transform = 'scale(1)';
+                                  e.currentTarget.style.boxShadow = 'none';
+                                }}
+                              >
+                                <Share2 size={14} />
+                                Forward
+                              </button>
+                            </div>
+                          )}
+                        </td>
                       </tr>
 
                       {/* Expanded Row - Order Details - Only show on first row of each order */}
                       {isExpanded && isFirstRow &&
                     <tr key={`${order._id}-expanded`} className="expanded-row">
-                          <td colSpan={14}>
+                          <td colSpan={15}>
                             <div className="order-details-expanded">
                               {/* Order Info Grid */}
                               <div className="order-details-grid">
@@ -1737,6 +1813,23 @@ const IndexAllOders = () => {
           .orders-table th, .orders-table td { border: 1px solid #000 !important; }
         }
       `}</style>
+
+      {/* Forward Order Modal */}
+      {selectedOrderForForward && (
+        <ForwardOrderModal
+          isOpen={forwardModalOpen}
+          onClose={() => {
+            setForwardModalOpen(false);
+            setSelectedOrderForForward(null);
+          }}
+          orderId={selectedOrderForForward.id}
+          orderNumber={selectedOrderForForward.number}
+          onSuccess={() => {
+            // Refresh orders list after successful forward
+            dispatch(fetchOrders({ page: currentPage, limit: itemsPerPage }));
+          }}
+        />
+      )}
     </div>);
 
 };

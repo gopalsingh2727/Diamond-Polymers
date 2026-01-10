@@ -1,0 +1,386 @@
+/**
+ * PersonChat - Person-to-Person Chat Modal
+ * Chat with people you're forwarding orders to/from
+ */
+
+import React, { useState, useEffect, useRef } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { X, Send, MessageCircle } from 'lucide-react';
+import { fetchMessages, sendMessage, markAsRead } from '../../../../redux/p2pChat/p2pChatActions';
+import { receiveNewMessage } from '../../../../redux/p2pChat/p2pChatSlice';
+import { RootState } from '../../../../redux/rootReducer';
+import './PersonChat.css';
+
+interface PersonChatProps {
+  isOpen: boolean;
+  onClose: () => void;
+  personId: string;
+  personName: string;
+  personEmail?: string;
+}
+
+interface ChatMessage {
+  id: string;
+  senderId: string;
+  senderName: string;
+  message: string;
+  timestamp: Date;
+  isMe: boolean;
+}
+
+const PersonChat: React.FC<PersonChatProps> = ({
+  isOpen,
+  onClose,
+  personId,
+  personName,
+  personEmail
+}) => {
+  const dispatch = useDispatch();
+
+  // Redux selectors
+  const reduxMessages = useSelector((state: RootState) => state.p2pChat?.messages?.[personId] || []);
+  const messagesLoading = useSelector((state: RootState) => state.p2pChat?.messagesLoading || false);
+  const currentUserId = useSelector((state: RootState) => state.auth?.userData?.id || state.auth?.userData?._id);
+
+  // Local state
+  const [newMessage, setNewMessage] = useState('');
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // WebSocket connection status from global middleware
+  const wsConnected = useSelector((state: RootState) => state.websocket?.status === 'connected');
+
+  // Transform Redux messages to local ChatMessage format
+  const messages: ChatMessage[] = reduxMessages.map((msg: any) => {
+    // Parse timestamp safely
+    const timestamp = msg.timestamp ? new Date(msg.timestamp) : new Date();
+    const validTimestamp = isNaN(timestamp.getTime()) ? new Date() : timestamp;
+
+    return {
+      id: msg._id,
+      senderId: msg.senderId,
+      senderName: msg.senderName,
+      message: msg.text || '',
+      timestamp: validTimestamp,
+      isMe: msg.senderId !== personId
+    };
+  });
+
+  // Auto-scroll to bottom when new messages arrive
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  // Load messages when chat opens
+  useEffect(() => {
+    if (isOpen && personId) {
+      console.log('[PersonChat] Opening chat - loading messages from API');
+      // Load messages from API
+      dispatch(fetchMessages(personId) as any);
+      // Mark messages as read
+      dispatch(markAsRead(personId) as any);
+    }
+  }, [isOpen, personId, dispatch]);
+
+  // Connect to WebSocket
+  const connectWebSocket = () => {
+    try {
+      const token = localStorage.getItem('authToken');
+      const wsUrl = import.meta.env.VITE_WEBSOCKET_URL || 'ws://localhost:3001';
+
+      console.log('[PersonChat] Connecting to WebSocket:', wsUrl);
+
+      const ws = new WebSocket(`${wsUrl}?token=${token}`);
+
+      ws.onopen = () => {
+        console.log('[PersonChat] WebSocket connected');
+        setWsConnected(true);
+
+        // Subscribe to current user's room to receive chat messages
+        // Backend broadcasts messages to receiver's user room (user:{userId})
+        if (currentUserId) {
+          ws.send(JSON.stringify({
+            action: 'subscribe',
+            data: {
+              room: `user:${currentUserId}`
+            }
+          }));
+          console.log('[PersonChat] Subscribed to user room:', `user:${currentUserId}`);
+        } else {
+          console.error('[PersonChat] Cannot subscribe - current user ID not found');
+        }
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          console.log('[PersonChat] WebSocket message received:', data);
+
+          // ❌ REMOVED message handling - now handled globally by websocketMiddleware
+          // This prevents duplicate messages from being dispatched twice
+          // The global middleware already handles 'chat_message' events and dispatches to Redux
+        } catch (error) {
+          console.error('[PersonChat] Error parsing WebSocket message:', error);
+        }
+      };
+
+      ws.onerror = (error) => {
+        console.error('[PersonChat] WebSocket error:', error);
+        setWsConnected(false);
+      };
+
+      ws.onclose = () => {
+        console.log('[PersonChat] WebSocket disconnected');
+        setWsConnected(false);
+
+        // Attempt to reconnect after 3 seconds if modal is still open
+        if (isOpen) {
+          setTimeout(() => {
+            if (isOpen && personId) {
+              console.log('[PersonChat] Attempting to reconnect WebSocket...');
+              connectWebSocket();
+            }
+          }, 3000);
+        }
+      };
+
+      wsRef.current = ws;
+    } catch (error) {
+      console.error('[PersonChat] Error connecting WebSocket:', error);
+      setWsConnected(false);
+    }
+  };
+
+  // Disconnect WebSocket
+  const disconnectWebSocket = () => {
+    if (wsRef.current) {
+      console.log('[PersonChat] Disconnecting WebSocket');
+      wsRef.current.close();
+      wsRef.current = null;
+      setWsConnected(false);
+    }
+  };
+
+  // loadChatHistory is now handled by Redux via fetchMessages action in useEffect
+
+  const handleSendMessage = async () => {
+    if (!newMessage.trim()) return;
+
+    const messageText = newMessage.trim();
+    setNewMessage('');
+
+    try {
+      console.log('[PersonChat] Sending message via Redux action');
+      console.log('[PersonChat] To personId:', personId);
+      console.log('[PersonChat] Message:', messageText);
+
+      // Use Redux action to send message (handles optimistic update)
+      await dispatch(sendMessage(personId, messageText) as any);
+    } catch (error) {
+      console.error('[PersonChat] Error sending message:', error);
+      alert('Failed to send message. Please try again.');
+
+      // Restore the message in the input field
+      setNewMessage(messageText);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
+  // Format time like WhatsApp - adaptive based on message age
+  const formatMessageTime = (timestamp: Date): string => {
+    const now = new Date();
+    const diffInMs = now.getTime() - timestamp.getTime();
+    const diffInHours = diffInMs / (1000 * 60 * 60);
+
+    if (diffInHours < 24) {
+      // Less than 24 hours: show time "2:30 PM"
+      return timestamp.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } else if (diffInHours < 168) {
+      // Less than 1 week: show day "Monday"
+      return timestamp.toLocaleDateString('en-US', { weekday: 'short' });
+    } else {
+      // Older: show date "Jan 15"
+      return timestamp.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric'
+      });
+    }
+  };
+
+  // Check if we should show a date divider between messages
+  const shouldShowDateDivider = (currentMsg: ChatMessage, prevMsg?: ChatMessage): boolean => {
+    if (!prevMsg) return true; // Always show divider before first message
+
+    const currentDate = new Date(currentMsg.timestamp).toDateString();
+    const prevDate = new Date(prevMsg.timestamp).toDateString();
+
+    return currentDate !== prevDate; // Show divider if dates are different
+  };
+
+  // Format date divider text
+  const formatDateDivider = (timestamp: Date): string => {
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const messageDate = new Date(timestamp).toDateString();
+    const todayDate = today.toDateString();
+    const yesterdayDate = yesterday.toDateString();
+
+    if (messageDate === todayDate) {
+      return 'Today';
+    } else if (messageDate === yesterdayDate) {
+      return 'Yesterday';
+    } else {
+      return timestamp.toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        year: timestamp.getFullYear() !== today.getFullYear() ? 'numeric' : undefined
+      });
+    }
+  };
+
+  if (!isOpen) {
+    console.log('[PersonChat] Not rendering - isOpen is false');
+    return null;
+  }
+
+  console.log('[PersonChat] Rendering modal now!', { isOpen, personId, personName });
+
+  return (
+    <div className="person-chat-overlay" onClick={onClose}>
+      <div className="person-chat-modal" onClick={e => e.stopPropagation()}>
+        {/* Header */}
+        <div className="person-chat-header">
+          <div className="person-chat-header-info">
+            <MessageCircle size={20} className="person-chat-icon" />
+            <div>
+              <h3>{personName}</h3>
+              {personEmail && <p className="person-email">{personEmail}</p>}
+            </div>
+          </div>
+          <div className="person-chat-header-actions">
+            {wsConnected && (
+              <div className="ws-status connected" title="Connected - Real-time messaging active">
+                <span className="ws-indicator"></span>
+                <span className="ws-text">Connected</span>
+              </div>
+            )}
+            {!wsConnected && (
+              <div className="ws-status disconnected" title="Disconnected - Messages may be delayed">
+                <span className="ws-indicator"></span>
+                <span className="ws-text">Offline</span>
+              </div>
+            )}
+            <button className="person-chat-close" onClick={onClose}>
+              <X size={20} />
+            </button>
+          </div>
+        </div>
+
+        {/* Messages */}
+        <div className="person-chat-messages">
+          {messagesLoading ? (
+            <div className="person-chat-loading">
+              <div className="loading-spinner"></div>
+              <p>Loading messages...</p>
+            </div>
+          ) : messages.length === 0 ? (
+            <div className="person-chat-empty">
+              <MessageCircle size={48} />
+              <p>No messages yet</p>
+              <span>Start a conversation with {personName}</span>
+            </div>
+          ) : (
+            messages.map((msg, index) => {
+              const showDivider = shouldShowDateDivider(msg, messages[index - 1]);
+
+              return (
+                <div key={msg.id}>
+                  {/* Date Divider */}
+                  {showDivider && (
+                    <div className="date-divider">
+                      <span className="date-divider-text">
+                        {formatDateDivider(msg.timestamp)}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Message */}
+                  <div className={`chat-message ${msg.isMe ? 'chat-message-me' : 'chat-message-them'}`}>
+                    <div className="chat-message-content">
+                      {/* Sender name for received messages */}
+                      {!msg.isMe && (
+                        <div style={{
+                          fontSize: '12px',
+                          color: '#6b7280',
+                          marginBottom: '4px',
+                          paddingLeft: '4px'
+                        }}>
+                          {msg.senderName}
+                        </div>
+                      )}
+
+                      {/* Message text */}
+                      <div className="chat-message-text">
+                        {msg.message}
+
+                        {/* Time and read receipts */}
+                        <div className="message-time-wrapper">
+                          <span>
+                            {!isNaN(msg.timestamp.getTime())
+                              ? formatMessageTime(msg.timestamp)
+                              : 'Just now'}
+                          </span>
+                          {msg.isMe && (
+                            <span className="message-status" title={msg.isMe ? 'Sent' : ''}>
+                              ✓✓
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Input */}
+        <div className="person-chat-input">
+          <input
+            type="text"
+            placeholder={`Message ${personName}...`}
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            onKeyPress={handleKeyPress}
+          />
+          <button
+            className="person-chat-send"
+            onClick={handleSendMessage}
+            disabled={!newMessage.trim()}
+          >
+            <Send size={18} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default PersonChat;

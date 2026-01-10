@@ -8,10 +8,6 @@ export const FETCH_BRANCHES_REQUEST = "FETCH_BRANCHES_REQUEST";
 export const FETCH_BRANCHES_SUCCESS = "FETCH_BRANCHES_SUCCESS";
 export const FETCH_BRANCHES_FAIL = "FETCH_BRANCHES_FAIL";
 
-export const SELECT_BRANCH_REQUEST = "SELECT_BRANCH_REQUEST";
-export const SELECT_BRANCH_SUCCESS = "SELECT_BRANCH_SUCCESS";
-export const SELECT_BRANCH_FAIL = "SELECT_BRANCH_FAIL";
-
 export const BRANCH_LIST_REQUEST = "BRANCH_LIST_REQUEST";
 export const BRANCH_LIST_SUCCESS = "BRANCH_LIST_SUCCESS";
 export const BRANCH_LIST_FAIL = "BRANCH_LIST_FAIL";
@@ -96,85 +92,31 @@ export const fetchBranchesIfNeeded = () => {
   };
 };
 
-// Fetch Branches - Fixed for both Admin and Manager
+// ✅ FIXED: Use branches from login response (no API call needed)
 export const fetchBranches = () => {
   return async (dispatch: AppDispatch, getState: () => RootState) => {
     dispatch({ type: FETCH_BRANCHES_REQUEST });
 
     try {
-      const token = getToken(getState);
       const userData = getUserData(getState);
-      const role = userData?.role;
 
-      let url = "";
-      let branches: any[] = [];
+      // ✅ Get branches from auth state (already loaded from login response)
+      const branches = userData?.branches || [];
       let branchId: string | null = null;
 
-      if (role === "admin" || role === "master_admin") {
-        url = `${baseUrl}/branch/branches`;
+      console.log('✅ Using branches from login response:', branches.length, 'branches');
 
-        const selectedBranch = localStorage.getItem("selectedBranch");
-        const headers: Record<string, string> = {
-          Authorization: `Bearer ${token}`,
-          "x-api-key": API_KEY
-        };
-        if (selectedBranch) {
-          headers["x-selected-branch"] = selectedBranch;
-        }
-
-        const { data } = await axios.get(url, { headers });
-
-        console.log('🔍 Branch API Response:', data);
-        console.log('🔍 Response type:', typeof data);
-        console.log('🔍 Is Array?:', Array.isArray(data));
-
-        // ✅ Extract branches array from response
-        branches = data.branches || data || [];
-
-        // ✅ Ensure branches is an array
-        if (!Array.isArray(branches)) {
-          console.warn('⚠️ Branches is not an array, converting to empty array');
-          branches = [];
-        }
-
-        console.log('✅ Final branches array:', branches);
-        console.log('✅ Branches count:', branches.length);
-
-        if (branches.length === 0) {
-          console.error('❌ ERROR: Branches array is empty after processing!');
-        }
-
-        // Get first branch ID if available
-        if (branches.length > 0) {
-          branchId = branches[0]._id || branches[0].id;
-          console.log('✅ First branch ID:', branchId);
-        } else {
-          console.warn('⚠️ No branches available to select');
-        }
-
-      } else if (role === "manager") {
-        url = `${baseUrl}/manager/getMyBranch`;
-
-        const selectedBranch = localStorage.getItem("selectedBranch");
-        const mgrHeaders: Record<string, string> = {
-          Authorization: `Bearer ${token}`,
-          "x-api-key": API_KEY
-        };
-        if (selectedBranch) {
-          mgrHeaders["x-selected-branch"] = selectedBranch;
-        }
-
-        const { data } = await axios.get(url, { headers: mgrHeaders });
-
-        // ✅ For manager, wrap single branch in array
-        branches = [data];
-        branchId = data.branchId || data._id || data.id;
-
-      } else {
-        throw new Error("Unauthorized role");
+      // ✅ Ensure branches is an array
+      if (!Array.isArray(branches)) {
+        console.warn('⚠️ Branches is not an array, using empty array');
+        dispatch({
+          type: FETCH_BRANCHES_SUCCESS,
+          payload: []
+        });
+        return;
       }
 
-      // ✅ Dispatch branches array (always an array)
+      // ✅ Dispatch branches array (already from login response)
       console.log('🚀 Dispatching FETCH_BRANCHES_SUCCESS with', branches.length, 'branches');
       dispatch({
         type: FETCH_BRANCHES_SUCCESS,
@@ -182,82 +124,37 @@ export const fetchBranches = () => {
       });
       console.log('✅ Branches dispatched to Redux successfully');
 
+      // ✅ Get first branch ID if available
+      if (branches.length > 0) {
+        branchId = branches[0]._id || branches[0].id;
+        console.log('✅ First branch ID:', branchId);
+      } else {
+        console.warn('⚠️ No branches available to select');
+      }
+
       // ✅ Store branch ID if found
       if (branchId) {
-
         storeBranchId(branchId, userData);
 
         // ✅ Fetch form data after branch is selected (uses cache if available)
         try {
           await dispatch(getOrderFormDataIfNeeded() as any);
         } catch (error) {
-
+          // Silent fail for form data
         }
-      } else {
-
       }
 
     } catch (error: any) {
-      console.error('❌ ERROR fetching branches:', error);
-      console.error('❌ Error details:', {
-        message: error?.message,
-        response: error?.response?.data,
-        status: error?.response?.status
-      });
+      console.error('❌ ERROR loading branches from auth state:', error);
       dispatch({
         type: FETCH_BRANCHES_FAIL,
-        payload: error?.response?.data?.message || "Failed to fetch branches"
+        payload: error?.message || "Failed to load branches from state"
       });
     }
   };
 };
 
-// Select Branch
-export const selectBranch = (branchId: string) => {
-  return async (dispatch: AppDispatch, getState: () => RootState) => {
-    dispatch({ type: SELECT_BRANCH_REQUEST });
-
-    try {
-      const token = getToken(getState);
-
-      const selectedBranch = localStorage.getItem("selectedBranch");
-      const selectHeaders: Record<string, string> = {
-        Authorization: `Bearer ${token}`,
-        "x-api-key": API_KEY,
-        "Content-Type": "application/json"
-      };
-      if (selectedBranch) {
-        selectHeaders["x-selected-branch"] = selectedBranch;
-      }
-
-      const { data } = await axios.post(
-        `${baseUrl}/branch/selectBranch`,
-        { branchId },
-        { headers: selectHeaders }
-      );
-
-      dispatch({ type: SELECT_BRANCH_SUCCESS, payload: data });
-
-      const userData = getUserData(getState);
-      storeBranchId(branchId, userData);
-
-      // ✅ Fetch form data after branch is selected (uses cache if available)
-      try {
-        await dispatch(getOrderFormDataIfNeeded() as any);
-      } catch (error) {
-
-      }
-
-    } catch (error: any) {
-      dispatch({
-        type: SELECT_BRANCH_FAIL,
-        payload: error?.response?.data?.message || "Branch selection failed"
-      });
-    }
-  };
-};
-
-// List All Branches (Admin)
+// List All Branches - V2 endpoint
 export const listBranches = () => {
   return async (dispatch: AppDispatch, getState: () => RootState) => {
     dispatch({ type: BRANCH_LIST_REQUEST });
@@ -274,12 +171,13 @@ export const listBranches = () => {
         listHeaders["x-selected-branch"] = selectedBranch;
       }
 
-      const { data } = await axios.get(`${baseUrl}/branch/branches`, {
+      // ✅ Updated to use V2 endpoint
+      const { data } = await axios.get(`${baseUrl}/v2/branch`, {
         headers: listHeaders
       });
 
-      // ✅ Extract branches array
-      const branches = data.branches || data || [];
+      // ✅ Extract branches array from V2 response
+      const branches = data.data?.data || data.data || data.branches || data || [];
 
       dispatch({
         type: BRANCH_LIST_SUCCESS,

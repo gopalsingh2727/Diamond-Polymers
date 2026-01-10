@@ -35,6 +35,25 @@ import {
   CLEAR_MACHINE_TEMPLATE_ERROR
 } from "./machineTemplateConstants";
 
+// Import V2 action types from unified API
+import {
+  TEMPLATE_V2_CREATE_REQUEST,
+  TEMPLATE_V2_CREATE_SUCCESS,
+  TEMPLATE_V2_CREATE_FAILURE,
+  TEMPLATE_V2_LIST_REQUEST,
+  TEMPLATE_V2_LIST_SUCCESS,
+  TEMPLATE_V2_LIST_FAILURE,
+  TEMPLATE_V2_GET_REQUEST,
+  TEMPLATE_V2_GET_SUCCESS,
+  TEMPLATE_V2_GET_FAILURE,
+  TEMPLATE_V2_UPDATE_REQUEST,
+  TEMPLATE_V2_UPDATE_SUCCESS,
+  TEMPLATE_V2_UPDATE_FAILURE,
+  TEMPLATE_V2_DELETE_REQUEST,
+  TEMPLATE_V2_DELETE_SUCCESS,
+  TEMPLATE_V2_DELETE_FAILURE
+} from "../unifiedV2/templateActions";
+
 // Types
 export interface MachineTemplate {
   _id: string;
@@ -79,10 +98,12 @@ const machineTemplateReducer = (
   action: any
 ): MachineTemplateState => {
   switch (action.type) {
-    // Create
+    // Create (old and V2)
     case CREATE_MACHINE_TEMPLATE_REQUEST:
+    case TEMPLATE_V2_CREATE_REQUEST:
       return { ...state, loading: true, error: null, success: false };
     case CREATE_MACHINE_TEMPLATE_SUCCESS:
+    case TEMPLATE_V2_CREATE_SUCCESS:
       return {
         ...state,
         loading: false,
@@ -92,12 +113,15 @@ const machineTemplateReducer = (
         error: null
       };
     case CREATE_MACHINE_TEMPLATE_FAIL:
+    case TEMPLATE_V2_CREATE_FAILURE:
       return { ...state, loading: false, error: action.payload, success: false };
 
-    // Get All
+    // Get All (old and V2)
     case GET_MACHINE_TEMPLATES_REQUEST:
+    case TEMPLATE_V2_LIST_REQUEST:
       return { ...state, loading: true, error: null };
     case GET_MACHINE_TEMPLATES_SUCCESS:
+    case TEMPLATE_V2_LIST_SUCCESS:
       return {
         ...state,
         loading: false,
@@ -105,12 +129,15 @@ const machineTemplateReducer = (
         error: null
       };
     case GET_MACHINE_TEMPLATES_FAIL:
+    case TEMPLATE_V2_LIST_FAILURE:
       return { ...state, loading: false, error: action.payload, templates: [] };
 
-    // Get by ID
+    // Get by ID (old and V2)
     case GET_MACHINE_TEMPLATE_BY_ID_REQUEST:
+    case TEMPLATE_V2_GET_REQUEST:
       return { ...state, loading: true, error: null };
     case GET_MACHINE_TEMPLATE_BY_ID_SUCCESS:
+    case TEMPLATE_V2_GET_SUCCESS:
       return {
         ...state,
         loading: false,
@@ -118,6 +145,7 @@ const machineTemplateReducer = (
         error: null
       };
     case GET_MACHINE_TEMPLATE_BY_ID_FAIL:
+    case TEMPLATE_V2_GET_FAILURE:
       return { ...state, loading: false, error: action.payload };
 
     // Get by Machine
@@ -133,10 +161,12 @@ const machineTemplateReducer = (
     case GET_TEMPLATES_BY_MACHINE_FAIL:
       return { ...state, loading: false, error: action.payload, machineTemplates: [] };
 
-    // Update
+    // Update (old and V2)
     case UPDATE_MACHINE_TEMPLATE_REQUEST:
+    case TEMPLATE_V2_UPDATE_REQUEST:
       return { ...state, loading: true, error: null, success: false };
     case UPDATE_MACHINE_TEMPLATE_SUCCESS:
+    case TEMPLATE_V2_UPDATE_SUCCESS:
       const updatedTemplate = action.payload.template || action.payload;
       return {
         ...state,
@@ -152,13 +182,16 @@ const machineTemplateReducer = (
         error: null
       };
     case UPDATE_MACHINE_TEMPLATE_FAIL:
+    case TEMPLATE_V2_UPDATE_FAILURE:
       return { ...state, loading: false, error: action.payload, success: false };
 
-    // Delete
+    // Delete (old and V2)
     case DELETE_MACHINE_TEMPLATE_REQUEST:
+    case TEMPLATE_V2_DELETE_REQUEST:
       return { ...state, loading: true, error: null, success: false };
     case DELETE_MACHINE_TEMPLATE_SUCCESS:
-      const deletedId = action.payload.id || action.payload._id;
+    case TEMPLATE_V2_DELETE_SUCCESS:
+      const deletedId = action.payload.id || action.payload._id || action.payload;
       return {
         ...state,
         loading: false,
@@ -168,6 +201,7 @@ const machineTemplateReducer = (
         error: null
       };
     case DELETE_MACHINE_TEMPLATE_FAIL:
+    case TEMPLATE_V2_DELETE_FAILURE:
       return { ...state, loading: false, error: action.payload, success: false };
 
     // Activate

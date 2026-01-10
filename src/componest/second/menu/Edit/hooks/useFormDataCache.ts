@@ -1,6 +1,7 @@
 import { useEffect, useCallback, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../../../redux/rootReducer';
+// ⚠️ TEMPORARILY using old action until V2 backend issue is fixed
 import { getOrderFormData } from '../../../../redux/oders/orderFormDataActions';
 
 /**
@@ -45,7 +46,7 @@ export const useFormDataCache = () => {
     const branchChanged = prevBranchRef.current !== selectedBranch;
 
     if (isAuthenticated && !loading) {
-      // Fetch if: no data OR branch changed OR error
+      // ⚠️ TEMPORARILY using old action until V2 backend issue is fixed
       if (!formData || branchChanged || error) {
         if (import.meta.env.DEV) {
           console.log('🔄 useFormDataCache: Fetching data for branch:', selectedBranch);
@@ -81,7 +82,7 @@ export const useFormDataCache = () => {
           'step'            // Manufacturing steps
         ];
 
-        // Refetch form data when any relevant entity is updated
+        // ⚠️ TEMPORARILY using old action until V2 backend issue is fixed
         if (refreshTriggers.includes(entityType)) {
           if (import.meta.env.DEV) {
             console.log(`🔄 useFormDataCache: WebSocket refresh triggered by ${entityType} update`);
@@ -99,7 +100,7 @@ export const useFormDataCache = () => {
     };
   }, [dispatch]);
 
-  // Manual refresh function
+  // ⚠️ TEMPORARILY using old action until V2 backend issue is fixed
   const refresh = useCallback(() => {
 
     dispatch(getOrderFormData() as any);

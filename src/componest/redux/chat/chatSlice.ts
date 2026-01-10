@@ -193,7 +193,8 @@ const chatSlice = createSlice({
     loadSettingsSuccess: (state, action: PayloadAction<ChatSettings>) => {
       state.settingsLoading = false;
       state.settings = action.payload;
-      if (action.payload.theme?.position) {
+      state.error = null; // Clear any previous errors
+      if (action.payload && action.payload.theme?.position) {
         state.position = {
           x: action.payload.theme.position.x || window.innerWidth - 420,
           y: action.payload.theme.position.y || window.innerHeight - 600

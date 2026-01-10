@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { getPrintTypes } from '../../../../redux/create/printType/printTypeActions';
+import { getPrintTypesV2 as getPrintTypes } from '../../../../redux/unifiedV2/printTypeActions';
 import { AppDispatch } from '../../../../../store';
 import CreatePrintType from '../../create/printType/CreatePrintType';
 import '../EditMachineType/EditMachineyType.css';

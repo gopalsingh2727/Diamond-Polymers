@@ -31,6 +31,10 @@ const Update = () => {
   const [downloadProgress, setDownloadProgress] = useState<DownloadProgress>({ progress: 0, downloaded: 0, total: 0 });
 
   const checkUpdate = async () => {
+    if (!window.ipcRenderer) {
+      return;
+    }
+
     setStatus('checking');
     const result = await window.ipcRenderer.invoke('check-update');
     setStatus('idle');
@@ -83,6 +87,10 @@ const Update = () => {
   );
 
   const startDownload = async () => {
+    if (!window.ipcRenderer) {
+      return;
+    }
+
     try {
       setStatus('downloading');
       setDownloadProgress({ progress: 0, downloaded: 0, total: 0 });
@@ -103,6 +111,10 @@ const Update = () => {
   };
 
   const installUpdate = async () => {
+    if (!window.ipcRenderer) {
+      return;
+    }
+
     try {
       setStatus('installing');
       const result = await window.ipcRenderer.invoke('install-update');
@@ -120,6 +132,10 @@ const Update = () => {
   };
 
   const openDownloadPage = async () => {
+    if (!window.ipcRenderer) {
+      return;
+    }
+
     try {
       await window.ipcRenderer.invoke('open-download-page');
     } catch (err) {
@@ -181,14 +197,21 @@ const Update = () => {
   };
 
   useEffect(() => {
+    // Only set up IPC listeners if running in Electron
+    if (!window.ipcRenderer) {
+      return;
+    }
+
     window.ipcRenderer.on('update-can-available', onUpdateCanAvailable);
     window.ipcRenderer.on('update-error', onUpdateError);
     window.ipcRenderer.on('download-progress', onDownloadProgress);
 
     return () => {
-      window.ipcRenderer.off('update-can-available', onUpdateCanAvailable);
-      window.ipcRenderer.off('update-error', onUpdateError);
-      window.ipcRenderer.off('download-progress', onDownloadProgress);
+      if (window.ipcRenderer) {
+        window.ipcRenderer.off('update-can-available', onUpdateCanAvailable);
+        window.ipcRenderer.off('update-error', onUpdateError);
+        window.ipcRenderer.off('download-progress', onDownloadProgress);
+      }
     };
   }, [onUpdateCanAvailable, onUpdateError, onDownloadProgress]);
 

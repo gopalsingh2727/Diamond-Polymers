@@ -15,6 +15,7 @@ import {
   pingReceived,
   forceLogout } from
 './websocketSlice';
+import { showMessageNotification, isWindowFocused } from '../../../utils/notifications';
 
 let wsClient: WebSocketClient | null = null;
 let reconnectAttempts = 0;
@@ -154,6 +155,24 @@ function handleConnect(store: any, payload: {url: string;token: string;platform?
               data: { branchId }
             });
           }
+
+          // ✅ Auto-subscribe to user's own room for P2P chat messages
+          const userData = localStorage.getItem('userData');
+          if (userData && wsClient) {
+            try {
+              const user = JSON.parse(userData);
+              const userId = user.id || user._id;
+              if (userId) {
+                console.log('[WebSocket] Subscribing to user room for P2P chat:', `user:${userId}`);
+                wsClient.send({
+                  action: 'subscribe',
+                  data: { room: `user:${userId}` }
+                });
+              }
+            } catch (error) {
+              console.error('[WebSocket] Failed to parse userData for chat subscription:', error);
+            }
+          }
         }
         break;
     }
@@ -231,6 +250,89 @@ function handleConnect(store: any, payload: {url: string;token: string;platform?
       detail: { type: 'order:deleted', data: data.data }
     }));
   });
+
+  // ✅ Listen for WebRTC call signaling (incoming calls)
+  wsClient.on('call:incoming', (message) => {
+    console.log('[WebSocket Middleware] Incoming call received:', message);
+    const data = message.data || message;
+
+    // Dispatch custom browser event so components can handle it
+    window.dispatchEvent(new CustomEvent('call:incoming', {
+      detail: data
+    }));
+  });
+
+  // ✅ Listen for P2P chat messages
+  wsClient.on('chat_message', (data) => {
+    console.log('[WebSocket] Received chat_message:', data);
+
+    if (data.data) {
+      const msg = data.data;
+      const userData = localStorage.getItem('userData');
+      let currentUserId = null;
+
+      try {
+        if (userData) {
+          const user = JSON.parse(userData);
+          currentUserId = user.id || user._id;
+        }
+      } catch (error) {
+        console.error('[WebSocket] Failed to parse userData:', error);
+      }
+
+      // Only show notification if message is from someone else
+      const isFromMe = msg.senderId === currentUserId;
+
+      // Dispatch to p2pChat reducer
+      store.dispatch({
+        type: 'p2pChat/receiveNewMessage',
+        payload: {
+          _id: msg._id || Date.now().toString(),
+          conversationId: msg.senderId === currentUserId ? msg.receiverId : msg.senderId,
+          senderId: msg.senderId,
+          senderName: msg.senderName,
+          senderRole: 'User',
+          text: msg.text || msg.message,
+          type: 'text',
+          timestamp: new Date(msg.createdAt || Date.now()),
+          status: 'delivered',
+          reactions: [],
+          readBy: []
+        }
+      });
+
+      console.log('[WebSocket] Chat message dispatched to Redux');
+
+      // Show notification for incoming messages
+      if (!isFromMe) {
+        // Only show notification if window is not focused or chat is not open
+        const shouldShowNotification = !isWindowFocused();
+
+        if (shouldShowNotification) {
+          showMessageNotification(
+            msg.senderName || 'Unknown User',
+            msg.text || msg.message || 'New message',
+            msg.senderId,
+            () => {
+              // Handle notification click - bring window to focus
+              window.focus();
+              // Dispatch custom event to open chat with this person
+              window.dispatchEvent(new CustomEvent('openChat', {
+                detail: {
+                  personId: msg.senderId,
+                  personName: msg.senderName
+                }
+              }));
+            }
+          );
+        }
+      }
+    }
+  });
+
+  // ❌ REMOVED DUPLICATE 'message' handler to prevent duplicate messages
+
+  // Continue with rest of event listeners below...
 
   // ✅ Listen for daybook-specific updates
   wsClient.on('daybook:updated', (data) => {

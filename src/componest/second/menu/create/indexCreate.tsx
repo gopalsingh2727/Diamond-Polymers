@@ -5,7 +5,7 @@ import CreateMachine from "./machine/CreateMachine";
 import CreateStep from "./CreateStep/CreateStep";
 import CreteMachineOpertor from "./CreateMachineOpertor/CreteMachineOpertor";
 import CreateMachineType from "./machine/createMachineType";
-import Headers from "../../header/Headers";
+// import Headers from "../../header/Headers";
 import  DeviceAccess from './deviceAccess/deviceAccess';
 import DiveceAccessCreate from "./deviceAccess/deviceAccessCreate";
 import CreateOrderType from "./orderType/CreateOrderType";
@@ -17,7 +17,7 @@ import CreateOption from "./option/CreateOption";
 import CreateOptionSpec from "./optionSpec/CreateOptionSpec";
 import CreateCategory from "./category/CreateCategory";
 import ViewTemplateWizard from "./machine/ViewTemplateWizard";
-import OperatorEntryView from "./machine/OperatorEntryView";
+// import OperatorEntryView from "./machine/OperatorEntryView";
 import CustomerCategory from "./customerCategory/CustomerCategory";
 import CustomerParentCompany from "./customerParentCompany/CustomerParentCompany";
 import CreateInventory from "./inventory/CreateInventory";
@@ -35,7 +35,7 @@ interface RootState {
 }
 
 const Layout = () => {
-  // Get user role from Redux
+
   const userData = useSelector((state: RootState) => state.auth.userData);
   const userRole = userData?.role || '';
   const isMasterAdmin = userRole === 'master_admin';

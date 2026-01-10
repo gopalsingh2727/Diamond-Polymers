@@ -249,8 +249,15 @@ action: ExtendedOrderActionTypes)
       if (action.payload) {
         // Check if payload has the nested data structure
         if (action.payload.data) {
-          orders = action.payload.data.orders || [];
-          pagination = action.payload.data.pagination || null;
+          // V2 API: response.data.data.data (v2 unified handler returns { success, data: { data: [], total, ... } })
+          // V1 API: response.data.data.orders (old API returns { success, data: { orders: [], ... } })
+          orders = action.payload.data.data || action.payload.data.orders || [];
+          pagination = action.payload.data.pagination || {
+            total: action.payload.data.total,
+            page: action.payload.data.page,
+            limit: action.payload.data.limit,
+            pages: action.payload.data.pages
+          } || null;
           summary = action.payload.data.summary || null;
           statusCounts = action.payload.data.statusCounts || null;
         }

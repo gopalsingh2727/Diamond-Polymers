@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { getOptions } from '../../../../redux/option/optionActions';
+import { useSelector } from 'react-redux';
 import './optionsSection.css';
 
 interface OptionItem {
@@ -8,6 +7,8 @@ interface OptionItem {
   optionId: string;
   optionName: string;
   optionCode: string;
+  optionTypeName?: string;
+  optionSpecName?: string;
   category: string;
   quantity: number;
   specificationValues: Array<{
@@ -40,8 +41,17 @@ const OptionsSection: React.FC<OptionsSectionProps> = ({
   onDataChange,
   initialData = []
 }) => {
-  const dispatch = useDispatch();
-  const { options } = useSelector((state: any) => state.option || { options: [] });
+  // ✅ DEBUG: Try multiple sources for options data
+  const optionsFromFormData = useSelector((state: any) => state.orderFormData?.data?.options || []);
+  const optionsFromV2 = useSelector((state: any) => state.v2?.option?.list || []);
+
+  // Use whichever has data
+  const options = optionsFromFormData.length > 0 ? optionsFromFormData : optionsFromV2;
+
+  console.log('🔍 DEBUG Options Sources:');
+  console.log('  - From orderFormData:', optionsFromFormData.length, 'items');
+  console.log('  - From v2.option.list:', optionsFromV2.length, 'items');
+  console.log('  - Using:', options.length, 'items');
 
   const [selectedOptions, setSelectedOptions] = useState<OptionItem[]>(initialData);
   const [showPopup, setShowPopup] = useState(false);
@@ -52,38 +62,8 @@ const OptionsSection: React.FC<OptionsSectionProps> = ({
   const [editingField, setEditingField] = useState<'name' | 'code' | null>(null);
   const [editValue, setEditValue] = useState('');
 
-  // Fetch options for this category
-  useEffect(() => {
-    const branchId = localStorage.getItem('selectedBranch') || '';
-    dispatch(getOptions({ category, branchId }) as any);
-  }, [dispatch, category]);
-
-  // Listen for WebSocket updates to refetch options in real-time
-  useEffect(() => {
-    const branchId = localStorage.getItem('selectedBranch') || '';
-
-    const handleWebSocketMessage = (event: CustomEvent) => {
-      const { type, data } = event.detail;
-
-      if (type === 'referenceData:invalidate') {
-        const entityType = data?.entity || data?.entityType;
-
-
-        // Refetch options when option or optionType is updated
-        if (entityType === 'option' || entityType === 'optionType') {
-
-          dispatch(getOptions({ category, branchId }) as any);
-        }
-      }
-    };
-
-    // Add event listener for WebSocket messages
-    window.addEventListener('websocket:message', handleWebSocketMessage as EventListener);
-
-    return () => {
-      window.removeEventListener('websocket:message', handleWebSocketMessage as EventListener);
-    };
-  }, [dispatch, category]);
+  // ✅ WebSocket updates are handled by the order form data hook
+  // Options will be refreshed automatically when form data is refreshed
 
   // Filter options by search term
   const filteredOptions = options.filter((opt: any) =>
@@ -91,6 +71,17 @@ const OptionsSection: React.FC<OptionsSectionProps> = ({
   opt.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
   opt.code.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  // Debug: Log first option to see structure
+  useEffect(() => {
+    if (filteredOptions.length > 0) {
+      console.log('📋 First filtered option structure:', filteredOptions[0]);
+      console.log('📋 Dimensions field:', filteredOptions[0].dimensions);
+      console.log('📋 Specifications field (legacy):', filteredOptions[0].specifications);
+      console.log('📋 Has dimensions?', !!filteredOptions[0].dimensions);
+      console.log('📋 Dimensions length:', filteredOptions[0].dimensions?.length || 0);
+    }
+  }, [filteredOptions]);
 
   const handleAddOption = () => {
     if (!selectedOptionId || !quantity || quantity <= 0) {
@@ -104,15 +95,71 @@ const OptionsSection: React.FC<OptionsSectionProps> = ({
       return;
     }
 
+    // 🔍 DEBUG: Log the selected option structure
+    console.log('🔍 DEBUG Selected Option:', option);
+    console.log('🔍 Has dimensions?', !!option.dimensions);
+    console.log('🔍 Has specifications?', !!option.specifications);
+    console.log('🔍 dimensions value:', option.dimensions);
+    console.log('🔍 specifications value:', option.specifications);
+    console.log('🔍 All option keys:', Object.keys(option));
+
+    // ✅ COLLECT ALL SPECIFICATIONS from 3 sources:
+    // 1. OptionType specifications (parent type specs)
+    // 2. OptionSpec specifications (template specs with formulas)
+    // 3. Option dimensions (instance-specific values)
+    const allSpecs: any[] = [];
+
+    // 1. Add OptionType specifications (if available)
+    if (option.optionTypeId?.specifications && Array.isArray(option.optionTypeId.specifications)) {
+      option.optionTypeId.specifications.forEach((spec: any) => {
+        allSpecs.push({
+          name: `[Type] ${spec.name}`,
+          value: spec.defaultValue || spec.value || 0,
+          unit: spec.unit || '',
+          source: 'optionType'
+        });
+      });
+    }
+
+    // 2. Add OptionSpec specifications (if available) - IMPORTANT FOR FORMULAS!
+    if (option.optionSpecId?.specifications && Array.isArray(option.optionSpecId.specifications)) {
+      option.optionSpecId.specifications.forEach((spec: any) => {
+        allSpecs.push({
+          name: `[Spec] ${spec.name}`,
+          value: spec.value || 0,
+          unit: spec.unit || '',
+          source: 'optionSpec',
+          isCalculated: spec.isCalculated || false
+        });
+      });
+    }
+
+    // 3. Add Option dimensions (instance values)
+    const optionDimensions = option.dimensions || option.specifications || [];
+    optionDimensions.forEach((spec: any) => {
+      allSpecs.push({
+        name: spec.name,
+        value: spec.value,
+        unit: spec.unit || '',
+        source: 'option',
+        isCalculated: spec.isCalculated || false
+      });
+    });
+
+    console.log('🔍 Final combined specs (Type + Spec + Option):', allSpecs);
+
     // Create option item for order
     const optionItem: OptionItem = {
       _id: Date.now().toString(), // Temporary ID
       optionId: option._id,
       optionName: option.name,
       optionCode: option.code,
+      optionTypeName: option.optionTypeId?.name || option.optionType?.name || '',
+      optionSpecName: option.optionSpecId?.name || option.optionSpec?.name || '',
       category: option.optionTypeId?.category || category,
       quantity,
-      specificationValues: option.specifications.map((spec: any) => ({
+      // ✅ FIX: Include ALL specs (OptionType + OptionSpec + Option)
+      specificationValues: allSpecs.map((spec: any) => ({
         name: spec.name,
         value: spec.value,
         unit: spec.unit || ''
@@ -214,6 +261,8 @@ const OptionsSection: React.FC<OptionsSectionProps> = ({
                 <th>#</th>
                 <th>Option</th>
                 <th>Code</th>
+                <th>Type</th>
+                <th>Spec</th>
                 <th>Quantity</th>
                 <th>Specifications</th>
                 <th>Mixing</th>
@@ -287,6 +336,16 @@ const OptionsSection: React.FC<OptionsSectionProps> = ({
                         </button>
                       </div>
                 }
+                  </td>
+                  <td>
+                    <span className="typeName" title={item.optionTypeName || 'Not specified'}>
+                      {item.optionTypeName || '-'}
+                    </span>
+                  </td>
+                  <td>
+                    <span className="specName" title={item.optionSpecName || 'Not specified'}>
+                      {item.optionSpecName || '-'}
+                    </span>
                   </td>
                   <td>
                     <input
@@ -366,12 +425,22 @@ const OptionsSection: React.FC<OptionsSectionProps> = ({
                 className="optionSelect">
 
                   <option value="">-- Select an option --</option>
-                  {filteredOptions.map((opt: any) =>
-                <option key={opt._id} value={opt._id}>
-                      {opt.name} ({opt.code})
-                      {opt.optionTypeId?.name ? ` - ${opt.optionTypeId.name}` : ''}
-                    </option>
-                )}
+                  {filteredOptions.map((opt: any) => {
+                    // Build spec display string using dimensions (not specifications)
+                    const specs = opt.dimensions || opt.specifications || [];
+                    const specDisplay = specs.length > 0
+                      ? ` | ${specs.map((spec: any) => `${spec.name}: ${spec.value}${spec.unit || ''}`).join(', ')}`
+                      : '';
+
+                    return (
+                      <option key={opt._id} value={opt._id}>
+                        {opt.name} ({opt.code || 'N/A'})
+                        {opt.optionTypeId?.name ? ` - Type: ${opt.optionTypeId.name}` : ''}
+                        {opt.optionSpecId?.name ? ` | Spec: ${opt.optionSpecId.name}` : ''}
+                        {specDisplay}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
 
@@ -386,24 +455,74 @@ const OptionsSection: React.FC<OptionsSectionProps> = ({
                   <div className="previewCard">
                         <h4>{selectedOption.name}</h4>
                         <p className="optionCode">Code: {selectedOption.code}</p>
+                        {selectedOption.optionTypeId?.name && (
+                          <p className="optionType">
+                            <strong>Type:</strong> {selectedOption.optionTypeId.name}
+                          </p>
+                        )}
+                        {selectedOption.optionSpecId?.name && (
+                          <p className="optionSpec">
+                            <strong>Spec:</strong> {selectedOption.optionSpecId.name}
+                          </p>
+                        )}
 
                         {/* Specifications */}
-                        {selectedOption.specifications && selectedOption.specifications.length > 0 &&
-                    <div className="previewSection">
-                            <strong>Specifications:</strong>
-                            <div className="specGrid">
-                              {selectedOption.specifications.map((spec: any, i: number) =>
-                        <div key={i} className="specItem">
-                                  <span className="specName">{spec.name}:</span>
-                                  <span className="specValue">
-                                    {spec.value} {spec.unit}
-                                    {spec.isCalculated && <span className="calcBadge">🧮</span>}
-                                  </span>
-                                </div>
-                        )}
+                        {/* ✅ SHOW ALL SPECS: OptionType + OptionSpec + Option */}
+                        {(() => {
+                          const allSpecs: any[] = [];
+
+                          // 1. OptionType specifications
+                          if (selectedOption.optionTypeId?.specifications && Array.isArray(selectedOption.optionTypeId.specifications)) {
+                            selectedOption.optionTypeId.specifications.forEach((spec: any) => {
+                              allSpecs.push({
+                                name: `[Type] ${spec.name}`,
+                                value: spec.defaultValue || spec.value || 0,
+                                unit: spec.unit || '',
+                                isCalculated: false
+                              });
+                            });
+                          }
+
+                          // 2. OptionSpec specifications - IMPORTANT!
+                          if (selectedOption.optionSpecId?.specifications && Array.isArray(selectedOption.optionSpecId.specifications)) {
+                            selectedOption.optionSpecId.specifications.forEach((spec: any) => {
+                              allSpecs.push({
+                                name: `[Spec] ${spec.name}`,
+                                value: spec.value || 0,
+                                unit: spec.unit || '',
+                                isCalculated: spec.isCalculated || false
+                              });
+                            });
+                          }
+
+                          // 3. Option dimensions
+                          const optionDimensions = selectedOption.dimensions || selectedOption.specifications || [];
+                          optionDimensions.forEach((spec: any) => {
+                            allSpecs.push({
+                              name: spec.name,
+                              value: spec.value,
+                              unit: spec.unit || '',
+                              isCalculated: spec.isCalculated || false
+                            });
+                          });
+
+                          return allSpecs.length > 0 && (
+                            <div className="previewSection">
+                              <strong>Specifications:</strong>
+                              <div className="specGrid">
+                                {allSpecs.map((spec: any, i: number) => (
+                                  <div key={i} className="specItem">
+                                    <span className="specName">{spec.name}:</span>
+                                    <span className="specValue">
+                                      {spec.value} {spec.unit}
+                                      {spec.isCalculated && <span className="calcBadge">🧮</span>}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
                             </div>
-                          </div>
-                    }
+                          );
+                        })()}
 
                         {/* Mixing Info */}
                         {selectedOption.mixingConfig?.enabled &&

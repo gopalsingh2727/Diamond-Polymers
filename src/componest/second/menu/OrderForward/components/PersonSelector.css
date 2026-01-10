@@ -1,0 +1,416 @@
+/* Person Selector Styles */
+
+.person-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-height: 600px;
+}
+
+.person-selector-header {
+  padding-bottom: 16px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.person-selector-header h3 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.person-selector-header .text-muted {
+  margin: 0;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+/* Search and Filter Controls */
+.person-selector-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.search-box:focus-within {
+  background: white;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.search-box svg {
+  color: #6b7280;
+}
+
+.search-box input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 14px;
+  color: #111827;
+}
+
+.search-box input::placeholder {
+  color: #9ca3af;
+}
+
+/* Role Filter */
+.role-filter {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.role-filter-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.role-filter-btn:hover {
+  border-color: #3b82f6;
+  color: #3b82f6;
+  background: #eff6ff;
+}
+
+.role-filter-btn.active {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: white;
+}
+
+.role-filter-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* People List */
+.people-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px;
+  max-height: 400px;
+}
+
+/* Loading State */
+.people-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 16px;
+}
+
+.people-loading .spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.people-loading p {
+  margin: 0;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+/* Error State */
+.people-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 16px;
+}
+
+.people-error p {
+  margin: 0;
+  font-size: 14px;
+  color: #dc2626;
+}
+
+.btn-retry {
+  padding: 8px 16px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-retry:hover {
+  background: #2563eb;
+}
+
+/* Empty State */
+.people-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 12px;
+  color: #9ca3af;
+}
+
+.people-empty svg {
+  color: #d1d5db;
+}
+
+.people-empty p {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.people-empty span {
+  font-size: 14px;
+  color: #9ca3af;
+}
+
+/* Person Card */
+.person-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.person-card:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+  transform: translateY(-1px);
+}
+
+.person-card.selected {
+  border-color: #3b82f6;
+  background: #eff6ff;
+  box-shadow: 0 2px 12px rgba(59, 130, 246, 0.15);
+}
+
+.person-avatar {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 10px;
+  color: white;
+}
+
+.person-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.person-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.person-email {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.person-designation {
+  font-size: 12px;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.person-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-end;
+}
+
+/* Role Badges */
+.role-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.role-master-admin {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.role-admin {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.role-manager {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.role-employee {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.role-default {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.branch-badge {
+  padding: 4px 10px;
+  background: #f3f4f6;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+/* Selected Indicator */
+.selected-indicator {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #3b82f6;
+  color: white;
+  border-radius: 50%;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* Selected Person Summary */
+.selected-person-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 10px;
+  color: white;
+}
+
+.summary-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+}
+
+.summary-info {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.summary-info strong {
+  font-weight: 600;
+}
+
+.summary-info .role-badge {
+  background: rgba(255, 255, 255, 0.3);
+  color: white;
+}
+
+/* Scrollbar Styling */
+.people-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.people-list::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 3px;
+}
+
+.people-list::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+.people-list::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .person-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .person-meta {
+    width: 100%;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 8px;
+  }
+
+  .role-filter {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+  }
+
+  .role-filter-btn {
+    white-space: nowrap;
+  }
+}

@@ -17,7 +17,7 @@ const CSP_POLICY = [
   "font-src 'self' https://fonts.gstatic.com data:",
   "img-src 'self' data: blob: https:",
   "connect-src 'self' http://localhost:* ws://localhost:* wss://* https://api.github.com https://*.27infinity.in https://*.execute-api.ap-south-1.amazonaws.com",
-  "media-src 'self' blob:",
+  "media-src 'self' blob: data:",
   "worker-src 'self' blob:",
 ].join('; ');
 

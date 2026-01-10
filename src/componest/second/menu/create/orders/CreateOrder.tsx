@@ -112,7 +112,8 @@ const CreateOrder = () => {
       return {
         overallStatus: editOrderData.overallStatus || editOrderData.status || 'Wait for Approval',
         priority: editOrderData.priority || 'normal',
-        orderType: editOrderData.orderTypeId || editOrderData.orderType?._id || ''
+        orderType: editOrderData.orderTypeId || editOrderData.orderType?._id || '',
+        notes: editOrderData.Notes || ''
         // Add other fields as needed
       };
     }
@@ -659,6 +660,9 @@ const CreateOrder = () => {
       if (formValues.overallStatus) orderData.overallStatus = formValues.overallStatus;
       if (formValues.priority) orderData.priority = formValues.priority;
 
+      // Add notes field
+      if (formValues.notes) orderData.Notes = formValues.notes;
+
       // Debug: Log order data being sent
 
 
@@ -680,8 +684,8 @@ const CreateOrder = () => {
       null;
 
       const url = isEditMode ?
-      `${import.meta.env.VITE_API_27INFINITY_IN}/orders/${orderIdentifier}` :
-      `${import.meta.env.VITE_API_27INFINITY_IN}/orders`;
+      `${import.meta.env.VITE_API_27INFINITY_IN}/v2/orders/${orderIdentifier}` :
+      `${import.meta.env.VITE_API_27INFINITY_IN}/v2/orders`;
 
       const method = isEditMode ? "PUT" : "POST";
 
@@ -690,7 +694,8 @@ const CreateOrder = () => {
         headers: {
           "Content-Type": "application/json",
           "x-api-key": apiKey || "",
-          "Authorization": `Bearer ${token}`
+          "Authorization": `Bearer ${token}`,
+          "x-selected-branch": branchId || ""
         },
         body: JSON.stringify(orderData)
       });
@@ -712,6 +717,11 @@ const CreateOrder = () => {
         setMaterialSpecValues({});
         setCalculatedDimensions({});
         setCalculatedMaterialWeight(0);
+      } else {
+        // For edit mode, navigate back to orders list after 1.5 seconds
+        setTimeout(() => {
+          navigate('/menu/Oders', { state: { refresh: true } });
+        }, 1500);
       }
     } catch (err: any) {
       setError(err.message || `Failed to ${isEditMode ? 'update' : 'create'} order`);

@@ -4,6 +4,14 @@ import {
   GET_ORDER_FORM_DATA_FAIL } from
 "./orderFormDataActions";
 
+// ✅ Import V2 action types
+import {
+  GET_ORDER_FORM_DATA_V2_REQUEST,
+  GET_ORDER_FORM_DATA_V2_SUCCESS,
+  GET_ORDER_FORM_DATA_V2_FAIL,
+  CLEAR_ORDER_FORM_DATA_V2
+} from "./orderFormDataActionsV2";
+
 interface OrderFormData {
   customers: any[];
   productTypes: any[];
@@ -29,6 +37,7 @@ interface OrderFormDataState {
   error: string | null;
   data: OrderFormData | null;
   lastFetched: string | null;
+  branchId?: string | null; // Track which branch this cache is for
 }
 
 // LocalStorage key - CACHE_VERSION is incremented when API response format changes
@@ -93,12 +102,13 @@ const loadFromLocalStorage = (): OrderFormDataState => {
 };
 
 // Save to localStorage
-const saveToLocalStorage = (data: OrderFormData, lastFetched: string) => {
+const saveToLocalStorage = (data: OrderFormData, lastFetched: string, branchId?: string) => {
   try {
     const storageKey = getLocalStorageKey();
     localStorage.setItem(storageKey, JSON.stringify({
       data,
-      lastFetched
+      lastFetched,
+      branchId: branchId || localStorage.getItem("selectedBranch")
     }));
 
   } catch (error) {
@@ -121,7 +131,68 @@ state = initialState,
 action: any)
 : OrderFormDataState => {
   switch (action.type) {
-    // ✅ NEW: Try to load from localStorage for current branch on first request
+    // ✅ V2 API: Request
+    case GET_ORDER_FORM_DATA_V2_REQUEST: {
+      // If we don't have data yet, try loading from localStorage first
+      if (!state.data) {
+        const cached = loadFromLocalStorage();
+        // If cache exists and is valid, use it but still set loading: true for fresh fetch
+        if (cached.data) {
+          return { ...cached, loading: true };
+        }
+      }
+      return { ...state, loading: true, error: null };
+    }
+
+    // ✅ V2 API: Success
+    case GET_ORDER_FORM_DATA_V2_SUCCESS: {
+      const timestamp = new Date().toISOString();
+      const branchId = localStorage.getItem("selectedBranch");
+
+      // Save to localStorage with branch tracking
+      saveToLocalStorage(action.payload, timestamp, branchId);
+
+      return {
+        loading: false,
+        data: action.payload,
+        error: null,
+        lastFetched: timestamp,
+        branchId
+      };
+    }
+
+    // ✅ V2 API: Failure
+    case GET_ORDER_FORM_DATA_V2_FAIL: {
+      return {
+        ...state,
+        loading: false,
+        error: action.payload
+      };
+    }
+
+    // ✅ V2 API: Clear cache
+    case CLEAR_ORDER_FORM_DATA_V2: {
+      // Clear all branch caches
+      try {
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith('order_form_data_cache')) {
+            localStorage.removeItem(key);
+          }
+        }
+      } catch (e) {
+
+      }
+      return {
+        loading: false,
+        error: null,
+        data: null,
+        lastFetched: null,
+        branchId: null
+      };
+    }
+
+    // ✅ OLD API: Try to load from localStorage for current branch on first request
     case GET_ORDER_FORM_DATA_REQUEST: {
       // If we don't have data yet, try loading from localStorage first
       if (!state.data) {
@@ -134,17 +205,21 @@ action: any)
       return { ...state, loading: true, error: null };
     }
 
-    case GET_ORDER_FORM_DATA_SUCCESS:
+    case GET_ORDER_FORM_DATA_SUCCESS: {
       const timestamp = new Date().toISOString();
-      // Save to localStorage
-      saveToLocalStorage(action.payload, timestamp);
+      const branchId = localStorage.getItem("selectedBranch");
+
+      // Save to localStorage with branch tracking
+      saveToLocalStorage(action.payload, timestamp, branchId);
 
       return {
         loading: false,
         data: action.payload,
         error: null,
-        lastFetched: timestamp
+        lastFetched: timestamp,
+        branchId
       };
+    }
 
     case GET_ORDER_FORM_DATA_FAIL:
       return {

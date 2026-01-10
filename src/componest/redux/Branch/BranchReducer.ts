@@ -4,9 +4,6 @@ import {
   FETCH_BRANCHES_REQUEST,
   FETCH_BRANCHES_SUCCESS,
   FETCH_BRANCHES_FAIL,
-  SELECT_BRANCH_REQUEST,
-  SELECT_BRANCH_SUCCESS,
-  SELECT_BRANCH_FAIL,
   BRANCH_LIST_REQUEST,
   BRANCH_LIST_SUCCESS,
   BRANCH_LIST_FAIL,
@@ -50,7 +47,6 @@ const initialState: BranchState = {
 export const branchReducer = (state = initialState, action: any): BranchState => {
   switch (action.type) {
     case FETCH_BRANCHES_REQUEST:
-    case SELECT_BRANCH_REQUEST:
       return { ...state, loading: true, error: null };
 
     case FETCH_BRANCHES_SUCCESS:
@@ -70,11 +66,7 @@ export const branchReducer = (state = initialState, action: any): BranchState =>
         lastFetched: new Date().toISOString()
       };
 
-    case SELECT_BRANCH_SUCCESS:
-      return { ...state, loading: false, selectedBranch: action.payload };
-
     case FETCH_BRANCHES_FAIL:
-    case SELECT_BRANCH_FAIL:
       return { ...state, loading: false, error: action.payload };
 
     // ✅ Clear branches on logout

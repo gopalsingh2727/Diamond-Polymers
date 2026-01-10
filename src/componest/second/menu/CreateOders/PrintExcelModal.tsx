@@ -3,8 +3,8 @@ import { useDispatch } from 'react-redux';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import html2pdf from 'html2pdf.js';
-import { getPrintTypes, getPrintTypesByOrderType } from '../../../redux/create/printType/printTypeActions';
-import { getExcelExportTypes } from '../../../redux/create/excelExportType/excelExportTypeActions';
+import { getPrintTypesV2 as getPrintTypes, getPrintTypesByOrderTypeV2 as getPrintTypesByOrderType } from '../../../redux/unifiedV2/printTypeActions';
+import { getExcelExportTypesV2 as getExcelExportTypes } from '../../../redux/unifiedV2/excelExportTypeActions';
 
 // Print Type interface
 interface PrintType {

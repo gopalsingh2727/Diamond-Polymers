@@ -13,18 +13,18 @@ const LoginForm = () => {
   const navigate = useNavigate();
 
   const auth = useSelector((state: any) => state.auth);
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loginMode, setLoginMode] = useState<'email' | 'qr'>('email');
 
   const handleEmailLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    dispatch(login(email, password));
+    dispatch(login(username, password));
   };
 
   const handleVerificationSuccess = () => {
     dispatch(clearVerificationState());
-    setEmail("");
+    setUsername("");
     setPassword("");
   };
 
@@ -56,16 +56,16 @@ const LoginForm = () => {
             {/* Email/Password Login */}
             <form onSubmit={handleEmailLogin}>
               <div className="mb-5">
-                <label htmlFor="email" className="block text-gray-700 mb-2">
-                  Email
+                <label htmlFor="username" className="block text-gray-700 mb-2">
+                  Username or Email
                 </label>
                 <input
-                  id="email"
+                  id="username"
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF6B35] transition"
-                  type="email"
-                  placeholder="Enter your email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  type="text"
+                  placeholder="Enter your username or email"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                 />
               </div>
 

@@ -2,18 +2,18 @@ import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
-  createReportType,
-  updateReportType,
-  deleteReportType,
-  getReportTypes
-} from "../../../../redux/create/reportType/reportTypeActions";
-import { getOrderTypes } from "../../../../redux/create/orderType/orderTypeActions";
+  createReportTypeV2 as createReportType,
+  updateReportTypeV2 as updateReportType,
+  deleteReportTypeV2 as deleteReportType,
+  getReportTypesV2 as getReportTypes
+} from "../../../../redux/unifiedV2/reportTypeActions";
+import { getOrderTypesV2 as getOrderTypes } from "../../../../redux/unifiedV2/orderTypeActions";
 import { getOptionTypes } from "../../../../redux/option/optionTypeActions";
 import { getOptions } from "../../../../redux/option/optionActions";
-import { getMachines } from "../../../../redux/create/machine/MachineActions";
-import { listOperators } from "../../../../redux/create/CreateMachineOpertor/MachineOpertorActions";
-import { getCustomerCategories } from "../../../../redux/create/customerCategory/CustomerCategoryActions";
-import { getCustomerParentCompanies } from "../../../../redux/create/customerParentCompany/CustomerParentCompanyActions";
+import { getMachinesV2 as getMachines } from "../../../../redux/unifiedV2/machineActions";
+import { getOperatorsV2 as listOperators } from "../../../../redux/unifiedV2/operatorActions";
+import { getCustomerCategoriesV2 as getCustomerCategories } from "../../../../redux/unifiedV2/customerCategoryActions";
+import { getParentCompaniesV2 as getCustomerParentCompanies } from "../../../../redux/unifiedV2/parentCompanyActions";
 import { AppDispatch } from "../../../../../store";
 import { ActionButton } from "../../../../../components/shared/ActionButton";
 import { ToastContainer } from "../../../../../components/shared/Toast";

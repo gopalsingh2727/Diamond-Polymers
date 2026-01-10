@@ -61,17 +61,18 @@ const validateEmail = (email: string): boolean => {
 // ✅ Password validation removed - accept any password
 
 // ✅ Login - Uses unified API that auto-detects user type
-export const login = (email: string, password: string) => {
+// Now supports both username and email
+export const login = (identifier: string, password: string) => {
   return async (dispatch: any) => {
     try {
       // ✅ SECURITY: Rate limiting check
       checkRateLimit();
 
       // ✅ SECURITY: Input validation
-      if (!validateEmail(email)) {
+      if (!identifier || !password) {
         dispatch({
           type: LOGIN_FAIL,
-          payload: "Invalid email format"
+          payload: "Username/email and password are required"
         });
         return;
       }
@@ -79,9 +80,10 @@ export const login = (email: string, password: string) => {
       dispatch({ type: LOGIN_REQUEST });
 
       // ✅ Single unified login endpoint (auto-detects user type)
+      // Send as "username" which accepts both username and email
       const response = await axios.post(
         `${baseUrl}/auth/login`,
-        { email, password },
+        { username: identifier, password },
         {
           headers: {
             "x-api-key": API_KEY,

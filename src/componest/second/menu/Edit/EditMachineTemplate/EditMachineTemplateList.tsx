@@ -1,10 +1,14 @@
 /**
  * EditMachineTemplateList - LIST ONLY
  * Click → Goes to ViewTemplateWizard for editing
+ * ✅ MIGRATED TO V2 API
  */
 import React, { useState, useCallback, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { getMachineTemplates, activateMachineTemplate, deactivateMachineTemplate, deleteMachineTemplate } from "../../../../redux/machineTemplate/machineTemplateActions";
+// ✅ MIGRATED TO V2 API - using unified v2 actions
+import { getTemplatesV2, deleteTemplateV2 } from "../../../../redux/unifiedV2/templateActions";
+// Keep activate/deactivate from old actions (not in v2 yet)
+import { activateMachineTemplate, deactivateMachineTemplate } from "../../../../redux/machineTemplate/machineTemplateActions";
 import { RootState } from "../../../../redux/rootReducer";
 import { AppDispatch } from "../../../../../store";
 import { useCRUD } from "../../../../../hooks/useCRUD";
@@ -67,7 +71,8 @@ const EditMachineTemplateList: React.FC<Props> = ({ onEdit }) => {
 
   // Fetch templates on mount and when branch changes
   useEffect(() => {
-    dispatch(getMachineTemplates());
+    // ✅ USING V2 API
+    dispatch(getTemplatesV2());
   }, [dispatch, selectedBranch]);
 
   const filteredItems = templates.filter((item: MachineTemplate) => {
@@ -125,7 +130,8 @@ const EditMachineTemplateList: React.FC<Props> = ({ onEdit }) => {
 
   const handleTemplateDelete = (templateId: string) => {
     crudDelete(
-      () => dispatch(deleteMachineTemplate(templateId)),
+      // ✅ USING V2 API
+      () => dispatch(deleteTemplateV2(templateId)),
       {
         confirmTitle: 'Delete Template?',
         confirmMessage: 'Are you sure you want to delete this template? This action cannot be undone.',

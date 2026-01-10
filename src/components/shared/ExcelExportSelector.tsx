@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
-import { getExcelExportTypes, getExcelExportTypesByOptionType } from '../../componest/redux/create/excelExportType/excelExportTypeActions';
+import { getExcelExportTypesV2 as getExcelExportTypes, getExcelExportTypesByOptionTypeV2 as getExcelExportTypesByOptionType } from '../../componest/redux/unifiedV2/excelExportTypeActions';
 
 // Define available export columns
 export interface ExportColumn {

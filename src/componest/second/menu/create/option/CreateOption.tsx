@@ -186,14 +186,18 @@ const CreateOption: React.FC<CreateOptionProps> = ({ initialData, onCancel, onSa
       context[name.toUpperCase()] = value;
     };
 
-    // Add Option Type specifications to context (e.g., OT_purity = 80)
-    // Support all case variations: OT_PURITY, OT_purity, OT_Purity, etc.
+    // Add Option Type specifications to context (e.g., optionType_purity = 80)
+    // Support all case variations and prefixes for backward compatibility
     if (optionTypeSpecsData.length > 0) {
       optionTypeSpecsData.forEach((spec) => {
         if (!spec.name || spec.name.trim() === '') return;
         const varName = toVarName(spec.name);
         const value = Number(spec.defaultValue) || 0;
-        // Add all case variations for OT_ prefix
+        // Add optionType_ prefix (matches backend)
+        context['optionType_' + varName] = value;
+        context['optionType_' + varName.toLowerCase()] = value;
+        context['optionType_' + varName.toUpperCase()] = value;
+        // Add OT_ prefix for backward compatibility
         context['OT_' + varName] = value;
         context['OT_' + varName.toLowerCase()] = value;
         context['OT_' + varName.toUpperCase()] = value;
@@ -821,9 +825,9 @@ const CreateOption: React.FC<CreateOptionProps> = ({ initialData, onCancel, onSa
                 {optionTypeSpecsData.map((spec, idx) =>
               <div
                 key={idx}
-                onClick={() => insertIntoFormula('OT_' + spec.name.replace(/\s+/g, '_'))}
+                onClick={() => insertIntoFormula('optionType_' + spec.name.replace(/\s+/g, '_'))}
                 className="createOption-optionTypeValueItem"
-                title={`Click to use OT_${spec.name.replace(/\s+/g, '_')} in formula`}>
+                title={`Click to use optionType_${spec.name.replace(/\s+/g, '_')} in formula`}>
 
                     <span className="createOption-optionTypeValueName">{spec.name}</span>
                     <span className="createOption-optionTypeValueNumber">
@@ -833,7 +837,7 @@ const CreateOption: React.FC<CreateOptionProps> = ({ initialData, onCancel, onSa
               )}
               </div>
               <div className="createOption-formulaHint">
-                Formula Example: wastage = <code className="createOption-formulaCode">calculation - OT_purity</code>
+                Formula Example: wastage = <code className="createOption-formulaCode">calculation - optionType_purity</code>
               </div>
             </div>
           </div>
@@ -931,7 +935,7 @@ const CreateOption: React.FC<CreateOptionProps> = ({ initialData, onCancel, onSa
                   <span className="createOption-formulaLabel">Formula:</span>
                   <input
                 type="text"
-                placeholder="e.g., length * width or OT_purity / 100 (leave empty for manual value)"
+                placeholder="e.g., length * width or optionType_purity / 100 (leave empty for manual value)"
                 value={dim.formula || ''}
                 onChange={(e) => updateDimension(index, 'formula', e.target.value)}
                 onFocus={() => setActiveFormulaIndex(index)}

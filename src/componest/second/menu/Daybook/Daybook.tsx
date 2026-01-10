@@ -11,7 +11,7 @@ import { fetchOrders } from "../../../redux/oders/OdersActions";
 import { RootState } from "../../../../store";
 import { useFormDataCache } from "../Edit/hooks/useFormDataCache";
 import { useDaybookUpdates, useWebSocketStatus } from "../../../../hooks/useWebSocket";
-import { ArrowDownTrayIcon, PrinterIcon, ArrowPathIcon, CheckCircleIcon, XMarkIcon, SignalIcon, SignalSlashIcon, ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
+import { ArrowDownTrayIcon, PrinterIcon, ArrowPathIcon, CheckCircleIcon, XMarkIcon, SignalIcon, SignalSlashIcon, ChevronLeftIcon, ChevronRightIcon, ArrowRightCircleIcon, ClockIcon, XCircleIcon } from "@heroicons/react/24/solid";
 import { crudAPI } from "../../../../utils/crudHelpers";
 
 
@@ -95,6 +95,13 @@ interface Order {
       description: string;
     };
   };
+
+  // Forward status fields
+  isForwarded?: boolean;
+  forwardAcceptanceStatus?: 'pending' | 'accepted' | 'denied' | null;
+  forwardedTo?: string;
+  forwardedToName?: string;
+  forwardedAt?: string;
 }
 
 interface OrderFilters {
@@ -800,11 +807,11 @@ export default function DayBook() {
       for (const orderId of orderIds) {
         try {
           if (updateType === 'status') {
-            await crudAPI.update(`/orders/${orderId}/status`, { status: value });
+            await crudAPI.update(`/v2/orders/${orderId}/status`, { status: value });
           } else if (updateType === 'priority') {
-            await crudAPI.update(`/orders/${orderId}`, { priority: value });
+            await crudAPI.update(`/v2/orders/${orderId}`, { priority: value });
           } else if (updateType === 'orderType') {
-            await crudAPI.update(`/orders/${orderId}`, { orderTypeId: value });
+            await crudAPI.update(`/v2/orders/${orderId}`, { orderTypeId: value });
           }
           successCount++;
         } catch (err) {
@@ -1640,6 +1647,13 @@ export default function DayBook() {
                       </div>
                   }
                   </th>
+
+                  {/* Forward Status Column */}
+                  <th style={{ width: '80px', textAlign: 'center' }}>
+                    <div className="header-filter-btn" style={{ justifyContent: 'center' }}>
+                      <span>Forward</span>
+                    </div>
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -1765,6 +1779,48 @@ export default function DayBook() {
 
                       <span style={{ color: '#94a3b8', fontSize: '12px' }}>-</span>
                       }
+                      </td>
+
+                      {/* Forward Status Cell */}
+                      <td style={{ textAlign: 'center' }}>
+                        {order.isForwarded ? (
+                          <div
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '4px',
+                              padding: '4px 8px',
+                              borderRadius: '6px',
+                              backgroundColor: order.forwardAcceptanceStatus === 'accepted'
+                                ? '#d1fae5'
+                                : order.forwardAcceptanceStatus === 'denied'
+                                  ? '#fee2e2'
+                                  : '#fef3c7',
+                              cursor: 'pointer'
+                            }}
+                            title={`Forwarded to ${order.forwardedToName || 'Unknown'}\nStatus: ${order.forwardAcceptanceStatus || 'Pending'}`}
+                          >
+                            {order.forwardAcceptanceStatus === 'accepted' ? (
+                              <CheckCircleIcon style={{ width: '16px', height: '16px', color: '#10b981' }} />
+                            ) : order.forwardAcceptanceStatus === 'denied' ? (
+                              <XCircleIcon style={{ width: '16px', height: '16px', color: '#ef4444' }} />
+                            ) : (
+                              <ClockIcon style={{ width: '16px', height: '16px', color: '#f59e0b' }} />
+                            )}
+                            <ArrowRightCircleIcon style={{
+                              width: '14px',
+                              height: '14px',
+                              color: order.forwardAcceptanceStatus === 'accepted'
+                                ? '#10b981'
+                                : order.forwardAcceptanceStatus === 'denied'
+                                  ? '#ef4444'
+                                  : '#f59e0b'
+                            }} />
+                          </div>
+                        ) : (
+                          <span style={{ color: '#d1d5db', fontSize: '12px' }}>—</span>
+                        )}
                       </td>
                     </tr>);
 

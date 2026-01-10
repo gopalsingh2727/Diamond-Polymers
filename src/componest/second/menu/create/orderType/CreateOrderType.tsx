@@ -138,6 +138,7 @@ const CreateOrderType: React.FC<CreateOrderTypeProps> = ({ initialData: propInit
   const [billingType, setBillingType] = useState<string>('');
   const [allowManufacturingLink, setAllowManufacturingLink] = useState(false);
   const [hideManufacturingSteps, setHideManufacturingSteps] = useState(false);
+  const [allowForwarding, setAllowForwarding] = useState(true);
 
   // Inventory Mode (none/debit/credit)
   const [inventoryMode, setInventoryMode] = useState<'none' | 'debit' | 'credit'>('none');
@@ -320,6 +321,7 @@ const CreateOrderType: React.FC<CreateOrderTypeProps> = ({ initialData: propInit
       setBillingType(orderTypeData.billingType || '');
       setAllowManufacturingLink(orderTypeData.allowManufacturingLink || false);
       setHideManufacturingSteps(orderTypeData.hideManufacturingSteps || false);
+      setAllowForwarding(orderTypeData.allowForwarding !== false);
 
       // Inventory Mode
       setInventoryMode(orderTypeData.inventoryMode || 'none');
@@ -631,6 +633,7 @@ const CreateOrderType: React.FC<CreateOrderTypeProps> = ({ initialData: propInit
       billingType: orderCategory === 'billing' ? billingType : undefined,
       allowManufacturingLink: orderCategory === 'billing' ? allowManufacturingLink : false,
       hideManufacturingSteps: orderCategory === 'billing' ? hideManufacturingSteps : false,
+      allowForwarding,
       // Inventory Mode
       inventoryMode,
       // Inventory Units (for multi-unit tracking when inventoryMode is debit/credit)
@@ -1033,6 +1036,21 @@ const CreateOrderType: React.FC<CreateOrderTypeProps> = ({ initialData: propInit
                     <div style={{ fontWeight: 500, color: '#065f46' }}>Hide Manufacturing Steps</div>
                     <div style={{ fontSize: '12px', color: '#6b7280' }}>
                       Hide production steps section when creating orders of this type
+                    </div>
+                  </div>
+                </label>
+
+                <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                  <input
+                  type="checkbox"
+                  checked={allowForwarding}
+                  onChange={(e) => setAllowForwarding(e.target.checked)}
+                  style={{ width: '18px', height: '18px', accentColor: '#10b981' }} />
+
+                  <div>
+                    <div style={{ fontWeight: 500, color: '#065f46' }}>Allow Order Forwarding</div>
+                    <div style={{ fontSize: '12px', color: '#6b7280' }}>
+                      Enable or disable order forwarding for orders of this type
                     </div>
                   </div>
                 </label>

@@ -41,6 +41,9 @@ import { RootState } from '../rootReducer';
 const baseUrl = import.meta.env.VITE_API_27INFINITY_IN;
 const API_KEY = import.meta.env.VITE_API_KEY;
 
+// ✅ V2 API: Use /v2/orders for all order endpoints
+const ORDERS_ENDPOINT = '/v2/orders';
+
 const getAuthHeaders = (token: string, branchId?: string | null) => {
   const headers: Record<string, string> = {
     Authorization: `Bearer ${token}`,
@@ -907,7 +910,7 @@ export const saveOrder = (orderData?: SchemaAlignedOrderData, orderTypeConfig?: 
 
       // Send multipart/form-data
       response = await axios.post(
-        `${baseUrl}/orders`,
+        `${baseUrl}${ORDERS_ENDPOINT}`,
         formData,
         {
           headers: {
@@ -924,7 +927,7 @@ export const saveOrder = (orderData?: SchemaAlignedOrderData, orderTypeConfig?: 
 
       // Send JSON as before
       response = await axios.post(
-        `${baseUrl}/orders`,
+        `${baseUrl}${ORDERS_ENDPOINT}`,
         finalOrderData,
         { headers: getAuthHeaders(token) }
       );
@@ -1163,7 +1166,7 @@ async (dispatch: Dispatch<OrderActionTypes>, getState: () => RootState) => {
       queryParams = `?${params.toString()}`;
     }
 
-    const requestUrl = `${baseUrl}/orders${queryParams}`;
+    const requestUrl = `${baseUrl}${ORDERS_ENDPOINT}${queryParams}`;
 
     // ✅ Debug: Log the request details (helpful for troubleshooting filters)
     if (import.meta.env.DEV) {
@@ -1358,7 +1361,7 @@ export const updateOrder = (orderId: string, orderData: Partial<UpdatedOrderData
         updatedAt: new Date().toISOString()
       } as UpdatedOrderData;
 
-      const updateUrl = `${baseUrl}/orders/${orderId}`;
+      const updateUrl = `${baseUrl}${ORDERS_ENDPOINT}/${orderId}`;
 
 
 
@@ -1464,7 +1467,7 @@ async (dispatch: Dispatch, getState: () => RootState) => {
 
 
     const query = new URLSearchParams(cleanFilters as any).toString();
-    const url = `${baseUrl}/orders/customer?${query}`;
+    const url = `${baseUrl}${ORDERS_ENDPOINT}/customer?${query}`;
 
 
 
@@ -1477,7 +1480,7 @@ async (dispatch: Dispatch, getState: () => RootState) => {
 
     dispatch({
       type: GET_ACCOUNT_ORDERS_SUCCESS,
-      payload: response.data?.data?.orders || []
+      payload: response.data?.data?.data || []  // Fixed: v2 API returns data.data.data (not data.data.orders)
     });
   } catch (error: any) {
     dispatch({
@@ -1511,7 +1514,7 @@ async (dispatch: Dispatch, getState: () => any) => {
     }
 
     const response = await axios.get(
-      `${baseUrl}/orders/${orderId}/machines/${machineId}/table-data`,
+      `${baseUrl}${ORDERS_ENDPOINT}/${orderId}/machines/${machineId}/table-data`,
       {
         headers: getAuthHeaders(token)
       }
@@ -1579,7 +1582,7 @@ async (dispatch: Dispatch, getState: () => any) => {
     const token = getToken(getState);
 
     const response = await axios.post(
-      `${baseUrl}/orders/${orderId}/machines/${machineId}/table-data/rows`,
+      `${baseUrl}${ORDERS_ENDPOINT}/${orderId}/machines/${machineId}/table-data/rows`,
       { rowData },
       {
         headers: getAuthHeaders(token)
@@ -1628,7 +1631,7 @@ async (dispatch: Dispatch, getState: () => any) => {
     const token = getToken(getState);
 
     const response = await axios.put(
-      `${baseUrl}/orders/${orderId}/machines/${machineId}/table-data/rows/${rowIndex}`,
+      `${baseUrl}${ORDERS_ENDPOINT}/${orderId}/machines/${machineId}/table-data/rows/${rowIndex}`,
       { rowData },
       {
         headers: getAuthHeaders(token)
@@ -1676,7 +1679,7 @@ async (dispatch: Dispatch, getState: () => any) => {
     const token = getToken(getState);
 
     const response = await axios.delete(
-      `${baseUrl}/orders/${orderId}/machines/${machineId}/table-data/rows/${rowIndex}`,
+      `${baseUrl}${ORDERS_ENDPOINT}/${orderId}/machines/${machineId}/table-data/rows/${rowIndex}`,
       {
         headers: getAuthHeaders(token)
       }
@@ -1733,7 +1736,7 @@ async (dispatch: Dispatch, getState: () => RootState) => {
     }
 
     const response = await axios.delete(
-      `${baseUrl}/orders/${orderId}`,
+      `${baseUrl}${ORDERS_ENDPOINT}/${orderId}`,
       {
         headers: getAuthHeaders(token)
       }

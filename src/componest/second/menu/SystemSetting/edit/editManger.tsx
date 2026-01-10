@@ -7,6 +7,7 @@ import {
 "../../../../redux/Manger/MangerActions";
 import { listBranches } from "../../../../redux/createBranchAndManager/branchActions";
 import { RootState } from "../../../../redux/rootReducer";
+import DeletionOTPModal from "../../../../shared/DeletionOTPModal";
 import "./editStyles.css";
 
 interface Manager {
@@ -46,7 +47,7 @@ const AllSeeMangerAndEdit: React.FC = () => {
     isActive: true
   });
   const [searchTerm, setSearchTerm] = useState("");
-  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [deleteModal, setDeleteModal] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
     dispatch(getAllManagers() as any);
@@ -102,14 +103,8 @@ const AllSeeMangerAndEdit: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    try {
-      await dispatch(deleteManager(id) as any);
-      dispatch(getAllManagers() as any);
-      setDeleteConfirm(null);
-    } catch (err) {
-
-    }
+  const handleDeleteClick = (id: string, name: string) => {
+    setDeleteModal({ id, name });
   };
 
   const handleToggleActive = async (manager: Manager) => {
@@ -202,29 +197,12 @@ const AllSeeMangerAndEdit: React.FC = () => {
 
                           Edit
                         </button>
-                        {deleteConfirm === manager._id ?
-                  <div className="delete-confirm">
-                            <button
-                      className="btn-confirm-delete"
-                      onClick={() => handleDelete(manager._id)}>
-
-                              Confirm
-                            </button>
-                            <button
-                      className="btn-cancel-delete"
-                      onClick={() => setDeleteConfirm(null)}>
-
-                              Cancel
-                            </button>
-                          </div> :
-
-                  <button
+                        <button
                     className="btn-delete"
-                    onClick={() => setDeleteConfirm(manager._id)}>
+                    onClick={() => handleDeleteClick(manager._id, manager.username)}>
 
-                            Delete
-                          </button>
-                  }
+                          Delete
+                        </button>
                       </td>
                     </tr>
               )
@@ -307,6 +285,19 @@ const AllSeeMangerAndEdit: React.FC = () => {
           </div>
         </div>
       }
+
+      {/* Deletion OTP Modal */}
+      <DeletionOTPModal
+        isOpen={!!deleteModal}
+        onClose={() => setDeleteModal(null)}
+        entityType="manager"
+        entityId={deleteModal?.id || ''}
+        entityName={deleteModal?.name || ''}
+        onSuccess={() => {
+          setDeleteModal(null);
+          dispatch(getAllManagers() as any);
+        }}
+      />
     </div>);
 
 };

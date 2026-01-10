@@ -1,18 +1,21 @@
-import require$$0$5, { app, Menu, session, shell, globalShortcut, Notification, ipcMain, BrowserWindow } from "electron";
-import { fileURLToPath } from "node:url";
-import path from "node:path";
-import fs from "node:fs";
-import os from "node:os";
-import { spawn } from "node:child_process";
-import require$$0 from "fs";
-import require$$2 from "path";
-import require$$1 from "os";
-import require$$3 from "crypto";
-import require$$0$1 from "child_process";
-import require$$0$2 from "util";
-import require$$0$3 from "events";
-import require$$0$4 from "http";
-import require$$1$1 from "https";
+"use strict";
+Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
+const require$$0$5 = require("electron");
+const node_url = require("node:url");
+const path = require("node:path");
+const fs = require("node:fs");
+const os = require("node:os");
+const node_child_process = require("node:child_process");
+const require$$0 = require("fs");
+const require$$2 = require("path");
+const require$$1 = require("os");
+const require$$3 = require("crypto");
+const require$$0$1 = require("child_process");
+const require$$0$2 = require("util");
+const require$$0$3 = require("events");
+const require$$0$4 = require("http");
+const require$$1$1 = require("https");
+var _documentCurrentScript = typeof document !== "undefined" ? document.currentScript : null;
 function getDefaultExportFromCjs(x) {
   return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, "default") ? x["default"] : x;
 }
@@ -319,7 +322,7 @@ var hasRequiredElectronLogPreload;
 function requireElectronLogPreload() {
   if (hasRequiredElectronLogPreload) return electronLogPreload.exports;
   hasRequiredElectronLogPreload = 1;
-  (function(module) {
+  (function(module2) {
     let electron = {};
     try {
       electron = require("electron");
@@ -329,7 +332,7 @@ function requireElectronLogPreload() {
       initialize2(electron);
     }
     {
-      module.exports = initialize2;
+      module2.exports = initialize2;
     }
     function initialize2({ contextBridge, ipcRenderer }) {
       if (!ipcRenderer) {
@@ -921,7 +924,7 @@ var hasRequiredRenderer;
 function requireRenderer() {
   if (hasRequiredRenderer) return renderer.exports;
   hasRequiredRenderer = 1;
-  (function(module) {
+  (function(module2) {
     const Logger = requireLogger();
     const RendererErrorHandler = requireRendererErrorHandler();
     const transportConsole = requireConsole$1();
@@ -931,9 +934,9 @@ function requireRenderer() {
         "electron-log/renderer is loaded in the main process. It could cause unexpected behaviour."
       );
     }
-    module.exports = createLogger();
-    module.exports.Logger = Logger;
-    module.exports.default = module.exports;
+    module2.exports = createLogger();
+    module2.exports.Logger = Logger;
+    module2.exports.default = module2.exports;
     function createLogger() {
       const logger = new Logger({
         allowUnknownLevel: true,
@@ -1367,23 +1370,23 @@ function requireElectronExternalApi() {
       includeFutureSession = true,
       getSessions = () => [this.electron.session?.defaultSession]
     }) {
-      for (const session2 of getSessions().filter(Boolean)) {
-        setPreload(session2);
+      for (const session of getSessions().filter(Boolean)) {
+        setPreload(session);
       }
       if (includeFutureSession) {
-        this.onAppEvent("session-created", (session2) => {
-          setPreload(session2);
+        this.onAppEvent("session-created", (session) => {
+          setPreload(session);
         });
       }
-      function setPreload(session2) {
-        if (typeof session2.registerPreloadScript === "function") {
-          session2.registerPreloadScript({
+      function setPreload(session) {
+        if (typeof session.registerPreloadScript === "function") {
+          session.registerPreloadScript({
             filePath,
             id: "electron-log-preload",
             type: "frame"
           });
         } else {
-          session2.setPreloads([...session2.getPreloads(), filePath]);
+          session.setPreloads([...session.getPreloads(), filePath]);
         }
       }
     }
@@ -1975,9 +1978,9 @@ var hasRequiredObject;
 function requireObject() {
   if (hasRequiredObject) return object.exports;
   hasRequiredObject = 1;
-  (function(module) {
+  (function(module2) {
     const util = require$$0$2;
-    module.exports = {
+    module2.exports = {
       serialize,
       maxDepth({ data, transport, depth = transport?.depth ?? 6 }) {
         if (!data) {
@@ -1989,7 +1992,7 @@ function requireObject() {
           return data;
         }
         if (Array.isArray(data)) {
-          return data.map((child) => module.exports.maxDepth({
+          return data.map((child) => module2.exports.maxDepth({
             data: child,
             depth: depth - 1
           }));
@@ -2009,7 +2012,7 @@ function requireObject() {
         const newJson = {};
         for (const i in data) {
           if (!Object.prototype.hasOwnProperty.call(data, i)) continue;
-          newJson[i] = module.exports.maxDepth({
+          newJson[i] = module2.exports.maxDepth({
             data: data[i],
             depth: depth - 1
           });
@@ -2834,10 +2837,10 @@ const CSP_POLICY = [
   "font-src 'self' https://fonts.gstatic.com data:",
   "img-src 'self' data: blob: https:",
   "connect-src 'self' http://localhost:* ws://localhost:* wss://* https://api.github.com https://*.27infinity.in https://*.execute-api.ap-south-1.amazonaws.com",
-  "media-src 'self' blob:",
+  "media-src 'self' blob: data:",
   "worker-src 'self' blob:"
 ].join("; ");
-const __dirname$1 = path.dirname(fileURLToPath(import.meta.url));
+const __dirname$1 = path.dirname(node_url.fileURLToPath(typeof document === "undefined" ? require("url").pathToFileURL(__filename).href : _documentCurrentScript && _documentCurrentScript.tagName.toUpperCase() === "SCRIPT" && _documentCurrentScript.src || new URL("main.js", document.baseURI).href));
 process.env.APP_ROOT = path.join(__dirname$1, "..");
 const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
 const MAIN_DIST = path.join(process.env.APP_ROOT, "dist-electron");
@@ -2847,7 +2850,7 @@ let win = null;
 let splash = null;
 let downloadedInstallerPath = null;
 function createWindow() {
-  splash = new BrowserWindow({
+  splash = new require$$0$5.BrowserWindow({
     width: 400,
     height: 300,
     frame: false,
@@ -2856,7 +2859,7 @@ function createWindow() {
     resizable: false
   });
   splash.loadFile(path.join(process.env.VITE_PUBLIC, "splash.html"));
-  win = new BrowserWindow({
+  win = new require$$0$5.BrowserWindow({
     show: false,
     width: 1200,
     height: 800,
@@ -2889,12 +2892,12 @@ function createWindow() {
   }
   return win;
 }
-app.whenReady().then(() => {
-  Menu.setApplicationMenu(null);
+require$$0$5.app.whenReady().then(() => {
+  require$$0$5.Menu.setApplicationMenu(null);
   log.transports.file.level = "info";
   log.info("Logger initialized");
-  log.info("App version:", app.getVersion());
-  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+  log.info("App version:", require$$0$5.app.getVersion());
+  require$$0$5.session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
     callback({
       responseHeaders: {
         ...details.responseHeaders,
@@ -2905,7 +2908,7 @@ app.whenReady().then(() => {
       }
     });
   });
-  app.on("web-contents-created", (event, contents) => {
+  require$$0$5.app.on("web-contents-created", (event, contents) => {
     contents.on("will-navigate", (event2, navigationUrl) => {
       const parsedUrl = new URL(navigationUrl);
       if (parsedUrl.hostname !== "localhost" && !parsedUrl.hostname.endsWith("27infinity.in")) {
@@ -2916,14 +2919,14 @@ app.whenReady().then(() => {
     contents.setWindowOpenHandler(({ url }) => {
       const parsedUrl = new URL(url);
       if (parsedUrl.hostname.endsWith("27infinity.in") || parsedUrl.hostname === "github.com") {
-        shell.openExternal(url);
+        require$$0$5.shell.openExternal(url);
       } else {
         log.warn(`Blocked popup to: ${url}`);
       }
       return { action: "deny" };
     });
   });
-  session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
+  require$$0$5.session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
     const allowedPermissions = ["media", "microphone", "audioCapture"];
     if (allowedPermissions.includes(permission)) {
       log.info(`Permission granted: ${permission}`);
@@ -2933,13 +2936,13 @@ app.whenReady().then(() => {
       callback(false);
     }
   });
-  session.defaultSession.setPermissionCheckHandler((webContents, permission) => {
+  require$$0$5.session.defaultSession.setPermissionCheckHandler((webContents, permission) => {
     const allowedPermissions = ["media", "microphone", "audioCapture"];
     return allowedPermissions.includes(permission);
   });
   const win2 = createWindow();
   const refreshShortcut = process.platform === "darwin" ? "Command+R" : "Control+R";
-  const registered = globalShortcut.register(refreshShortcut, () => {
+  const registered = require$$0$5.globalShortcut.register(refreshShortcut, () => {
     log.info("Refresh shortcut triggered - clearing storage and reloading");
     if (win2 && !win2.isDestroyed()) {
       win2.webContents.send("clear-storage-and-reload");
@@ -2951,7 +2954,7 @@ app.whenReady().then(() => {
     log.error(`Failed to register refresh shortcut: ${refreshShortcut}`);
   }
   const devToolsShortcut = process.platform === "darwin" ? "Option+Command+I" : "Control+Shift+I";
-  const devToolsRegistered = globalShortcut.register(devToolsShortcut, () => {
+  const devToolsRegistered = require$$0$5.globalShortcut.register(devToolsShortcut, () => {
     log.info("DevTools shortcut triggered");
     if (win2 && !win2.isDestroyed()) {
       if (win2.webContents.isDevToolsOpened()) {
@@ -2993,7 +2996,7 @@ app.whenReady().then(() => {
       }
       const data = await response.json();
       const latestVersion = data.tag_name.replace("v", "");
-      const currentVersion = app.getVersion();
+      const currentVersion = require$$0$5.app.getVersion();
       const isNewer = latestVersion !== currentVersion && latestVersion.localeCompare(currentVersion, void 0, { numeric: true }) > 0;
       return {
         version: currentVersion,
@@ -3007,7 +3010,7 @@ app.whenReady().then(() => {
         error: {
           message: err.message || "Failed to check for updates"
         },
-        version: app.getVersion()
+        version: require$$0$5.app.getVersion()
       };
     }
   };
@@ -3015,28 +3018,28 @@ app.whenReady().then(() => {
     const result = await checkForUpdatesViaGitHub();
     if (result.update) {
       log.info("Update available:", result.newVersion);
-      if (Notification.isSupported()) {
-        const notification = new Notification({
+      if (require$$0$5.Notification.isSupported()) {
+        const notification = new require$$0$5.Notification({
           title: "Update Available",
           body: `Version ${result.newVersion} is available. Click to download.`,
           icon: path.join(process.env.VITE_PUBLIC, "electron-vite.svg")
         });
         notification.on("click", () => {
-          shell.openExternal(getDownloadUrl());
+          require$$0$5.shell.openExternal(getDownloadUrl());
         });
         notification.show();
       }
       win2?.webContents.send("update-can-available", result);
     }
   }, 1e4);
-  ipcMain.handle("check-update", async () => {
+  require$$0$5.ipcMain.handle("check-update", async () => {
     return await checkForUpdatesViaGitHub();
   });
-  ipcMain.handle("open-download-page", async () => {
+  require$$0$5.ipcMain.handle("open-download-page", async () => {
     try {
       const downloadUrl = getDownloadUrl();
       log.info("Opening download URL:", downloadUrl);
-      await shell.openExternal(downloadUrl);
+      await require$$0$5.shell.openExternal(downloadUrl);
       return { success: true };
     } catch (err) {
       log.error("Failed to open download page:", err.message);
@@ -3089,7 +3092,7 @@ app.whenReady().then(() => {
       return null;
     }
   };
-  ipcMain.handle("download-update", async () => {
+  require$$0$5.ipcMain.handle("download-update", async () => {
     try {
       const installerInfo = await getInstallerUrl();
       if (!installerInfo) {
@@ -3138,25 +3141,25 @@ app.whenReady().then(() => {
       return { success: false, error: err.message };
     }
   });
-  ipcMain.handle("install-update", async () => {
+  require$$0$5.ipcMain.handle("install-update", async () => {
     try {
       if (!downloadedInstallerPath || !fs.existsSync(downloadedInstallerPath)) {
         return { success: false, error: "No downloaded installer found" };
       }
       log.info("Installing update from:", downloadedInstallerPath);
       if (process.platform === "win32") {
-        spawn(downloadedInstallerPath, [], {
+        node_child_process.spawn(downloadedInstallerPath, [], {
           detached: true,
           stdio: "ignore"
         }).unref();
       } else if (process.platform === "darwin") {
-        spawn("open", [downloadedInstallerPath], {
+        node_child_process.spawn("open", [downloadedInstallerPath], {
           detached: true,
           stdio: "ignore"
         }).unref();
       }
       setTimeout(() => {
-        app.quit();
+        require$$0$5.app.quit();
       }, 1e3);
       return { success: true };
     } catch (err) {
@@ -3165,27 +3168,25 @@ app.whenReady().then(() => {
     }
   });
 });
-app.on("window-all-closed", () => {
+require$$0$5.app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
-    app.quit();
+    require$$0$5.app.quit();
     win = null;
   }
 });
-app.on("activate", () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
-    if (app.isReady()) {
+require$$0$5.app.on("activate", () => {
+  if (require$$0$5.BrowserWindow.getAllWindows().length === 0) {
+    if (require$$0$5.app.isReady()) {
       createWindow();
     } else {
-      app.whenReady().then(createWindow);
+      require$$0$5.app.whenReady().then(createWindow);
     }
   }
 });
-app.on("will-quit", () => {
-  globalShortcut.unregisterAll();
+require$$0$5.app.on("will-quit", () => {
+  require$$0$5.globalShortcut.unregisterAll();
   log.info("All global shortcuts unregistered");
 });
-export {
-  MAIN_DIST,
-  RENDERER_DIST,
-  VITE_DEV_SERVER_URL
-};
+exports.MAIN_DIST = MAIN_DIST;
+exports.RENDERER_DIST = RENDERER_DIST;
+exports.VITE_DEV_SERVER_URL = VITE_DEV_SERVER_URL;

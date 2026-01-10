@@ -54,17 +54,36 @@ const ChatWidget: React.FC = () => {
 
   // Initialize chat
   useEffect(() => {
-    dispatch(loadChatSettings() as any);
-    dispatch(loadChatHistory() as any);
-    dispatch(loadReminders() as any);
+    // Load settings silently - errors are handled in Redux
+    dispatch(loadChatSettings() as any).catch(() => {
+      // Silent failure - settings will use defaults
+    });
 
-    // Check for due reminders every minute
-    reminderCheckInterval.current = setInterval(() => {
-      dispatch(checkDueReminders() as any);
-    }, 60000);
+    // Load history silently - errors are handled in Redux
+    dispatch(loadChatHistory() as any).catch(() => {
+      // Silent failure - will start with empty history
+    });
 
-    // Initial check
-    dispatch(checkDueReminders() as any);
+    // Only load reminders and check for due reminders if user has permission
+    // Reminders require manager/admin role - skip silently for employees
+    const checkReminders = async () => {
+      try {
+        await dispatch(loadReminders() as any);
+        await dispatch(checkDueReminders() as any);
+
+        // Check for due reminders every minute (only if first check succeeded)
+        reminderCheckInterval.current = setInterval(() => {
+          dispatch(checkDueReminders() as any).catch(() => {
+            // Silent failure
+          });
+        }, 60000);
+      } catch (error) {
+        // User doesn't have permission - that's fine, skip reminders
+        // Silent failure
+      }
+    };
+
+    checkReminders();
 
     return () => {
       if (reminderCheckInterval.current) {

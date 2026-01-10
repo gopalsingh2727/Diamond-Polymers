@@ -374,7 +374,10 @@ const CreateOptionSpec = () => {
     if (optionTypeSpecsData.length > 0) {
       optionTypeSpecsData.forEach((spec) => {
         const varName = toVarName(spec.name);
-        // Use prefix to avoid conflicts with current spec values
+        // Use prefix to match backend: optionType_fieldName
+        context['optionType_' + varName] = spec.defaultValue;
+        context['optionType_' + varName.toLowerCase()] = spec.defaultValue;
+        // Also add legacy prefixes for backward compatibility
         context['OT_' + varName] = spec.defaultValue;
         context['ot_' + varName.toLowerCase()] = spec.defaultValue;
       });
@@ -1068,7 +1071,7 @@ const CreateOptionSpec = () => {
                 <span
                   key={idx}
                   className="createOptionSpec-dimensionTag"
-                  onClick={() => insertIntoFormula('OT_' + spec.name.replace(/\s+/g, '_'))}
+                  onClick={() => insertIntoFormula('optionType_' + spec.name.replace(/\s+/g, '_'))}
                   style={{
                     cursor: 'pointer',
                     transition: 'all 0.2s ease',
@@ -1088,9 +1091,9 @@ const CreateOptionSpec = () => {
                     e.currentTarget.style.color = '';
                     e.currentTarget.style.transform = '';
                   }}
-                  title={`Click to insert "OT_${spec.name.replace(/\s+/g, '_')}" into formula (Default value: ${spec.defaultValue}${spec.unit ? ' ' + spec.unit : ''})`}>
+                  title={`Click to insert "optionType_${spec.name.replace(/\s+/g, '_')}" into formula (Default value: ${spec.defaultValue}${spec.unit ? ' ' + spec.unit : ''})`}>
 
-                        <strong>OT_{spec.name.replace(/\s+/g, '_')}</strong>
+                        <strong>optionType_{spec.name.replace(/\s+/g, '_')}</strong>
                         <span style={{
                     background: 'rgba(0,0,0,0.1)',
                     padding: '2px 6px',

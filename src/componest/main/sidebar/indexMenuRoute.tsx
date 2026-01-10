@@ -20,6 +20,7 @@ import CreateEmployee from "../../second/menu/SystemSetting/create/createEmploye
 import EditEmployeeList from "../../second/menu/Edit/EditEmployee/EditEmployeeList";
 import PayrollDashboard from "../../second/menu/SystemSetting/Payroll/PayrollDashboard";
 import PayrollSettings from "../../second/menu/SystemSetting/Payroll/PayrollSettings";
+import { OrdersForward } from "../../second/menu/OrderForward";
 
 function IndexMenuRoute() {
   return (
@@ -33,6 +34,13 @@ function IndexMenuRoute() {
       </Route>
       <Route path="orderform" element={<OrderForm/>} />
       <Route path="IndexAllOders" element={<IndexAllOders />} />
+      <Route path="order-forward">
+        <Route index element={<OrdersForward />} />
+        <Route path="connections" element={<OrdersForward initialView="connections" />} />
+        <Route path="myorders" element={<OrdersForward initialView="myorders" />} />
+        <Route path="forwarded" element={<OrdersForward initialView="forwarded" />} />
+        <Route path="received" element={<OrdersForward initialView="received" />} />
+      </Route>
       <Route path="edit" element={<IndexEdit/>} />
       <Route path="SystemSetting" element={<SystemSetting/>} />
       <Route path="dispatch" element={<Dispatch/>} />
