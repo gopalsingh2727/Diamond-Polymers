@@ -7,6 +7,8 @@ import { useCRUD } from '../../../../../hooks/useCRUD';
 import { useFormDataCache } from '../../Edit/hooks/useFormDataCache';
 import ImportProgressPopup from '../../../../../components/shared/ImportProgressPopup';
 import ImportAccountPopup from '../../../../../components/shared/ImportAccountPopup';
+import HelpDocModal, { HelpButton } from "../../../../../components/shared/HelpDocModal";
+import { stepHelp } from "../../../../../components/shared/helpContent";
 import * as XLSX from 'xlsx';
 import "./createStep.css";
 
@@ -43,14 +45,20 @@ const CreateStep: React.FC<CreateStepProps> = ({ initialData, onCancel, onSaveSu
     errors: string[];
   } | null>(null);
 
+  // Help modal state
+  const [showHelpModal, setShowHelpModal] = useState(false);
+
   const { saveState, handleSave, toast } = useCRUD();
-  const { machines: machineList } = useFormDataCache();
+  const { machines: machineList, refresh: refreshCache } = useFormDataCache();
 
   useEffect(() => {
     if (initialData) {
       setStepName(initialData.stepName || "");
       if (initialData.machines && initialData.machines.length > 0) {
-        setMachines(initialData.machines.map(m => ({ machineId: m.machineId })));
+        // Extract machineId properly - it could be an object or string
+        setMachines(initialData.machines.map(m => ({
+          machineId: typeof m.machineId === 'object' ? m.machineId._id : m.machineId
+        })));
       }
     }
   }, [initialData]);
@@ -94,13 +102,20 @@ const CreateStep: React.FC<CreateStepProps> = ({ initialData, onCancel, onSaveSu
 
     handleSave(saveAction, {
       successMessage: isEditMode ? 'Step updated!' : 'Production step created!',
-      onSuccess: () => {
+      onSuccess: async () => {
         setStepName("");
         setMachines([{ machineId: "" }]);
+
+        // Wait for backend to finish writing
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // Refresh cache and wait for API to complete
+        await refreshCache();
+
+        // Wait for Redux state to fully propagate and components to re-render
         if (onSaveSuccess) {
-          setTimeout(() => {
-            onSaveSuccess();
-          }, 1500);
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          onSaveSuccess();
         }
       }
     });
@@ -112,7 +127,16 @@ const CreateStep: React.FC<CreateStepProps> = ({ initialData, onCancel, onSaveSu
     try {
       await dispatch(deleteStepV2(initialData._id));
       toast.success('Deleted', 'Step deleted');
-      setTimeout(() => onSaveSuccess?.(), 1000);
+
+      // Wait for backend to finish
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Refresh cache and wait for API to complete
+      await refreshCache();
+
+      // Wait for Redux state to fully propagate and components to re-render
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      onSaveSuccess?.();
     } catch {
       toast.error('Error', 'Failed to delete');
     }
@@ -313,6 +337,10 @@ const CreateStep: React.FC<CreateStepProps> = ({ initialData, onCancel, onSaveSu
           title: 'Import Complete',
           message: `Successfully imported ${successCount} production step(s)`,
         });
+
+        // Wait for backend to finish, then refresh cache
+        await new Promise(resolve => setTimeout(resolve, 800));
+        await refreshCache();
       }
     } catch (error: any) {
       console.error('Excel import error:', error);
@@ -359,6 +387,9 @@ const CreateStep: React.FC<CreateStepProps> = ({ initialData, onCancel, onSaveSu
                 <line x1="9" y1="15" x2="15" y2="15"></line>
               </svg>
             </button>
+
+            {/* Help Button */}
+            <HelpButton onClick={() => setShowHelpModal(true)} size="medium" />
           </div>
         ) : (
           <h2 className="productionsstep-title">
@@ -474,6 +505,13 @@ const CreateStep: React.FC<CreateStepProps> = ({ initialData, onCancel, onSaveSu
             </div>
           </div>
         )}
+
+        {/* Help Documentation Modal */}
+        <HelpDocModal
+          isOpen={showHelpModal}
+          onClose={() => setShowHelpModal(false)}
+          content={stepHelp}
+        />
 
         <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
       </div>

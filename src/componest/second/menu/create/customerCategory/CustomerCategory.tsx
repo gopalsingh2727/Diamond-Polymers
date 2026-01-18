@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
 import { createCustomerCategoryV2, updateCustomerCategoryV2, deleteCustomerCategoryV2 } from "../../../../redux/unifiedV2";
@@ -6,6 +6,9 @@ import { RootState, AppDispatch } from "../../../../../store";
 import { useInternalBackNavigation } from "../../../../allCompones/BackButton";
 import { useCRUD } from "../../../../../hooks/useCRUD";
 import { ToastContainer } from "../../../../../components/shared/Toast";
+import HelpDocModal, { HelpButton } from "../../../../../components/shared/HelpDocModal";
+import { customerCategoryHelp } from "../../../../../components/shared/helpContent";
+import { useFormDataCache } from "../../Edit/hooks/useFormDataCache";
 import "./CustomerCategory.css";
 
 type CategoryFormData = {
@@ -44,12 +47,26 @@ const CustomerCategory: React.FC<Props> = ({
 
   const locationState = location.state as LocationState | null;
   const initialData: CategoryData = locationState?.initialData || propInitialData;
-  const itemId = locationState?.itemId || initialData?._id;
-  const editMode = locationState?.editMode || !!initialData?._id;
+  const itemId = locationState?.itemId || initialData?._id || (initialData as any)?.id;
+  const editMode = locationState?.editMode || !!(initialData?._id || (initialData as any)?.id);
 
   const { error: reduxError } = useSelector(
     (state: RootState) => state.v2.customerCategory
   );
+
+  // Get customers from cache
+  const { customers } = useFormDataCache();
+
+  // Filter customers that use this category
+  const relatedCustomers = useMemo(() => {
+    if (!editMode || !itemId) return [];
+    return customers.filter((customer: any) => {
+      const categoryId = typeof customer.categoryId === 'object'
+        ? customer.categoryId?._id
+        : customer.categoryId;
+      return categoryId === itemId;
+    });
+  }, [customers, itemId, editMode]);
 
   const [formValues, setFormValues] = useState<CategoryFormData>({
     name: initialData.name || "",
@@ -57,6 +74,7 @@ const CustomerCategory: React.FC<Props> = ({
   });
 
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
+  const [showHelpModal, setShowHelpModal] = useState(false);
 
   const handleBackToList = () => {
     if (onSaveSuccess) {
@@ -71,7 +89,8 @@ const CustomerCategory: React.FC<Props> = ({
   useInternalBackNavigation(editMode && !confirmDialog.isOpen, handleBackToList);
 
   useEffect(() => {
-    if (initialData && initialData._id) {
+    const hasId = initialData && (initialData._id || (initialData as any)?.id);
+    if (hasId) {
       setFormValues({
         name: initialData.name || "",
         description: initialData.description || "",
@@ -178,7 +197,7 @@ const CustomerCategory: React.FC<Props> = ({
   };
 
   return (
-    <div className="customerCategory-container">
+    <div className={`customerCategory-container ${editMode ? 'edit-mode' : ''}`}>
       <div className="customerCategory-form">
 
         {/* Delete Confirmation Modal */}
@@ -248,77 +267,96 @@ const CustomerCategory: React.FC<Props> = ({
         )}
 
         {editMode && (
-          <div className="customerCategory-header">
+          <div className="customerCategory-top-buttons">
             {onCancel && (
               <button
                 type="button"
                 onClick={onCancel}
-                style={{
-                  padding: "8px 16px",
-                  background: "#6b7280",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                  fontSize: "14px"
-                }}
+                className="customerCategory-back-btn"
               >
                 Back to List
               </button>
             )}
-            <h2 className="customerCategory-header-title">Edit Customer Category</h2>
             <button
               type="button"
               onClick={handleDeleteClick}
               disabled={deleteState === 'loading'}
-              style={{
-                padding: "8px 16px",
-                background: "#ef4444",
-                color: "white",
-                border: "none",
-                borderRadius: "6px",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                fontSize: "14px"
-              }}
+              className="customerCategory-delete-btn"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14zM10 11v6M14 11v6" />
-              </svg>
               {deleteState === 'loading' ? "Deleting..." : "Delete"}
             </button>
           </div>
         )}
 
-        {!editMode && <h2 className="customerCategory-title">Create Customer Category</h2>}
+        {!editMode && (
+          <div className="customerCategory-title-row">
+            <h2 className="customerCategory-title">Create Customer Category</h2>
+            <HelpButton onClick={() => setShowHelpModal(true)} size="medium" />
+          </div>
+        )}
+        {editMode && (
+          <div className="customerCategory-title-row">
+            <h2 className="customerCategory-title">Edit Customer Category</h2>
+            <HelpButton onClick={() => setShowHelpModal(true)} size="medium" />
+          </div>
+        )}
 
         <form ref={formRef} onSubmit={handleSubmit}>
-          <div className="customerCategory-group">
-            <label className="customerCategory-label">Category Name *</label>
-            <input
-              className="customerCategory-input"
-              name="name"
-              value={formValues.name}
-              onChange={handleChange}
-              placeholder="e.g., Premium, Corporate, Non-Premium"
-            />
-            {validationErrors.name && (
-              <small className="customerCategory-error">{validationErrors.name}</small>
-            )}
-          </div>
+          {editMode ? (
+            <div className="customerCategory-form-row">
+              <div className="customerCategory-group">
+                <label className="customerCategory-label">Category Name *</label>
+                <input
+                  className="customerCategory-input"
+                  name="name"
+                  value={formValues.name}
+                  onChange={handleChange}
+                  placeholder="e.g., Premium, Corporate, Non-Premium"
+                />
+                {validationErrors.name && (
+                  <small className="customerCategory-error">{validationErrors.name}</small>
+                )}
+              </div>
 
-          <div className="customerCategory-group">
-            <label className="customerCategory-label">Description</label>
-            <textarea
-              className="customerCategory-textarea"
-              name="description"
-              value={formValues.description}
-              onChange={handleChange}
-              placeholder="Enter category description..."
-            />
-          </div>
+              <div className="customerCategory-group">
+                <label className="customerCategory-label">Description</label>
+                <input
+                  className="customerCategory-input"
+                  name="description"
+                  value={formValues.description}
+                  onChange={handleChange}
+                  placeholder="Enter category description..."
+                />
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="customerCategory-group">
+                <label className="customerCategory-label">Category Name *</label>
+                <input
+                  className="customerCategory-input"
+                  name="name"
+                  value={formValues.name}
+                  onChange={handleChange}
+                  placeholder="e.g., Premium, Corporate, Non-Premium"
+                />
+                {validationErrors.name && (
+                  <small className="customerCategory-error">{validationErrors.name}</small>
+                )}
+              </div>
+
+              <div className="customerCategory-group">
+                <label className="customerCategory-label">Description</label>
+                <textarea
+                  className="customerCategory-textarea"
+                  name="description"
+                  value={formValues.description}
+                  onChange={handleChange}
+                  placeholder="Enter category description..."
+                />
+              </div>
+            </>
+          )}
 
           {reduxError && <div className="customerCategory-error">{reduxError}</div>}
 
@@ -327,6 +365,49 @@ const CustomerCategory: React.FC<Props> = ({
           </button>
         </form>
       </div>
+
+      {/* Related Customers Table - Only in Edit Mode */}
+      {editMode && relatedCustomers.length > 0 && (
+        <div className="customerCategory-customers-section">
+          <h3 className="customerCategory-customers-title">
+            Customers in this Category ({relatedCustomers.length})
+          </h3>
+          <div className="customerCategory-table-wrapper">
+            <table className="customerCategory-table">
+              <thead>
+                <tr>
+                  <th>No</th>
+                  <th>Company Name</th>
+                  <th>Contact Name</th>
+                  <th>Phone</th>
+                  <th>State</th>
+                </tr>
+              </thead>
+              <tbody>
+                {relatedCustomers.map((customer: any, index: number) => (
+                  <tr key={customer._id}>
+                    <td>{index + 1}</td>
+                    <td>{customer.companyName || "N/A"}</td>
+                    <td>
+                      {[customer.firstName, customer.lastName].filter(Boolean).join(" ") || "N/A"}
+                    </td>
+                    <td>{customer.phone1 || "N/A"}</td>
+                    <td>{customer.state || "N/A"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Help Documentation Modal */}
+      <HelpDocModal
+        isOpen={showHelpModal}
+        onClose={() => setShowHelpModal(false)}
+        content={customerCategoryHelp}
+      />
+
       <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
     </div>
   );

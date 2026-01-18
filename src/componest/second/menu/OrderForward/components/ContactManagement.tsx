@@ -1,5 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { Users, UserPlus, Check, X, Clock, Send } from 'lucide-react';
+/**
+ * ContactManagement - Premium Contact Management Component
+ * Manages contacts, pending requests, and sent requests for order forwarding
+ */
+
+import React, { useState, useEffect, useCallback } from 'react';
+// Centralized Icons
+import {
+  GroupIcon as PeopleIcon,
+  PersonAddIcon,
+  CheckCircleIcon as CheckIcon,
+  CloseIcon,
+  AccessTimeIcon,
+  SendIcon,
+  RefreshIcon,
+  ErrorIcon as ErrorOutlineIcon,
+} from './icons';
 import './ContactManagement.css';
 
 interface Contact {
@@ -34,86 +49,116 @@ const ContactManagement: React.FC<ContactManagementProps> = ({ onClose }) => {
   const [sentRequests, setSentRequests] = useState<ContactRequest[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [processingId, setProcessingId] = useState<string | null>(null);
 
-  const API_BASE = 'http://localhost:4000/dev';
+  const API_BASE = import.meta.env.VITE_API_27INFINITY_IN || 'http://localhost:4000/dev';
 
-  // Get token from localStorage
-  const getToken = () => {
-    return localStorage.getItem('authToken') || '';
-  };
+  // Get authentication details
+  const getToken = useCallback(() => {
+    return localStorage.getItem('authToken') || localStorage.getItem('token') || '';
+  }, []);
 
-  const getBranchId = () => {
+  const getBranchId = useCallback(() => {
     return localStorage.getItem('selectedBranchId') || '';
-  };
+  }, []);
 
   // Fetch contacts
-  const fetchContacts = async () => {
+  const fetchContacts = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const response = await fetch(`${API_BASE}/v2/contacts`, {
         headers: {
           'Authorization': `Bearer ${getToken()}`,
-          'x-selected-branch': getBranchId()
+          'x-selected-branch': getBranchId(),
+          'Content-Type': 'application/json'
         }
       });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch contacts: ${response.statusText}`);
+      }
+
       const data = await response.json();
       if (data.success) {
         setContacts(data.data || []);
+      } else {
+        throw new Error(data.message || 'Failed to fetch contacts');
       }
     } catch (err: any) {
-      setError(err.message);
+      console.error('Error fetching contacts:', err);
+      setError(err.message || 'Failed to load contacts');
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_BASE, getToken, getBranchId]);
 
   // Fetch pending requests
-  const fetchPendingRequests = async () => {
+  const fetchPendingRequests = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const response = await fetch(`${API_BASE}/v2/contacts/pending`, {
         headers: {
           'Authorization': `Bearer ${getToken()}`,
-          'x-selected-branch': getBranchId()
+          'x-selected-branch': getBranchId(),
+          'Content-Type': 'application/json'
         }
       });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch pending requests: ${response.statusText}`);
+      }
+
       const data = await response.json();
       if (data.success) {
         setPendingRequests(data.data || []);
+      } else {
+        throw new Error(data.message || 'Failed to fetch pending requests');
       }
     } catch (err: any) {
-      setError(err.message);
+      console.error('Error fetching pending requests:', err);
+      setError(err.message || 'Failed to load pending requests');
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_BASE, getToken, getBranchId]);
 
   // Fetch sent requests
-  const fetchSentRequests = async () => {
+  const fetchSentRequests = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const response = await fetch(`${API_BASE}/v2/contacts/sent`, {
         headers: {
           'Authorization': `Bearer ${getToken()}`,
-          'x-selected-branch': getBranchId()
+          'x-selected-branch': getBranchId(),
+          'Content-Type': 'application/json'
         }
       });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch sent requests: ${response.statusText}`);
+      }
+
       const data = await response.json();
       if (data.success) {
         setSentRequests(data.data || []);
+      } else {
+        throw new Error(data.message || 'Failed to fetch sent requests');
       }
     } catch (err: any) {
-      setError(err.message);
+      console.error('Error fetching sent requests:', err);
+      setError(err.message || 'Failed to load sent requests');
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_BASE, getToken, getBranchId]);
 
   // Accept contact request
   const handleAccept = async (requestId: string) => {
+    setProcessingId(requestId);
+    setError(null);
     try {
       const response = await fetch(`${API_BASE}/v2/contacts/respond`, {
         method: 'POST',
@@ -124,19 +169,30 @@ const ContactManagement: React.FC<ContactManagementProps> = ({ onClose }) => {
         },
         body: JSON.stringify({ requestId, action: 'accept' })
       });
+
+      if (!response.ok) {
+        throw new Error(`Failed to accept request: ${response.statusText}`);
+      }
+
       const data = await response.json();
       if (data.success) {
         // Refresh lists
-        fetchPendingRequests();
-        fetchContacts();
+        await Promise.all([fetchPendingRequests(), fetchContacts()]);
+      } else {
+        throw new Error(data.message || 'Failed to accept request');
       }
     } catch (err: any) {
-      setError(err.message);
+      console.error('Error accepting request:', err);
+      setError(err.message || 'Failed to accept request');
+    } finally {
+      setProcessingId(null);
     }
   };
 
   // Deny contact request
   const handleDeny = async (requestId: string) => {
+    setProcessingId(requestId);
+    setError(null);
     try {
       const response = await fetch(`${API_BASE}/v2/contacts/respond`, {
         method: 'POST',
@@ -147,12 +203,33 @@ const ContactManagement: React.FC<ContactManagementProps> = ({ onClose }) => {
         },
         body: JSON.stringify({ requestId, action: 'deny' })
       });
+
+      if (!response.ok) {
+        throw new Error(`Failed to deny request: ${response.statusText}`);
+      }
+
       const data = await response.json();
       if (data.success) {
-        fetchPendingRequests();
+        await fetchPendingRequests();
+      } else {
+        throw new Error(data.message || 'Failed to deny request');
       }
     } catch (err: any) {
-      setError(err.message);
+      console.error('Error denying request:', err);
+      setError(err.message || 'Failed to deny request');
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  // Refresh current tab
+  const handleRefresh = () => {
+    if (activeTab === 'contacts') {
+      fetchContacts();
+    } else if (activeTab === 'pending') {
+      fetchPendingRequests();
+    } else if (activeTab === 'sent') {
+      fetchSentRequests();
     }
   };
 
@@ -165,7 +242,17 @@ const ContactManagement: React.FC<ContactManagementProps> = ({ onClose }) => {
     } else if (activeTab === 'sent') {
       fetchSentRequests();
     }
-  }, [activeTab]);
+  }, [activeTab, fetchContacts, fetchPendingRequests, fetchSentRequests]);
+
+  // Format date
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -173,12 +260,25 @@ const ContactManagement: React.FC<ContactManagementProps> = ({ onClose }) => {
         {/* Header */}
         <div className="modal-header">
           <div>
-            <h2><Users size={24} /> Contacts</h2>
-            <p className="subtitle">Manage your forwarding contacts</p>
+            <h2>
+              <PeopleIcon width={24} height={24} style={{ marginRight: 8 }} />
+              Contact Management
+            </h2>
+            <p className="subtitle">Manage your order forwarding network</p>
           </div>
-          <button className="btn-close" onClick={onClose}>
-            <X size={20} />
-          </button>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              className="btn-close"
+              onClick={handleRefresh}
+              title="Refresh"
+              disabled={loading}
+            >
+              <RefreshIcon width={20} height={20} />
+            </button>
+            <button className="btn-close" onClick={onClose} title="Close">
+              <CloseIcon width={20} height={20} />
+            </button>
+          </div>
         </div>
 
         {/* Tabs */}
@@ -187,22 +287,25 @@ const ContactManagement: React.FC<ContactManagementProps> = ({ onClose }) => {
             className={`tab ${activeTab === 'contacts' ? 'active' : ''}`}
             onClick={() => setActiveTab('contacts')}
           >
-            <Users size={18} />
-            Contacts ({contacts.length})
+            <PeopleIcon width={18} height={18} />
+            <span>Contacts</span>
+            {contacts.length > 0 && <span className="tab-count">({contacts.length})</span>}
           </button>
           <button
             className={`tab ${activeTab === 'pending' ? 'active' : ''}`}
             onClick={() => setActiveTab('pending')}
           >
-            <Clock size={18} />
-            Pending ({pendingRequests.length})
+            <AccessTimeIcon width={18} height={18} />
+            <span>Pending</span>
+            {pendingRequests.length > 0 && <span className="tab-count">({pendingRequests.length})</span>}
           </button>
           <button
             className={`tab ${activeTab === 'sent' ? 'active' : ''}`}
             onClick={() => setActiveTab('sent')}
           >
-            <Send size={18} />
-            Sent ({sentRequests.length})
+            <SendIcon width={18} height={18} />
+            <span>Sent</span>
+            {sentRequests.length > 0 && <span className="tab-count">({sentRequests.length})</span>}
           </button>
         </div>
 
@@ -210,12 +313,16 @@ const ContactManagement: React.FC<ContactManagementProps> = ({ onClose }) => {
         <div className="modal-body">
           {error && (
             <div className="error-alert">
+              <ErrorOutlineIcon width={20} height={20} />
               <span>{error}</span>
             </div>
           )}
 
           {loading ? (
-            <div className="loading">Loading...</div>
+            <div className="loading">
+              <div className="spinner"></div>
+              <p>Loading {activeTab}...</p>
+            </div>
           ) : (
             <>
               {/* Contacts Tab */}
@@ -223,7 +330,7 @@ const ContactManagement: React.FC<ContactManagementProps> = ({ onClose }) => {
                 <div className="contacts-list">
                   {contacts.length === 0 ? (
                     <div className="empty-state">
-                      <UserPlus size={48} />
+                      <PersonAddIcon width={64} height={64} />
                       <p>No contacts yet</p>
                       <small>Send contact requests to start forwarding orders</small>
                     </div>
@@ -237,6 +344,9 @@ const ContactManagement: React.FC<ContactManagementProps> = ({ onClose }) => {
                           <div className="contact-name">{contact.userName}</div>
                           <div className="contact-role">{contact.userRole}</div>
                           <div className="contact-email">{contact.userEmail}</div>
+                          <div className="contact-meta">
+                            Connected on {formatDate(contact.connectedAt)}
+                          </div>
                         </div>
                         <div className="contact-badge connected">Connected</div>
                       </div>
@@ -250,8 +360,9 @@ const ContactManagement: React.FC<ContactManagementProps> = ({ onClose }) => {
                 <div className="requests-list">
                   {pendingRequests.length === 0 ? (
                     <div className="empty-state">
-                      <Clock size={48} />
+                      <AccessTimeIcon width={64} height={64} />
                       <p>No pending requests</p>
+                      <small>You're all caught up!</small>
                     </div>
                   ) : (
                     pendingRequests.map(request => (
@@ -264,21 +375,28 @@ const ContactManagement: React.FC<ContactManagementProps> = ({ onClose }) => {
                           <div className="contact-role">{request.fromUserRole}</div>
                           <div className="contact-email">{request.fromUserEmail}</div>
                           {request.message && (
-                            <div className="request-message">{request.message}</div>
+                            <div className="request-message">"{request.message}"</div>
                           )}
+                          <div className="contact-meta">
+                            Requested {formatDate(request.requestedAt)}
+                          </div>
                         </div>
                         <div className="request-actions">
                           <button
-                            className="btn btn-accept"
+                            className="btn-accept"
                             onClick={() => handleAccept(request._id)}
+                            disabled={processingId === request._id}
                           >
-                            <Check size={16} /> Accept
+                            <CheckIcon width={16} height={16} />
+                            {processingId === request._id ? 'Processing...' : 'Accept'}
                           </button>
                           <button
-                            className="btn btn-deny"
+                            className="btn-deny"
                             onClick={() => handleDeny(request._id)}
+                            disabled={processingId === request._id}
                           >
-                            <X size={16} /> Deny
+                            <CloseIcon width={16} height={16} />
+                            {processingId === request._id ? 'Processing...' : 'Deny'}
                           </button>
                         </div>
                       </div>
@@ -292,18 +410,27 @@ const ContactManagement: React.FC<ContactManagementProps> = ({ onClose }) => {
                 <div className="requests-list">
                   {sentRequests.length === 0 ? (
                     <div className="empty-state">
-                      <Send size={48} />
+                      <SendIcon width={64} height={64} />
                       <p>No sent requests</p>
+                      <small>Start by sending a contact request</small>
                     </div>
                   ) : (
                     sentRequests.map(request => (
                       <div key={request._id} className="request-item">
                         <div className="contact-avatar">
-                          {request.toUserId ? 'U' : 'U'}
+                          {request.toUserId ? request.toUserId.charAt(0).toUpperCase() : 'U'}
                         </div>
                         <div className="request-info">
-                          <div className="contact-name">User</div>
-                          <div className="contact-role">Status: {request.status}</div>
+                          <div className="contact-name">
+                            {request.fromUserName || 'Contact Request'}
+                          </div>
+                          <div className="contact-role">To: {request.toUserId}</div>
+                          {request.message && (
+                            <div className="request-message">"{request.message}"</div>
+                          )}
+                          <div className="contact-meta">
+                            Sent {formatDate(request.requestedAt)}
+                          </div>
                         </div>
                         <div className={`contact-badge ${request.status}`}>
                           {request.status}

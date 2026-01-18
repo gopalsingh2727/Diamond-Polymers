@@ -2869,7 +2869,7 @@ function createWindow() {
     backgroundColor: "#f9fafb",
     // Match app background - faster first paint
     webPreferences: {
-      preload: path.join(__dirname$1, "preload.mjs"),
+      preload: path.join(__dirname$1, "preload.js"),
       webSecurity: true,
       allowRunningInsecureContent: false,
       contextIsolation: true,
@@ -2927,7 +2927,7 @@ require$$0$5.app.whenReady().then(() => {
     });
   });
   require$$0$5.session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
-    const allowedPermissions = ["media", "microphone", "audioCapture"];
+    const allowedPermissions = ["media", "microphone", "audioCapture", "notifications"];
     if (allowedPermissions.includes(permission)) {
       log.info(`Permission granted: ${permission}`);
       callback(true);
@@ -2937,7 +2937,7 @@ require$$0$5.app.whenReady().then(() => {
     }
   });
   require$$0$5.session.defaultSession.setPermissionCheckHandler((webContents, permission) => {
-    const allowedPermissions = ["media", "microphone", "audioCapture"];
+    const allowedPermissions = ["media", "microphone", "audioCapture", "notifications"];
     return allowedPermissions.includes(permission);
   });
   const win2 = createWindow();
@@ -3034,6 +3034,33 @@ require$$0$5.app.whenReady().then(() => {
   }, 1e4);
   require$$0$5.ipcMain.handle("check-update", async () => {
     return await checkForUpdatesViaGitHub();
+  });
+  require$$0$5.ipcMain.handle("show-notification", async (event, options) => {
+    try {
+      if (!require$$0$5.Notification.isSupported()) {
+        log.warn("Notifications not supported on this platform");
+        return { success: false, error: "Notifications not supported" };
+      }
+      const appIcon = path.join(process.env.VITE_PUBLIC, "icon.png");
+      const notification = new require$$0$5.Notification({
+        title: options.title,
+        body: options.body,
+        icon: appIcon,
+        silent: options.silent || false
+      });
+      notification.on("click", () => {
+        if (win2 && !win2.isDestroyed()) {
+          if (win2.isMinimized()) win2.restore();
+          win2.focus();
+        }
+      });
+      notification.show();
+      log.info(`Notification shown: ${options.title}`);
+      return { success: true };
+    } catch (error) {
+      log.error("Failed to show notification:", error.message);
+      return { success: false, error: error.message };
+    }
   });
   require$$0$5.ipcMain.handle("open-download-page", async () => {
     try {

@@ -1,74 +1,147 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { Users, Send, Package, RefreshCw, Clock, CheckCircle, XCircle, Ban, Plus, MessageCircle } from 'lucide-react';
 import { BackButton } from '../../../allCompones/BackButton';
-import ConnectionManagement from './components/ConnectionManagement';
-import MyOrdersModal from './components/MyOrdersModal';
-import PersonChat from './components/PersonChat';
 import {
   fetchForwardedOrdersFromPerson,
   fetchReceivedOrdersForPerson,
   acceptForwardedOrder,
-  denyForwardedOrder
+  denyForwardedOrder,
+  // Role-based imports
+  fetchMyOrders,
+  fetchTeamOrders,
+  fetchBranchOrders,
+  fetchAllBranchOrders,
+  fetchCompanyOrders,
+  fetchSharedOrders,
+  cancelOrder
 } from '../../../redux/orderforward/orderForwardActions';
 import { RootState, AppDispatch } from '../../../../store';
+import MessagesList from './components/MessagesList';
+import PersonChat from './components/PersonChat';
+import OrdersRoleSideMenu from './components/OrdersRoleSideMenu';
 import './OrdersForward.css';
 
+// Icons
+const SendIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+  </svg>
+);
+
+const InboxIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M19 3H4.99c-1.11 0-1.98.89-1.98 2L3 19c0 1.1.88 2 1.99 2H19c1.1 0 2-.9 2-2V5c0-1.11-.9-2-2-2zm0 12h-4c0 1.66-1.35 3-3 3s-3-1.34-3-3H4.99V5H19v10z"/>
+  </svg>
+);
+
+const AllIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/>
+  </svg>
+);
+
+const PendingIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+  </svg>
+);
+
+const CheckCircleIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+  </svg>
+);
+
+const CancelIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"/>
+  </svg>
+);
+
+const VisibilityIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+  </svg>
+);
+
+const MessageIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
+  </svg>
+);
+
+const PhoneIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
+  </svg>
+);
+
 interface OrdersForwardProps {
-  initialView?: 'connections' | 'forwarded' | 'pending' | 'accepted' | 'denied';
+  initialView?: 'all' | 'forwarded' | 'received' | 'pending';
 }
 
-// Helper function to safely extract note text
-const getNotesText = (notes: any): string | null => {
-  if (!notes) return null;
-
-  try {
-    // If notes is an array, get the first note
-    if (Array.isArray(notes) && notes.length > 0 && notes[0]?.note) {
-      const noteText = notes[0].note;
-      return typeof noteText === 'string' ? noteText : null;
-    }
-
-    // If notes is a single object with a note property
-    if (typeof notes === 'object' && !Array.isArray(notes) && notes.note) {
-      const noteText = notes.note;
-      return typeof noteText === 'string' ? noteText : null;
-    }
-  } catch (error) {
-    console.error('[getNotesText] Error extracting notes:', error, notes);
-  }
-
-  return null;
-};
-
-// Helper function to safely get a string value
-const safeString = (value: any, fallback: string = ''): string => {
-  if (value === null || value === undefined) return fallback;
-  if (typeof value === 'string') return value;
-  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
-  return fallback;
-};
+interface Contact {
+  _id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  userRole?: string;
+  connectedAt: string;
+}
 
 const OrdersForward: React.FC<OrdersForwardProps> = ({ initialView = 'pending' }) => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-  const [activeView, setActiveView] = useState<'connections' | 'forwarded' | 'pending' | 'accepted' | 'denied'>(initialView);
 
-  // Deny modal state
+  const [mainView, setMainView] = useState<'orders' | 'messages'>('orders');
+  const [activeTab, setActiveTab] = useState<'all' | 'forwarded' | 'received' | 'pending'>(initialView);
   const [denyModalOpen, setDenyModalOpen] = useState(false);
   const [denyingOrderId, setDenyingOrderId] = useState<string | null>(null);
   const [denyReason, setDenyReason] = useState('');
 
-  // Redux state for person-to-person forwarded orders
+  // Messages state
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [contactsLoading, setContactsLoading] = useState(false);
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+
+  // Keep track of active person for persistent calls (component stays mounted)
+  const [activePerson, setActivePerson] = useState<{ id: string; name: string; email: string } | null>(null);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [callPerson, setCallPerson] = useState<{ id: string; name: string; email: string } | null>(null);
+
+  // Role-based order management
+  const [roleView, setRoleView] = useState<string>('myOrders');
+  const [roleBasedOrders, setRoleBasedOrders] = useState<any[]>([]);
+  const [roleBasedLoading, setRoleBasedLoading] = useState(false);
+
+  // Cancel order state
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
+  const [cancelReason, setCancelReason] = useState('');
+
+  // Order counts for side menu
+  const [orderCounts, setOrderCounts] = useState({
+    myOrders: 0,
+    teamOrders: 0,
+    branchOrders: 0,
+    allBranchOrders: 0,
+    companyOrders: 0,
+    sharedOrders: 0
+  });
+
   const {
     forwardedOrders,
     forwardedOrdersLoading,
     receivedOrders,
     receivedOrdersLoading,
-    loading: actionLoading,
-    error: orderForwardError
+    loading: actionLoading
   } = useSelector((state: RootState) => state.orderForward);
+
+  // Get user info from Redux
+  const userData = useSelector((state: RootState) => state.auth?.userData);
+  const userRole = userData?.role || 'employee';
+  const canCancelOrders = ['manager', 'admin', 'master_admin'].includes(userRole);
 
   // Filter received orders by status
   const pendingOrders = Array.isArray(receivedOrders)
@@ -81,78 +154,202 @@ const OrdersForward: React.FC<OrdersForwardProps> = ({ initialView = 'pending' }
     ? receivedOrders.filter((order: any) => order.forwardingStatus === 'denied')
     : [];
 
-  // Loading states
-  const pendingOrdersLoading = receivedOrdersLoading;
-  const acceptedOrdersLoading = receivedOrdersLoading;
-  const deniedOrdersLoading = receivedOrdersLoading;
+  const allOrders = [...pendingOrders, ...acceptedOrders, ...(forwardedOrders || [])];
 
-  // MyOrdersModal state
-  const [myOrdersModalOpen, setMyOrdersModalOpen] = useState(false);
-  const [selectedContact, setSelectedContact] = useState<{
-    id: string;
-    name: string;
-    forwardedCount: number;
-    receivedCount: number;
-  } | null>(null);
+  // Fetch contacts for messages
+  const fetchContacts = async () => {
+    setContactsLoading(true);
+    try {
+      const token = localStorage.getItem('authToken') || '';
+      const branchId = localStorage.getItem('selectedBranchId') || '';
+      const baseUrl = import.meta.env.VITE_API_27INFINITY_IN || 'http://localhost:4000/dev';
 
-  // PersonChat state
-  const [chatOpen, setChatOpen] = useState(false);
-  const [chatPerson, setChatPerson] = useState<{
-    id: string;
-    name: string;
-    email?: string;
-  } | null>(null);
-
-  // Debug: Log chat state changes
-  useEffect(() => {
-    console.log('[OrdersForward] Chat State:', { chatOpen, chatPerson });
-  }, [chatOpen, chatPerson]);
-
-  // Debug: Log Redux state changes
-  useEffect(() => {
-    console.log('[OrdersForward] Redux State Updated:');
-    console.log('  - forwardedOrders:', forwardedOrders?.length || 0, forwardedOrders);
-    console.log('  - receivedOrders:', receivedOrders?.length || 0);
-    console.log('  - pendingOrders:', pendingOrders?.length || 0);
-    console.log('  - acceptedOrders:', acceptedOrders?.length || 0);
-    console.log('  - deniedOrders:', deniedOrders?.length || 0);
-    console.log('  - forwardedOrdersLoading:', forwardedOrdersLoading);
-    console.log('  - error:', orderForwardError);
-  }, [forwardedOrders, receivedOrders, pendingOrders, acceptedOrders, deniedOrders, forwardedOrdersLoading, orderForwardError]);
-
-  // Use Redux actions for person-to-person forwarding
-  useEffect(() => {
-    console.log('[OrdersForward] Active view changed to:', activeView);
-    if (activeView === 'forwarded') {
-      console.log('[OrdersForward] Fetching forwarded orders...');
-      dispatch(fetchForwardedOrdersFromPerson()).then((result: any) => {
-        console.log('[OrdersForward] Forwarded orders result:', result);
-        console.log('[OrdersForward] Orders received:', result?.data?.orders?.length || 0);
-        if (result?.data?.orders) {
-          console.log('[OrdersForward] Sample order:', result.data.orders[0]);
+      const response = await fetch(`${baseUrl}/v2/contacts`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'x-selected-branch': branchId
         }
-      }).catch((error: any) => {
-        console.error('[OrdersForward] Error fetching forwarded orders:', error);
-        console.error('[OrdersForward] Error details:', error.response?.data);
       });
-    } else if (activeView === 'pending' || activeView === 'accepted' || activeView === 'denied') {
-      // Fetch all received orders and filter by status in the component
-      dispatch(fetchReceivedOrdersForPerson());
+      const data = await response.json();
+      if (data.success) {
+        setContacts(data.data || []);
+      }
+    } catch (err) {
+      console.error('Error fetching contacts:', err);
+    } finally {
+      setContactsLoading(false);
     }
-  }, [activeView, dispatch]);
+  };
 
-  // Handle accept order
+  // Fetch orders based on selected role view
+  const fetchOrdersForView = async (view: string) => {
+    setRoleBasedLoading(true);
+    try {
+      let response;
+      switch (view) {
+        case 'myOrders':
+          response = await dispatch(fetchMyOrders());
+          break;
+        case 'teamOrders':
+          response = await dispatch(fetchTeamOrders());
+          break;
+        case 'branchOrders':
+          response = await dispatch(fetchBranchOrders());
+          break;
+        case 'allBranchOrders':
+          response = await dispatch(fetchAllBranchOrders());
+          break;
+        case 'companyOrders':
+          response = await dispatch(fetchCompanyOrders());
+          break;
+        case 'sharedOrders':
+          response = await dispatch(fetchSharedOrders());
+          break;
+        default:
+          response = await dispatch(fetchMyOrders());
+      }
+
+      if (response?.data) {
+        setRoleBasedOrders(response.data.orders || response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching orders for view:', view, error);
+      setRoleBasedOrders([]);
+    } finally {
+      setRoleBasedLoading(false);
+    }
+  };
+
+  // Fetch order counts for each view
+  const fetchOrderCounts = async () => {
+    try {
+      const counts = {
+        myOrders: 0,
+        teamOrders: 0,
+        branchOrders: 0,
+        allBranchOrders: 0,
+        companyOrders: 0,
+        sharedOrders: 0
+      };
+
+      // Fetch count for My Orders (all roles)
+      try {
+        const myOrdersRes = await dispatch(fetchMyOrders(1, 1));
+        counts.myOrders = myOrdersRes?.data?.pagination?.total || 0;
+      } catch (err) {
+        console.error('Error fetching my orders count:', err);
+      }
+
+      // Fetch counts based on role
+      if (['manager', 'admin', 'master_admin'].includes(userRole)) {
+        try {
+          const teamOrdersRes = await dispatch(fetchTeamOrders(1, 1));
+          counts.teamOrders = teamOrdersRes?.data?.pagination?.total || 0;
+        } catch (err) {
+          console.error('Error fetching team orders count:', err);
+        }
+
+        try {
+          const branchOrdersRes = await dispatch(fetchBranchOrders(1, 1));
+          counts.branchOrders = branchOrdersRes?.data?.pagination?.total || 0;
+        } catch (err) {
+          console.error('Error fetching branch orders count:', err);
+        }
+      }
+
+      if (['admin', 'master_admin'].includes(userRole)) {
+        try {
+          const allBranchOrdersRes = await dispatch(fetchAllBranchOrders(1, 1));
+          counts.allBranchOrders = allBranchOrdersRes?.data?.pagination?.total || 0;
+        } catch (err) {
+          console.error('Error fetching all branch orders count:', err);
+        }
+      }
+
+      if (userRole === 'master_admin') {
+        try {
+          const companyOrdersRes = await dispatch(fetchCompanyOrders(1, 1));
+          counts.companyOrders = companyOrdersRes?.data?.pagination?.total || 0;
+        } catch (err) {
+          console.error('Error fetching company orders count:', err);
+        }
+      }
+
+      // Fetch shared orders count (all roles)
+      try {
+        const sharedOrdersRes = await dispatch(fetchSharedOrders(1, 1));
+        counts.sharedOrders = sharedOrdersRes?.data?.pagination?.total || 0;
+      } catch (err) {
+        console.error('Error fetching shared orders count:', err);
+      }
+
+      setOrderCounts(counts);
+    } catch (error) {
+      console.error('Error fetching order counts:', error);
+    }
+  };
+
+  // Cancel order handler
+  const handleCancelOrder = async () => {
+    if (!cancellingOrderId || !cancelReason.trim()) {
+      alert('Please provide a cancellation reason');
+      return;
+    }
+
+    if (cancelReason.trim().length < 5) {
+      alert('Cancellation reason must be at least 5 characters');
+      return;
+    }
+
+    try {
+      await dispatch(cancelOrder(cancellingOrderId, cancelReason));
+      alert('Order cancelled successfully');
+
+      // Refresh current view
+      fetchOrdersForView(roleView);
+
+      // Close modal
+      setCancelModalOpen(false);
+      setCancellingOrderId(null);
+      setCancelReason('');
+    } catch (error: any) {
+      console.error('Failed to cancel order:', error);
+      alert(error.response?.data?.message || error.message || 'Failed to cancel order');
+    }
+  };
+
+  const openCancelModal = (orderId: string) => {
+    setCancellingOrderId(orderId);
+    setCancelModalOpen(true);
+  };
+
+  useEffect(() => {
+    dispatch(fetchReceivedOrdersForPerson());
+    dispatch(fetchForwardedOrdersFromPerson());
+    fetchContacts();
+  }, [dispatch]);
+
+  // Effect to fetch orders when role view changes
+  useEffect(() => {
+    if (mainView === 'orders') {
+      fetchOrdersForView(roleView);
+    }
+  }, [roleView, mainView]);
+
+  // Effect to fetch order counts on mount
+  useEffect(() => {
+    fetchOrderCounts();
+  }, [userRole]);
+
   const handleAcceptOrder = async (orderId: string) => {
     try {
       await dispatch(acceptForwardedOrder(orderId));
-      // Refresh received orders after accept
       dispatch(fetchReceivedOrdersForPerson());
     } catch (error) {
       console.error('Failed to accept order:', error);
     }
   };
 
-  // Handle deny order
   const handleDenyOrder = async () => {
     if (!denyingOrderId || !denyReason.trim()) return;
 
@@ -161,23 +358,18 @@ const OrdersForward: React.FC<OrdersForwardProps> = ({ initialView = 'pending' }
       setDenyModalOpen(false);
       setDenyingOrderId(null);
       setDenyReason('');
-      // Refresh received orders after deny
       dispatch(fetchReceivedOrdersForPerson());
     } catch (error) {
       console.error('Failed to deny order:', error);
     }
   };
 
-  // Open deny modal
   const openDenyModal = (orderId: string) => {
     setDenyingOrderId(orderId);
     setDenyModalOpen(true);
   };
 
-  // Handle clicking on an order to view order details
   const handleViewOrderDetails = async (orderId: string, isReceivedOrder: boolean = false) => {
-    console.log('[OrdersForward] Fetching order details for:', orderId, 'isReceivedOrder:', isReceivedOrder);
-
     try {
       const token = localStorage.getItem('authToken');
       const baseUrl = import.meta.env.VITE_API_27INFINITY_IN || 'http://localhost:4000/dev';
@@ -192,8 +384,6 @@ const OrdersForward: React.FC<OrdersForwardProps> = ({ initialView = 'pending' }
         const result = await response.json();
         const order = result.data || result;
 
-        console.log('[OrdersForward] Order fetched:', order);
-
         navigate('/menu/orderform', {
           state: {
             isEdit: true,
@@ -202,13 +392,12 @@ const OrdersForward: React.FC<OrdersForwardProps> = ({ initialView = 'pending' }
             editMode: true,
             mode: 'edit',
             orderId: order.orderId || order._id,
-            isReceivedForwardedOrder: isReceivedOrder, // Flag to hide customer details
-            hideCustomerDetails: isReceivedOrder // Additional flag for clarity
+            isReceivedForwardedOrder: isReceivedOrder,
+            hideCustomerDetails: isReceivedOrder
           }
         });
       } else {
-        console.error('Failed to fetch order:', response.status, response.statusText);
-        alert(`Failed to load order details: ${response.statusText}`);
+        alert(`Failed to load order details`);
       }
     } catch (error) {
       console.error('Error fetching order:', error);
@@ -216,462 +405,271 @@ const OrdersForward: React.FC<OrdersForwardProps> = ({ initialView = 'pending' }
     }
   };
 
-  // Handle clicking on contact to view all orders with that person
-  const handleContactClick = (contactId: string, contactName: string) => {
-    console.log('[OrdersForward] handleContactClick:', { contactId, contactName });
-
-    // Count orders with this contact (person-to-person)
-    const forwardedCount = Array.isArray(forwardedOrders)
-      ? forwardedOrders.filter(order => order.forwardedToPerson === contactId).length
-      : 0;
-    // Count from pending + accepted orders (received orders)
-    const pendingFromContact = Array.isArray(pendingOrders)
-      ? pendingOrders.filter(order => order.receivedFromPerson === contactId).length
-      : 0;
-    const acceptedFromContact = Array.isArray(acceptedOrders)
-      ? acceptedOrders.filter(order => order.receivedFromPerson === contactId).length
-      : 0;
-    const receivedCount = pendingFromContact + acceptedFromContact;
-
-    console.log('[OrdersForward] Counts:', { forwardedCount, receivedCount });
-
-    setSelectedContact({
-      id: contactId,
-      name: contactName,
-      forwardedCount,
-      receivedCount
-    });
-    setMyOrdersModalOpen(true);
+  const getCurrentOrders = () => {
+    switch (activeTab) {
+      case 'forwarded':
+        return forwardedOrders || [];
+      case 'received':
+        return [...acceptedOrders, ...deniedOrders];
+      case 'pending':
+        return pendingOrders;
+      case 'all':
+      default:
+        return allOrders;
+    }
   };
 
-  // Handle opening chat with a person
-  const handleOpenChat = (personId: string, personName: string, personEmail?: string) => {
-    console.log('[OrdersForward] Opening chat with:', { personId, personName, personEmail });
-    setChatPerson({
-      id: personId,
-      name: personName,
-      email: personEmail
-    });
-    setChatOpen(true);
+  const safeString = (value: any, fallback: string = ''): string => {
+    if (value === null || value === undefined) return fallback;
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+    return fallback;
   };
+
+  const currentOrders = getCurrentOrders();
+  const isLoading = receivedOrdersLoading || forwardedOrdersLoading;
 
   return (
-    <div className="orders-forward-container">
-      {/* Header */}
-      <div className="orders-forward-header">
-        <div className="header-left">
-          <BackButton />
-          <h1>Order Forward</h1>
-        </div>
-        <div className="header-actions">
-          <button
-            className="btn-create-connection"
-            onClick={() => setActiveView('connections')}
-            title="Add new connection"
-          >
-            <Plus size={20} />
-            <span>New Connection</span>
-          </button>
-        </div>
-      </div>
+    <div className="orders-forward-page-wrapper">
+      {/* Role-Based Side Menu - Only show in orders view */}
+      {/* {mainView === 'orders' && (
+        <OrdersRoleSideMenu
+          activeView={roleView}
+          onViewChange={(view) => {
+            setRoleView(view);
+            fetchOrdersForView(view);
+          }}
+          orderCounts={orderCounts}
+        />
+      )} */}
 
-      {/* Navigation Tabs - Only Forward Related Orders */}
-      <div className="orders-forward-tabs">
+      {/* Side Menu */}
+      <div className="orders-side-menu">
         <button
-          className={`tab-btn ${activeView === 'pending' ? 'active' : ''}`}
-          onClick={() => setActiveView('pending')}
+          className={`side-menu-btn ${mainView === 'orders' ? 'active' : ''}`}
+          onClick={() => setMainView('orders')}
         >
-          <Clock size={20} />
-          <span>New Received ({Array.isArray(pendingOrders) ? pendingOrders.length : 0})</span>
+          <InboxIcon />
+          <span>Orders</span>
         </button>
         <button
-          className={`tab-btn ${activeView === 'accepted' ? 'active' : ''}`}
-          onClick={() => setActiveView('accepted')}
+          className={`side-menu-btn ${mainView === 'messages' ? 'active' : ''}`}
+          onClick={() => setMainView('messages')}
         >
-          <CheckCircle size={20} />
-          <span>Accepted ({Array.isArray(acceptedOrders) ? acceptedOrders.length : 0})</span>
-        </button>
-        <button
-          className={`tab-btn ${activeView === 'denied' ? 'active' : ''}`}
-          onClick={() => setActiveView('denied')}
-        >
-          <Ban size={20} />
-          <span>Denied ({Array.isArray(deniedOrders) ? deniedOrders.length : 0})</span>
-        </button>
-        <button
-          className={`tab-btn ${activeView === 'forwarded' ? 'active' : ''}`}
-          onClick={() => setActiveView('forwarded')}
-        >
-          <Send size={20} />
-          <span>Forwarded ({Array.isArray(forwardedOrders) ? forwardedOrders.length : 0})</span>
-        </button>
-        <button
-          className={`tab-btn ${activeView === 'connections' ? 'active' : ''}`}
-          onClick={() => setActiveView('connections')}
-        >
-          <Users size={20} />
-          <span>Connections</span>
+          <MessageIcon />
+          <span>Messages</span>
         </button>
       </div>
 
-      {/* Content Area */}
-      <div className="orders-forward-content">
-        {/* Connections Tab */}
-        {activeView === 'connections' && (
-          <ConnectionManagement
-            onClose={() => {}}
-            onOpenChat={handleOpenChat}
-          />
-        )}
+      {/* Main Area */}
+      <div className="orders-forward-page">
+        {/* Header */}
+        <div className="orders-forward-header">
+          <div className="header-left">
+            <BackButton />
+            <h1 className="page-title">{mainView === 'orders' ? 'Orders' : 'Messages'}</h1>
+          </div>
+          <div className="header-subtitle">
+            {mainView === 'orders' ? 'Manage and track all orders' : 'Messages and conversations'}
+          </div>
+        </div>
 
-        {/* Pending Orders Tab - Orders awaiting acceptance */}
-        {activeView === 'pending' && (
-          <div className="orders-view">
-            {pendingOrdersLoading ? (
-              <div className="loading-state">
-                <RefreshCw size={48} className="spin" />
-                <p>Loading pending orders...</p>
+        {/* Main Content */}
+        {mainView === 'messages' ? (
+          <div className="messages-view-wrapper">
+            <MessagesList
+              contacts={contacts}
+              onSelectContact={setSelectedContact}
+              selectedContactId={selectedContact?.userId}
+              loading={contactsLoading}
+            />
+            {selectedContact && (
+              <PersonChat
+                isOpen={true}
+                onClose={() => setSelectedContact(null)}
+                personId={selectedContact.userId}
+                personName={selectedContact.userName}
+                personEmail={selectedContact.userEmail}
+                embedded={true}
+              />
+            )}
+          </div>
+        ) : (
+          <div className="orders-forward-content">
+            {/* Section Header */}
+            <div className="section-header">
+              <h2 className="section-title">Orders</h2>
+              <p className="section-subtitle">View orders you created and orders sent to you</p>
+            </div>
+
+            {/* Tabs */}
+            <div className="orders-tabs">
+              <button
+                className={`orders-tab ${activeTab === 'pending' ? 'active' : ''}`}
+                onClick={() => setActiveTab('pending')}
+              >
+                <PendingIcon />
+                <span>Pending Orders ({pendingOrders.length})</span>
+              </button>
+              <button
+                className={`orders-tab ${activeTab === 'received' ? 'active' : ''}`}
+                onClick={() => setActiveTab('received')}
+              >
+                <InboxIcon />
+                <span>Received Orders ({acceptedOrders.length + deniedOrders.length})</span>
+              </button>
+              <button
+                className={`orders-tab ${activeTab === 'all' ? 'active' : ''}`}
+                onClick={() => setActiveTab('all')}
+              >
+                <AllIcon />
+                <span>All Orders ({allOrders.length})</span>
+              </button>
+              <button
+                className={`orders-tab ${activeTab === 'forwarded' ? 'active' : ''}`}
+                onClick={() => setActiveTab('forwarded')}
+              >
+                <SendIcon />
+                <span>Forwarded Orders ({(forwardedOrders || []).length})</span>
+              </button>
+            </div>
+
+            {/* Orders Section */}
+            <div className="orders-section">
+              <div className="orders-section-header">
+                <h3 className="orders-section-title">
+                  {activeTab === 'pending' && 'Pending Orders'}
+                  {activeTab === 'received' && 'Received Orders'}
+                  {activeTab === 'forwarded' && 'Orders you created and sent to other users'}
+                  {activeTab === 'all' && 'All Orders'}
+                </h3>
               </div>
-            ) : orderForwardError ? (
-              <div className="error-state">
-                <p>{orderForwardError}</p>
-                <button onClick={() => dispatch(fetchReceivedOrdersForPerson())} className="btn-retry">
-                  Retry
-                </button>
-              </div>
-            ) : !Array.isArray(pendingOrders) || pendingOrders.length === 0 ? (
-              <div className="empty-state">
-                <Clock size={64} />
-                <h2>No Pending Orders</h2>
-                <p>Orders awaiting your acceptance will appear here</p>
-              </div>
-            ) : (
-              <div className="orders-table-container">
-                <div className="orders-table">
-                  <table>
+
+              {/* Orders Table */}
+              {isLoading ? (
+                <div className="loading-state">
+                  <div className="spinner"></div>
+                  <p>Loading orders...</p>
+                </div>
+              ) : currentOrders.length === 0 ? (
+                <div className="empty-state">
+                  <div className="empty-icon">📦</div>
+                  <p>No orders found</p>
+                </div>
+              ) : (
+                <div className="orders-table-wrapper">
+                  <table className="orders-table">
                     <thead>
                       <tr>
-                        <th>Order #</th>
-                        <th>From</th>
+                        <th>Order ID</th>
+                        <th>{activeTab === 'forwarded' ? 'Sent To' : 'From'}</th>
                         <th>Customer</th>
-                        <th>Received Date</th>
-                        <th>Notes</th>
+                        <th>Items</th>
+                        <th>Order Date</th>
+                        <th>Last Updated</th>
                         <th>Status</th>
                         <th>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {pendingOrders.map(order => (
-                        <tr key={order._id}>
-                          <td className="table-order-number">{safeString(order.orderNumber)}</td>
-                          <td className="table-person">{safeString(order.receivedFromName, 'Unknown')}</td>
-                          <td>{safeString(order.customerInfo?.name, '-')}</td>
-                          <td className="table-date">{order.receivedAt ? new Date(order.receivedAt).toLocaleDateString() : 'N/A'}</td>
-                          <td className="table-notes">{getNotesText(order.notes) || '-'}</td>
-                          <td>
-                            <span className="status-badge pending">Pending</span>
-                          </td>
-                          <td>
-                            <div className="table-actions">
-                              <button
-                                className="btn-view btn-table-action"
-                                onClick={() => handleViewOrderDetails(order.originalOrderId || order._id, true)}
-                                title="View Details"
-                              >
-                                <Package size={14} />
-                                View
-                              </button>
-                              <button
-                                className="btn-accept btn-table-action"
-                                onClick={() => handleAcceptOrder(order._id)}
-                                disabled={actionLoading}
-                                title="Accept Order"
-                              >
-                                <CheckCircle size={14} />
-                                Accept
-                              </button>
-                              <button
-                                className="btn-deny btn-table-action"
-                                onClick={() => openDenyModal(order._id)}
-                                disabled={actionLoading}
-                                title="Deny Order"
-                              >
-                                <XCircle size={14} />
-                                Deny
-                              </button>
-                              <button
-                                className="btn-chat btn-table-action"
-                                onClick={() => handleOpenChat(order.receivedFromPerson || '', order.receivedFromName || 'Unknown')}
-                                title="Chat with sender"
-                              >
-                                <MessageCircle size={14} />
-                                Chat
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Accepted Orders Tab - Orders I've accepted */}
-        {activeView === 'accepted' && (
-          <div className="orders-view">
-            {acceptedOrdersLoading ? (
-              <div className="loading-state">
-                <RefreshCw size={48} className="spin" />
-                <p>Loading accepted orders...</p>
-              </div>
-            ) : orderForwardError ? (
-              <div className="error-state">
-                <p>{orderForwardError}</p>
-                <button onClick={() => dispatch(fetchReceivedOrdersForPerson())} className="btn-retry">
-                  Retry
-                </button>
-              </div>
-            ) : !Array.isArray(acceptedOrders) || acceptedOrders.length === 0 ? (
-              <div className="empty-state">
-                <CheckCircle size={64} />
-                <h2>No Accepted Orders</h2>
-                <p>Orders you've accepted will appear here</p>
-              </div>
-            ) : (
-              <div className="orders-table-container">
-                <div className="orders-table">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Order #</th>
-                        <th>From</th>
-                        <th>Customer</th>
-                        <th>Order Status</th>
-                        <th>Accepted Date</th>
-                        <th>Chain Steps</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {acceptedOrders.map(order => (
-                        <tr key={order._id} onClick={() => handleViewOrderDetails(order.originalOrderId || order._id, true)} style={{ cursor: 'pointer' }}>
-                          <td className="table-order-number">{safeString(order.orderNumber)}</td>
-                          <td className="table-person">{safeString(order.receivedFromName || order.originalBranchName, 'Unknown')}</td>
-                          <td>{safeString(order.customerInfo?.name, '-')}</td>
-                          <td>{safeString(order.overallStatus, 'N/A')}</td>
-                          <td className="table-date">{order.acceptedAt ? new Date(order.acceptedAt).toLocaleDateString() : 'N/A'}</td>
-                          <td>{order.forwardingChain && Array.isArray(order.forwardingChain) ? order.forwardingChain.length : 0}</td>
-                          <td>
-                            <span className="status-badge accepted">Accepted</span>
-                          </td>
-                          <td>
-                            <div className="table-actions">
-                              <button
-                                className="btn-view btn-table-action"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleViewOrderDetails(order.originalOrderId || order._id, true);
-                                }}
-                                title="View Details"
-                              >
-                                <Package size={14} />
-                                View
-                              </button>
-                              <button
-                                className="btn-chat btn-table-action"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleOpenChat(order.receivedFromPerson || '', order.receivedFromName || 'Unknown');
-                                }}
-                                title="Chat with sender"
-                              >
-                                <MessageCircle size={14} />
-                                Chat
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Denied Orders Tab - Orders I've denied */}
-        {activeView === 'denied' && (
-          <div className="orders-view">
-            {deniedOrdersLoading ? (
-              <div className="loading-state">
-                <RefreshCw size={48} className="spin" />
-                <p>Loading denied orders...</p>
-              </div>
-            ) : orderForwardError ? (
-              <div className="error-state">
-                <p>{orderForwardError}</p>
-                <button onClick={() => dispatch(fetchReceivedOrdersForPerson())} className="btn-retry">
-                  Retry
-                </button>
-              </div>
-            ) : !Array.isArray(deniedOrders) || deniedOrders.length === 0 ? (
-              <div className="empty-state">
-                <Ban size={64} />
-                <h2>No Denied Orders</h2>
-                <p>Orders you've denied will appear here</p>
-              </div>
-            ) : (
-              <div className="orders-table-container">
-                <div className="orders-table">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Order #</th>
-                        <th>From</th>
-                        <th>Customer</th>
-                        <th>Denied Date</th>
-                        <th>Denial Reason</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {deniedOrders.map(order => (
-                        <tr key={order._id}>
-                          <td className="table-order-number">{safeString(order.orderNumber)}</td>
-                          <td className="table-person">{safeString(order.receivedFromName || order.originalBranchName, 'Unknown')}</td>
-                          <td>{safeString(order.customerInfo?.name, '-')}</td>
-                          <td className="table-date">{order.deniedAt ? new Date(order.deniedAt).toLocaleDateString() : 'N/A'}</td>
-                          <td className="table-denial-reason">{safeString(order.responseNote || order.denialReason, '-')}</td>
-                          <td>
-                            <span className="status-badge denied">Denied</span>
-                          </td>
-                          <td>
-                            <div className="table-actions">
-                              <button
-                                className="btn-view btn-table-action"
-                                onClick={() => handleViewOrderDetails(order.originalOrderId || order._id, true)}
-                                title="View Details"
-                              >
-                                <Package size={14} />
-                                View
-                              </button>
-                              <button
-                                className="btn-chat btn-table-action"
-                                onClick={() => handleOpenChat(order.receivedFromPerson || '', order.receivedFromName || 'Unknown')}
-                                title="Chat with sender"
-                              >
-                                <MessageCircle size={14} />
-                                Chat
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Forwarded Orders Tab */}
-        {activeView === 'forwarded' && (
-          <div className="orders-view">
-            {forwardedOrdersLoading ? (
-              <div className="loading-state">
-                <RefreshCw size={48} className="spin" />
-                <p>Loading forwarded orders...</p>
-              </div>
-            ) : orderForwardError ? (
-              <div className="error-state">
-                <p>{orderForwardError}</p>
-                <button onClick={() => dispatch(fetchForwardedOrdersFromPerson())} className="btn-retry">
-                  Retry
-                </button>
-              </div>
-            ) : !Array.isArray(forwardedOrders) || forwardedOrders.length === 0 ? (
-              <div className="empty-state">
-                <Send size={64} />
-                <h2>No Forwarded Orders</h2>
-                <p>Orders you forward to others will appear here</p>
-              </div>
-            ) : (
-              <div className="orders-table-container">
-                <div className="orders-table">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Order #</th>
-                        <th>Forwarded To</th>
-                        <th>Customer</th>
-                        <th>Forwarded Date</th>
-                        <th>Recipient Status</th>
-                        <th>Notes</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {forwardedOrders.map(order => {
-                        // Get the latest chain status for this forwarded order
-                        const lastChainItem = order.forwardingChain && order.forwardingChain.length > 0
-                          ? order.forwardingChain[order.forwardingChain.length - 1]
-                          : null;
-                        const recipientStatus = lastChainItem?.status || order.forwardingStatus || 'pending';
-
-                        // Support both person-to-person and branch-to-branch forwarding
-                        const forwardedToPersonId = order.forwardedToPerson || order.forwardedTo;
-                        const forwardedToPersonName = order.forwardedToPersonName || order.forwardedToName || 'Unknown';
+                      {currentOrders.map((order: any) => {
+                        const isForwarded = activeTab === 'forwarded' || order.forwardedToPerson;
+                        const personName = isForwarded
+                          ? (order.forwardedToPersonName || order.forwardedToName || 'Unknown')
+                          : (order.receivedFromName || 'Unknown');
+                        const status = order.forwardingStatus || 'pending';
 
                         return (
                           <tr key={order._id}>
-                            <td className="table-order-number">{safeString(order.orderNumber)}</td>
-                            <td className="table-person">{safeString(forwardedToPersonName, 'Unknown')}</td>
+                            <td className="order-number">{safeString(order.orderNumber || order.orderId, '-')}</td>
+                            <td>{personName}</td>
                             <td>{safeString(order.customerInfo?.name, '-')}</td>
-                            <td className="table-date">{order.forwardedAt ? new Date(order.forwardedAt).toLocaleDateString() : 'N/A'}</td>
                             <td>
-                              <span className={`status-badge ${recipientStatus}`}>
-                                {recipientStatus === 'accepted' ? 'Accepted' : recipientStatus === 'denied' ? 'Denied' : 'Pending'}
-                              </span>
-                              {recipientStatus === 'accepted' && lastChainItem?.acceptedAt && (
-                                <div className="table-sub-info">
-                                  {new Date(lastChainItem.acceptedAt).toLocaleDateString()}
-                                </div>
-                              )}
-                              {recipientStatus === 'denied' && lastChainItem?.deniedAt && (
-                                <div className="table-sub-info">
-                                  {new Date(lastChainItem.deniedAt).toLocaleDateString()}
-                                </div>
-                              )}
+                              {Array.isArray(order.options) ? order.options.length : 0} Items
+                              <div className="item-details">
+                                {order.options?.[0]?.optionTypeName || 'Wireless Headphones'}
+                              </div>
                             </td>
-                            <td className="table-notes">
-                              {recipientStatus === 'denied' && lastChainItem?.denialReason
-                                ? safeString(lastChainItem.denialReason)
-                                : getNotesText(order.notes) || '-'}
+                            <td>
+                              {order.forwardedAt
+                                ? new Date(order.forwardedAt).toLocaleDateString()
+                                : order.createdAt
+                                  ? new Date(order.createdAt).toLocaleDateString()
+                                  : '-'}
+                            </td>
+                            <td>
+                              {order.updatedAt
+                                ? new Date(order.updatedAt).toLocaleDateString()
+                                : '-'}
+                            </td>
+                            <td>
+                              <span className={`status-badge ${status}`}>
+                                {status === 'pending' ? 'processing' : status}
+                              </span>
                             </td>
                             <td>
                               <div className="table-actions">
                                 <button
-                                  className="btn-view btn-table-action"
-                                  onClick={() => forwardedToPersonId && forwardedToPersonName && handleContactClick(forwardedToPersonId, forwardedToPersonName)}
-                                  title="View All Orders with this Contact"
+                                  className="action-btn view-btn"
+                                  onClick={() => handleViewOrderDetails(order.originalOrderId || order._id, !isForwarded)}
+                                  title="View Order"
                                 >
-                                  <Package size={14} />
-                                  View All
+                                  <VisibilityIcon />
+                                </button>
+                                {status === 'pending' && !isForwarded && (
+                                  <>
+                                    <button
+                                      className="action-btn accept-btn"
+                                      onClick={() => handleAcceptOrder(order._id)}
+                                      disabled={actionLoading}
+                                      title="Accept"
+                                    >
+                                      <CheckCircleIcon />
+                                    </button>
+                                    <button
+                                      className="action-btn deny-btn"
+                                      onClick={() => openDenyModal(order._id)}
+                                      disabled={actionLoading}
+                                      title="Deny"
+                                    >
+                                      <CancelIcon />
+                                    </button>
+                                  </>
+                                )}
+                                <button
+                                  className="action-btn message-btn"
+                                  onClick={() => {
+                                    const personId = isForwarded
+                                      ? (order.forwardedToPerson || order.forwardedTo)
+                                      : order.receivedFromPerson;
+                                    const personEmail = isForwarded
+                                      ? (order.forwardedToPersonEmail || order.forwardedToEmail || '')
+                                      : (order.receivedFromEmail || '');
+                                    setActivePerson({ id: personId, name: personName, email: personEmail });
+                                    setIsChatOpen(true);
+                                    setCallPerson(null); // Clear call flag
+                                  }}
+                                  title={`Message ${personName}`}
+                                >
+                                  <MessageIcon />
                                 </button>
                                 <button
-                                  className="btn-chat btn-table-action"
-                                  onClick={() => forwardedToPersonId && forwardedToPersonName && handleOpenChat(forwardedToPersonId, forwardedToPersonName)}
-                                  title="Chat with recipient"
+                                  className="action-btn call-btn"
+                                  onClick={() => {
+                                    const personId = isForwarded
+                                      ? (order.forwardedToPerson || order.forwardedTo)
+                                      : order.receivedFromPerson;
+                                    const personEmail = isForwarded
+                                      ? (order.forwardedToPersonEmail || order.forwardedToEmail || '')
+                                      : (order.receivedFromEmail || '');
+                                    const person = { id: personId, name: personName, email: personEmail };
+                                    setActivePerson(person);
+                                    setCallPerson(person); // Mark as call (for autoStartCall)
+                                    setIsChatOpen(true);
+                                  }}
+                                  title={`Call ${personName}`}
                                 >
-                                  <MessageCircle size={14} />
-                                  Chat
+                                  <PhoneIcon />
                                 </button>
                               </div>
                             </td>
@@ -681,82 +679,62 @@ const OrdersForward: React.FC<OrdersForwardProps> = ({ initialView = 'pending' }
                     </tbody>
                   </table>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         )}
 
-      </div>
-
-      {/* My Orders Modal */}
-      {selectedContact && (
-        <MyOrdersModal
-          isOpen={myOrdersModalOpen}
-          onClose={() => {
-            setMyOrdersModalOpen(false);
-            setSelectedContact(null);
-          }}
-          contactName={selectedContact.name}
-          contactId={selectedContact.id}
-          forwardedCount={selectedContact.forwardedCount}
-          receivedCount={selectedContact.receivedCount}
-        />
-      )}
-
-      {/* Person Chat */}
-      {chatPerson && (
-        <PersonChat
-          isOpen={chatOpen}
-          onClose={() => {
-            setChatOpen(false);
-            setChatPerson(null);
-          }}
-          personId={chatPerson.id}
-          personName={chatPerson.name}
-          personEmail={chatPerson.email}
-        />
-      )}
-
-      {/* Deny Order Modal */}
-      {denyModalOpen && (
-        <div className="modal-overlay" onClick={() => setDenyModalOpen(false)}>
-          <div className="modal-content deny-modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Deny Order</h2>
-              <button className="close-btn" onClick={() => setDenyModalOpen(false)}>×</button>
-            </div>
-            <div className="modal-body">
-              <p>Please provide a reason for denying this order:</p>
+        {/* Deny Modal */}
+        {denyModalOpen && (
+          <div className="modal-overlay" onClick={() => setDenyModalOpen(false)}>
+            <div className="modal-content" onClick={e => e.stopPropagation()}>
+              <h3 className="modal-title">Deny Order</h3>
+              <p className="modal-description">
+                Please provide a reason for denying this order:
+              </p>
               <textarea
+                className="modal-textarea"
                 value={denyReason}
                 onChange={(e) => setDenyReason(e.target.value)}
                 placeholder="Enter reason for denial..."
                 rows={4}
-                className="deny-reason-input"
               />
-            </div>
-            <div className="modal-footer">
-              <button
-                className="btn-cancel"
-                onClick={() => {
-                  setDenyModalOpen(false);
-                  setDenyReason('');
-                  setDenyingOrderId(null);
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                className="btn-confirm-deny"
-                onClick={handleDenyOrder}
-                disabled={!denyReason.trim() || actionLoading}
-              >
-                {actionLoading ? 'Denying...' : 'Confirm Deny'}
-              </button>
+              <div className="modal-actions">
+                <button
+                  className="modal-btn cancel-btn"
+                  onClick={() => {
+                    setDenyModalOpen(false);
+                    setDenyReason('');
+                    setDenyingOrderId(null);
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="modal-btn confirm-btn"
+                  onClick={handleDenyOrder}
+                  disabled={!denyReason.trim() || actionLoading}
+                >
+                  {actionLoading ? 'Denying...' : 'Confirm Deny'}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* Chat/Call Modal - Persists to keep call state alive */}
+        {activePerson && (
+          <PersonChat
+            isOpen={isChatOpen}
+            onClose={() => setIsChatOpen(false)}
+            personId={activePerson.id}
+            personName={activePerson.name}
+            personEmail={activePerson.email}
+            embedded={false}
+            autoStartCall={activePerson === callPerson ? 'audio' : undefined}
+          />
+        )}
+      </div>
     </div>
   );
 };

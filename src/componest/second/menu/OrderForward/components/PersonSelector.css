@@ -46,8 +46,8 @@
 
 .search-box:focus-within {
   background: white;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: #f97316;
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
 }
 
 .search-box svg {
@@ -90,14 +90,14 @@
 }
 
 .role-filter-btn:hover {
-  border-color: #3b82f6;
-  color: #3b82f6;
-  background: #eff6ff;
+  border-color: #f97316;
+  color: #f97316;
+  background: #fef3c7;
 }
 
 .role-filter-btn.active {
-  background: #3b82f6;
-  border-color: #3b82f6;
+  background: #f97316;
+  border-color: #f97316;
   color: white;
 }
 
@@ -131,7 +131,7 @@
   width: 40px;
   height: 40px;
   border: 3px solid #e5e7eb;
-  border-top-color: #3b82f6;
+  border-top-color: #f97316;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -164,7 +164,7 @@
 
 .btn-retry {
   padding: 8px 16px;
-  background: #3b82f6;
+  background: #f97316;
   color: white;
   border: none;
   border-radius: 6px;
@@ -175,7 +175,7 @@
 }
 
 .btn-retry:hover {
-  background: #2563eb;
+  background: #ea580c;
 }
 
 /* Empty State */
@@ -220,15 +220,15 @@
 }
 
 .person-card:hover {
-  border-color: #3b82f6;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+  border-color: #f97316;
+  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.1);
   transform: translateY(-1px);
 }
 
 .person-card.selected {
-  border-color: #3b82f6;
-  background: #eff6ff;
-  box-shadow: 0 2px 12px rgba(59, 130, 246, 0.15);
+  border-color: #f97316;
+  background: #fef3c7;
+  box-shadow: 0 2px 12px rgba(249, 115, 22, 0.15);
 }
 
 .person-avatar {
@@ -237,7 +237,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #f97316 0%, #fb923c 100%);
   border-radius: 10px;
   color: white;
 }
@@ -327,7 +327,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #3b82f6;
+  background: #f97316;
   color: white;
   border-radius: 50%;
   font-size: 14px;
@@ -340,7 +340,7 @@
   align-items: center;
   gap: 12px;
   padding: 14px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #f97316 0%, #fb923c 100%);
   border-radius: 10px;
   color: white;
 }

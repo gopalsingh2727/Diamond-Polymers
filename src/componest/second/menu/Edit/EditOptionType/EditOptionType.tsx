@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getOptionTypes, updateOptionType } from '../../../../redux/option/optionTypeActions';
+import { getCategories } from '../../../../redux/category/categoryActions';
 import { RootState } from '../../../../redux/rootReducer';
 import { AppDispatch } from '../../../../../store';
 import { useCRUD } from '../../../../../hooks/useCRUD';
@@ -18,16 +19,24 @@ const EditOptionType: React.FC = () => {
   const rawOptionTypes = optionTypeState?.list;
   const optionTypes = Array.isArray(rawOptionTypes) ? rawOptionTypes : [];
 
+  const categoryState = useSelector((state: RootState) => state.v2.category);
+  const rawCategories = categoryState?.list;
+  const categories = Array.isArray(rawCategories) ? rawCategories : [];
+
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [categoryId, setCategoryId] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load option types on mount
+  // Load option types and categories on mount
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
       try {
-        await dispatch(getOptionTypes({}));
+        await Promise.all([
+          dispatch(getOptionTypes({})),
+          dispatch(getCategories({}))
+        ]);
       } catch (error) {
 
       } finally {
@@ -45,6 +54,7 @@ const EditOptionType: React.FC = () => {
       if (type) {
         setName(type.name || '');
         setDescription(type.description || '');
+        setCategoryId(type.categoryId?._id || type.categoryId || '');
       }
     }
   }, [id, optionTypes]);
@@ -68,6 +78,7 @@ const EditOptionType: React.FC = () => {
       name,
       description,
       branchId,
+      categoryId: categoryId || undefined,
       isActive: true
     };
 
@@ -130,6 +141,20 @@ const EditOptionType: React.FC = () => {
               required
               className="inputBox" />
 
+          </div>
+
+          <div className="formGroup">
+            <label>Category (Optional)</label>
+            <select
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
+              className="inputBox"
+              autoComplete="off">
+              <option value="">-- Select a category --</option>
+              {categories.map((cat: any) => (
+                <option key={cat._id} value={cat._id}>{cat.name}</option>
+              ))}
+            </select>
           </div>
 
           <div className="formGroup">

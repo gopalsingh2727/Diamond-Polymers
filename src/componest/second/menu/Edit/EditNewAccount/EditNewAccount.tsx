@@ -5,6 +5,8 @@ import { useListNavigation } from "../../../../allCompones/BackButton";
 interface Account {
   _id: string;
   companyName?: string;
+  categoryId?: { _id: string; name: string };
+  parentCompanyId?: { _id: string; name: string };
   firstName?: string;
   lastName?: string;
   email?: string;
@@ -117,6 +119,8 @@ const EditAccount: React.FC<EditAccountProps> = ({ onEdit }) => {
                   <tr>
                     <th className="editsectionsTable-th">No</th>
                     <th className="editsectionsTable-th">Company</th>
+                    <th className="editsectionsTable-th">Category</th>
+                    <th className="editsectionsTable-th">Parent Company</th>
                     <th className="editsectionsTable-th">Name</th>
                     <th className="editsectionsTable-th">Phone</th>
                     <th className="editsectionsTable-th">State</th>
@@ -132,6 +136,8 @@ const EditAccount: React.FC<EditAccountProps> = ({ onEdit }) => {
                     >
                       <td className="editsectionsTable-td">{index + 1}</td>
                       <td className="editsectionsTable-td">{item.companyName || "N/A"}</td>
+                      <td className="editsectionsTable-td">{item.categoryId?.name || "N/A"}</td>
+                      <td className="editsectionsTable-td">{item.parentCompanyId?.name || "N/A"}</td>
                       <td className="editsectionsTable-td">
                         {[item.firstName, item.lastName].filter(Boolean).join(" ") ||
                           "N/A"}

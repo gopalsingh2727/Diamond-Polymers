@@ -7,6 +7,7 @@ import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import "../Dispatch/Dispatch.css";
 import "../Oders/indexAllOders.css";
+import "./Daybook.css";
 import { fetchOrders } from "../../../redux/oders/OdersActions";
 import { RootState } from "../../../../store";
 import { useFormDataCache } from "../Edit/hooks/useFormDataCache";
@@ -600,7 +601,7 @@ export default function DayBook() {
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (openDropdown && !(e.target as HTMLElement).closest('.filter-header')) {
+      if (openDropdown && !(e.target as HTMLElement).closest('.editsectionsTable-filterHeader')) {
         setOpenDropdown(null);
       }
       // Close bulk dropdown when clicking outside
@@ -644,11 +645,6 @@ export default function DayBook() {
   const handleSearch = (value: string) => {
     setSearchTerm(value);
     setCurrentPage(1);
-  };
-
-  const handleRefresh = () => {
-
-    fetchOrdersData();
   };
 
   const handleClearFilters = () => {
@@ -1064,12 +1060,12 @@ export default function DayBook() {
   };
 
   return (
-    <div className="all-orders-page">
+    <div className="EditMachineType">
       {/* Header */}
-      <div className="all-orders-header">
-        <div className="all-orders-header__left">
+      <div className="editsectionsTable-header">
+        <div className="editsectionsTable-header__left">
           <BackButton />
-          <h1 className="all-orders-title">Day Book</h1>
+          <h1 className="editsectionsTable-title">Day Book</h1>
           {/* WebSocket Status Indicator */}
           <div
             style={{
@@ -1122,7 +1118,7 @@ export default function DayBook() {
             </button>
           }
         </div>
-        <div className="all-orders-header__actions" style={{
+        <div className="editsectionsTable-header__actions" style={{
           display: 'flex',
           alignItems: 'center',
           gap: '8px',
@@ -1288,27 +1284,15 @@ export default function DayBook() {
               <rect x="6" y="14" width="12" height="8" />
             </svg>
           </button>
-          <button
-            style={{ width: '40px', height: '40px', backgroundColor: 'transparent', color: '#f59e0b', border: '1px solid #e5e7eb', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            onClick={handleRefresh}
-            disabled={loading}
-            title="Refresh Orders">
-
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={loading ? 'loading-spinner' : ''}>
-              <polyline points="23 4 23 10 17 10" />
-              <polyline points="1 20 1 14 7 14" />
-              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-            </svg>
-          </button>
         </div>
       </div>
 
       {/* Summary Cards - Status counts */}
       {statusCounts &&
-      <div className="summary-cards summary-cards--compact">
-          <div className="summary-card summary-card--mini">
-            <div className="summary-card__value">{summary?.totalOrders || filteredOrders.length}</div>
-            <div className="summary-card__label">Total</div>
+      <div className="editsectionsTable-summary editsectionsTable-summary--compact">
+          <div className="editsectionsTable-summaryCard editsectionsTable-summaryCard--mini">
+            <div className="editsectionsTable-summaryCard__value">{summary?.totalOrders || filteredOrders.length}</div>
+            <div className="editsectionsTable-summaryCard__label">Total</div>
           </div>
           {Object.entries(statusCounts).map(([status, count]) => {
           const statusClassMap: Record<string, string> = {
@@ -1323,9 +1307,9 @@ export default function DayBook() {
           };
           const statusClass = statusClassMap[status] || '';
           return (
-            <div key={status} className={`summary-card summary-card--mini summary-card--${statusClass}`}>
-                <div className="summary-card__value">{count as number}</div>
-                <div className="summary-card__label">{status.replace(/_/g, ' ')}</div>
+            <div key={status} className={`editsectionsTable-summaryCard editsectionsTable-summaryCard--mini editsectionsTable-summaryCard--${statusClass}`}>
+                <div className="editsectionsTable-summaryCard__value">{count as number}</div>
+                <div className="editsectionsTable-summaryCard__label">{status.replace(/_/g, ' ')}</div>
               </div>);
 
         })}
@@ -1333,49 +1317,37 @@ export default function DayBook() {
       }
 
       {/* Orders table */}
-      <div ref={contentRef}>
+      <div className="editsectionsTable-container">
         {loading &&
-        <div className="loading-state">
-            <div className="loading-spinner" style={{ width: '40px', height: '40px', border: '3px solid #e2e8f0', borderTopColor: '#3b82f6', borderRadius: '50%' }}></div>
-            <p>Loading orders...</p>
-          </div>
+        <p className="loadingAndError">Loading orders...</p>
         }
 
         {error &&
-        <div className="error-state">
-            <span className="error-icon" style={{ fontSize: '48px' }}>⚠️</span>
-            <p className="error-message">Error: {error}</p>
-            <button className="retry-btn" onClick={handleRefresh}>
-              🔄 Retry
-            </button>
-          </div>
+        <p className="loadingAndError" style={{ color: 'red' }}>Error: {error}</p>
         }
 
         {!loading && !error && filteredOrders.length === 0 &&
-        <div className="empty-state">
+        <div className="editsectionsTable-empty">
             <span style={{ fontSize: '48px' }}>📋</span>
             <p style={{ fontSize: '16px', fontWeight: 600, marginBottom: '8px' }}>No orders found</p>
             <p style={{ fontSize: '14px', color: '#64748b' }}>Try adjusting your filters or navigate to a different page</p>
-            <button className="filter-reset-btn" onClick={handleClearFilters} style={{ marginTop: '12px' }}>
-              Clear All Filters
-            </button>
           </div>
         }
 
         {!loading && filteredOrders.length > 0 &&
         <div
-          className="orders-table-container"
+          className="editsectionsTable-wrapper"
           ref={contentRef}
           tabIndex={0}
           onKeyDown={handleKeyNavigation}
           onClick={() => contentRef.current?.focus()}
-          style={{ outline: 'none', paddingBottom: '60px' }}>
+          style={{ outline: 'none' }}>
 
-            <table className="orders-table orders-table--with-filters">
-              <thead>
+            <table className="editsectionsTable-table">
+              <thead className="editsectionsTable-thead">
                 {/* Header Row with Dropdown Filters */}
                 <tr>
-                  <th style={{ width: '40px', textAlign: 'center' }}>
+                  <th className="editsectionsTable-th" style={{ width: '40px', textAlign: 'center' }}>
                     <input
                     type="checkbox"
                     checked={selectedOrders.size === filteredOrders.length && filteredOrders.length > 0}
@@ -1383,51 +1355,51 @@ export default function DayBook() {
                     title="Select all" />
 
                   </th>
-                  <th style={{ width: '50px' }}>No</th>
+                  <th className="editsectionsTable-th" style={{ width: '50px' }}>No</th>
 
                   {/* Created - Date Filter */}
-                  <th className={`filter-header ${fromDate || toDate ? 'has-filter' : ''}`} style={{ width: '120px' }}>
-                    <div className="header-filter-btn" onClick={(e) => toggleDropdown('created', e)}>
+                  <th className={`editsectionsTable-th editsectionsTable-filterHeader ${fromDate || toDate ? 'editsectionsTable-hasFilter' : ''}`} style={{ width: '120px' }}>
+                    <div className="editsectionsTable-filterBtn" onClick={(e) => toggleDropdown('created', e)}>
                       <span>Created</span>
-                      <span className="filter-icon">{fromDate || toDate ? '✓' : '▼'}</span>
+                      <span className="editsectionsTable-filterIcon">{fromDate || toDate ? '✓' : '▼'}</span>
                     </div>
                     {openDropdown === 'created' && dropdownPosition &&
                   <div
-                    className="header-dropdown header-dropdown--fixed"
+                    className="editsectionsTable-dropdown editsectionsTable-dropdown--fixed"
                     style={{ top: `${dropdownPosition.top}px`, left: `${dropdownPosition.left}px` }}
                     onClick={(e) => e.stopPropagation()}>
 
-                        <div className="dropdown-title">Filter by Date</div>
-                        <div className="dropdown-item">
+                        <div className="editsectionsTable-dropdownTitle">Filter by Date</div>
+                        <div className="editsectionsTable-dropdownItem">
                           <label>From:</label>
                           <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
                         </div>
-                        <div className="dropdown-item">
+                        <div className="editsectionsTable-dropdownItem">
                           <label>To:</label>
                           <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} />
                         </div>
-                        <div className="dropdown-actions">
+                        <div className="editsectionsTable-dropdownActions">
                           <button onClick={() => {setFromDate('');setToDate('');}}>Clear</button>
-                          <button className="apply-btn" onClick={() => setOpenDropdown(null)}>Apply</button>
+                          <button className="editsectionsTable-applyBtn" onClick={() => setOpenDropdown(null)}>Apply</button>
                         </div>
                       </div>
                   }
                   </th>
 
                   {/* Order ID - Search Filter */}
-                  <th className={`filter-header ${searchTerm ? 'has-filter' : ''}`} style={{ width: '120px' }}>
-                    <div className="header-filter-btn" onClick={(e) => toggleDropdown('orderId', e)}>
+                  <th className={`editsectionsTable-th editsectionsTable-filterHeader ${searchTerm ? 'editsectionsTable-hasFilter' : ''}`} style={{ width: '120px' }}>
+                    <div className="editsectionsTable-filterBtn" onClick={(e) => toggleDropdown('orderId', e)}>
                       <span>Order ID</span>
-                      <span className="filter-icon">{searchTerm ? '✓' : '▼'}</span>
+                      <span className="editsectionsTable-filterIcon">{searchTerm ? '✓' : '▼'}</span>
                     </div>
                     {openDropdown === 'orderId' && dropdownPosition &&
                   <div
-                    className="header-dropdown header-dropdown--fixed"
+                    className="editsectionsTable-dropdown editsectionsTable-dropdown--fixed"
                     style={{ top: `${dropdownPosition.top}px`, left: `${dropdownPosition.left}px` }}
                     onClick={(e) => e.stopPropagation()}>
 
-                        <div className="dropdown-title">Search</div>
-                        <div className="dropdown-item">
+                        <div className="editsectionsTable-dropdownTitle">Search</div>
+                        <div className="editsectionsTable-dropdownItem">
                           <input
                         type="text"
                         placeholder="Search Order ID, Company..."
@@ -1436,28 +1408,28 @@ export default function DayBook() {
                         autoFocus />
 
                         </div>
-                        <div className="dropdown-actions">
+                        <div className="editsectionsTable-dropdownActions">
                           <button onClick={() => setSearchTerm('')}>Clear</button>
-                          <button className="apply-btn" onClick={() => setOpenDropdown(null)}>Apply</button>
+                          <button className="editsectionsTable-applyBtn" onClick={() => setOpenDropdown(null)}>Apply</button>
                         </div>
                       </div>
                   }
                   </th>
 
                   {/* Company - Search Filter */}
-                  <th className={`filter-header ${searchTerm ? 'has-filter' : ''}`}>
-                    <div className="header-filter-btn" onClick={(e) => toggleDropdown('company', e)}>
+                  <th className={`editsectionsTable-th editsectionsTable-filterHeader ${searchTerm ? 'editsectionsTable-hasFilter' : ''}`}>
+                    <div className="editsectionsTable-filterBtn" onClick={(e) => toggleDropdown('company', e)}>
                       <span>Company</span>
-                      <span className="filter-icon">{searchTerm ? '✓' : '▼'}</span>
+                      <span className="editsectionsTable-filterIcon">{searchTerm ? '✓' : '▼'}</span>
                     </div>
                     {openDropdown === 'company' && dropdownPosition &&
                   <div
-                    className="header-dropdown header-dropdown--fixed"
+                    className="editsectionsTable-dropdown editsectionsTable-dropdown--fixed"
                     style={{ top: `${dropdownPosition.top}px`, left: `${dropdownPosition.left}px` }}
                     onClick={(e) => e.stopPropagation()}>
 
-                        <div className="dropdown-title">Search Company</div>
-                        <div className="dropdown-item">
+                        <div className="editsectionsTable-dropdownTitle">Search Company</div>
+                        <div className="editsectionsTable-dropdownItem">
                           <input
                         type="text"
                         placeholder="Search company name..."
@@ -1466,32 +1438,32 @@ export default function DayBook() {
                         autoFocus />
 
                         </div>
-                        <div className="dropdown-actions">
+                        <div className="editsectionsTable-dropdownActions">
                           <button onClick={() => setSearchTerm('')}>Clear</button>
-                          <button className="apply-btn" onClick={() => setOpenDropdown(null)}>Apply</button>
+                          <button className="editsectionsTable-applyBtn" onClick={() => setOpenDropdown(null)}>Apply</button>
                         </div>
                       </div>
                   }
                   </th>
 
                   {/* Created By - Multi-Select Dropdown Filter */}
-                  <th className={`filter-header ${createdByFilters.length > 0 ? 'has-filter' : ''}`} style={{ width: '120px' }}>
-                    <div className="header-filter-btn" onClick={(e) => toggleDropdown('createdBy', e)}>
+                  <th className={`editsectionsTable-th editsectionsTable-filterHeader ${createdByFilters.length > 0 ? 'editsectionsTable-hasFilter' : ''}`} style={{ width: '120px' }}>
+                    <div className="editsectionsTable-filterBtn" onClick={(e) => toggleDropdown('createdBy', e)}>
                       <span>Created By {createdByFilters.length > 0 && `(${createdByFilters.length})`}</span>
-                      <span className="filter-icon">{createdByFilters.length > 0 ? '✓' : '▼'}</span>
+                      <span className="editsectionsTable-filterIcon">{createdByFilters.length > 0 ? '✓' : '▼'}</span>
                     </div>
                     {openDropdown === 'createdBy' && dropdownPosition &&
                   <div
-                    className="header-dropdown header-dropdown--fixed"
+                    className="editsectionsTable-dropdown editsectionsTable-dropdown--fixed"
                     style={{ top: `${dropdownPosition.top}px`, left: `${dropdownPosition.left}px` }}
                     onClick={(e) => e.stopPropagation()}>
 
-                        <div className="dropdown-title">Filter by Creator (Multi-Select)</div>
-                        <div className="dropdown-options">
+                        <div className="editsectionsTable-dropdownTitle">Filter by Creator (Multi-Select)</div>
+                        <div className="editsectionsTable-dropdownOptions">
                           {uniqueCreators.map((creator) =>
                       <div
                         key={creator}
-                        className={`dropdown-option ${createdByFilters.includes(creator) ? 'selected' : ''}`}
+                        className={`editsectionsTable-dropdownOption ${createdByFilters.includes(creator) ? 'selected' : ''}`}
                         onClick={() => toggleFilterValue(createdByFilters, creator, setCreatedByFilters)}
                         style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
 
@@ -1506,28 +1478,28 @@ export default function DayBook() {
                             </div>
                       )}
                         </div>
-                        <div className="dropdown-actions">
+                        <div className="editsectionsTable-dropdownActions">
                           <button onClick={() => setCreatedByFilters([])}>Clear All</button>
-                          <button className="apply-btn" onClick={() => setOpenDropdown(null)}>Apply</button>
+                          <button className="editsectionsTable-applyBtn" onClick={() => setOpenDropdown(null)}>Apply</button>
                         </div>
                       </div>
                   }
                   </th>
 
                   {/* Order Status - Multi-Select Dropdown Filter */}
-                  <th className={`filter-header ${statusFilters.length > 0 ? 'has-filter' : ''}`} style={{ width: '140px' }}>
-                    <div className="header-filter-btn" onClick={(e) => toggleDropdown('status', e)}>
+                  <th className={`editsectionsTable-th editsectionsTable-filterHeader ${statusFilters.length > 0 ? 'editsectionsTable-hasFilter' : ''}`} style={{ width: '140px' }}>
+                    <div className="editsectionsTable-filterBtn" onClick={(e) => toggleDropdown('status', e)}>
                       <span>Order Status {statusFilters.length > 0 && `(${statusFilters.length})`}</span>
-                      <span className="filter-icon">{statusFilters.length > 0 ? '✓' : '▼'}</span>
+                      <span className="editsectionsTable-filterIcon">{statusFilters.length > 0 ? '✓' : '▼'}</span>
                     </div>
                     {openDropdown === 'status' && dropdownPosition &&
                   <div
-                    className="header-dropdown header-dropdown--fixed"
+                    className="editsectionsTable-dropdown editsectionsTable-dropdown--fixed"
                     style={{ top: `${dropdownPosition.top}px`, left: `${dropdownPosition.left}px` }}
                     onClick={(e) => e.stopPropagation()}>
 
-                        <div className="dropdown-title">Filter by Status (Multi-Select)</div>
-                        <div className="dropdown-options">
+                        <div className="editsectionsTable-dropdownTitle">Filter by Status (Multi-Select)</div>
+                        <div className="editsectionsTable-dropdownOptions">
                           {[
                       { value: 'Wait for Approval', label: 'Wait for Approval' },
                       { value: 'pending', label: 'Pending' },
@@ -1540,7 +1512,7 @@ export default function DayBook() {
                       map((status) =>
                       <div
                         key={status.value}
-                        className={`dropdown-option ${statusFilters.includes(status.value) ? 'selected' : ''}`}
+                        className={`editsectionsTable-dropdownOption ${statusFilters.includes(status.value) ? 'selected' : ''}`}
                         onClick={() => toggleFilterValue(statusFilters, status.value, setStatusFilters)}
                         style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
 
@@ -1555,28 +1527,28 @@ export default function DayBook() {
                             </div>
                       )}
                         </div>
-                        <div className="dropdown-actions">
+                        <div className="editsectionsTable-dropdownActions">
                           <button onClick={() => setStatusFilters([])}>Clear All</button>
-                          <button className="apply-btn" onClick={() => setOpenDropdown(null)}>Apply</button>
+                          <button className="editsectionsTable-applyBtn" onClick={() => setOpenDropdown(null)}>Apply</button>
                         </div>
                       </div>
                   }
                   </th>
 
                   {/* Priority - Multi-Select Dropdown Filter */}
-                  <th className={`filter-header ${priorityFilters.length > 0 ? 'has-filter' : ''}`} style={{ width: '100px' }}>
-                    <div className="header-filter-btn" onClick={(e) => toggleDropdown('priority', e)}>
+                  <th className={`editsectionsTable-th editsectionsTable-filterHeader ${priorityFilters.length > 0 ? 'editsectionsTable-hasFilter' : ''}`} style={{ width: '100px' }}>
+                    <div className="editsectionsTable-filterBtn" onClick={(e) => toggleDropdown('priority', e)}>
                       <span>Priority {priorityFilters.length > 0 && `(${priorityFilters.length})`}</span>
-                      <span className="filter-icon">{priorityFilters.length > 0 ? '✓' : '▼'}</span>
+                      <span className="editsectionsTable-filterIcon">{priorityFilters.length > 0 ? '✓' : '▼'}</span>
                     </div>
                     {openDropdown === 'priority' && dropdownPosition &&
                   <div
-                    className="header-dropdown header-dropdown--fixed"
+                    className="editsectionsTable-dropdown editsectionsTable-dropdown--fixed"
                     style={{ top: `${dropdownPosition.top}px`, left: `${dropdownPosition.left}px` }}
                     onClick={(e) => e.stopPropagation()}>
 
-                        <div className="dropdown-title">Filter by Priority (Multi-Select)</div>
-                        <div className="dropdown-options">
+                        <div className="editsectionsTable-dropdownTitle">Filter by Priority (Multi-Select)</div>
+                        <div className="editsectionsTable-dropdownOptions">
                           {[
                       { value: 'urgent', label: 'Urgent' },
                       { value: 'high', label: 'High' },
@@ -1585,7 +1557,7 @@ export default function DayBook() {
                       map((priority) =>
                       <div
                         key={priority.value}
-                        className={`dropdown-option ${priorityFilters.includes(priority.value) ? 'selected' : ''}`}
+                        className={`editsectionsTable-dropdownOption ${priorityFilters.includes(priority.value) ? 'selected' : ''}`}
                         onClick={() => toggleFilterValue(priorityFilters, priority.value, setPriorityFilters)}
                         style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
 
@@ -1600,32 +1572,32 @@ export default function DayBook() {
                             </div>
                       )}
                         </div>
-                        <div className="dropdown-actions">
+                        <div className="editsectionsTable-dropdownActions">
                           <button onClick={() => setPriorityFilters([])}>Clear All</button>
-                          <button className="apply-btn" onClick={() => setOpenDropdown(null)}>Apply</button>
+                          <button className="editsectionsTable-applyBtn" onClick={() => setOpenDropdown(null)}>Apply</button>
                         </div>
                       </div>
                   }
                   </th>
 
                   {/* Order Type - Multi-Select Dropdown Filter */}
-                  <th className={`filter-header ${orderTypeFilters.length > 0 ? 'has-filter' : ''}`} style={{ width: '150px' }}>
-                    <div className="header-filter-btn" onClick={(e) => toggleDropdown('orderType', e)}>
+                  <th className={`editsectionsTable-th editsectionsTable-filterHeader ${orderTypeFilters.length > 0 ? 'editsectionsTable-hasFilter' : ''}`} style={{ width: '150px' }}>
+                    <div className="editsectionsTable-filterBtn" onClick={(e) => toggleDropdown('orderType', e)}>
                       <span>Order Type {orderTypeFilters.length > 0 && `(${orderTypeFilters.length})`}</span>
-                      <span className="filter-icon">{orderTypeFilters.length > 0 ? '✓' : '▼'}</span>
+                      <span className="editsectionsTable-filterIcon">{orderTypeFilters.length > 0 ? '✓' : '▼'}</span>
                     </div>
                     {openDropdown === 'orderType' && dropdownPosition &&
                   <div
-                    className="header-dropdown header-dropdown--fixed"
+                    className="editsectionsTable-dropdown editsectionsTable-dropdown--fixed"
                     style={{ top: `${dropdownPosition.top}px`, left: `${dropdownPosition.left}px` }}
                     onClick={(e) => e.stopPropagation()}>
 
-                        <div className="dropdown-title">Filter by Order Type (Multi-Select)</div>
-                        <div className="dropdown-options">
+                        <div className="editsectionsTable-dropdownTitle">Filter by Order Type (Multi-Select)</div>
+                        <div className="editsectionsTable-dropdownOptions">
                           {Array.isArray(orderTypes) && orderTypes.map((type: any) =>
                       <div
                         key={type._id}
-                        className={`dropdown-option ${orderTypeFilters.includes(type._id) ? 'selected' : ''}`}
+                        className={`editsectionsTable-dropdownOption ${orderTypeFilters.includes(type._id) ? 'selected' : ''}`}
                         onClick={() => toggleFilterValue(orderTypeFilters, type._id, setOrderTypeFilters)}
                         style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
 
@@ -1640,23 +1612,23 @@ export default function DayBook() {
                             </div>
                       )}
                         </div>
-                        <div className="dropdown-actions">
+                        <div className="editsectionsTable-dropdownActions">
                           <button onClick={() => setOrderTypeFilters([])}>Clear All</button>
-                          <button className="apply-btn" onClick={() => setOpenDropdown(null)}>Apply</button>
+                          <button className="editsectionsTable-applyBtn" onClick={() => setOpenDropdown(null)}>Apply</button>
                         </div>
                       </div>
                   }
                   </th>
 
                   {/* Forward Status Column */}
-                  <th style={{ width: '80px', textAlign: 'center' }}>
-                    <div className="header-filter-btn" style={{ justifyContent: 'center' }}>
+                  <th className="editsectionsTable-th" style={{ width: '80px', textAlign: 'center' }}>
+                    <div className="editsectionsTable-filterBtn" style={{ justifyContent: 'center' }}>
                       <span>Forward</span>
                     </div>
                   </th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="editsectionsTable-tbody">
                 {filteredOrders.map((order, index) => {
                 const orderType = (order as any).orderType;
                 const orderTypeName = (order as any).orderTypeName || orderType?.typeName || '';
@@ -1698,11 +1670,10 @@ export default function DayBook() {
                   <tr
                     key={`${order._id}-${index}`}
                     ref={(el) => ordersRef.current[index] = el as any}
-                    className={`clickable-row ${selectedOrderIndex === index ? "row-expanded" : ""} ${isSelected ? "row-selected" : ""}`}
-                    onClick={() => handleOrderClick(order)}
-                    style={isSelected ? { backgroundColor: '#dbeafe' } : undefined}>
+                    className={`editsectionsTable-tr ${isSelected ? "editsectionsTable-trSelected" : ""}`}
+                    onClick={() => handleOrderClick(order)}>
 
-                      <td style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
+                      <td className="editsectionsTable-td" style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
                         <input
                         type="checkbox"
                         checked={isSelected}
@@ -1710,22 +1681,22 @@ export default function DayBook() {
                         onClick={(e) => e.stopPropagation()} />
 
                       </td>
-                      <td style={{ textAlign: 'center', fontWeight: 500 }}>{index + 1}</td>
-                      <td className="date-cell">
+                      <td className="editsectionsTable-td" style={{ textAlign: 'center', fontWeight: 500 }}>{index + 1}</td>
+                      <td className="editsectionsTable-td editsectionsTable-dateCell">
                         {order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-IN', {
                         day: '2-digit',
                         month: 'short',
                         year: '2-digit'
                       }) : 'N/A'}
                       </td>
-                      <td className="order-id-cell">{order.orderId || 'N/A'}</td>
-                      <td style={{ fontWeight: 500 }}>{order.companyName || 'N/A'}</td>
-                      <td style={{ fontSize: '12px', color: '#64748b' }}>
+                      <td className="editsectionsTable-td editsectionsTable-orderIdCell">{order.orderId || 'N/A'}</td>
+                      <td className="editsectionsTable-td" style={{ fontWeight: 500 }}>{order.companyName || 'N/A'}</td>
+                      <td className="editsectionsTable-td" style={{ fontSize: '12px', color: '#64748b' }}>
                         {(order as any).createdByName || (order as any).creator?.username || (order as any).creator?.name || '-'}
                       </td>
-                      <td>
+                      <td className="editsectionsTable-td">
                         <span
-                        className="status-badge"
+                        className="editsectionsTable-statusBadge"
                         style={{ backgroundColor: getStatusBadgeColor(order.status || 'pending') }}>
 
                           {(() => {
@@ -1739,15 +1710,15 @@ export default function DayBook() {
                         })()}
                         </span>
                       </td>
-                      <td>
+                      <td className="editsectionsTable-td">
                         <span
-                        className="priority-badge"
+                        className="editsectionsTable-priorityBadge"
                         style={{ backgroundColor: getPriorityBadgeColor(priority) }}>
 
                           {priority.charAt(0).toUpperCase() + priority.slice(1)}
                         </span>
                       </td>
-                      <td>
+                      <td className="editsectionsTable-td">
                         {orderTypeName ?
                       <span style={{
                         display: 'inline-flex',
@@ -1782,7 +1753,7 @@ export default function DayBook() {
                       </td>
 
                       {/* Forward Status Cell */}
-                      <td style={{ textAlign: 'center' }}>
+                      <td className="editsectionsTable-td" style={{ textAlign: 'center' }}>
                         {order.isForwarded ? (
                           <div
                             style={{
@@ -1900,7 +1871,7 @@ export default function DayBook() {
               type="date"
               value={fromDate}
               onChange={(e) => setFromDate(e.target.value)}
-              className="filter-input"
+              className="editsectionsTable-filterInput"
               style={{ width: '100%' }} />
 
             </div>
@@ -1912,20 +1883,20 @@ export default function DayBook() {
               type="date"
               value={toDate}
               onChange={(e) => setToDate(e.target.value)}
-              className="filter-input"
+              className="editsectionsTable-filterInput"
               style={{ width: '100%' }} />
 
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
               <button
               onClick={() => setShowPeriodModal(false)}
-              className="filter-reset-btn">
+              className="editsectionsTable-resetBtn">
 
                 Cancel
               </button>
               <button
               onClick={handleDateFilter}
-              className="action-btn action-btn--export">
+              className="editsectionsTable-actionBtn editsectionsTable-actionBtn--export">
 
                 Apply
               </button>

@@ -12,6 +12,7 @@ interface Step {
   description?: string;
   machineType?: { _id: string; type: string };
   branchId?: { _id: string; name: string };
+  machines?: { machineId: string | { _id: string }; sequence?: number }[];
 }
 
 interface Props {
@@ -19,15 +20,7 @@ interface Props {
 }
 
 const EditStepList: React.FC<Props> = ({ onEdit }) => {
-  const { steps = [], machines = [], loading, error } = useFormDataCache();
-
-  // Count machines by machine type
-  const getMachineCount = (machineTypeId?: string) => {
-    if (!machineTypeId) return 0;
-    return machines.filter((m: any) =>
-      m.machineType?._id === machineTypeId || m.machineTypeId === machineTypeId
-    ).length;
-  };
+  const { steps = [], loading, error } = useFormDataCache();
 
   const [selectedRow, setSelectedRow] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
@@ -103,7 +96,7 @@ const EditStepList: React.FC<Props> = ({ onEdit }) => {
                   >
                     <td className="editsectionsTable-td">{index + 1}</td>
                     <td className="editsectionsTable-td">{item.stepName}</td>
-                    <td className="editsectionsTable-td">{getMachineCount(item.machineType?._id)}</td>
+                    <td className="editsectionsTable-td">{item.machines?.length || 0}</td>
                     <td className="editsectionsTable-td">{item.branchId?.name || "N/A"}</td>
                   </tr>
                 ))}

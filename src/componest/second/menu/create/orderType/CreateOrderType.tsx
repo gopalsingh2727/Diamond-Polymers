@@ -8,6 +8,9 @@ import { ToastContainer } from "../../../../../components/shared/Toast";
 import { useCRUD } from "../../../../../hooks/useCRUD";
 import FieldTooltip from "../../../../../components/shared/FieldTooltip";
 import { useInternalBackNavigation } from "../../../../allCompones/BackButton";
+import HelpDocModal, { HelpButton } from '../../../../../components/shared/HelpDocModal';
+import { createOrderTypeHelp } from '../../../../../components/shared/helpContent';
+import SectionHelpIcon from '../../../../../components/shared/SectionHelpIcon';
 import "./orderType.css";
 
 // Section configuration types
@@ -149,6 +152,9 @@ const CreateOrderType: React.FC<CreateOrderTypeProps> = ({ initialData: propInit
   // Delete confirmation modal
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  // Help modal
+  const [showHelpModal, setShowHelpModal] = useState(false);
 
   // Section Configuration
   const [sections, setSections] = useState<SectionConfig[]>(defaultSections);
@@ -816,9 +822,12 @@ const CreateOrderType: React.FC<CreateOrderTypeProps> = ({ initialData: propInit
               </button>
             }
             <div>
-              <h2 className="orderTypeTitle">
-                {editMode ? 'Edit Order Type' : 'Create Order Type'}
-              </h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <h2 className="orderTypeTitle" style={{ marginBottom: 0 }}>
+                  {editMode ? 'Edit Order Type' : 'Create Order Type'}
+                </h2>
+                <HelpButton onClick={() => setShowHelpModal(true)} size="medium" />
+              </div>
               <p className="orderTypeSubtitle">
                 {editMode ?
                 `Editing: ${orderTypeData?.typeName || 'Order Type'}` :
@@ -921,7 +930,12 @@ const CreateOrderType: React.FC<CreateOrderTypeProps> = ({ initialData: propInit
             <FieldTooltip
               content="Select whether this order type is for manufacturing (production orders) or billing (invoices, estimates, etc.)"
               position="right" />
-
+            {createOrderTypeHelp.sections?.find(s => s.title === '📂 Order Category Configuration') && (
+              <SectionHelpIcon
+                section={createOrderTypeHelp.sections.find(s => s.title === '📂 Order Category Configuration')!}
+                size={20}
+              />
+            )}
           </h3>
 
           <div className="orderTypeFormRow">
@@ -1066,7 +1080,12 @@ const CreateOrderType: React.FC<CreateOrderTypeProps> = ({ initialData: propInit
             <FieldTooltip
               content="Control how orders of this type affect inventory. When Debit or Credit is selected, only inventory-based options will be available in the order form."
               position="right" />
-
+            {createOrderTypeHelp.sections?.find(s => s.title === '📊 Inventory Mode Configuration') && (
+              <SectionHelpIcon
+                section={createOrderTypeHelp.sections.find(s => s.title === '📊 Inventory Mode Configuration')!}
+                size={20}
+              />
+            )}
           </h3>
 
           <div className="orderTypeFormRow">
@@ -1343,7 +1362,12 @@ const CreateOrderType: React.FC<CreateOrderTypeProps> = ({ initialData: propInit
             <FieldTooltip
               content="Select which option types can be used when creating orders of this type. The order determines how they appear in order forms. Leave empty to allow all option types."
               position="right" />
-
+            {createOrderTypeHelp.sections?.find(s => s.title === '🎯 Allowed Option Types') && (
+              <SectionHelpIcon
+                section={createOrderTypeHelp.sections.find(s => s.title === '🎯 Allowed Option Types')!}
+                size={20}
+              />
+            )}
           </h3>
 
           <div className="orderTypeFormRow">
@@ -1533,7 +1557,12 @@ const CreateOrderType: React.FC<CreateOrderTypeProps> = ({ initialData: propInit
             <FieldTooltip
               content="Select which print types/templates are available when printing orders of this type. These will appear in the print dialog."
               position="right" />
-
+            {createOrderTypeHelp.sections?.find(s => s.title === '🖨️ Linked Print Types') && (
+              <SectionHelpIcon
+                section={createOrderTypeHelp.sections.find(s => s.title === '🖨️ Linked Print Types')!}
+                size={20}
+              />
+            )}
           </h3>
 
           <div className="orderTypeFormRow">
@@ -1615,7 +1644,12 @@ const CreateOrderType: React.FC<CreateOrderTypeProps> = ({ initialData: propInit
             <FieldTooltip
               content="Select which excel export types/templates are available when exporting orders of this type to Excel. These will appear in the export dialog."
               position="right" />
-
+            {createOrderTypeHelp.sections?.find(s => s.title === '📊 Linked Excel Export Types') && (
+              <SectionHelpIcon
+                section={createOrderTypeHelp.sections.find(s => s.title === '📊 Linked Excel Export Types')!}
+                size={20}
+              />
+            )}
           </h3>
 
           <div className="orderTypeFormRow">
@@ -1697,7 +1731,12 @@ const CreateOrderType: React.FC<CreateOrderTypeProps> = ({ initialData: propInit
               <FieldTooltip
                 content="1. Select specifications from Allowed Option Types. 2. Create formulas using selected specifications. Only selected specs can be used in formulas."
                 position="right" />
-
+              {createOrderTypeHelp.sections?.find(s => s.title === '🧮 Dynamic Calculations') && (
+                <SectionHelpIcon
+                  section={createOrderTypeHelp.sections.find(s => s.title === '🧮 Dynamic Calculations')!}
+                  size={20}
+                />
+              )}
             </h3>
             <button
               type="button"
@@ -2157,7 +2196,12 @@ const CreateOrderType: React.FC<CreateOrderTypeProps> = ({ initialData: propInit
             <FieldTooltip
               content="Configure which sections and fields appear in the order creation form. Use up/down arrows to reorder, toggle visibility, and select display format."
               position="right" />
-
+            {createOrderTypeHelp.sections?.find(s => s.title === '📋 Form Sections Configuration') && (
+              <SectionHelpIcon
+                section={createOrderTypeHelp.sections.find(s => s.title === '📋 Form Sections Configuration')!}
+                size={20}
+              />
+            )}
           </h3>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -2549,6 +2593,12 @@ const CreateOrderType: React.FC<CreateOrderTypeProps> = ({ initialData: propInit
           </ActionButton>
         </div>
       </div>
+
+      <HelpDocModal
+        isOpen={showHelpModal}
+        onClose={() => setShowHelpModal(false)}
+        content={createOrderTypeHelp}
+      />
 
       <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
     </div>);

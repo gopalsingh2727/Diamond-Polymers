@@ -56,6 +56,9 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
     const [savedStep, setSavedStep] = useState<StepData | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [showStepPopup, setShowStepPopup] = useState(false);
+    // Keyboard navigation for step suggestions
+    const [stepSuggestionIndex, setStepSuggestionIndex] = useState(-1);
+    const [currentStepSuggestions, setCurrentStepSuggestions] = useState<any[]>([]);
     const [selectedStep, setSelectedStep] = useState<StepData | null>(null);
     const [noteIndex, setNoteIndex] = useState<number | null>(null);
     const [noteText, setNoteText] = useState("");
@@ -556,6 +559,47 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
         handleSelect(formattedStep);
       } catch (error) {
         handleError(error, 'handleSuggestionSelect');
+      }
+    };
+
+    // Keyboard handler for step search input
+    const handleStepSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (currentStepSuggestions.length === 0) return;
+
+      switch (e.key) {
+        case 'ArrowDown':
+          e.preventDefault();
+          setStepSuggestionIndex((prev) =>
+            prev < currentStepSuggestions.length - 1 ? prev + 1 : 0
+          );
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          setStepSuggestionIndex((prev) =>
+            prev > 0 ? prev - 1 : currentStepSuggestions.length - 1
+          );
+          break;
+        case 'Enter':
+          e.preventDefault();
+          if (stepSuggestionIndex >= 0 && stepSuggestionIndex < currentStepSuggestions.length) {
+            handleSuggestionSelect(currentStepSuggestions[stepSuggestionIndex]);
+            setStepSuggestionIndex(-1);
+          }
+          break;
+        case 'Escape':
+          e.preventDefault();
+          setSearchTerm('');
+          setStepSuggestionIndex(-1);
+          break;
+      }
+    };
+
+    // Handle suggestions change from StepSuggestions component
+    const handleStepSuggestionsChange = (suggestions: any[]) => {
+      setCurrentStepSuggestions(suggestions);
+      // Reset selection when suggestions change
+      if (suggestions.length === 0) {
+        setStepSuggestionIndex(-1);
       }
     };
 
@@ -1266,13 +1310,19 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
               type="text"
               placeholder="Enter step name to search..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setStepSuggestionIndex(-1); // Reset selection when typing
+              }}
+              onKeyDown={handleStepSearchKeyDown}
               className="inputBox"
               style={{ width: '100%', padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: '6px', fontSize: '13px' }} />
 
               <StepSuggestions
               stepName={searchTerm}
-              onSelect={handleSuggestionSelect} />
+              onSelect={handleSuggestionSelect}
+              selectedIndex={stepSuggestionIndex}
+              onSuggestionsChange={handleStepSuggestionsChange} />
 
             </div>
           </div>

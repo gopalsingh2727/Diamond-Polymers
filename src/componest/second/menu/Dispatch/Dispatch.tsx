@@ -1520,7 +1520,7 @@ export default function Dispatch() {
       {/* Loading & Error States */}
       {loading &&
       <div className="orders-loading">
-          <div className="loading-spinner"></div>
+          {/* <div className="loading-spinner"></div> */}
           <p>Loading dispatch orders...</p>
         </div>
       }

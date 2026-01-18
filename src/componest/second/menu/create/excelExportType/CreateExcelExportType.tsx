@@ -12,6 +12,9 @@ import FieldTooltip from "../../../../../components/shared/FieldTooltip";
 import { useInternalBackNavigation } from "../../../../allCompones/BackButton";
 import * as XLSX from 'xlsx';
 import "../orderType/orderType.css";
+import HelpDocModal, { HelpButton } from '../../../../../components/shared/HelpDocModal';
+import { createExcelExportTypeHelp } from '../../../../../components/shared/helpContent';
+import SectionHelpIcon from '../../../../../components/shared/SectionHelpIcon';
 
 // Default columns configuration matching backend model
 const DEFAULT_COLUMNS = [
@@ -155,6 +158,9 @@ const CreateExcelExportType: React.FC<CreateExcelExportTypeProps> = ({ initialDa
   // Delete confirmation modal
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  // Help modal
+  const [showHelpModal, setShowHelpModal] = useState(false);
 
   const dispatch = useDispatch<AppDispatch>();
   const { saveState, handleSave, toast } = useCRUD();
@@ -1269,9 +1275,12 @@ const CreateExcelExportType: React.FC<CreateExcelExportTypeProps> = ({ initialDa
               </button>
             }
             <div>
-              <h2 className="orderTypeTitle">
-                {editMode ? 'Edit Excel Export Type' : 'Create Excel Export Type'}
-              </h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <h2 className="orderTypeTitle" style={{ marginBottom: 0 }}>
+                  {editMode ? 'Edit Excel Export Type' : 'Create Excel Export Type'}
+                </h2>
+                <HelpButton onClick={() => setShowHelpModal(true)} size="medium" />
+              </div>
               <p className="orderTypeSubtitle">
                 {editMode ?
                 `Editing: ${excelExportTypeData?.typeName || 'Excel Export Type'}` :
@@ -1684,7 +1693,15 @@ const CreateExcelExportType: React.FC<CreateExcelExportTypeProps> = ({ initialDa
 
         {/* Basic Information Section */}
         <div className="orderTypeSection">
-          <h3 className="orderTypeSectionTitle">Basic Information</h3>
+          <h3 className="orderTypeSectionTitle">
+            Basic Information
+            {createExcelExportTypeHelp.sections?.find(s => s.title === '📋 Basic Information') && (
+              <SectionHelpIcon
+                section={createExcelExportTypeHelp.sections.find(s => s.title === '📋 Basic Information')!}
+                size={20}
+              />
+            )}
+          </h3>
 
           <div className="orderTypeFormRow">
             <div className="orderTypeFormColumn">
@@ -1747,6 +1764,12 @@ const CreateExcelExportType: React.FC<CreateExcelExportTypeProps> = ({ initialDa
         <div className="orderTypeSection">
           <h3 className="orderTypeSectionTitle">
             Link to Order Types
+            {createExcelExportTypeHelp.sections?.find(s => s.title === '📦 Link to Order Types') && (
+              <SectionHelpIcon
+                section={createExcelExportTypeHelp.sections.find(s => s.title === '📦 Link to Order Types')!}
+                size={20}
+              />
+            )}
             <span style={{ marginLeft: '10px', fontSize: '13px', fontWeight: 400, color: '#6b7280' }}>
               ({linkedOrderTypes.length} selected)
             </span>
@@ -2120,6 +2143,12 @@ const CreateExcelExportType: React.FC<CreateExcelExportTypeProps> = ({ initialDa
         <div className="orderTypeSection">
           <h3 className="orderTypeSectionTitle">
             Link to Option Types & Specifications
+            {createExcelExportTypeHelp.sections?.find(s => s.title === '🔗 Link to Option Types & Specifications') && (
+              <SectionHelpIcon
+                section={createExcelExportTypeHelp.sections.find(s => s.title === '🔗 Link to Option Types & Specifications')!}
+                size={20}
+              />
+            )}
             <span style={{ marginLeft: '10px', fontSize: '13px', fontWeight: 400, color: '#6b7280' }}>
               ({linkedOptionTypes.length} selected, {linkedSpecs.length} specs)
             </span>
@@ -2347,6 +2376,12 @@ const CreateExcelExportType: React.FC<CreateExcelExportTypeProps> = ({ initialDa
         <div className="orderTypeSection">
           <h3 className="orderTypeSectionTitle">
             Export Columns Configuration
+            {createExcelExportTypeHelp.sections?.find(s => s.title === '📊 Export Columns Configuration') && (
+              <SectionHelpIcon
+                section={createExcelExportTypeHelp.sections.find(s => s.title === '📊 Export Columns Configuration')!}
+                size={20}
+              />
+            )}
             <span style={{
               marginLeft: '10px',
               fontSize: '13px',
@@ -2448,7 +2483,15 @@ const CreateExcelExportType: React.FC<CreateExcelExportTypeProps> = ({ initialDa
 
         {/* Export Settings Section */}
         <div className="orderTypeSection">
-          <h3 className="orderTypeSectionTitle">Export Settings</h3>
+          <h3 className="orderTypeSectionTitle">
+            Export Settings
+            {createExcelExportTypeHelp.sections?.find(s => s.title === '⚙️ Export Settings') && (
+              <SectionHelpIcon
+                section={createExcelExportTypeHelp.sections.find(s => s.title === '⚙️ Export Settings')!}
+                size={20}
+              />
+            )}
+          </h3>
 
           <div className="orderTypeFormRow">
             <div className="orderTypeFormColumn">
@@ -2506,7 +2549,15 @@ const CreateExcelExportType: React.FC<CreateExcelExportTypeProps> = ({ initialDa
 
         {/* Advanced Settings Section */}
         <div className="orderTypeSection">
-          <h3 className="orderTypeSectionTitle">Advanced Settings</h3>
+          <h3 className="orderTypeSectionTitle">
+            Advanced Settings
+            {createExcelExportTypeHelp.sections?.find(s => s.title === '🌟 Advanced Settings') && (
+              <SectionHelpIcon
+                section={createExcelExportTypeHelp.sections.find(s => s.title === '🌟 Advanced Settings')!}
+                size={20}
+              />
+            )}
+          </h3>
 
           <div className="orderTypeCheckboxGrid">
             {(userRole === 'admin' || userRole === 'master_admin') &&
@@ -2602,6 +2653,13 @@ const CreateExcelExportType: React.FC<CreateExcelExportTypeProps> = ({ initialDa
       </div>
 
       <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
+
+      {/* Help Documentation Modal */}
+      <HelpDocModal
+        isOpen={showHelpModal}
+        onClose={() => setShowHelpModal(false)}
+        content={createExcelExportTypeHelp}
+      />
     </div>);
 
 };

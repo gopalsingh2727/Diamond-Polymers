@@ -1,169 +1,992 @@
 /* ====================================
-   Edit Machines - Compact Form Styles
-   Pattern: Same as Create Section
+   Edit Machines - Compact Form Layout
    ==================================== */
 
-#EditMachinesCss {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  padding: 10px;
+/* ====================================
+   Root Container - Full Height Layout
+   ==================================== */
+.EditMachine {
+  width: 100% !important;
+  height: 100vh !important;
+  max-height: 100vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  padding: 20px !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+  background: #f5f7fa !important;
 }
 
-#EditMachinesCss .edit-container {
-  background: white;
-  padding: 16px 24px;
-  max-width: 600px;
-  width: 100%;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+/* Detail Container - Compact Fixed Width Edit Mode */
+div.EditMachine div.detail-container,
+.EditMachine > .detail-container,
+.EditMachine .detail-container {
+  width: 30% !important;
+  min-width: 350px !important;
+  max-width: 450px !important;
+  background: white !important;
+  padding: 20px 24px !important;
+  margin: 0 auto !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+  box-sizing: border-box !important;
+  overflow-y: auto !important;
+  flex: none !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
-/* Form Title */
-#EditMachinesCss h2,
-#EditMachinesCss .form-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #1f2937;
+/* Top Button Row (Back + Delete) - Edit Mode */
+.EditMachine .detail-container .TopButtonEdit {
+  display: flex !important;
+  gap: 8px !important;
+  margin-bottom: 16px !important;
+  padding-bottom: 12px !important;
+  border-bottom: 1px solid #e5e7eb !important;
+}
+
+.EditMachine .detail-container .TopButtonEdit button {
+  padding: 8px 16px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  border: none !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  width: auto !important;
+  margin-top: 0 !important;
+  min-width: 80px !important;
+}
+
+.EditMachine .detail-container .TopButtonEdit button:first-child {
+  background: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%) !important;
+  color: white !important;
+}
+
+.EditMachine .detail-container .TopButtonEdit button:first-child:hover {
+  background: linear-gradient(135deg, #E55A2B 0%, #d44a1b 100%) !important;
+  transform: translateY(-1px) !important;
+}
+
+.EditMachine .detail-container .TopButtonEdit .Delete {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+  color: white !important;
+}
+
+.EditMachine .detail-container .TopButtonEdit .Delete:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+  transform: translateY(-1px) !important;
+}
+
+.EditMachine .detail-container .TopButtonEdit .Delete:disabled {
+  background: #9ca3af !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+}
+
+/* Form Section - Edit Mode - Compact */
+.EditMachine .detail-container .form-section {
+  background: transparent !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  margin-bottom: 14px !important;
+  box-shadow: none !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.EditMachine .detail-container .form-section label {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: #34495e !important;
+  margin-bottom: 6px !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  letter-spacing: 0.3px !important;
+}
+
+/* Two column form row */
+.EditMachine .detail-container .form-row {
+  display: flex !important;
+  gap: 12px !important;
+  margin-bottom: 14px !important;
+}
+
+.EditMachine .detail-container .form-row .form-section {
+  flex: 1 !important;
+  margin-bottom: 0 !important;
+}
+
+/* Inputs - EDIT MODE - Compact Style */
+.EditMachine .detail-container input,
+.EditMachine .detail-container select,
+.EditMachine .detail-container textarea {
+  width: 100% !important;
+  padding: 10px 12px !important;
+  font-size: 13px !important;
+  color: #2c3e50 !important;
+  background-color: #ffffff !important;
+  background: #ffffff !important;
+  border: 2px solid #e0e6ed !important;
+  border-radius: 6px !important;
+  outline: none !important;
+  box-sizing: border-box !important;
+  transition: all 0.2s ease !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.EditMachine .detail-container input:focus,
+.EditMachine .detail-container select:focus,
+.EditMachine .detail-container textarea:focus {
+  border-color: #3498db !important;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1) !important;
+}
+
+.EditMachine .detail-container input::placeholder,
+.EditMachine .detail-container textarea::placeholder {
+  color: #9ca3af !important;
+}
+
+/* Info Section - Edit Mode - Compact */
+.EditMachine .detail-container .info-section {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%) !important;
+  padding: 12px 14px !important;
+  border-radius: 6px !important;
+  border-left: 3px solid #3498db !important;
+  margin-top: 16px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+}
+
+.EditMachine .detail-container .info-section p {
+  margin: 0 !important;
+  color: #0c4a6e !important;
+  font-size: 12px !important;
+}
+
+.EditMachine .detail-container .info-section p strong {
+  color: #1e40af !important;
+  font-size: 12px !important;
+}
+
+/* Loading/Error Text */
+.EditMachine .loadingAndError {
   text-align: center;
-  margin-bottom: 12px;
-  margin-top: 0;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #e5e7eb;
+  padding: 20px;
+  font-size: 14px;
+  color: #6b7280;
 }
 
-/* Form Groups */
-#EditMachinesCss .form-group {
-  margin-bottom: 10px;
+/* ====================================
+   Edit Sections Table Styles
+   ==================================== */
+
+/* Main Container */
+.editsectionsTable-container {
+  width: 100%;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  flex: 1;
+  overflow: hidden;
 }
 
-#EditMachinesCss .form-row {
+/* Search Section */
+.editsectionsTable-searchWrapper {
   display: flex;
   gap: 12px;
-  margin-bottom: 10px;
+  align-items: center;
+  flex-shrink: 0;
 }
 
-#EditMachinesCss .form-row .form-group {
+.editsectionsTable-searchBox {
+  position: relative;
   flex: 1;
-  margin-bottom: 0;
 }
 
-/* Labels */
-#EditMachinesCss label {
-  font-size: 13px;
-  font-weight: 500;
-  color: #374151;
-  margin-bottom: 4px;
-  display: block;
-}
-
-/* Inputs - Bordered Style (matches Create section) */
-#EditMachinesCss input,
-#EditMachinesCss select,
-#EditMachinesCss textarea {
+.editsectionsTable-searchInput {
   width: 100%;
-  padding: 12px 16px;
-  font-size: 14px;
-  color: #2c3e50;
-  background-color: #ffffff;
-  border: 2px solid #e0e6ed;
-  border-radius: 8px;
+  padding: 12px 40px 12px 44px !important;
+  font-size: 15px !important;
+  color: #374151 !important;
+  background: #fff !important;
+  border: 2px solid #e5e7eb !important;
+  border-radius: 10px !important;
   outline: none;
+  transition: all 0.2s ease;
   box-sizing: border-box;
-  transition: all 0.3s ease;
 }
 
-#EditMachinesCss input:focus,
-#EditMachinesCss select:focus,
-#EditMachinesCss textarea:focus {
-  border-color: #FF6B35;
+.editsectionsTable-searchInput:focus {
+  border-color: #FF6B35 !important;
   box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
 }
 
-#EditMachinesCss input:hover,
-#EditMachinesCss select:hover,
-#EditMachinesCss textarea:hover {
-  border-color: #bdc3c7;
-}
-
-#EditMachinesCss input::placeholder {
+.editsectionsTable-searchInput::placeholder {
   color: #9ca3af;
 }
 
-/* Select dropdown */
-#EditMachinesCss select {
-  cursor: pointer;
-  -webkit-appearance: none;
-  appearance: none;
+.editsectionsTable-searchIcon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 18px;
+  color: #9ca3af;
+  pointer-events: none;
 }
 
-/* Save button */
-#EditMachinesCss button,
-#EditMachinesCss .save-button {
+.editsectionsTable-clearButton {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #9ca3af;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.editsectionsTable-clearButton:hover {
+  color: #374151;
+  background: #f3f4f6;
+}
+
+.editsectionsTable-countBadge {
+  padding: 12px 18px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #6b7280;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+/* Table Wrapper */
+.editsectionsTable-wrapper {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  overflow: auto;
+  border: 1px solid #e5e7eb;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Table */
+.editsectionsTable-table {
   width: 100%;
-  padding: 12px 24px;
-  margin-top: 16px;
+  border-collapse: collapse;
+  margin: 0;
+}
+
+/* Table Header */
+.editsectionsTable-thead {
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.editsectionsTable-th {
+  padding: 14px 16px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #FF6B35;
+  background: #f9fafb;
+  white-space: nowrap;
+}
+
+.editsectionsTable-th:first-child {
+  padding-left: 20px;
+}
+
+.editsectionsTable-th:last-child {
+  padding-right: 20px;
+}
+
+/* Table Body */
+.editsectionsTable-tbody {
+  background: #fff;
+}
+
+.editsectionsTable-tr {
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.editsectionsTable-tr:last-child {
+  border-bottom: none;
+}
+
+.editsectionsTable-tr:hover {
+  background: #fff7ed;
+}
+
+.editsectionsTable-trSelected {
+  background: #fff7ed !important;
+}
+
+.editsectionsTable-trSelected .editsectionsTable-td:first-child {
+  box-shadow: inset 3px 0 0 #FF6B35;
+}
+
+.editsectionsTable-td {
+  padding: 14px 16px;
+  font-size: 14px;
+  color: #4b5563;
+  vertical-align: middle;
+}
+
+.editsectionsTable-td:first-child {
+  padding-left: 20px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.editsectionsTable-td:last-child {
+  padding-right: 20px;
+}
+
+/* Empty State */
+.editsectionsTable-empty {
+  padding: 60px 40px;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 15px;
+  background: #fafafa;
+  border-radius: 12px;
+  border: 1px dashed #e5e7eb;
+}
+
+.editsectionsTable-empty span {
+  color: #FF6B35;
+  font-weight: 500;
+}
+
+/* ====================================
+   Table Configuration Styles
+   ==================================== */
+
+/* Section Header */
+.CreateMachineSectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #FF6B35;
+}
+
+.CreateMachineSectionTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.CreateMachineSubsectionTitle {
   font-size: 15px;
   font-weight: 600;
+  color: #374151;
+  margin: 0 0 12px 0;
+}
+
+/* Export Button */
+.CreateMachineExportConfigBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
-  background: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%);
   border: none;
   border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.25);
 }
 
-#EditMachinesCss button:hover:not(:disabled),
-#EditMachinesCss .save-button:hover:not(:disabled) {
+.CreateMachineExportConfigBtn:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  transform: translateY(-1px);
+}
+
+/* Template Selection */
+.CreateMachineTemplateSelection {
+  background: #f9fafb;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.CreateMachineTemplateButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.CreateMachineTemplateBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.CreateMachineTemplateBtn:hover {
+  border-color: #FF6B35;
+  color: #FF6B35;
+  background: #fff7ed;
+}
+
+/* Column Management */
+.CreateMachineColumnManagement {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.CreateMachineCurrentColumns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.CreateMachineColumnItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+}
+
+.CreateMachineColumnInfo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.CreateMachineColumnTypeIcon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e5e7eb;
+  border-radius: 4px;
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.CreateMachineColumnName {
+  font-weight: 500;
+  color: #1f2937;
+  font-size: 13px;
+}
+
+.CreateMachineColumnType {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+.CreateMachineRequiredBadge {
+  padding: 2px 6px;
+  background: #fef2f2;
+  color: #dc2626;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.CreateMachineRemoveColumnBtn {
+  padding: 4px;
+  background: none;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.CreateMachineRemoveColumnBtn:hover {
+  background: #fef2f2;
+}
+
+/* Add Column Form */
+.CreateMachineAddColumnForm {
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.CreateMachineColumnInputs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.CreateMachineColumnNameInput {
+  flex: 1;
+  min-width: 150px;
+  padding: 10px 12px !important;
+  border: 2px solid #e5e7eb !important;
+  border-radius: 6px !important;
+  font-size: 14px !important;
+}
+
+.CreateMachineColumnTypeSelect {
+  padding: 10px 12px !important;
+  border: 2px solid #e5e7eb !important;
+  border-radius: 6px !important;
+  font-size: 14px !important;
+  min-width: 100px;
+}
+
+.CreateMachineRequiredCheckbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+}
+
+.CreateMachineRequiredCheckbox input {
+  width: auto !important;
+  margin: 0 !important;
+}
+
+.CreateMachineAddColumnBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.CreateMachineAddColumnBtn:hover {
   background: linear-gradient(135deg, #E55A2B 0%, #d44a1b 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(255, 107, 53, 0.35);
 }
 
-#EditMachinesCss button:disabled {
+/* Formula Management */
+.CreateMachineFormulaManagement {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.CreateMachineCurrentFormulas {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.CreateMachineFormulaItem {
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.CreateMachineFormulaHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.CreateMachineFormulaColumnName {
+  font-weight: 600;
+  color: #0369a1;
+  font-size: 14px;
+}
+
+.CreateMachineRemoveFormulaBtn {
+  padding: 4px;
+  background: none;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.CreateMachineRemoveFormulaBtn:hover {
+  background: #fef2f2;
+}
+
+.CreateMachineFormulaExpression,
+.CreateMachineFormulaDependencies,
+.CreateMachineFormulaDescription {
+  font-size: 13px;
+  color: #374151;
+  margin-bottom: 4px;
+}
+
+.CreateMachineFormulaExpression strong,
+.CreateMachineFormulaDependencies strong,
+.CreateMachineFormulaDescription strong {
+  color: #0369a1;
+}
+
+/* Add Formula Form */
+.CreateMachineAddFormulaForm {
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.CreateMachineFormulaInputs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.CreateMachineFormulaColumnSelect {
+  flex: 1;
+  padding: 10px 12px !important;
+  border: 2px solid #e5e7eb !important;
+  border-radius: 6px !important;
+  font-size: 14px !important;
+}
+
+.CreateMachineFormulaExpressionInput {
+  flex: 2;
+  padding: 10px 12px !important;
+  border: 2px solid #e5e7eb !important;
+  border-radius: 6px !important;
+  font-size: 14px !important;
+}
+
+.CreateMachineFormulaDescriptionInput {
+  width: 100%;
+  padding: 10px 12px !important;
+  border: 2px solid #e5e7eb !important;
+  border-radius: 6px !important;
+  font-size: 14px !important;
+  margin-bottom: 10px;
+}
+
+.CreateMachineAddFormulaBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.CreateMachineAddFormulaBtn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+}
+
+.CreateMachineAddFormulaBtn:disabled {
   background: #9ca3af;
   cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
 }
 
-/* Delete button */
-#EditMachinesCss .delete-button {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25);
+.CreateMachineFormulaHelp {
+  margin-top: 12px;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #6b7280;
 }
 
-#EditMachinesCss .delete-button:hover:not(:disabled) {
-  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.35);
+.CreateMachineFormulaHelp p {
+  margin: 4px 0;
 }
 
-/* Error Messages */
-.error-text {
-  color: #dc2626;
-  font-size: 12px;
-  margin-top: 4px;
-}
-
-/* Success Messages */
-.success-text {
-  color: #059669;
-  font-size: 12px;
-  margin-top: 4px;
-}
-
-/* Info Section */
-#EditMachinesCss .info-section {
-  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-  padding: 12px 16px;
+/* Table Preview */
+.CreateMachineTablePreview,
+.CreateMachinePreviewSection,
+.CreateMachineDataEntrySection {
+  background: white;
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
-  border-left: 4px solid #FF6B35;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.CreateMachinePreviewTableWrapper {
+  overflow-x: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-top: 12px;
+}
+
+.CreateMachinePreviewTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.CreateMachinePreviewHeader {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+  text-transform: uppercase;
+  background: #f9fafb;
+  border-bottom: 2px solid #FF6B35;
+}
+
+.CreateMachinePreviewRow {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.CreateMachinePreviewRow:last-child {
+  border-bottom: none;
+}
+
+.CreateMachinePreviewCell {
+  padding: 12px 16px;
+  font-size: 14px;
+  color: #374151;
+}
+
+.CreateMachinePreviewCell.formula-cell {
+  background: #f0fdf4;
+  color: #166534;
+  font-weight: 600;
+}
+
+.CreateMachineCellContent {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.CreateMachineRequiredMark {
+  color: #dc2626;
+}
+
+/* Total Row */
+.CreateMachineTotalRow {
+  background: #f9fafb;
+  font-weight: 600;
+}
+
+.CreateMachineTotalRow .CreateMachinePreviewCell {
+  border-top: 2px solid #e5e7eb;
+  color: #1f2937;
+}
+
+/* Test Mode Alert */
+.CreateMachineTestModeAlert {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: #c2410c;
+}
+
+/* Regenerate Button */
+.CreateMachineRegenerateBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.CreateMachineRegenerateBtn:hover {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+}
+
+/* Add Row Button */
+.CreateMachineAddRowBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.CreateMachineAddRowBtn:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+}
+
+/* Formula Explanation */
+.CreateMachineFormulaExplanation {
+  margin-top: 16px;
+  padding: 16px;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+}
+
+.CreateMachineFormulaExplanationItem {
+  font-size: 13px;
+  color: #0369a1;
+  margin-bottom: 6px;
+}
+
+.CreateMachineFormulaExplanationItem:last-child {
+  margin-bottom: 0;
+}
+
+/* Data Input */
+.CreateMachineDataInput {
+  width: 100% !important;
+  padding: 8px 12px !important;
+  border: 2px solid #e5e7eb !important;
+  border-radius: 6px !important;
+  font-size: 14px !important;
+}
+
+.CreateMachineDataInput:focus {
+  border-color: #FF6B35 !important;
+}
+
+.CreateMachineFormulaValue {
+  font-weight: 600;
+  color: #166534;
+  background: #f0fdf4;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+/* Row Actions */
+.CreateMachineActionsHeader,
+.CreateMachineActionsCell {
+  text-align: center;
+  width: 120px;
+}
+
+.CreateMachineRowActions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.CreateMachineSaveRowBtn,
+.CreateMachineEditRowBtn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.CreateMachineSaveRowBtn:hover,
+.CreateMachineEditRowBtn:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+}
+
+.CreateMachineCancelRowBtn,
+.CreateMachineDeleteRowBtn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.CreateMachineCancelRowBtn:hover,
+.CreateMachineDeleteRowBtn:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+}
+
+/* Empty State */
+.CreateMachineEmptyState {
+  padding: 40px;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 14px;
+  background: #f9fafb;
+  border-radius: 8px;
   margin-top: 16px;
 }
 
-#EditMachinesCss .info-section p {
-  margin: 4px 0;
-  color: #0c4a6e;
-  font-size: 13px;
+/* ====================================
+   Loading & Error States
+   ==================================== */
+
+.loadingAndError {
+  text-align: center;
+  padding: 40px 20px;
+  font-size: 14px;
+  color: #6b7280;
 }

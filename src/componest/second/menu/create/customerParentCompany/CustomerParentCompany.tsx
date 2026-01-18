@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
 import { createParentCompanyV2, updateParentCompanyV2, deleteParentCompanyV2 } from "../../../../redux/unifiedV2";
@@ -6,6 +6,9 @@ import { RootState, AppDispatch } from "../../../../../store";
 import { useInternalBackNavigation } from "../../../../allCompones/BackButton";
 import { useCRUD } from "../../../../../hooks/useCRUD";
 import { ToastContainer } from "../../../../../components/shared/Toast";
+import HelpDocModal, { HelpButton } from "../../../../../components/shared/HelpDocModal";
+import { parentCompanyHelp } from "../../../../../components/shared/helpContent";
+import { useFormDataCache } from "../../Edit/hooks/useFormDataCache";
 import "./CustomerParentCompany.css";
 
 type ParentCompanyFormData = {
@@ -43,8 +46,8 @@ const CustomerParentCompany: React.FC<Props> = ({
 
   const locationState = location.state as LocationState | null;
   const initialData: ParentCompanyData = locationState?.initialData || propInitialData;
-  const itemId = locationState?.itemId || initialData?._id;
-  const editMode = locationState?.editMode || !!initialData?._id;
+  const itemId = locationState?.itemId || initialData?._id || (initialData as any)?.id;
+  const editMode = locationState?.editMode || !!(initialData?._id || (initialData as any)?.id);
 
   const { error: reduxError } = useSelector(
     (state: RootState) => state.v2.parentCompany
@@ -52,12 +55,27 @@ const CustomerParentCompany: React.FC<Props> = ({
 
   const { handleSave, handleDelete: crudDelete, saveState, deleteState, confirmDialog, closeConfirmDialog, toast } = useCRUD();
 
+  // Get customers from cache
+  const { customers } = useFormDataCache();
+
+  // Filter customers that use this parent company
+  const relatedCustomers = useMemo(() => {
+    if (!editMode || !itemId) return [];
+    return customers.filter((customer: any) => {
+      const parentCompanyId = typeof customer.parentCompanyId === 'object'
+        ? customer.parentCompanyId?._id
+        : customer.parentCompanyId;
+      return parentCompanyId === itemId;
+    });
+  }, [customers, itemId, editMode]);
+
   const [formValues, setFormValues] = useState<ParentCompanyFormData>({
     name: initialData.name || "",
     description: initialData.description || "",
   });
 
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
+  const [showHelpModal, setShowHelpModal] = useState(false);
 
   const handleBackToList = () => {
     if (onSaveSuccess) {
@@ -72,7 +90,8 @@ const CustomerParentCompany: React.FC<Props> = ({
   useInternalBackNavigation(editMode && !confirmDialog.isOpen, handleBackToList);
 
   useEffect(() => {
-    if (initialData && initialData._id) {
+    const hasId = initialData && (initialData._id || (initialData as any)?.id);
+    if (hasId) {
       setFormValues({
         name: initialData.name || "",
         description: initialData.description || "",
@@ -179,7 +198,7 @@ const CustomerParentCompany: React.FC<Props> = ({
   };
 
   return (
-    <div className="customerParentCompany-container">
+    <div className={`customerParentCompany-container ${editMode ? 'edit-mode' : ''}`}>
       <div className="customerParentCompany-form">
 
         {/* Delete Confirmation Modal */}
@@ -249,77 +268,96 @@ const CustomerParentCompany: React.FC<Props> = ({
         )}
 
         {editMode && (
-          <div className="customerParentCompany-header">
+          <div className="customerParentCompany-top-buttons">
             {onCancel && (
               <button
                 type="button"
                 onClick={onCancel}
-                style={{
-                  padding: "8px 16px",
-                  background: "#6b7280",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                  fontSize: "14px"
-                }}
+                className="customerParentCompany-back-btn"
               >
                 Back to List
               </button>
             )}
-            <h2 className="customerParentCompany-header-title">Edit Parent Company</h2>
             <button
               type="button"
               onClick={handleDeleteClick}
               disabled={deleteState === 'loading'}
-              style={{
-                padding: "8px 16px",
-                background: "#ef4444",
-                color: "white",
-                border: "none",
-                borderRadius: "6px",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                fontSize: "14px"
-              }}
+              className="customerParentCompany-delete-btn"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14zM10 11v6M14 11v6" />
-              </svg>
               {deleteState === 'loading' ? "Deleting..." : "Delete"}
             </button>
           </div>
         )}
 
-        {!editMode && <h2 className="customerParentCompany-title">Create Parent Company</h2>}
+        {!editMode && (
+          <div className="customerParentCompany-title-row">
+            <h2 className="customerParentCompany-title">Create Parent Company</h2>
+            <HelpButton onClick={() => setShowHelpModal(true)} size="medium" />
+          </div>
+        )}
+        {editMode && (
+          <div className="customerParentCompany-title-row">
+            <h2 className="customerParentCompany-title">Edit Parent Company</h2>
+            <HelpButton onClick={() => setShowHelpModal(true)} size="medium" />
+          </div>
+        )}
 
         <form ref={formRef} onSubmit={handleSubmit}>
-          <div className="customerParentCompany-group">
-            <label className="customerParentCompany-label">Company Name *</label>
-            <input
-              className="customerParentCompany-input"
-              name="name"
-              value={formValues.name}
-              onChange={handleChange}
-              placeholder="e.g., Kalyan Jewellers, Malabar Gold"
-            />
-            {validationErrors.name && (
-              <small className="customerParentCompany-error">{validationErrors.name}</small>
-            )}
-          </div>
+          {editMode ? (
+            <div className="customerParentCompany-form-row">
+              <div className="customerParentCompany-group">
+                <label className="customerParentCompany-label">Company Name *</label>
+                <input
+                  className="customerParentCompany-input"
+                  name="name"
+                  value={formValues.name}
+                  onChange={handleChange}
+                  placeholder="e.g., Kalyan Jewellers, Malabar Gold"
+                />
+                {validationErrors.name && (
+                  <small className="customerParentCompany-error">{validationErrors.name}</small>
+                )}
+              </div>
 
-          <div className="customerParentCompany-group">
-            <label className="customerParentCompany-label">Description</label>
-            <textarea
-              className="customerParentCompany-textarea"
-              name="description"
-              value={formValues.description}
-              onChange={handleChange}
-              placeholder="Enter company description..."
-            />
-          </div>
+              <div className="customerParentCompany-group">
+                <label className="customerParentCompany-label">Description</label>
+                <input
+                  className="customerParentCompany-input"
+                  name="description"
+                  value={formValues.description}
+                  onChange={handleChange}
+                  placeholder="Enter company description..."
+                />
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="customerParentCompany-group">
+                <label className="customerParentCompany-label">Company Name *</label>
+                <input
+                  className="customerParentCompany-input"
+                  name="name"
+                  value={formValues.name}
+                  onChange={handleChange}
+                  placeholder="e.g., Kalyan Jewellers, Malabar Gold"
+                />
+                {validationErrors.name && (
+                  <small className="customerParentCompany-error">{validationErrors.name}</small>
+                )}
+              </div>
+
+              <div className="customerParentCompany-group">
+                <label className="customerParentCompany-label">Description</label>
+                <textarea
+                  className="customerParentCompany-textarea"
+                  name="description"
+                  value={formValues.description}
+                  onChange={handleChange}
+                  placeholder="Enter company description..."
+                />
+              </div>
+            </>
+          )}
 
           {reduxError && <div className="customerParentCompany-error">{reduxError}</div>}
 
@@ -328,6 +366,49 @@ const CustomerParentCompany: React.FC<Props> = ({
           </button>
         </form>
       </div>
+
+      {/* Related Customers Table - Only in Edit Mode */}
+      {editMode && relatedCustomers.length > 0 && (
+        <div className="customerParentCompany-customers-section">
+          <h3 className="customerParentCompany-customers-title">
+            Customers using this Parent Company ({relatedCustomers.length})
+          </h3>
+          <div className="customerParentCompany-table-wrapper">
+            <table className="customerParentCompany-table">
+              <thead>
+                <tr>
+                  <th>No</th>
+                  <th>Company Name</th>
+                  <th>Contact Name</th>
+                  <th>Phone</th>
+                  <th>State</th>
+                </tr>
+              </thead>
+              <tbody>
+                {relatedCustomers.map((customer: any, index: number) => (
+                  <tr key={customer._id}>
+                    <td>{index + 1}</td>
+                    <td>{customer.companyName || "N/A"}</td>
+                    <td>
+                      {[customer.firstName, customer.lastName].filter(Boolean).join(" ") || "N/A"}
+                    </td>
+                    <td>{customer.phone1 || "N/A"}</td>
+                    <td>{customer.state || "N/A"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Help Documentation Modal */}
+      <HelpDocModal
+        isOpen={showHelpModal}
+        onClose={() => setShowHelpModal(false)}
+        content={parentCompanyHelp}
+      />
+
       <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
     </div>
   );

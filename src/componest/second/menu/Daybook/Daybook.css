@@ -1,0 +1,677 @@
+/* ====================================
+   Daybook - Edit Table Styles
+   Copied from EditMachineType CSS
+   ==================================== */
+
+/* ====================================
+   Edit Sections Table Styles
+   Prefix: editsectionsTable-
+   ==================================== */
+
+/* Main Container */
+.editsectionsTable-container {
+  width: 100%;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Page Title */
+.editsectionsTable-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1f2937;
+  text-align: center;
+  margin: 0 0 10px 0;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #FF6B35;
+}
+
+/* Search Section */
+.editsectionsTable-searchWrapper {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.editsectionsTable-searchBox {
+  position: relative;
+  flex: 1;
+}
+
+.editsectionsTable-searchInput {
+  width: 100%;
+  padding: 8px 32px 8px 36px !important;
+  font-size: 12px !important;
+  color: #374151 !important;
+  background: #fff !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 6px !important;
+  outline: none;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.editsectionsTable-searchInput:focus {
+  border-color: #FF6B35 !important;
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+}
+
+.editsectionsTable-searchInput::placeholder {
+  color: #9ca3af;
+}
+
+.editsectionsTable-searchIcon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+.editsectionsTable-clearButton {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  color: #9ca3af;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.editsectionsTable-clearButton:hover {
+  color: #374151;
+  background: #f3f4f6;
+}
+
+.editsectionsTable-countBadge {
+  padding: 6px 12px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 11px;
+  color: #6b7280;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+/* Table Wrapper */
+.editsectionsTable-wrapper {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  overflow: auto;
+  border: 1px solid #e5e7eb;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Table */
+.editsectionsTable-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0;
+}
+
+/* Table Header */
+.editsectionsTable-thead {
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+}
+
+.editsectionsTable-th {
+  padding: 8px 10px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  border-bottom: 2px solid #FF6B35;
+}
+
+.editsectionsTable-th:first-child {
+  padding-left: 12px;
+}
+
+.editsectionsTable-th:last-child {
+  padding-right: 12px;
+}
+
+/* Table Body */
+.editsectionsTable-tbody {
+  background: #fff;
+}
+
+.editsectionsTable-tr {
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.editsectionsTable-tr:last-child {
+  border-bottom: none;
+}
+
+.editsectionsTable-tr:hover {
+  background: #fff7ed;
+}
+
+.editsectionsTable-trSelected {
+  background: #fff7ed !important;
+}
+
+.editsectionsTable-trSelected .editsectionsTable-td:first-child {
+  box-shadow: inset 3px 0 0 #FF6B35;
+}
+
+.editsectionsTable-td {
+  padding: 6px 10px;
+  font-size: 12px;
+  color: #4b5563;
+  vertical-align: middle;
+}
+
+.editsectionsTable-td:first-child {
+  padding-left: 12px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.editsectionsTable-td:last-child {
+  padding-right: 12px;
+}
+
+/* Empty State */
+.editsectionsTable-empty {
+  padding: 30px 20px;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 13px;
+  background: #fafafa;
+  border-radius: 8px;
+  border: 1px dashed #e5e7eb;
+}
+
+.editsectionsTable-empty span {
+  color: #FF6B35;
+  font-weight: 500;
+}
+
+/* ====================================
+   Daybook Page Layout - Full Height
+   Same as EditNewAccount list view
+   ==================================== */
+
+/* Main Container - Full viewport height with flex layout */
+.EditMachineType {
+  width: 100%;
+  height: 100vh;
+  max-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+  background: #fff;
+}
+
+/* ====================================
+   Header Styles - Fixed at top
+   ==================================== */
+
+.editsectionsTable-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
+  z-index: 100;
+}
+
+.editsectionsTable-header__left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.editsectionsTable-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.editsectionsTable-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+  padding: 0;
+  border: none;
+  text-align: left;
+}
+
+/* ====================================
+   Summary Cards - Below header
+   ==================================== */
+
+.editsectionsTable-summary {
+  display: flex;
+  gap: 8px;
+  padding: 6px 16px;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.editsectionsTable-summary--compact {
+  padding: 4px 16px;
+  gap: 6px;
+}
+
+.editsectionsTable-summaryCard {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 6px 10px;
+  min-width: 50px;
+  text-align: center;
+}
+
+.editsectionsTable-summaryCard--mini {
+  padding: 4px 8px;
+  min-width: 40px;
+}
+
+.editsectionsTable-summaryCard__value {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.editsectionsTable-summaryCard__label {
+  font-size: 9px;
+  color: #6b7280;
+  text-transform: uppercase;
+  margin-top: 1px;
+}
+
+/* Status-specific colors */
+.editsectionsTable-summaryCard--waiting { border-left: 3px solid #f59e0b; }
+.editsectionsTable-summaryCard--pending { border-left: 3px solid #eab308; }
+.editsectionsTable-summaryCard--approved { border-left: 3px solid #8b5cf6; }
+.editsectionsTable-summaryCard--progress { border-left: 3px solid #3b82f6; }
+.editsectionsTable-summaryCard--completed { border-left: 3px solid #10b981; }
+.editsectionsTable-summaryCard--dispatched { border-left: 3px solid #06b6d4; }
+.editsectionsTable-summaryCard--issue { border-left: 3px solid #ef4444; }
+.editsectionsTable-summaryCard--cancelled { border-left: 3px solid #6b7280; }
+
+/* ====================================
+   Table Container - Takes remaining space
+   ==================================== */
+
+.editsectionsTable-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+  min-height: 0; /* Critical for flex children to shrink */
+}
+
+/* ====================================
+   Table Wrapper - Scrollable area
+   ==================================== */
+
+.editsectionsTable-wrapper {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: auto;
+  background: #fff;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  min-height: 0; /* Critical for flex children to shrink */
+}
+
+/* ====================================
+   Table Styles
+   ==================================== */
+
+.editsectionsTable-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* ====================================
+   Sticky Table Header - Stays at top when scrolling
+   ==================================== */
+
+.editsectionsTable-thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #f9fafb;
+}
+
+.editsectionsTable-th {
+  padding: 8px 10px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  border-bottom: 2px solid #FF6B35;
+  background: #f9fafb;
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+/* ====================================
+   Filter Header Styles
+   ==================================== */
+
+.editsectionsTable-filterHeader {
+  position: relative;
+  cursor: pointer;
+}
+
+.editsectionsTable-filterHeader.editsectionsTable-hasFilter {
+  background: #fff7ed !important;
+}
+
+.editsectionsTable-filterBtn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  padding: 2px 0;
+}
+
+.editsectionsTable-filterBtn:hover {
+  color: #FF6B35;
+}
+
+.editsectionsTable-filterIcon {
+  font-size: 10px;
+  color: #9ca3af;
+}
+
+.editsectionsTable-hasFilter .editsectionsTable-filterIcon {
+  color: #FF6B35;
+}
+
+/* ====================================
+   Dropdown Styles
+   ==================================== */
+
+.editsectionsTable-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  min-width: 200px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.editsectionsTable-dropdown--fixed {
+  position: fixed;
+}
+
+.editsectionsTable-dropdownTitle {
+  padding: 6px 10px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  border-bottom: 1px solid #f3f4f6;
+  background: #f9fafb;
+}
+
+.editsectionsTable-dropdownItem {
+  padding: 6px 10px;
+}
+
+.editsectionsTable-dropdownItem label {
+  display: block;
+  font-size: 10px;
+  color: #6b7280;
+  margin-bottom: 3px;
+}
+
+.editsectionsTable-dropdownItem input[type="date"],
+.editsectionsTable-dropdownItem input[type="text"] {
+  width: 100%;
+  padding: 5px 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 5px;
+  font-size: 11px;
+  background: #fff;
+}
+
+.editsectionsTable-dropdownItem input:focus {
+  border-color: #FF6B35;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.1);
+}
+
+.editsectionsTable-dropdownOptions {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.editsectionsTable-dropdownOption {
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  font-size: 11px;
+}
+
+.editsectionsTable-dropdownOption:hover {
+  background: #f9fafb;
+}
+
+.editsectionsTable-dropdownOption.selected {
+  background: #fff7ed;
+  color: #FF6B35;
+}
+
+.editsectionsTable-dropdownActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  padding: 6px 10px;
+  border-top: 1px solid #f3f4f6;
+  background: #f9fafb;
+}
+
+.editsectionsTable-dropdownActions button {
+  padding: 4px 10px;
+  border-radius: 5px;
+  font-size: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #374151;
+}
+
+.editsectionsTable-dropdownActions button:hover {
+  background: #f3f4f6;
+}
+
+.editsectionsTable-applyBtn {
+  background: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%) !important;
+  color: #fff !important;
+  border: none !important;
+}
+
+.editsectionsTable-applyBtn:hover {
+  background: linear-gradient(135deg, #E55A2B 0%, #d44a1b 100%) !important;
+}
+
+/* ====================================
+   Badge Styles
+   ==================================== */
+
+.editsectionsTable-statusBadge,
+.editsectionsTable-priorityBadge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #fff;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+/* ====================================
+   Cell Styles
+   ==================================== */
+
+.editsectionsTable-dateCell {
+  font-size: 11px;
+  color: #6b7280;
+  white-space: nowrap;
+}
+
+.editsectionsTable-orderIdCell {
+  font-weight: 600;
+  font-size: 11px;
+  color: #1f2937;
+}
+
+/* ====================================
+   Pagination Styles
+   ==================================== */
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 8px 16px;
+  background: #fff;
+  border-top: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+.pagination-btn {
+  padding: 5px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 5px;
+  background: #fff;
+  color: #374151;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: #f9fafb;
+  border-color: #FF6B35;
+  color: #FF6B35;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-info {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+/* ====================================
+   Filter & Action Buttons
+   ==================================== */
+
+.editsectionsTable-filterInput {
+  padding: 6px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 12px;
+  transition: all 0.2s ease;
+}
+
+.editsectionsTable-filterInput:focus {
+  border-color: #FF6B35;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+}
+
+.editsectionsTable-resetBtn {
+  padding: 6px 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #fff;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.editsectionsTable-resetBtn:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.editsectionsTable-actionBtn {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.editsectionsTable-actionBtn--export {
+  background: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%);
+  color: #fff;
+}
+
+.editsectionsTable-actionBtn--export:hover {
+  background: linear-gradient(135deg, #E55A2B 0%, #d44a1b 100%);
+  transform: translateY(-1px);
+}
+
+/* ====================================
+   Loading & Error States
+   ==================================== */
+
+.loadingAndError {
+  text-align: center;
+  padding: 20px 16px;
+  font-size: 12px;
+  color: #6b7280;
+}

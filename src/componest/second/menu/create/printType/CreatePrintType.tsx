@@ -11,6 +11,8 @@ import { ToastContainer } from "../../../../../components/shared/Toast";
 import { useCRUD } from "../../../../../hooks/useCRUD";
 import FieldTooltip from "../../../../../components/shared/FieldTooltip";
 import { useInternalBackNavigation } from "../../../../allCompones/BackButton";
+import HelpDocModal, { HelpButton } from "../../../../../components/shared/HelpDocModal";
+import { printTypeHelp } from "../../../../../components/shared/helpContent";
 import "../orderType/orderType.css";
 
 interface CreatePrintTypeProps {
@@ -45,6 +47,9 @@ const CreatePrintType: React.FC<CreatePrintTypeProps> = ({ initialData: propInit
   const [footerTemplate, setFooterTemplate] = useState("");
   const [cssTemplate, setCssTemplate] = useState("");
   const [showPreview, setShowPreview] = useState(false);
+
+  // Help modal state
+  const [showHelpModal, setShowHelpModal] = useState(false);
 
   // Linked Order Types
   const [linkedOrderTypes, setLinkedOrderTypes] = useState<string[]>([]);
@@ -711,16 +716,19 @@ const CreatePrintType: React.FC<CreatePrintTypeProps> = ({ initialData: propInit
                 Back to List
               </button>
             }
-            <div>
-              <h2 className="orderTypeTitle">
-                {editMode ? 'Edit Print Type' : 'Create Print Type'}
-              </h2>
-              <p className="orderTypeSubtitle">
-                {editMode ?
-                `Editing: ${printTypeData?.typeName || 'Print Type'}` :
-                'Configure a new print type for your system'
-                }
-              </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div>
+                <h2 className="orderTypeTitle">
+                  {editMode ? 'Edit Print Type' : 'Create Print Type'}
+                </h2>
+                <p className="orderTypeSubtitle">
+                  {editMode ?
+                  `Editing: ${printTypeData?.typeName || 'Print Type'}` :
+                  'Configure a new print type for your system'
+                  }
+                </p>
+              </div>
+              {!editMode && <HelpButton onClick={() => setShowHelpModal(true)} size="medium" />}
             </div>
           </div>
           {editMode &&
@@ -1853,6 +1861,12 @@ th { background-color: #f5f5f5; }`}
           </ActionButton>
         </div>
       </div>
+
+      <HelpDocModal
+        isOpen={showHelpModal}
+        onClose={() => setShowHelpModal(false)}
+        content={printTypeHelp}
+      />
 
       <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
     </div>);

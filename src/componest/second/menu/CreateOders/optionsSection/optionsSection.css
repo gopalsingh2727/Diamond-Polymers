@@ -1656,6 +1656,17 @@
   color: #FF6B35;
 }
 
+/* Selected/highlighted suggestion item (keyboard navigation) */
+.createorderstartsections-suggestionItem.selected {
+  background-color: #FF6B35;
+  color: white;
+}
+
+.createorderstartsections-suggestionItem.selected:hover {
+  background-color: #e55a2b;
+  color: white;
+}
+
 /* Bottom Gusset */
 .createorderstartsections-BottomGusset {
   display: flex;

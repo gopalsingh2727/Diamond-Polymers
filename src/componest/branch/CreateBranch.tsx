@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import type { RootState, AppDispatch } from "../../store";
 import { InfinitySpinner } from "../../components/InfinitySpinner";
-import { setSelectedBranchInAuth } from "../redux/login/authActions";
+import { setSelectedBranchInAuth, logout } from "../redux/login/authActions";
+import { isTokenExpired, clearAuthData } from "../redux/utils/auth";
 
 const CreateBranch = () => {
   const navigate = useNavigate();
@@ -14,6 +15,15 @@ const CreateBranch = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+
+  // Check token validity on mount and redirect if expired
+  useEffect(() => {
+    if (!token || isTokenExpired(token)) {
+      clearAuthData();
+      dispatch(logout());
+      navigate("/login", { replace: true });
+    }
+  }, [token, dispatch, navigate]);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -25,6 +35,12 @@ const CreateBranch = () => {
 
   const baseUrl = import.meta.env.VITE_API_27INFINITY_IN || "https://api.27infinity.in";
   const apiKey = import.meta.env.VITE_API_KEY;
+
+  const handleLogout = () => {
+    clearAuthData();
+    dispatch(logout());
+    navigate("/login", { replace: true });
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -96,15 +112,15 @@ const CreateBranch = () => {
         localStorage.setItem('selectedBranch', newBranchId);
         localStorage.setItem('branchId', newBranchId);
 
-        // Update Redux state
-        dispatch(setSelectedBranchInAuth(newBranchId));
+        // Update Redux state - await to ensure state updates before navigating
+        await dispatch(setSelectedBranchInAuth(newBranchId));
       }
 
       setSuccess(true);
 
       // Redirect to main menu after 2 seconds
       setTimeout(() => {
-        navigate("/menu");
+        navigate("/menu", { replace: true });
       }, 2000);
     } catch (err: any) {
 
@@ -285,6 +301,29 @@ const CreateBranch = () => {
             "Create Branch"
             }
           </button>
+
+          {/* Escape options */}
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <div className="flex gap-3">
+              {/* Select existing branch - only for admin role */}
+              {userData?.role === "admin" && (
+                <button
+                  type="button"
+                  onClick={() => navigate("/select-branch", { replace: true })}
+                  className="flex-1 py-2 px-4 rounded-lg font-medium text-[#FF6B35] border border-[#FF6B35] hover:bg-[#FF6B35] hover:text-white transition-all duration-300">
+                  Select Existing Branch
+                </button>
+              )}
+
+              {/* Logout button */}
+              <button
+                type="button"
+                onClick={handleLogout}
+                className={`${userData?.role === "admin" ? "flex-1" : "w-full"} py-2 px-4 rounded-lg font-medium text-gray-600 border border-gray-300 hover:bg-gray-100 transition-all duration-300`}>
+                Logout
+              </button>
+            </div>
+          </div>
         </form>
       </div>
     </div>);

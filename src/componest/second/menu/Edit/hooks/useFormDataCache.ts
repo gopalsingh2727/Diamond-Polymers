@@ -102,8 +102,7 @@ export const useFormDataCache = () => {
 
   // ⚠️ TEMPORARILY using old action until V2 backend issue is fixed
   const refresh = useCallback(() => {
-
-    dispatch(getOrderFormData() as any);
+    return dispatch(getOrderFormData() as any);
   }, [dispatch]);
 
   // ⚠️ CRITICAL FIX: Check if data matches current branch

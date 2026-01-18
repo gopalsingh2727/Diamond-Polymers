@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { Search, User, Users, Shield, Briefcase } from 'lucide-react';
+// Centralized Icons
+import { SearchIcon, PersonIcon, GroupIcon as PeopleIcon, SecurityIcon, WorkIcon } from './icons';import { useSelector, useDispatch } from 'react-redux';
+// Material Icons
+
+
+
+
+
 import './PersonSelector.css';
 
 interface Person {
@@ -81,15 +87,15 @@ const PersonSelector: React.FC<PersonSelectorProps> = ({
   const getRoleIcon = (role: string) => {
     switch (role) {
       case 'master_admin':
-        return <Shield size={16} />;
+        return <SecurityIcon width={16} height={16} />;
       case 'admin':
-        return <Users size={16} />;
+        return <PeopleIcon width={16} height={16} />;
       case 'manager':
-        return <Briefcase size={16} />;
+        return <WorkIcon width={16} height={16} />;
       case 'employee':
-        return <User size={16} />;
+        return <PersonIcon width={16} height={16} />;
       default:
-        return <User size={16} />;
+        return <PersonIcon width={16} height={16} />;
     }
   };
 
@@ -130,11 +136,11 @@ const PersonSelector: React.FC<PersonSelectorProps> = ({
 
   // Available roles (filtered)
   const roles = [
-    { value: 'all', label: 'All Roles', icon: <Users size={18} /> },
-    { value: 'master_admin', label: 'Master Admin', icon: <Shield size={18} /> },
-    { value: 'admin', label: 'Admin', icon: <Users size={18} /> },
-    { value: 'manager', label: 'Manager', icon: <Briefcase size={18} /> },
-    { value: 'employee', label: 'Employee', icon: <User size={18} /> }
+    { value: 'all', label: 'All Roles', icon: <PeopleIcon width={18} height={18} /> },
+    { value: 'master_admin', label: 'Master Admin', icon: <SecurityIcon width={18} height={18} /> },
+    { value: 'admin', label: 'Admin', icon: <PeopleIcon width={18} height={18} /> },
+    { value: 'manager', label: 'Manager', icon: <WorkIcon width={18} height={18} /> },
+    { value: 'employee', label: 'Employee', icon: <PersonIcon width={18} height={18} /> }
   ].filter(r => r.value === 'all' || !excludeRoles.includes(r.value));
 
   return (
@@ -147,7 +153,7 @@ const PersonSelector: React.FC<PersonSelectorProps> = ({
       {/* Search and Filter */}
       <div className="person-selector-controls">
         <div className="search-box">
-          <Search size={18} />
+          <SearchIcon width={18} height={18} />
           <input
             type="text"
             placeholder="Search by name, email, role..."
@@ -190,7 +196,7 @@ const PersonSelector: React.FC<PersonSelectorProps> = ({
 
         {!loading && !error && filteredPeople.length === 0 && (
           <div className="people-empty">
-            <User size={48} />
+            <PersonIcon width={48} height={48} />
             <p>No people found</p>
             <span>Try adjusting your filters</span>
           </div>

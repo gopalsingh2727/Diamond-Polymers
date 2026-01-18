@@ -56,7 +56,7 @@ function createWindow() {
     // Performance optimizations
     backgroundColor: '#f9fafb', // Match app background - faster first paint
     webPreferences: {
-      preload: path.join(__dirname, 'preload.mjs'),
+      preload: path.join(__dirname, 'preload.js'),
       webSecurity: true,
       allowRunningInsecureContent: false,
       contextIsolation: true,
@@ -129,9 +129,9 @@ app.whenReady().then(() => {
     });
   });
 
-  // Set up permission handlers for microphone access (required for speech recognition)
+  // Set up permission handlers for microphone access and notifications
   session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
-    const allowedPermissions = ['media', 'microphone', 'audioCapture'];
+    const allowedPermissions = ['media', 'microphone', 'audioCapture', 'notifications'];
     if (allowedPermissions.includes(permission)) {
       log.info(`Permission granted: ${permission}`);
       callback(true);
@@ -142,7 +142,7 @@ app.whenReady().then(() => {
   });
 
   session.defaultSession.setPermissionCheckHandler((webContents, permission) => {
-    const allowedPermissions = ['media', 'microphone', 'audioCapture'];
+    const allowedPermissions = ['media', 'microphone', 'audioCapture', 'notifications'];
     return allowedPermissions.includes(permission);
   });
 
@@ -272,6 +272,47 @@ app.whenReady().then(() => {
   // IPC handler for manual update check
   ipcMain.handle('check-update', async () => {
     return await checkForUpdatesViaGitHub();
+  });
+
+  // IPC handler for showing native Electron notifications
+  ipcMain.handle('show-notification', async (event, options: {
+    title: string;
+    body: string;
+    icon?: string;
+    tag?: string;
+    silent?: boolean;
+  }) => {
+    try {
+      if (!Notification.isSupported()) {
+        log.warn('Notifications not supported on this platform');
+        return { success: false, error: 'Notifications not supported' };
+      }
+
+      // Use app icon from public folder (your logo)
+      const appIcon = path.join(process.env.VITE_PUBLIC!, 'icon.png');
+
+      const notification = new Notification({
+        title: options.title,
+        body: options.body,
+        icon: appIcon,
+        silent: options.silent || false
+      });
+
+      notification.on('click', () => {
+        // Bring window to front when notification is clicked
+        if (win && !win.isDestroyed()) {
+          if (win.isMinimized()) win.restore();
+          win.focus();
+        }
+      });
+
+      notification.show();
+      log.info(`Notification shown: ${options.title}`);
+      return { success: true };
+    } catch (error: any) {
+      log.error('Failed to show notification:', error.message);
+      return { success: false, error: error.message };
+    }
   });
 
   // IPC handler to open download page

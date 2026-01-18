@@ -59,7 +59,8 @@ export const createStepV2 = (data: any) => async (dispatch: Dispatch) => {
       payload: response.data.data,
     });
 
-    dispatch(refreshOrderFormData() as any);
+    // ⚠️ Don't auto-refresh here - let component control when to refresh
+    // dispatch(refreshOrderFormData() as any);
     return response.data.data;
   } catch (error: any) {
     dispatch({
@@ -139,7 +140,8 @@ export const updateStepV2 = (id: string, data: any) => async (dispatch: Dispatch
       payload: response.data.data,
     });
 
-    dispatch(refreshOrderFormData() as any);
+    // ⚠️ Don't auto-refresh here - let component control when to refresh
+    // dispatch(refreshOrderFormData() as any);
     return response.data.data;
   } catch (error: any) {
     dispatch({
@@ -164,7 +166,8 @@ export const deleteStepV2 = (id: string) => async (dispatch: Dispatch) => {
       payload: id,
     });
 
-    dispatch(refreshOrderFormData() as any);
+    // ⚠️ Don't auto-refresh here - let component control when to refresh
+    // dispatch(refreshOrderFormData() as any);
     return id;
   } catch (error: any) {
     dispatch({

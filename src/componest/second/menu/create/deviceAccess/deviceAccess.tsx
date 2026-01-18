@@ -9,6 +9,8 @@ import { AppDispatch } from "../../../../../store";
 import { useFormDataCache } from '../../Edit/hooks/useFormDataCache';
 import { useCRUD } from '../../../../../hooks/useCRUD';
 import { ToastContainer } from '../../../../../components/shared/Toast';
+import HelpDocModal, { HelpButton } from "../../../../../components/shared/HelpDocModal";
+import { deviceMachineAssignHelp } from "../../../../../components/shared/helpContent";
 import "./deviceaccess.css";
 
 const DeviceAccess: React.FC = () => {
@@ -16,6 +18,7 @@ const DeviceAccess: React.FC = () => {
   const { handleSave, saveState, toast } = useCRUD();
   const [selectedDeviceId, setSelectedDeviceId] = useState("");
   const [machineId, setMachineId] = useState("");
+  const [showHelpModal, setShowHelpModal] = useState(false);
 
   // 🚀 OPTIMIZED: Get machines from cached form data (no API call!)
   const { machines = [] } = useFormDataCache();
@@ -43,6 +46,7 @@ const DeviceAccess: React.FC = () => {
     const saveAction = async () => {
       return dispatch(
         updateDeviceAccess(selectedDeviceId, {
+          action: "assignMachine",
           machineId,
           machineName: selectedMachine?.machineName,
           machineType:
@@ -66,7 +70,10 @@ const DeviceAccess: React.FC = () => {
   return (
     <div className="deviceAccess-container">
       <div className="deviceAccess-form">
-        <h2 className="deviceAccess-title">Assign Machine to Device</h2>
+        <div className="createaccount-title-row">
+          <h2 className="deviceAccess-title" style={{ margin: 0, border: 'none', padding: 0 }}>Assign Machine to Device</h2>
+          <HelpButton onClick={() => setShowHelpModal(true)} size="medium" />
+        </div>
 
         <div className="deviceAccess-group">
           <label className="deviceAccess-label">Select Device</label>
@@ -108,6 +115,12 @@ const DeviceAccess: React.FC = () => {
         >
           {saveState === 'loading' ? "ASSIGNING..." : "ASSIGN MACHINE"}
         </button>
+        {/* Help Documentation Modal */}
+        <HelpDocModal
+          isOpen={showHelpModal}
+          onClose={() => setShowHelpModal(false)}
+          content={deviceMachineAssignHelp}
+        />
       </div>
       <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
     </div>

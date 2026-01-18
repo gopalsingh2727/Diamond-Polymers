@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { Parser } from "expr-eval";
+import { Printer, FileSpreadsheet, Eye } from "lucide-react";
 import "./CreateOders.css";
 import "./DynamicForm.css";
 import { BackButton } from "../../../allCompones/BackButton";
@@ -14,7 +15,7 @@ import OrderTypeSelect, { OrderTypeSelectRef } from "./OrderTypeSelect";
 import Notes from "./notes";
 import Priority from "./priority";
 import Status from "./status";
-import SaveOrders from "./saveTheOdes";
+import SaveOrders, { SaveOrdersRef } from "./saveTheOdes";
 import StepContainer, { StepContainerRef } from "./stepContainer";
 import { useOrderFormData } from "./useOrderFormData";
 import InlineOptionsInput, { InlineOptionsInputRef } from "./optionsSection/InlineOptionsInput";
@@ -168,6 +169,21 @@ const transformOptionsForEdit = (orderData: any): any[] => {
   });
 };
 
+// Helper function to check if value is a file
+const isFileValue = (value: any): boolean => {
+  if (!value || typeof value !== 'object') return false;
+  return Boolean(value.fileName || value.url || value.path);
+};
+
+// Helper function to render spec values
+const renderSpecValue = (value: any): string => {
+  if (value === undefined || value === null || value === '') return '-';
+  if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+  if (typeof value === 'number') return value.toLocaleString();
+  if (typeof value === 'object' && value.fileName) return value.fileName;
+  return String(value);
+};
+
 const CreateOrders = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -196,11 +212,11 @@ const CreateOrders = () => {
   const [showPrintExcelModal, setShowPrintExcelModal] = useState(false);
   const [modalMode, setModalMode] = useState<'print' | 'excel'>('print');
 
-  // View Print modal state (separate from PrintExcelModal)
-  const [showViewPrint, setShowViewPrint] = useState(false);
-
   // Forward order modal state
   const [showForwardModal, setShowForwardModal] = useState(false);
+
+  // View All Options popup state
+  const [showViewAllOptions, setShowViewAllOptions] = useState(false);
 
   // 🚀 OPTIMIZED: Single API call for all form data
   const {
@@ -237,6 +253,61 @@ const CreateOrders = () => {
   const stepContainerRef = useRef<StepContainerRef>(null);
   const orderTypeRef = useRef<OrderTypeSelectRef>(null);
   const optionsInputRef = useRef<InlineOptionsInputRef>(null);
+  const saveOrdersRef = useRef<SaveOrdersRef>(null);
+
+  // Track last ESC press time for double-ESC detection
+  const lastEscPressRef = useRef<number>(0);
+
+  // Global keyboard handler for navigation and shortcuts
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      // Handle Cmd+S (Mac) / Ctrl+S (Windows) to save order
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault();
+        saveOrdersRef.current?.triggerSave();
+        return;
+      }
+
+      if (e.key === 'Escape') {
+        const now = Date.now();
+        const timeSinceLastEsc = now - lastEscPressRef.current;
+        lastEscPressRef.current = now;
+
+        // Check if options popup is open
+        if (optionsInputRef.current?.isPopupOpen?.()) {
+          e.preventDefault();
+          e.stopPropagation();
+
+          // Double ESC (within 500ms) - close popup AND go to menu
+          if (timeSinceLastEsc < 500) {
+            optionsInputRef.current.closePopup();
+            navigate(-1);
+          } else {
+            // Single ESC - close popup, focus order type
+            optionsInputRef.current.closePopup();
+            setTimeout(() => orderTypeRef.current?.focus(), 50);
+          }
+          return;
+        }
+
+        // Check if order type dropdown is open
+        if (orderTypeRef.current?.isDropdownOpen?.()) {
+          e.preventDefault();
+          e.stopPropagation();
+          orderTypeRef.current.closeDropdown();
+          return;
+        }
+
+        // Nothing is open - go back to menu
+        e.preventDefault();
+        navigate(-1);
+      }
+    };
+
+    // Add listener on capture phase to handle before child components
+    document.addEventListener('keydown', handleGlobalKeyDown, true);
+    return () => document.removeEventListener('keydown', handleGlobalKeyDown, true);
+  }, [navigate]);
 
   // Set order type from orderData in edit mode
   useEffect(() => {
@@ -616,31 +687,34 @@ const CreateOrders = () => {
   };
 
   // Auto-calculate dynamic values when options change
+  // Use JSON.stringify to detect deep changes in options array (specificationValues)
+  const optionsJson = JSON.stringify(options);
+
   useEffect(() => {
     if (orderTypeConfig?.dynamicCalculations && options.length > 0) {
       const { aggregated, single } = getSpecValuesFromOptions();
       const newCalculatedValues: {[key: string]: number | string;} = {};
 
-
-
-
+      console.log('📊 Recalculating dynamic values...', { aggregated, single });
 
       orderTypeConfig.dynamicCalculations.
       filter((calc) => calc.enabled && calc.autoPopulate).
       forEach((calc) => {
         const value = calculateDynamicValue(calc.formula, aggregated, single);
+        console.log(`  📊 ${calc.name} = ${value} (formula: ${calc.formula})`);
 
         if (value !== '') {
           newCalculatedValues[calc.name] = value;
         }
       });
 
-
-
-
+      console.log('📊 New calculated values:', newCalculatedValues);
       setCalculatedValues(newCalculatedValues);
+    } else if (options.length === 0) {
+      // Clear calculations when no options
+      setCalculatedValues({});
     }
-  }, [options, orderTypeConfig?.dynamicCalculations]);
+  }, [optionsJson, orderTypeConfig?.dynamicCalculations, allData]);
 
   // Handle delete order
   const handleDelete = async () => {
@@ -690,22 +764,18 @@ const CreateOrders = () => {
     setShowPrintExcelModal(true);
   };
 
-  const handleViewPrintClick = () => {
-    if (!editMode || !orderData) {
-      toast.error('Error', 'Please save the order first before viewing print');
-      return;
-    }
-    setShowViewPrint(true);
-  };
-
-  const handleActualPrint = () => {
-    window.print();
-  };
-
   const handleWhatsAppClick = () => {
     // Open the SendOrderModal for WhatsApp - allow sending to any number
     setSendModalMode('whatsapp');
     setShowSendModal(true);
+  };
+
+  const handleViewAllOptionsClick = () => {
+    if (options.length === 0) {
+      toast.error('Error', 'No options added yet');
+      return;
+    }
+    setShowViewAllOptions(true);
   };
 
   // Handle sending email from Print/Excel modal
@@ -1015,6 +1085,19 @@ const CreateOrders = () => {
             </svg>
           </button>
 
+          {/* View All Options Icon */}
+          <button
+            type="button"
+            onClick={handleViewAllOptionsClick}
+            style={{ width: '40px', height: '40px', backgroundColor: 'transparent', color: '#f59e0b', border: '1px solid #e5e7eb', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            title="View All Options">
+
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+          </button>
+
           {/* Forward Order Icon - Only show in edit mode */}
           {editMode && orderData?._id && (
             <button
@@ -1030,19 +1113,6 @@ const CreateOrders = () => {
               </svg>
             </button>
           )}
-
-          {/* View Print Icon */}
-          <button
-            type="button"
-            onClick={handleViewPrintClick}
-            style={{ width: '40px', height: '40px', backgroundColor: 'transparent', color: '#8b5cf6', border: '1px solid #e5e7eb', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            title="View Print Preview">
-
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-              <circle cx="12" cy="12" r="3" />
-            </svg>
-          </button>
 
           {/* Print Icon */}
           <button
@@ -1074,83 +1144,68 @@ const CreateOrders = () => {
 
       <div className="CreateOrdersBody">
         <div className="createOdersForm">
-          {!shouldHideCustomerDetails && (
-            <CustomerName
-              ref={customerNameRef}
-              initialData={orderData}
-              isEditMode={editMode}
-              onCustomerSelect={() => {
-                // Directly focus the order type dropdown
-                setTimeout(() => {
-                  orderTypeRef.current?.focus();
-                }, 50);
-              }} />
-          )}
-          {shouldHideCustomerDetails && (
-            <div className="customer-hidden-notice" style={{
-              padding: '16px',
-              background: '#f3f4f6',
-              border: '1px solid #e5e7eb',
-              borderRadius: '8px',
-              marginBottom: '16px',
-              color: '#6b7280',
-              fontSize: '14px'
-            }}>
-              <strong>ℹ️ Customer Details Hidden</strong>
-              <p style={{ margin: '8px 0 0 0' }}>You are viewing a forwarded order. Customer information is only visible to the person who forwarded this order.</p>
-            </div>
-          )}
-
-
-          <OrderTypeSelect
-            ref={orderTypeRef}
-            value={selectedOrderType}
-            onChange={handleOrderTypeChange}
-            initialValue={
-            typeof orderData?.orderType === 'string' ?
-            orderData.orderType :
-            orderData?.orderType?._id || orderData?.orderTypeId || ''
-            }
-            orderTypes={orderTypes}
-            loading={formDataLoading}
-            onOrderTypeSelect={() => {
-              // Order type selected with Enter - focus options input
-
-              setTimeout(() => {
-                optionsInputRef.current?.focus();
-              }, 100);
-            }}
-            onBackspace={() => {
-              // Backspace - go back to customer name input
-              customerNameRef.current?.focus();
-            }} />
-
-
-          {/* Billing Order Indicator */}
-          {isBillingOrder && orderTypeConfig &&
-          <div style={{
-            marginTop: '12px',
-            padding: '12px 16px',
-            background: '#ecfdf5',
-            border: '1px solid #10b981',
-            borderRadius: '8px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px'
-          }}>
-              <span style={{ fontSize: '20px' }}>📄</span>
-              <div>
-                <div style={{ fontWeight: 600, color: '#065f46', fontSize: '14px' }}>
-                  Billing Order - {orderTypeConfig.billingType?.replace('_', ' ').toUpperCase() || 'Invoice'}
-                </div>
-                <div style={{ fontSize: '12px', color: '#6b7280' }}>
-                  {orderTypeConfig.allowManufacturingLink ?
-                'Can be linked to manufacturing order' :
-                'Standalone billing document'}
-                </div>
+          {/* Sticky section for customer details and order type */}
+          <div className="CustomerStickySection">
+            {!shouldHideCustomerDetails && (
+              <CustomerName
+                ref={customerNameRef}
+                initialData={orderData}
+                isEditMode={editMode}
+                onCustomerSelect={() => {
+                  // Directly focus the order type dropdown
+                  setTimeout(() => {
+                    orderTypeRef.current?.focus();
+                  }, 50);
+                }} />
+            )}
+            {shouldHideCustomerDetails && (
+              <div className="customer-hidden-notice" style={{
+                padding: '12px',
+                background: '#f3f4f6',
+                border: '1px solid #e5e7eb',
+                borderRadius: '6px',
+                marginBottom: '8px',
+                color: '#6b7280',
+                fontSize: '12px'
+              }}>
+                <strong>ℹ️ Customer Details Hidden</strong>
+                <p style={{ margin: '4px 0 0 0' }}>Forwarded order - customer info visible to sender only.</p>
               </div>
+            )}
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <OrderTypeSelect
+                ref={orderTypeRef}
+                value={selectedOrderType}
+                onChange={handleOrderTypeChange}
+                initialValue={
+                typeof orderData?.orderType === 'string' ?
+                orderData.orderType :
+                orderData?.orderType?._id || orderData?.orderTypeId || ''
+                }
+                orderTypes={orderTypes}
+                loading={formDataLoading}
+                disabled={editMode}
+                onOrderTypeSelect={() => {
+                  // Order type selected with Enter - focus options input
+
+                  setTimeout(() => {
+                    optionsInputRef.current?.focus();
+                  }, 100);
+                }}
+                onBackspace={() => {
+                  // Backspace - go back to customer name input
+                  customerNameRef.current?.focus();
+                }} />
+
+              {/* Billing Order Indicator - inline text */}
+              {isBillingOrder && orderTypeConfig && (
+                <span style={{ fontSize: '11px', color: '#059669', fontWeight: 500 }}>
+                  Billing Order - {orderTypeConfig.billingType?.replace('_', ' ').toUpperCase() || 'Invoice'}
+                </span>
+              )}
             </div>
-          }
+          </div>
 
           {/* Hidden input for order type ID - needed for DOM data collection */}
           <input
@@ -1231,11 +1286,7 @@ const CreateOrders = () => {
                       return (
                         <div key="dynamicColumns" className="dynamicSection dynamicColumnsSection">
                         <div className="dynamicSection-title">Dynamic Calculations</div>
-                        <div style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '8px'
-                          }}>
+                        <div className="dynamicColumnsGrid">
                           {calculations.
                             sort((a, b) => (a.order || 0) - (b.order || 0)).
                             map((calc, idx) => {
@@ -1244,19 +1295,17 @@ const CreateOrders = () => {
                               calc.columnFormat === 'summary' ? 'dynamicColumn-summary' :
                               calc.columnFormat === 'hidden' ? 'dynamicColumn-hidden' : '';
 
-
-
                               return (
                                 <div
                                   key={idx}
                                   className={`dynamicColumnItem ${formatClass}`}
                                   style={{
-                                    display: calc.columnFormat === 'hidden' ? 'none' : 'block'
+                                    display: calc.columnFormat === 'hidden' ? 'none' : 'flex'
                                   }}>
 
-                                  <label className="inputLabel">
+                                  <label className="dynamicColumnLabel">
                                     {calc.name}
-                                    {calc.unit && ` (${calc.unit})`}
+                                    {calc.unit && <span className="dynamicColumnUnit"> ({calc.unit})</span>}
                                   </label>
                                   <input
                                     type="text"
@@ -1271,7 +1320,7 @@ const CreateOrders = () => {
                                         }));
                                       }
                                     }}
-                                    className="inputField"
+                                    className={`dynamicColumnInput ${calc.autoPopulate ? 'auto-calculated' : ''}`}
                                     placeholder={calc.autoPopulate ? 'Auto-calculated' : 'Enter value'} />
 
                                 </div>);
@@ -1340,6 +1389,7 @@ const CreateOrders = () => {
             }} />
 
           <SaveOrders
+            ref={saveOrdersRef}
             isEditMode={editMode}
             orderId={orderData?._id}
             orderData={{
@@ -1412,6 +1462,469 @@ const CreateOrders = () => {
           }}
         />
       )}
+
+      {/* View All Options Popup */}
+      {showViewAllOptions && options.length > 0 && (() => {
+        // Group options by optionTypeId
+        const groupedOptions: Record<string, any[]> = {};
+        options.forEach((option) => {
+          const typeKey = option.optionTypeId;
+          if (!groupedOptions[typeKey]) {
+            groupedOptions[typeKey] = [];
+          }
+          groupedOptions[typeKey].push(option);
+        });
+
+        const customerInfo = orderData?.customer ? {
+          name: orderData.customer.companyName || orderData.customer.name,
+          companyName: orderData.customer.companyName,
+          address: orderData.customer.address || orderData.customer.address1,
+          phone: orderData.customer.phone || orderData.customer.phone1,
+          whatsapp: orderData.customer.whatsapp
+        } : undefined;
+
+        const createdByName = orderData?.createdByName;
+        const createdAt = orderData?.createdAt;
+
+        const handleViewFile = (fileData: any) => {
+          if (fileData?.url) {
+            window.open(fileData.url, '_blank');
+          }
+        };
+
+        return (
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 10000,
+              padding: '20px'
+            }}
+            onClick={() => setShowViewAllOptions(false)}>
+
+            <div
+              style={{
+                backgroundColor: 'white',
+                borderRadius: '12px',
+                maxWidth: '95vw',
+                maxHeight: '90vh',
+                overflow: 'hidden',
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                display: 'flex',
+                flexDirection: 'column',
+                minWidth: '600px'
+              }}
+              onClick={(e) => e.stopPropagation()}>
+
+              {/* Header */}
+              <div
+                style={{
+                  padding: '16px 20px',
+                  borderBottom: '1px solid #e5e7eb',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  backgroundColor: '#fef3c7'
+                }}>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  {orderData?.orderId &&
+                  <span style={{
+                    background: '#f59e0b',
+                    color: 'white',
+                    padding: '4px 10px',
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                    fontWeight: '600'
+                  }}>
+                      {orderData.orderId}
+                    </span>
+                  }
+                  <h3 style={{ margin: 0, fontSize: '16px', color: '#92400e', fontWeight: '600' }}>
+                    All Options Summary
+                  </h3>
+                  <span style={{
+                    background: '#fbbf24',
+                    color: '#78350f',
+                    padding: '4px 10px',
+                    borderRadius: '12px',
+                    fontSize: '12px',
+                    fontWeight: '500'
+                  }}>
+                    {options.length} options • {Object.keys(groupedOptions).length} types
+                  </span>
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    onClick={() => {
+                      window.print();
+                    }}
+                    style={{
+                      background: '#f59e0b',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      padding: '6px 12px',
+                      fontSize: '13px',
+                      color: 'white',
+                      fontWeight: '500',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}>
+
+                    <Printer size={14} />
+                    Print All
+                  </button>
+                  <button
+                    onClick={() => {
+                      toast.success('Success', 'Excel export feature coming soon!');
+                    }}
+                    style={{
+                      background: '#10b981',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      padding: '6px 12px',
+                      fontSize: '13px',
+                      color: 'white',
+                      fontWeight: '500',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}>
+
+                    <FileSpreadsheet size={14} />
+                    Excel All
+                  </button>
+                  <button
+                    onClick={() => setShowViewAllOptions(false)}
+                    style={{
+                      background: '#f1f5f9',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      padding: '6px 12px',
+                      fontSize: '13px',
+                      color: '#64748b',
+                      fontWeight: '500'
+                    }}>
+
+                    ✕ Close
+                  </button>
+                </div>
+              </div>
+
+              {/* Content - Grouped by Type */}
+              <div style={{ padding: '16px', overflowY: 'auto', maxHeight: 'calc(90vh - 80px)' }}>
+                {/* Customer Info Card */}
+                {customerInfo &&
+                <div style={{
+                  background: '#f0f9ff',
+                  border: '1px solid #bae6fd',
+                  borderRadius: '8px',
+                  padding: '12px 16px',
+                  marginBottom: '16px'
+                }}>
+                    <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+                      {customerInfo.name &&
+                    <div>
+                          <div style={{ fontSize: '10px', color: '#0369a1', fontWeight: '600', textTransform: 'uppercase' }}>Customer</div>
+                          <div style={{ fontSize: '13px', color: '#0c4a6e', fontWeight: '500' }}>{customerInfo.name}</div>
+                        </div>
+                    }
+                      {customerInfo.companyName &&
+                    <div>
+                          <div style={{ fontSize: '10px', color: '#0369a1', fontWeight: '600', textTransform: 'uppercase' }}>Company</div>
+                          <div style={{ fontSize: '13px', color: '#0c4a6e' }}>{customerInfo.companyName}</div>
+                        </div>
+                    }
+                      {customerInfo.address &&
+                    <div>
+                          <div style={{ fontSize: '10px', color: '#0369a1', fontWeight: '600', textTransform: 'uppercase' }}>Address</div>
+                          <div style={{ fontSize: '13px', color: '#0c4a6e' }}>{customerInfo.address}</div>
+                        </div>
+                    }
+                      {(customerInfo.phone || customerInfo.whatsapp) &&
+                    <div>
+                          <div style={{ fontSize: '10px', color: '#0369a1', fontWeight: '600', textTransform: 'uppercase' }}>Phone</div>
+                          <div style={{ fontSize: '13px', color: '#0c4a6e' }}>{customerInfo.phone || customerInfo.whatsapp}</div>
+                        </div>
+                    }
+                    </div>
+                  </div>
+                }
+
+                {/* Creator Info Card */}
+                {(createdByName || createdAt) &&
+                <div style={{
+                  background: '#f3f4f6',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '8px',
+                  padding: '12px 16px',
+                  marginBottom: '16px'
+                }}>
+                    <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+                      {createdByName &&
+                    <div>
+                          <div style={{ fontSize: '13px', color: '#374151', fontWeight: '600' }}>{createdByName}</div>
+                        </div>
+                    }
+                      {createdAt &&
+                    <div>
+                          <div style={{ fontSize: '13px', color: '#6b7280' }}>
+                            {new Date(createdAt).toLocaleDateString('en-IN', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric'
+                        })}
+                          </div>
+                        </div>
+                    }
+                    </div>
+                  </div>
+                }
+
+                {/* Options by Type */}
+                {Object.entries(groupedOptions).map(([typeId, opts], groupIdx) => {
+                  const typeName = opts[0]?.optionTypeName || 'Unknown';
+                  const specKeys = Array.from(new Set(opts.flatMap((o: any) => Object.keys(o.specificationValues || {}))));
+
+                  return (
+                    <div key={typeId} style={{ marginBottom: groupIdx < Object.keys(groupedOptions).length - 1 ? '20px' : 0 }}>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        marginBottom: '8px',
+                        padding: '8px 12px',
+                        background: '#f0f9ff',
+                        borderRadius: '6px'
+                      }}>
+                        <span style={{ fontWeight: '600', color: '#0369a1', fontSize: '14px' }}>{typeName}</span>
+                        <span style={{
+                          background: '#0ea5e9',
+                          color: 'white',
+                          padding: '2px 8px',
+                          borderRadius: '10px',
+                          fontSize: '11px'
+                        }}>
+                          {opts.length} item{opts.length > 1 ? 's' : ''}
+                        </span>
+                      </div>
+
+                      <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                          <thead>
+                            <tr style={{ backgroundColor: '#f8fafc' }}>
+                              <th style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '600', color: '#475569', borderBottom: '2px solid #e2e8f0' }}>#</th>
+                              <th style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '600', color: '#475569', borderBottom: '2px solid #e2e8f0' }}>Name</th>
+                              {specKeys.map((key) =>
+                              <th key={key} style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '600', color: '#475569', borderBottom: '2px solid #e2e8f0', whiteSpace: 'nowrap' }}>
+                                  {key}
+                                </th>
+                              )}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {opts.map((opt: any, idx: number) =>
+                            <tr key={opt.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                <td style={{ padding: '8px 10px', color: '#64748b' }}>{idx + 1}</td>
+                                <td style={{ padding: '8px 10px', fontWeight: '500', color: '#1e293b' }}>{opt.optionName}</td>
+                                {specKeys.map((key) => {
+                                const value = opt.specificationValues?.[key];
+                                const isFile = isFileValue(value);
+                                return (
+                                  <td key={key} style={{ padding: '8px 10px', color: '#334155' }}>
+                                      {isFile ?
+                                    <button
+                                      type="button"
+                                      onClick={() => handleViewFile(value)}
+                                      style={{
+                                        background: '#eff6ff',
+                                        border: '1px solid #bfdbfe',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer',
+                                        color: '#2563eb',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '4px',
+                                        padding: '3px 6px',
+                                        fontSize: '11px'
+                                      }}>
+
+                                          <Eye size={12} /> View
+                                        </button> :
+
+                                    renderSpecValue(value)
+                                    }
+                                    </td>);
+
+                              })}
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>);
+
+                })}
+
+                {/* Dynamic Calculations Section */}
+                {orderTypeConfig?.dynamicCalculations && orderTypeConfig.dynamicCalculations.length > 0 &&
+                <div style={{ marginTop: '20px' }}>
+                    <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    marginBottom: '8px',
+                    padding: '8px 12px',
+                    background: '#f0f9ff',
+                    borderRadius: '6px'
+                  }}>
+                      <span style={{
+                      background: '#0ea5e9',
+                      color: 'white',
+                      padding: '4px 10px',
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      fontWeight: '600'
+                    }}>
+                        📊
+                      </span>
+                      <span style={{
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      color: '#0369a1'
+                    }}>
+                        Dynamic Calculations
+                      </span>
+                      <span style={{
+                      background: '#bae6fd',
+                      color: '#0c4a6e',
+                      padding: '3px 8px',
+                      borderRadius: '10px',
+                      fontSize: '11px',
+                      fontWeight: '500'
+                    }}>
+                        {orderTypeConfig.dynamicCalculations.filter((c: any) => c.enabled).length} calculations
+                      </span>
+                    </div>
+
+                    <div style={{
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px',
+                    overflow: 'hidden'
+                  }}>
+                      <table style={{
+                      width: '100%',
+                      borderCollapse: 'collapse'
+                    }}>
+                        <thead>
+                          <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e5e7eb' }}>
+                            <th style={{
+                            padding: '8px 10px',
+                            textAlign: 'left',
+                            fontSize: '11px',
+                            fontWeight: '600',
+                            color: '#475569',
+                            width: '40px'
+                          }}>
+                              #
+                            </th>
+                            <th style={{
+                            padding: '8px 10px',
+                            textAlign: 'left',
+                            fontSize: '11px',
+                            fontWeight: '600',
+                            color: '#475569'
+                          }}>
+                              Calculation Name
+                            </th>
+                            <th style={{
+                            padding: '8px 10px',
+                            textAlign: 'right',
+                            fontSize: '11px',
+                            fontWeight: '600',
+                            color: '#475569',
+                            width: '150px'
+                          }}>
+                              Value
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {orderTypeConfig.dynamicCalculations.
+                        filter((c: any) => c.enabled).
+                        sort((a: any, b: any) => (a.order || 0) - (b.order || 0)).
+                        map((calc: any, idx: number) => {
+                          const value = calculatedValues[calc.name] || '-';
+                          const rowBg = calc.columnFormat === 'highlight' ? '#fef3c7' :
+                          calc.columnFormat === 'summary' ? '#dbeafe' :
+                          idx % 2 === 0 ? '#ffffff' : '#f9fafb';
+
+                          return (
+                            <tr
+                              key={idx}
+                              style={{
+                                backgroundColor: rowBg,
+                                borderBottom: idx < orderTypeConfig.dynamicCalculations.filter((c: any) => c.enabled).length - 1 ? '1px solid #e5e7eb' : 'none'
+                              }}>
+
+                                  <td style={{
+                                padding: '8px 10px',
+                                fontSize: '11px',
+                                color: '#64748b',
+                                fontWeight: '500'
+                              }}>
+                                    {idx + 1}
+                                  </td>
+                                  <td style={{
+                                padding: '8px 10px',
+                                fontSize: '12px',
+                                color: '#1f2937',
+                                fontWeight: '500'
+                              }}>
+                                    {calc.name}
+                                    {calc.unit &&
+                                <span style={{
+                                  fontSize: '10px',
+                                  color: '#6b7280',
+                                  marginLeft: '6px'
+                                }}>
+                                        ({calc.unit})
+                                      </span>
+                                }
+                                  </td>
+                                  <td style={{
+                                padding: '8px 10px',
+                                fontSize: '13px',
+                                color: '#0f172a',
+                                fontWeight: '700',
+                                textAlign: 'right'
+                              }}>
+                                    {value}
+                                  </td>
+                                </tr>);
+
+                        })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>);
+
+      })()}
 
     </div>);
 

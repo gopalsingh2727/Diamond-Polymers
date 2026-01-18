@@ -13,7 +13,7 @@ import EditMachineTypeList from "./EditMachineType/EditMachineTypeList";
 import EditMachineOperatorList from "./EditMachineOpertor/EditMachineOperatorList";
 import EditStepList from "./EditCreateStep/EditStepList";
 import EditDeviceAccess from "./EditDeviceAccess/EditDeviceAccess";
-import EditAccessListOnly from "./EditDeviceAccess/EditAccessListOnly";
+
 import EditCategoryListOnly from "./EditCategory/EditCategoryListOnly";
 import EditOptionTypeListOnly from "./EditOptionType/EditOptionTypeListOnly";
 import EditOptionListOnly from "./EditOption/EditOptionListOnly";
@@ -137,7 +137,7 @@ const EditIndex = () => {
     ]},
     { title: "Device Access", items: [
       { key: "DeviceAccess", label: "Device Access" },
-      { key: "Access", label: "Access" }
+  
     ]},
     { title: "Options System", items: [
       { key: "category", label: "Category" },
@@ -216,7 +216,6 @@ const EditIndex = () => {
       step: <ErrorBoundary key={`step-${componentKey}`}><EditStepList onEdit={setEdit('step')} /></ErrorBoundary>,
       machineOperator: <ErrorBoundary key={`machineOperator-${componentKey}`}><EditMachineOperatorList onEdit={setEdit('machineOperator')} /></ErrorBoundary>,
       DeviceAccess: <ErrorBoundary key={`DeviceAccess-${componentKey}`}><EditDeviceAccess /></ErrorBoundary>,
-      Access: <ErrorBoundary key={`Access-${componentKey}`}><EditAccessListOnly onEdit={setEdit('Access')} /></ErrorBoundary>,
       category: <ErrorBoundary key={`category-${componentKey}`}><EditCategoryListOnly onEdit={setEdit('category')} /></ErrorBoundary>,
       optionType: <ErrorBoundary key={`optionType-${componentKey}`}><EditOptionTypeListOnly onEdit={setEdit('optionType')} /></ErrorBoundary>,
       option: <ErrorBoundary key={`option-${componentKey}`}><EditOptionListOnly onEdit={setEdit('option')} /></ErrorBoundary>,

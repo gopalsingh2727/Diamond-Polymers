@@ -57,6 +57,9 @@ import orderForwardReducer from "./orderforward/orderForwardReducer";
 // P2P Chat
 import p2pChatReducer from "./p2pChat/p2pChatSlice";
 
+// Contacts
+import contactsReducer from "./contacts/contactsSlice";
+
 const appReducer = combineReducers({
   // Auth
   auth: authReducer,
@@ -117,6 +120,9 @@ const appReducer = combineReducers({
 
   // P2P Chat
   p2pChat: p2pChatReducer,
+
+  // Contacts
+  contacts: contactsReducer,
 
 });
 

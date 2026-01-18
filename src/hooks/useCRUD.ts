@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { ActionState } from '../components/shared/ActionButton';
 import { useToast } from './useToast';
+import { showCRUDNotification, showErrorNotification, requestNotificationPermission } from '../utils/notifications';
 
 export interface CRUDOptions<T> {
   onSuccess?: (data: T) => void;
@@ -8,6 +9,9 @@ export interface CRUDOptions<T> {
   successMessage?: string;
   errorMessage?: string;
   showToast?: boolean;
+  showDesktopNotification?: boolean; // Enable desktop notifications
+  entityName?: string; // Name of entity being created/updated/deleted (e.g., "Machine", "Order", "Customer")
+  notificationDetails?: string; // Additional details for notification body
 }
 
 export interface CRUDState {
@@ -46,7 +50,10 @@ export const useCRUD = <T = any>() => {
       onError,
       successMessage = 'Data saved successfully',
       errorMessage = 'Failed to save data',
-      showToast = true
+      showToast = true,
+      showDesktopNotification = false,
+      entityName = 'Data',
+      notificationDetails
     } = options;
 
     try {
@@ -56,8 +63,15 @@ export const useCRUD = <T = any>() => {
 
       setCrudState(prev => ({ ...prev, saveState: 'success' }));
 
+      // Show toast notification
       if (showToast) {
         toast.success('Saved!', successMessage);
+      }
+
+      // Show desktop notification
+      if (showDesktopNotification) {
+        await requestNotificationPermission();
+        showCRUDNotification('create', entityName, notificationDetails || successMessage);
       }
 
       if (onSuccess) {
@@ -73,8 +87,18 @@ export const useCRUD = <T = any>() => {
     } catch (error) {
       setCrudState(prev => ({ ...prev, saveState: 'error' }));
 
+      // Show toast error
       if (showToast) {
         toast.error('Save Failed', error instanceof Error ? error.message : errorMessage);
+      }
+
+      // Show desktop error notification
+      if (showDesktopNotification) {
+        await requestNotificationPermission();
+        showErrorNotification(
+          'Save Failed',
+          error instanceof Error ? error.message : errorMessage
+        );
       }
 
       if (onError) {
@@ -100,7 +124,10 @@ export const useCRUD = <T = any>() => {
       onError,
       successMessage = 'Data updated successfully',
       errorMessage = 'Failed to update data',
-      showToast = true
+      showToast = true,
+      showDesktopNotification = false,
+      entityName = 'Data',
+      notificationDetails
     } = options;
 
     try {
@@ -110,8 +137,15 @@ export const useCRUD = <T = any>() => {
 
       setCrudState(prev => ({ ...prev, updateState: 'success' }));
 
+      // Show toast notification
       if (showToast) {
         toast.success('Updated!', successMessage);
+      }
+
+      // Show desktop notification
+      if (showDesktopNotification) {
+        await requestNotificationPermission();
+        showCRUDNotification('update', entityName, notificationDetails || successMessage);
       }
 
       if (onSuccess) {
@@ -126,8 +160,18 @@ export const useCRUD = <T = any>() => {
     } catch (error) {
       setCrudState(prev => ({ ...prev, updateState: 'error' }));
 
+      // Show toast error
       if (showToast) {
         toast.error('Update Failed', error instanceof Error ? error.message : errorMessage);
+      }
+
+      // Show desktop error notification
+      if (showDesktopNotification) {
+        await requestNotificationPermission();
+        showErrorNotification(
+          'Update Failed',
+          error instanceof Error ? error.message : errorMessage
+        );
       }
 
       if (onError) {
@@ -153,6 +197,9 @@ export const useCRUD = <T = any>() => {
       successMessage = 'Data deleted successfully',
       errorMessage = 'Failed to delete data',
       showToast = true,
+      showDesktopNotification = false,
+      entityName = 'Data',
+      notificationDetails,
       confirmMessage = 'Are you sure you want to delete this? This action cannot be undone.',
       confirmTitle = 'Confirm Delete'
     } = options;
@@ -172,8 +219,15 @@ export const useCRUD = <T = any>() => {
 
             setCrudState(prev => ({ ...prev, deleteState: 'success' }));
 
+            // Show toast notification
             if (showToast) {
               toast.success('Deleted!', successMessage);
+            }
+
+            // Show desktop notification
+            if (showDesktopNotification) {
+              await requestNotificationPermission();
+              showCRUDNotification('delete', entityName, notificationDetails || successMessage);
             }
 
             if (onSuccess) {
@@ -188,8 +242,18 @@ export const useCRUD = <T = any>() => {
           } catch (error) {
             setCrudState(prev => ({ ...prev, deleteState: 'error' }));
 
+            // Show toast error
             if (showToast) {
               toast.error('Delete Failed', error instanceof Error ? error.message : errorMessage);
+            }
+
+            // Show desktop error notification
+            if (showDesktopNotification) {
+              await requestNotificationPermission();
+              showErrorNotification(
+                'Delete Failed',
+                error instanceof Error ? error.message : errorMessage
+              );
             }
 
             if (onError) {

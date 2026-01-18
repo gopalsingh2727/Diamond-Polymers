@@ -56,7 +56,7 @@
   justify-content: space-between;
   padding: 24px;
   border-bottom: 2px solid #e5e7eb;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #f97316 0%, #fb923c 100%);
   color: white;
 }
 
@@ -109,9 +109,9 @@
 }
 
 .search-input-group:focus-within {
-  border-color: #667eea;
+  border-color: #f97316;
   background: white;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
 }
 
 .search-input-group svg {
@@ -137,7 +137,7 @@
   align-items: center;
   gap: 8px;
   padding: 10px 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #f97316 0%, #fb923c 100%);
   color: white;
   border: none;
   border-radius: 8px;
@@ -150,7 +150,7 @@
 
 .btn-search:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.4);
 }
 
 .btn-search:disabled {
@@ -247,7 +247,7 @@
 }
 
 .order-result-card:hover {
-  border-color: #667eea;
+  border-color: #f97316;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
   transform: translateY(-2px);
 }
@@ -367,8 +367,8 @@
 }
 
 .btn-outline:hover {
-  border-color: #667eea;
-  color: #667eea;
+  border-color: #f97316;
+  color: #f97316;
   background: #f9fafb;
 }
 
@@ -377,7 +377,7 @@
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #f97316 0%, #fb923c 100%);
   border: none;
   border-radius: 8px;
   font-size: 14px;
@@ -389,7 +389,7 @@
 
 .btn-primary:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.4);
 }
 
 .btn-sm {
@@ -457,7 +457,7 @@
   justify-content: space-between;
   padding: 20px 24px;
   border-bottom: 2px solid #e5e7eb;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #f97316 0%, #fb923c 100%);
   color: white;
   border-radius: 16px 16px 0 0;
 }
@@ -519,7 +519,7 @@
 .note-item {
   padding: 12px;
   background: white;
-  border-left: 3px solid #667eea;
+  border-left: 3px solid #f97316;
   border-radius: 6px;
 }
 

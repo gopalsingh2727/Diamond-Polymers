@@ -199,3 +199,112 @@
   font-size: 14px;
   text-align: center;
 }
+
+/* ====================================
+   Edit Mode - Full Width Layout
+   ==================================== */
+.productionsstep-container.edit-mode {
+  justify-content: flex-start !important;
+  align-items: flex-start !important;
+  padding: 20px !important;
+  display: block !important;
+}
+
+.productionsstep-container.edit-mode .productionsstep-form {
+  max-width: 100% !important;
+  width: 100% !important;
+  border-radius: 12px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+  padding: 24px !important;
+  margin-bottom: 20px !important;
+}
+
+/* ====================================
+   Machines Table Section (Edit Mode)
+   ==================================== */
+.productionsstep-machines-section {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.productionsstep-machines-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 20px 0;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #f3f4f6;
+}
+
+.productionsstep-table-wrapper {
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.productionsstep-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.productionsstep-table thead {
+  background: #f9fafb;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.productionsstep-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  color: #374151;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.productionsstep-table tbody tr {
+  border-bottom: 1px solid #f3f4f6;
+  transition: background-color 0.15s ease;
+}
+
+.productionsstep-table tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+.productionsstep-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.productionsstep-table td {
+  padding: 14px 16px;
+  color: #1f2937;
+}
+
+.productionsstep-table td:first-child {
+  font-weight: 600;
+  color: #6b7280;
+  width: 60px;
+}
+
+/* ====================================
+   Responsive
+   ==================================== */
+@media (max-width: 767px) {
+  .productionsstep-machines-section {
+    padding: 16px;
+  }
+
+  .productionsstep-table {
+    font-size: 12px;
+  }
+
+  .productionsstep-table th,
+  .productionsstep-table td {
+    padding: 10px 12px;
+  }
+}

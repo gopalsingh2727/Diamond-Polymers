@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
-import { Send, X, AlertCircle } from 'lucide-react';
+// Material Icons
+// Centralized Icons
+import { SendIcon, CloseIcon, ErrorIcon } from './icons';
+
+
 import PersonSelector from './PersonSelector';
 import './ForwardToPersonModal.css';
 
@@ -62,7 +66,7 @@ const ForwardToPersonModal: React.FC<ForwardToPersonModalProps> = ({
             <p className="order-number">Order: {order.orderId || order.orderNumber}</p>
           </div>
           <button className="btn-close" onClick={onClose}>
-            <X size={20} />
+            <CloseIcon width={20} height={20} />
           </button>
         </div>
 
@@ -70,7 +74,7 @@ const ForwardToPersonModal: React.FC<ForwardToPersonModalProps> = ({
         <div className="modal-body">
           {error && (
             <div className="error-alert">
-              <AlertCircle size={18} />
+              <ErrorIcon width={18} height={18} />
               <span>{error}</span>
             </div>
           )}
@@ -116,7 +120,7 @@ const ForwardToPersonModal: React.FC<ForwardToPersonModalProps> = ({
               </>
             ) : (
               <>
-                <Send size={18} />
+                <SendIcon width={18} height={18} />
                 Forward to {selectedPerson ? (selectedPerson.fullName || selectedPerson.username) : 'Person'}
               </>
             )}

@@ -9,6 +9,8 @@ import { useCRUD } from '../../../../../hooks/useCRUD';
 import { useFormDataCache } from '../../Edit/hooks/useFormDataCache';
 import ImportProgressPopup from "../../../../../components/shared/ImportProgressPopup";
 import ImportAccountPopup from "../../../../../components/shared/ImportAccountPopup";
+import HelpDocModal, { HelpButton } from "../../../../../components/shared/HelpDocModal";
+import { createMachineHelp } from "../../../../../components/shared/helpContent";
 import * as XLSX from 'xlsx';
 import "./createMachine.css";
 
@@ -57,6 +59,9 @@ const CreateMachine: React.FC<CreateMachineProps> = ({ initialData, onCancel, on
     failed: number;
     errors: string[];
   } | null>(null);
+
+  // Help modal state
+  const [showHelpModal, setShowHelpModal] = useState(false);
 
   // EDIT MODE: Populate form with initialData when editing
   useEffect(() => {
@@ -443,6 +448,9 @@ const CreateMachine: React.FC<CreateMachineProps> = ({ initialData, onCancel, on
                 <line x1="9" y1="15" x2="15" y2="15"></line>
               </svg>
             </button>
+
+            {/* Help Button */}
+            <HelpButton onClick={() => setShowHelpModal(true)} size="medium" />
           </div>
         )}
 
@@ -603,6 +611,13 @@ const CreateMachine: React.FC<CreateMachineProps> = ({ initialData, onCancel, on
           </div>
         </div>
       )}
+
+      {/* Help Documentation Modal */}
+      <HelpDocModal
+        isOpen={showHelpModal}
+        onClose={() => setShowHelpModal(false)}
+        content={createMachineHelp}
+      />
 
       {/* Toast notifications */}
       <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />

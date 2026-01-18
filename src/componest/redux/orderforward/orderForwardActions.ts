@@ -802,6 +802,88 @@ export const denyForwardedOrder = (orderId: string, responseNote: string) => {
   };
 };
 
+/**
+ * Accept a person-forwarded order (person-to-person)
+ */
+export const acceptPersonForwardedOrder = (orderId: string, responseNote?: string) => {
+  return async (dispatch: Dispatch<OrderForwardActionTypes>) => {
+    try {
+      dispatch({ type: types.ACCEPT_ORDER_REQUEST });
+
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+
+      const response = await axios.post(
+        `${baseUrl}/v2/orders/${orderId}/accept-person-forward`,
+        { responseNote },
+        { headers: getAuthHeaders(token) }
+      );
+
+      dispatch({
+        type: types.ACCEPT_ORDER_SUCCESS,
+        payload: response.data
+      });
+
+      // Refresh received orders after accepting
+      await (dispatch as any)(fetchReceivedOrdersForPerson());
+
+      return response.data;
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to accept person-forwarded order';
+      dispatch({
+        type: types.ACCEPT_ORDER_FAILURE,
+        payload: errorMessage
+      });
+      throw error;
+    }
+  };
+};
+
+/**
+ * Deny a person-forwarded order (person-to-person)
+ */
+export const denyPersonForwardedOrder = (orderId: string, responseNote: string) => {
+  return async (dispatch: Dispatch<OrderForwardActionTypes>) => {
+    try {
+      dispatch({ type: types.DENY_ORDER_REQUEST });
+
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+
+      if (!responseNote) {
+        throw new Error("Response note is required when denying an order");
+      }
+
+      const response = await axios.post(
+        `${baseUrl}/v2/orders/${orderId}/deny-person-forward`,
+        { responseNote },
+        { headers: getAuthHeaders(token) }
+      );
+
+      dispatch({
+        type: types.DENY_ORDER_SUCCESS,
+        payload: response.data
+      });
+
+      // Refresh received orders after denying
+      await (dispatch as any)(fetchReceivedOrdersForPerson());
+
+      return response.data;
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to deny person-forwarded order';
+      dispatch({
+        type: types.DENY_ORDER_FAILURE,
+        payload: errorMessage
+      });
+      throw error;
+    }
+  };
+};
+
 // ============= PENDING/ACCEPTED ORDERS ACTIONS =============
 
 /**
@@ -934,7 +1016,7 @@ export const syncOrderStatus = (orderNumber: string, newStatus: string, notes?: 
       }
 
       const response = await axios.put(
-        `${baseUrl}/v2/orders/${orderNumber}/sync-status`,
+        `${baseUrl}/v2/orders/sync-status/${orderNumber}`,
         { newStatus, notes },
         { headers: getAuthHeaders(token) }
       );
@@ -984,6 +1066,274 @@ export const fetchFullChainByOrderNumber = (orderNumber: string) => {
       const errorMessage = error.response?.data?.message || error.message || 'Failed to fetch forwarding chain';
       dispatch({
         type: types.FETCH_FORWARDING_CHAIN_FAILURE,
+        payload: errorMessage
+      });
+      throw error;
+    }
+  };
+};
+
+// ============= ROLE-BASED ORDER FETCHING ACTIONS =============
+
+/**
+ * Fetch my orders (orders assigned to current user)
+ * Employee: See only their assigned orders
+ */
+export const fetchMyOrders = (page: number = 1, limit: number = 100) => {
+  return async (dispatch: Dispatch<OrderForwardActionTypes>) => {
+    try {
+      dispatch({ type: types.FETCH_MY_ORDERS_REQUEST });
+
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+
+      const url = `${baseUrl}/v2/orders/role-based/my-orders?page=${page}&limit=${limit}`;
+      const response = await axios.get(url, { headers: getAuthHeaders(token) });
+
+      dispatch({
+        type: types.FETCH_MY_ORDERS_SUCCESS,
+        payload: {
+          orders: response.data.data.orders || response.data.data,
+          pagination: response.data.data.pagination
+        }
+      });
+
+      return response.data;
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to fetch my orders';
+      dispatch({
+        type: types.FETCH_MY_ORDERS_FAILURE,
+        payload: errorMessage
+      });
+      throw error;
+    }
+  };
+};
+
+/**
+ * Fetch team orders (orders from employees under current manager)
+ * Manager: See orders from their team members
+ */
+export const fetchTeamOrders = (page: number = 1, limit: number = 100) => {
+  return async (dispatch: Dispatch<OrderForwardActionTypes>) => {
+    try {
+      dispatch({ type: types.FETCH_TEAM_ORDERS_REQUEST });
+
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+
+      const url = `${baseUrl}/v2/orders/role-based/team-orders?page=${page}&limit=${limit}`;
+      const response = await axios.get(url, { headers: getAuthHeaders(token) });
+
+      dispatch({
+        type: types.FETCH_TEAM_ORDERS_SUCCESS,
+        payload: {
+          orders: response.data.data.orders || response.data.data,
+          pagination: response.data.data.pagination
+        }
+      });
+
+      return response.data;
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to fetch team orders';
+      dispatch({
+        type: types.FETCH_TEAM_ORDERS_FAILURE,
+        payload: errorMessage
+      });
+      throw error;
+    }
+  };
+};
+
+/**
+ * Fetch branch orders (all orders in current branch)
+ * Manager/Admin: See all orders in their current selected branch
+ */
+export const fetchBranchOrders = (page: number = 1, limit: number = 100) => {
+  return async (dispatch: Dispatch<OrderForwardActionTypes>) => {
+    try {
+      dispatch({ type: types.FETCH_BRANCH_ORDERS_REQUEST });
+
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+
+      const url = `${baseUrl}/v2/orders/role-based/branch-orders?page=${page}&limit=${limit}`;
+      const response = await axios.get(url, { headers: getAuthHeaders(token) });
+
+      dispatch({
+        type: types.FETCH_BRANCH_ORDERS_SUCCESS,
+        payload: {
+          orders: response.data.data.orders || response.data.data,
+          pagination: response.data.data.pagination
+        }
+      });
+
+      return response.data;
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to fetch branch orders';
+      dispatch({
+        type: types.FETCH_BRANCH_ORDERS_FAILURE,
+        payload: errorMessage
+      });
+      throw error;
+    }
+  };
+};
+
+/**
+ * Fetch all branch orders (orders from all branches user has access to)
+ * Admin: See orders from all branches in their branchIds array
+ */
+export const fetchAllBranchOrders = (page: number = 1, limit: number = 100) => {
+  return async (dispatch: Dispatch<OrderForwardActionTypes>) => {
+    try {
+      dispatch({ type: types.FETCH_ALL_BRANCH_ORDERS_REQUEST });
+
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+
+      const url = `${baseUrl}/v2/orders/role-based/all-branch-orders?page=${page}&limit=${limit}`;
+      const response = await axios.get(url, { headers: getAuthHeaders(token) });
+
+      dispatch({
+        type: types.FETCH_ALL_BRANCH_ORDERS_SUCCESS,
+        payload: {
+          orders: response.data.data.orders || response.data.data,
+          pagination: response.data.data.pagination
+        }
+      });
+
+      return response.data;
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to fetch all branch orders';
+      dispatch({
+        type: types.FETCH_ALL_BRANCH_ORDERS_FAILURE,
+        payload: errorMessage
+      });
+      throw error;
+    }
+  };
+};
+
+/**
+ * Fetch company orders (all orders under product27InfinityId)
+ * Master Admin: See all orders in the entire company
+ */
+export const fetchCompanyOrders = (page: number = 1, limit: number = 100) => {
+  return async (dispatch: Dispatch<OrderForwardActionTypes>) => {
+    try {
+      dispatch({ type: types.FETCH_COMPANY_ORDERS_REQUEST });
+
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+
+      const url = `${baseUrl}/v2/orders/role-based/company-orders?page=${page}&limit=${limit}`;
+      const response = await axios.get(url, { headers: getAuthHeaders(token) });
+
+      dispatch({
+        type: types.FETCH_COMPANY_ORDERS_SUCCESS,
+        payload: {
+          orders: response.data.data.orders || response.data.data,
+          pagination: response.data.data.pagination
+        }
+      });
+
+      return response.data;
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to fetch company orders';
+      dispatch({
+        type: types.FETCH_COMPANY_ORDERS_FAILURE,
+        payload: errorMessage
+      });
+      throw error;
+    }
+  };
+};
+
+/**
+ * Fetch shared orders (person-to-person forwarded orders)
+ * All Roles: See orders that have been shared directly with them
+ */
+export const fetchSharedOrders = (page: number = 1, limit: number = 100) => {
+  return async (dispatch: Dispatch<OrderForwardActionTypes>) => {
+    try {
+      dispatch({ type: types.FETCH_SHARED_ORDERS_REQUEST });
+
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+
+      // Use the existing person-to-person endpoint
+      const url = `${baseUrl}/v2/orders/received-person?page=${page}&limit=${limit}`;
+      const response = await axios.get(url, { headers: getAuthHeaders(token) });
+
+      dispatch({
+        type: types.FETCH_SHARED_ORDERS_SUCCESS,
+        payload: {
+          orders: response.data.data.orders || response.data.data,
+          pagination: response.data.data.pagination
+        }
+      });
+
+      return response.data;
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to fetch shared orders';
+      dispatch({
+        type: types.FETCH_SHARED_ORDERS_FAILURE,
+        payload: errorMessage
+      });
+      throw error;
+    }
+  };
+};
+
+// ============= ORDER CANCELLATION ACTION =============
+
+/**
+ * Cancel an order
+ * Allowed for: master_admin, admin, manager
+ */
+export const cancelOrder = (orderId: string, reason: string) => {
+  return async (dispatch: Dispatch<OrderForwardActionTypes>) => {
+    try {
+      dispatch({ type: types.CANCEL_ORDER_REQUEST });
+
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+
+      if (!reason || !reason.trim()) {
+        throw new Error("Cancellation reason is required");
+      }
+
+      const response = await axios.post(
+        `${baseUrl}/v2/orders/${orderId}/cancel`,
+        { reason },
+        { headers: getAuthHeaders(token) }
+      );
+
+      dispatch({
+        type: types.CANCEL_ORDER_SUCCESS,
+        payload: response.data
+      });
+
+      return response.data;
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to cancel order';
+      dispatch({
+        type: types.CANCEL_ORDER_FAILURE,
         payload: errorMessage
       });
       throw error;

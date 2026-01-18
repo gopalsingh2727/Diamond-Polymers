@@ -229,13 +229,11 @@ const CustomerName = forwardRef<CustomerNameRef, CustomerNameProps>(({ initialDa
 
 
   return (
-    <div className="CustomerStickySection">
+    <div>
       <div className="OrderIDanddata">
-        {/* Left side: Order ID (only in edit mode) */}
+        {/* Left side: Date info (only in edit mode) - Order ID is shown in header */}
         <div className="OrderIDCreate">
-          {isEditMode && initialData?.orderId &&
-          <span className="OrderIDBadge">{initialData.orderId}</span>
-          }
+          {/* Order ID badge removed - now shown in header only */}
         </div>
 
         {/* Right side: Date and Customer Image */}

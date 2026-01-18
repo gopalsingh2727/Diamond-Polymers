@@ -7,6 +7,8 @@ import { useCRUD } from '../../../../../hooks/useCRUD';
 import { ToastContainer } from '../../../../../components/shared/Toast';
 import ImportProgressPopup from "../../../../../components/shared/ImportProgressPopup";
 import ImportAccountPopup from "../../../../../components/shared/ImportAccountPopup";
+import HelpDocModal, { HelpButton } from "../../../../../components/shared/HelpDocModal";
+import { deviceAccessHelp } from "../../../../../components/shared/helpContent";
 import * as XLSX from 'xlsx';
 import "./deviceaccess.css";
 
@@ -57,6 +59,9 @@ const DeviceAccessCreate: React.FC<DeviceAccessCreateProps> = ({ initialData, on
     failed: number;
     errors: string[];
   } | null>(null);
+
+  // Help modal state
+  const [showHelpModal, setShowHelpModal] = useState(false);
 
   // Load data when editing
   useEffect(() => {
@@ -542,6 +547,9 @@ const DeviceAccessCreate: React.FC<DeviceAccessCreateProps> = ({ initialData, on
                 <line x1="9" y1="15" x2="15" y2="15"></line>
               </svg>
             </button>
+
+            {/* Help Button */}
+            <HelpButton onClick={() => setShowHelpModal(true)} size="medium" />
           </div>
         ) : (
           <h2 className="createDeviceAccess-title">
@@ -859,6 +867,13 @@ const DeviceAccessCreate: React.FC<DeviceAccessCreateProps> = ({ initialData, on
         )}
 
         {error && <div className="createDeviceAccess-error">{error}</div>}
+
+        {/* Help Documentation Modal */}
+        <HelpDocModal
+          isOpen={showHelpModal}
+          onClose={() => setShowHelpModal(false)}
+          content={deviceAccessHelp}
+        />
       </div>
       <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
     </div>);

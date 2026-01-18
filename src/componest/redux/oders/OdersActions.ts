@@ -1099,22 +1099,21 @@ interface OrderFilters {
 export const fetchOrders = (filters?: OrderFilters) =>
 async (dispatch: Dispatch<OrderActionTypes>, getState: () => RootState) => {
   try {
+    console.log('🔍 fetchOrders called with filters:', filters);
 
-
+    // ✅ FIXED: Dispatch FETCH_ORDERS_REQUEST first
+    dispatch({ type: 'FETCH_ORDERS_REQUEST' as any });
     dispatch({ type: SET_LOADING, payload: true });
 
     const token = getToken(getState);
 
+    console.log('🔑 Auth token exists:', !!token);
 
     const branchId = getBranchId(getState);
     const userRole = (getState().auth as any)?.user?.role;
 
-
-
-
-
-
-
+    console.log('👤 User role:', userRole);
+    console.log('🏢 Branch ID:', branchId);
 
     if (!token) {
       throw new Error("Authentication token missing. Please log in again.");
@@ -1149,7 +1148,7 @@ async (dispatch: Dispatch<OrderActionTypes>, getState: () => RootState) => {
       cleanFilters.branchId = branchId;
     }
 
-
+    console.log('🔧 Clean filters:', cleanFilters);
 
     // ✅ Build query params properly handling arrays
     let queryParams = '';
@@ -1167,16 +1166,7 @@ async (dispatch: Dispatch<OrderActionTypes>, getState: () => RootState) => {
     }
 
     const requestUrl = `${baseUrl}${ORDERS_ENDPOINT}${queryParams}`;
-
-    // ✅ Debug: Log the request details (helpful for troubleshooting filters)
-    if (import.meta.env.DEV) {
-      console.log('🔍 Fetching orders with filters:', {
-        url: requestUrl,
-        filters: cleanFilters,
-        fromDate: filters?.startDate,
-        toDate: filters?.endDate
-      });
-    }
+    console.log('🌐 Request URL:', requestUrl);
 
     // Build request headers with all required headers
     const requestHeaders: Record<string, string> = {
@@ -1190,23 +1180,18 @@ async (dispatch: Dispatch<OrderActionTypes>, getState: () => RootState) => {
       requestHeaders['x-selected-branch'] = branchId;
     }
 
-
-
-
-
+    console.log('📤 Making API request to fetch orders...');
 
     const response = await axios.get(requestUrl, {
       headers: requestHeaders,
       timeout: 90000
     });
 
-
-
-
-
-
-
-
+    console.log('✅ Orders API response received:', {
+      status: response.status,
+      hasData: !!response.data,
+      dataStructure: response.data ? Object.keys(response.data) : []
+    });
 
     dispatch({
       type: 'FETCH_ORDERS_SUCCESS',
@@ -1214,19 +1199,25 @@ async (dispatch: Dispatch<OrderActionTypes>, getState: () => RootState) => {
     });
 
     dispatch({ type: SET_LOADING, payload: false });
+    console.log('✅ Orders fetched successfully');
     return response.data;
 
   } catch (error: any) {
-
+    console.error('❌ fetchOrders error:', error);
+    console.error('Error details:', {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status
+    });
 
     let errorMessage = "Failed to fetch orders";
 
     if (axios.isAxiosError(error)) {
-
-
-
-
-
+      console.error('Axios error details:', {
+        status: error.response?.status,
+        data: error.response?.data,
+        headers: error.response?.headers
+      });
 
       switch (error.response?.status) {
         case 401:
@@ -1254,6 +1245,12 @@ async (dispatch: Dispatch<OrderActionTypes>, getState: () => RootState) => {
       errorMessage = error.message || "Network error occurred";
     }
 
+    // ✅ FIXED: Always dispatch FETCH_ORDERS_FAILURE
+    dispatch({
+      type: 'FETCH_ORDERS_FAILURE' as any,
+      payload: errorMessage
+    });
+
     dispatch({
       type: SET_ERROR,
       payload: errorMessage
@@ -1261,11 +1258,14 @@ async (dispatch: Dispatch<OrderActionTypes>, getState: () => RootState) => {
 
     dispatch({ type: SET_LOADING, payload: false });
 
+    console.error('❌ Final error message:', errorMessage);
+
     if (error.response?.status === 401) {
       return null;
     }
 
-    throw error;
+    // ✅ FIXED: Don't throw error - just return null to prevent unhandled rejections
+    return null;
   }
 };
 
@@ -1473,8 +1473,7 @@ async (dispatch: Dispatch, getState: () => RootState) => {
 
     const response = await axios.get(url, {
       headers: {
-        ...getAuthHeaders(token, branchId),
-        customerId: accountId.trim()
+        ...getAuthHeaders(token, branchId)
       }
     });
 

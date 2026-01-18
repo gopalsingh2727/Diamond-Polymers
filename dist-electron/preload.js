@@ -16,7 +16,8 @@ const ALLOWED_INVOKE_CHANNELS = [
   "check-update",
   "open-download-page",
   "download-update",
-  "install-update"
+  "install-update",
+  "show-notification"
 ];
 console.log("[Preload] Loading preload script...");
 try {

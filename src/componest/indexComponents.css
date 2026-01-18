@@ -5,6 +5,7 @@
   grid-template-columns: 1fr;
   width: 100vw;
   height: 100vh;
+  height: 100dvh; /* Dynamic viewport height - accounts for browser address bar */
   gap: 8px;
   padding: 8px;
   box-sizing: border-box;

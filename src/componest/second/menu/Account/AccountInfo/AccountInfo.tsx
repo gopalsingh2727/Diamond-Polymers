@@ -9,8 +9,8 @@ import { BackButton } from "../../../../allCompones/BackButton";
 import { getAccountOrders } from "../../../../redux/oders/OdersActions";
 import { useDaybookUpdates } from "../../../../../hooks/useWebSocket"; // ✅ WebSocket real-time updates
 import "../../Oders/indexAllOders.css"; // ✅ Import All Orders styling
+import "../../Edit/EditMachineType/EditMachineyType.css"; // ✅ Import Table styling
 import "./accountInfo.css"; // ✅ Import AccountInfo specific styling
-import { Download, Printer, RefreshCw } from "lucide-react"; // ✅ Icons
 
 // Define Order interface
 interface Order {
@@ -154,6 +154,7 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
   const [statusFilter, setStatusFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1); // ✅ Pagination state
   const [refreshTrigger, setRefreshTrigger] = useState(0); // ✅ ADDED: Force refresh trigger
+  const [showAccountModal, setShowAccountModal] = useState(false); // ✅ Account info modal
 
   // Refs - must be declared before useEffect
   const scrollWrapperRef = useRef<HTMLDivElement>(null);
@@ -248,8 +249,9 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
 
   // Transform orders to match component needs
   const transformedOrders: Order[] = Array.isArray(reduxOrders) ? reduxOrders.map((order: any) => {
-    const customerName = order.customer?.companyName || order.customer?.name || accountData.name || 'Unknown Customer';
-    const customerPhone = order.customer?.phone1 || order.customer?.phone || accountData.phone || '';
+    // Fix: Check all possible customer name fields including accountData.companyName
+    const customerName = order.customer?.companyName || order.customer?.name || order.companyName || accountData?.companyName || accountData?.name || (accountData?.firstName && accountData?.lastName ? `${accountData.firstName} ${accountData.lastName}` : null) || 'Unknown Customer';
+    const customerPhone = order.customer?.phone1 || order.customer?.phone || order.phone || accountData?.phone || '';
     const orderStatus = order.overallStatus || order.status || 'unknown';
 
     // Get order type - could be populated object or ID
@@ -457,25 +459,25 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
       options: order.options || [],
       optionsWithDetails: order.optionsWithDetails || [],
 
-      // Customer information - use accountData as primary source
+      // Customer information - use accountData as primary source (with safe optional chaining)
       customer: {
-        _id: accountData._id || order.customer?._id || '',
-        name: accountData.name || order.customer?.name || order.customer?.companyName || '',
-        companyName: accountData.companyName || order.customer?.companyName || accountData.name || '',
-        phone: accountData.phone || order.customer?.phone1 || order.customer?.phone || '',
-        email: accountData.email || order.customer?.email || '',
-        address: accountData.address || order.customer?.address1 || '',
-        whatsapp: accountData.whatsapp || order.customer?.whatsapp || '',
-        phone2: accountData.phone2 || order.customer?.phone2 || '',
-        pinCode: accountData.pinCode || order.customer?.pinCode || '',
-        state: accountData.state || order.customer?.state || '',
-        imageUrl: accountData.imageUrl || order.customer?.imageUrl || '',
-        address1: accountData.address1 || order.customer?.address1 || '',
-        address2: accountData.address2 || order.customer?.address2 || '',
-        phone1: accountData.phone1 || accountData.phone || order.customer?.phone1 || '',
-        telephone: accountData.telephone || order.customer?.telephone || '',
-        firstName: accountData.firstName || order.customer?.firstName || '',
-        lastName: accountData.lastName || order.customer?.lastName || ''
+        _id: accountData?._id || order.customer?._id || '',
+        name: accountData?.name || accountData?.companyName || order.customer?.name || order.customer?.companyName || '',
+        companyName: accountData?.companyName || accountData?.name || order.customer?.companyName || order.customer?.name || '',
+        phone: accountData?.phone || order.customer?.phone1 || order.customer?.phone || '',
+        email: accountData?.email || order.customer?.email || '',
+        address: accountData?.address || order.customer?.address1 || '',
+        whatsapp: accountData?.whatsapp || order.customer?.whatsapp || '',
+        phone2: accountData?.phone2 || order.customer?.phone2 || '',
+        pinCode: accountData?.pinCode || order.customer?.pinCode || '',
+        state: accountData?.state || order.customer?.state || '',
+        imageUrl: accountData?.imageUrl || order.customer?.imageUrl || '',
+        address1: accountData?.address1 || order.customer?.address1 || '',
+        address2: accountData?.address2 || order.customer?.address2 || '',
+        phone1: accountData?.phone1 || accountData?.phone || order.customer?.phone1 || '',
+        telephone: accountData?.telephone || order.customer?.telephone || '',
+        firstName: accountData?.firstName || order.customer?.firstName || '',
+        lastName: accountData?.lastName || order.customer?.lastName || ''
       },
 
       // Order details
@@ -532,10 +534,10 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
         fromAccountInfo: true,
         accountData: accountData,
 
-        // Legacy compatibility
-        companyName: accountData.name || order.customer?.companyName || 'Unknown Customer',
-        customerPhone: accountData.phone || order.customer?.phone1 || '',
-        customerId: accountData._id || order.customer?._id || '',
+        // Legacy compatibility - Fix: Check all customer name fields
+        companyName: accountData?.companyName || accountData?.name || order.customer?.companyName || order.customer?.name || order.companyName || 'Unknown Customer',
+        customerPhone: accountData?.phone || order.customer?.phone1 || order.customer?.phone || '',
+        customerId: accountData?._id || order.customer?._id || '',
         orderDate: order.date || '',
         status: order.overallStatus || order.status || '',
         orderId: order.orderId,
@@ -579,11 +581,6 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
 
   const handleStatusFilter = (status: string) => {
     setStatusFilter(status);
-  };
-
-  const handleRefresh = () => {
-
-    fetchAccountOrdersData();
   };
 
   const handleClearFilters = () => {
@@ -912,68 +909,41 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
           </span>
         </div>
         <div className="all-orders-header__actions">
-          <button className="action-btn action-btn--export" onClick={handleExportExcel} disabled={loading}>
-            <Download /> Export
+          <button className="action-btn" onClick={() => setShowAccountModal(true)} title="Account Info" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0066cc" strokeWidth="2" style={{ display: 'inline' }}>
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="16" x2="12" y2="12" />
+              <line x1="12" y1="8" x2="12.01" y2="8" />
+            </svg>
           </button>
-          <button className="action-btn action-btn--print" onClick={handlePrint} disabled={loading}>
-            <Printer /> Print
+          <button className="action-btn action-btn--export" onClick={handleExportExcel} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Export
           </button>
-          <button className="action-btn" onClick={handleRefresh} disabled={loading}>
-            <RefreshCw className={loading ? 'spin' : ''} /> {loading ? 'Refreshing...' : 'Refresh'}
-          </button>
-        </div>
-      </div>
-
-      {/* Account Info Banner */}
-      <div className="accountinfoorders__banner">
-        <div className="accountinfoorders__banner-item">
-          <strong>Company:</strong> <span>{accountData.companyName || 'N/A'}</span>
-        </div>
-        <div className="accountinfoorders__banner-item">
-          <strong>Name:</strong> <span>{accountData.firstName} {accountData.lastName}</span>
-        </div>
-        <div className="accountinfoorders__banner-item">
-          <strong>Phone:</strong> <span>{accountData.phone || accountData.phone1 || 'N/A'}</span>
-        </div>
-        <div className="accountinfoorders__banner-item">
-          <strong>Email:</strong> <span>{accountData.email || 'N/A'}</span>
         </div>
       </div>
 
       {/* Selection Controls */}
       {filteredOrders.length > 0 &&
       <div className={`accountinfoorders__selection ${selectedOrders.size > 0 ? 'accountinfoorders__selection--active' : ''}`}>
-          <span className="accountinfoorders__selection-text">
-            {selectedOrders.size > 0 ?
-          `${selectedOrders.size} order${selectedOrders.size > 1 ? 's' : ''} selected` :
-          'Use Tab/Arrow keys to navigate, Space to select'}
-          </span>
-          <div className="accountinfoorders__selection-spacer"></div>
-          <button
-          onClick={selectAllOrders}
-          className="accountinfoorders__btn accountinfoorders__btn--select">
-
-            Select All
-            <span className="accountinfoorders__btn-badge">{filteredOrders.length}</span>
-          </button>
-          {selectedOrders.size > 0 &&
-        <>
+          {selectedOrders.size > 0 && (
+            <>
+              <span className="accountinfoorders__selection-text">
+                {`${selectedOrders.size} order${selectedOrders.size > 1 ? 's' : ''} selected`}
+              </span>
+              <div className="accountinfoorders__selection-spacer"></div>
               <button
-            onClick={handlePrintSelectedLabels}
-            className="accountinfoorders__btn accountinfoorders__btn--print">
-
-                <Printer />
-                Print Labels
-                <span className="accountinfoorders__btn-badge">{selectedOrders.size}</span>
-              </button>
-              <button
-            onClick={clearSelections}
-            className="accountinfoorders__btn accountinfoorders__btn--clear">
+              onClick={clearSelections}
+              className="accountinfoorders__btn accountinfoorders__btn--clear">
 
                 Clear
               </button>
             </>
-        }
+          )}
         </div>
       }
 
@@ -1040,33 +1010,33 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
 
       {/* Loading & Error States */}
       {loading &&
-      <div className="orders-loading">
-          <div className="loading-spinner"></div>
-          <p>Loading orders...</p>
-        </div>
+      <p className="loadingAndError">Loading orders...</p>
       }
-      {error && <div className="orders-error">Error: {error}</div>}
+      {error &&
+      <p className="loadingAndError" style={{ color: 'red' }}>Error: {error}</p>
+      }
 
       {/* Orders Table */}
-      {!loading && filteredOrders.length === 0 &&
-      <div className="orders-empty">
-          <p>No orders found for this account with the selected criteria.</p>
-        </div>
-      }
+      <div className="editsectionsTable-container" style={{ paddingBottom: '60px' }}>
+        {!loading && filteredOrders.length === 0 &&
+        <div className="editsectionsTable-empty">
+            <p>No orders found for this account with the selected criteria.</p>
+          </div>
+        }
 
-      {!loading && filteredOrders.length > 0 &&
-      <div
-        className="orders-table-container"
-        ref={contentRef}
-        tabIndex={0}
-        onKeyDown={handleKeyNavigation}
-        onClick={() => contentRef.current?.focus()}
-        style={{ outline: 'none' }}>
+        {!loading && filteredOrders.length > 0 &&
+        <div
+          className="editsectionsTable-wrapper"
+          ref={contentRef}
+          tabIndex={0}
+          onKeyDown={handleKeyNavigation}
+          onClick={() => contentRef.current?.focus()}
+          style={{ outline: 'none' }}>
 
-          <table className="orders-table">
-            <thead>
+            <table className="editsectionsTable-table">
+            <thead className="editsectionsTable-thead">
               <tr>
-                <th style={{ width: '40px', textAlign: 'center' }}>
+                <th className="editsectionsTable-th" style={{ width: '40px', textAlign: 'center' }}>
                   <input
                   type="checkbox"
                   checked={selectedOrders.size === filteredOrders.length && filteredOrders.length > 0}
@@ -1080,24 +1050,24 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
                   className="accountinfoorders__checkbox" />
 
                 </th>
-                <th style={{ width: '50px' }}>No</th>
-                <th style={{ width: '100px' }}>Created</th>
-                <th style={{ width: '120px' }}>Order ID</th>
-                <th>Company</th>
-                <th style={{ width: '140px' }}>Order Status</th>
-                <th style={{ width: '100px' }}>Priority</th>
-                <th style={{ width: '150px' }}>Order Type</th>
+                <th className="editsectionsTable-th" style={{ width: '50px' }}>No</th>
+                <th className="editsectionsTable-th" style={{ width: '100px' }}>Created</th>
+                <th className="editsectionsTable-th" style={{ width: '120px' }}>Order ID</th>
+                <th className="editsectionsTable-th">Company</th>
+                <th className="editsectionsTable-th" style={{ width: '140px' }}>Order Status</th>
+                <th className="editsectionsTable-th" style={{ width: '100px' }}>Priority</th>
+                <th className="editsectionsTable-th" style={{ width: '150px' }}>Order Type</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="editsectionsTable-tbody">
               {filteredOrders.map((order, index) =>
             <tr
               key={order._id || index}
               ref={(el) => ordersRef.current[index] = el as any}
-              className={`clickable-row ${selectedOrderIndex === index ? 'row-expanded' : ''} ${selectedOrders.has(order._id) ? 'accountinfoorders__row--selected' : ''}`}
+              className={`editsectionsTable-tr ${selectedOrders.has(order._id) ? 'editsectionsTable-trSelected' : ''}`}
               onClick={() => handleOrderClick(order)}>
 
-                  <td style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
+                  <td className="editsectionsTable-td" style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
                     <input
                   type="checkbox"
                   checked={selectedOrders.has(order._id)}
@@ -1105,17 +1075,17 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
                   className="accountinfoorders__checkbox" />
 
                   </td>
-                  <td style={{ textAlign: 'center', fontWeight: 500 }}>{index + 1}</td>
-                  <td className="date-cell">
+                  <td className="editsectionsTable-td" style={{ textAlign: 'center', fontWeight: 500 }}>{index + 1}</td>
+                  <td className="editsectionsTable-td date-cell">
                     {order.createdAt ? new Date(order.createdAt as string).toLocaleDateString('en-IN', {
                   day: '2-digit',
                   month: 'short',
                   year: '2-digit'
                 }) : 'N/A'}
                   </td>
-                  <td className="order-id-cell">{order.orderId || 'N/A'}</td>
-                  <td style={{ fontWeight: 500 }}>{order.companyName || 'N/A'}</td>
-                  <td>
+                  <td className="editsectionsTable-td order-id-cell">{order.orderId || 'N/A'}</td>
+                  <td className="editsectionsTable-td" style={{ fontWeight: 500 }}>{order.companyName || 'N/A'}</td>
+                  <td className="editsectionsTable-td">
                     <span
                   className="status-badge"
                   style={{ backgroundColor: getStatusColor(order.status || '') }}>
@@ -1123,7 +1093,7 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
                       {order.status?.replace(/_/g, ' ') || 'Unknown'}
                     </span>
                   </td>
-                  <td>
+                  <td className="editsectionsTable-td">
                     <span
                   className="priority-badge"
                   style={{ backgroundColor: getPriorityBadgeColor(order.priority || 'normal') }}>
@@ -1131,7 +1101,7 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
                       {order.priority || 'normal'}
                     </span>
                   </td>
-                  <td>
+                  <td className="editsectionsTable-td">
                     {order.orderTypeName ?
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}>
                         <span style={{ fontWeight: 500 }}>{order.orderTypeName}</span>
@@ -1148,33 +1118,76 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
             </tbody>
           </table>
 
-          {/* ✅ Pagination Controls */}
-          {filteredOrders.length > 0 && (
-            <div className="accountinfoorders__pagination">
-              <button
-                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                disabled={currentPage === 1 || loading}
-                className={`accountinfoorders__pagination-btn ${currentPage === 1 || loading ? 'accountinfoorders__pagination-btn--disabled' : 'accountinfoorders__pagination-btn--active'}`}
-              >
-                ← Previous
-              </button>
-
-              <span className="accountinfoorders__pagination-info">
-                Page {currentPage}
-              </span>
-
-              <button
-                onClick={() => setCurrentPage(prev => prev + 1)}
-                disabled={filteredOrders.length < 50 || loading}
-                className={`accountinfoorders__pagination-btn ${filteredOrders.length < 50 || loading ? 'accountinfoorders__pagination-btn--disabled' : 'accountinfoorders__pagination-btn--active'}`}
-              >
-                Next →
-              </button>
-            </div>
-          )}
 
         </div>
       }
+      </div>
+
+      {/* Account Info Modal */}
+      {showAccountModal && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 50
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            padding: '24px',
+            borderRadius: '12px',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            width: '400px',
+            maxWidth: '90vw'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 600, color: '#1f2937' }}>Account Information</h2>
+              <button onClick={() => setShowAccountModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2.5">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Company</label>
+                <p style={{ margin: '4px 0 0 0', fontSize: '14px', color: '#1f2937', fontWeight: 500 }}>{accountData.companyName || 'N/A'}</p>
+              </div>
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Name</label>
+                <p style={{ margin: '4px 0 0 0', fontSize: '14px', color: '#1f2937', fontWeight: 500 }}>{accountData.firstName} {accountData.lastName}</p>
+              </div>
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Phone</label>
+                <p style={{ margin: '4px 0 0 0', fontSize: '14px', color: '#1f2937', fontWeight: 500 }}>{accountData.phone || accountData.phone1 || 'N/A'}</p>
+              </div>
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Email</label>
+                <p style={{ margin: '4px 0 0 0', fontSize: '14px', color: '#1f2937', fontWeight: 500 }}>{accountData.email || 'N/A'}</p>
+              </div>
+            </div>
+
+            <button onClick={() => setShowAccountModal(false)} style={{
+              width: '100%',
+              marginTop: '20px',
+              padding: '10px 16px',
+              backgroundColor: '#FF6B35',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              fontSize: '14px',
+              fontWeight: 500,
+              cursor: 'pointer'
+            }}>
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>);
 
 };

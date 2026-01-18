@@ -1,0 +1,195 @@
+/* Section Help Icon Container */
+.section-help-icon-container {
+  position: relative;
+  display: inline-flex;
+  margin-left: 8px;
+}
+
+/* Info Icon Button */
+.section-help-icon-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Android Emoji", "EmojiSymbols", sans-serif;
+  line-height: 1;
+  opacity: 0.7;
+}
+
+.section-help-icon-button:hover {
+  transform: scale(1.2);
+  opacity: 1;
+}
+
+.section-help-icon-button:active {
+  transform: scale(0.95);
+}
+
+/* Backdrop */
+.section-help-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10000;
+}
+
+/* Popover */
+.section-help-popover {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  z-index: 10001;
+  width: 600px;
+  max-width: 90vw;
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  animation: popoverSlideIn 0.2s ease;
+}
+
+@keyframes popoverSlideIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -45%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+/* Popover Header */
+.section-help-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+  border-radius: 12px 12px 0 0;
+}
+
+.section-help-icon {
+  font-size: 24px;
+  line-height: 1;
+  flex-shrink: 0;
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Android Emoji", "EmojiSymbols", sans-serif;
+}
+
+.section-help-title {
+  flex: 1;
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.section-help-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  font-size: 24px;
+  line-height: 1;
+  color: #6b7280;
+  border-radius: 6px;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.section-help-close:hover {
+  background: #f3f4f6;
+  color: #1f2937;
+}
+
+/* Popover Content */
+.section-help-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.section-help-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.section-help-spacer {
+  height: 12px;
+}
+
+.section-help-header-line {
+  font-weight: 700;
+  color: #1f2937;
+  font-size: 1.1rem;
+  margin-top: 12px;
+  margin-bottom: 6px;
+}
+
+.section-help-item {
+  font-size: 1rem;
+  color: #4b5563;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+}
+
+.section-help-text {
+  margin: 0;
+  font-size: 1rem;
+  color: #4b5563;
+  line-height: 1.8;
+}
+
+/* Scrollbar Styling */
+.section-help-content::-webkit-scrollbar {
+  width: 10px;
+}
+
+.section-help-content::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 3px;
+}
+
+.section-help-content::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+.section-help-content::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .section-help-content {
+    padding: 24px 20px;
+  }
+
+  .section-help-header {
+    padding: 16px 20px;
+  }
+
+  .section-help-title {
+    font-size: 1.25rem;
+  }
+
+  .section-help-icon {
+    font-size: 28px;
+  }
+
+  .section-help-close {
+    font-size: 28px;
+  }
+}

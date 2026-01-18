@@ -41,7 +41,7 @@ const EditStep: React.FC = () => {
   const { handleUpdate, handleDelete: crudDelete, updateState, deleteState, confirmDialog, closeConfirmDialog, toast } = useCRUD();
 
   // 🚀 OPTIMIZED: Get data from cached form data (no API calls!)
-  const { steps, machines, loading, error } = useFormDataCache();
+  const { steps, machines, loading, error, refresh: refreshCache } = useFormDataCache();
 
   const [selectedRow, setSelectedRow] = useState(0);
   const [showDetail, setShowDetail] = useState(false);
@@ -151,19 +151,46 @@ const EditStep: React.FC = () => {
       })),
     };
 
-    await handleUpdate(
-      () => dispatch(updateStepV2(selectedStep._id, updatedStep)),
-      {
-        successMessage: 'Step updated successfully!',
-        onSuccess: () => {
-          setTimeout(() => {
-            setShowDetail(false);
-            setSelectedStep(null);
-            // ✅ OPTIMIZED: Cache will auto-refresh on next page load
-          }, 1500);
+    console.log('💾 Starting update...');
+
+    try {
+      await handleUpdate(
+        () => dispatch(updateStepV2(selectedStep._id, updatedStep)),
+        {
+          successMessage: 'Step updated successfully!',
+          onSuccess: async () => {
+            try {
+              console.log('🔄 Step updated - starting refresh');
+
+              // Wait for backend to finish writing
+              await new Promise(resolve => setTimeout(resolve, 1000));
+
+              // Refresh cache and wait for API to complete
+              console.log('📡 Calling refreshCache()...');
+              await refreshCache();
+              console.log('✅ refreshCache() completed');
+
+              // Force a small delay for React to process state updates
+              await new Promise(resolve => setTimeout(resolve, 500));
+
+              console.log('📊 Current steps in cache:', steps.length);
+              console.log('🔍 Steps data:', steps);
+
+              // Wait for Redux state to fully propagate
+              await new Promise(resolve => setTimeout(resolve, 1500));
+
+              console.log('🔙 Closing detail view');
+              setShowDetail(false);
+              setSelectedStep(null);
+            } catch (err) {
+              console.error('❌ Error in onSuccess:', err);
+            }
+          }
         }
-      }
-    );
+      );
+    } catch (error) {
+      console.error('❌ Error in handleUpdate:', error);
+    }
   };
 
   const handleDeleteClick = async () => {
@@ -175,10 +202,18 @@ const EditStep: React.FC = () => {
         confirmTitle: 'Delete Step',
         confirmMessage: 'Are you sure you want to delete this step?',
         successMessage: 'Deleted successfully.',
-        onSuccess: () => {
+        onSuccess: async () => {
+          // Wait for backend to finish
+          await new Promise(resolve => setTimeout(resolve, 1000));
+
+          // Refresh cache and wait for API to complete
+          await refreshCache();
+
+          // Wait for Redux state to fully propagate and components to re-render
+          await new Promise(resolve => setTimeout(resolve, 2000));
+
           setShowDetail(false);
           setSelectedStep(null);
-          // ✅ OPTIMIZED: Cache will auto-refresh on next page load
         }
       }
     );

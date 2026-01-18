@@ -9,6 +9,8 @@ import { useCRUD } from "../../../../../hooks/useCRUD";
 import { ToastContainer } from "../../../../../components/shared/Toast";
 import ImportProgressPopup from "../../../../../components/shared/ImportProgressPopup";
 import ImportAccountPopup from "../../../../../components/shared/ImportAccountPopup";
+import HelpDocModal, { HelpButton } from "../../../../../components/shared/HelpDocModal";
+import { createAccountHelp } from "../../../../../components/shared/helpContent";
 import * as XLSX from 'xlsx';
 import "./createNewAccount.css";
 
@@ -34,6 +36,8 @@ type AccountFormData = {
 interface AccountData extends Partial<AccountFormData> {
   _id?: string;
   imageUrl?: string;
+  categoryId?: string | { _id: string; name: string };
+  parentCompanyId?: string | { _id: string; name: string };
 }
 
 interface LocationState {
@@ -61,6 +65,14 @@ interface CustomerParentCompany {
 }
 
 type ValidationErrors = Partial<Record<keyof AccountFormData, string>>;
+
+// Helper function to extract ID from object or string
+const extractId = (value: any): string => {
+  if (!value) return "";
+  if (typeof value === 'string') return value;
+  if (typeof value === 'object' && value._id) return value._id;
+  return "";
+};
 
 const CreateNewAccount: React.FC<Props> = ({ initialData: propInitialData = {}, onCancel, onSaveSuccess }) => {
   const formRef = useRef<HTMLFormElement>(null);
@@ -105,8 +117,8 @@ const CreateNewAccount: React.FC<Props> = ({ initialData: propInitialData = {}, 
   const [formValues, setFormValues] = useState<AccountFormData>({
     companyName: initialData.companyName || "",
     gstNumber: initialData.gstNumber || "",
-    categoryId: initialData.categoryId || "",
-    parentCompanyId: initialData.parentCompanyId || "",
+    categoryId: extractId(initialData.categoryId),
+    parentCompanyId: extractId(initialData.parentCompanyId),
     firstName: initialData.firstName || "",
     lastName: initialData.lastName || "",
     email: initialData.email || "",
@@ -129,6 +141,9 @@ const CreateNewAccount: React.FC<Props> = ({ initialData: propInitialData = {}, 
   // Excel import state
   const [showImportPopup, setShowImportPopup] = useState(false);
   const [bulkImporting, setBulkImporting] = useState(false);
+
+  // Help modal state
+  const [showHelpModal, setShowHelpModal] = useState(false);
   const [importProgress, setImportProgress] = useState({
     current: 0,
     total: 0,
@@ -150,11 +165,6 @@ const CreateNewAccount: React.FC<Props> = ({ initialData: propInitialData = {}, 
     dispatch(getParentCompaniesV2());
   }, [dispatch]);
 
-  // Debug log to check if data is loaded
-  useEffect(() => {
-
-
-  }, [categories, parentCompanies]);
 
   // Handle ESC key to go back to list in edit mode
   const handleBackToList = () => {
@@ -172,11 +182,14 @@ const CreateNewAccount: React.FC<Props> = ({ initialData: propInitialData = {}, 
   // Load data when initialData changes (edit mode)
   useEffect(() => {
     if (initialData && initialData._id) {
+      const categoryId = extractId(initialData.categoryId);
+      const parentCompanyId = extractId(initialData.parentCompanyId);
+
       setFormValues({
         companyName: initialData.companyName || "",
         gstNumber: initialData.gstNumber || "",
-        categoryId: initialData.categoryId || "",
-        parentCompanyId: initialData.parentCompanyId || "",
+        categoryId,
+        parentCompanyId,
         firstName: initialData.firstName || "",
         lastName: initialData.lastName || "",
         email: initialData.email || "",
@@ -779,23 +792,29 @@ const CreateNewAccount: React.FC<Props> = ({ initialData: propInitialData = {}, 
             </svg>
           </h6>
 
-          {/* Import Button on same line - Only in Create Mode */}
-          {!editMode && (
-            <button
-              type="button"
-              onClick={() => setShowImportPopup(true)}
-              className="import-accounts-title-btn"
-              disabled={bulkImporting}
-            >
-              Import Accounts
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                <polyline points="14 2 14 8 20 8"></polyline>
-                <line x1="12" y1="18" x2="12" y2="12"></line>
-                <line x1="9" y1="15" x2="15" y2="15"></line>
-              </svg>
-            </button>
-          )}
+          {/* Buttons container - Import and Help */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            {/* Import Button on same line - Only in Create Mode */}
+            {!editMode && (
+              <button
+                type="button"
+                onClick={() => setShowImportPopup(true)}
+                className="import-accounts-title-btn"
+                disabled={bulkImporting}
+              >
+                Import Accounts
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="12" y1="18" x2="12" y2="12"></line>
+                  <line x1="9" y1="15" x2="15" y2="15"></line>
+                </svg>
+              </button>
+            )}
+
+            {/* Help Button - Orange ? icon */}
+            <HelpButton onClick={() => setShowHelpModal(true)} size="medium" />
+          </div>
         </div>
       }
 
@@ -809,6 +828,13 @@ const CreateNewAccount: React.FC<Props> = ({ initialData: propInitialData = {}, 
           setShowImportPopup(false);
         }}
         isImporting={bulkImporting}
+      />
+
+      {/* Help Documentation Modal */}
+      <HelpDocModal
+        isOpen={showHelpModal}
+        onClose={() => setShowHelpModal(false)}
+        content={createAccountHelp}
       />
 
       {/* Import Progress Popup */}

@@ -6,10 +6,13 @@ import MainRount from './componest/MainRounts/MainRount';
 import { InfinityLoader } from './components/InfinityLoader';
 
 // Direct imports for Electron app
-import ChatWidget from './components/chat/ChatWidget';
+// import ChatWidget from './components/chat/ChatWidget';   
+import ChatWidget from './componest/second/menu/OrderForward/components/chat/ChatWidget';
+
 import UniversalSearchModal from './components/UniversalSearch/UniversalSearchModal';
 import WebSocketManager from './components/WebSocketManager';
 import BranchSwitchingLoader from './componest/BranchSwitchingLoader';
+import GlobalIncomingCallHandler from './componest/second/menu/OrderForward/components/chat/GlobalIncomingCallHandler';
 
 // Chat widget wrapper to show only when authenticated
 const AuthenticatedChatWidget = () => {
@@ -35,6 +38,7 @@ function App() {
     <HashRouter>
       <WebSocketManager />
       <BranchSwitchingLoader />
+      <GlobalIncomingCallHandler />
       <MainRount />
       <AuthenticatedChatWidget />
       <UniversalSearchModal />

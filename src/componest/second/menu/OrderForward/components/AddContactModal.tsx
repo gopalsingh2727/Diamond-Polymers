@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { UserPlus, X, AlertCircle, Search } from 'lucide-react';
+// Centralized Icons
+import { PersonAddIcon, CloseIcon, ErrorIcon, SearchIcon } from './icons';
 import './AddContactModal.css';
 
 interface Person {
@@ -127,11 +128,11 @@ const AddContactModal: React.FC<AddContactModalProps> = ({ onClose, onSuccess })
         {/* Header */}
         <div className="modal-header">
           <div>
-            <h2><UserPlus size={24} /> Add New Contact</h2>
+            <h2><PersonAddIcon width={24} height={24} /> Add New Contact</h2>
             <p className="subtitle">Send a contact request to start forwarding orders</p>
           </div>
           <button className="btn-close" onClick={onClose}>
-            <X size={20} />
+            <CloseIcon width={20} height={20} />
           </button>
         </div>
 
@@ -139,14 +140,14 @@ const AddContactModal: React.FC<AddContactModalProps> = ({ onClose, onSuccess })
         <div className="modal-body">
           {error && (
             <div className="error-alert">
-              <AlertCircle size={18} />
+              <ErrorIcon width={18} height={18} />
               <span>{error}</span>
             </div>
           )}
 
           {/* Search */}
           <div className="search-box">
-            <Search size={18} />
+            <SearchIcon width={18} height={18} />
             <input
               type="text"
               placeholder="Search by name, email, or role..."
@@ -229,7 +230,7 @@ const AddContactModal: React.FC<AddContactModalProps> = ({ onClose, onSuccess })
               </>
             ) : (
               <>
-                <UserPlus size={18} />
+                <PersonAddIcon width={18} height={18} />
                 Send Request
               </>
             )}

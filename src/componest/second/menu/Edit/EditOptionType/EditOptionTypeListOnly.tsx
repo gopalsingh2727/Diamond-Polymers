@@ -14,7 +14,7 @@ interface OptionType {
   _id: string;
   name: string;
   description?: string;
-  category?: { _id: string; name: string };
+  categoryId?: { _id: string; name: string };
   branchId?: { _id: string; name: string };
 }
 
@@ -44,7 +44,7 @@ const EditOptionTypeListOnly: React.FC<Props> = ({ onEdit }) => {
     const search = searchTerm.toLowerCase();
     return (
       item.name?.toLowerCase().includes(search) ||
-      item.category?.name?.toLowerCase().includes(search)
+      item.categoryId?.name?.toLowerCase().includes(search)
     );
   });
 
@@ -117,7 +117,7 @@ const EditOptionTypeListOnly: React.FC<Props> = ({ onEdit }) => {
                   >
                     <td className="editsectionsTable-td">{index + 1}</td>
                     <td className="editsectionsTable-td">{item.name}</td>
-                    <td className="editsectionsTable-td">{item.category?.name || "N/A"}</td>
+                    <td className="editsectionsTable-td">{item.categoryId?.name || "N/A"}</td>
                     <td className="editsectionsTable-td">{item.branchId?.name || "N/A"}</td>
                   </tr>
                 ))}

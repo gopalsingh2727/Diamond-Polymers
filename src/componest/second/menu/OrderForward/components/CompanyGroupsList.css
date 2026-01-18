@@ -1,0 +1,241 @@
+/**
+ * Company Groups List Styles
+ */
+
+.company-groups-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  overflow-y: auto;
+}
+
+.company-groups-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--color-neutral-500, #737373);
+}
+
+.company-groups-empty svg {
+  width: 64px;
+  height: 64px;
+  opacity: 0.3;
+  margin-bottom: 16px;
+}
+
+.company-groups-empty .empty-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-neutral-700, #404040);
+  margin: 0 0 8px 0;
+}
+
+.company-groups-empty .empty-subtitle {
+  font-size: 14px;
+  color: var(--color-neutral-500, #737373);
+  margin: 0;
+}
+
+/* Company Group Item */
+.company-group-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid rgba(249, 115, 22, 0.08);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.company-group-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 100%;
+  background: linear-gradient(180deg, #f97316 0%, #fb923c 100%);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.2s ease;
+}
+
+.company-group-item:hover {
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.03) 0%, rgba(251, 146, 60, 0.02) 100%);
+  border-color: rgba(249, 115, 22, 0.15);
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.08);
+}
+
+.company-group-item:hover::before {
+  transform: scaleX(1);
+}
+
+.company-group-item.active {
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.08) 0%, rgba(251, 146, 60, 0.05) 100%);
+  border-color: var(--color-primary, #f97316);
+  box-shadow: 0 6px 16px rgba(249, 115, 22, 0.12);
+}
+
+.company-group-item.active::before {
+  transform: scaleX(1);
+}
+
+/* Company Avatar */
+.company-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f97316 0%, #fb923c 50%, #ea580c 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.25);
+}
+
+.company-avatar svg {
+  width: 28px;
+  height: 28px;
+}
+
+/* Company Info */
+.company-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.company-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.company-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-neutral-900, #171717);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.company-unread-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 8px;
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.3);
+  flex-shrink: 0;
+}
+
+.company-code {
+  font-size: 13px;
+  color: var(--color-neutral-600, #525252);
+  font-family: 'Courier New', monospace;
+  font-weight: 500;
+}
+
+/* Company Stats */
+.company-stats {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.stat-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--color-neutral-600, #525252);
+  font-weight: 500;
+}
+
+.stat-item svg {
+  flex-shrink: 0;
+}
+
+.stat-item.pending {
+  color: #f59e0b;
+}
+
+.stat-item.pending svg {
+  fill: #f59e0b;
+}
+
+.stat-item.received {
+  color: #22c55e;
+}
+
+.stat-item.received svg {
+  fill: #22c55e;
+}
+
+/* Company Arrow */
+.company-arrow {
+  color: var(--color-neutral-400, #a3a3a3);
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.company-group-item:hover .company-arrow {
+  color: var(--color-primary, #f97316);
+  transform: translateX(4px);
+}
+
+.company-group-item.active .company-arrow {
+  color: var(--color-primary, #f97316);
+  transform: translateX(4px);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .company-group-item {
+    padding: 12px;
+  }
+
+  .company-avatar {
+    width: 48px;
+    height: 48px;
+  }
+
+  .company-avatar svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .company-name {
+    font-size: 15px;
+  }
+
+  .company-stats {
+    gap: 8px;
+  }
+
+  .stat-item {
+    font-size: 11px;
+  }
+}

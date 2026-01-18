@@ -195,6 +195,17 @@
   width: 100%;
   padding: 20px;
   box-sizing: border-box;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Override createOptionSpec-container min-height when used in edit mode */
+.EditOptionSpec .createOptionSpec-container {
+  min-height: auto !important;
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* Search Bar Container */

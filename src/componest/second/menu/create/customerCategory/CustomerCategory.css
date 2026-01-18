@@ -22,15 +22,31 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
+/* Title Row with Help Button */
+.customerCategory-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
 /* Title */
 .customerCategory-title {
   font-size: 1.25rem;
   font-weight: 600;
   color: #1f2937;
   text-align: center;
-  margin: 0 0 20px 0;
-  padding-bottom: 15px;
-  border-bottom: 1px solid #e5e7eb;
+  margin: 0;
+  flex: 1;
+}
+
+.customerCategory-title-row .customerCategory-title {
+  text-align: left;
+  margin: 0;
+  padding-bottom: 0;
+  border-bottom: none;
 }
 
 /* Form Group - Compact spacing */
@@ -145,4 +161,237 @@
   font-weight: 600;
   color: #1f2937;
   margin: 0;
+}
+
+/* ====================================
+   Edit Mode - Full Width Layout
+   ==================================== */
+.customerCategory-container.edit-mode {
+  justify-content: flex-start !important;
+  align-items: flex-start !important;
+  padding: 20px !important;
+  display: block !important;
+}
+
+.customerCategory-container.edit-mode .customerCategory-form {
+  max-width: 100% !important;
+  width: 100% !important;
+  border-radius: 12px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+  padding: 24px !important;
+  margin-bottom: 20px !important;
+}
+
+/* ====================================
+   Edit Mode - Top Button Row (Back & Delete)
+   ==================================== */
+.customerCategory-top-buttons {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  margin-bottom: 24px !important;
+  padding-bottom: 16px !important;
+  border-bottom: 2px solid #f3f4f6 !important;
+}
+
+.customerCategory-back-btn {
+  padding: 10px 24px !important;
+  background: #f3f4f6 !important;
+  color: #374151 !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 8px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.customerCategory-back-btn:hover {
+  background: #e5e7eb !important;
+}
+
+.customerCategory-delete-btn {
+  padding: 10px 24px !important;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 8px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.customerCategory-delete-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
+}
+
+.customerCategory-delete-btn:disabled {
+  background: #9ca3af !important;
+  cursor: not-allowed !important;
+}
+
+/* ====================================
+   Edit Mode - Form Row (Two Columns)
+   ==================================== */
+.customerCategory-form-row {
+  display: flex !important;
+  gap: 20px !important;
+  margin-bottom: 16px !important;
+}
+
+.customerCategory-form-row .customerCategory-group {
+  flex: 1 !important;
+  margin-bottom: 0 !important;
+}
+
+/* ====================================
+   Edit Mode - Form Inputs with Full Border
+   ==================================== */
+.customerCategory-container.edit-mode .customerCategory-input,
+.customerCategory-container.edit-mode .customerCategory-textarea {
+  padding: 12px 14px !important;
+  font-size: 14px !important;
+  color: #1f2937 !important;
+  background: #ffffff !important;
+  border: 2px solid #e5e7eb !important;
+  border-radius: 8px !important;
+  outline: none !important;
+  box-sizing: border-box !important;
+  transition: all 0.2s ease !important;
+}
+
+.customerCategory-container.edit-mode .customerCategory-input:focus,
+.customerCategory-container.edit-mode .customerCategory-textarea:focus {
+  border-color: #FF6B35 !important;
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1) !important;
+}
+
+/* ====================================
+   Edit Mode - Title Styling
+   ==================================== */
+.customerCategory-container.edit-mode .customerCategory-title {
+  text-align: left !important;
+  justify-content: flex-start !important;
+  font-size: 1.5rem !important;
+  margin-bottom: 24px !important;
+}
+
+/* ====================================
+   Edit Mode - Update Button
+   ==================================== */
+.customerCategory-container.edit-mode .customerCategory-button {
+  max-width: 300px !important;
+}
+
+/* ====================================
+   Customers Table Section (Edit Mode)
+   ==================================== */
+.customerCategory-customers-section {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.customerCategory-customers-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 20px 0;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #f3f4f6;
+}
+
+.customerCategory-table-wrapper {
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.customerCategory-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.customerCategory-table thead {
+  background: #f9fafb;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.customerCategory-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  color: #374151;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.customerCategory-table tbody tr {
+  border-bottom: 1px solid #f3f4f6;
+  transition: background-color 0.15s ease;
+}
+
+.customerCategory-table tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+.customerCategory-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.customerCategory-table td {
+  padding: 14px 16px;
+  color: #1f2937;
+}
+
+.customerCategory-table td:first-child {
+  font-weight: 600;
+  color: #6b7280;
+  width: 60px;
+}
+
+/* ====================================
+   Responsive
+   ==================================== */
+@media (max-width: 767px) {
+  .customerCategory-form-row {
+    flex-direction: column !important;
+    gap: 0 !important;
+  }
+
+  .customerCategory-form-row .customerCategory-group {
+    margin-bottom: 16px !important;
+  }
+
+  .customerCategory-top-buttons {
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+
+  .customerCategory-back-btn,
+  .customerCategory-delete-btn {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  .customerCategory-customers-section {
+    padding: 16px;
+  }
+
+  .customerCategory-table {
+    font-size: 12px;
+  }
+
+  .customerCategory-table th,
+  .customerCategory-table td {
+    padding: 10px 12px;
+  }
 }

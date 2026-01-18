@@ -4,7 +4,7 @@
  */
 
 export type CallType = 'audio' | 'video';
-export type CallState = 'idle' | 'calling' | 'ringing' | 'connected' | 'ended' | 'failed';
+export type CallState = 'idle' | 'calling' | 'ringing' | 'connected' | 'ended' | 'failed' | 'on_hold';
 
 interface WebRTCConfig {
   iceServers: RTCIceServer[];
@@ -14,6 +14,7 @@ interface CallEventHandlers {
   onStateChange?: (state: CallState) => void;
   onRemoteStream?: (stream: MediaStream) => void;
   onLocalStream?: (stream: MediaStream) => void;
+  onScreenShareStream?: (stream: MediaStream | null) => void;
   onError?: (error: Error) => void;
   onIceCandidate?: (candidate: RTCIceCandidate) => void;
 }
@@ -22,9 +23,14 @@ export default class WebRTCService {
   private peerConnection: RTCPeerConnection | null = null;
   private localStream: MediaStream | null = null;
   private remoteStream: MediaStream | null = null;
+  private screenShareStream: MediaStream | null = null;
+  private isScreenSharing: boolean = false;
+  private originalVideoTrack: MediaStreamTrack | null = null;
   private callState: CallState = 'idle';
   private callType: CallType = 'audio';
   private eventHandlers: CallEventHandlers = {};
+  private isOnHold: boolean = false;
+  private previousCallState: CallState = 'idle';
 
   // Queue for ICE candidates that arrive before peer connection is ready
   private pendingIceCandidates: RTCIceCandidateInit[] = [];
@@ -490,29 +496,323 @@ export default class WebRTCService {
   }
 
   /**
+   * Put call on hold - pauses all audio/video streams
+   */
+  holdCall(): boolean {
+    if (!this.localStream || this.callState !== 'connected') {
+      console.warn('[WebRTC] Cannot hold - no active call');
+      return false;
+    }
+
+    console.log('[WebRTC] Putting call on hold');
+    this.isOnHold = true;
+    this.previousCallState = this.callState;
+
+    // Disable all tracks (pauses media transmission)
+    this.localStream.getTracks().forEach((track) => {
+      track.enabled = false;
+    });
+
+    this.updateCallState('on_hold');
+    return true;
+  }
+
+  /**
+   * Resume call from hold
+   */
+  resumeCall(): boolean {
+    if (!this.localStream || this.callState !== 'on_hold') {
+      console.warn('[WebRTC] Cannot resume - call is not on hold');
+      return false;
+    }
+
+    console.log('[WebRTC] Resuming call from hold');
+    this.isOnHold = false;
+
+    // Re-enable all tracks
+    this.localStream.getTracks().forEach((track) => {
+      track.enabled = true;
+    });
+
+    this.updateCallState('connected');
+    return true;
+  }
+
+  /**
+   * Toggle hold state
+   */
+  toggleHold(): boolean {
+    if (this.callState === 'on_hold') {
+      return this.resumeCall();
+    } else if (this.callState === 'connected') {
+      return this.holdCall();
+    }
+    return false;
+  }
+
+  /**
+   * Check if call is on hold
+   */
+  isCallOnHold(): boolean {
+    return this.isOnHold;
+  }
+
+  /**
+   * Start screen sharing
+   * Replaces the camera video track with screen share
+   */
+  async startScreenShare(): Promise<boolean> {
+    try {
+      if (!this.peerConnection || this.callState !== 'connected') {
+        console.warn('[WebRTC] Cannot share screen - no active call');
+        return false;
+      }
+
+      // Check if getDisplayMedia is supported
+      if (!navigator.mediaDevices.getDisplayMedia) {
+        console.error('[WebRTC] Screen sharing not supported');
+        if (this.eventHandlers.onError) {
+          this.eventHandlers.onError(new Error('Screen sharing is not supported in this browser'));
+        }
+        return false;
+      }
+
+      console.log('[WebRTC] Starting screen share...');
+
+      // Get screen share stream
+      const screenStream = await navigator.mediaDevices.getDisplayMedia({
+        video: {
+          cursor: 'always',
+          displaySurface: 'monitor',
+        },
+        audio: false, // Set to true if you want to share system audio
+      });
+
+      this.screenShareStream = screenStream;
+      const screenTrack = screenStream.getVideoTracks()[0];
+
+      if (!screenTrack) {
+        console.error('[WebRTC] No video track in screen share stream');
+        return false;
+      }
+
+      // Handle when user stops sharing via browser UI
+      screenTrack.onended = () => {
+        console.log('[WebRTC] Screen share ended by user');
+        this.stopScreenShare();
+      };
+
+      // Find the video sender and replace track
+      const videoSender = this.peerConnection.getSenders().find(
+        sender => sender.track?.kind === 'video'
+      );
+
+      if (videoSender) {
+        // Store the original video track
+        this.originalVideoTrack = videoSender.track;
+
+        // Replace with screen share track
+        await videoSender.replaceTrack(screenTrack);
+        console.log('[WebRTC] Video track replaced with screen share');
+      } else {
+        // No video sender, add the screen track
+        this.peerConnection.addTrack(screenTrack, screenStream);
+        console.log('[WebRTC] Screen share track added');
+      }
+
+      this.isScreenSharing = true;
+
+      // Notify UI
+      if (this.eventHandlers.onScreenShareStream) {
+        this.eventHandlers.onScreenShareStream(screenStream);
+      }
+
+      console.log('[WebRTC] Screen sharing started successfully');
+      return true;
+    } catch (error: any) {
+      console.error('[WebRTC] Error starting screen share:', error);
+
+      // User cancelled the screen share picker
+      if (error.name === 'NotAllowedError') {
+        console.log('[WebRTC] Screen share cancelled by user');
+        return false;
+      }
+
+      if (this.eventHandlers.onError) {
+        this.eventHandlers.onError(new Error('Failed to start screen sharing: ' + error.message));
+      }
+      return false;
+    }
+  }
+
+  /**
+   * Stop screen sharing and restore camera
+   */
+  async stopScreenShare(): Promise<boolean> {
+    try {
+      if (!this.isScreenSharing || !this.screenShareStream) {
+        console.warn('[WebRTC] Not currently sharing screen');
+        return false;
+      }
+
+      console.log('[WebRTC] Stopping screen share...');
+
+      // Stop screen share tracks
+      this.screenShareStream.getTracks().forEach(track => {
+        track.stop();
+      });
+
+      // Restore original video track if we have one
+      if (this.originalVideoTrack && this.peerConnection) {
+        const videoSender = this.peerConnection.getSenders().find(
+          sender => sender.track?.kind === 'video'
+        );
+
+        if (videoSender) {
+          // Get a new camera stream to replace screen share
+          if (this.localStream) {
+            const cameraTrack = this.localStream.getVideoTracks()[0];
+            if (cameraTrack) {
+              await videoSender.replaceTrack(cameraTrack);
+              console.log('[WebRTC] Restored camera video track');
+            }
+          }
+        }
+      }
+
+      this.screenShareStream = null;
+      this.isScreenSharing = false;
+      this.originalVideoTrack = null;
+
+      // Notify UI
+      if (this.eventHandlers.onScreenShareStream) {
+        this.eventHandlers.onScreenShareStream(null);
+      }
+
+      console.log('[WebRTC] Screen sharing stopped');
+      return true;
+    } catch (error) {
+      console.error('[WebRTC] Error stopping screen share:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Toggle screen sharing
+   */
+  async toggleScreenShare(): Promise<boolean> {
+    if (this.isScreenSharing) {
+      return this.stopScreenShare();
+    } else {
+      return this.startScreenShare();
+    }
+  }
+
+  /**
+   * Check if currently sharing screen
+   */
+  isScreenSharingActive(): boolean {
+    return this.isScreenSharing;
+  }
+
+  /**
+   * Check if screen sharing is supported
+   */
+  static isScreenShareSupported(): boolean {
+    return !!(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia);
+  }
+
+  /**
+   * Request Picture-in-Picture mode for remote video
+   * @param videoElement - The video element to put in PiP mode
+   */
+  async requestPictureInPicture(videoElement: HTMLVideoElement): Promise<boolean> {
+    try {
+      if (!document.pictureInPictureEnabled) {
+        console.warn('[WebRTC] Picture-in-Picture not supported');
+        return false;
+      }
+
+      if (document.pictureInPictureElement) {
+        // Exit PiP if already active
+        await document.exitPictureInPicture();
+        console.log('[WebRTC] Exited Picture-in-Picture');
+        return false;
+      } else {
+        // Enter PiP mode
+        await videoElement.requestPictureInPicture();
+        console.log('[WebRTC] Entered Picture-in-Picture');
+        return true;
+      }
+    } catch (error) {
+      console.error('[WebRTC] Error toggling Picture-in-Picture:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Check if Picture-in-Picture is supported
+   */
+  isPictureInPictureSupported(): boolean {
+    return document.pictureInPictureEnabled === true;
+  }
+
+  /**
+   * Check if currently in Picture-in-Picture mode
+   */
+  isInPictureInPicture(): boolean {
+    return document.pictureInPictureElement !== null;
+  }
+
+  /**
    * End the call
    */
   endCall(): void {
-    console.log('[WebRTC] Ending call');
+    console.log('[WebRTC] Ending call - stopping all media tracks');
 
     // Clear pending ICE candidates
     this.pendingIceCandidates = [];
 
-    // Stop all local tracks
+    // Stop all local tracks (camera/microphone)
     if (this.localStream) {
+      console.log('[WebRTC] Stopping local stream tracks:', this.localStream.getTracks().length);
       this.localStream.getTracks().forEach((track) => {
+        console.log('[WebRTC] Stopping local track:', track.kind, track.label);
         track.stop();
+        track.enabled = false;
       });
       this.localStream = null;
     }
 
+    // Stop all remote tracks
+    if (this.remoteStream) {
+      console.log('[WebRTC] Stopping remote stream tracks:', this.remoteStream.getTracks().length);
+      this.remoteStream.getTracks().forEach((track) => {
+        console.log('[WebRTC] Stopping remote track:', track.kind, track.label);
+        track.stop();
+        track.enabled = false;
+      });
+      this.remoteStream = null;
+    }
+
     // Close peer connection
     if (this.peerConnection) {
+      // Remove all tracks from senders first
+      this.peerConnection.getSenders().forEach((sender) => {
+        if (sender.track) {
+          console.log('[WebRTC] Removing sender track:', sender.track.kind);
+          sender.track.stop();
+        }
+      });
+
       this.peerConnection.close();
       this.peerConnection = null;
     }
 
-    this.remoteStream = null;
+    // Reset hold state
+    this.isOnHold = false;
+
+    console.log('[WebRTC] ✅ Call ended - all media tracks stopped');
     this.updateCallState('ended');
   }
 
@@ -554,5 +854,205 @@ export default class WebRTCService {
    */
   setEventHandlers(handlers: CallEventHandlers): void {
     this.eventHandlers = { ...this.eventHandlers, ...handlers };
+  }
+
+  /**
+   * Get connection quality statistics
+   * Useful for adaptive bitrate and monitoring
+   */
+  async getConnectionStats(): Promise<{
+    rtt: number;
+    packetLoss: number;
+    bitrate: number;
+    quality: 'excellent' | 'good' | 'fair' | 'poor';
+  } | null> {
+    if (!this.peerConnection) return null;
+
+    try {
+      const stats = await this.peerConnection.getStats();
+      let rtt = 0;
+      let packetsLost = 0;
+      let packetsReceived = 0;
+      let bytesReceived = 0;
+
+      stats.forEach((report) => {
+        if (report.type === 'candidate-pair' && report.state === 'succeeded') {
+          rtt = report.currentRoundTripTime ? report.currentRoundTripTime * 1000 : 0;
+        }
+        if (report.type === 'inbound-rtp' && report.kind === 'video') {
+          packetsLost = report.packetsLost || 0;
+          packetsReceived = report.packetsReceived || 0;
+          bytesReceived = report.bytesReceived || 0;
+        }
+      });
+
+      const totalPackets = packetsLost + packetsReceived;
+      const packetLoss = totalPackets > 0 ? (packetsLost / totalPackets) * 100 : 0;
+      const bitrate = bytesReceived * 8; // bits per second (approximate)
+
+      // Determine quality based on metrics
+      let quality: 'excellent' | 'good' | 'fair' | 'poor' = 'excellent';
+      if (rtt > 300 || packetLoss > 5) {
+        quality = 'poor';
+      } else if (rtt > 200 || packetLoss > 2) {
+        quality = 'fair';
+      } else if (rtt > 100 || packetLoss > 1) {
+        quality = 'good';
+      }
+
+      return { rtt, packetLoss, bitrate, quality };
+    } catch (error) {
+      console.error('[WebRTC] Error getting connection stats:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Apply adaptive bitrate based on network conditions
+   * Adjusts video quality automatically
+   */
+  async applyAdaptiveBitrate(): Promise<void> {
+    if (!this.peerConnection || this.callType !== 'video') return;
+
+    try {
+      const stats = await this.getConnectionStats();
+      if (!stats) return;
+
+      const videoSender = this.peerConnection.getSenders().find(
+        sender => sender.track?.kind === 'video'
+      );
+
+      if (!videoSender) return;
+
+      const params = videoSender.getParameters();
+      if (!params.encodings || params.encodings.length === 0) {
+        params.encodings = [{}];
+      }
+
+      // Adjust bitrate based on quality
+      let maxBitrate: number;
+      switch (stats.quality) {
+        case 'excellent':
+          maxBitrate = 2500000; // 2.5 Mbps - HD quality
+          break;
+        case 'good':
+          maxBitrate = 1500000; // 1.5 Mbps - Good quality
+          break;
+        case 'fair':
+          maxBitrate = 800000; // 800 Kbps - Medium quality
+          break;
+        case 'poor':
+          maxBitrate = 400000; // 400 Kbps - Low quality
+          break;
+        default:
+          maxBitrate = 1500000;
+      }
+
+      params.encodings[0].maxBitrate = maxBitrate;
+      await videoSender.setParameters(params);
+
+      console.log(`[WebRTC] Adaptive bitrate applied: ${maxBitrate / 1000} Kbps (quality: ${stats.quality})`);
+    } catch (error) {
+      console.error('[WebRTC] Error applying adaptive bitrate:', error);
+    }
+  }
+
+  /**
+   * Start adaptive bitrate monitoring
+   * Checks connection quality every 5 seconds and adjusts bitrate
+   */
+  private adaptiveBitrateInterval: NodeJS.Timeout | null = null;
+
+  startAdaptiveBitrateMonitoring(): void {
+    if (this.adaptiveBitrateInterval) {
+      clearInterval(this.adaptiveBitrateInterval);
+    }
+
+    this.adaptiveBitrateInterval = setInterval(async () => {
+      if (this.callState === 'connected') {
+        await this.applyAdaptiveBitrate();
+      }
+    }, 5000);
+
+    console.log('[WebRTC] Adaptive bitrate monitoring started');
+  }
+
+  stopAdaptiveBitrateMonitoring(): void {
+    if (this.adaptiveBitrateInterval) {
+      clearInterval(this.adaptiveBitrateInterval);
+      this.adaptiveBitrateInterval = null;
+      console.log('[WebRTC] Adaptive bitrate monitoring stopped');
+    }
+  }
+
+  /**
+   * Get network type and estimated bandwidth
+   * Uses Network Information API if available
+   */
+  static getNetworkInfo(): {
+    type: string;
+    effectiveType: string;
+    downlink: number;
+    rtt: number;
+    saveData: boolean;
+  } | null {
+    const connection = (navigator as any).connection ||
+                       (navigator as any).mozConnection ||
+                       (navigator as any).webkitConnection;
+
+    if (!connection) return null;
+
+    return {
+      type: connection.type || 'unknown',
+      effectiveType: connection.effectiveType || 'unknown',
+      downlink: connection.downlink || 0, // Mbps
+      rtt: connection.rtt || 0, // ms
+      saveData: connection.saveData || false
+    };
+  }
+
+  /**
+   * Get recommended video constraints based on network
+   */
+  static getRecommendedVideoConstraints(): MediaTrackConstraints {
+    const networkInfo = WebRTCService.getNetworkInfo();
+
+    if (!networkInfo) {
+      // Default HD constraints
+      return {
+        width: { ideal: 1280, min: 640, max: 1920 },
+        height: { ideal: 720, min: 480, max: 1080 },
+        frameRate: { ideal: 30, min: 15 }
+      };
+    }
+
+    // Adjust based on network type
+    switch (networkInfo.effectiveType) {
+      case '4g':
+        return {
+          width: { ideal: 1280, min: 640, max: 1920 },
+          height: { ideal: 720, min: 480, max: 1080 },
+          frameRate: { ideal: 30, min: 20 }
+        };
+      case '3g':
+        return {
+          width: { ideal: 640, min: 320, max: 1280 },
+          height: { ideal: 480, min: 240, max: 720 },
+          frameRate: { ideal: 20, min: 15 }
+        };
+      case '2g':
+      case 'slow-2g':
+        return {
+          width: { ideal: 320, max: 640 },
+          height: { ideal: 240, max: 480 },
+          frameRate: { ideal: 15, max: 20 }
+        };
+      default:
+        return {
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          frameRate: { ideal: 30 }
+        };
+    }
   }
 }

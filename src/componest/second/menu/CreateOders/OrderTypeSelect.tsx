@@ -6,12 +6,15 @@ interface OrderTypeSelectProps {
   initialValue?: string;
   orderTypes?: any[];
   loading?: boolean;
+  disabled?: boolean;
   onOrderTypeSelect?: () => void;
   onBackspace?: () => void;
 }
 
 export interface OrderTypeSelectRef {
   focus: () => void;
+  isDropdownOpen: () => boolean;
+  closeDropdown: () => void;
 }
 
 const OrderTypeSelect = forwardRef<OrderTypeSelectRef, OrderTypeSelectProps>(({
@@ -20,6 +23,7 @@ const OrderTypeSelect = forwardRef<OrderTypeSelectRef, OrderTypeSelectProps>(({
   initialValue,
   orderTypes = [],
   loading = false,
+  disabled = false,
   onOrderTypeSelect,
   onBackspace
 }, ref) => {
@@ -31,6 +35,11 @@ const OrderTypeSelect = forwardRef<OrderTypeSelectRef, OrderTypeSelectProps>(({
   useImperativeHandle(ref, () => ({
     focus: () => {
       containerRef.current?.focus();
+    },
+    isDropdownOpen: () => isOpen,
+    closeDropdown: () => {
+      setIsOpen(false);
+      setSelectedIndex(-1);
     }
   }));
 
@@ -48,12 +57,24 @@ const OrderTypeSelect = forwardRef<OrderTypeSelectRef, OrderTypeSelectProps>(({
     }
   }, [isOpen, orderTypes, value]);
 
-  // Scroll selected item into view
+  // Scroll selected item into view within dropdown only (not page scroll)
   useEffect(() => {
     if (isOpen && listRef.current && selectedIndex >= 0) {
       const items = listRef.current.querySelectorAll('li');
-      if (items[selectedIndex]) {
-        items[selectedIndex].scrollIntoView({ block: 'nearest' });
+      const selectedItem = items[selectedIndex];
+      if (selectedItem && listRef.current) {
+        // Scroll within the dropdown container only, not the page
+        const container = listRef.current;
+        const itemTop = selectedItem.offsetTop;
+        const itemBottom = itemTop + selectedItem.offsetHeight;
+        const containerTop = container.scrollTop;
+        const containerBottom = containerTop + container.offsetHeight;
+
+        if (itemTop < containerTop) {
+          container.scrollTop = itemTop;
+        } else if (itemBottom > containerBottom) {
+          container.scrollTop = itemBottom - container.offsetHeight;
+        }
       }
     }
   }, [selectedIndex, isOpen]);
@@ -145,11 +166,12 @@ const OrderTypeSelect = forwardRef<OrderTypeSelectRef, OrderTypeSelectProps>(({
 
       <div
         ref={containerRef}
-        tabIndex={0}
-        className="order-type-select"
-        onKeyDown={handleKeyDown}
-        onClick={() => !loading && setIsOpen(!isOpen)}
+        tabIndex={disabled ? -1 : 0}
+        className={`order-type-select ${disabled ? 'disabled' : ''}`}
+        onKeyDown={disabled ? undefined : handleKeyDown}
+        onClick={() => !loading && !disabled && setIsOpen(!isOpen)}
         onBlur={() => setTimeout(() => setIsOpen(false), 150)}
+        style={disabled ? { opacity: 0.7, cursor: 'not-allowed', pointerEvents: 'none' } : undefined}
       >
         <span style={{ flex: 1, color: value ? '#333' : '#999' }}>{getDisplayText()}</span>
         <span className={`arrow ${isOpen ? 'open' : ''}`}>▼</span>

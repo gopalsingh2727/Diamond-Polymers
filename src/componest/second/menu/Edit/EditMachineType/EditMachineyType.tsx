@@ -254,20 +254,22 @@ const EditMachineType: React.FC = () => {
           </div>
 
           <div className="form-section">
-            <label>Machine Type:</label>
+            <label>Machine Type *</label>
             <input
               type="text"
+              placeholder="Enter machine type name"
               value={editType}
               onChange={(e) => setEditType(e.target.value)}
             />
           </div>
 
           <div className="form-section">
-            <label>Description:</label>
+            <label>Description</label>
             <textarea
+              placeholder="Enter description (optional)"
               value={editDescription}
               onChange={(e) => setEditDescription(e.target.value)}
-              rows={3}
+              rows={4}
             />
           </div>
 
@@ -301,28 +303,43 @@ const EditMachineType: React.FC = () => {
             </p>
           </div>
 
-          <table className="machine-details-table">
-            <thead>
-              <tr>
-                <th>Machine Name</th>
-                <th>Size X</th>
-                <th>Size Y</th>
-                <th>Size Z</th>
-                <th>Branch</th>
-              </tr>
-            </thead>
-            <tbody>
-              {selectedItem?.machines.map((m: Machine, idx: number) => (
-                <tr key={idx}>
-                  <td>{m.machineName}</td>
-                  <td>{m.sizeX}</td>
-                  <td>{m.sizeY}</td>
-                  <td>{m.sizeZ}</td>
-                  <td>{m.branchId?.name || "N/A"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          {/* Machine List Section */}
+          <h3 className="machine-list-title">
+            Machines ({selectedItem?.machines?.length ?? 0})
+          </h3>
+
+          {selectedItem?.machines && selectedItem.machines.length > 0 ? (
+            <div className="machine-table-wrapper">
+              <table className="machine-details-table">
+                <thead>
+                  <tr>
+                    <th>No</th>
+                    <th>Machine Name</th>
+                    <th>Size X</th>
+                    <th>Size Y</th>
+                    <th>Size Z</th>
+                    <th>Branch</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {selectedItem.machines.map((m: Machine, idx: number) => (
+                    <tr key={idx}>
+                      <td>{idx + 1}</td>
+                      <td>{m.machineName}</td>
+                      <td>{m.sizeX}</td>
+                      <td>{m.sizeY}</td>
+                      <td>{m.sizeZ}</td>
+                      <td>{m.branchId?.name || "N/A"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="no-machines">
+              No machines assigned to this type
+            </div>
+          )}
         </div>
       ) : (
         !loading && <p>No machine types available.</p>

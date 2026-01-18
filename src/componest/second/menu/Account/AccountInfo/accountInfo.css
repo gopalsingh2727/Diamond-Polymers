@@ -1,640 +1,1223 @@
 /* ===================================
-   Account Info Orders Page CSS
-   ================================== */
+   Account Info Orders - New Design
+   All classes prefixed with: accountInfo
+   Theme: Orange (#FF6B35)
+   =================================== */
 
-/* Main container for account info orders page */
-.accountinfoorders {
+/* ===== Main Container ===== */
+.accountInfoPage {
   padding: 16px 20px;
-  background-color: #f8fafc;
-  height: 100vh;
-  max-height: 100vh;
-  overflow: hidden;
+  padding-bottom: 80px;
+  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
   position: relative;
 }
 
-/* ===================================
-   Header Action Buttons Fix
-   ================================== */
+/* ===== Header Section ===== */
+.accountInfoHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 3px solid var(--color-primary-100);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: 16px;
+}
 
-/* Override action buttons with fixed width and padding */
-.all-orders-header__actions .action-btn {
+.accountInfoHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.accountInfoTitle {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, var(--color-primary-600) 0%, var(--color-primary-700) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.accountInfoSubtitle {
+  font-size: 14px;
+  color: var(--color-primary-700);
+  font-weight: 600;
+  padding: 6px 16px;
+  background: linear-gradient(135deg, var(--color-primary-50) 0%, var(--color-primary-100) 100%);
+  border-radius: 24px;
+  border: 2px solid var(--color-primary-200);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ===== Header Actions ===== */
+.accountInfoHeaderActions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.accountInfoActionBtn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 10px 18px;
+  padding: 12px 24px;
   min-width: 120px;
-  height: 40px;
+  height: 44px;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.25s ease;
+  transition: var(--transition-all);
   white-space: nowrap;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  background-color: #f1f5f9;
-  color: #64748b;
+  box-shadow: var(--shadow-md);
+  -webkit-appearance: none;
+  appearance: none;
 }
 
-.all-orders-header__actions .action-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+.accountInfoActionBtn:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
 }
 
-.all-orders-header__actions .action-btn:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+.accountInfoActionBtn:active:not(:disabled) {
+  transform: translateY(-1px);
 }
 
-.all-orders-header__actions .action-btn:disabled {
-  background: #e2e8f0;
-  color: #94a3b8;
+.accountInfoActionBtn:disabled {
+  background: var(--color-neutral-100) !important;
+  color: var(--color-neutral-400) !important;
+  border: 1px solid var(--color-neutral-200) !important;
   cursor: not-allowed;
-  box-shadow: none;
-  transform: none;
+  box-shadow: none !important;
+  transform: none !important;
 }
 
-.all-orders-header__actions .action-btn:disabled:hover {
-  transform: none;
-  box-shadow: none;
-}
-
-/* Export Button - Green */
-.all-orders-header__actions .action-btn--export {
-  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+.accountInfoActionBtnExport {
+  background: linear-gradient(135deg, var(--color-success-500) 0%, var(--color-success-600) 100%);
   color: #ffffff;
-  border: 2px solid #16a34a;
 }
 
-.all-orders-header__actions .action-btn--export:hover {
-  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
-  border-color: #15803d;
+.accountInfoActionBtnExport:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--color-success-600) 0%, var(--color-success-700) 100%);
 }
 
-.all-orders-header__actions .action-btn--export svg {
+.accountInfoActionBtnPrint {
+  background: linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-primary-600) 100%);
+  color: #ffffff;
+}
+
+.accountInfoActionBtnPrint:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--color-primary-600) 0%, var(--color-primary-700) 100%);
+}
+
+.accountInfoActionBtnRefresh {
+  background: linear-gradient(135deg, var(--color-info-500) 0%, var(--color-info-600) 100%);
+  color: #ffffff;
+}
+
+.accountInfoActionBtnRefresh:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--color-info-600) 0%, var(--color-info-700) 100%);
+}
+
+.accountInfoActionBtnIcon {
   width: 18px;
   height: 18px;
   stroke-width: 2.5;
+  flex-shrink: 0;
 }
 
-/* Print Button - Orange */
-.all-orders-header__actions .action-btn--print {
-  background: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%);
-  color: #ffffff;
-  border: 2px solid #E55A2B;
-}
 
-.all-orders-header__actions .action-btn--print:hover {
-  background: linear-gradient(135deg, #E55A2B 0%, #D14E1F 100%);
-  border-color: #D14E1F;
-}
-
-.all-orders-header__actions .action-btn--print svg {
-  width: 18px;
-  height: 18px;
-  stroke-width: 2.5;
-}
-
-/* Refresh Button - Gray/Blue */
-.all-orders-header__actions .action-btn:not(.action-btn--export):not(.action-btn--print) {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: #ffffff;
-  border: 2px solid #2563eb;
-}
-
-.all-orders-header__actions .action-btn:not(.action-btn--export):not(.action-btn--print):hover {
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-  border-color: #1d4ed8;
-}
-
-.all-orders-header__actions .action-btn:not(.action-btn--export):not(.action-btn--print) svg {
-  width: 18px;
-  height: 18px;
-  stroke-width: 2.5;
-}
-
-/* Spin animation for refresh icon */
-.all-orders-header__actions .action-btn svg.spin {
-  animation: headerButtonSpin 1s linear infinite;
-}
-
-@keyframes headerButtonSpin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* Account Info Banner */
-.accountinfoorders__banner {
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-  padding: 16px 20px;
-  border-radius: 12px;
-  margin-bottom: 16px;
+/* ===== Account Info Banner ===== */
+.accountInfoBanner {
+  background: linear-gradient(135deg, #ffffff 0%, var(--color-primary-50) 100%);
+  padding: 20px 24px;
+  border-radius: var(--radius-xl);
+  margin-bottom: 20px;
   display: flex;
-  gap: 24px;
+  gap: 32px;
   flex-wrap: wrap;
   font-size: 14px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e2e8f0;
+  box-shadow: var(--shadow-md);
+  border: 2px solid var(--color-primary-100);
 }
 
-.accountinfoorders__banner-item {
+.accountInfoBannerItem {
   display: flex;
   align-items: center;
-  gap: 8px;
-  color: #475569;
+  gap: 10px;
+  color: var(--text-secondary);
   font-size: 14px;
 }
 
-.accountinfoorders__banner-item strong {
-  color: #1e293b;
+.accountInfoBannerItemLabel {
+  color: var(--text-primary);
   font-weight: 600;
 }
 
-.accountinfoorders__banner-item span {
-  color: #64748b;
+.accountInfoBannerItemValue {
+  color: var(--color-primary-700);
+  font-weight: 500;
 }
 
-/* Selection Controls Bar */
-.accountinfoorders__selection {
+/* ===== Selection Controls ===== */
+.accountInfoSelection {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 16px;
-  padding: 12px 16px;
-  background: #ffffff;
-  border-radius: 10px;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  border: 2px solid #e2e8f0;
-}
-
-.accountinfoorders__selection--active {
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-  border-color: #fbbf24;
-  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.2);
-}
-
-.accountinfoorders__selection-text {
-  font-size: 14px;
-  color: #475569;
-  font-weight: 500;
-  flex: 1;
-}
-
-.accountinfoorders__selection--active .accountinfoorders__selection-text {
-  color: #92400e;
-  font-weight: 600;
-}
-
-.accountinfoorders__selection-spacer {
-  flex: 1;
-}
-
-/* Selection Control Buttons */
-.accountinfoorders__btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 10px 18px;
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.25s ease;
-  white-space: nowrap;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-}
-
-.accountinfoorders__btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.accountinfoorders__btn:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-}
-
-/* Select All Button */
-.accountinfoorders__btn--select {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: #ffffff;
-  border: 2px solid #2563eb;
-}
-
-.accountinfoorders__btn--select:hover {
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-  border-color: #1d4ed8;
-}
-
-/* Print Labels Button */
-.accountinfoorders__btn--print {
-  background: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%);
-  color: #ffffff;
-  border: 2px solid #E55A2B;
-}
-
-.accountinfoorders__btn--print:hover {
-  background: linear-gradient(135deg, #E55A2B 0%, #D14E1F 100%);
-  border-color: #D14E1F;
-}
-
-.accountinfoorders__btn--print svg {
-  width: 16px;
-  height: 16px;
-  stroke-width: 2.5;
-}
-
-/* Clear Button */
-.accountinfoorders__btn--clear {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-  color: #ffffff;
-  border: 2px solid #dc2626;
-}
-
-.accountinfoorders__btn--clear:hover {
-  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-  border-color: #b91c1c;
-}
-
-/* Disabled state for buttons */
-.accountinfoorders__btn:disabled {
-  background: #e2e8f0;
-  color: #94a3b8;
-  border-color: #cbd5e1;
-  cursor: not-allowed;
-  box-shadow: none;
-  transform: none;
-}
-
-.accountinfoorders__btn:disabled:hover {
-  transform: none;
-  box-shadow: none;
-}
-
-/* Button badge (count indicator) */
-.accountinfoorders__btn-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 22px;
-  height: 22px;
-  padding: 0 6px;
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 700;
-  margin-left: 4px;
-}
-
-/* Table Row Selection States */
-.accountinfoorders__row--selected {
-  background-color: #fef3c7 !important;
-  border-left: 4px solid #fbbf24 !important;
-}
-
-.accountinfoorders__row--selected:hover {
-  background-color: #fde68a !important;
-}
-
-/* Checkbox Styling */
-.accountinfoorders__checkbox {
-  cursor: pointer;
-  width: 18px;
-  height: 18px;
-  accent-color: #3b82f6;
-  border-radius: 4px;
-  transition: all 0.2s ease;
-}
-
-.accountinfoorders__checkbox:hover {
-  transform: scale(1.1);
-}
-
-.accountinfoorders__checkbox:checked {
-  accent-color: #2563eb;
-}
-
-/* Pagination Fixed Bottom Bar */
-.accountinfoorders__pagination {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: linear-gradient(to top, #ffffff 0%, #f8fafc 100%);
+  margin-bottom: 20px;
   padding: 14px 20px;
-  border-top: 3px solid #e2e8f0;
-  box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.12);
-  z-index: 10;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 20px;
+  background: #ffffff;
+  border-radius: var(--radius-lg);
+  transition: var(--transition-all);
+  box-shadow: var(--shadow-sm);
+  border: 2px solid var(--color-neutral-200);
+  flex-wrap: wrap;
 }
 
-.accountinfoorders__pagination-btn {
+.accountInfoSelectionActive {
+  background: linear-gradient(135deg, var(--color-primary-50) 0%, var(--color-primary-100) 100%);
+  border-color: var(--color-primary-400);
+  box-shadow: 0 4px 16px rgba(249, 115, 22, 0.2);
+}
+
+.accountInfoSelectionText {
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.accountInfoSelectionActive .accountInfoSelectionText {
+  color: var(--color-primary-700);
+  font-weight: 600;
+}
+
+.accountInfoSelectionSpacer {
+  flex: 1;
+  min-width: 20px;
+}
+
+/* ===== Selection Buttons ===== */
+.accountInfoBtn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   padding: 10px 20px;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.25s ease;
-  min-width: 120px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: var(--transition-all);
+  white-space: nowrap;
+  box-shadow: var(--shadow-sm);
 }
 
-.accountinfoorders__pagination-btn--active {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: #ffffff;
-  border: 2px solid #2563eb;
-}
-
-.accountinfoorders__pagination-btn--active:hover {
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-  border-color: #1d4ed8;
+.accountInfoBtn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  box-shadow: var(--shadow-md);
 }
 
-.accountinfoorders__pagination-btn--disabled {
-  background: #e2e8f0;
-  color: #94a3b8;
-  border: 2px solid #cbd5e1;
+.accountInfoBtn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.accountInfoBtn:disabled {
+  background: var(--color-neutral-100) !important;
+  color: var(--color-neutral-400) !important;
+  cursor: not-allowed;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.accountInfoBtnSelect {
+  background: linear-gradient(135deg, var(--color-info-500) 0%, var(--color-info-600) 100%);
+  color: #ffffff;
+}
+
+.accountInfoBtnSelect:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--color-info-600) 0%, var(--color-info-700) 100%);
+}
+
+.accountInfoBtnPrint {
+  background: linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-primary-600) 100%);
+  color: #ffffff;
+}
+
+.accountInfoBtnPrint:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--color-primary-600) 0%, var(--color-primary-700) 100%);
+}
+
+.accountInfoBtnClear {
+  background: linear-gradient(135deg, var(--color-danger-500) 0%, var(--color-danger-600) 100%);
+  color: #ffffff;
+}
+
+.accountInfoBtnClear:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--color-danger-600) 0%, var(--color-danger-700) 100%);
+}
+
+.accountInfoBtnBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 8px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 700;
+  margin-left: 4px;
+}
+
+.accountInfoBtnIcon {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2.5;
+}
+
+/* ===== Filters Section ===== */
+.accountInfoFilters {
+  background-color: #ffffff;
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-md);
+  border: 2px solid var(--color-neutral-200);
+}
+
+.accountInfoFilterRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-end;
+}
+
+.accountInfoFilterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 160px;
+  flex: 1;
+}
+
+.accountInfoFilterLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.accountInfoFilterInput,
+.accountInfoFilterSelect {
+  padding: 12px 14px;
+  border: 2px solid var(--color-neutral-200);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  background-color: #ffffff;
+  color: var(--text-primary);
+  transition: var(--transition-all);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.accountInfoFilterInput:focus,
+.accountInfoFilterSelect:focus {
+  outline: none;
+  border-color: var(--color-primary-500);
+  box-shadow: var(--shadow-focus);
+}
+
+.accountInfoFilterResetBtn {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, var(--color-neutral-100) 0%, var(--color-neutral-200) 100%);
+  color: var(--text-secondary);
+  border: 2px solid var(--color-neutral-300);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-all);
+  white-space: nowrap;
+}
+
+.accountInfoFilterResetBtn:hover {
+  background: linear-gradient(135deg, var(--color-neutral-200) 0%, var(--color-neutral-300) 100%);
+  color: var(--text-primary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ===== Table Container ===== */
+.accountInfoTableContainer {
+  background-color: #ffffff;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  border: 2px solid var(--color-neutral-200);
+  overflow-x: auto;
+  overflow-y: auto;
+  flex: 1;
+  max-height: calc(100vh - 400px);
+  position: relative;
+  -webkit-overflow-scrolling: touch;
+}
+
+.accountInfoTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.accountInfoTableHead {
+  background: linear-gradient(135deg, var(--color-primary-50) 0%, var(--color-primary-100) 100%);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.accountInfoTableHeadCell {
+  padding: 14px 16px;
+  text-align: left;
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--color-primary-800);
+  border-bottom: 3px solid var(--color-primary-200);
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.accountInfoTableBody {
+  background: #ffffff;
+}
+
+.accountInfoTableRow {
+  transition: var(--transition-fast);
+  cursor: pointer;
+  border-bottom: 1px solid var(--color-neutral-100);
+}
+
+.accountInfoTableRow:hover {
+  background: linear-gradient(135deg, var(--color-primary-50) 0%, #ffffff 100%);
+}
+
+.accountInfoTableRow:active {
+  transform: scale(0.995);
+}
+
+.accountInfoTableRowExpanded {
+  background: linear-gradient(135deg, var(--color-primary-100) 0%, var(--color-primary-50) 100%) !important;
+  border-left: 5px solid var(--color-primary-600);
+}
+
+.accountInfoTableRowSelected {
+  background: linear-gradient(135deg, var(--color-primary-100) 0%, var(--color-primary-50) 100%) !important;
+  border-left: 5px solid var(--color-primary-600) !important;
+}
+
+.accountInfoTableRowSelected:hover {
+  background: linear-gradient(135deg, var(--color-primary-200) 0%, var(--color-primary-100) 100%) !important;
+}
+
+.accountInfoTableCell {
+  padding: 14px 16px;
+  color: var(--text-primary);
+  vertical-align: middle;
+  font-size: 14px;
+}
+
+.accountInfoTableCellDate {
+  white-space: nowrap;
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.accountInfoTableCellOrderId {
+  color: var(--color-primary-600);
+  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.accountInfoTableRow:hover .accountInfoTableCellOrderId {
+  text-decoration: underline;
+}
+
+/* ===== Status & Priority Badges ===== */
+.accountInfoStatusBadge {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: var(--radius-md);
+  font-size: 11px;
+  font-weight: 700;
+  color: white;
+  text-transform: capitalize;
+  white-space: nowrap;
+  min-width: 120px;
+  text-align: center;
+  line-height: 1.3;
+  box-shadow: var(--shadow-sm);
+}
+
+.accountInfoPriorityBadge {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: var(--radius-md);
+  font-size: 11px;
+  font-weight: 700;
+  color: white;
+  text-transform: capitalize;
+  min-width: 75px;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+}
+
+/* ===== Checkbox ===== */
+.accountInfoCheckbox {
+  cursor: pointer;
+  width: 20px;
+  height: 20px;
+  accent-color: var(--color-primary-600);
+  border-radius: var(--radius-sm);
+  transition: var(--transition-transform);
+}
+
+.accountInfoCheckbox:hover {
+  transform: scale(1.15);
+}
+
+.accountInfoCheckbox:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+}
+
+/* ===== Pagination ===== */
+.accountInfoPagination {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, #ffffff 0%, var(--color-primary-50) 100%);
+  padding: 18px 28px;
+  border-top: 3px solid var(--color-primary-200);
+  box-shadow: 0 -4px 20px rgba(249, 115, 22, 0.15);
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 24px;
+}
+
+.accountInfoPaginationBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 28px;
+  border: none;
+  border-radius: var(--radius-lg);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition-all);
+  min-width: 130px;
+  box-shadow: var(--shadow-md);
+}
+
+.accountInfoPaginationBtnActive {
+  background: linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-primary-600) 100%);
+  color: #ffffff;
+}
+
+.accountInfoPaginationBtnActive:hover {
+  background: linear-gradient(135deg, var(--color-primary-600) 0%, var(--color-primary-700) 100%);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(249, 115, 22, 0.4);
+}
+
+.accountInfoPaginationBtnDisabled {
+  background: var(--color-neutral-100);
+  color: var(--color-neutral-400);
+  border: 2px solid var(--color-neutral-200);
   cursor: not-allowed;
   box-shadow: none;
 }
 
-.accountinfoorders__pagination-btn--disabled:hover {
+.accountInfoPaginationBtnDisabled:hover {
   transform: none;
   box-shadow: none;
 }
 
-.accountinfoorders__pagination-info {
-  font-size: 14px;
-  font-weight: 600;
-  color: #374151;
-  min-width: 100px;
+.accountInfoPaginationInfo {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  min-width: 110px;
   text-align: center;
-  padding: 8px 16px;
-  background: #f1f5f9;
-  border-radius: 8px;
-  border: 2px solid #e2e8f0;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, var(--color-primary-100) 0%, var(--color-primary-50) 100%);
+  border-radius: var(--radius-lg);
+  border: 2px solid var(--color-primary-200);
+  box-shadow: var(--shadow-sm);
 }
 
-/* Responsive Design for Account Info Orders */
-@media (max-width: 1440px) {
-  .accountinfoorders {
+
+/* ===== Error State ===== */
+.accountInfoError {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, var(--color-danger-50) 0%, var(--color-danger-100) 100%);
+  border: 2px solid var(--color-danger-200);
+  border-radius: var(--radius-lg);
+  margin-bottom: 20px;
+  color: var(--color-danger-700);
+  font-size: 15px;
+  font-weight: 600;
+  box-shadow: var(--shadow-md);
+}
+
+.accountInfoError::before {
+  content: "⚠️";
+  font-size: 22px;
+}
+
+/* ===== Empty State ===== */
+.accountInfoEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  background: #ffffff;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  border: 2px solid var(--color-neutral-200);
+  text-align: center;
+}
+
+.accountInfoEmptyText {
+  color: var(--text-secondary);
+  font-size: 17px;
+  font-weight: 500;
+  margin: 0;
+}
+
+/* ===== Loading & Error States ===== */
+.loadingAndError {
+  padding: 20px;
+  text-align: center;
+  font-size: 15px;
+  color: #64748b;
+  background: #ffffff;
+  border-radius: var(--radius-lg);
+  margin-bottom: 20px;
+}
+
+/* ===== Focus States for Accessibility ===== */
+.accountInfoBtn:focus-visible,
+.accountInfoPaginationBtn:focus-visible,
+.accountInfoActionBtn:focus-visible {
+  outline: 3px solid var(--color-primary-500);
+  outline-offset: 2px;
+}
+
+.accountInfoFilterInput:focus-visible,
+.accountInfoFilterSelect:focus-visible {
+  outline: none;
+  border-color: var(--color-primary-500);
+  box-shadow: var(--shadow-focus);
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+
+/* Desktop (1440px - 1679px) */
+@media (max-width: 1679px) {
+  .accountInfoPage {
     padding: 14px 18px;
+    padding-bottom: 75px;
   }
 
-  .accountinfoorders__banner {
-    padding: 14px 18px;
-    gap: 20px;
+  .accountInfoTitle {
+    font-size: 24px;
+  }
+
+  .accountInfoActionBtn {
+    padding: 10px 20px;
+    min-width: 110px;
+    height: 42px;
     font-size: 13px;
   }
 
-  .accountinfoorders__selection {
+  .accountInfoBanner {
+    padding: 18px 22px;
+    gap: 28px;
+  }
+
+  .accountInfoTableContainer {
+    max-height: calc(100vh - 380px);
+  }
+}
+
+/* MacBook 14" (1366px - 1439px) */
+@media (max-width: 1439px) {
+  .accountInfoPage {
+    padding: 12px 16px;
+    padding-bottom: 70px;
+  }
+
+  .accountInfoHeader {
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+  }
+
+  .accountInfoTitle {
+    font-size: 22px;
+  }
+
+  .accountInfoSubtitle {
+    font-size: 13px;
+    padding: 5px 14px;
+  }
+
+  .accountInfoActionBtn {
+    padding: 9px 18px;
+    min-width: 100px;
+    height: 40px;
+    font-size: 12px;
+  }
+
+  .accountInfoBanner {
+    padding: 16px 20px;
+    gap: 24px;
+    font-size: 13px;
+  }
+
+  .accountInfoTableContainer {
+    max-height: calc(100vh - 360px);
+  }
+
+  .accountInfoTableHeadCell,
+  .accountInfoTableCell {
+    padding: 12px 14px;
+  }
+
+  .accountInfoStatusBadge {
+    min-width: 110px;
+    padding: 5px 12px;
+    font-size: 10px;
+  }
+}
+
+/* MacBook 13" (1280px - 1365px) */
+@media (max-width: 1365px) {
+  .accountInfoPage {
     padding: 10px 14px;
+    padding-bottom: 65px;
+  }
+
+  .accountInfoHeader {
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+    gap: 12px;
+  }
+
+  .accountInfoTitle {
+    font-size: 20px;
+  }
+
+  .accountInfoHeaderActions {
     gap: 10px;
   }
 
-  .accountinfoorders__btn {
-    padding: 8px 14px;
-    font-size: 13px;
-  }
-
-  .accountinfoorders__pagination {
-    padding: 12px 18px;
-    gap: 16px;
-  }
-
-  .accountinfoorders__pagination-btn {
+  .accountInfoActionBtn {
     padding: 8px 16px;
-    font-size: 13px;
-    min-width: 100px;
-  }
-
-  /* Header buttons responsive */
-  .all-orders-header__actions .action-btn {
-    padding: 8px 14px;
-    min-width: 110px;
+    min-width: 90px;
     height: 38px;
-    font-size: 13px;
+    font-size: 11px;
+    gap: 6px;
   }
 
-  .all-orders-header__actions .action-btn svg {
+  .accountInfoActionBtnIcon {
     width: 16px;
     height: 16px;
   }
-}
 
-@media (max-width: 1366px) {
-  .accountinfoorders {
-    padding: 12px 16px;
-  }
-
-  .accountinfoorders__banner {
-    padding: 12px 16px;
-    gap: 18px;
+  .accountInfoBanner {
+    padding: 14px 18px;
+    gap: 20px;
     font-size: 12px;
   }
 
-  .accountinfoorders__selection {
-    padding: 8px 12px;
-    gap: 8px;
+  .accountInfoSelection {
+    padding: 12px 16px;
+    gap: 10px;
   }
 
-  .accountinfoorders__btn {
-    padding: 7px 12px;
+  .accountInfoBtn {
+    padding: 8px 16px;
     font-size: 12px;
   }
 
-  .accountinfoorders__btn-badge {
-    min-width: 20px;
-    height: 20px;
+  .accountInfoFilterGroup {
+    min-width: 120px;
+  }
+
+  .accountInfoFilterInput,
+  .accountInfoFilterSelect {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .accountInfoTableContainer {
+    max-height: calc(100vh - 340px);
+  }
+
+  .accountInfoTable {
+    font-size: 13px;
+  }
+
+  .accountInfoTableHeadCell {
+    padding: 10px 12px;
     font-size: 11px;
   }
 
-  .accountinfoorders__pagination {
-    padding: 10px 16px;
-    gap: 14px;
+  .accountInfoTableCell {
+    padding: 10px 12px;
   }
 
-  .accountinfoorders__pagination-btn {
-    padding: 7px 14px;
-    font-size: 12px;
-    min-width: 90px;
-  }
-
-  .accountinfoorders__pagination-info {
-    font-size: 12px;
-    padding: 6px 12px;
-  }
-
-  /* Header buttons responsive */
-  .all-orders-header__actions .action-btn {
-    padding: 7px 12px;
+  .accountInfoStatusBadge {
     min-width: 100px;
-    height: 36px;
-    font-size: 12px;
+    padding: 5px 10px;
+    font-size: 10px;
   }
 
-  .all-orders-header__actions .action-btn svg {
-    width: 15px;
-    height: 15px;
+  .accountInfoPaginationBtn {
+    padding: 12px 22px;
+    font-size: 13px;
+    min-width: 110px;
   }
 }
 
-@media (max-width: 1024px) {
-  .accountinfoorders__banner {
+/* Tablet / iPad (1024px - 1279px) */
+@media (max-width: 1279px) {
+  .accountInfoPage {
+    padding: 10px 12px;
+    padding-bottom: 65px;
+  }
+
+  .accountInfoHeader {
+    flex-wrap: wrap;
+  }
+
+  .accountInfoHeaderLeft {
+    flex: 1;
+    min-width: 280px;
+  }
+
+  .accountInfoHeaderActions {
+    flex-wrap: wrap;
+  }
+
+  .accountInfoBanner {
+    gap: 16px;
+  }
+
+  .accountInfoBannerItem {
+    flex: 1;
+    min-width: 160px;
+  }
+
+  .accountInfoFilterGroup {
+    flex: 1;
+    min-width: 150px;
+  }
+
+  .accountInfoTableContainer {
+    max-height: calc(100vh - 360px);
+  }
+
+  .accountInfoStatusBadge {
+    min-width: 95px;
+  }
+}
+
+/* Small Tablet (768px - 1023px) */
+@media (max-width: 1023px) {
+  .accountInfoPage {
+    padding: 10px;
+    padding-bottom: 60px;
+  }
+
+  .accountInfoHeader {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .accountInfoHeaderLeft {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .accountInfoTitle {
+    font-size: 20px;
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .accountInfoHeaderActions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .accountInfoActionBtn {
+    flex: 1;
+    min-width: auto;
+    padding: 10px 12px;
+  }
+
+  .accountInfoBanner {
     flex-direction: column;
     gap: 12px;
   }
 
-  .accountinfoorders__selection {
-    flex-wrap: wrap;
+  .accountInfoBannerItem {
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--color-neutral-50);
+    border-radius: var(--radius-md);
   }
 
-  .accountinfoorders__btn {
-    flex: 1;
-    min-width: 140px;
+  .accountInfoSelection {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
   }
 
-  /* Header buttons responsive */
-  .all-orders-header__actions {
-    flex-wrap: wrap;
-    gap: 8px;
+  .accountInfoSelectionSpacer {
+    display: none;
   }
 
-  .all-orders-header__actions .action-btn {
-    padding: 6px 10px;
+  .accountInfoBtn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .accountInfoFilterRow {
+    flex-direction: column;
+  }
+
+  .accountInfoFilterGroup {
+    width: 100%;
+  }
+
+  .accountInfoFilterResetBtn {
+    width: 100%;
+  }
+
+  .accountInfoTableContainer {
+    max-height: calc(100vh - 420px);
+  }
+
+  .accountInfoTableHeadCell,
+  .accountInfoTableCell {
+    padding: 10px 8px;
+  }
+
+  .accountInfoStatusBadge {
     min-width: 90px;
-    height: 34px;
-    font-size: 11px;
+    font-size: 10px;
+    padding: 5px 8px;
   }
 
-  .all-orders-header__actions .action-btn svg {
-    width: 14px;
-    height: 14px;
+  .accountInfoPagination {
+    padding: 14px;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .accountInfoPaginationBtn {
+    flex: 1;
+    min-width: 110px;
+    padding: 12px 16px;
+    font-size: 13px;
+  }
+
+  .accountInfoPaginationInfo {
+    order: -1;
+    width: 100%;
+    text-align: center;
+    margin-bottom: 10px;
   }
 }
 
-@media (max-width: 768px) {
-  .accountinfoorders {
-    padding: 10px 12px;
+/* Mobile (up to 767px) */
+@media (max-width: 767px) {
+  .accountInfoPage {
+    padding: 8px;
+    padding-bottom: 70px;
   }
 
-  .accountinfoorders__banner {
-    padding: 10px 12px;
-    gap: 10px;
-    font-size: 11px;
+  .accountInfoHeader {
+    gap: 12px;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
   }
 
-  .accountinfoorders__selection {
-    flex-direction: column;
-    align-items: stretch;
+  .accountInfoTitle {
+    font-size: 18px;
+  }
+
+  .accountInfoSubtitle {
+    font-size: 12px;
+    padding: 3px 10px;
+  }
+
+  .accountInfoHeaderActions {
     gap: 8px;
   }
 
-  .accountinfoorders__btn {
-    width: 100%;
-    min-width: auto;
-  }
-
-  .accountinfoorders__pagination {
-    padding: 8px 12px;
-    gap: 10px;
-  }
-
-  .accountinfoorders__pagination-btn {
-    padding: 6px 12px;
+  .accountInfoActionBtn {
+    padding: 8px 10px;
     font-size: 11px;
-    min-width: 80px;
+    height: 36px;
+    gap: 5px;
   }
 
-  .accountinfoorders__pagination-info {
-    font-size: 11px;
-    padding: 5px 10px;
+  .accountInfoActionBtnIcon {
+    width: 15px;
+    height: 15px;
   }
 
-  /* Header buttons responsive */
-  .all-orders-header__actions {
-    width: 100%;
-    justify-content: space-between;
+  .accountInfoBanner {
+    padding: 12px;
+    font-size: 12px;
   }
 
-  .all-orders-header__actions .action-btn {
-    flex: 1;
-    padding: 6px 8px;
-    min-width: 70px;
-    height: 32px;
+  .accountInfoSelection {
+    padding: 12px;
+  }
+
+  .accountInfoBtn {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+
+  .accountInfoFilters {
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+
+  .accountInfoFilterLabel {
     font-size: 10px;
   }
 
-  .all-orders-header__actions .action-btn svg {
-    width: 13px;
-    height: 13px;
+  .accountInfoFilterInput,
+  .accountInfoFilterSelect {
+    padding: 10px;
+    font-size: 13px;
+  }
+
+  .accountInfoFilterResetBtn {
+    padding: 10px 16px;
+    font-size: 12px;
+  }
+
+  .accountInfoTableContainer {
+    max-height: calc(100vh - 420px);
+    border-radius: var(--radius-md);
+  }
+
+  .accountInfoTable {
+    font-size: 12px;
+  }
+
+  .accountInfoTableHeadCell {
+    padding: 10px 8px;
+    font-size: 10px;
+  }
+
+  .accountInfoTableCell {
+    padding: 10px 8px;
+  }
+
+  .accountInfoStatusBadge {
+    min-width: 85px;
+    font-size: 9px;
+    padding: 4px 6px;
+  }
+
+  .accountInfoPriorityBadge {
+    min-width: 50px;
+    font-size: 9px;
+    padding: 3px 6px;
+  }
+
+  .accountInfoTableCellOrderId,
+  .accountInfoTableCellDate {
+    font-size: 11px;
+  }
+
+  .accountInfoCheckbox {
+    width: 18px;
+    height: 18px;
+  }
+
+  .accountInfoPagination {
+    padding: 12px 10px;
+    gap: 10px;
+  }
+
+  .accountInfoPaginationBtn {
+    padding: 10px 14px;
+    font-size: 12px;
+    min-width: 90px;
+  }
+
+  .accountInfoPaginationInfo {
+    font-size: 12px;
+    padding: 8px 14px;
+  }
+
+  .accountInfoError {
+    font-size: 13px;
+    padding: 12px 16px;
   }
 }
 
-/* Animation for selection state change */
-@keyframes selectionPulse {
-  0% {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+/* Very Small Mobile (up to 480px) */
+@media (max-width: 480px) {
+  .accountInfoPage {
+    padding: 6px;
+    padding-bottom: 75px;
   }
-  50% {
-    box-shadow: 0 4px 16px rgba(251, 191, 36, 0.3);
+
+  .accountInfoTitle {
+    font-size: 16px;
   }
-  100% {
-    box-shadow: 0 4px 12px rgba(251, 191, 36, 0.2);
+
+  .accountInfoSubtitle {
+    display: none;
+  }
+
+  .accountInfoActionBtn {
+    padding: 6px 8px;
+    font-size: 10px;
+    height: 32px;
+  }
+
+  .accountInfoActionBtnIcon {
+    width: 14px;
+    height: 14px;
+  }
+
+  .accountInfoBanner {
+    padding: 10px;
+    font-size: 11px;
+  }
+
+  .accountInfoBannerItem {
+    padding: 8px 10px;
+  }
+
+  .accountInfoBtn {
+    padding: 8px 10px;
+    font-size: 11px;
+  }
+
+  .accountInfoBtnBadge {
+    display: none;
+  }
+
+  .accountInfoTable {
+    font-size: 10px;
+  }
+
+  .accountInfoTableHeadCell,
+  .accountInfoTableCell {
+    padding: 8px 6px;
+  }
+
+  .accountInfoStatusBadge {
+    min-width: 75px;
+    font-size: 9px;
+    padding: 3px 5px;
+  }
+
+  .accountInfoPriorityBadge {
+    min-width: 45px;
+    font-size: 8px;
+    padding: 2px 5px;
+  }
+
+  .accountInfoPagination {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .accountInfoPaginationBtn {
+    width: 100%;
+  }
+
+  .accountInfoPaginationInfo {
+    width: 100%;
   }
 }
 
-.accountinfoorders__selection--active {
-  animation: selectionPulse 0.5s ease-out;
-}
-
-/* Loading state for buttons */
-@keyframes buttonSpin {
-  from {
-    transform: rotate(0deg);
+/* ===== Print Styles ===== */
+@media print {
+  .accountInfoPage {
+    padding: 0;
+    background: white;
   }
-  to {
-    transform: rotate(360deg);
+
+  .accountInfoHeaderActions,
+  .accountInfoSelection,
+  .accountInfoFilters,
+  .accountInfoPagination {
+    display: none !important;
+  }
+
+  .accountInfoTableContainer {
+    max-height: none;
+    overflow: visible;
+    box-shadow: none;
+    border: 1px solid #000;
+  }
+
+  .accountInfoTableHeadCell,
+  .accountInfoTableCell {
+    border: 1px solid #000;
   }
 }
 
-.accountinfoorders__btn--loading svg {
-  animation: buttonSpin 1s linear infinite;
-}
-
-/* Focus states for accessibility */
-.accountinfoorders__btn:focus-visible {
-  outline: 3px solid #3b82f6;
-  outline-offset: 2px;
-}
-
-.accountinfoorders__checkbox:focus-visible {
-  outline: 2px solid #3b82f6;
-  outline-offset: 2px;
-}
-
-.accountinfoorders__pagination-btn:focus-visible {
-  outline: 3px solid #3b82f6;
-  outline-offset: 2px;
+/* ===== Reduced Motion ===== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

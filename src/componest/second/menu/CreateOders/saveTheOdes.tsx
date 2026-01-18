@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, forwardRef, useImperativeHandle } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import {
@@ -21,6 +21,11 @@ interface SaveOrdersProps {
   optionsData?: any[]; // Unified options array format
 }
 
+// Ref interface for parent component access
+export interface SaveOrdersRef {
+  triggerSave: () => void;
+}
+
 // PrintType interface
 interface PrintType {
   _id: string;
@@ -36,12 +41,12 @@ interface PrintType {
   isDefault?: boolean;
 }
 
-const SaveOrders: React.FC<SaveOrdersProps> = ({
+const SaveOrders = forwardRef<SaveOrdersRef, SaveOrdersProps>(({
   isEditMode = false,
   orderId,
   orderData,
   optionsData
-}) => {
+}, ref) => {
   const dispatch = useDispatch<any>();
   const navigate = useNavigate();
 
@@ -204,6 +209,13 @@ const SaveOrders: React.FC<SaveOrdersProps> = ({
       });
     }
   };
+
+  // Expose triggerSave method to parent via ref
+  useImperativeHandle(ref, () => ({
+    triggerSave: () => {
+      handleSaveOrder();
+    }
+  }));
 
   // Watch for Redux success message
   useEffect(() => {
@@ -816,7 +828,9 @@ const SaveOrders: React.FC<SaveOrdersProps> = ({
       )}
     </>);
 
-};
+});
+
+SaveOrders.displayName = 'SaveOrders';
 
 // Styles
 const overlayStyle: React.CSSProperties = {

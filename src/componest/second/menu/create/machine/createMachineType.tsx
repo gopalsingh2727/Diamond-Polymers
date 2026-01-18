@@ -1,12 +1,15 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { createMachineTypeV2, updateMachineTypeV2, deleteMachineTypeV2 } from "../../../../redux/unifiedV2";
 import { RootState } from "../../../../redux/rootReducer";
 import { AppDispatch } from "../../../../../store";
 import { ToastContainer } from '../../../../../components/shared/Toast';
 import { useCRUD } from '../../../../../hooks/useCRUD';
+import { useFormDataCache } from "../../Edit/hooks/useFormDataCache";
 import ImportProgressPopup from "../../../../../components/shared/ImportProgressPopup";
 import ImportAccountPopup from "../../../../../components/shared/ImportAccountPopup";
+import HelpDocModal, { HelpButton } from "../../../../../components/shared/HelpDocModal";
+import { machineTypeHelp } from "../../../../../components/shared/helpContent";
 import * as XLSX from 'xlsx';
 import "./createMachineType.css";
 
@@ -30,6 +33,17 @@ const CreateMachineType: React.FC<CreateMachineTypeProps> = ({ initialData, onCa
   const dispatch = useDispatch<AppDispatch>();
   const { saveState, handleSave, toast } = useCRUD();
 
+  // Get machines from cache for edit mode
+  const { machines: cachedMachines } = useFormDataCache();
+
+  // Filter machines belonging to this machine type
+  const machinesForType = useMemo(() => {
+    if (!isEditMode || !initialData?._id) return [];
+    return cachedMachines.filter((machine: any) =>
+      machine.machineType?._id === initialData._id || machine.machineTypeId === initialData._id
+    );
+  }, [cachedMachines, initialData, isEditMode]);
+
   const { loading } = useSelector(
     (state: RootState) => state.v2.machineType
   );
@@ -50,6 +64,9 @@ const CreateMachineType: React.FC<CreateMachineTypeProps> = ({ initialData, onCa
     failed: number;
     errors: string[];
   } | null>(null);
+
+  // Help modal state
+  const [showHelpModal, setShowHelpModal] = useState(false);
 
   // Load data in edit mode
   useEffect(() => {
@@ -299,22 +316,22 @@ const CreateMachineType: React.FC<CreateMachineTypeProps> = ({ initialData, onCa
   };
 
   return (
-    <div className="createMachineType-container">
+    <div className={`createMachineType-container ${isEditMode ? 'edit-mode' : ''}`}>
       <div className="createMachineType-form">
         {/* Header with Back/Delete for edit mode */}
         {isEditMode && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
+          <div className="createMachineType-top-buttons">
             <button
               type="button"
               onClick={onCancel}
-              style={{ padding: '8px 16px', background: '#6b7280', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+              className="createMachineType-back-btn"
             >
-              ← Back to List
+              Back
             </button>
             <button
               type="button"
               onClick={handleDelete}
-              style={{ padding: '8px 16px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+              className="createMachineType-delete-btn"
             >
               Delete
             </button>
@@ -341,6 +358,9 @@ const CreateMachineType: React.FC<CreateMachineTypeProps> = ({ initialData, onCa
                 <line x1="9" y1="15" x2="15" y2="15"></line>
               </svg>
             </button>
+
+            {/* Help Button */}
+            <HelpButton onClick={() => setShowHelpModal(true)} size="medium" />
           </div>
         ) : (
           <h2 className="createMachineType-title">
@@ -348,27 +368,54 @@ const CreateMachineType: React.FC<CreateMachineTypeProps> = ({ initialData, onCa
           </h2>
         )}
 
-        <div className="createMachineType-group">
-          <label className="createMachineType-label">Machine Type Name *</label>
-          <input
-            type="text"
-            value={machineTypeName}
-            onChange={(e) => setMachineTypeName(e.target.value)}
-            className="createMachineType-input"
-            placeholder="Enter Machine Type"
-          />
-        </div>
-
-        <div className="createMachineType-group">
-          <label className="createMachineType-label">Description *</label>
-          <input
-            type="text"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="createMachineType-input"
-            placeholder="Enter Description"
-          />
-        </div>
+        {/* Edit Mode: Two columns layout */}
+        {isEditMode ? (
+          <div className="createMachineType-form-row">
+            <div className="createMachineType-group">
+              <label className="createMachineType-label">Machine Type Name *</label>
+              <input
+                type="text"
+                value={machineTypeName}
+                onChange={(e) => setMachineTypeName(e.target.value)}
+                className="createMachineType-input"
+                placeholder="Enter Machine Type"
+              />
+            </div>
+            <div className="createMachineType-group">
+              <label className="createMachineType-label">Description *</label>
+              <input
+                type="text"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="createMachineType-input"
+                placeholder="Enter Description"
+              />
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="createMachineType-group">
+              <label className="createMachineType-label">Machine Type Name *</label>
+              <input
+                type="text"
+                value={machineTypeName}
+                onChange={(e) => setMachineTypeName(e.target.value)}
+                className="createMachineType-input"
+                placeholder="Enter Machine Type"
+              />
+            </div>
+            <div className="createMachineType-group">
+              <label className="createMachineType-label">Description *</label>
+              <input
+                type="text"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="createMachineType-input"
+                placeholder="Enter Description"
+              />
+            </div>
+          </>
+        )}
 
         <div className="createMachineType-group">
           <label className="createMachineType-label">Status</label>
@@ -413,6 +460,47 @@ const CreateMachineType: React.FC<CreateMachineTypeProps> = ({ initialData, onCa
         >
           {saveState === 'loading' ? 'Saving...' : isEditMode ? 'Update' : 'Add Machine Type'}
         </button>
+
+        {/* Machines List - Only shown in edit mode */}
+        {isEditMode && (
+          <div className="machines-section">
+            <h3 className="machines-title">
+              Machines ({machinesForType.length})
+            </h3>
+            {machinesForType.length > 0 ? (
+              <div className="machines-table-wrapper">
+                <table className="machines-table">
+                  <thead>
+                    <tr>
+                      <th>No</th>
+                      <th>Machine Name</th>
+                      <th>Branch</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {machinesForType.map((machine: any, index: number) => (
+                      <tr key={machine._id}>
+                        <td>{index + 1}</td>
+                        <td>{machine.machineName || 'N/A'}</td>
+                        <td>{machine.branchId?.name || 'N/A'}</td>
+                        <td>
+                          <span className={`status-badge ${machine.isActive !== false ? 'active' : 'inactive'}`}>
+                            {machine.isActive !== false ? '★ ACTIVE' : 'INACTIVE'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="no-machines">
+                No machines assigned to this type
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Import Account Popup */}
         <ImportAccountPopup
@@ -502,6 +590,13 @@ const CreateMachineType: React.FC<CreateMachineTypeProps> = ({ initialData, onCa
             </div>
           </div>
         )}
+
+        {/* Help Documentation Modal */}
+        <HelpDocModal
+          isOpen={showHelpModal}
+          onClose={() => setShowHelpModal(false)}
+          content={machineTypeHelp}
+        />
 
         <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
       </div>

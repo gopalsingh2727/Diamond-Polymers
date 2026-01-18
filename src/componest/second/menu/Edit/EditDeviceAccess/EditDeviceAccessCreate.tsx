@@ -129,7 +129,7 @@ const EditDeviceAccessCreate: React.FC = () => {
     }
 
     await handleUpdate(
-      () => dispatch(updateDeviceAccess(form._id!, "updateDetails", updatePayload)),
+      () => dispatch(updateDeviceAccess(form._id!, { action: "updateDetails", ...updatePayload })),
       {
         successMessage: "Device access updated successfully!",
         errorMessage: "Failed to update device access.",

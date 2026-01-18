@@ -25,11 +25,26 @@ const EditOptionList: React.FC = () => {
   const [editOptionTypeId, setEditOptionTypeId] = useState('');
   const [editId, setEditId] = useState<string | null>(null);
 
-  // Get option type name by ID
-  const getOptionTypeName = (optionTypeId: string) => {
-    if (!optionTypeId || !Array.isArray(optionTypes)) return 'N/A';
+  // Get option type name - handles both string ID and populated object
+  const getOptionTypeName = (optionTypeId: any) => {
+    if (!optionTypeId) return 'N/A';
+    // If it's a populated object, use the name directly
+    if (typeof optionTypeId === 'object' && optionTypeId.name) {
+      return optionTypeId.name;
+    }
+    // If it's a string ID, look it up
+    if (!Array.isArray(optionTypes)) return 'N/A';
     const type = optionTypes.find((t: any) => t._id === optionTypeId);
     return type?.name || 'N/A';
+  };
+
+  // Get option type ID - handles both string ID and populated object
+  const getOptionTypeId = (optionTypeId: any): string => {
+    if (!optionTypeId) return '';
+    if (typeof optionTypeId === 'object' && optionTypeId._id) {
+      return optionTypeId._id;
+    }
+    return optionTypeId;
   };
 
   // Filter options based on search
@@ -46,7 +61,7 @@ const EditOptionList: React.FC = () => {
     setSelectedRow(index);
     setEditId(item._id);
     setEditName(item.name || '');
-    setEditOptionTypeId(item.optionTypeId || '');
+    setEditOptionTypeId(getOptionTypeId(item.optionTypeId));
     setShowDetail(true);
   };
 
@@ -293,7 +308,7 @@ const EditOptionList: React.FC = () => {
             disabled={
               updateState === 'loading' ||
               (editName === selectedItem.name &&
-              editOptionTypeId === selectedItem.optionTypeId)
+              editOptionTypeId === getOptionTypeId(selectedItem.optionTypeId))
             }
           >
             {updateState === 'loading' ? 'Saving...' : updateState === 'success' ? 'Saved!' : 'Save'}

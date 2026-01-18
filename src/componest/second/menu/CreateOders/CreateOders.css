@@ -43,14 +43,70 @@
   --co-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   --co-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 
-  /* Typography */
-  --co-font-xs: 11px;
-  --co-font-sm: 12px;
-  --co-font-base: 13px;
-  --co-font-md: 14px;
-  --co-font-lg: 16px;
-  --co-font-xl: 18px;
-  --co-font-2xl: 20px;
+  /* Typography - Fixed sizes for consistency */
+  --co-font-xs: 10px;      /* Labels */
+  --co-font-sm: 11px;      /* Small text */
+  --co-font-base: 13px;    /* Inputs - standard */
+  --co-font-md: 12px;      /* Section titles */
+  --co-font-lg: 14px;      /* Main titles */
+  --co-font-xl: 16px;
+  --co-font-2xl: 18px;
+
+  /* Fixed Input Size */
+  --co-input-font: 13px;
+  --co-input-padding: 6px 2px;
+  --co-label-font: 10px;
+}
+
+/* ================================================
+   GLOBAL INPUT STYLES - Fixed 13px for ALL inputs
+   ================================================ */
+.CreateOrders input,
+.CreateOrders select,
+.CreateOrders textarea,
+.co-container input,
+.co-container select,
+.co-container textarea {
+  font-size: 13px !important;
+  padding: 6px 2px !important;
+  border: none !important;
+  border-bottom: 1.5px solid #d1d5db !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  outline: none !important;
+  box-shadow: none !important;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease;
+}
+
+.CreateOrders input:focus,
+.CreateOrders select:focus,
+.CreateOrders textarea:focus,
+.co-container input:focus,
+.co-container select:focus,
+.co-container textarea:focus {
+  border: none !important;
+  border-bottom: 1.5px solid var(--co-accent, #FF6B35) !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.CreateOrders input::placeholder,
+.co-container input::placeholder {
+  color: #9ca3af;
+  font-size: 13px;
+}
+
+/* Global label styles - Fixed 10px */
+.CreateOrders label,
+.co-container label {
+  font-size: 10px !important;
+  font-weight: 600;
+  color: var(--co-text-secondary, #6b7280);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 2px;
+  display: block;
 }
 
 /* ================================================
@@ -66,6 +122,22 @@
   background: var(--co-bg-secondary);
 }
 
+/* Override CreateForm constraints for CreateOrders */
+.CreateOrders.CreateForm {
+  padding: 0 !important;
+  align-items: stretch !important;
+}
+
+.CreateOrders.CreateForm > div,
+.CreateOrders.CreateForm > form {
+  width: 100% !important;
+  max-width: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
 /* ================================================
    CO-HEADER
    ================================================ */
@@ -74,9 +146,9 @@
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
-  gap: var(--co-space-lg);
-  padding: 0 var(--co-space-xl);
-  height: 56px;
+  gap: var(--co-space-sm);
+  padding: 0 12px;
+  height: 36px;
   background: var(--co-bg);
   border-bottom: 1px solid var(--co-border);
   position: sticky;
@@ -92,9 +164,56 @@
   gap: 12px;
 }
 
+/* ================================================
+   CO-HEADER-ACTION-BTN - Icon buttons in header
+   Override global CreateForm button styles
+   ================================================ */
+.co-header-action-btn {
+  width: 32px !important;
+  height: 32px !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 6px !important;
+  cursor: pointer;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.15s ease;
+  box-shadow: none !important;
+  margin: 0 !important;
+}
+
+.co-header-action-btn:hover {
+  background: #f3f4f6 !important;
+  border-color: #d1d5db !important;
+  transform: none !important;
+}
+
+.co-header-action-btn svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+/* Individual button colors */
+.co-header-action-btn.email-btn { color: #f97316; }
+.co-header-action-btn.excel-btn { color: #10b981; }
+.co-header-action-btn.view-btn { color: #f59e0b; }
+.co-header-action-btn.forward-btn { color: #3b82f6; }
+.co-header-action-btn.print-btn { color: #3b82f6; }
+.co-header-action-btn.whatsapp-btn { color: #25D366; }
+
+.co-header-action-btn.email-btn:hover { color: #ea580c; }
+.co-header-action-btn.excel-btn:hover { color: #059669; }
+.co-header-action-btn.view-btn:hover { color: #d97706; }
+.co-header-action-btn.forward-btn:hover { color: #2563eb; }
+.co-header-action-btn.print-btn:hover { color: #2563eb; }
+.co-header-action-btn.whatsapp-btn:hover { color: #128C7E; }
+
 .co-title,
 .CreteOrdersTitel {
-  font-size: var(--co-font-lg);
+  font-size: 14px;
   font-weight: 600;
   color: var(--co-primary);
   margin: 0;
@@ -141,7 +260,7 @@
   grid-template-columns: 1fr 200px;
   gap: 0;
   flex: 1;
-  height: calc(100vh - 56px);
+  height: calc(100vh - 36px);
   overflow: hidden;
 }
 
@@ -152,15 +271,15 @@
 .createOdersForm {
   display: flex;
   flex-direction: column;
-  gap: var(--co-space-lg);
-  padding: var(--co-space-xl);
-  padding-bottom: 120px;
+  gap: 6px;
+  padding: 0 12px;
+  padding-bottom: 80px;
   overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: visible;
   background: var(--co-bg);
   border-right: 1px solid var(--co-border);
   height: 100%;
-  max-height: calc(100vh - 56px);
+  max-height: calc(100vh - 36px);
   -ms-overflow-style: none;  /* Hide scrollbar IE/Edge */
   scrollbar-width: none;  /* Hide scrollbar Firefox */
 }
@@ -220,13 +339,20 @@
 .CustomerStickySection {
   position: sticky;
   top: 0;
-  z-index: 50;
+  z-index: 200;
   background: var(--co-bg);
-  margin: 0 calc(-1 * var(--co-space-xl));
-  padding: var(--co-space-xs) var(--co-space-xl);
-  width: calc(100% + 2 * var(--co-space-xl));
+  margin: 0 -12px 6px -12px;
+  padding: 6px 12px;
+  width: calc(100% + 24px);
   border-bottom: 1px solid var(--co-border);
-  box-shadow: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  overflow: visible;
+}
+
+/* Ensure suggestion dropdowns within sticky section appear on top */
+.CustomerStickySection .suggestion-list,
+.CustomerStickySection .suggestionsListContainer {
+  z-index: 2000 !important;
 }
 
 /* ================================================
@@ -282,7 +408,7 @@
 .CreateOrdersForm {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: var(--co-space-sm);
+  gap: 4px 8px;
   padding: 0;
   margin: 0;
   background: var(--co-bg);
@@ -292,7 +418,7 @@
 .CustomerNameRow {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: var(--co-space-lg);
+  gap: 4px 8px;
   grid-column: 1 / -1;
 }
 
@@ -303,16 +429,12 @@
 .SeleteType {
   display: flex;
   align-items: center;
-  gap: var(--co-space-sm);
-  padding: var(--co-space-xs) var(--co-space-xl);
+  gap: 8px;
+  padding: 6px 0;
   background: var(--co-bg);
-  border-bottom: 1px solid var(--co-border);
-  margin: 0 calc(-1 * var(--co-space-xl));
-  width: calc(100% + 2 * var(--co-space-xl));
-  position: sticky;
-  top: 60px;
-  z-index: 10;
+  z-index: 100;
   box-shadow: none;
+  position: relative;
 }
 
 .SeleteType label {
@@ -334,6 +456,7 @@
 
 /* ================================================
    CO-INPUT - Form Inputs (Underline Style)
+   Same as createNewAccount: padding: 6px 2px, font-size: 13px
    ================================================ */
 .co-input,
 .co-input-name,
@@ -342,14 +465,17 @@
 .CurstomerNameInput,
 .CurstomerAddressInput {
   width: 100%;
-  padding: var(--co-space-xs) var(--co-space-xs);
-  font-size: var(--co-font-sm);
-  color: var(--co-text);
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid var(--co-border-dark);
-  outline: none;
-  transition: all 0.2s ease;
+  padding: 6px 2px !important;
+  font-size: 13px !important;
+  color: var(--co-text) !important;
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1.5px solid #d1d5db !important;
+  border-radius: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease;
 }
 
 .co-input:focus,
@@ -358,8 +484,10 @@
 .CurstomerInput:focus,
 .CurstomerNameInput:focus,
 .CurstomerAddressInput:focus {
-  border-bottom-color: var(--co-accent);
-  border-bottom-width: 2px;
+  border: none !important;
+  border-bottom: 1.5px solid var(--co-accent) !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .co-input:hover,
@@ -368,14 +496,30 @@
 .CurstomerInput:hover,
 .CurstomerNameInput:hover,
 .CurstomerAddressInput:hover {
-  background: var(--co-bg-tertiary);
+  background: transparent !important;
 }
 
 .co-input::placeholder,
 .CurstomerInput::placeholder,
 .CurstomerNameInput::placeholder,
 .CurstomerAddressInput::placeholder {
-  color: var(--co-text-light);
+  color: #9ca3af;
+}
+
+/* Remove autofill background styling */
+.co-input:-webkit-autofill,
+.co-input:-webkit-autofill:hover,
+.co-input:-webkit-autofill:focus,
+.CurstomerInput:-webkit-autofill,
+.CurstomerNameInput:-webkit-autofill,
+.CurstomerAddressInput:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0px 1000px transparent inset !important;
+  box-shadow: 0 0 0px 1000px transparent inset !important;
+  -webkit-text-fill-color: var(--co-text) !important;
+  background-color: transparent !important;
+  border: none !important;
+  border-bottom: 1.5px solid var(--co-accent) !important;
+  border-radius: 0 !important;
 }
 
 /* ================================================
@@ -385,51 +529,54 @@
 .CreateOrdersForm label,
 .CustomerNameRow label {
   display: block;
-  font-size: var(--co-font-xs);
+  font-size: 10px;
   font-weight: 600;
   color: var(--co-text-secondary);
-  margin-bottom: var(--co-space-xs);
+  margin-bottom: 2px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
 }
 
 /* ================================================
-   CO-SELECT - Dropdown Selects
+   CO-SELECT - Dropdown Selects (Underline Style)
+   Same as createNewAccount: padding: 6px 2px, font-size: 13px
    ================================================ */
 .co-select,
 #myDropdown,
 #printSelect,
 .ordersCreateSections-Status select {
-  appearance: none;
   width: 100%;
-  padding: var(--co-space-sm) var(--co-space-md);
-  padding-right: 36px;
-  font-size: var(--co-font-md);
-  color: var(--co-text);
-  background: var(--co-bg);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  border: 1px solid var(--co-border-dark);
-  border-radius: var(--co-radius-md);
+  padding: 6px 2px !important;
+  font-size: 13px !important;
+  color: var(--co-text) !important;
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1.5px solid #d1d5db !important;
+  border-radius: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: border-color 0.2s ease;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
 }
 
 .co-select:focus,
 #myDropdown:focus,
 #printSelect:focus,
 .ordersCreateSections-Status select:focus {
-  outline: none;
-  border-color: var(--co-accent);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border: none !important;
+  border-bottom: 1.5px solid var(--co-accent) !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .co-select:hover,
 #myDropdown:hover,
 #printSelect:hover,
 .ordersCreateSections-Status select:hover {
-  border-color: var(--co-accent);
+  background: transparent !important;
 }
 
 /* ================================================
@@ -439,79 +586,81 @@
 .dynamicSection {
   background: var(--co-bg);
   border: 1px solid var(--co-border);
-  border-radius: var(--co-radius-lg);
-  padding: var(--co-space-lg);
-  margin-bottom: var(--co-space-md);
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-bottom: 6px;
 }
 
 .co-section-title,
 .dynamicSection-title {
   display: flex;
   align-items: center;
-  gap: var(--co-space-sm);
-  font-size: var(--co-font-md);
+  gap: 4px;
+  font-size: 10px;
   font-weight: 600;
-  color: var(--co-primary);
-  margin-bottom: var(--co-space-md);
-  padding-bottom: var(--co-space-sm);
+  color: var(--co-text-secondary);
+  margin-bottom: 6px;
+  padding-bottom: 4px;
   border-bottom: 1px solid var(--co-border);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 }
 
 /* ================================================
-   CO-CALC-SECTION - Dynamic Calculations
+   CO-CALC-SECTION - Dynamic Calculations (Clean Style)
    ================================================ */
 .co-calc-section,
 .dynamicColumnsSection {
-  background: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%);
-  border: 1px solid #fbbf24;
+  background: var(--co-bg);
+  border: 1px solid var(--co-border);
 }
 
 .co-calc-section .co-section-title,
 .dynamicColumnsSection .dynamicSection-title {
-  color: #92400e;
-  border-bottom-color: #fbbf24;
+  color: var(--co-text);
+  border-bottom-color: var(--co-border);
 }
 
 .co-calc-count,
 .dynamicSection-count {
-  font-size: var(--co-font-xs);
+  font-size: 9px;
   font-weight: 500;
-  background: #f59e0b;
+  background: var(--co-primary);
   color: white;
-  padding: 2px 8px;
+  padding: 2px 6px;
   border-radius: 10px;
 }
 
 .co-calc-grid,
 .dynamicColumnsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: var(--co-space-md);
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--co-space-sm);
 }
 
 .co-calc-item,
 .dynamicColumnItem {
   display: flex;
   flex-direction: column;
-  gap: var(--co-space-xs);
-  background: white;
-  padding: var(--co-space-md);
-  border-radius: var(--co-radius-md);
-  border: 1px solid #fde68a;
+  gap: 2px;
+  background: var(--co-bg-secondary);
+  padding: var(--co-space-sm);
+  border-radius: var(--co-radius-sm);
+  border: 1px solid var(--co-border);
   position: relative;
   transition: all 0.15s ease;
 }
 
 .co-calc-item:hover,
 .dynamicColumnItem:hover {
-  border-color: #f59e0b;
+  border-color: var(--co-border-dark);
   box-shadow: var(--co-shadow-sm);
 }
 
 .co-calc-item.highlight,
 .dynamicColumnItem.dynamicColumn-highlight {
-  background: linear-gradient(135deg, #fef3c7, white);
-  border-color: #f59e0b;
+  background: var(--co-bg-tertiary);
+  border-color: var(--co-border-dark);
 }
 
 .co-calc-item.summary,
@@ -522,54 +671,61 @@
 
 .co-calc-label,
 .dynamicColumnLabel {
-  font-size: var(--co-font-xs);
+  font-size: 9px;
   font-weight: 600;
-  color: #78350f;
+  color: var(--co-text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.2px;
 }
 
 .co-calc-unit,
 .dynamicColumnUnit {
   font-weight: 400;
-  color: #a16207;
+  color: var(--co-text-light);
   text-transform: none;
 }
 
 .co-calc-input,
 .dynamicColumnInput {
-  background: transparent;
-  border: none;
-  border-bottom: 1.5px solid #d4d4d4;
-  padding: var(--co-space-sm) 0;
-  font-size: var(--co-font-md);
+  width: 100%;
+  padding: 4px 2px !important;
+  font-size: 11px !important;
   font-weight: 500;
-  color: var(--co-text);
-  transition: all 0.2s ease;
+  color: var(--co-text) !important;
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid var(--co-border-dark) !important;
+  border-radius: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease;
 }
 
 .co-calc-input:focus,
 .dynamicColumnInput:focus {
-  outline: none;
-  border-bottom-color: #f59e0b;
+  border: none !important;
+  border-bottom: 1.5px solid var(--co-accent) !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .co-calc-input.auto,
 .dynamicColumnInput.auto-calculated {
-  background: #fef9c3;
-  color: #92400e;
+  background: var(--co-bg-tertiary) !important;
+  color: var(--co-text);
   font-weight: 600;
   cursor: not-allowed;
   border-radius: var(--co-radius-sm);
-  padding: var(--co-space-sm);
+  padding: var(--co-space-xs);
 }
 
 .co-calc-rule,
 .dynamicColumnRule {
   position: absolute;
-  top: 8px;
-  right: 8px;
-  font-size: var(--co-font-sm);
+  top: 6px;
+  right: 6px;
+  font-size: 10px;
   cursor: help;
 }
 
@@ -980,27 +1136,33 @@
 }
 
 /* ================================================
-   CO-TEXTAREA - Notes Textarea
+   CO-TEXTAREA - Notes Textarea (Underline Style)
+   Same as createNewAccount: padding: 6px 2px, font-size: 13px
    ================================================ */
 .co-textarea,
 .NotesTextarea {
   width: 100%;
   min-height: 60px;
-  padding: var(--co-space-md);
-  font-size: var(--co-font-md);
-  color: var(--co-text);
-  background: var(--co-bg);
-  border: 1px solid var(--co-border-dark);
-  border-radius: var(--co-radius-md);
+  padding: 6px 2px !important;
+  font-size: 13px !important;
+  color: var(--co-text) !important;
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1.5px solid #d1d5db !important;
+  border-radius: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
   resize: vertical;
-  transition: all 0.15s ease;
+  font-family: inherit;
+  transition: border-color 0.2s ease;
 }
 
 .co-textarea:focus,
 .NotesTextarea:focus {
-  outline: none;
-  border-color: var(--co-accent);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border: none !important;
+  border-bottom: 1.5px solid var(--co-accent) !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 /* ================================================
@@ -1307,18 +1469,18 @@
 .co-suggestions,
 .suggestionsListContainer,
 .suggestion-list {
-  position: absolute;
+  position: absolute !important;
   top: 100%;
   left: 0;
   right: 0;
   max-height: 220px;
   overflow-y: auto;
-  background: var(--co-bg);
-  border: 1px solid var(--co-border);
-  border-top: none;
-  border-radius: 0 0 var(--co-radius-md) var(--co-radius-md);
-  box-shadow: var(--co-shadow-lg);
-  z-index: 500;
+  background: var(--co-bg) !important;
+  border: 1px solid var(--co-border) !important;
+  border-top: none !important;
+  border-radius: 0 0 var(--co-radius-md) var(--co-radius-md) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  z-index: 2000 !important;
 }
 
 /* Make sure parent containers allow suggestions to show */
@@ -1326,12 +1488,20 @@
 .CustomerNameRow {
   position: relative;
   overflow: visible;
+  z-index: 100;
 }
 
 /* Customer input wrapper for suggestions */
 .co-customer-form > div,
 .CreateOrdersForm > div {
   position: relative;
+  overflow: visible;
+}
+
+/* Customer form needs overflow visible for dropdowns */
+.co-customer-form,
+.CreateOrdersForm {
+  overflow: visible !important;
 }
 
 .co-suggestion-item,
@@ -1454,7 +1624,7 @@
 
   .co-calc-grid,
   .dynamicColumnsGrid {
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
   }
 
   /* Footer inherits main styles with !important */
@@ -1518,8 +1688,8 @@
 
   .co-calc-grid,
   .dynamicColumnsGrid {
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: var(--co-space-sm);
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 6px;
   }
 
   /* Footer inherits main styles with !important */
@@ -1556,7 +1726,8 @@
 
   .co-calc-grid,
   .dynamicColumnsGrid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 6px;
   }
 
   .co-step-header,
@@ -1614,7 +1785,8 @@
 
   .co-calc-grid,
   .dynamicColumnsGrid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 4px;
   }
 
   .co-step-header,
@@ -1687,12 +1859,13 @@
 
   .co-calc-grid,
   .dynamicColumnsGrid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4px;
   }
 
   .co-calc-item,
   .dynamicColumnItem {
-    padding: var(--co-space-sm);
+    padding: 6px;
   }
 
   .co-step-header,
@@ -1803,7 +1976,7 @@
   max-height: 150px;
   overflow-y: auto;
   overflow-x: hidden;
-  z-index: 50;
+  z-index: 1000;
   min-width: 150px;
 }
 

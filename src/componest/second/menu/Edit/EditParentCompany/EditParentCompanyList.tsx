@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getParentCompaniesV2 } from "../../../../redux/unifiedV2";
 import { RootState, AppDispatch } from "../../../../../store";
 import CustomerParentCompany from "../../create/customerParentCompany/CustomerParentCompany";
 import { useListNavigation } from "../../../../allCompones/BackButton";
+import { useFormDataCache } from "../hooks/useFormDataCache";
 import "../EditMachineType/EditMachineyType.css";
 
 interface Props {
@@ -21,12 +22,29 @@ const EditParentCompanyList: React.FC<Props> = ({ onEdit }) => {
   const loading = parentCompanyState?.loading;
   const error = parentCompanyState?.error;
 
+  // Get customers from cache to count usage
+  const { customers } = useFormDataCache();
+
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRow, setSelectedRow] = useState(0);
   const [selectedItem, setSelectedItem] = useState<any>(null);
 
   // Get selected branch to refetch when it changes
   const selectedBranch = useSelector((state: any) => state.auth?.userData?.selectedBranch);
+
+  // Count customers by parent company
+  const customerCountByParentCompany = useMemo(() => {
+    const counts: Record<string, number> = {};
+    customers.forEach((customer: any) => {
+      const parentCompanyId = typeof customer.parentCompanyId === 'object'
+        ? customer.parentCompanyId?._id
+        : customer.parentCompanyId;
+      if (parentCompanyId) {
+        counts[parentCompanyId] = (counts[parentCompanyId] || 0) + 1;
+      }
+    });
+    return counts;
+  }, [customers]);
 
   useEffect(() => {
     dispatch(getParentCompaniesV2());
@@ -123,6 +141,7 @@ const EditParentCompanyList: React.FC<Props> = ({ onEdit }) => {
                     <th className="editsectionsTable-th">No</th>
                     <th className="editsectionsTable-th">Company Name</th>
                     <th className="editsectionsTable-th">Description</th>
+                    <th className="editsectionsTable-th">Customers</th>
                     <th className="editsectionsTable-th">Created</th>
                   </tr>
                 </thead>
@@ -136,6 +155,7 @@ const EditParentCompanyList: React.FC<Props> = ({ onEdit }) => {
                       <td className="editsectionsTable-td">{index + 1}</td>
                       <td className="editsectionsTable-td">{item.name || "N/A"}</td>
                       <td className="editsectionsTable-td">{item.description || "N/A"}</td>
+                      <td className="editsectionsTable-td">{customerCountByParentCompany[item._id] || 0}</td>
                       <td className="editsectionsTable-td">
                         {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "N/A"}
                       </td>

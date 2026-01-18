@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
-import { Search, Mail, User, Send, Eye, X, AlertCircle } from 'lucide-react';
+// Centralized Icons
+import { SearchIcon, EmailIcon, PersonIcon, SendIcon, VisibilityIcon, CloseIcon, ErrorIcon } from './icons';import { useDispatch } from 'react-redux';
+// Material Icons
+
+
+
+
+
 import { searchOrdersByEmail, forwardOrderToPerson } from '../../../../redux/orderforward/orderForwardActions';
 import { AppDispatch } from '../../../../../store';
 import ForwardToPersonModal from './ForwardToPersonModal';
@@ -136,7 +142,7 @@ const OrderSearchByEmail: React.FC<OrderSearchByEmailProps> = ({ onClose }) => {
           </div>
           {onClose && (
             <button className="btn-close" onClick={onClose}>
-              <X size={20} />
+              <CloseIcon width={20} height={20} />
             </button>
           )}
         </div>
@@ -144,7 +150,7 @@ const OrderSearchByEmail: React.FC<OrderSearchByEmailProps> = ({ onClose }) => {
         {/* Search Form */}
         <form onSubmit={handleSearch} className="search-form">
           <div className="search-input-group">
-            <Mail size={20} />
+            <EmailIcon width={20} height={20} />
             <input
               type="email"
               placeholder="Enter customer or user email address"
@@ -165,7 +171,7 @@ const OrderSearchByEmail: React.FC<OrderSearchByEmailProps> = ({ onClose }) => {
                 </>
               ) : (
                 <>
-                  <Search size={18} />
+                  <SearchIcon width={18} height={18} />
                   Search
                 </>
               )}
@@ -176,7 +182,7 @@ const OrderSearchByEmail: React.FC<OrderSearchByEmailProps> = ({ onClose }) => {
         {/* Error */}
         {error && (
           <div className="search-error">
-            <AlertCircle size={18} />
+            <ErrorIcon width={18} height={18} />
             <span>{error}</span>
           </div>
         )}
@@ -187,7 +193,7 @@ const OrderSearchByEmail: React.FC<OrderSearchByEmailProps> = ({ onClose }) => {
             <div className="results-header">
               <h3>Found {searchResults.length} orders</h3>
               <span className="search-email-label">
-                <Mail size={14} />
+                <EmailIcon width={14} height={14} />
                 {email}
               </span>
             </div>
@@ -208,7 +214,7 @@ const OrderSearchByEmail: React.FC<OrderSearchByEmailProps> = ({ onClose }) => {
                     {/* Customer Info */}
                     {order.customerInfo && (
                       <div className="detail-row">
-                        <User size={14} />
+                        <PersonIcon width={14} height={14} />
                         <span>
                           Customer: {order.customerInfo.name}
                           {order.customerInfo.email && ` (${order.customerInfo.email})`}
@@ -218,7 +224,7 @@ const OrderSearchByEmail: React.FC<OrderSearchByEmailProps> = ({ onClose }) => {
 
                     {/* Person Info */}
                     <div className="detail-row">
-                      <Mail size={14} />
+                      <EmailIcon width={14} height={14} />
                       <span>
                         {order.isReceived ? 'Received by' : 'Sent by'}: {order.personName} ({order.personEmail})
                       </span>
@@ -250,14 +256,14 @@ const OrderSearchByEmail: React.FC<OrderSearchByEmailProps> = ({ onClose }) => {
                       className="btn-outline btn-sm"
                       onClick={() => setViewOrder(order)}
                     >
-                      <Eye size={16} />
+                      <VisibilityIcon width={16} height={16} />
                       View Details
                     </button>
                     <button
                       className="btn-primary btn-sm"
                       onClick={() => handleForwardOrder(order)}
                     >
-                      <Send size={16} />
+                      <SendIcon width={16} height={16} />
                       Forward
                     </button>
                   </div>
@@ -270,7 +276,7 @@ const OrderSearchByEmail: React.FC<OrderSearchByEmailProps> = ({ onClose }) => {
         {/* Empty State */}
         {!searching && searchResults.length === 0 && !error && email && (
           <div className="search-empty">
-            <Search size={48} />
+            <SearchIcon width={48} height={48} />
             <p>Enter an email address to search for orders</p>
           </div>
         )}
@@ -295,7 +301,7 @@ const OrderSearchByEmail: React.FC<OrderSearchByEmailProps> = ({ onClose }) => {
             <div className="dialog-header">
               <h3>Order Details</h3>
               <button className="btn-close" onClick={() => setViewOrder(null)}>
-                <X size={20} />
+                <CloseIcon width={20} height={20} />
               </button>
             </div>
 
@@ -372,7 +378,7 @@ const OrderSearchByEmail: React.FC<OrderSearchByEmailProps> = ({ onClose }) => {
                   handleForwardOrder(viewOrder);
                 }}
               >
-                <Send size={16} />
+                <SendIcon width={16} height={16} />
                 Forward Order
               </button>
             </div>

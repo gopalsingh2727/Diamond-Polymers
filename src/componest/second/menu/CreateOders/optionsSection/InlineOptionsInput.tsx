@@ -67,6 +67,8 @@ interface InlineOptionsInputProps {
 // Ref interface for parent component access
 export interface InlineOptionsInputRef {
   focus: () => void;
+  isPopupOpen: () => boolean;
+  closePopup: () => void;
 }
 
 // Generate unique ID for option items
@@ -237,9 +239,20 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
   // Current option being edited in popup
   const [currentOption, setCurrentOption] = useState<OptionItem>(createEmptyOption());
 
+  // Index of option being edited (-1 means adding new)
+  const [editingIndex, setEditingIndex] = useState<number>(-1);
+
   // Suggestions state
   const [showTypeSuggestions, setShowTypeSuggestions] = useState(false);
   const [showNameSuggestions, setShowNameSuggestions] = useState(false);
+
+  // Keyboard navigation state for suggestions
+  const [selectedTypeIndex, setSelectedTypeIndex] = useState(-1);
+  const [selectedNameIndex, setSelectedNameIndex] = useState(-1);
+
+  // Refs for suggestion list scrolling
+  const typeSuggestionsRef = useRef<HTMLDivElement>(null);
+  const nameSuggestionsRef = useRef<HTMLDivElement>(null);
 
   // Selected backend option for loading specs
   const [selectedBackendOption, setSelectedBackendOption] = useState<any>(null);
@@ -263,17 +276,26 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
   const typeRef = useRef<HTMLInputElement>(null);
   const nameRef = useRef<HTMLInputElement>(null);
   const mainContainerRef = useRef<HTMLDivElement>(null);
+  const specsContainerRef = useRef<HTMLDivElement>(null);
 
   // ✅ FIXED: Track if this is the initial mount to prevent infinite loops
   const isInitialMount = useRef(true);
   const hasLoadedInitialData = useRef(false);
 
-  // Expose focus method to parent via ref
+  // Expose methods to parent via ref
   useImperativeHandle(ref, () => ({
     focus: () => {
       setCurrentOption(createEmptyOption());
       setShowPopup(true);
       setTimeout(() => typeRef.current?.focus(), 100);
+    },
+    isPopupOpen: () => showPopup,
+    closePopup: () => {
+      setShowPopup(false);
+      setShowTypeSuggestions(false);
+      setShowNameSuggestions(false);
+      setSelectedTypeIndex(-1);
+      setSelectedNameIndex(-1);
     }
   }));
 
@@ -304,30 +326,28 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
 
     // Only load initial data once in edit mode
     if (isEditMode && initialData && initialData.length > 0 && !hasLoadedInitialData.current) {
-
+      console.log('📦 Loading initial options in edit mode:', initialData);
       setSelectedOptions(initialData);
       hasLoadedInitialData.current = true;
-    } else {
-
-
-
-
-
-
+      // Immediately notify parent of initial data for calculations
+      onDataChange(initialData);
     }
-  }, [isEditMode, initialData]);
+  }, [isEditMode, initialData, onDataChange]);
 
   // Notify parent of data changes (skip on initial mount in edit mode)
   useEffect(() => {
-    // Skip on initial mount to prevent loop
+    // Skip on initial mount to prevent loop - but only if not edit mode with initial data
     if (isInitialMount.current) {
       isInitialMount.current = false;
-      return;
+      // In edit mode, we already called onDataChange above, so skip here
+      if (isEditMode && hasLoadedInitialData.current) {
+        return;
+      }
     }
 
-
+    console.log('📦 Options changed, notifying parent:', selectedOptions);
     onDataChange(selectedOptions);
-  }, [selectedOptions, onDataChange]);
+  }, [selectedOptions, onDataChange, isEditMode]);
 
   // ✅ RECALCULATE ALL OPTIONS when a new option is added (cross-option dependencies)
   // Track previous options count to detect when a new option is added
@@ -493,36 +513,292 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
     return filtered;
   };
 
-  // Open popup
+  // Open popup for adding new option
   const openPopup = () => {
     setCurrentOption(createEmptyOption());
+    setEditingIndex(-1);
+    setSelectedBackendOption(null);
     setShowPopup(true);
     // Focus first field after popup opens
     setTimeout(() => typeRef.current?.focus(), 100);
   };
 
-  // Handle Enter key navigation
+  // Open popup for editing existing option
+  const handleEditOption = (index: number) => {
+    const optionToEdit = selectedOptions[index];
+    if (optionToEdit) {
+      setCurrentOption({ ...optionToEdit });
+      setEditingIndex(index);
+      // Try to find the backend option to load specs
+      const backendOpt = options.find((opt: any) =>
+        opt._id === optionToEdit.optionId ||
+        (opt.name === optionToEdit.optionName && opt.optionTypeId?.name === optionToEdit.optionTypeName)
+      );
+      setSelectedBackendOption(backendOpt || null);
+      setShowPopup(true);
+      // Focus first field after popup opens
+      setTimeout(() => typeRef.current?.focus(), 100);
+    }
+  };
+
+  // Get filtered type suggestions (for keyboard navigation)
+  const getFilteredTypeSuggestions = () => {
+    return optionTypes.filter((type) => {
+      const isEmpty = !currentOption.optionTypeName;
+      const isWildcard = currentOption.optionTypeName === '*';
+      const matchesSearch = type.toLowerCase().includes(currentOption.optionTypeName.toLowerCase());
+      return isEmpty || isWildcard || matchesSearch;
+    });
+  };
+
+  // Get filtered name suggestions (for keyboard navigation)
+  const getFilteredNameSuggestions = () => {
+    if (!currentOption.optionTypeName) return [];
+    const allOptions = getOptionsByType(currentOption.optionTypeName);
+    return allOptions
+      .filter((opt: any) => {
+        const isEmpty = !currentOption.optionName;
+        const isWildcard = currentOption.optionName === '*';
+        const matchesSearch = opt.name.toLowerCase().includes(currentOption.optionName.toLowerCase());
+        return isEmpty || isWildcard || matchesSearch;
+      })
+      .slice(0, 50);
+  };
+
+  // Scroll selected suggestion into view
+  const scrollSuggestionIntoView = (containerRef: React.RefObject<HTMLDivElement>, index: number) => {
+    if (!containerRef.current || index < 0) return;
+    const items = containerRef.current.querySelectorAll('.createorderstartsections-suggestionItem');
+    const selectedItem = items[index] as HTMLElement;
+    if (selectedItem) {
+      const container = containerRef.current;
+      const itemTop = selectedItem.offsetTop;
+      const itemBottom = itemTop + selectedItem.offsetHeight;
+      const containerTop = container.scrollTop;
+      const containerBottom = containerTop + container.offsetHeight;
+
+      if (itemTop < containerTop) {
+        container.scrollTop = itemTop;
+      } else if (itemBottom > containerBottom) {
+        container.scrollTop = itemBottom - container.offsetHeight;
+      }
+    }
+  };
+
+  // Helper to get all spec inputs in order
+  const getSpecInputs = (): HTMLInputElement[] => {
+    if (!specsContainerRef.current) return [];
+    return Array.from(specsContainerRef.current.querySelectorAll('input, select')) as HTMLInputElement[];
+  };
+
+  // Helper to get current spec input index
+  const getCurrentSpecIndex = (target: EventTarget | null): number => {
+    const inputs = getSpecInputs();
+    return inputs.findIndex(input => input === target);
+  };
+
+  // Handle keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent, field: 'type' | 'name' | 'spec') => {
+    // Handle arrow keys for suggestion navigation
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (field === 'type' && showTypeSuggestions) {
+        const filtered = getFilteredTypeSuggestions();
+        setSelectedTypeIndex((prev) => {
+          const newIndex = prev < filtered.length - 1 ? prev + 1 : 0;
+          setTimeout(() => scrollSuggestionIntoView(typeSuggestionsRef, newIndex), 0);
+          return newIndex;
+        });
+      } else if (field === 'name' && showNameSuggestions) {
+        const filtered = getFilteredNameSuggestions();
+        setSelectedNameIndex((prev) => {
+          const newIndex = prev < filtered.length - 1 ? prev + 1 : 0;
+          setTimeout(() => scrollSuggestionIntoView(nameSuggestionsRef, newIndex), 0);
+          return newIndex;
+        });
+      }
+      return;
+    }
+
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (field === 'type' && showTypeSuggestions) {
+        const filtered = getFilteredTypeSuggestions();
+        setSelectedTypeIndex((prev) => {
+          const newIndex = prev > 0 ? prev - 1 : filtered.length - 1;
+          setTimeout(() => scrollSuggestionIntoView(typeSuggestionsRef, newIndex), 0);
+          return newIndex;
+        });
+      } else if (field === 'name' && showNameSuggestions) {
+        const filtered = getFilteredNameSuggestions();
+        setSelectedNameIndex((prev) => {
+          const newIndex = prev > 0 ? prev - 1 : filtered.length - 1;
+          setTimeout(() => scrollSuggestionIntoView(nameSuggestionsRef, newIndex), 0);
+          return newIndex;
+        });
+      }
+      return;
+    }
+
+    // Handle left/right arrow keys to switch between fields
+    if (e.key === 'ArrowRight') {
+      if (field === 'type') {
+        e.preventDefault();
+        nameRef.current?.focus();
+        setSelectedTypeIndex(-1);
+      } else if (field === 'name') {
+        // Move from name to first spec input
+        e.preventDefault();
+        const specInputs = getSpecInputs();
+        if (specInputs.length > 0) {
+          specInputs[0].focus();
+        }
+      } else if (field === 'spec') {
+        // Move to next spec input
+        const specInputs = getSpecInputs();
+        const currentIndex = getCurrentSpecIndex(e.target);
+        if (currentIndex < specInputs.length - 1) {
+          e.preventDefault();
+          specInputs[currentIndex + 1].focus();
+        }
+      }
+      return;
+    }
+
+    if (e.key === 'ArrowLeft') {
+      if (field === 'name') {
+        e.preventDefault();
+        typeRef.current?.focus();
+        setSelectedNameIndex(-1);
+      } else if (field === 'spec') {
+        // Move to previous spec input or back to name
+        const specInputs = getSpecInputs();
+        const currentIndex = getCurrentSpecIndex(e.target);
+        if (currentIndex > 0) {
+          e.preventDefault();
+          specInputs[currentIndex - 1].focus();
+        } else if (currentIndex === 0) {
+          e.preventDefault();
+          nameRef.current?.focus();
+        }
+      }
+      return;
+    }
+
+    // Handle Escape to close suggestions
+    if (e.key === 'Escape') {
+      if (showTypeSuggestions || showNameSuggestions) {
+        e.preventDefault();
+        setShowTypeSuggestions(false);
+        setShowNameSuggestions(false);
+        setSelectedTypeIndex(-1);
+        setSelectedNameIndex(-1);
+      }
+      return;
+    }
+
+    // Handle Backspace to go back to previous field when empty
+    if (e.key === 'Backspace') {
+      const target = e.target as HTMLInputElement;
+      const isEmpty = !target.value || target.value === '';
+
+      if (isEmpty) {
+        if (field === 'spec') {
+          // Go to previous spec or name field
+          const specInputs = getSpecInputs();
+          const currentIndex = getCurrentSpecIndex(e.target);
+          if (currentIndex > 0) {
+            e.preventDefault();
+            specInputs[currentIndex - 1].focus();
+          } else if (currentIndex === 0) {
+            e.preventDefault();
+            nameRef.current?.focus();
+          }
+        } else if (field === 'name' && !currentOption.optionName) {
+          e.preventDefault();
+          typeRef.current?.focus();
+        } else if (field === 'type' && !currentOption.optionTypeName) {
+          e.preventDefault();
+          // Close popup and go back to order type
+          setShowPopup(false);
+          onBackspace?.();
+        }
+      }
+      return;
+    }
+
     if (e.key === 'Enter') {
       e.preventDefault();
 
       if (field === 'type') {
+        // If suggestion is selected, use it
+        if (showTypeSuggestions && selectedTypeIndex >= 0) {
+          const filtered = getFilteredTypeSuggestions();
+          if (filtered[selectedTypeIndex]) {
+            handleTypeSelect({ name: filtered[selectedTypeIndex] });
+            setSelectedTypeIndex(-1);
+            return;
+          }
+        }
         // Move to option name
         nameRef.current?.focus();
-      } else if (field === 'name' || field === 'spec') {
+      } else if (field === 'name') {
+        // If suggestion is selected, use it
+        if (showNameSuggestions && selectedNameIndex >= 0) {
+          const filtered = getFilteredNameSuggestions();
+          if (filtered[selectedNameIndex]) {
+            handleNameSelect(filtered[selectedNameIndex]);
+            setSelectedNameIndex(-1);
+            return;
+          }
+        }
+        // Move to first spec input if available
+        const specInputs = getSpecInputs();
+        if (specInputs.length > 0) {
+          specInputs[0].focus();
+          return;
+        }
+        // Fall through to save logic if no specs
+      } else if (field === 'spec') {
+        // Move to next spec input, or save if last
+        const specInputs = getSpecInputs();
+        const currentIndex = getCurrentSpecIndex(e.target);
+        if (currentIndex < specInputs.length - 1) {
+          specInputs[currentIndex + 1].focus();
+          return;
+        }
+        // Last spec - fall through to save
+      }
+
+      // Save logic - only when all fields are filled and we're at the end
+      if ((field === 'name' && getSpecInputs().length === 0) ||
+          (field === 'spec' && getCurrentSpecIndex(e.target) === getSpecInputs().length - 1)) {
         // Check if row is empty (end list)
         if (!currentOption.optionTypeName && !currentOption.optionName) {
           // Empty row - close popup
           setShowPopup(false);
+          setEditingIndex(-1);
         } else if (currentOption.optionTypeName && currentOption.optionName) {
-          // Save current option and start new row
-          setSelectedOptions((prev) => {
-            const updated = [...prev, { ...currentOption, id: generateId() }];
-            // onDataChange will be called by useEffect
-            return updated;
-          });
+          // Save current option
+          if (editingIndex >= 0) {
+            // Editing existing option - replace it
+            setSelectedOptions((prev) => {
+              const updated = [...prev];
+              updated[editingIndex] = { ...currentOption };
+              return updated;
+            });
+            setEditingIndex(-1);
+          } else {
+            // Adding new option
+            setSelectedOptions((prev) => {
+              const updated = [...prev, { ...currentOption, id: generateId() }];
+              return updated;
+            });
+          }
           setCurrentOption(createEmptyOption());
           setSelectedBackendOption(null);
+          setSelectedTypeIndex(-1);
+          setSelectedNameIndex(-1);
           // Focus back to first field
           typeRef.current?.focus();
         } else {
@@ -535,6 +811,17 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
         }
       }
     }
+  };
+
+  // Reset selected index when input changes
+  const handleTypeInputChange = (value: string) => {
+    updateCurrentOption('optionTypeName', value);
+    setSelectedTypeIndex(-1);
+  };
+
+  const handleNameInputChange = (value: string) => {
+    updateCurrentOption('optionName', value);
+    setSelectedNameIndex(-1);
   };
 
   // Update current option field
@@ -1684,7 +1971,7 @@ For old files, you need to re-upload them.
               {/* Close Button */}
               <button
             type="button"
-            onClick={() => setShowPopup(false)}
+            onClick={() => { setShowPopup(false); setEditingIndex(-1); }}
             style={{
               position: 'absolute',
               top: '10px',
@@ -1711,15 +1998,26 @@ For old files, you need to re-upload them.
                  flexDirection:'row',
                  gap:'20px',
               }}>
-             
+
               <h3 style={{ marginBottom: '10px', color: '#1e293b', textAlign: 'center', fontSize: '18px', fontWeight: '600' }}>
-                Add Options
+                {editingIndex >= 0 ? 'Edit Option' : 'Add Options'}
               </h3>
                    <button
             type="button"
             onClick={() => {
               if (currentOption.optionTypeName && currentOption.optionName) {
-                setSelectedOptions((prev) => [...prev, { ...currentOption, id: generateId() }]);
+                if (editingIndex >= 0) {
+                  // Update existing option
+                  setSelectedOptions((prev) => {
+                    const updated = [...prev];
+                    updated[editingIndex] = { ...currentOption };
+                    return updated;
+                  });
+                  setEditingIndex(-1);
+                } else {
+                  // Add new option
+                  setSelectedOptions((prev) => [...prev, { ...currentOption, id: generateId() }]);
+                }
                 setCurrentOption(createEmptyOption());
                 setSelectedBackendOption(null);
                 typeRef.current?.focus();
@@ -1728,7 +2026,7 @@ For old files, you need to re-upload them.
             className="createorderstartsections-addProductBtn"
             style={{ alignSelf: 'center', padding: '7px 15px', fontSize: '10px', marginBottom: '15px' }}>
 
-                + Add Option
+                {editingIndex >= 0 ? '✓ Update' : '+ Add Option'}
               </button>
               </div>
             
@@ -1750,10 +2048,11 @@ For old files, you need to re-upload them.
               <div style={{ maxHeight: '200px', overflowY: 'auto', marginBottom: '10px' }}>
                 {selectedOptions.map((option, index) =>
             <div key={option.id} className="createorderstartsections-popupitemall" style={{
-              gridTemplateColumns: '150px 150px auto 40px',
+              gridTemplateColumns: '150px 150px auto 30px 30px',
               padding: '8px 0',
               borderBottom: '1px solid #e5e7eb',
-              alignItems: 'center'
+              alignItems: 'center',
+              backgroundColor: editingIndex === index ? '#fff3e0' : 'transparent'
             }}>
                     <span style={{ fontSize: '13px' }}>{option.optionTypeName}</span>
                     <span style={{ fontSize: '13px' }}>{option.optionName}</span>
@@ -1764,6 +2063,20 @@ For old files, you need to re-upload them.
                         </span>
                 )}
                     </span>
+                    <button
+                type="button"
+                onClick={() => handleEditOption(index)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                  color: '#3b82f6',
+                  padding: '4px'
+                }}
+                title="Edit">
+                      ✏️
+                    </button>
                     <button
                 type="button"
                 onClick={() => handleRemoveOption(index)}
@@ -1794,42 +2107,18 @@ For old files, you need to re-upload them.
                 ref={typeRef}
                 type="text"
                 value={currentOption.optionTypeName}
-                onChange={(e) => updateCurrentOption('optionTypeName', e.target.value)}
+                onChange={(e) => handleTypeInputChange(e.target.value)}
                 onKeyDown={(e) => handleKeyDown(e, 'type')}
-                placeholder="Type or * for all"
-                onFocus={() => setShowTypeSuggestions(true)}
+                placeholder="Type or * for all (↑↓ to navigate)"
+                onFocus={() => { setShowTypeSuggestions(true); setSelectedTypeIndex(-1); }}
                 onBlur={() => setTimeout(() => setShowTypeSuggestions(false), 200)}
                 className="createorderstartsections-tableInput" />
 
                   {showTypeSuggestions && (() => {
-                    console.log('🎯 IIFE EXECUTING - showTypeSuggestions is TRUE');
-                    console.log('📝 Current state:', {
-                      optionTypeName: currentOption.optionTypeName,
-                      isWildcard: currentOption.optionTypeName === '*',
-                      isEmpty: !currentOption.optionTypeName,
-                      totalTypes: optionTypes.length
-                    });
-
-                    const filtered = optionTypes.filter((type) => {
-                      const isEmpty = !currentOption.optionTypeName;
-                      const isWildcard = currentOption.optionTypeName === '*';
-                      const matchesSearch = type.toLowerCase().includes(currentOption.optionTypeName.toLowerCase());
-
-                      console.log(`  Checking type "${type}":`, { isEmpty, isWildcard, matchesSearch });
-
-                      return isEmpty || isWildcard || matchesSearch;
-                    });
-
-                    console.log('🔍 Type suggestions RESULT:', {
-                      showTypeSuggestions,
-                      totalTypes: optionTypes.length,
-                      searchValue: currentOption.optionTypeName,
-                      filteredCount: filtered.length,
-                      filteredTypes: filtered
-                    });
+                    const filtered = getFilteredTypeSuggestions();
 
                     return (
-              <div className="createorderstartsections-suggestion-list" style={{ position: 'absolute', zIndex: 99999 }}>
+              <div ref={typeSuggestionsRef} className="createorderstartsections-suggestion-list" style={{ position: 'absolute', zIndex: 99999 }}>
                       {optionTypes.length === 0 ?
                 <div className="createorderstartsections-suggestionItem" style={{ color: '#999', fontStyle: 'italic' }}>
                           No option types available
@@ -1842,8 +2131,9 @@ For old files, you need to re-upload them.
                 filtered.map((type, i) =>
                 <div
                   key={i}
-                  className="createorderstartsections-suggestionItem"
-                  onMouseDown={() => handleTypeSelect({ name: type })}>
+                  className={`createorderstartsections-suggestionItem ${i === selectedTypeIndex ? 'selected' : ''}`}
+                  onMouseDown={() => handleTypeSelect({ name: type })}
+                  onMouseEnter={() => setSelectedTypeIndex(i)}>
 
                               {type}
                             </div>
@@ -1861,47 +2151,19 @@ For old files, you need to re-upload them.
                 ref={nameRef}
                 type="text"
                 value={currentOption.optionName}
-                onChange={(e) => updateCurrentOption('optionName', e.target.value)}
+                onChange={(e) => handleNameInputChange(e.target.value)}
                 onKeyDown={(e) => handleKeyDown(e, 'name')}
-                placeholder="Name or * for all"
-                onFocus={() => setShowNameSuggestions(true)}
+                placeholder="Name or * for all (↑↓ to navigate)"
+                onFocus={() => { setShowNameSuggestions(true); setSelectedNameIndex(-1); }}
                 onBlur={() => setTimeout(() => setShowNameSuggestions(false), 200)}
                 className="createorderstartsections-tableInput" />
 
                   {showNameSuggestions && currentOption.optionTypeName && (() => {
-                    console.log('🎯 Name IIFE EXECUTING - showNameSuggestions is TRUE');
-                    console.log('📝 Name state:', {
-                      optionName: currentOption.optionName,
-                      isWildcard: currentOption.optionName === '*',
-                      isEmpty: !currentOption.optionName,
-                      optionTypeName: currentOption.optionTypeName
-                    });
-
+                    const filtered = getFilteredNameSuggestions();
                     const allOptions = getOptionsByType(currentOption.optionTypeName);
 
-                    console.log('📦 All options for type:', allOptions.length);
-
-                    const filtered = allOptions
-                      .filter((opt: any) => {
-                        const isEmpty = !currentOption.optionName;
-                        const isWildcard = currentOption.optionName === '*';
-                        const matchesSearch = opt.name.toLowerCase().includes(currentOption.optionName.toLowerCase());
-
-                        return isEmpty || isWildcard || matchesSearch;
-                      })
-                      .slice(0, 50);  // ✅ Show more results when using "*" wildcard
-
-                    console.log('🔍 Name suggestions RESULT:', {
-                      showNameSuggestions,
-                      optionTypeName: currentOption.optionTypeName,
-                      totalOptions: allOptions.length,
-                      searchValue: currentOption.optionName,
-                      filteredCount: filtered.length,
-                      filteredOptions: filtered.map((o: any) => o.name)
-                    });
-
                     return (
-              <div className="createorderstartsections-suggestion-list" style={{ position: 'absolute', zIndex: 99999 }}>
+              <div ref={nameSuggestionsRef} className="createorderstartsections-suggestion-list" style={{ position: 'absolute', zIndex: 99999 }}>
                       {allOptions.length === 0 ?
                 <div className="createorderstartsections-suggestionItem" style={{ color: '#999', fontStyle: 'italic' }}>
                           No options available for this type
@@ -1914,8 +2176,9 @@ For old files, you need to re-upload them.
                 filtered.map((opt: any, i: number) =>
                 <div
                   key={i}
-                  className="createorderstartsections-suggestionItem"
-                  onMouseDown={() => handleNameSelect(opt)}>
+                  className={`createorderstartsections-suggestionItem ${i === selectedNameIndex ? 'selected' : ''}`}
+                  onMouseDown={() => handleNameSelect(opt)}
+                  onMouseEnter={() => setSelectedNameIndex(i)}>
 
                               <div style={{ fontWeight: 500 }}>{opt.name}</div>
                               {opt.code &&
@@ -1931,7 +2194,7 @@ For old files, you need to re-upload them.
 
                 {/* Specifications Section - dynamically loaded */}
                 {/* ✅ FIX: Show specs when option type is selected OR when backend option is selected */}
-                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                <div ref={specsContainerRef} style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
                   {(currentOption.optionTypeName || selectedBackendOption) && (() => {
                 // ✅ FIX: Merge specs from all sources (same logic as handleNameSelect)
                 const getMergedSpecs = () => {

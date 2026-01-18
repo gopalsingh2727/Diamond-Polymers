@@ -1,163 +1,892 @@
 /* ====================================
-   Edit Device Access - Compact Form Styles
-   Pattern: Same as Create Section
+   Edit Device Access - Full Width Edit Mode
    ==================================== */
 
-#EditDeviceAccessCss {
+/* ====================================
+   Root Container - Full Height Layout
+   ==================================== */
+.EditDeviceAccess {
   width: 100%;
+  height: 100vh;
+  max-height: 100vh;
   display: flex;
-  justify-content: center;
-  padding: 10px;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+  background: #fff;
 }
 
-#EditDeviceAccessCss .edit-container {
-  background: white;
-  padding: 16px 24px;
-  max-width: 600px;
-  width: 100%;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-
-/* Form Title */
-#EditDeviceAccessCss h2,
-#EditDeviceAccessCss .form-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #1f2937;
+.EditDeviceAccess .loadingAndError {
   text-align: center;
-  margin-bottom: 12px;
-  margin-top: 0;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #e5e7eb;
+  padding: 40px 20px;
+  font-size: 15px;
+  color: #6b7280;
 }
 
-/* Form Groups */
-#EditDeviceAccessCss .form-group {
-  margin-bottom: 10px;
+/* ====================================
+   List View Table Container
+   ==================================== */
+.EditDeviceAccess .editsectionsTable-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 20px;
+  min-height: 0;
 }
 
-#EditDeviceAccessCss .form-row {
+.EditDeviceAccess .editsectionsTable-searchWrapper {
   display: flex;
   gap: 12px;
-  margin-bottom: 10px;
+  align-items: center;
+  flex-shrink: 0;
+  margin-bottom: 16px;
 }
 
-#EditDeviceAccessCss .form-row .form-group {
+.EditDeviceAccess .editsectionsTable-searchBox {
+  position: relative;
   flex: 1;
-  margin-bottom: 0;
 }
 
-/* Labels */
-#EditDeviceAccessCss label {
-  font-size: 13px;
-  font-weight: 500;
-  color: #374151;
-  margin-bottom: 4px;
-  display: block;
-}
-
-/* Inputs - Bordered Style (matches Create section) */
-#EditDeviceAccessCss input,
-#EditDeviceAccessCss select,
-#EditDeviceAccessCss textarea {
+.EditDeviceAccess .editsectionsTable-searchInput {
   width: 100%;
-  padding: 10px 12px;
+  padding: 12px 40px 12px 44px !important;
+  font-size: 15px !important;
+  color: #374151 !important;
+  background: #fff !important;
+  border: 2px solid #e5e7eb !important;
+  border-radius: 10px !important;
+  outline: none;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.EditDeviceAccess .editsectionsTable-searchInput:focus {
+  border-color: #FF6B35 !important;
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+}
+
+.EditDeviceAccess .editsectionsTable-searchIcon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 18px;
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+.EditDeviceAccess .editsectionsTable-clearButton {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #9ca3af;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.EditDeviceAccess .editsectionsTable-countBadge {
+  padding: 12px 18px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
   font-size: 14px;
-  color: #1f2937;
-  background-color: #fff;
-  border: 2px solid #e5e7eb;
-  border-radius: 6px;
+  color: #6b7280;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.EditDeviceAccess .editsectionsTable-wrapper {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: auto;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+  min-height: 0;
+}
+
+.EditDeviceAccess .editsectionsTable-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.EditDeviceAccess .editsectionsTable-thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #f9fafb;
+}
+
+.EditDeviceAccess .editsectionsTable-th {
+  padding: 14px 16px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #FF6B35;
+  background: #f9fafb;
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.EditDeviceAccess .editsectionsTable-tbody {
+  background: #fff;
+}
+
+.EditDeviceAccess .editsectionsTable-tr {
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.EditDeviceAccess .editsectionsTable-tr:hover {
+  background: #fff7ed;
+}
+
+.EditDeviceAccess .editsectionsTable-trSelected {
+  background: #fff7ed !important;
+}
+
+.EditDeviceAccess .editsectionsTable-td {
+  padding: 14px 16px;
+  font-size: 14px;
+  color: #4b5563;
+  vertical-align: middle;
+}
+
+.EditDeviceAccess .editsectionsTable-empty {
+  padding: 60px 40px;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 15px;
+  background: #fafafa;
+  border-radius: 12px;
+  border: 1px dashed #e5e7eb;
+}
+
+/* ====================================
+   Edit Device Container (Full Width)
+   ==================================== */
+.EditDeviceAccess .edit-device-container {
+  width: 100%;
+  padding: 20px;
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-sizing: border-box;
+}
+
+/* Ensure inputs are visible in edit container - override EditMachineType styles */
+.EditDeviceAccess .edit-device-container input,
+.EditDeviceAccess .edit-device-container select,
+.EditDeviceAccess .edit-device-container textarea {
+  width: 100% !important;
+  padding: 12px 14px !important;
+  font-size: 14px !important;
+  color: #1f2937 !important;
+  background-color: #ffffff !important;
+  background: #ffffff !important;
+  border: 2px solid #e5e7eb !important;
+  border-radius: 8px !important;
   outline: none;
   box-sizing: border-box;
-  transition: all 0.2s ease-in-out;
+  transition: all 0.2s ease;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
-#EditDeviceAccessCss input:focus,
-#EditDeviceAccessCss select:focus,
-#EditDeviceAccessCss textarea:focus {
+.EditDeviceAccess .edit-device-container input:focus,
+.EditDeviceAccess .edit-device-container select:focus {
   border-color: #FF6B35;
-  box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.15);
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
 }
 
-#EditDeviceAccessCss input::placeholder {
+.EditDeviceAccess .edit-device-container input::placeholder {
   color: #9ca3af;
 }
 
-/* Select dropdown */
-#EditDeviceAccessCss select {
-  cursor: pointer;
-  -webkit-appearance: none;
-  appearance: none;
+.EditDeviceAccess .edit-device-container label {
+  display: block !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: #374151 !important;
+  margin-bottom: 8px !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
-/* Save button */
-#EditDeviceAccessCss button,
-#EditDeviceAccessCss .save-button {
+/* Ensure form sections are always visible */
+.EditDeviceAccess .edit-device-container .form-section {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  margin-bottom: 16px;
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+  min-height: 60px;
+}
+
+/* Ensure form rows are always visible */
+.EditDeviceAccess .edit-device-container .form-row {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  gap: 20px;
+  margin-bottom: 16px;
   width: 100%;
-  padding: 12px 24px;
-  margin-top: 16px;
-  font-size: 15px;
-  font-weight: 600;
-  color: white;
-  background: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%);
-  border: none;
-  border-radius: 8px;
+}
+
+.EditDeviceAccess .edit-device-container .form-row .form-section {
+  flex: 1;
+  margin-bottom: 0;
+  min-width: 0;
+}
+
+/* Ensure required asterisk is visible */
+.EditDeviceAccess .edit-device-container .required {
+  color: #ef4444 !important;
+  display: inline !important;
+  visibility: visible !important;
+}
+
+/* ====================================
+   Top Button Edit (Back & Delete)
+   ==================================== */
+.EditDeviceAccess .edit-device-container .TopButtonEdit {
+  display: flex !important;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #f3f4f6;
+  flex-shrink: 0;
+}
+
+.EditDeviceAccess .edit-device-container .TopButtonEdit button {
+  padding: 10px 24px !important;
+  border-radius: 8px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.25);
+  width: auto !important;
 }
 
-#EditDeviceAccessCss button:hover:not(:disabled),
-#EditDeviceAccessCss .save-button:hover:not(:disabled) {
-  background: linear-gradient(135deg, #E55A2B 0%, #d44a1b 100%);
+.EditDeviceAccess .edit-device-container .TopButtonEdit button:first-child {
+  background: #f3f4f6 !important;
+  color: #374151 !important;
+  border: 1px solid #d1d5db !important;
+}
+
+.EditDeviceAccess .edit-device-container .TopButtonEdit button:first-child:hover {
+  background: #e5e7eb !important;
+}
+
+.EditDeviceAccess .edit-device-container .TopButtonEdit button.Delete {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+  color: white !important;
+  border: none !important;
+}
+
+.EditDeviceAccess .edit-device-container .TopButtonEdit button.Delete:hover:not(:disabled) {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.EditDeviceAccess .edit-device-container .TopButtonEdit button.Delete:disabled {
+  background: #9ca3af !important;
+  cursor: not-allowed;
+}
+
+/* ====================================
+   Form Row (Two columns) - Scoped to edit-device-container
+   ==================================== */
+/* Note: Main form-row styles are defined above in the edit-device-container section */
+
+/* ====================================
+   Form Section - Scoped to edit-device-container
+   ==================================== */
+/* Note: Main form-section styles are defined above in the edit-device-container section */
+
+.EditDeviceAccess .edit-device-container .form-section label {
+  display: block !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: #374151 !important;
+  margin-bottom: 8px !important;
+}
+
+.EditDeviceAccess .edit-device-container .form-section .required {
+  color: #ef4444 !important;
+}
+
+.EditDeviceAccess .edit-device-container .form-section input,
+.EditDeviceAccess .edit-device-container .form-section select {
+  width: 100% !important;
+  padding: 12px 14px !important;
+  font-size: 14px !important;
+  color: #1f2937 !important;
+  background-color: #fff !important;
+  background: #fff !important;
+  border: 2px solid #e5e7eb !important;
+  border-radius: 8px !important;
+  outline: none;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.EditDeviceAccess .edit-device-container .form-section input:focus,
+.EditDeviceAccess .edit-device-container .form-section select:focus {
+  border-color: #FF6B35 !important;
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+}
+
+.EditDeviceAccess .edit-device-container .form-section input::placeholder {
+  color: #9ca3af;
+}
+
+.EditDeviceAccess .edit-device-container .form-section input[readonly] {
+  background: #f9fafb !important;
+  cursor: default;
+}
+
+/* ====================================
+   Device ID Section
+   ==================================== */
+.EditDeviceAccess .edit-device-container .device-id-section {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  margin-bottom: 20px;
+}
+
+.EditDeviceAccess .edit-device-container .device-id-row {
+  display: flex !important;
+  visibility: visible !important;
+  align-items: center;
+  gap: 12px;
+}
+
+.EditDeviceAccess .edit-device-container .device-id-input {
+  flex: 1;
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace !important;
+  font-weight: 600 !important;
+  background: #f9fafb !important;
+  letter-spacing: 1px;
+}
+
+.EditDeviceAccess .edit-device-container .regenerate-btn {
+  padding: 12px 20px !important;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 8px !important;
+  cursor: pointer;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  width: auto !important;
+}
+
+.EditDeviceAccess .edit-device-container .regenerate-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.EditDeviceAccess .edit-device-container .regenerate-btn:disabled {
+  background: #9ca3af !important;
+  cursor: not-allowed;
+}
+
+/* ====================================
+   Password Input Wrapper
+   ==================================== */
+.EditDeviceAccess .edit-device-container .password-input-wrapper {
+  position: relative;
+  display: block !important;
+  visibility: visible !important;
+}
+
+.EditDeviceAccess .edit-device-container .password-input-wrapper input {
+  padding-right: 50px !important;
+}
+
+.toggle-password-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 4px;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.toggle-password-btn:hover {
+  opacity: 1;
+}
+
+/* ====================================
+   Save Button
+   ==================================== */
+.EditDeviceAccess .edit-device-container .save-btn {
+  width: 100% !important;
+  max-width: 300px;
+  padding: 14px 32px !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  color: white !important;
+  background: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 32px;
+  flex-shrink: 0;
+}
+
+.EditDeviceAccess .edit-device-container .save-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #E55A2B 0%, #d44a1b 100%) !important;
   transform: translateY(-2px);
   box-shadow: 0 4px 16px rgba(255, 107, 53, 0.35);
 }
 
-#EditDeviceAccessCss button:disabled {
-  background: #9ca3af;
+.EditDeviceAccess .edit-device-container .save-btn:disabled {
+  background: #9ca3af !important;
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
 }
 
-/* Delete button */
-#EditDeviceAccessCss .delete-button {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25);
+/* ====================================
+   Add Machine Section
+   ==================================== */
+.EditDeviceAccess .edit-device-container .add-machine-section {
+  border-top: 2px solid #f3f4f6;
+  padding-top: 24px;
+  margin-top: 8px;
+  flex-shrink: 0;
 }
 
-#EditDeviceAccessCss .delete-button:hover:not(:disabled) {
-  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.35);
+.EditDeviceAccess .edit-device-container .add-machine-section h4 {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  color: #1f2937 !important;
+  margin: 0 0 16px 0;
 }
 
-/* Error Messages */
-.error-text {
-  color: #dc2626;
-  font-size: 12px;
-  margin-top: 4px;
+.EditDeviceAccess .edit-device-container .add-machine-row {
+  display: flex !important;
+  gap: 12px;
+  align-items: stretch;
 }
 
-/* Success Messages */
-.success-text {
-  color: #059669;
-  font-size: 12px;
-  margin-top: 4px;
+.EditDeviceAccess .edit-device-container .add-machine-row select {
+  flex: 1;
+  padding: 12px 14px !important;
+  border: 2px solid #e5e7eb !important;
+  border-radius: 8px !important;
+  font-size: 14px !important;
+  background: white !important;
+  cursor: pointer;
+  color: #374151 !important;
 }
 
-/* Info Section */
-#EditDeviceAccessCss .info-section {
-  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-  padding: 12px 16px;
-  border-radius: 8px;
-  border-left: 4px solid #FF6B35;
+.EditDeviceAccess .edit-device-container .add-machine-row select:focus {
+  border-color: #FF6B35 !important;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+}
+
+.EditDeviceAccess .edit-device-container .add-machine-btn {
+  padding: 12px 24px !important;
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 8px !important;
+  cursor: pointer;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  width: auto !important;
+}
+
+.EditDeviceAccess .edit-device-container .add-machine-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+}
+
+.EditDeviceAccess .edit-device-container .add-machine-btn:disabled {
+  background: #d1d5db !important;
+  color: #9ca3af !important;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ====================================
+   Assigned Machines Header
+   ==================================== */
+.EditDeviceAccess .edit-device-container .machines-header {
+  display: flex !important;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.EditDeviceAccess .edit-device-container .machines-header h4 {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  color: #1f2937 !important;
+  margin: 0;
+}
+
+.EditDeviceAccess .edit-device-container .machines-count {
+  background: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%) !important;
+  color: white !important;
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 6px rgba(255, 107, 53, 0.25);
+}
+
+/* ====================================
+   Machine Table Wrapper (for scroll)
+   ==================================== */
+.EditDeviceAccess .edit-device-container .machine-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+/* ====================================
+   Machine Table Styles
+   ==================================== */
+.EditDeviceAccess .edit-device-container .machine-details-table {
+  width: 100%;
+  min-width: 600px;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: white !important;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e7eb !important;
+}
+
+.EditDeviceAccess .edit-device-container .machine-details-table thead {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
+}
+
+.EditDeviceAccess .edit-device-container .machine-details-table th {
+  padding: 14px 16px !important;
+  text-align: left;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  color: #64748b !important;
+  border-bottom: 2px solid #e2e8f0 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.EditDeviceAccess .edit-device-container .machine-details-table th:first-child {
+  width: 60px;
+  text-align: center;
+}
+
+.EditDeviceAccess .edit-device-container .machine-details-table th:last-child {
+  text-align: center;
+  width: 140px;
+  min-width: 140px;
+}
+
+.EditDeviceAccess .edit-device-container .machine-details-table td {
+  padding: 14px 16px !important;
+  font-size: 14px !important;
+  color: #475569 !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+  vertical-align: middle;
+}
+
+.EditDeviceAccess .edit-device-container .machine-details-table tbody tr {
+  transition: all 0.15s ease;
+}
+
+.EditDeviceAccess .edit-device-container .machine-details-table tbody tr:hover {
+  background: #f8fafc !important;
+}
+
+.EditDeviceAccess .edit-device-container .machine-details-table tbody tr:last-child td {
+  border-bottom: none !important;
+}
+
+.EditDeviceAccess .edit-device-container .machine-details-table td:first-child {
+  font-weight: 700 !important;
+  color: #94a3b8 !important;
+  text-align: center;
+  font-size: 13px !important;
+}
+
+.EditDeviceAccess .edit-device-container .machine-details-table td:nth-child(2) {
+  font-weight: 600 !important;
+  color: #1e293b !important;
+}
+
+.EditDeviceAccess .edit-device-container .machine-details-table td:nth-child(3) {
+  color: #64748b !important;
+  font-style: italic;
+}
+
+.EditDeviceAccess .edit-device-container .machine-details-table td:last-child {
+  text-align: center;
+  width: 140px;
+  min-width: 140px;
+}
+
+/* Remove button in table */
+.EditDeviceAccess .edit-device-container .machine-details-table .remove-btn,
+.EditDeviceAccess .edit-device-container .remove-btn {
+  padding: 8px 20px !important;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 6px !important;
+  cursor: pointer;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  display: inline-block !important;
+  width: auto !important;
+}
+
+.EditDeviceAccess .edit-device-container .machine-details-table .remove-btn:hover,
+.EditDeviceAccess .edit-device-container .remove-btn:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
+}
+
+/* ====================================
+   Empty State for Machines
+   ==================================== */
+.EditDeviceAccess .edit-device-container .no-machines-message {
+  padding: 32px 24px;
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%) !important;
+  border-radius: 12px;
+  text-align: center;
+  color: #6b7280 !important;
+  font-size: 14px !important;
+  border: 2px dashed #d1d5db !important;
+}
+
+/* ====================================
+   Branch Info Section
+   ==================================== */
+.EditDeviceAccess .edit-device-container .branch-info {
+  margin-top: 24px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%) !important;
+  border-radius: 10px;
+  border-left: 4px solid #FF6B35 !important;
+  flex-shrink: 0;
+}
+
+.EditDeviceAccess .edit-device-container .branch-info p {
+  margin: 0;
+  color: #0c4a6e !important;
+  font-size: 14px !important;
+}
+
+.EditDeviceAccess .edit-device-container .branch-info strong {
+  color: #0369a1 !important;
+}
+
+/* ====================================
+   Detail Container (for Create mode)
+   ==================================== */
+.EditDeviceAccess .detail-container {
+  background: white;
+  padding: 20px 24px;
+  border-radius: 12px;
+  max-width: 600px;
+  margin: 0 auto;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.EditDeviceAccess .detail-container h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 24px 0;
+  text-align: center;
+}
+
+/* Create mode form sections */
+.EditDeviceAccess .detail-container .form-section {
+  margin-bottom: 16px;
+}
+
+.EditDeviceAccess .detail-container .form-section label {
+  display: block !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: #374151 !important;
+  margin-bottom: 8px !important;
+}
+
+.EditDeviceAccess .detail-container .form-section input {
+  width: 100% !important;
+  padding: 12px 14px !important;
+  font-size: 14px !important;
+  color: #1f2937 !important;
+  background: #fff !important;
+  border: 2px solid #e5e7eb !important;
+  border-radius: 8px !important;
+  box-sizing: border-box;
+}
+
+.EditDeviceAccess .detail-container .form-section input:focus {
+  border-color: #FF6B35 !important;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+}
+
+.EditDeviceAccess .detail-container .TopButtonEdit {
+  display: flex;
+  margin-bottom: 20px;
+}
+
+.EditDeviceAccess .detail-container .TopButtonEdit button {
+  padding: 10px 24px !important;
+  background: #f3f4f6 !important;
+  color: #374151 !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 8px !important;
+  cursor: pointer;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+
+.EditDeviceAccess .detail-container .save-button {
+  width: 100% !important;
+  padding: 12px 24px !important;
+  background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 8px !important;
+  cursor: pointer;
+  font-size: 15px !important;
+  font-weight: 600 !important;
   margin-top: 16px;
 }
 
-#EditDeviceAccessCss .info-section p {
-  margin: 4px 0;
-  color: #0c4a6e;
-  font-size: 13px;
+.EditDeviceAccess .detail-container .save-button:disabled {
+  background: #ccc !important;
+  cursor: not-allowed;
+}
+
+/* ====================================
+   Loading and Error States
+   ==================================== */
+.loadingAndError {
+  text-align: center;
+  padding: 40px 20px;
+  font-size: 15px;
+  color: #6b7280;
+}
+
+/* ====================================
+   Confirmation Modal
+   ==================================== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: white;
+  padding: 28px;
+  border-radius: 16px;
+  max-width: 420px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.modal-content h3 {
+  margin: 0 0 12px 0;
+  color: #1f2937;
+  font-size: 18px;
+  font-weight: 700;
+  text-align: left;
+}
+
+.modal-content p {
+  margin: 0 0 24px 0;
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ====================================
+   Responsive Design
+   ==================================== */
+@media (max-width: 768px) {
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .form-row .form-section {
+    margin-bottom: 16px;
+  }
+
+  .device-id-row {
+    flex-direction: column;
+  }
+
+  .regenerate-btn {
+    width: 100%;
+  }
+
+  .add-machine-row {
+    flex-direction: column;
+  }
+
+  .add-machine-btn {
+    width: 100%;
+  }
 }

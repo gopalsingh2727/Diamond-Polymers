@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
-import { X, Package, Calendar, User, Mail, Phone, MapPin, FileText, Share2, CheckCircle, XCircle } from 'lucide-react';
+// Material Icons
+// Centralized Icons
+import { CloseIcon, InventoryIcon, CalendarTodayIcon, PersonIcon, EmailIcon, PhoneIcon, LocationOnIcon, DescriptionIcon, ShareIcon, CheckCircleIcon, CancelIcon } from './icons';
+
+
+
+
 import ForwardingChain from './ForwardingChain';
 import {
   fetchForwardedOrdersFromPerson,
@@ -192,14 +198,14 @@ const MyOrdersModal: React.FC<MyOrdersModalProps> = ({
         {/* Header */}
         <div className="modal-header">
           <div className="modal-title-section">
-            <Package size={24} />
+            <InventoryIcon width={24} height={24} />
             <div>
               <h2>Orders with {contactName}</h2>
               <p className="modal-subtitle">Total: {totalOrders} orders</p>
             </div>
           </div>
           <button className="modal-close-btn" onClick={onClose}>
-            <X size={20} />
+            <CloseIcon width={20} height={20} />
           </button>
         </div>
 
@@ -272,7 +278,7 @@ const MyOrdersModal: React.FC<MyOrdersModalProps> = ({
 
           {!loading && !error && filteredOrdersByStatus.length === 0 && (
             <div className="modal-empty">
-              <Package size={48} />
+              <InventoryIcon width={48} height={48} />
               <p>
                 {orders.length === 0
                   ? `No ${activeTab} orders with this contact`
@@ -288,11 +294,11 @@ const MyOrdersModal: React.FC<MyOrdersModalProps> = ({
                 <div key={order._id} className="order-card">
                   <div className="order-header">
                     <div className="order-number">
-                      <Package size={16} />
+                      <InventoryIcon width={16} height={16} />
                       <strong>{order.orderNumber}</strong>
                     </div>
                     <div className="order-date">
-                      <Calendar size={14} />
+                      <CalendarTodayIcon width={14} height={14} />
                       {new Date(order.createdAt).toLocaleDateString()}
                     </div>
                   </div>
@@ -300,8 +306,8 @@ const MyOrdersModal: React.FC<MyOrdersModalProps> = ({
                   {/* Forwarding Status Badge */}
                   {order.forwardingStatus && (
                     <div className={`forwarding-status-badge status-${order.forwardingStatus}`}>
-                      {order.forwardingStatus === 'accepted' && <CheckCircle size={14} />}
-                      {order.forwardingStatus === 'denied' && <XCircle size={14} />}
+                      {order.forwardingStatus === 'accepted' && <CheckCircleIcon width={14} height={14} />}
+                      {order.forwardingStatus === 'denied' && <CancelIcon width={14} height={14} />}
                       {order.forwardingStatus === 'pending' && <span>⏳</span>}
                       <span>{order.forwardingStatus.toUpperCase()}</span>
                     </div>
@@ -309,42 +315,42 @@ const MyOrdersModal: React.FC<MyOrdersModalProps> = ({
 
                   {order.customerName && (
                     <div className="order-detail">
-                      <User size={14} />
+                      <PersonIcon width={14} height={14} />
                       <span>{order.customerName}</span>
                     </div>
                   )}
 
                   {order.customerPhone && (
                     <div className="order-detail">
-                      <Phone size={14} />
+                      <PhoneIcon width={14} height={14} />
                       <span>{order.customerPhone}</span>
                     </div>
                   )}
 
                   {order.customerEmail && (
                     <div className="order-detail">
-                      <Mail size={14} />
+                      <EmailIcon width={14} height={14} />
                       <span>{order.customerEmail}</span>
                     </div>
                   )}
 
                   {order.customerAddress && (
                     <div className="order-detail">
-                      <MapPin size={14} />
+                      <LocationOnIcon width={14} height={14} />
                       <span>{order.customerAddress}</span>
                     </div>
                   )}
 
                   {order.notes && Array.isArray(order.notes) && order.notes.length > 0 && order.notes[0]?.note && (
                     <div className="order-detail">
-                      <FileText size={14} />
+                      <DescriptionIcon width={14} height={14} />
                       <span>{typeof order.notes[0].note === 'string' ? order.notes[0].note : ''}</span>
                     </div>
                   )}
 
                   {order.responseNote && (
                     <div className="order-detail response-note">
-                      <FileText size={14} />
+                      <DescriptionIcon width={14} height={14} />
                       <span><strong>Response:</strong> {order.responseNote}</span>
                     </div>
                   )}
@@ -368,7 +374,7 @@ const MyOrdersModal: React.FC<MyOrdersModalProps> = ({
                         onClick={() => handleAcceptOrder(order._id, order.orderNumber)}
                         disabled={processingOrder === order._id}
                       >
-                        <CheckCircle size={16} />
+                        <CheckCircleIcon width={16} height={16} />
                         <span>Accept</span>
                       </button>
                       <button
@@ -376,7 +382,7 @@ const MyOrdersModal: React.FC<MyOrdersModalProps> = ({
                         onClick={() => handleDenyOrder(order._id, order.orderNumber)}
                         disabled={processingOrder === order._id}
                       >
-                        <XCircle size={16} />
+                        <CancelIcon width={16} height={16} />
                         <span>Deny</span>
                       </button>
                     </div>
@@ -388,7 +394,7 @@ const MyOrdersModal: React.FC<MyOrdersModalProps> = ({
                     onClick={() => fetchForwardingChain(order._id, order.orderNumber)}
                     disabled={loadingChain}
                   >
-                    <Share2 size={16} />
+                    <ShareIcon width={16} height={16} />
                     <span>View Forwarding History</span>
                   </button>
 

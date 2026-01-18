@@ -7,6 +7,8 @@ import SearchableSelect, { SearchableSelectHandle } from "../../../../../compone
 import { Parser } from "expr-eval";
 import { useKeyboardNavigation } from "../../../../../hooks/useKeyboardNavigation";
 import KeyboardShortcutsGuide from "../../../../../components/shared/KeyboardShortcutsGuide";
+import HelpDocModal, { HelpButton } from '../../../../../components/shared/HelpDocModal';
+import { createOrderHelp } from '../../../../../components/shared/helpContent';
 import "./createOrder.css";
 
 interface ProductType {
@@ -104,6 +106,9 @@ const CreateOrder = () => {
   const [productSpecs, setProductSpecs] = useState<ProductSpec[]>([]);
   const [materialTypes, setMaterialTypes] = useState<MaterialType[]>([]);
   const [materialSpecs, setMaterialSpecs] = useState<MaterialSpec[]>([]);
+
+  // Help modal
+  const [showHelpModal, setShowHelpModal] = useState(false);
 
   // Form values - dynamic based on field names
   // ✅ Initialize with edit data if in edit mode
@@ -1159,7 +1164,10 @@ const CreateOrder = () => {
 
   return (
     <div className="create-order-container">
-      <h2 className="page-title">{isEditMode ? "Edit Order" : "Create Order"}</h2>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '1.5rem' }}>
+        <h2 className="page-title" style={{ marginBottom: 0 }}>{isEditMode ? "Edit Order" : "Create Order"}</h2>
+        <HelpButton onClick={() => setShowHelpModal(true)} size="medium" />
+      </div>
 
       {/* Order Type Selection - Always shown */}
       <div className="form-section">
@@ -1316,6 +1324,13 @@ const CreateOrder = () => {
       {/* Messages */}
       {error && <div className="error-message">{error}</div>}
       {success && <div className="success-message">{success}</div>}
+
+      {/* Help Modal */}
+      <HelpDocModal
+        isOpen={showHelpModal}
+        onClose={() => setShowHelpModal(false)}
+        content={createOrderHelp}
+      />
 
       {/* Keyboard Shortcuts Guide */}
       <KeyboardShortcutsGuide context={isEditMode ? "edit-order" : "create-order"} />

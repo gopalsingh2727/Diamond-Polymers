@@ -8,6 +8,8 @@ import { useCRUD } from '../../../../../hooks/useCRUD';
 import { ToastContainer } from '../../../../../components/shared/Toast';
 import ImportProgressPopup from '../../../../../components/shared/ImportProgressPopup';
 import ImportAccountPopup from '../../../../../components/shared/ImportAccountPopup';
+import HelpDocModal, { HelpButton } from "../../../../../components/shared/HelpDocModal";
+import { machineOperatorHelp } from "../../../../../components/shared/helpContent";
 import * as XLSX from 'xlsx';
 import "./machineOperator.css";
 
@@ -60,6 +62,9 @@ const CreteMachineOpertor: React.FC<CreteMachineOpertorProps> = ({ initialData, 
     failed: number;
     errors: string[];
   } | null>(null);
+
+  // Help modal state
+  const [showHelpModal, setShowHelpModal] = useState(false);
 
   // 🚀 OPTIMIZED: Get data from cached form data (no API calls!)
   const { machines: machineList } = useFormDataCache();
@@ -503,6 +508,9 @@ const CreteMachineOpertor: React.FC<CreteMachineOpertorProps> = ({ initialData, 
                 <line x1="9" y1="15" x2="15" y2="15"></line>
               </svg>
             </button>
+
+            {/* Help Button */}
+            <HelpButton onClick={() => setShowHelpModal(true)} size="medium" />
           </div>
         ) : (
           <h2 className="createMachineOperator-title">
@@ -675,6 +683,13 @@ const CreteMachineOpertor: React.FC<CreteMachineOpertorProps> = ({ initialData, 
           </div>
         </div>
       )}
+
+      {/* Help Documentation Modal */}
+      <HelpDocModal
+        isOpen={showHelpModal}
+        onClose={() => setShowHelpModal(false)}
+        content={machineOperatorHelp}
+      />
 
       <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
     </div>

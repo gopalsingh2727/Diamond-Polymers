@@ -25,6 +25,9 @@ import { ToastContainer } from '../../../../../components/shared/Toast';
 import { useCRUD } from '../../../../../hooks/useCRUD';
 import './createInventory.css';
 import { BackButton } from '@/componest/allCompones/BackButton';
+import HelpDocModal, { HelpButton } from '../../../../../components/shared/HelpDocModal';
+import { createInventoryHelp } from '../../../../../components/shared/helpContent';
+import SectionHelpIcon from '../../../../../components/shared/SectionHelpIcon';
 
 // Types
 interface SelectedSpec {
@@ -108,6 +111,9 @@ const CreateInventory: React.FC<CreateInventoryProps> = ({
   // Delete confirmation
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  // Help modal
+  const [showHelpModal, setShowHelpModal] = useState(false);
 
   // Get data from Redux
   const rawOptionTypes = useSelector((state: any) => state.v2.optionType?.list);
@@ -350,7 +356,10 @@ const CreateInventory: React.FC<CreateInventoryProps> = ({
               ← Back
             </button>
           )}
-          <h1>{isEditMode ? 'Edit Inventory' : 'Create Inventory'}</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <h1>{isEditMode ? 'Edit Inventory' : 'Create Inventory'}</h1>
+            <HelpButton onClick={() => setShowHelpModal(true)} size="medium" />
+          </div>
         </div>
         <div className="createinventory-header-actions">
           {isEditMode && (
@@ -383,7 +392,15 @@ const CreateInventory: React.FC<CreateInventoryProps> = ({
 
           {/* Basic Info */}
           <div className="form-section">
-            <h3>Basic Information</h3>
+            <h3>
+              Basic Information
+              {createInventoryHelp.sections?.find(s => s.title === '📋 Basic Information') && (
+                <SectionHelpIcon
+                  section={createInventoryHelp.sections.find(s => s.title === '📋 Basic Information')!}
+                  size={20}
+                />
+              )}
+            </h3>
             <div className="form-row">
               <div className="form-group">
                 <label>Name *</label>
@@ -418,7 +435,15 @@ const CreateInventory: React.FC<CreateInventoryProps> = ({
 
           {/* Option Types */}
           <div className="form-section">
-            <h3>Linked Option Types</h3>
+            <h3>
+              Linked Option Types
+              {createInventoryHelp.sections?.find(s => s.title === '🎯 Linked Option Types') && (
+                <SectionHelpIcon
+                  section={createInventoryHelp.sections.find(s => s.title === '🎯 Linked Option Types')!}
+                  size={20}
+                />
+              )}
+            </h3>
             <p className="section-hint">Select which option types can be tracked in this inventory</p>
             {optionTypesLoading ? (
               <div className="loading-state">Loading option types...</div>
@@ -449,7 +474,15 @@ const CreateInventory: React.FC<CreateInventoryProps> = ({
           {/* Selected Specifications */}
           {selectedOptionTypesData.length > 0 && (
             <div className="form-section">
-              <h3>Specifications for Formulas</h3>
+              <h3>
+                Specifications for Formulas
+                {createInventoryHelp.sections?.find(s => s.title === '📐 Specifications for Formulas') && (
+                  <SectionHelpIcon
+                    section={createInventoryHelp.sections.find(s => s.title === '📐 Specifications for Formulas')!}
+                    size={20}
+                  />
+                )}
+              </h3>
               <p className="section-hint">Select specifications to use in calculations</p>
               {selectedOptionTypesData.map((ot: any) => (
                 <div key={ot._id} className="spec-group">
@@ -480,7 +513,15 @@ const CreateInventory: React.FC<CreateInventoryProps> = ({
           {/* Dynamic Calculations */}
           <div className="form-section">
             <div className="section-header">
-              <h3>Dynamic Calculations</h3>
+              <h3>
+                Dynamic Calculations
+                {createInventoryHelp.sections?.find(s => s.title === '🧮 Dynamic Calculations') && (
+                  <SectionHelpIcon
+                    section={createInventoryHelp.sections.find(s => s.title === '🧮 Dynamic Calculations')!}
+                    size={20}
+                  />
+                )}
+              </h3>
               <button type="button" className="add-btn" onClick={addCalculation}>
                 + Add Calculation
               </button>
@@ -553,7 +594,15 @@ const CreateInventory: React.FC<CreateInventoryProps> = ({
 
           {/* Inventory Units */}
           <div className="form-section">
-            <h3>Inventory Units</h3>
+            <h3>
+              Inventory Units
+              {createInventoryHelp.sections?.find(s => s.title === '📦 Inventory Units') && (
+                <SectionHelpIcon
+                  section={createInventoryHelp.sections.find(s => s.title === '📦 Inventory Units')!}
+                  size={20}
+                />
+              )}
+            </h3>
             <p className="section-hint">Select which units to track (KG, PCS, etc.)</p>
             {inventoryTypesLoading ? (
               <div className="loading-state">Loading inventory units...</div>
@@ -689,6 +738,13 @@ const CreateInventory: React.FC<CreateInventoryProps> = ({
           </div>
         </div>
       )}
+
+      {/* Help Documentation Modal */}
+      <HelpDocModal
+        isOpen={showHelpModal}
+        onClose={() => setShowHelpModal(false)}
+        content={createInventoryHelp}
+      />
     </div>
   );
 };

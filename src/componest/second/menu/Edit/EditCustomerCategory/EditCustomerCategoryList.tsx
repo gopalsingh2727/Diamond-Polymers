@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getCustomerCategoriesV2 } from "../../../../redux/unifiedV2";
 import { RootState, AppDispatch } from "../../../../../store";
 import CustomerCategory from "../../create/customerCategory/CustomerCategory";
 import { useListNavigation } from "../../../../allCompones/BackButton";
+import { useFormDataCache } from "../hooks/useFormDataCache";
 import "../EditMachineType/EditMachineyType.css";
 
 interface Props {
@@ -21,12 +22,29 @@ const EditCustomerCategoryList: React.FC<Props> = ({ onEdit }) => {
   const loading = customerCategoryState?.loading;
   const error = customerCategoryState?.error;
 
+  // Get customers from cache to count usage
+  const { customers } = useFormDataCache();
+
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRow, setSelectedRow] = useState(0);
   const [selectedItem, setSelectedItem] = useState<any>(null);
 
   // Get selected branch to refetch when it changes
   const selectedBranch = useSelector((state: any) => state.auth?.userData?.selectedBranch);
+
+  // Count customers by category
+  const customerCountByCategory = useMemo(() => {
+    const counts: Record<string, number> = {};
+    customers.forEach((customer: any) => {
+      const categoryId = typeof customer.categoryId === 'object'
+        ? customer.categoryId?._id
+        : customer.categoryId;
+      if (categoryId) {
+        counts[categoryId] = (counts[categoryId] || 0) + 1;
+      }
+    });
+    return counts;
+  }, [customers]);
 
   useEffect(() => {
     dispatch(getCustomerCategoriesV2());
@@ -123,6 +141,7 @@ const EditCustomerCategoryList: React.FC<Props> = ({ onEdit }) => {
                     <th className="editsectionsTable-th">No</th>
                     <th className="editsectionsTable-th">Category Name</th>
                     <th className="editsectionsTable-th">Description</th>
+                    <th className="editsectionsTable-th">Customers</th>
                     <th className="editsectionsTable-th">Created</th>
                   </tr>
                 </thead>
@@ -136,6 +155,7 @@ const EditCustomerCategoryList: React.FC<Props> = ({ onEdit }) => {
                       <td className="editsectionsTable-td">{index + 1}</td>
                       <td className="editsectionsTable-td">{item.name || "N/A"}</td>
                       <td className="editsectionsTable-td">{item.description || "N/A"}</td>
+                      <td className="editsectionsTable-td">{customerCountByCategory[item._id] || 0}</td>
                       <td className="editsectionsTable-td">
                         {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "N/A"}
                       </td>

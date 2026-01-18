@@ -1,4 +1,4 @@
-/* Forwarding Chain Container */
+/* Forwarding Chain Container - Orange Theme */
 .forwarding-chain-container {
   padding: 20px;
   background: #f9fafb;
@@ -24,11 +24,12 @@
 
 .chain-count {
   padding: 4px 12px;
-  background: #667eea;
+  background: #f97316;
   color: white;
   border-radius: 12px;
   font-size: 12px;
   font-weight: 500;
+  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.3);
 }
 
 /* Empty State */
@@ -56,6 +57,12 @@
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   position: relative;
+  transition: all 0.2s;
+}
+
+.forwarding-step:hover {
+  border-color: #f97316;
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.1);
 }
 
 /* Forwarding Node */
@@ -86,8 +93,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #667eea;
+  color: #f97316;
   flex-shrink: 0;
+  box-shadow: 0 2px 4px rgba(249, 115, 22, 0.2);
 }
 
 .node-details {
@@ -110,14 +118,14 @@
   text-transform: capitalize;
 }
 
-/* Arrow */
+/* Arrow - Orange Theme */
 .forwarding-arrow {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   padding: 8px 0;
-  color: #667eea;
+  color: #f97316;
   position: relative;
 }
 
@@ -131,10 +139,10 @@
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(to right, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(to right, #f97316 0%, #fb923c 100%);
 }
 
-/* Metadata */
+/* Metadata - Orange Theme */
 .forwarding-metadata {
   display: flex;
   flex-direction: column;
@@ -142,7 +150,7 @@
   padding: 12px;
   background: #f9fafb;
   border-radius: 6px;
-  border-left: 3px solid #667eea;
+  border-left: 3px solid #f97316;
 }
 
 .metadata-row {
@@ -167,11 +175,11 @@
   margin-top: 4px;
 }
 
-/* Step Connector */
+/* Step Connector - Orange Theme */
 .step-connector {
   width: 2px;
   height: 24px;
-  background: linear-gradient(to bottom, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(to bottom, #f97316 0%, #fb923c 100%);
   margin: 0 auto;
   position: relative;
 }
@@ -185,7 +193,8 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #764ba2;
+  background: #fb923c;
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.2);
 }
 
 /* Summary */
@@ -193,7 +202,7 @@
   margin-top: 20px;
   padding: 16px;
   background: white;
-  border: 2px dashed #e5e7eb;
+  border: 2px dashed #f97316;
   border-radius: 8px;
 }
 
@@ -214,14 +223,15 @@
   gap: 8px;
   flex-wrap: wrap;
   padding: 12px;
-  background: #f9fafb;
+  background: #fef3c7;
   border-radius: 6px;
+  border: 1px solid #fbbf24;
 }
 
 .path-node {
   padding: 6px 12px;
   background: white;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #f97316;
   border-radius: 6px;
   font-size: 13px;
   font-weight: 500;
@@ -230,7 +240,7 @@
 }
 
 .path-arrow {
-  color: #667eea;
+  color: #f97316;
   flex-shrink: 0;
 }
 

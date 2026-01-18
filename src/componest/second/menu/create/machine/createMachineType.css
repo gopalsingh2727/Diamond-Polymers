@@ -3,14 +3,21 @@
    All class names start with createMachineType-
    ==================================== */
 
-/* Container - Centered on Screen */
+/* Container - Centered for Create, Full Width for Edit */
 .createMachineType-container {
   width: 100%;
   min-height: 100%;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   padding: 20px;
+}
+
+/* Edit Mode - Full Width Layout */
+.createMachineType-container.edit-mode {
+  justify-content: flex-start !important;
+  align-items: flex-start !important;
+  padding: 0 !important;
 }
 
 /* Form Card */
@@ -21,6 +28,15 @@
   width: 100%;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Edit Mode - Full Width Form */
+.createMachineType-container.edit-mode .createMachineType-form {
+  max-width: 100% !important;
+  width: 100% !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 20px !important;
 }
 
 /* Title Row with Import Button */
@@ -321,11 +337,230 @@
   }
 }
 
+/* ====================================
+   Edit Mode - Top Button Row (Back & Delete)
+   ==================================== */
+.createMachineType-top-buttons {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  margin-bottom: 24px !important;
+  padding-bottom: 16px !important;
+  border-bottom: 2px solid #f3f4f6 !important;
+}
+
+.createMachineType-back-btn {
+  padding: 10px 24px !important;
+  background: #f3f4f6 !important;
+  color: #374151 !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 8px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.createMachineType-back-btn:hover {
+  background: #e5e7eb !important;
+}
+
+.createMachineType-delete-btn {
+  padding: 10px 24px !important;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 8px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.createMachineType-delete-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
+}
+
+.createMachineType-delete-btn:disabled {
+  background: #9ca3af !important;
+  cursor: not-allowed !important;
+}
+
+/* ====================================
+   Edit Mode - Form Row (Two Columns)
+   ==================================== */
+.createMachineType-form-row {
+  display: flex !important;
+  gap: 20px !important;
+  margin-bottom: 16px !important;
+}
+
+.createMachineType-form-row .createMachineType-group {
+  flex: 1 !important;
+  margin-bottom: 0 !important;
+}
+
+/* ====================================
+   Edit Mode - Form Inputs with Full Border
+   ==================================== */
+.createMachineType-container.edit-mode .createMachineType-input {
+  padding: 12px 14px !important;
+  font-size: 14px !important;
+  color: #1f2937 !important;
+  background: #ffffff !important;
+  border: 2px solid #e5e7eb !important;
+  border-radius: 8px !important;
+  outline: none !important;
+  box-sizing: border-box !important;
+  transition: all 0.2s ease !important;
+}
+
+.createMachineType-container.edit-mode .createMachineType-input:focus {
+  border-color: #FF6B35 !important;
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1) !important;
+}
+
+/* ====================================
+   Edit Mode - Title Styling
+   ==================================== */
+.createMachineType-container.edit-mode .createMachineType-title {
+  text-align: left !important;
+  justify-content: flex-start !important;
+  font-size: 1.5rem !important;
+  margin-bottom: 24px !important;
+}
+
+/* ====================================
+   Edit Mode - Update Button
+   ==================================== */
+.createMachineType-container.edit-mode .createMachineType-button {
+  max-width: 300px !important;
+}
+
+/* ====================================
+   Machines Section - Edit Mode
+   ==================================== */
+.machines-section {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 2px solid #f3f4f6;
+}
+
+.machines-title {
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  color: #1f2937 !important;
+  margin: 0 0 16px 0 !important;
+  padding-bottom: 8px !important;
+  border-bottom: 2px solid #FF6B35 !important;
+}
+
+.machines-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.machines-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.machines-table thead {
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+}
+
+.machines-table th,
+.machines-table td {
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 13px;
+}
+
+.machines-table th {
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 2px solid #FF6B35;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+}
+
+.machines-table tbody tr {
+  transition: background 0.15s ease;
+}
+
+.machines-table tbody tr:hover {
+  background: #fff7ed;
+}
+
+.machines-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.machines-table td:first-child {
+  font-weight: 600;
+  color: #9ca3af;
+  text-align: center;
+  width: 50px;
+}
+
+.machines-table td:nth-child(2) {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+/* Status Badge */
+.status-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.status-badge.active {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  color: #065f46;
+}
+
+.status-badge.inactive {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  color: #991b1b;
+}
+
+/* No Machines Message */
+.no-machines {
+  padding: 32px 20px;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 14px;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 2px dashed #d1d5db;
+}
+
 /* Responsive */
 @media (max-width: 767px) {
   .createMachineType-title-row {
     flex-direction: column;
     gap: 12px;
+  }
+
+  .createMachineType-form-row {
+    flex-direction: column !important;
+    gap: 0 !important;
+  }
+
+  .createMachineType-form-row .createMachineType-group {
+    margin-bottom: 16px !important;
   }
 
   .import-summary-content {
@@ -345,5 +580,15 @@
   .import-machinetype-btn {
     font-size: 12px;
     padding: 5px 12px;
+  }
+
+  .machines-table th,
+  .machines-table td {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  .machines-table th {
+    font-size: 10px;
   }
 }

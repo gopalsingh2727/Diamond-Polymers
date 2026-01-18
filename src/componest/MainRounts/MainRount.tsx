@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { RootState } from "../redux/rootReducer";
+import { isTokenExpired } from "../redux/utils/auth";
 
 // Direct imports for Electron app
 import IndexComponentes from "../IndexComponents";
@@ -17,9 +18,12 @@ import ExternalAPIKeys from "../settings/ExternalAPIKeys";
 import MasterSettings from "../settings/MasterSettings";
 
 const MainRount = () => {
-  const { isAuthenticated, userData } = useSelector(
+  const { isAuthenticated, userData, token } = useSelector(
     (state: RootState) => state.auth
   );
+
+  // Check if we have a valid, non-expired token
+  const hasValidAuth = Boolean(isAuthenticated && token && !isTokenExpired(token));
 
   // Master admin and admin need to create/select branch first
   const hasSelectedBranch =
@@ -29,30 +33,30 @@ const MainRount = () => {
     <Routes>
       <Route
         path="/login"
-        element={isAuthenticated ? <Navigate to="/" /> : <LoginForm />}
+        element={hasValidAuth ? <Navigate to="/" replace /> : <LoginForm />}
       />
 
       <Route
         path="/signup"
-        element={isAuthenticated ? <Navigate to="/" /> : <UnifiedAuthPage />}
+        element={hasValidAuth ? <Navigate to="/" replace /> : <UnifiedAuthPage />}
       />
 
       <Route
         path="/forgot-password"
-        element={isAuthenticated ? <Navigate to="/" /> : <ForgotPassword />}
+        element={hasValidAuth ? <Navigate to="/" replace /> : <ForgotPassword />}
       />
 
       <Route
         path="/"
         element={
-          isAuthenticated ? (
+          hasValidAuth ? (
             hasSelectedBranch ? (
               <IndexComponentes />
             ) : (
-              <Navigate to="/create-branch" />
+              <Navigate to="/create-branch" replace />
             )
           ) : (
-            <Navigate to="/login" />
+            <Navigate to="/login" replace />
           )
         }
       />
@@ -60,14 +64,14 @@ const MainRount = () => {
       <Route
         path="/menu/*"
         element={
-          isAuthenticated ? (
+          hasValidAuth ? (
             hasSelectedBranch ? (
               <IndexMenuRoute />
             ) : (
-              <Navigate to="/create-branch" />
+              <Navigate to="/create-branch" replace />
             )
           ) : (
-            <Navigate to="/login" />
+            <Navigate to="/login" replace />
           )
         }
       />
@@ -75,10 +79,10 @@ const MainRount = () => {
       <Route
         path="/select-branch"
         element={
-          isAuthenticated && userData?.role === "admin" ? (
+          hasValidAuth && userData?.role === "admin" ? (
             <BranchSelect />
           ) : (
-            <Navigate to="/" />
+            <Navigate to="/" replace />
           )
         }
       />
@@ -86,10 +90,10 @@ const MainRount = () => {
       <Route
         path="/create-branch"
         element={
-          isAuthenticated && (userData?.role === "master_admin" || userData?.role === "admin") ? (
+          hasValidAuth && (userData?.role === "master_admin" || userData?.role === "admin") ? (
             <CreateBranch />
           ) : (
-            <Navigate to="/login" />
+            <Navigate to="/login" replace />
           )
         }
       />
@@ -98,10 +102,10 @@ const MainRount = () => {
       <Route
         path="/settings/branches"
         element={
-          isAuthenticated && (userData?.role === "master_admin" || userData?.role === "admin") ? (
+          hasValidAuth && (userData?.role === "master_admin" || userData?.role === "admin") ? (
             <SecretBranches />
           ) : (
-            <Navigate to="/login" />
+            <Navigate to="/login" replace />
           )
         }
       />
@@ -109,10 +113,10 @@ const MainRount = () => {
       <Route
         path="/settings/managers"
         element={
-          isAuthenticated && (userData?.role === "master_admin" || userData?.role === "admin") ? (
+          hasValidAuth && (userData?.role === "master_admin" || userData?.role === "admin") ? (
             <SecretManager />
           ) : (
-            <Navigate to="/login" />
+            <Navigate to="/login" replace />
           )
         }
       />
@@ -120,10 +124,10 @@ const MainRount = () => {
       <Route
         path="/settings/all"
         element={
-          isAuthenticated && (userData?.role === "master_admin" || userData?.role === "admin") ? (
+          hasValidAuth && (userData?.role === "master_admin" || userData?.role === "admin") ? (
             <SeeAll />
           ) : (
-            <Navigate to="/login" />
+            <Navigate to="/login" replace />
           )
         }
       />
@@ -131,10 +135,10 @@ const MainRount = () => {
       <Route
         path="/settings/api-keys"
         element={
-          isAuthenticated && userData?.role === "master_admin" ? (
+          hasValidAuth && userData?.role === "master_admin" ? (
             <ExternalAPIKeys />
           ) : (
-            <Navigate to="/login" />
+            <Navigate to="/login" replace />
           )
         }
       />
@@ -142,12 +146,18 @@ const MainRount = () => {
       <Route
         path="/settings/master"
         element={
-          isAuthenticated && userData?.role === "master_admin" ? (
+          hasValidAuth && userData?.role === "master_admin" ? (
             <MasterSettings />
           ) : (
-            <Navigate to="/login" />
+            <Navigate to="/login" replace />
           )
         }
+      />
+
+      {/* Catch-all route - redirect unknown URLs */}
+      <Route
+        path="*"
+        element={<Navigate to={hasValidAuth ? "/" : "/login"} replace />}
       />
     </Routes>
   );

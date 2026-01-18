@@ -8,6 +8,9 @@ import { getOptionSpecsV2 as getOptionSpecs } from "../../../../redux/unifiedV2/
 import { createTemplateV2, updateTemplateV2 } from "../../../../redux/unifiedV2/templateActions";
 import { ChevronLeft, ChevronRight, Plus, Trash2, Eye, Save, Copy, Loader2, AlertTriangle, Edit2, ChevronDown, ChevronUp, X, Layers } from 'lucide-react';
 import "./ViewTemplateWizard.css";
+import HelpDocModal, { HelpButton } from '../../../../../components/shared/HelpDocModal';
+import { createViewTemplateHelp } from '../../../../../components/shared/helpContent';
+import SectionHelpIcon from '../../../../../components/shared/SectionHelpIcon';
 
 // Types
 type ColumnDataType = 'text' | 'number' | 'formula' | 'dropdown' | 'boolean' | 'date' | 'image' | 'file' | 'audio';
@@ -363,6 +366,9 @@ const ViewTemplateWizard: React.FC<ViewTemplateWizardProps> = ({ initialData, on
   const [isSaving, setIsSaving] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [showProductionInfo, setShowProductionInfo] = useState(false);
+
+  // Help modal
+  const [showHelpModal, setShowHelpModal] = useState(false);
 
   // Load initial data when editing (from props)
   useEffect(() => {
@@ -4165,7 +4171,10 @@ const ViewTemplateWizard: React.FC<ViewTemplateWizardProps> = ({ initialData, on
               </button>
             }
             <div>
-              <h2 style={{ margin: 0 }}>{isEditingExisting || editMode ? 'Edit View Template' : 'Create View Template'}</h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <h2 style={{ margin: 0 }}>{isEditingExisting || editMode ? 'Edit View Template' : 'Create View Template'}</h2>
+                <HelpButton onClick={() => setShowHelpModal(true)} size="medium" />
+              </div>
               <p style={{ margin: '4px 0 0 0', fontSize: '14px', color: '#6b7280' }}>
                 {editMode ? `Editing: ${config.templateName || 'Template'}` : 'Configure operator view for machine production entry'}
               </p>
@@ -4652,6 +4661,13 @@ const ViewTemplateWizard: React.FC<ViewTemplateWizardProps> = ({ initialData, on
           </div>
         </div>
       }
+
+      {/* Help Documentation Modal */}
+      <HelpDocModal
+        isOpen={showHelpModal}
+        onClose={() => setShowHelpModal(false)}
+        content={createViewTemplateHelp}
+      />
     </div>);
 
 };

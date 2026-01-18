@@ -9,6 +9,8 @@ import { useCRUD } from '../../../../../hooks/useCRUD';
 import { ToastContainer } from '../../../../../components/shared/Toast';
 import ImportProgressPopup from '../../../../../components/shared/ImportProgressPopup';
 import ImportAccountPopup from '../../../../../components/shared/ImportAccountPopup';
+import HelpDocModal, { HelpButton } from '../../../../../components/shared/HelpDocModal';
+import { optionSpecHelp } from '../../../../../components/shared/helpContent';
 import * as XLSX from 'xlsx';
 
 // Reference dimension interface (for refer items)
@@ -164,6 +166,9 @@ const CreateOptionSpec = () => {
   // State for refer popup - DISABLED (not using this feature currently)
   // const [referPopupIndex, setReferPopupIndex] = useState<number | null>(null);
   // const [tempReferenceItems, setTempReferenceItems] = useState<ReferenceItem[]>([]);
+
+  // Help modal state
+  const [showHelpModal, setShowHelpModal] = useState(false);
 
   // Excel import state
   const [showImportPopup, setShowImportPopup] = useState(false);
@@ -955,20 +960,23 @@ const CreateOptionSpec = () => {
         <div className="createaccount-title-row">
           <h1 className="createOptionSpec-title" style={{ margin: 0, border: 'none', padding: 0 }}>Create Option Specification</h1>
 
-          <button
-            type="button"
-            onClick={() => setShowImportPopup(true)}
-            className="import-accounts-title-btn"
-            disabled={bulkImporting}
-          >
-            Import Specs
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-              <polyline points="14 2 14 8 20 8"></polyline>
-              <line x1="12" y1="18" x2="12" y2="12"></line>
-              <line x1="9" y1="15" x2="15" y2="15"></line>
-            </svg>
-          </button>
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <HelpButton onClick={() => setShowHelpModal(true)} size="medium" />
+            <button
+              type="button"
+              onClick={() => setShowImportPopup(true)}
+              className="import-accounts-title-btn"
+              disabled={bulkImporting}
+            >
+              Import Specs
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="12" y1="18" x2="12" y2="12"></line>
+                <line x1="9" y1="15" x2="15" y2="15"></line>
+              </svg>
+            </button>
+          </div>
         </div>
         <p className="createOptionSpec-subtitle">Configure specifications for your manufacturing options</p>
       </div>
@@ -1933,6 +1941,12 @@ const CreateOptionSpec = () => {
           </div>
         </div>
       )}
+
+      <HelpDocModal
+        isOpen={showHelpModal}
+        onClose={() => setShowHelpModal(false)}
+        content={optionSpecHelp}
+      />
 
       <ToastContainer toasts={toast.toasts} onClose={toast.removeToast} />
     </div>);

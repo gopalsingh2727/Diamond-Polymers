@@ -33,9 +33,11 @@ interface Step {
 interface Props {
   stepName: string;
   onSelect: (step: Step) => void;
+  selectedIndex?: number;
+  onSuggestionsChange?: (suggestions: Step[]) => void;
 }
 
-const StepSuggestions: React.FC<Props> = ({ stepName, onSelect }) => {
+const StepSuggestions: React.FC<Props> = ({ stepName, onSelect, selectedIndex = -1, onSuggestionsChange }) => {
   // ✅ OPTIMIZED: Use cached data from orderFormData
   const orderFormData = useSelector((state: RootState) => state.orderFormData);
   const steps = orderFormData?.data?.steps || [];
@@ -50,11 +52,19 @@ const StepSuggestions: React.FC<Props> = ({ stepName, onSelect }) => {
       const results = steps.filter((step: any) =>
         step.stepName.toLowerCase().includes(searchTerm)
       );
-      setFiltered(results.slice(0, 5));
+      const limited = results.slice(0, 5);
+      setFiltered(limited);
+      // Notify parent of suggestions for keyboard navigation
+      if (onSuggestionsChange) {
+        onSuggestionsChange(limited);
+      }
     } else {
       setFiltered([]);
+      if (onSuggestionsChange) {
+        onSuggestionsChange([]);
+      }
     }
-  }, [stepName, steps]);
+  }, [stepName, steps, onSuggestionsChange]);
   
   if (loading) return (
     <div style={{
@@ -134,7 +144,7 @@ const StepSuggestions: React.FC<Props> = ({ stepName, onSelect }) => {
       margin: 0,
       padding: 0
     }}>
-      {filtered.map((step) => (
+      {filtered.map((step, index) => (
         <li
           key={step._id}
           style={{
@@ -142,16 +152,25 @@ const StepSuggestions: React.FC<Props> = ({ stepName, onSelect }) => {
             cursor: 'pointer',
             borderBottom: '1px solid #f3f4f6',
             fontSize: '13px',
-            color: '#1f2937',
+            color: index === selectedIndex ? 'white' : '#1f2937',
+            background: index === selectedIndex ? '#FF6B35' : 'white',
             transition: 'background 0.1s ease'
           }}
-          onMouseEnter={(e) => e.currentTarget.style.background = '#f0f9ff'}
-          onMouseLeave={(e) => e.currentTarget.style.background = 'white'}
+          onMouseEnter={(e) => {
+            if (index !== selectedIndex) {
+              e.currentTarget.style.background = '#f0f9ff';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (index !== selectedIndex) {
+              e.currentTarget.style.background = 'white';
+            }
+          }}
           onClick={() => onSelect(step)}
         >
           <div style={{ fontWeight: '500' }}>{step.stepName}</div>
           {step.machines && step.machines.length > 0 && (
-            <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px' }}>
+            <div style={{ fontSize: '11px', color: index === selectedIndex ? 'rgba(255,255,255,0.8)' : '#6b7280', marginTop: '2px' }}>
               {step.machines.length} machine{step.machines.length > 1 ? 's' : ''}
             </div>
           )}

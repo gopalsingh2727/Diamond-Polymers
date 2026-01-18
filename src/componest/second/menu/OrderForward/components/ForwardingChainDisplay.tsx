@@ -1,6 +1,13 @@
 import React, { useEffect, useState } from 'react';
+// Centralized Icons
+import { ArrowForwardIcon, PersonIcon, EmailIcon, LocationOnIcon, CalendarTodayIcon, DescriptionIcon, CloseIcon } from './icons';
 import { useDispatch } from 'react-redux';
-import { ArrowRight, User, Mail, MapPin, Calendar, FileText, X } from 'lucide-react';
+// Material Icons
+
+
+
+
+
 import { fetchPersonForwardingChain } from '../../../../redux/orderforward/orderForwardActions';
 import { AppDispatch } from '../../../../../store';
 import './ForwardingChainDisplay.css';
@@ -139,7 +146,7 @@ const ForwardingChainDisplay: React.FC<ForwardingChainDisplayProps> = ({
           </div>
           {onClose && (
             <button className="btn-close" onClick={onClose}>
-              <X size={20} />
+              <CloseIcon width={20} height={20} />
             </button>
           )}
         </div>
@@ -148,7 +155,7 @@ const ForwardingChainDisplay: React.FC<ForwardingChainDisplayProps> = ({
         <div className="chain-modal-body">
           {chain.length === 0 ? (
             <div className="chain-empty">
-              <FileText size={48} />
+              <DescriptionIcon width={48} height={48} />
               <p>No forwarding history</p>
               <span>This order hasn't been forwarded yet</span>
             </div>
@@ -163,7 +170,7 @@ const ForwardingChainDisplay: React.FC<ForwardingChainDisplayProps> = ({
                         className="person-avatar"
                         style={{ background: getRoleColor(step.from.personRole) }}
                       >
-                        <User size={20} />
+                        <PersonIcon width={20} height={20} />
                       </div>
                       <div className="person-info">
                         <div className="person-name">{step.from.personName}</div>
@@ -177,11 +184,11 @@ const ForwardingChainDisplay: React.FC<ForwardingChainDisplayProps> = ({
                     </div>
                     <div className="person-details">
                       <div className="detail-item">
-                        <Mail size={14} />
+                        <EmailIcon width={14} height={14} />
                         <span>{step.from.personEmail}</span>
                       </div>
                       <div className="detail-item">
-                        <MapPin size={14} />
+                        <LocationOnIcon width={14} height={14} />
                         <span>{step.from.branchName}</span>
                       </div>
                     </div>
@@ -189,7 +196,7 @@ const ForwardingChainDisplay: React.FC<ForwardingChainDisplayProps> = ({
 
                   {/* Arrow */}
                   <div className="chain-arrow">
-                    <ArrowRight size={24} />
+                    <ArrowForwardIcon width={24} height={24} />
                   </div>
 
                   {/* To Person */}
@@ -199,7 +206,7 @@ const ForwardingChainDisplay: React.FC<ForwardingChainDisplayProps> = ({
                         className="person-avatar"
                         style={{ background: getRoleColor(step.to.personRole) }}
                       >
-                        <User size={20} />
+                        <PersonIcon width={20} height={20} />
                       </div>
                       <div className="person-info">
                         <div className="person-name">{step.to.personName}</div>
@@ -213,11 +220,11 @@ const ForwardingChainDisplay: React.FC<ForwardingChainDisplayProps> = ({
                     </div>
                     <div className="person-details">
                       <div className="detail-item">
-                        <Mail size={14} />
+                        <EmailIcon width={14} height={14} />
                         <span>{step.to.personEmail}</span>
                       </div>
                       <div className="detail-item">
-                        <MapPin size={14} />
+                        <LocationOnIcon width={14} height={14} />
                         <span>{step.to.branchName}</span>
                       </div>
                     </div>
@@ -226,12 +233,12 @@ const ForwardingChainDisplay: React.FC<ForwardingChainDisplayProps> = ({
                   {/* Metadata */}
                   <div className="step-metadata">
                     <div className="metadata-item">
-                      <Calendar size={14} />
+                      <CalendarTodayIcon width={14} height={14} />
                       <span>{formatDate(step.date)}</span>
                     </div>
                     {step.notes && (
                       <div className="metadata-notes">
-                        <FileText size={14} />
+                        <DescriptionIcon width={14} height={14} />
                         <span>{step.notes}</span>
                       </div>
                     )}

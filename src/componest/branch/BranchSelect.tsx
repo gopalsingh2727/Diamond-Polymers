@@ -2,18 +2,28 @@ import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { fetchBranchesIfNeeded } from "../redux/Branch/BranchActions";
-import { setSelectedBranchInAuth } from "../redux/login/authActions";
+import { setSelectedBranchInAuth, logout } from "../redux/login/authActions";
 import type { RootState, AppDispatch } from "../../store";
+import { isTokenExpired, clearAuthData } from "../redux/utils/auth";
 
 const BranchSelect = () => {
   const dispatch: AppDispatch = useDispatch();
   const navigate = useNavigate();
 
   const { loading, error, branches } = useSelector((state: RootState) => state.branches);
-  const { isAuthenticated, userData } = useSelector((state: RootState) => state.auth);
+  const { isAuthenticated, userData, token } = useSelector((state: RootState) => state.auth);
 
   const [selectedBranch, setSelectedBranch] = useState("");
   const [isSelecting, setIsSelecting] = useState(false);
+
+  // Check token validity on mount and redirect if expired
+  useEffect(() => {
+    if (!token || isTokenExpired(token)) {
+      clearAuthData();
+      dispatch(logout());
+      navigate("/login", { replace: true });
+    }
+  }, [token, dispatch, navigate]);
 
   // ✅ Fetch branches for both admin and master_admin if no branch selected (uses cache if available)
   useEffect(() => {
@@ -27,10 +37,11 @@ const BranchSelect = () => {
 
   useEffect(() => {
     if (error === "Invalid or expired token") {
-      localStorage.removeItem("userData");
-      navigate("/login");
+      clearAuthData();
+      dispatch(logout());
+      navigate("/login", { replace: true });
     }
-  }, [error, navigate]);
+  }, [error, navigate, dispatch]);
 
   const handleBranchSelect = async () => {
     if (!selectedBranch) return;
@@ -39,7 +50,7 @@ const BranchSelect = () => {
     try {
       // Use the action creator which handles localStorage update
       await dispatch(setSelectedBranchInAuth(selectedBranch));
-      navigate("/");
+      navigate("/", { replace: true });
     } catch (error) {
 
       setIsSelecting(false);
@@ -148,7 +159,7 @@ const BranchSelect = () => {
 
                   <button
                 type="button"
-                onClick={() => navigate("/create-branch")}
+                onClick={() => navigate("/create-branch", { replace: true })}
                 className="w-full py-3 px-4 rounded-lg font-medium text-[#FF6B35] border-2 border-[#FF6B35] hover:bg-[#FF6B35] hover:text-white transition-all duration-300">
 
                     + Create New Branch

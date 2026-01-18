@@ -643,7 +643,7 @@ const EditMachines: React.FC = () => {
   };
 
   return (
-    <div className="EditMachineType">
+    <div className="EditMachine">
       {loading && <p className="loadingAndError">Loading...</p>}
       {error && <p className="loadingAndError" style={{ color: "red" }}>{error}</p>}
 
@@ -730,87 +730,92 @@ const EditMachines: React.FC = () => {
           <div className="TopButtonEdit">
             <button onClick={() => setShowDetail(false)}>Back</button>
             <button onClick={handleMachineDelete} className="Delete" disabled={deleteState === 'loading'}>
-              {deleteState === 'loading' ? 'Deleting...' : 'Delete Machine'}
+              {deleteState === 'loading' ? 'Deleting...' : 'Delete'}
             </button>
           </div>
 
-          {/* Edit Mode Tabs */}
-          <div style={{ 
-            display: 'flex', 
-            gap: '8px', 
-            marginBottom: '20px',
-            borderBottom: '2px solid #e5e7eb'
+          {/* Edit Mode Tabs - Compact */}
+          <div style={{
+            display: 'flex',
+            gap: '4px',
+            marginBottom: '14px',
+            borderBottom: '2px solid #e5e7eb',
+            flexWrap: 'wrap'
           }}>
             <button
               onClick={() => handleEditModeChange('basic')}
               style={{
-                padding: '10px 20px',
-                background: editMode === 'basic' ? '#2d89ef' : 'transparent',
+                padding: '6px 10px',
+                background: editMode === 'basic' ? '#3498db' : 'transparent',
                 color: editMode === 'basic' ? 'white' : '#666',
                 border: 'none',
-                borderRadius: '8px 8px 0 0',
+                borderRadius: '6px 6px 0 0',
                 cursor: 'pointer',
                 fontWeight: '600',
+                fontSize: '11px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px'
+                gap: '4px'
               }}
             >
-              <Settings size={16} />
-              Basic Info
+              <Settings size={12} />
+              Basic
             </button>
             <button
               onClick={() => handleEditModeChange('config')}
               style={{
-                padding: '10px 20px',
-                background: editMode === 'config' ? '#2d89ef' : 'transparent',
+                padding: '6px 10px',
+                background: editMode === 'config' ? '#3498db' : 'transparent',
                 color: editMode === 'config' ? 'white' : '#666',
                 border: 'none',
-                borderRadius: '8px 8px 0 0',
+                borderRadius: '6px 6px 0 0',
                 cursor: 'pointer',
                 fontWeight: '600',
+                fontSize: '11px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px'
+                gap: '4px'
               }}
             >
-              <Settings size={16} />
-              Configure Table
+              <Settings size={12} />
+              Config
             </button>
             <button
               onClick={() => handleEditModeChange('preview')}
               style={{
-                padding: '10px 20px',
-                background: editMode === 'preview' ? '#2d89ef' : 'transparent',
+                padding: '6px 10px',
+                background: editMode === 'preview' ? '#3498db' : 'transparent',
                 color: editMode === 'preview' ? 'white' : '#666',
                 border: 'none',
-                borderRadius: '8px 8px 0 0',
+                borderRadius: '6px 6px 0 0',
                 cursor: 'pointer',
                 fontWeight: '600',
+                fontSize: '11px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px'
+                gap: '4px'
               }}
             >
-              <Eye size={16} />
-              Preview & Test
+              <Eye size={12} />
+              Preview
             </button>
             <button
               onClick={() => handleEditModeChange('data')}
               style={{
-                padding: '10px 20px',
-                background: editMode === 'data' ? '#2d89ef' : 'transparent',
+                padding: '6px 10px',
+                background: editMode === 'data' ? '#3498db' : 'transparent',
                 color: editMode === 'data' ? 'white' : '#666',
                 border: 'none',
-                borderRadius: '8px 8px 0 0',
+                borderRadius: '6px 6px 0 0',
                 cursor: 'pointer',
                 fontWeight: '600',
+                fontSize: '11px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px'
+                gap: '4px'
               }}
             >
-              <TableIcon size={16} />
+              <TableIcon size={12} />
               Data ({tableRows.length})
             </button>
           </div>
@@ -1318,26 +1323,26 @@ const EditMachines: React.FC = () => {
             </div>
           )}
 
-          {/* Save Button */}
-          <div style={{ 
-            marginTop: '24px', 
-            padding: '16px', 
-            background: '#f9fafb', 
-            borderRadius: '8px',
+          {/* Save Button - Compact */}
+          <div style={{
+            marginTop: '16px',
+            padding: '12px',
+            background: '#f9fafb',
+            borderRadius: '6px',
             display: 'flex',
             justifyContent: 'flex-end',
-            gap: '12px'
+            gap: '8px'
           }}>
             <button
               onClick={() => setShowDetail(false)}
               style={{
-                padding: '10px 24px',
+                padding: '8px 16px',
                 background: '#6b7280',
                 color: 'white',
                 border: 'none',
-                borderRadius: '6px',
+                borderRadius: '4px',
                 cursor: 'pointer',
-                fontSize: '14px',
+                fontSize: '12px',
                 fontWeight: '600'
               }}
             >
@@ -1347,17 +1352,17 @@ const EditMachines: React.FC = () => {
               onClick={handleMachineUpdate}
               disabled={updateState === 'loading'}
               style={{
-                padding: '10px 24px',
-                background: updateState === 'loading' ? '#9ca3af' : '#2d89ef',
+                padding: '8px 16px',
+                background: updateState === 'loading' ? '#9ca3af' : '#3498db',
                 color: 'white',
                 border: 'none',
-                borderRadius: '6px',
+                borderRadius: '4px',
                 cursor: updateState === 'loading' ? 'not-allowed' : 'pointer',
-                fontSize: '14px',
+                fontSize: '12px',
                 fontWeight: '600'
               }}
             >
-              {updateState === 'loading' ? 'Saving...' : 'Save Changes'}
+              {updateState === 'loading' ? 'Saving...' : 'Save'}
             </button>
           </div>
         </div>

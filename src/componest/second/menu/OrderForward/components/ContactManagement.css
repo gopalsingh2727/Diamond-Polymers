@@ -1,4 +1,4 @@
-/* Contact Management Modal */
+/* Contact Management Modal - Orange Theme */
 
 .contact-modal {
   max-width: 800px;
@@ -14,7 +14,7 @@
   opacity: 0.9;
 }
 
-/* Tabs */
+/* Tabs - Orange Theme */
 .tabs {
   display: flex;
   gap: 4px;
@@ -40,13 +40,13 @@
 }
 
 .tab:hover {
-  background: rgba(102, 126, 234, 0.1);
-  color: #667eea;
+  background: rgba(249, 115, 22, 0.1);
+  color: #f97316;
 }
 
 .tab.active {
   background: white;
-  color: #667eea;
+  color: #f97316;
   font-weight: 600;
 }
 
@@ -57,7 +57,7 @@
   left: 0;
   right: 0;
   height: 2px;
-  background: #667eea;
+  background: #f97316;
 }
 
 /* Contacts List */
@@ -82,16 +82,16 @@
 
 .contact-item:hover,
 .request-item:hover {
-  border-color: #667eea;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+  border-color: #f97316;
+  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.15);
 }
 
-/* Avatar */
+/* Avatar - Orange Theme */
 .contact-avatar {
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #f97316 0%, #fb923c 100%);
   color: white;
   display: flex;
   align-items: center;
@@ -99,6 +99,7 @@
   font-size: 20px;
   font-weight: 600;
   flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
 }
 
 /* Contact Info */
@@ -137,7 +138,7 @@
   font-style: italic;
 }
 
-/* Badges */
+/* Badges - Orange Theme */
 .contact-badge {
   padding: 6px 12px;
   border-radius: 6px;
@@ -155,6 +156,7 @@
 .contact-badge.pending {
   background: #fef3c7;
   color: #92400e;
+  border: 1px solid #fbbf24;
 }
 
 .contact-badge.accepted {
