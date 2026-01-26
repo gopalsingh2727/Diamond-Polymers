@@ -20,7 +20,8 @@ import ViewTemplateWizard from "./machine/ViewTemplateWizard";
 // import OperatorEntryView from "./machine/OperatorEntryView";
 import CustomerCategory from "./customerCategory/CustomerCategory";
 import CustomerParentCompany from "./customerParentCompany/CustomerParentCompany";
-import CreateInventory from "./inventory/CreateInventory";
+// import CreateInventory from "./inventory/CreateInventory";
+// import CreateInventoryType from "./inventoryType/CreateInventoryType";
 import './create.css';
 import '../../../main/sidebar/menu.css';
 import ErrorBoundary from '../../../error/error';
@@ -85,7 +86,8 @@ const Layout = () => {
       masterAdminOnly: false,
       items: [
         { key: "orderType", label: "Create Order Type", masterAdminOnly: false },
-        { key: "inventory", label: "Create Inventory", masterAdminOnly: false },
+        // { key: "inventory", label: "Create Inventory", masterAdminOnly: false },
+        // { key: "inventoryType", label: "Manage Units (KG, PCS)", masterAdminOnly: false },
         { key: "printType", label: "Create Print Type", masterAdminOnly: false },
         { key: "excelExportType", label: "Create Excel Export Type", masterAdminOnly: false },
         { key: "viewTemplate", label: "View Template", masterAdminOnly: false },
@@ -124,7 +126,7 @@ const Layout = () => {
     "Account": true,
     "Machine Management": false,
     "Device Access": false,
-    "Options System": true,
+    "Options System": false,
     "Order Management": false,
     "Report": false
   });
@@ -203,6 +205,8 @@ const Layout = () => {
         return <ErrorBoundary><CreateOrderType /></ErrorBoundary>;
       case "inventory":
         return <ErrorBoundary><CreateInventory /></ErrorBoundary>;
+      // case "inventoryType":
+      //   return <ErrorBoundary><CreateInventoryType /></ErrorBoundary>;
       case "printType":
         return <ErrorBoundary><CreatePrintType /></ErrorBoundary>;
       case "excelExportType":

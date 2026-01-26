@@ -663,69 +663,69 @@ const MasterSettings = () => {
   };
 
   // Save WhatsApp settings
-  const saveWhatsappSettings = async () => {
-    setSaving(true);
-    setError("");
-    try {
-      // Validate branch selection for per-branch scope
-      if (whatsappScope === "per_branch" && !selectedBranch) {
-        setError("Please select a branch before saving per-branch WhatsApp settings.");
-        setSaving(false);
-        return;
-      }
+  // const saveWhatsappSettings = async () => {
+  //   setSaving(true);
+  //   setError("");
+  //   try {
+  //     // Validate branch selection for per-branch scope
+  //     if (whatsappScope === "per_branch" && !selectedBranch) {
+  //       setError("Please select a branch before saving per-branch WhatsApp settings.");
+  //       setSaving(false);
+  //       return;
+  //     }
 
-      // Build nested structure that backend expects
-      const encryptedWhatsapp: any = {
-        enabled: whatsappForm.isEnabled,
-        provider: whatsappForm.provider
-      };
+  //     // Build nested structure that backend expects
+  //     const encryptedWhatsapp: any = {
+  //       enabled: whatsappForm.isEnabled,
+  //       provider: whatsappForm.provider
+  //     };
 
-      if (whatsappForm.provider === "meta") {
-        encryptedWhatsapp.meta = {
-          phoneNumberId: whatsappForm.phoneNumberId,
-          businessAccountId: whatsappForm.businessAccountId,
-          accessToken: whatsappForm.accessToken || undefined // Only include if provided
-        };
-        encryptedWhatsapp.phoneNumber = whatsappForm.phoneNumber; // Store phone number at root level for display
-      } else if (whatsappForm.provider === "twilio") {
-        encryptedWhatsapp.twilio = {
-          accountSid: whatsappForm.accountSid,
-          authToken: whatsappForm.authToken || undefined, // Only include if provided
-          phoneNumber: whatsappForm.phoneNumber
-        };
-      } else if (whatsappForm.provider === "gupshup") {
-        encryptedWhatsapp.gupshup = {
-          apiKey: whatsappForm.apiKey || undefined, // Only include if provided
-          appName: whatsappForm.appName,
-          sourcePhoneNumber: whatsappForm.sourcePhoneNumber
-        };
-      } else if (whatsappForm.provider === "wati") {
-        encryptedWhatsapp.wati = {
-          apiEndpoint: whatsappForm.apiEndpoint,
-          accessToken: whatsappForm.accessToken || undefined // Only include if provided
-        };
-      }
+  //     if (whatsappForm.provider === "meta") {
+  //       encryptedWhatsapp.meta = {
+  //         phoneNumberId: whatsappForm.phoneNumberId,
+  //         businessAccountId: whatsappForm.businessAccountId,
+  //         accessToken: whatsappForm.accessToken || undefined // Only include if provided
+  //       };
+  //       encryptedWhatsapp.phoneNumber = whatsappForm.phoneNumber; // Store phone number at root level for display
+  //     } else if (whatsappForm.provider === "twilio") {
+  //       encryptedWhatsapp.twilio = {
+  //         accountSid: whatsappForm.accountSid,
+  //         authToken: whatsappForm.authToken || undefined, // Only include if provided
+  //         phoneNumber: whatsappForm.phoneNumber
+  //       };
+  //     } else if (whatsappForm.provider === "gupshup") {
+  //       encryptedWhatsapp.gupshup = {
+  //         apiKey: whatsappForm.apiKey || undefined, // Only include if provided
+  //         appName: whatsappForm.appName,
+  //         sourcePhoneNumber: whatsappForm.sourcePhoneNumber
+  //       };
+  //     } else if (whatsappForm.provider === "wati") {
+  //       encryptedWhatsapp.wati = {
+  //         apiEndpoint: whatsappForm.apiEndpoint,
+  //         accessToken: whatsappForm.accessToken || undefined // Only include if provided
+  //       };
+  //     }
 
-      if (whatsappScope === "global") {
-        await branchSettingsAPI.updateGlobal({ whatsapp: encryptedWhatsapp, whatsappScope });
-      } else if (selectedBranch) {
-        await branchSettingsAPI.update(selectedBranch, { whatsapp: encryptedWhatsapp, whatsappScope });
-      } else {
-        // This should never happen due to validation above, but just in case
-        throw new Error("Cannot save per-branch settings without a selected branch");
-      }
+  //     if (whatsappScope === "global") {
+  //       await branchSettingsAPI.updateGlobal({ whatsapp: encryptedWhatsapp, whatsappScope });
+  //     } else if (selectedBranch) {
+  //       await branchSettingsAPI.update(selectedBranch, { whatsapp: encryptedWhatsapp, whatsappScope });
+  //     } else {
+  //       // This should never happen due to validation above, but just in case
+  //       throw new Error("Cannot save per-branch settings without a selected branch");
+  //     }
 
-      setSuccess("WhatsApp settings saved successfully!");
-      setTimeout(() => setSuccess(""), 3000);
-      // Refresh all branch configs
-      fetchAllBranchConfigs();
-    } catch (err: any) {
-      console.error("Error saving WhatsApp settings:", err);
-      setError(err.message || err.response?.data?.message || "Failed to save WhatsApp settings");
-    } finally {
-      setSaving(false);
-    }
-  };
+  //     setSuccess("WhatsApp settings saved successfully!");
+  //     setTimeout(() => setSuccess(""), 3000);
+  //     // Refresh all branch configs
+  //     fetchAllBranchConfigs();
+  //   } catch (err: any) {
+  //     console.error("Error saving WhatsApp settings:", err);
+  //     setError(err.message || err.response?.data?.message || "Failed to save WhatsApp settings");
+  //   } finally {
+  //     setSaving(false);
+  //   }
+  // };
 
   // Reset Email Config for a branch
   const resetEmailConfigForBranch = async (branchId: string, branchName: string) => {
@@ -1246,9 +1246,9 @@ const MasterSettings = () => {
   const allTabs = [
     { id: "email" as TabType, name: "Email Config", icon: "M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z", masterAdminOnly: true },
     { id: "emailTemplates" as TabType, name: "Email Templates", icon: "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z", masterAdminOnly: false },
-    { id: "whatsapp" as TabType, name: "WhatsApp Config", icon: "M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z", masterAdminOnly: true },
-    { id: "whatsappTemplates" as TabType, name: "WhatsApp Templates", icon: "M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z", masterAdminOnly: false },
-    { id: "api" as TabType, name: "API Keys", icon: "M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z", masterAdminOnly: true }
+    // { id: "whatsapp" as TabType, name: "WhatsApp Config", icon: "M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z", masterAdminOnly: true },
+    // { id: "whatsappTemplates" as TabType, name: "WhatsApp Templates", icon: "M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z", masterAdminOnly: false },
+    // { id: "api" as TabType, name: "API Keys", icon: "M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z", masterAdminOnly: true }
   ];
 
   // Filter tabs based on role - admins only see template tabs
@@ -1853,392 +1853,11 @@ const MasterSettings = () => {
         }
 
         {/* WhatsApp Settings Tab */}
-        {activeTab === "whatsapp" && !loading &&
-        <div style={{ backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid #e5e7eb' }}>
-            <div style={{ padding: '24px', borderBottom: '1px solid #e5e7eb' }}>
-              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
-                <div>
-                  <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#111827', margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="#25D366">
-                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
-                    </svg>
-                    WhatsApp Configuration
-                  </h2>
-                  <p style={{ fontSize: '14px', color: '#6b7280', marginTop: '4px' }}>Configure WhatsApp Business API for notifications</p>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#f3f4f6', borderRadius: '8px', padding: '4px' }}>
-                    {isMasterAdmin && (
-                      <button
-                      onClick={() => setWhatsappScope("global")}
-                      style={{
-                        padding: '6px 12px',
-                        fontSize: '14px',
-                        fontWeight: '500',
-                        borderRadius: '6px',
-                        border: 'none',
-                        cursor: 'pointer',
-                        backgroundColor: whatsappScope === "global" ? 'white' : 'transparent',
-                        color: whatsappScope === "global" ? '#25D366' : '#6b7280',
-                        boxShadow: whatsappScope === "global" ? '0 1px 2px rgba(0,0,0,0.1)' : 'none'
-                      }}>
-                        Global
-                      </button>
-                    )}
-                    <button
-                    onClick={() => setWhatsappScope("per_branch")}
-                    style={{
-                      padding: '6px 12px',
-                      fontSize: '14px',
-                      fontWeight: '500',
-                      borderRadius: '6px',
-                      border: 'none',
-                      cursor: 'pointer',
-                      backgroundColor: whatsappScope === "per_branch" ? 'white' : 'transparent',
-                      color: whatsappScope === "per_branch" ? '#25D366' : '#6b7280',
-                      boxShadow: whatsappScope === "per_branch" ? '0 1px 2px rgba(0,0,0,0.1)' : 'none'
-                    }}>
-                      Per Branch
-                    </button>
-                  </div>
-                  {whatsappScope === "per_branch" && (
-                branches.length > 0 ?
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <label style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Branch:</label>
-                        <select
-                    value={selectedBranch}
-                    onChange={(e) => handleBranchChange(e.target.value)}
-                    style={{
-                      padding: '10px 16px',
-                      border: '2px solid #25D366',
-                      borderRadius: '8px',
-                      backgroundColor: '#f0fdf4',
-                      color: '#111827',
-                      fontSize: '14px',
-                      fontWeight: '500',
-                      minWidth: '200px',
-                      cursor: 'pointer',
-                      outline: 'none'
-                    }}>
-
-                          {branches.map((b) =>
-                    <option key={b._id} value={b._id}>{b.name} {b.code ? `(${b.code})` : ''}</option>
-                    )}
-                        </select>
-                      </div> :
-
-                <span style={{ padding: '8px 16px', backgroundColor: '#fef3c7', color: '#92400e', fontSize: '13px', borderRadius: '8px' }}>
-                        No branches found. Create a branch first.
-                      </span>)
-
-                }
-                </div>
-              </div>
-            </div>
-
-            {/* Configuration List - Table Format */}
-            {whatsappScope === "per_branch" && branches.length > 0 &&
-          <div style={{ borderBottom: '1px solid #e5e7eb' }}>
-                <div style={{ padding: '16px 24px', backgroundColor: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
-                  <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#374151', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#25D366" strokeWidth="2">
-                      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
-                    </svg>
-                    All Branch WhatsApp Configurations
-                  </h3>
-                </div>
-                <div style={{ overflowX: 'auto', overflowY: 'auto', maxHeight: '400px' }} className="table-scrollbar">
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                    <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
-                      <tr style={{ backgroundColor: '#f9fafb' }}>
-                        <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', color: '#374151', borderBottom: '2px solid #e5e7eb', backgroundColor: '#f9fafb' }}>Branch</th>
-                        <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', color: '#374151', borderBottom: '2px solid #e5e7eb', backgroundColor: '#f9fafb' }}>Status</th>
-                        <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', color: '#374151', borderBottom: '2px solid #e5e7eb', backgroundColor: '#f9fafb' }}>Provider</th>
-                        <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', color: '#374151', borderBottom: '2px solid #e5e7eb', backgroundColor: '#f9fafb' }}>Phone ID</th>
-                        <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', color: '#374151', borderBottom: '2px solid #e5e7eb', backgroundColor: '#f9fafb' }}>Business ID</th>
-                        <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', color: '#374151', borderBottom: '2px solid #e5e7eb', backgroundColor: '#f9fafb' }}>Phone Number</th>
-                        <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '600', color: '#374151', borderBottom: '2px solid #e5e7eb', backgroundColor: '#f9fafb' }}>Access Token</th>
-                        <th style={{ padding: '12px 16px', textAlign: 'center', fontWeight: '600', color: '#374151', borderBottom: '2px solid #e5e7eb', backgroundColor: '#f9fafb' }}>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {branches.map((branch, index) => {
-                    const config = allBranchConfigs[branch._id]?.whatsapp || {} as Partial<WhatsAppConfig>;
-                    const isSelected = selectedBranch === branch._id;
-                    return (
-                      <tr
-                        key={branch._id}
-                        onClick={() => handleBranchChange(branch._id)}
-                        style={{
-                          backgroundColor: isSelected ? '#f0fdf4' : index % 2 === 0 ? 'white' : '#fafafa',
-                          cursor: 'pointer',
-                          transition: 'background-color 0.2s',
-                          borderLeft: isSelected ? '3px solid #25D366' : '3px solid transparent'
-                        }}
-                        onMouseOver={(e) => {if (!isSelected) e.currentTarget.style.backgroundColor = '#f5f5f5';}}
-                        onMouseOut={(e) => {if (!isSelected) e.currentTarget.style.backgroundColor = index % 2 === 0 ? 'white' : '#fafafa';}}>
-
-                            <td style={{ padding: '12px 16px', borderBottom: '1px solid #e5e7eb' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <span style={{ fontWeight: '600', color: '#1f2937' }}>{branch.name}</span>
-                                {branch.code &&
-                            <span style={{ padding: '2px 6px', fontSize: '10px', backgroundColor: '#e0e7ff', color: '#4338ca', borderRadius: '4px' }}>
-                                    {branch.code}
-                                  </span>
-                            }
-                              </div>
-                            </td>
-                            <td style={{ padding: '12px 16px', borderBottom: '1px solid #e5e7eb' }}>
-                              <span style={{
-                            padding: '4px 10px',
-                            fontSize: '11px',
-                            fontWeight: '600',
-                            borderRadius: '12px',
-                            backgroundColor: config.isEnabled ? '#dcfce7' : '#fee2e2',
-                            color: config.isEnabled ? '#166534' : '#dc2626'
-                          }}>
-                                {config.isEnabled ? 'Enabled' : 'Disabled'}
-                              </span>
-                            </td>
-                            <td style={{ padding: '12px 16px', borderBottom: '1px solid #e5e7eb', fontFamily: 'monospace', color: '#6b7280' }}>
-                              {(config.provider || 'meta').toUpperCase()}
-                            </td>
-                            <td style={{ padding: '12px 16px', borderBottom: '1px solid #e5e7eb', fontFamily: 'monospace', color: config.phoneNumberId ? '#1f2937' : '#9ca3af', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {config.phoneNumberId || '—'}
-                            </td>
-                            <td style={{ padding: '12px 16px', borderBottom: '1px solid #e5e7eb', fontFamily: 'monospace', color: config.businessAccountId ? '#1f2937' : '#9ca3af', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {config.businessAccountId || '—'}
-                            </td>
-                            <td style={{ padding: '12px 16px', borderBottom: '1px solid #e5e7eb', fontFamily: 'monospace', color: config.phoneNumber ? '#1f2937' : '#9ca3af' }}>
-                              {config.phoneNumber || '—'}
-                            </td>
-                            <td style={{ padding: '12px 16px', borderBottom: '1px solid #e5e7eb', fontFamily: 'monospace', color: config.accessToken ? '#1f2937' : '#9ca3af' }}>
-                              {config.accessToken ? '••••••••' : '—'}
-                            </td>
-                            <td style={{ padding: '12px 16px', borderBottom: '1px solid #e5e7eb', textAlign: 'center' }}>
-                              <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
-                                <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleBranchChange(branch._id);
-                                setTimeout(() => scrollToWhatsappForm(), 100);
-                              }}
-                              style={{
-                                padding: '6px 12px',
-                                border: 'none',
-                                borderRadius: '6px',
-                                background: '#25D366',
-                                color: 'white',
-                                fontSize: '12px',
-                                cursor: 'pointer',
-                                fontWeight: '500',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '4px'
-                              }}>
-
-                                  <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                    <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
-                                    <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-                                  </svg>
-                                  Edit
-                                </button>
-                                <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                resetWhatsappConfigForBranch(branch._id, branch.name);
-                              }}
-                              style={{
-                                padding: '6px 12px',
-                                border: '1px solid #fecaca',
-                                borderRadius: '6px',
-                                background: '#fef2f2',
-                                color: '#dc2626',
-                                fontSize: '12px',
-                                cursor: 'pointer',
-                                fontWeight: '500'
-                              }}>
-
-                                  Reset
-                                </button>
-                              </div>
-                            </td>
-                          </tr>);
-
-                  })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-          }
-
-            <div id="whatsapp-config-form" style={{ padding: '24px' }}>
-              {/* Enable Toggle */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', backgroundColor: '#f9fafb', borderRadius: '8px', marginBottom: '24px' }}>
-                <div>
-                  <label style={{ fontSize: '14px', fontWeight: '500', color: '#111827' }}>Enable WhatsApp Notifications</label>
-                  <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>Allow sending WhatsApp messages</p>
-                </div>
-                <button
-                onClick={() => setWhatsappForm({ ...whatsappForm, isEnabled: !whatsappForm.isEnabled })}
-                style={{
-                  position: 'relative',
-                  width: '44px',
-                  height: '24px',
-                  borderRadius: '9999px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  backgroundColor: whatsappForm.isEnabled ? '#25D366' : '#d1d5db',
-                  transition: 'background-color 0.2s'
-                }}>
-
-                  <span style={{
-                  position: 'absolute',
-                  top: '2px',
-                  left: whatsappForm.isEnabled ? '22px' : '2px',
-                  width: '20px',
-                  height: '20px',
-                  borderRadius: '50%',
-                  backgroundColor: 'white',
-                  transition: 'left 0.2s',
-                  boxShadow: '0 1px 2px rgba(0,0,0,0.2)'
-                }} />
-                </button>
-              </div>
-
-              {/* Provider Selection */}
-              <div style={{ marginBottom: '24px' }}>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>WhatsApp Provider</label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px' }}>
-                  {[
-                { id: "meta", name: "Meta Business API" },
-                { id: "twilio", name: "Twilio" },
-                { id: "gupshup", name: "Gupshup" },
-                { id: "wati", name: "WATI" }].
-                map((provider) =>
-                <button
-                  key={provider.id}
-                  onClick={() => setWhatsappForm({ ...whatsappForm, provider: provider.id })}
-                  style={{
-                    padding: '16px',
-                    border: `2px solid ${whatsappForm.provider === provider.id ? '#25D366' : '#e5e7eb'}`,
-                    borderRadius: '8px',
-                    textAlign: 'center',
-                    cursor: 'pointer',
-                    backgroundColor: whatsappForm.provider === provider.id ? '#f0fdf4' : 'white',
-                    color: whatsappForm.provider === provider.id ? '#25D366' : '#374151',
-                    fontWeight: '500',
-                    fontSize: '14px',
-                    transition: 'all 0.2s'
-                  }}>
-
-                      {provider.name}
-                    </button>
-                )}
-                </div>
-              </div>
-
-              {/* Meta Fields */}
-              {whatsappForm.provider === "meta" &&
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '4px' }}>Phone Number ID *</label>
-                    <input
-                  type="text"
-                  value={whatsappForm.phoneNumberId}
-                  onChange={(e) => setWhatsappForm({ ...whatsappForm, phoneNumberId: e.target.value })}
-                  style={{ width: '100%', padding: '8px 16px', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }}
-                  placeholder="1234567890" />
-
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '4px' }}>Business Account ID *</label>
-                    <input
-                  type="text"
-                  value={whatsappForm.businessAccountId}
-                  onChange={(e) => setWhatsappForm({ ...whatsappForm, businessAccountId: e.target.value })}
-                  style={{ width: '100%', padding: '8px 16px', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }}
-                  placeholder="9876543210" />
-
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '4px' }}>WhatsApp Phone Number</label>
-                    <input
-                  type="text"
-                  value={whatsappForm.phoneNumber}
-                  onChange={(e) => setWhatsappForm({ ...whatsappForm, phoneNumber: e.target.value })}
-                  style={{ width: '100%', padding: '8px 16px', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }}
-                  placeholder="+919876543210" />
-                    <p style={{ fontSize: '11px', color: '#6b7280', marginTop: '4px' }}>For display purposes (e.g., +919876543210)</p>
-                  </div>
-                  <div style={{ gridColumn: '1 / -1' }}>
-                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '4px' }}>Access Token *</label>
-                    <input
-                  type="password"
-                  value={whatsappForm.accessToken}
-                  onChange={(e) => setWhatsappForm({ ...whatsappForm, accessToken: e.target.value })}
-                  style={{ width: '100%', padding: '8px 16px', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }}
-                  placeholder="Enter to update" />
-
-                  </div>
-                </div>
-            }
-
-              {/* Action Buttons */}
-              <div style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: '12px',
-                padding: '24px',
-                marginTop: '24px',
-                borderTop: '1px solid #e5e7eb',
-                backgroundColor: 'white'
-              }}>
-                <button
-                onClick={saveWhatsappSettings}
-                disabled={saving}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  backgroundColor: '#25D366',
-                  color: 'white',
-                  padding: '10px 24px',
-                  borderRadius: '8px',
-                  fontWeight: '500',
-                  border: 'none',
-                  cursor: saving ? 'not-allowed' : 'pointer',
-                  opacity: saving ? 0.5 : 1
-                }}>
-
-                  {saving ? "Saving..." : "Save Settings"}
-                </button>
-                <button
-                onClick={testWhatsapp}
-                disabled={saving || !whatsappForm.isEnabled}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  border: '1px solid #d1d5db',
-                  color: '#374151',
-                  padding: '10px 24px',
-                  borderRadius: '8px',
-                  fontWeight: '500',
-                  backgroundColor: 'white',
-                  cursor: saving || !whatsappForm.isEnabled ? 'not-allowed' : 'pointer',
-                  opacity: saving || !whatsappForm.isEnabled ? 0.5 : 1
-                }}>
-
-                  Send Test Message
-                </button>
-              </div>
-            </div>
-          </div>
-        }
+        {/* {activeTab === "whatsapp" && !loading &&
+      
 
         {/* API Keys Tab */}
-        {activeTab === "api" && !loading &&
+        {/* {activeTab === "api" && !loading &&
         <div style={{ backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid #e5e7eb' }}>
             <div style={{ padding: '24px', borderBottom: '1px solid #e5e7eb', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
               <div>
@@ -2336,7 +1955,7 @@ const MasterSettings = () => {
               </table>
             </div>
           </div>
-        }
+        } */}
 
         {/* Email Templates Tab */}
         {activeTab === "emailTemplates" && !loading &&
@@ -2648,394 +2267,12 @@ const MasterSettings = () => {
         }
 
         {/* WhatsApp Templates Tab */}
-        {activeTab === "whatsappTemplates" && !loading &&
-        <div style={{ backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid #e5e7eb' }}>
-            {/* Header */}
-            <div style={{ padding: '24px', borderBottom: '1px solid #e5e7eb' }}>
-              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '16px', marginBottom: '20px' }}>
-                <div>
-                  <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#111827', margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="#25D366">
-                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
-                    </svg>
-                    WhatsApp Templates
-                  </h2>
-                  <p style={{ fontSize: '14px', color: '#6b7280', marginTop: '4px' }}>Manage WhatsApp message templates for notifications</p>
-                </div>
-                <button
-                onClick={openCreateWhatsappTemplateModal}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  background: 'linear-gradient(135deg, #25D366, #128C7E)',
-                  color: 'white',
-                  padding: '10px 20px',
-                  borderRadius: '8px',
-                  fontWeight: '600',
-                  border: 'none',
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 8px rgba(37, 211, 102, 0.3)',
-                  transition: 'all 0.2s'
-                }}
-                onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-1px)'}
-                onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}>
-
-                  <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  Create Template
-                </button>
-              </div>
-
-              {/* Branch Filter */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>Filter by:</span>
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                  <button
-                  onClick={() => handleBranchChange("")}
-                  style={{
-                    padding: '6px 14px',
-                    borderRadius: '20px',
-                    border: 'none',
-                    fontSize: '13px',
-                    fontWeight: '500',
-                    cursor: 'pointer',
-                    backgroundColor: selectedBranch === "" ? '#25D366' : '#f3f4f6',
-                    color: selectedBranch === "" ? 'white' : '#6b7280',
-                    transition: 'all 0.2s'
-                  }}>
-
-                    All Templates
-                  </button>
-                  <button
-                  onClick={() => handleBranchChange("global")}
-                  style={{
-                    padding: '6px 14px',
-                    borderRadius: '20px',
-                    border: 'none',
-                    fontSize: '13px',
-                    fontWeight: '500',
-                    cursor: 'pointer',
-                    backgroundColor: selectedBranch === "global" ? '#8b5cf6' : '#f3f4f6',
-                    color: selectedBranch === "global" ? 'white' : '#6b7280',
-                    transition: 'all 0.2s'
-                  }}>
-
-                    Global
-                  </button>
-                  {branches.map((branch) =>
-                <button
-                  key={branch._id}
-                  onClick={() => handleBranchChange(branch._id)}
-                  style={{
-                    padding: '6px 14px',
-                    borderRadius: '20px',
-                    border: 'none',
-                    fontSize: '13px',
-                    fontWeight: '500',
-                    cursor: 'pointer',
-                    backgroundColor: selectedBranch === branch._id ? '#3b82f6' : '#f3f4f6',
-                    color: selectedBranch === branch._id ? 'white' : '#6b7280',
-                    transition: 'all 0.2s'
-                  }}>
-
-                      {branch.name}
-                    </button>
-                )}
-                </div>
-              </div>
-            </div>
-
-            {/* Template List */}
-            <div style={{ padding: '24px' }}>
-              {whatsappTemplates.length === 0 ?
-            <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-                  <div style={{
-                width: '80px',
-                height: '80px',
-                borderRadius: '50%',
-                backgroundColor: '#ecfdf5',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 20px'
-              }}>
-                    <svg width="40" height="40" viewBox="0 0 24 24" fill="#25D366">
-                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
-                    </svg>
-                  </div>
-                  <h3 style={{ color: '#1f2937', fontSize: '16px', fontWeight: '600', margin: '0 0 8px' }}>No WhatsApp templates found</h3>
-                  <p style={{ color: '#6b7280', marginBottom: '20px', fontSize: '14px' }}>Create templates for order updates, notifications, and more.</p>
-                  <button
-                onClick={openCreateWhatsappTemplateModal}
-                style={{
-                  padding: '10px 24px',
-                  background: 'linear-gradient(135deg, #25D366, #128C7E)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontWeight: '600',
-                  cursor: 'pointer'
-                }}>
-
-                    Create Your First Template
-                  </button>
-                </div> :
-
-            <div style={{ display: 'grid', gap: '16px' }}>
-                  {whatsappTemplates.
-              filter((t) => !selectedBranch || selectedBranch === "" ||
-              selectedBranch === "global" && t.isGlobal ||
-              t.branchId === selectedBranch).
-              map((template) =>
-              <div
-                key={template._id}
-                style={{
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '12px',
-                  padding: '20px',
-                  background: 'white',
-                  transition: 'all 0.2s',
-                  position: 'relative',
-                  overflow: 'hidden'
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)';
-                  e.currentTarget.style.borderColor = '#25D366';
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.boxShadow = 'none';
-                  e.currentTarget.style.borderColor = '#e5e7eb';
-                }}>
-
-                      {/* Template Header */}
-                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '12px' }}>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px', flexWrap: 'wrap' }}>
-                            <h3 style={{ fontWeight: '600', color: '#111827', margin: 0, fontSize: '16px' }}>{template.name}</h3>
-                            <span style={{
-                        padding: '3px 10px',
-                        fontSize: '11px',
-                        fontWeight: '600',
-                        borderRadius: '12px',
-                        backgroundColor: template.isActive ? '#dcfce7' : '#f3f4f6',
-                        color: template.isActive ? '#166534' : '#6b7280'
-                      }}>
-                              {template.isActive ? "Active" : "Inactive"}
-                            </span>
-                            <span style={{
-                        padding: '3px 10px',
-                        fontSize: '11px',
-                        fontWeight: '500',
-                        borderRadius: '12px',
-                        backgroundColor: template.isGlobal ? '#f3e8ff' : '#dbeafe',
-                        color: template.isGlobal ? '#7c3aed' : '#2563eb'
-                      }}>
-                              {template.isGlobal ? "Global" : branches.find((b) => b._id === template.branchId)?.name || "Branch"}
-                            </span>
-                          </div>
-                        </div>
-                        <div style={{ display: 'flex', gap: '4px' }}>
-                          <button
-                      onClick={() => openEditWhatsappTemplateModal(template)}
-                      style={{
-                        padding: '8px 12px',
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '6px',
-                        background: 'white',
-                        color: '#3b82f6',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        fontSize: '13px',
-                        fontWeight: '500',
-                        transition: 'all 0.2s'
-                      }}
-                      onMouseOver={(e) => {
-                        e.currentTarget.style.backgroundColor = '#eff6ff';
-                        e.currentTarget.style.borderColor = '#3b82f6';
-                      }}
-                      onMouseOut={(e) => {
-                        e.currentTarget.style.backgroundColor = 'white';
-                        e.currentTarget.style.borderColor = '#e5e7eb';
-                      }}>
-
-                            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                              <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
-                              <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-                            </svg>
-                            Edit
-                          </button>
-                          <button
-                      onClick={() => template._id && deleteWhatsappTemplate(template._id)}
-                      style={{
-                        padding: '8px 12px',
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '6px',
-                        background: 'white',
-                        color: '#ef4444',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        fontSize: '13px',
-                        fontWeight: '500',
-                        transition: 'all 0.2s'
-                      }}
-                      onMouseOver={(e) => {
-                        e.currentTarget.style.backgroundColor = '#fef2f2';
-                        e.currentTarget.style.borderColor = '#ef4444';
-                      }}
-                      onMouseOut={(e) => {
-                        e.currentTarget.style.backgroundColor = 'white';
-                        e.currentTarget.style.borderColor = '#e5e7eb';
-                      }}>
-
-                            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                              <path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z" />
-                            </svg>
-                            Delete
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Message Preview */}
-                      <div style={{
-                  padding: '12px 16px',
-                  backgroundColor: '#dcfce7',
-                  borderRadius: '8px',
-                  borderLeft: '4px solid #25D366',
-                  fontSize: '13px',
-                  color: '#166534',
-                  maxHeight: '80px',
-                  overflow: 'hidden',
-                  position: 'relative',
-                  whiteSpace: 'pre-wrap'
-                }}>
-                        {template.body.substring(0, 200)}{template.body.length > 200 ? '...' : ''}
-                        {template.body.length > 150 &&
-                  <div style={{
-                    position: 'absolute',
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    height: '24px',
-                    background: 'linear-gradient(transparent, #dcfce7)'
-                  }} />
-                  }
-                      </div>
-
-                      {/* Variables */}
-                      {template.variables && template.variables.length > 0 &&
-                <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                          <span style={{ fontSize: '12px', color: '#6b7280' }}>Variables:</span>
-                          {template.variables.slice(0, 5).map((v) =>
-                  <span key={v} style={{
-                    padding: '2px 8px',
-                    backgroundColor: '#ecfdf5',
-                    color: '#059669',
-                    fontSize: '11px',
-                    borderRadius: '4px',
-                    fontFamily: 'monospace'
-                  }}>
-                              {`{{${v}}}`}
-                            </span>
-                  )}
-                          {template.variables.length > 5 &&
-                  <span style={{ fontSize: '11px', color: '#9ca3af' }}>+{template.variables.length - 5} more</span>
-                  }
-                        </div>
-                }
-                    </div>
-              )}
-                </div>
-            }
-            </div>
-          </div>
-        }
+      
         </div>
       </div>
 
       {/* API Key Modal */}
-      {showApiModal &&
-      <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: '16px' }}>
-          <div style={{ backgroundColor: 'white', borderRadius: '16px', boxShadow: '0 25px 50px rgba(0,0,0,0.25)', width: '100%', maxWidth: '500px', maxHeight: '90vh', overflow: 'auto' }}>
-            <div style={{ padding: '24px', borderBottom: '1px solid #e5e7eb' }}>
-              <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#111827', margin: 0 }}>
-                {editingApiKey ? "Edit API Key" : "Create API Key"}
-              </h3>
-            </div>
-            <div style={{ padding: '24px' }}>
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '4px' }}>Name *</label>
-                <input
-                type="text"
-                value={apiForm.name}
-                onChange={(e) => setApiForm({ ...apiForm, name: e.target.value })}
-                style={{ width: '100%', padding: '8px 16px', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }}
-                placeholder="My API Key" />
-
-              </div>
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '4px' }}>Branch *</label>
-                <select
-                value={apiForm.branchId}
-                onChange={(e) => setApiForm({ ...apiForm, branchId: e.target.value })}
-                style={{ width: '100%', padding: '8px 16px', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }}>
-
-                  <option value="">Select a branch</option>
-                  {branches.map((b) =>
-                <option key={b._id} value={b._id}>{b.name}</option>
-                )}
-                </select>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '4px' }}>Requests/Min</label>
-                  <input
-                  type="number"
-                  value={apiForm.requestsPerMinute}
-                  onChange={(e) => setApiForm({ ...apiForm, requestsPerMinute: parseInt(e.target.value) || 60 })}
-                  style={{ width: '100%', padding: '8px 16px', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }} />
-
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '4px' }}>Requests/Day</label>
-                  <input
-                  type="number"
-                  value={apiForm.requestsPerDay}
-                  onChange={(e) => setApiForm({ ...apiForm, requestsPerDay: parseInt(e.target.value) || 10000 })}
-                  style={{ width: '100%', padding: '8px 16px', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }} />
-
-                </div>
-              </div>
-            </div>
-            <div style={{ padding: '24px', borderTop: '1px solid #e5e7eb', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-              <button onClick={() => setShowApiModal(false)} style={{ padding: '8px 16px', color: '#6b7280', border: 'none', background: 'none', cursor: 'pointer', fontWeight: '500' }}>
-                Cancel
-              </button>
-              <button
-              onClick={saveApiKey}
-              disabled={saving}
-              style={{
-                padding: '8px 16px',
-                backgroundColor: '#FF6B35',
-                color: 'white',
-                borderRadius: '8px',
-                fontWeight: '500',
-                border: 'none',
-                cursor: saving ? 'not-allowed' : 'pointer',
-                opacity: saving ? 0.5 : 1
-              }}>
-
-                {saving ? "Saving..." : editingApiKey ? "Update" : "Create"}
-              </button>
-            </div>
-          </div>
-        </div>
-      }
+   
 
       {/* Email Template Modal */}
       {showEmailTemplateModal &&
@@ -3699,158 +2936,7 @@ const MasterSettings = () => {
       }
 
       {/* Test WhatsApp Modal */}
-      {showTestWhatsAppModal &&
-      <div style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0,0,0,0.6)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 10000,
-        animation: 'fadeIn 0.2s ease-out'
-      }}>
-          <div style={{
-          backgroundColor: 'white',
-          borderRadius: '16px',
-          width: '90%',
-          maxWidth: '450px',
-          overflow: 'hidden',
-          boxShadow: '0 25px 50px rgba(0,0,0,0.25)',
-          animation: 'slideUp 0.3s ease-out'
-        }}>
-            {/* Modal Header */}
-            <div style={{
-            background: 'linear-gradient(135deg, #25D366, #128C7E)',
-            padding: '24px',
-            textAlign: 'center'
-          }}>
-              <div style={{
-              width: '64px',
-              height: '64px',
-              borderRadius: '50%',
-              backgroundColor: 'rgba(255,255,255,0.2)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 16px',
-              animation: testWhatsAppStatus === 'sending' ? 'pulse 1.5s infinite' : 'none'
-            }}>
-                {testWhatsAppStatus === 'idle' &&
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="white">
-                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
-                  </svg>
-              }
-                {testWhatsAppStatus === 'sending' &&
-              <div style={{
-                width: '32px',
-                height: '32px',
-                border: '3px solid rgba(255,255,255,0.3)',
-                borderTopColor: 'white',
-                borderRadius: '50%',
-                animation: 'spin 1s linear infinite'
-              }} />
-              }
-                {testWhatsAppStatus === 'success' &&
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-              }
-                {testWhatsAppStatus === 'error' &&
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-                    <circle cx="12" cy="12" r="10" />
-                    <line x1="15" y1="9" x2="9" y2="15" />
-                    <line x1="9" y1="9" x2="15" y2="15" />
-                  </svg>
-              }
-              </div>
-              <h2 style={{ color: 'white', margin: 0, fontSize: '20px', fontWeight: '600' }}>
-                {testWhatsAppStatus === 'idle' && 'Send Test WhatsApp'}
-                {testWhatsAppStatus === 'sending' && 'Sending Message...'}
-                {testWhatsAppStatus === 'success' && 'Message Sent!'}
-                {testWhatsAppStatus === 'error' && 'Send Failed'}
-              </h2>
-            </div>
-
-            {/* Modal Body */}
-            <div style={{ padding: '24px' }}>
-              {testWhatsAppStatus !== 'success' &&
-            <>
-                  <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
-                    Phone number (with country code):
-                  </label>
-                  <input
-                type="tel"
-                value={testPhoneNumber}
-                onChange={(e) => setTestPhoneNumber(e.target.value)}
-                placeholder="+919876543210"
-                disabled={testingWhatsApp}
-                style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  border: '2px solid #e5e7eb',
-                  borderRadius: '8px',
-                  fontSize: '16px',
-                  boxSizing: 'border-box'
-                }}
-                onKeyDown={(e) => e.key === 'Enter' && testWhatsapp()} />
-
-                </>
-            }
-            </div>
-
-            {/* Modal Footer */}
-            <div style={{
-            padding: '16px 24px',
-            borderTop: '1px solid #e5e7eb',
-            display: 'flex',
-            justifyContent: 'flex-end',
-            gap: '12px',
-            backgroundColor: '#f9fafb'
-          }}>
-              <button
-              onClick={() => {
-                setShowTestWhatsAppModal(false);
-                setTestWhatsAppStatus('idle');
-              }}
-              style={{
-                padding: '10px 20px',
-                border: '1px solid #e5e7eb',
-                borderRadius: '8px',
-                backgroundColor: 'white',
-                color: '#6b7280',
-                cursor: 'pointer'
-              }}>
-
-                Cancel
-              </button>
-              {testWhatsAppStatus !== 'success' &&
-            <button
-              onClick={testWhatsapp}
-              disabled={testingWhatsApp || !testPhoneNumber}
-              style={{
-                padding: '10px 24px',
-                border: 'none',
-                borderRadius: '8px',
-                background: 'linear-gradient(135deg, #25D366, #128C7E)',
-                color: 'white',
-                fontWeight: '600',
-                cursor: testingWhatsApp || !testPhoneNumber ? 'not-allowed' : 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}>
-
-                  {testingWhatsApp ? 'Sending...' : 'Send Test'}
-                </button>
-            }
-            </div>
-          </div>
-        </div>
-      }
+    
 
       {/* CSS Animations */}
       <style>{`

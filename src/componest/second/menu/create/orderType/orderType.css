@@ -8,9 +8,9 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: 1.5rem;
-  max-width: 1400px;
+  max-width: 100%;
   width: 100%;
-  margin: 0 auto;
+  margin: 0;
   padding: 2rem;
   background-color: #ffffff;
   border-radius: 8px;
@@ -650,4 +650,211 @@
   .orderTypeSection {
     break-inside: avoid;
   }
+}
+
+/* ============================================
+   COMPACT STYLING - Match All Orders Theme
+   ============================================ */
+
+/* Compact Container */
+.orderTypeContainer {
+  padding: 12px;
+  gap: 10px;
+  max-width: 100%;
+  margin: 0;
+}
+
+/* Compact Header */
+.orderTypeHeader {
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+}
+
+.orderTypeTitle {
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.orderTypeSubtitle {
+  font-size: 9px;
+}
+
+/* Compact Form Grid */
+.orderTypeFormGrid {
+  gap: 10px;
+}
+
+/* Compact Section */
+.orderTypeSection {
+  padding: 10px;
+}
+
+.orderTypeSectionTitle {
+  font-size: 11px;
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+}
+
+/* Compact Form Row */
+.orderTypeFormRow {
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+/* Compact Form Column */
+.orderTypeFormColumn {
+  gap: 3px;
+}
+
+/* Compact Labels */
+.orderTypeInputLabel {
+  font-size: 9px !important;
+}
+
+/* Compact Inputs */
+.orderTypeFormInput,
+.orderTypeFormTextarea,
+.orderTypeFormSelect {
+  padding: 6px 0 !important;
+  font-size: 11px !important;
+}
+
+.orderTypeFormTextarea {
+  min-height: 50px;
+}
+
+/* Compact Checkbox Grid */
+.orderTypeCheckboxGrid {
+  gap: 6px;
+}
+
+.orderTypeCheckboxLabel {
+  font-size: 10px;
+  padding: 6px;
+}
+
+.orderTypeCheckboxLabel input[type="checkbox"] {
+  width: 12px;
+  height: 12px;
+}
+
+/* Compact Format Preview */
+.orderTypeFormatPreview {
+  margin-top: 8px;
+  padding: 6px;
+  font-size: 10px;
+}
+
+/* Compact Section Configuration */
+.orderTypeSectionsConfig {
+  gap: 6px;
+}
+
+.orderTypeSectionConfigHeader {
+  padding: 6px 8px;
+}
+
+.orderTypeSectionName {
+  font-size: 10px;
+}
+
+.orderTypeSectionOrder {
+  font-size: 8px;
+  padding: 2px 4px;
+}
+
+.orderTypeOrderBtn,
+.orderTypeExpandBtn {
+  width: 22px;
+  height: 22px;
+  font-size: 10px;
+}
+
+/* Compact Field Configuration */
+.orderTypeSectionFieldsConfig {
+  padding: 8px;
+}
+
+.orderTypeFieldsHeader {
+  font-size: 8px;
+  padding-bottom: 4px;
+}
+
+.orderTypeFieldConfigRow {
+  padding: 4px 0;
+}
+
+.orderTypeFieldLabel {
+  font-size: 10px;
+}
+
+.orderTypeFieldConfigRow input[type="checkbox"] {
+  width: 12px;
+  height: 12px;
+}
+
+/* Compact Restrictions */
+.orderTypeRestrictionItem {
+  padding: 8px;
+  margin-bottom: 8px;
+}
+
+.orderTypeRestrictionTitle {
+  font-size: 10px;
+}
+
+.orderTypeToggleBtn {
+  padding: 3px 6px;
+  font-size: 9px;
+}
+
+.orderTypeSelectedTag {
+  padding: 3px 6px;
+  font-size: 9px;
+}
+
+/* Compact Form Actions */
+.orderTypeFormActions {
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 10px;
+}
+
+.orderTypeSaveButton,
+.orderTypeCancelButton {
+  min-width: 120px;
+  padding: 6px 12px;
+  font-size: 10px;
+}
+
+/* Compact Loading */
+.orderTypeLoading {
+  padding: 20px;
+  font-size: 10px;
+}
+
+/* Compact Empty State */
+.orderTypeEmptyState {
+  padding: 20px;
+  font-size: 10px;
+}
+
+/* Compact Helper Text */
+.orderTypeHelperText {
+  font-size: 9px;
+  margin-top: 3px;
+}
+
+/* Compact Messages */
+.orderTypeErrorMsg,
+.orderTypeSuccessMsg {
+  padding: 6px;
+  font-size: 10px;
+  margin-bottom: 8px;
+}
+
+/* Compact Badge */
+.orderTypeBadge {
+  padding: 2px 5px;
+  font-size: 8px;
 }

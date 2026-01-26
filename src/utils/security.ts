@@ -277,6 +277,62 @@ allowedFields?: string[])
 };
 
 // ============================================================================
+// URL VALIDATION
+// ============================================================================
+
+/**
+ * Allowed domains for file URLs (add your CDN domains here)
+ */
+const ALLOWED_FILE_DOMAINS = [
+  'firebasestorage.googleapis.com',
+  'storage.googleapis.com',
+  'localhost',
+  '127.0.0.1'
+];
+
+/**
+ * Validate if a URL is safe to open (prevents open redirect attacks)
+ */
+export const isValidFileUrl = (url: string): boolean => {
+  if (!url || typeof url !== 'string') return false;
+
+  try {
+    // Allow blob URLs (local file previews)
+    if (url.startsWith('blob:')) return true;
+
+    // Allow data URLs for images
+    if (url.startsWith('data:image/')) return true;
+
+    const parsed = new URL(url);
+
+    // Only allow http and https protocols
+    if (!['https:', 'http:'].includes(parsed.protocol)) {
+      return false;
+    }
+
+    // Check against allowed domains
+    const isAllowedDomain = ALLOWED_FILE_DOMAINS.some(
+      (domain) => parsed.hostname === domain || parsed.hostname.endsWith(`.${domain}`)
+    );
+
+    return isAllowedDomain;
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Safe window.open with security attributes
+ */
+export const safeWindowOpen = (url: string, target: string = '_blank'): Window | null => {
+  if (!isValidFileUrl(url)) {
+    console.warn('Blocked unsafe URL:', url);
+    return null;
+  }
+  return window.open(url, target, 'noopener,noreferrer');
+};
+
+// ============================================================================
 // EXPORTS
 // ============================================================================
 
@@ -294,5 +350,7 @@ export default {
   removeToken,
   isTokenExpired,
   checkRateLimit,
-  prepareSecureFormData
+  prepareSecureFormData,
+  isValidFileUrl,
+  safeWindowOpen
 };

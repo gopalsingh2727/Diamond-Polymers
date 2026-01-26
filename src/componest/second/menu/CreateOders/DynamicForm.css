@@ -423,3 +423,94 @@
   height: 2px;
   background-color: #333;
 }
+
+/* ================================================
+   COMPACT STYLING - Match All Orders Theme
+   ================================================ */
+
+/* Compact Section Title */
+.dynamicSection-title {
+  font-size: 10px;
+  margin-bottom: 6px;
+}
+
+/* Compact Field Labels */
+.dynamicField label {
+  font-size: 9px !important;
+  margin-bottom: 3px;
+}
+
+/* Compact Field Inputs */
+.dynamicField input,
+.dynamicField select {
+  padding: 4px 4px !important;
+  font-size: 11px !important;
+}
+
+/* Compact Form Row */
+.dynamicFormRow {
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+/* Compact Table Headers */
+.dynamicTable-header {
+  font-size: 9px;
+  padding-bottom: 4px;
+  margin-bottom: 4px;
+}
+
+/* Compact Table Rows */
+.dynamicTable-row {
+  padding: 4px 0;
+  font-size: 10px;
+}
+
+/* Compact Saved Display */
+.dynamicSavedDisplay {
+  font-size: 10px;
+  padding: 6px;
+}
+
+/* Compact Badges */
+.dynamicBadge {
+  padding: 2px 6px;
+  font-size: 8px;
+}
+
+/* Compact Popup */
+.dynamicPopup {
+  padding: 12px;
+}
+
+.dynamicPopup-title {
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.dynamicPopup-buttons {
+  padding-top: 10px;
+  gap: 8px;
+}
+
+.dynamicPopup-btn-save,
+.dynamicPopup-btn-cancel,
+.dynamicPopup-btn-add {
+  padding: 6px 12px;
+  font-size: 11px;
+}
+
+/* Compact Empty State */
+.dynamicEmpty {
+  padding: 8px;
+  font-size: 10px;
+}
+
+/* Compact Flex Row */
+.dynamicFlexRow {
+  gap: 8px;
+}
+
+.dynamicFlexRow .dynamicField {
+  min-width: 100px;
+}

@@ -5,6 +5,7 @@ import { saveAs } from 'file-saver';
 import html2pdf from 'html2pdf.js';
 import { getPrintTypesV2 as getPrintTypes, getPrintTypesByOrderTypeV2 as getPrintTypesByOrderType } from '../../../redux/unifiedV2/printTypeActions';
 import { getExcelExportTypesV2 as getExcelExportTypes } from '../../../redux/unifiedV2/excelExportTypeActions';
+import { sanitizeString } from '../../../../utils/security';
 
 // Print Type interface
 interface PrintType {
@@ -193,12 +194,12 @@ const PrintExcelModal: React.FC<PrintExcelModalProps> = ({
           let itemResult = itemTemplate;
           // Replace @index
           itemResult = itemResult.replace(/\{\{@index\}\}/g, String(index + 1));
-          // Replace item properties
-          itemResult = itemResult.replace(/\{\{optionName\}\}/g, item.optionName || item.name || 'N/A');
-          itemResult = itemResult.replace(/\{\{optionType\}\}/g, item.optionTypeName || item.optionType || item.category || 'N/A');
-          itemResult = itemResult.replace(/\{\{optionCode\}\}/g, item.optionCode || 'N/A');
+          // Replace item properties - sanitized to prevent XSS
+          itemResult = itemResult.replace(/\{\{optionName\}\}/g, sanitizeString(item.optionName || item.name || 'N/A'));
+          itemResult = itemResult.replace(/\{\{optionType\}\}/g, sanitizeString(item.optionTypeName || item.optionType || item.category || 'N/A'));
+          itemResult = itemResult.replace(/\{\{optionCode\}\}/g, sanitizeString(item.optionCode || 'N/A'));
           itemResult = itemResult.replace(/\{\{quantity\}\}/g, String(item.quantity || 1));
-          itemResult = itemResult.replace(/\{\{amount\}\}/g, item.amount || item.total || 'N/A');
+          itemResult = itemResult.replace(/\{\{amount\}\}/g, sanitizeString(String(item.amount || item.total || 'N/A')));
 
           // Replace dimension variables - convert array to object if needed
           const itemSpecs = specsToObject(item.specificationValues);
@@ -285,14 +286,14 @@ const PrintExcelModal: React.FC<PrintExcelModalProps> = ({
       replace(/\{\{date\}\}/g, new Date(orderData?.createdAt || Date.now()).toLocaleDateString('en-IN')).
       replace(/\{\{createdAt\}\}/g, orderData?.createdAt ? new Date(orderData.createdAt).toLocaleString('en-IN') : '').
       replace(/\{\{createdDate\}\}/g, orderData?.createdAt ? new Date(orderData.createdAt).toLocaleString('en-IN') : '').
-      replace(/\{\{createdBy\}\}/g, orderData?.createdBy?.username || orderData?.createdBy?.name || orderData?.createdByName || '').
-      replace(/\{\{createdByName\}\}/g, orderData?.createdBy?.username || orderData?.createdBy?.name || orderData?.createdByName || '').
+      replace(/\{\{createdBy\}\}/g, sanitizeString(orderData?.createdBy?.username || orderData?.createdBy?.name || orderData?.createdByName || '')).
+      replace(/\{\{createdByName\}\}/g, sanitizeString(orderData?.createdBy?.username || orderData?.createdBy?.name || orderData?.createdByName || '')).
       replace(/\{\{updatedAt\}\}/g, orderData?.updatedAt ? new Date(orderData.updatedAt).toLocaleString('en-IN') : '').
-      replace(/\{\{orderStatus\}\}/g, orderData?.status || orderData?.overallStatus || 'Pending').
-      replace(/\{\{status\}\}/g, orderData?.status || orderData?.overallStatus || 'Pending').
-      replace(/\{\{orderType\}\}/g, orderData?.orderTypeName || orderData?.orderType?.name || '').
-      replace(/\{\{priority\}\}/g, orderData?.priority || 'Normal').
-      replace(/\{\{notes\}\}/g, orderData?.notes || '').
+      replace(/\{\{orderStatus\}\}/g, sanitizeString(orderData?.status || orderData?.overallStatus || 'Pending')).
+      replace(/\{\{status\}\}/g, sanitizeString(orderData?.status || orderData?.overallStatus || 'Pending')).
+      replace(/\{\{orderType\}\}/g, sanitizeString(orderData?.orderTypeName || orderData?.orderType?.name || '')).
+      replace(/\{\{priority\}\}/g, sanitizeString(orderData?.priority || 'Normal')).
+      replace(/\{\{notes\}\}/g, sanitizeString(orderData?.notes || '')).
       replace(/\{\{totalOptions\}\}/g, String(options.length)).
       replace(/\{\{totalItems\}\}/g, String(options.length)).
       replace(/\{\{totalQuantity\}\}/g, String(options.reduce((sum: number, o: any) => sum + (o.quantity || 1), 0))).
@@ -300,11 +301,11 @@ const PrintExcelModal: React.FC<PrintExcelModalProps> = ({
       replace(/\{\{companyAddress\}\}/g, '').
       replace(/\{\{companyPhone\}\}/g, '').
       replace(/\{\{companyEmail\}\}/g, '')
-      // Customer placeholders
-      .replace(/\{\{customerName\}\}/g, customer.name || customer.accountName || '').
-      replace(/\{\{customerPhone\}\}/g, customer.phone || customer.mobile || '').
-      replace(/\{\{customerEmail\}\}/g, customer.email || '').
-      replace(/\{\{customerAddress\}\}/g, customer.address || '')
+      // Customer placeholders - sanitized to prevent XSS
+      .replace(/\{\{customerName\}\}/g, sanitizeString(customer.name || customer.accountName || '')).
+      replace(/\{\{customerPhone\}\}/g, sanitizeString(customer.phone || customer.mobile || '')).
+      replace(/\{\{customerEmail\}\}/g, sanitizeString(customer.email || '')).
+      replace(/\{\{customerAddress\}\}/g, sanitizeString(customer.address || ''))
       // Totals
       .replace(/\{\{subtotal\}\}/g, orderData?.subtotal || '').
       replace(/\{\{tax\}\}/g, orderData?.tax || '').
@@ -345,7 +346,7 @@ const PrintExcelModal: React.FC<PrintExcelModalProps> = ({
         <div style="background: #fffbeb; padding: 15px; border: 2px solid #FF6B35; border-radius: 8px; margin-bottom: 20px;">
           <div style="display: flex; justify-content: space-between; font-size: 14px; color: #1f2937;">
             <div>
-              <strong style="color: #FF6B35;">Created By:</strong> <span style="font-weight: 600;">${creatorName}</span>
+              <strong style="color: #FF6B35;">Created By:</strong> <span style="font-weight: 600;">${sanitizeString(creatorName)}</span>
             </div>
             <div>
               <strong style="color: #FF6B35;">Created Date:</strong> <span style="font-weight: 600;">${createdDate}</span>
@@ -365,10 +366,10 @@ const PrintExcelModal: React.FC<PrintExcelModalProps> = ({
             ${options.map((opt: any, idx: number) => `
               <tr>
                 <td style="border: 1px solid #e5e7eb; padding: 10px;">${idx + 1}</td>
-                <td style="border: 1px solid #e5e7eb; padding: 10px; font-weight: 500;">${opt.optionName || 'N/A'}</td>
-                <td style="border: 1px solid #e5e7eb; padding: 10px;">${opt.optionTypeName || opt.category || 'N/A'}</td>
+                <td style="border: 1px solid #e5e7eb; padding: 10px; font-weight: 500;">${sanitizeString(opt.optionName || 'N/A')}</td>
+                <td style="border: 1px solid #e5e7eb; padding: 10px;">${sanitizeString(opt.optionTypeName || opt.category || 'N/A')}</td>
                 <td style="border: 1px solid #e5e7eb; padding: 10px;">
-                  ${opt.specificationValues ? Object.entries(opt.specificationValues).map(([k, v]) => `${k}: ${v}`).join(', ') : 'N/A'}
+                  ${opt.specificationValues ? Object.entries(opt.specificationValues).map(([k, v]) => `${sanitizeString(String(k))}: ${sanitizeString(String(v))}`).join(', ') : 'N/A'}
                 </td>
               </tr>
             `).join('')}
@@ -404,7 +405,7 @@ const PrintExcelModal: React.FC<PrintExcelModalProps> = ({
         </div>
         <h3>Order Items</h3>
         ${optionsHtml}
-        ${orderData?.notes ? `<div style="margin-top: 20px;"><strong>Notes:</strong> ${orderData.notes}</div>` : ''}
+        ${orderData?.notes ? `<div style="margin-top: 20px;"><strong>Notes:</strong> ${sanitizeString(orderData.notes)}</div>` : ''}
       </div>
     `;
 
@@ -1160,7 +1161,7 @@ const PrintExcelModal: React.FC<PrintExcelModalProps> = ({
       // Fallback to text message only (old behavior)
       const cleanPhone = phone.replace(/\D/g, '');
       const formattedPhone = cleanPhone.startsWith('91') ? cleanPhone : `91${cleanPhone}`;
-      window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`, '_blank');
+      window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer');
     }
 
     setShowSendOptions(false);

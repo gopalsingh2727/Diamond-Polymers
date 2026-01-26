@@ -32,6 +32,10 @@ const CLEAR_SUCCESS_MESSAGE = 'CLEAR_SUCCESS_MESSAGE';
 const FETCH_ORDERS_REQUEST = 'FETCH_ORDERS_REQUEST';
 const FETCH_ORDERS_SUCCESS = 'FETCH_ORDERS_SUCCESS';
 const FETCH_ORDERS_FAILURE = 'FETCH_ORDERS_FAILURE';
+const FETCH_ORDER_DETAILS_REQUEST = 'FETCH_ORDER_DETAILS_REQUEST';
+const FETCH_ORDER_DETAILS_SUCCESS = 'FETCH_ORDER_DETAILS_SUCCESS';
+const FETCH_ORDER_DETAILS_FAILURE = 'FETCH_ORDER_DETAILS_FAILURE';
+const CLEAR_ORDER_DETAILS = 'CLEAR_ORDER_DETAILS';
 // const UPDATE_ORDER_STATUS = 'UPDATE_ORDER_STATUS';
 const UPDATE_MACHINE_STATUS = 'UPDATE_MACHINE_STATUS';
 const CLEAR_ORDERS = 'CLEAR_ORDERS';
@@ -237,9 +241,6 @@ action: ExtendedOrderActionTypes)
       };
 
     case FETCH_ORDERS_SUCCESS:
-
-
-
       // Handle different possible payload structures from your API
       let orders: OrderData[] = [];
       let pagination: PaginationInfo | null = null;
@@ -249,17 +250,20 @@ action: ExtendedOrderActionTypes)
       if (action.payload) {
         // Check if payload has the nested data structure
         if (action.payload.data) {
-          // V2 API: response.data.data.data (v2 unified handler returns { success, data: { data: [], total, ... } })
-          // V1 API: response.data.data.orders (old API returns { success, data: { orders: [], ... } })
           orders = action.payload.data.data || action.payload.data.orders || [];
-          pagination = action.payload.data.pagination || {
-            total: action.payload.data.total,
-            page: action.payload.data.page,
-            limit: action.payload.data.limit,
-            pages: action.payload.data.pages
-          } || null;
-          summary = action.payload.data.summary || null;
-          statusCounts = action.payload.data.statusCounts || null;
+          // Map API pagination fields to expected format
+          const apiData = action.payload.data;
+          pagination = {
+            totalOrders: apiData.total || 0,
+            currentPage: apiData.page || 1,
+            totalPages: apiData.pages || 1,
+            limit: apiData.limit || 50,
+            hasNextPage: (apiData.page || 1) < (apiData.pages || 1),
+            hasPrevPage: (apiData.page || 1) > 1,
+            showing: orders.length
+          };
+          summary = apiData.summary || null;
+          statusCounts = apiData.statusCounts || null;
         }
         // Check if payload has orders directly
         else if (action.payload.orders) {
@@ -271,15 +275,6 @@ action: ExtendedOrderActionTypes)
         // Check if payload is an array of orders
         else if (Array.isArray(action.payload)) {
           orders = action.payload;
-        }
-        // If payload has success flag, look for orders in different structures
-        else if (action.payload.success !== undefined) {
-          if (action.payload.data?.orders) {
-            orders = action.payload.data.orders;
-            pagination = action.payload.data.pagination || null;
-            summary = action.payload.data.summary || null;
-            statusCounts = action.payload.data.statusCounts || null;
-          }
         }
         // Fallback: try to use payload as single order
         else if (action.payload._id || action.payload.orderId) {
@@ -583,6 +578,36 @@ action: OrderActionTypes)
       }
       return state;
 
+    // Fetch single order details
+    case FETCH_ORDER_DETAILS_REQUEST:
+      return {
+        ...state,
+        loading: true,
+        error: null
+      };
+
+    case FETCH_ORDER_DETAILS_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        currentOrder: action.payload as OrderData,
+        error: null
+      };
+
+    case FETCH_ORDER_DETAILS_FAILURE:
+      return {
+        ...state,
+        loading: false,
+        error: action.payload as string
+      };
+
+    case CLEAR_ORDER_DETAILS:
+      return {
+        ...state,
+        currentOrder: null,
+        error: null
+      };
+
     default:
       return state;
   }
@@ -754,7 +779,10 @@ export type CombinedOrderState = {
 const initialState = {
   orders: [],
   loading: false,
-  error: null
+  error: null,
+  pagination: null,
+  statusCounts: null,
+  summary: null
 };
 
 export const accountOrdersReducer = (state = initialState, action: any) => {
@@ -763,7 +791,14 @@ export const accountOrdersReducer = (state = initialState, action: any) => {
       return { ...state, loading: true, error: null };
 
     case GET_ACCOUNT_ORDERS_SUCCESS:
-      return { ...state, loading: false, orders: action.payload };
+      return {
+        ...state,
+        loading: false,
+        orders: action.payload?.orders || action.payload || [],
+        pagination: action.payload?.pagination || null,
+        statusCounts: action.payload?.statusCounts || null,
+        summary: action.payload?.summary || null
+      };
 
     case GET_ACCOUNT_ORDERS_FAILURE:
       return { ...state, loading: false, error: action.payload };

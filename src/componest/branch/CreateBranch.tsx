@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import type { RootState, AppDispatch } from "../../store";
 import { InfinitySpinner } from "../../components/InfinitySpinner";
-import { setSelectedBranchInAuth, logout } from "../redux/login/authActions";
+import { addBranchToAuth, logout, SET_SELECTED_BRANCH_IN_AUTH } from "../redux/login/authActions";
+import { ADD_BRANCH_TO_LIST } from "../redux/Branch/BranchActions";
 import { isTokenExpired, clearAuthData } from "../redux/utils/auth";
 
 const CreateBranch = () => {
@@ -16,14 +17,32 @@ const CreateBranch = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
-  // Check token validity on mount and redirect if expired
+  // Track if we've already validated to prevent re-checking during state updates
+  const hasValidated = useRef(false);
+
+  // Check token validity on initial mount
   useEffect(() => {
-    if (!token || isTokenExpired(token)) {
+    // Skip if already validated or if branch was just created (show success popup)
+    if (hasValidated.current || success) return;
+
+    // Skip redirect if branch was just created (session flag)
+    if (sessionStorage.getItem('branchJustCreated') === 'true') {
+      hasValidated.current = true;
+      return;
+    }
+
+    // Get token from localStorage as fallback (Redux might not be hydrated yet)
+    const storedToken = token || localStorage.getItem("authToken");
+
+    if (!storedToken || isTokenExpired(storedToken)) {
       clearAuthData();
       dispatch(logout());
       navigate("/login", { replace: true });
+      return;
     }
-  }, [token, dispatch, navigate]);
+
+    hasValidated.current = true;
+  }, []); // Empty dependency - only run on mount
 
   const [formData, setFormData] = useState({
     name: "",
@@ -37,6 +56,8 @@ const CreateBranch = () => {
   const apiKey = import.meta.env.VITE_API_KEY;
 
   const handleLogout = () => {
+    // Clear the session flag
+    sessionStorage.removeItem('branchJustCreated');
     clearAuthData();
     dispatch(logout());
     navigate("/login", { replace: true });
@@ -112,16 +133,47 @@ const CreateBranch = () => {
         localStorage.setItem('selectedBranch', newBranchId);
         localStorage.setItem('branchId', newBranchId);
 
-        // Update Redux state - await to ensure state updates before navigating
-        await dispatch(setSelectedBranchInAuth(newBranchId));
+        // Update userData in localStorage
+        const storedUserData = localStorage.getItem('userData');
+        if (storedUserData) {
+          const userData = JSON.parse(storedUserData);
+          userData.selectedBranch = newBranchId;
+          userData.branches = [...(userData.branches || []), newBranch];
+          localStorage.setItem('userData', JSON.stringify(userData));
+        }
+
+        // Update Redux state with new branch
+        dispatch(addBranchToAuth({
+          _id: newBranchId,
+          name: formData.name.trim(),
+          code: formData.code.trim().toUpperCase(),
+          location: formData.location.trim(),
+          phone: formData.phone.trim(),
+          email: formData.email.trim()
+        }));
+
+        // Explicitly set the selected branch in Redux
+        dispatch({
+          type: SET_SELECTED_BRANCH_IN_AUTH,
+          payload: newBranchId
+        });
+
+        // Add branch to branches list (for dropdown in header)
+        dispatch({
+          type: ADD_BRANCH_TO_LIST,
+          payload: {
+            _id: newBranchId,
+            name: formData.name.trim(),
+            code: formData.code.trim().toUpperCase(),
+            location: formData.location.trim(),
+            phone: formData.phone.trim(),
+            email: formData.email.trim()
+          }
+        });
       }
 
-      setSuccess(true);
-
-      // Redirect to main menu after 2 seconds
-      setTimeout(() => {
-        navigate("/menu", { replace: true });
-      }, 2000);
+      // Auto-navigate to dashboard after branch creation
+      navigate("/", { replace: true });
     } catch (err: any) {
 
       setError(
@@ -155,25 +207,51 @@ const CreateBranch = () => {
 
   }
 
-  // Success state
+  // Success state - Popup after branch creation
   if (success) {
     return (
-      <div className="fixed inset-0 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md text-center">
-          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <svg className="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md text-center animate-in fade-in zoom-in">
+          {/* Success Icon */}
+          <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg className="w-14 h-14 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">Branch Created!</h2>
-          <p className="text-gray-600 mb-6">
-            Your branch has been created successfully.
-            <br />
-            Redirecting to main menu...
-          </p>
-          <div className="flex justify-center">
-            <InfinitySpinner size="md" />
+
+          {/* Title */}
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Congratulations!</h2>
+          <h3 className="text-lg text-green-600 font-semibold mb-4">Account & Branch Created Successfully</h3>
+
+          {/* Branch Details */}
+          <div className="bg-gray-50 rounded-lg p-4 mb-6">
+            <p className="text-gray-600 text-sm mb-2">Your branch details:</p>
+            <p className="text-lg font-bold text-gray-800">{formData.name}</p>
+            <p className="text-sm text-gray-500">{formData.location}</p>
+            <p className="text-xs text-gray-400 mt-1">Code: {formData.code.toUpperCase()}</p>
           </div>
+
+          {/* Buttons */}
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={() => {
+                sessionStorage.removeItem('branchJustCreated');
+                navigate("/", { replace: true });
+              }}
+              className="w-full py-3 px-4 rounded-lg font-semibold text-white bg-gradient-to-r from-[#FF6B35] to-[#FFA500] hover:opacity-90 transition shadow-lg">
+              Go to Dashboard
+            </button>
+            {/* <button
+              onClick={handleLogout}
+              className="w-full py-2 px-4 rounded-lg font-medium text-gray-600 border border-gray-300 hover:bg-gray-100 transition">
+              Logout
+            </button> */}
+          </div>
+
+          {/* Info text */}
+          <p className="text-xs text-gray-400 mt-4">
+            You can access your branch settings anytime from the dashboard.
+          </p>
         </div>
       </div>);
 
@@ -305,21 +383,19 @@ const CreateBranch = () => {
           {/* Escape options */}
           <div className="mt-4 pt-4 border-t border-gray-200">
             <div className="flex gap-3">
-              {/* Select existing branch - only for admin role */}
-              {userData?.role === "admin" && (
-                <button
-                  type="button"
-                  onClick={() => navigate("/select-branch", { replace: true })}
-                  className="flex-1 py-2 px-4 rounded-lg font-medium text-[#FF6B35] border border-[#FF6B35] hover:bg-[#FF6B35] hover:text-white transition-all duration-300">
-                  Select Existing Branch
-                </button>
-              )}
+              {/* Back to Dashboard - always show */}
+              <button
+                type="button"
+                onClick={() => navigate("/", { replace: true })}
+                className="flex-1 py-2 px-4 rounded-lg font-medium text-gray-600 border border-gray-300 hover:bg-gray-100 transition-all duration-300">
+                Back to Dashboard
+              </button>
 
               {/* Logout button */}
               <button
                 type="button"
                 onClick={handleLogout}
-                className={`${userData?.role === "admin" ? "flex-1" : "w-full"} py-2 px-4 rounded-lg font-medium text-gray-600 border border-gray-300 hover:bg-gray-100 transition-all duration-300`}>
+                className="flex-1 py-2 px-4 rounded-lg font-medium text-gray-600 border border-gray-300 hover:bg-gray-100 transition-all duration-300">
                 Logout
               </button>
             </div>

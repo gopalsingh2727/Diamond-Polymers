@@ -138,6 +138,10 @@ const Account: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(-1);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 50;
+
   // Quick send modal state
   const [showSendModal, setShowSendModal] = useState(false);
   const [sendModalMode, setSendModalMode] = useState<'email' | 'whatsapp'>('email');
@@ -193,6 +197,18 @@ const Account: React.FC = () => {
     acc.address2?.toLowerCase().includes(query)
     );
   }, [searchQuery, accounts]);
+
+  // Paginated accounts
+  const totalPages = Math.max(1, Math.ceil(displayedAccounts.length / itemsPerPage));
+  const paginatedAccounts = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return displayedAccounts.slice(startIndex, startIndex + itemsPerPage);
+  }, [displayedAccounts, currentPage, itemsPerPage]);
+
+  // Reset page when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
 
   useEffect(() => {
     if (selectedIndex >= 0) {
@@ -264,9 +280,24 @@ const Account: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       <BackButton />
       <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-4">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Search Accounts</h1>
-          <p className="text-gray-600">Find companies and contacts</p>
+        <div className="flex justify-between items-center mb-4">
+          <div className="text-center flex-1">
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">Search Accounts</h1>
+            <p className="text-gray-600">Find companies and contacts</p>
+          </div>
+          <button
+            onClick={() => navigate('/menu/ExportReport')}
+            className="flex items-center gap-2 px-4 py-2 bg-[#FF6B35] text-white rounded-lg hover:bg-[#E55A2B] transition-colors font-medium"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="16" y1="13" x2="8" y2="13" />
+              <line x1="16" y1="17" x2="8" y2="17" />
+              <polyline points="10 9 9 9 8 9" />
+            </svg>
+            Export Report
+          </button>
         </div>
 
         <div className="relative mb-2">
@@ -295,7 +326,7 @@ const Account: React.FC = () => {
           </div>
 
           <div className="accounts-list divide-y divide-gray-200">
-            {displayedAccounts.length > 0 ? displayedAccounts.map((acc, idx) =>
+            {paginatedAccounts.length > 0 ? paginatedAccounts.map((acc, idx) =>
             <div
               key={acc._id}
               id={`account-${idx}`}
@@ -358,6 +389,9 @@ const Account: React.FC = () => {
               </div>
             }
           </div>
+
+          {/* Pagination */}
+        
         </div>
       </div>
 

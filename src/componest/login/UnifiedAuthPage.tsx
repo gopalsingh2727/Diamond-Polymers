@@ -1,16 +1,13 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { InfinitySpinner } from '../../components/InfinitySpinner';
-import { LOGIN_SUCCESS } from '../redux/login/authConstants';
 import '../../styles/otp-verification.css';
 import './Signup.css';
 
 type SignupStep = 'details' | 'email-verification' | 'complete';
 
 const UnifiedAuthPage = () => {
-  const dispatch = useDispatch();
   const navigate = useNavigate();
 
   // Sign Up State
@@ -46,8 +43,10 @@ const UnifiedAuthPage = () => {
 
   // ============= SIGN UP FUNCTIONS =============
 
-  const handleSignUpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
+  const handleSignUpChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    const type = 'type' in e.target ? e.target.type : 'select';
+    const checked = 'checked' in e.target ? e.target.checked : false;
     setSignUpData((prev) => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
@@ -96,6 +95,26 @@ const UnifiedAuthPage = () => {
     return true;
   };
 
+  // Generate a valid username (at least 3 characters)
+  const generateUsername = (): string => {
+    const normalizedEmail = signUpData.email.toLowerCase().trim();
+    let username = normalizedEmail.split('@')[0];
+
+    // Ensure username is at least 3 characters
+    if (username.length < 3) {
+      // Combine with first name or add random suffix
+      const firstName = signUpData.firstName.toLowerCase().replace(/[^a-z0-9]/g, '');
+      if (firstName.length >= 3) {
+        username = firstName;
+      } else {
+        // Add random numbers to make it 3+ chars
+        username = username + Math.random().toString(36).substring(2, 5);
+      }
+    }
+
+    return username.substring(0, 20); // Max 20 chars
+  };
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -106,14 +125,18 @@ const UnifiedAuthPage = () => {
     setLoading(true);
     setError('');
 
+    // Generate username (at least 3 characters)
+    const generatedUsername = generateUsername();
+
     try {
-      // Step 1: Send email OTP
+      // Step 1: Send email OTP with username for pre-validation
       await axios.post(
         `${baseUrl}/signup/send-email-otp`,
         {
           email: signUpData.email,
           phone: signUpData.phone1,
-          userType: 'master-admin'
+          userType: 'master-admin',
+          username: generatedUsername
         },
         {
           headers: {
@@ -122,8 +145,6 @@ const UnifiedAuthPage = () => {
           }
         }
       );
-
-
 
       // Move to email verification
       setSignupStep('email-verification');
@@ -140,16 +161,19 @@ const UnifiedAuthPage = () => {
     setLoading(true);
     setError('');
 
+    // Generate username (at least 3 characters)
+    const generatedUsername = generateUsername();
+
     try {
       // Create admin after email verification
-      const response = await axios.post(
+      await axios.post(
         `${baseUrl}/signup/complete`,
         {
           email: signUpData.email,
           password: signUpData.password,
           phone: signUpData.phone1,
           userType: 'master-admin',
-          username: signUpData.email.split('@')[0],
+          username: generatedUsername,
           fullName: `${signUpData.firstName} ${signUpData.lastName}`.trim(),
           firstName: signUpData.firstName,
           lastName: signUpData.lastName,
@@ -176,46 +200,11 @@ const UnifiedAuthPage = () => {
 
 
 
-      // Auto-login: Store token and user data
-      const { token, refreshToken, user } = response.data;
-      if (token && user) {
-        const userData = {
-          ...user,
-          token,
-          refreshToken
-        };
-
-        // Store in localStorage
-        localStorage.setItem('authToken', token);
-        localStorage.setItem('token', token);
-        localStorage.setItem('refreshToken', refreshToken);
-        localStorage.setItem('userData', JSON.stringify(userData));
-        localStorage.setItem('userRole', user.role);
-
-        // Dispatch LOGIN_SUCCESS to Redux
-        dispatch({
-          type: LOGIN_SUCCESS,
-          payload: {
-            token,
-            refreshToken,
-            userData
-          }
-        });
-
-
-
-        // Redirect to create branch page
-        setSignupStep('complete');
-        setTimeout(() => {
-          navigate('/create-branch');
-        }, 1500);
-      } else {
-        // Fallback to login page if no token
-        setSignupStep('complete');
-        setTimeout(() => {
-          navigate('/login');
-        }, 2000);
-      }
+      // Account created successfully - redirect to login page (no auto-login)
+      setSignupStep('complete');
+      setTimeout(() => {
+        navigate('/login');
+      }, 2000);
     } catch (err: any) {
 
       setError(err.response?.data?.message || 'Failed to create account. Please try again.');
@@ -362,9 +351,9 @@ const UnifiedAuthPage = () => {
             Account Created Successfully!
           </h2>
           <p className="text-gray-600 mb-6">
-            Your account has been verified.
+            Your account has been created.
             <br />
-            Redirecting...
+            Please go to login to continue.
           </p>
           <div className="flex justify-center">
             <InfinitySpinner size="md" />
@@ -376,6 +365,26 @@ const UnifiedAuthPage = () => {
 
   // ============= STEP VALIDATION =============
 
+  // Check if step is valid WITHOUT setting error (for button disabled state)
+  const isStepValid = (step: number): boolean => {
+    switch (step) {
+      case 1: // Personal Information
+        return signUpData.firstName.trim().length >= 2 && signUpData.lastName.trim().length >= 2;
+      case 2: // Address
+        return signUpData.address1.trim().length >= 5 && signUpData.state.trim() !== '' && /^\d{6}$/.test(signUpData.pinCode);
+      case 3: // Contact Information
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(signUpData.email);
+      case 4: // Security
+        return signUpData.password.length >= 8 &&
+               /[0-9]/.test(signUpData.password) &&
+               /[a-zA-Z]/.test(signUpData.password) &&
+               /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(signUpData.password) &&
+               signUpData.password === signUpData.confirmPassword;
+      default:
+        return true;
+    }
+  };
+
   const validateStep = (step: number): boolean => {
     setError('');
     switch (step) {
@@ -384,14 +393,26 @@ const UnifiedAuthPage = () => {
           setError('First name is required');
           return false;
         }
+        if (signUpData.firstName.trim().length < 2) {
+          setError('First name must be at least 2 characters');
+          return false;
+        }
         if (!signUpData.lastName.trim()) {
           setError('Last name is required');
+          return false;
+        }
+        if (signUpData.lastName.trim().length < 2) {
+          setError('Last name must be at least 2 characters');
           return false;
         }
         return true;
       case 2: // Address
         if (!signUpData.address1.trim()) {
           setError('Address is required');
+          return false;
+        }
+        if (signUpData.address1.trim().length < 5) {
+          setError('Address must be at least 5 characters');
           return false;
         }
         if (!signUpData.state.trim()) {
@@ -519,8 +540,18 @@ const UnifiedAuthPage = () => {
                   className="Signup-input"
                   placeholder="First name"
                   value={signUpData.firstName}
-                  onChange={handleSignUpChange} />
-
+                  onChange={handleSignUpChange}
+                  style={{
+                    borderColor: signUpData.firstName.length > 0 && signUpData.firstName.trim().length < 2 ? '#dc3545' :
+                                 signUpData.firstName.trim().length >= 2 ? '#28a745' : undefined,
+                    borderWidth: signUpData.firstName.length > 0 ? '2px' : undefined
+                  }} />
+                  {signUpData.firstName.length > 0 && signUpData.firstName.trim().length < 2 && (
+                    <p style={{ color: '#dc3545', fontSize: '12px', marginTop: '4px', fontWeight: '500' }}>First name must be at least 2 characters</p>
+                  )}
+                  {signUpData.firstName.trim().length >= 2 && (
+                    <p style={{ color: '#28a745', fontSize: '12px', marginTop: '4px', fontWeight: '500' }}>✓ Valid</p>
+                  )}
                 </div>
                 <div className="Signup-inputGroup">
                   <label className="Signup-label">Last Name *</label>
@@ -530,8 +561,18 @@ const UnifiedAuthPage = () => {
                   className="Signup-input"
                   placeholder="Last name"
                   value={signUpData.lastName}
-                  onChange={handleSignUpChange} />
-
+                  onChange={handleSignUpChange}
+                  style={{
+                    borderColor: signUpData.lastName.length > 0 && signUpData.lastName.trim().length < 2 ? '#dc3545' :
+                                 signUpData.lastName.trim().length >= 2 ? '#28a745' : undefined,
+                    borderWidth: signUpData.lastName.length > 0 ? '2px' : undefined
+                  }} />
+                  {signUpData.lastName.length > 0 && signUpData.lastName.trim().length < 2 && (
+                    <p style={{ color: '#dc3545', fontSize: '12px', marginTop: '4px', fontWeight: '500' }}>Last name must be at least 2 characters</p>
+                  )}
+                  {signUpData.lastName.trim().length >= 2 && (
+                    <p style={{ color: '#28a745', fontSize: '12px', marginTop: '4px', fontWeight: '500' }}>✓ Valid</p>
+                  )}
                 </div>
               </div>
 
@@ -547,14 +588,30 @@ const UnifiedAuthPage = () => {
 
               </div>
 
-              {error &&
-            <div className="Signup-error">
-                  <p>{error}</p>
+              {error && (
+                <div style={{
+                  backgroundColor: '#fee2e2',
+                  border: '2px solid #dc3545',
+                  borderRadius: '8px',
+                  padding: '12px 16px',
+                  marginBottom: '16px'
+                }}>
+                  <p style={{ color: '#dc3545', fontWeight: '600', fontSize: '14px', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '18px' }}>⚠</span> {error}
+                  </p>
                 </div>
-            }
+              )}
 
               <div className="Signup-buttonRow">
-                <button type="button" className="Signup-buttonNext" onClick={handleNextStep}>
+                <button
+                  type="button"
+                  className="Signup-buttonNext"
+                  onClick={handleNextStep}
+                  disabled={!isStepValid(1)}
+                  style={{
+                    opacity: isStepValid(1) ? 1 : 0.5,
+                    cursor: isStepValid(1) ? 'pointer' : 'not-allowed'
+                  }}>
                   Next
                 </button>
               </div>
@@ -577,8 +634,18 @@ const UnifiedAuthPage = () => {
                 className="Signup-input"
                 placeholder="Street address, building, etc."
                 value={signUpData.address1}
-                onChange={handleSignUpChange} />
-
+                onChange={handleSignUpChange}
+                style={{
+                  borderColor: signUpData.address1.trim().length >= 5 ? '#28a745' :
+                               signUpData.address1.length > 0 && signUpData.address1.trim().length < 5 ? '#dc3545' : undefined,
+                  borderWidth: signUpData.address1.length > 0 ? '2px' : undefined
+                }} />
+                {signUpData.address1.length > 0 && signUpData.address1.trim().length < 5 && (
+                  <p style={{ color: '#dc3545', fontSize: '12px', marginTop: '4px', fontWeight: '500' }}>Address must be at least 5 characters</p>
+                )}
+                {signUpData.address1.trim().length >= 5 && (
+                  <p style={{ color: '#28a745', fontSize: '12px', marginTop: '4px', fontWeight: '500' }}>✓ Valid</p>
+                )}
               </div>
 
               <div className="Signup-inputGroup">
@@ -600,8 +667,11 @@ const UnifiedAuthPage = () => {
                   name="state"
                   className="Signup-input"
                   value={signUpData.state}
-                  onChange={handleSignUpChange}>
-
+                  onChange={handleSignUpChange}
+                  style={{
+                    borderColor: signUpData.state ? '#28a745' : undefined,
+                    borderWidth: signUpData.state ? '2px' : undefined
+                  }}>
                     <option value="">Select State</option>
                     <option value="Andhra Pradesh">Andhra Pradesh</option>
                     <option value="Arunachal Pradesh">Arunachal Pradesh</option>
@@ -655,22 +725,52 @@ const UnifiedAuthPage = () => {
                   }}
                   maxLength={6}
                   pattern="[0-9]{6}"
-                  inputMode="numeric" />
-
+                  inputMode="numeric"
+                  style={{
+                    borderColor: /^\d{6}$/.test(signUpData.pinCode) ? '#28a745' :
+                                 signUpData.pinCode.length > 0 ? '#dc3545' : undefined,
+                    borderWidth: signUpData.pinCode.length > 0 ? '2px' : undefined
+                  }} />
+                  {signUpData.pinCode.length > 0 && signUpData.pinCode.length < 6 && (
+                    <p style={{ color: '#dc3545', fontSize: '12px', marginTop: '4px', fontWeight: '500' }}>Pin code must be 6 digits ({signUpData.pinCode.length}/6)</p>
+                  )}
+                  {/^\d{6}$/.test(signUpData.pinCode) && (
+                    <p style={{ color: '#28a745', fontSize: '12px', marginTop: '4px', fontWeight: '500' }}>✓ Valid</p>
+                  )}
                 </div>
               </div>
 
-              {error &&
-            <div className="Signup-error">
-                  <p>{error}</p>
+              {signUpData.state && (
+                <p style={{ color: '#28a745', fontSize: '12px', marginTop: '-8px', marginBottom: '8px', fontWeight: '500' }}>✓ State selected: {signUpData.state}</p>
+              )}
+
+              {error && (
+                <div style={{
+                  backgroundColor: '#fee2e2',
+                  border: '2px solid #dc3545',
+                  borderRadius: '8px',
+                  padding: '12px 16px',
+                  marginBottom: '16px'
+                }}>
+                  <p style={{ color: '#dc3545', fontWeight: '600', fontSize: '14px', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '18px' }}>⚠</span> {error}
+                  </p>
                 </div>
-            }
+              )}
 
               <div className="Signup-buttonRow">
                 <button type="button" className="Signup-buttonBack" onClick={handlePrevStep}>
                   Back
                 </button>
-                <button type="button" className="Signup-buttonNext" onClick={handleNextStep}>
+                <button
+                  type="button"
+                  className="Signup-buttonNext"
+                  onClick={handleNextStep}
+                  disabled={!isStepValid(2)}
+                  style={{
+                    opacity: isStepValid(2) ? 1 : 0.5,
+                    cursor: isStepValid(2) ? 'pointer' : 'not-allowed'
+                  }}>
                   Next
                 </button>
               </div>
@@ -693,8 +793,21 @@ const UnifiedAuthPage = () => {
                 className="Signup-input"
                 placeholder="your@email.com"
                 value={signUpData.email}
-                onChange={handleSignUpChange} />
-
+                onChange={handleSignUpChange}
+                style={{
+                  borderColor: signUpData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(signUpData.email) ? '#dc3545' :
+                               signUpData.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(signUpData.email) ? '#28a745' : undefined,
+                  borderWidth: signUpData.email.length > 0 ? '2px' : undefined
+                }} />
+                {signUpData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(signUpData.email) && (
+                  <p style={{ color: '#dc3545', fontSize: '12px', marginTop: '4px', fontWeight: '500' }}>Please enter a valid email address</p>
+                )}
+                {signUpData.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(signUpData.email) && (
+                  <p style={{ color: '#28a745', fontSize: '12px', marginTop: '4px', fontWeight: '500' }}>✓ Valid email</p>
+                )}
+                {signUpData.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(signUpData.email) && signUpData.email.split('@')[0].length < 3 && (
+                  <p style={{ color: '#ffc107', fontSize: '12px', marginTop: '4px', fontWeight: '500' }}>Note: Username will be auto-generated (email prefix is short)</p>
+                )}
               </div>
 
               <div className="Signup-inputRow">
@@ -754,17 +867,33 @@ const UnifiedAuthPage = () => {
                 </label>
               </div>
 
-              {error &&
-            <div className="Signup-error">
-                  <p>{error}</p>
+              {error && (
+                <div style={{
+                  backgroundColor: '#fee2e2',
+                  border: '2px solid #dc3545',
+                  borderRadius: '8px',
+                  padding: '12px 16px',
+                  marginBottom: '16px'
+                }}>
+                  <p style={{ color: '#dc3545', fontWeight: '600', fontSize: '14px', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '18px' }}>⚠</span> {error}
+                  </p>
                 </div>
-            }
+              )}
 
               <div className="Signup-buttonRow">
                 <button type="button" className="Signup-buttonBack" onClick={handlePrevStep}>
                   Back
                 </button>
-                <button type="button" className="Signup-buttonNext" onClick={handleNextStep}>
+                <button
+                  type="button"
+                  className="Signup-buttonNext"
+                  onClick={handleNextStep}
+                  disabled={!isStepValid(3)}
+                  style={{
+                    opacity: isStepValid(3) ? 1 : 0.5,
+                    cursor: isStepValid(3) ? 'pointer' : 'not-allowed'
+                  }}>
                   Next
                 </button>
               </div>
@@ -788,8 +917,20 @@ const UnifiedAuthPage = () => {
                   className="Signup-input"
                   placeholder="Your password"
                   value={signUpData.password}
-                  onChange={handleSignUpChange} />
-
+                  onChange={handleSignUpChange}
+                  style={{
+                    borderColor: signUpData.password.length > 0 && (
+                      signUpData.password.length < 8 ||
+                      !/[0-9]/.test(signUpData.password) ||
+                      !/[a-zA-Z]/.test(signUpData.password) ||
+                      !/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(signUpData.password)
+                    ) ? '#dc3545' :
+                    signUpData.password.length >= 8 &&
+                    /[0-9]/.test(signUpData.password) &&
+                    /[a-zA-Z]/.test(signUpData.password) &&
+                    /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(signUpData.password) ? '#28a745' : undefined,
+                    borderWidth: signUpData.password.length > 0 ? '2px' : undefined
+                  }} />
                 </div>
                 <div className="Signup-inputGroup">
                   <label className="Signup-label">Confirm Password *</label>
@@ -799,8 +940,18 @@ const UnifiedAuthPage = () => {
                   className="Signup-input"
                   placeholder="Confirm password"
                   value={signUpData.confirmPassword}
-                  onChange={handleSignUpChange} />
-
+                  onChange={handleSignUpChange}
+                  style={{
+                    borderColor: signUpData.confirmPassword.length > 0 && signUpData.confirmPassword !== signUpData.password ? '#dc3545' :
+                                 signUpData.confirmPassword.length > 0 && signUpData.confirmPassword === signUpData.password ? '#28a745' : undefined,
+                    borderWidth: signUpData.confirmPassword.length > 0 ? '2px' : undefined
+                  }} />
+                  {signUpData.confirmPassword.length > 0 && signUpData.confirmPassword !== signUpData.password && (
+                    <p style={{ color: '#dc3545', fontSize: '12px', marginTop: '4px', fontWeight: '500' }}>Passwords do not match</p>
+                  )}
+                  {signUpData.confirmPassword.length > 0 && signUpData.confirmPassword === signUpData.password && (
+                    <p style={{ color: '#28a745', fontSize: '12px', marginTop: '4px', fontWeight: '500' }}>✓ Passwords match</p>
+                  )}
                 </div>
               </div>
 
@@ -843,29 +994,40 @@ const UnifiedAuthPage = () => {
                 </div>
               </div>
 
-              {error &&
-            <div className="Signup-error">
-                  <p>{error}</p>
+              {error && (
+                <div style={{
+                  backgroundColor: '#fee2e2',
+                  border: '2px solid #dc3545',
+                  borderRadius: '8px',
+                  padding: '12px 16px',
+                  marginBottom: '16px'
+                }}>
+                  <p style={{ color: '#dc3545', fontWeight: '600', fontSize: '14px', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '18px' }}>⚠</span> {error}
+                  </p>
                 </div>
-            }
+              )}
 
               <div className="Signup-buttonRow">
                 <button type="button" className="Signup-buttonBack" onClick={handlePrevStep}>
                   Back
                 </button>
                 <button
-                type="submit"
-                className="Signup-buttonSubmit"
-                disabled={loading}>
-
-                  {loading ?
-                <span className="Signup-loading">
+                  type="submit"
+                  className="Signup-buttonSubmit"
+                  disabled={loading || !isStepValid(4)}
+                  style={{
+                    opacity: (loading || !isStepValid(4)) ? 0.5 : 1,
+                    cursor: (loading || !isStepValid(4)) ? 'not-allowed' : 'pointer'
+                  }}>
+                  {loading ? (
+                    <span className="Signup-loading">
                       <InfinitySpinner size="sm" />
                       Creating Account...
-                    </span> :
-
-                'Create Account'
-                }
+                    </span>
+                  ) : (
+                    'Create Account'
+                  )}
                 </button>
               </div>
 

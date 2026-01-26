@@ -32,6 +32,9 @@ const OrderTypeSelect = forwardRef<OrderTypeSelectRef, OrderTypeSelectProps>(({
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
 
+  // Track if mouse is down on dropdown to prevent blur from closing it
+  const isMouseDownOnDropdown = useRef(false);
+
   useImperativeHandle(ref, () => ({
     focus: () => {
       containerRef.current?.focus();
@@ -41,7 +44,7 @@ const OrderTypeSelect = forwardRef<OrderTypeSelectRef, OrderTypeSelectProps>(({
       setIsOpen(false);
       setSelectedIndex(-1);
     }
-  }));
+  }), [isOpen]);
 
   useEffect(() => {
     if (initialValue && !value) {
@@ -170,7 +173,12 @@ const OrderTypeSelect = forwardRef<OrderTypeSelectRef, OrderTypeSelectProps>(({
         className={`order-type-select ${disabled ? 'disabled' : ''}`}
         onKeyDown={disabled ? undefined : handleKeyDown}
         onClick={() => !loading && !disabled && setIsOpen(!isOpen)}
-        onBlur={() => setTimeout(() => setIsOpen(false), 150)}
+        onBlur={() => {
+          // Only close if mouse is not down on dropdown (prevents race condition)
+          if (!isMouseDownOnDropdown.current) {
+            setIsOpen(false);
+          }
+        }}
         style={disabled ? { opacity: 0.7, cursor: 'not-allowed', pointerEvents: 'none' } : undefined}
       >
         <span style={{ flex: 1, color: value ? '#333' : '#999' }}>{getDisplayText()}</span>
@@ -178,7 +186,12 @@ const OrderTypeSelect = forwardRef<OrderTypeSelectRef, OrderTypeSelectProps>(({
       </div>
 
       {isOpen && orderTypes.length > 0 && (
-        <ul ref={listRef} className="order-type-dropdown">
+        <ul
+          ref={listRef}
+          className="order-type-dropdown"
+          onMouseDown={() => { isMouseDownOnDropdown.current = true; }}
+          onMouseUp={() => { isMouseDownOnDropdown.current = false; }}
+        >
           {orderTypes.map((type, index) => (
             <li
               key={type._id}

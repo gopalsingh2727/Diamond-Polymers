@@ -32,7 +32,11 @@ import {
   UPDATE_MACHINE_TABLE_ROW_FAILURE,
   DELETE_MACHINE_TABLE_ROW_REQUEST,
   DELETE_MACHINE_TABLE_ROW_SUCCESS,
-  DELETE_MACHINE_TABLE_ROW_FAILURE } from
+  DELETE_MACHINE_TABLE_ROW_FAILURE,
+  FETCH_ORDER_DETAILS_REQUEST,
+  FETCH_ORDER_DETAILS_SUCCESS,
+  FETCH_ORDER_DETAILS_FAILURE,
+  CLEAR_ORDER_DETAILS } from
 './OdersContants';
 import { RootState } from '../rootReducer';
 // Note: Axios fallback interceptor is loaded globally in main.tsx
@@ -1477,9 +1481,32 @@ async (dispatch: Dispatch, getState: () => RootState) => {
       }
     });
 
+    // Extract orders, pagination, and status counts from API response
+    const responseData = response.data?.data || {};
+    const orders = responseData.data || responseData.orders || [];
+
+    // Map API pagination fields to expected format
+    const pagination = responseData.total ? {
+      totalOrders: responseData.total || 0,
+      currentPage: responseData.page || 1,
+      totalPages: responseData.pages || 1,
+      limit: responseData.limit || 50,
+      hasNextPage: (responseData.page || 1) < (responseData.pages || 1),
+      hasPrevPage: (responseData.page || 1) > 1
+    } : null;
+
+    // Extract status counts and summary if available from API
+    const statusCounts = responseData.statusCounts || null;
+    const summary = responseData.summary || { totalOrders: responseData.total || orders.length };
+
     dispatch({
       type: GET_ACCOUNT_ORDERS_SUCCESS,
-      payload: response.data?.data?.data || []  // Fixed: v2 API returns data.data.data (not data.data.orders)
+      payload: {
+        orders,
+        pagination,
+        statusCounts,
+        summary
+      }
     });
   } catch (error: any) {
     dispatch({
@@ -1716,6 +1743,90 @@ async (dispatch: Dispatch, getState: () => any) => {
 export const DELETE_ORDER_REQUEST = 'DELETE_ORDER_REQUEST';
 export const DELETE_ORDER_SUCCESS = 'DELETE_ORDER_SUCCESS';
 export const DELETE_ORDER_FAILURE = 'DELETE_ORDER_FAILURE';
+
+/**
+ * Fetch complete details for a single order
+ * @param orderId - The ID of the order (can be MongoDB _id or custom orderId like DD-2025-0004)
+ * @returns Full order details with all populated fields
+ */
+export const fetchOrderDetails = (orderId: string) =>
+async (dispatch: Dispatch, getState: () => RootState) => {
+  try {
+    console.log('🔍 fetchOrderDetails called for order:', orderId);
+
+    dispatch({ type: FETCH_ORDER_DETAILS_REQUEST });
+
+    const token = getToken(getState);
+
+    if (!token) {
+      throw new Error("Authentication token missing. Please log in again.");
+    }
+
+    if (!orderId || orderId.trim() === '') {
+      throw new Error("Order ID is required");
+    }
+
+    console.log('📤 Fetching order details from API...');
+
+    const response = await axios.get(
+      `${baseUrl}${ORDERS_ENDPOINT}/${orderId}`,
+      {
+        headers: getAuthHeaders(token),
+        timeout: 30000
+      }
+    );
+
+    console.log('✅ Order details fetched successfully:', {
+      orderId: response.data?.data?.orderId,
+      hasData: !!response.data?.data
+    });
+
+    dispatch({
+      type: FETCH_ORDER_DETAILS_SUCCESS,
+      payload: response.data.data
+    });
+
+    return response.data.data;
+
+  } catch (error: any) {
+    console.error('❌ fetchOrderDetails error:', error);
+
+    let errorMessage = "Failed to fetch order details";
+
+    if (axios.isAxiosError(error)) {
+      switch (error.response?.status) {
+        case 401:
+          errorMessage = "Authentication failed. Please log in again.";
+          break;
+        case 403:
+          errorMessage = "Access denied. You don't have permission to view this order.";
+          break;
+        case 404:
+          errorMessage = "Order not found.";
+          break;
+        default:
+          errorMessage = error.response?.data?.message || error.message || "Failed to fetch order details";
+      }
+    } else {
+      errorMessage = error.message || "Network error occurred";
+    }
+
+    dispatch({
+      type: FETCH_ORDER_DETAILS_FAILURE,
+      payload: errorMessage
+    });
+
+    console.error('❌ Final error message:', errorMessage);
+    return null;
+  }
+};
+
+/**
+ * Clear order details from state
+ */
+export const clearOrderDetails = () => ({
+  type: CLEAR_ORDER_DETAILS
+});
 
 /**
  * Delete an order by ID

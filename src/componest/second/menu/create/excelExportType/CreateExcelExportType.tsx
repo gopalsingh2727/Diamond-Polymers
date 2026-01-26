@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
 import { createExcelExportTypeV2 as createExcelExportType, updateExcelExportTypeV2 as updateExcelExportType, deleteExcelExportTypeV2 as deleteExcelExportType } from "../../../../redux/unifiedV2/excelExportTypeActions";
-import { getOptionTypes } from "../../../../redux/option/optionTypeActions";
+import { getOptionTypesV2 as getOptionTypes } from "../../../../redux/unifiedV2/optionTypeActions";
+import { getOrderTypesV2 as getOrderTypes } from "../../../../redux/unifiedV2/orderTypeActions";
 import { AppDispatch } from "../../../../../store";
 import { RootState } from "../../../../redux/rootReducer";
 import { ActionButton } from "../../../../../components/shared/ActionButton";
@@ -173,6 +174,7 @@ const CreateExcelExportType: React.FC<CreateExcelExportTypeProps> = ({ initialDa
   const orderTypeState = useSelector((state: RootState) => state.v2.orderType);
   const rawOrderTypes = orderTypeState?.list;
   const orderTypes = Array.isArray(rawOrderTypes) ? rawOrderTypes : [];
+  const orderTypesLoading = orderTypeState?.loading;
   const userRole = useSelector((state: any) => state.auth?.userData?.role);
 
   // Handle ESC key to go back
@@ -190,8 +192,8 @@ const CreateExcelExportType: React.FC<CreateExcelExportTypeProps> = ({ initialDa
 
   // Load data on mount
   useEffect(() => {
-    dispatch(getOptionTypes({}));
-    // Note: orderTypes are loaded from Redux v2
+    dispatch(getOptionTypes());
+    dispatch(getOrderTypes());
   }, [dispatch]);
 
   // Load existing data when editing
@@ -1779,8 +1781,17 @@ const CreateExcelExportType: React.FC<CreateExcelExportTypeProps> = ({ initialDa
             Select order types to link. Click to expand and see Options, Specs & Calculations.
           </p>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {orderTypes && orderTypes.map((orderType: any) => {
+          {orderTypesLoading ? (
+            <div style={{ padding: '20px', textAlign: 'center', color: '#6b7280' }}>
+              Loading order types...
+            </div>
+          ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minHeight: '100px', maxHeight: '400px', overflowY: 'auto', paddingRight: '4px', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '10px', background: '#fafafa' }}>
+            {!orderTypes || orderTypes.length === 0 ? (
+              <div style={{ padding: '20px', textAlign: 'center', color: '#9ca3af', fontSize: '12px' }}>
+                No order types found. Create order types first.
+              </div>
+            ) : orderTypes.map((orderType: any) => {
               const isLinked = linkedOrderTypes.includes(orderType._id);
               const isExpanded = expandedOrderTypeDetails[orderType._id];
               const details = getOrderTypeDetails(orderType._id);
@@ -2046,6 +2057,7 @@ const CreateExcelExportType: React.FC<CreateExcelExportTypeProps> = ({ initialDa
 
             })}
           </div>
+          )}
 
           {linkedOrderTypes.length === 0 &&
           <div style={{
@@ -2204,8 +2216,12 @@ const CreateExcelExportType: React.FC<CreateExcelExportTypeProps> = ({ initialDa
               Loading option types...
             </div> :
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {optionTypes && optionTypes.map((optionType: any) => {
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minHeight: '100px', maxHeight: '400px', overflowY: 'auto', paddingRight: '4px', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '10px', background: '#fafafa' }}>
+              {!optionTypes || optionTypes.length === 0 ? (
+                <div style={{ padding: '20px', textAlign: 'center', color: '#9ca3af', fontSize: '12px' }}>
+                  No option types found. Create option types first.
+                </div>
+              ) : optionTypes.map((optionType: any) => {
               const isLinked = linkedOptionTypes.includes(optionType._id);
               const isExpanded = expandedOptionTypeSpecs[optionType._id];
               const specs = optionType.specifications || [];

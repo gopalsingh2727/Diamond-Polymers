@@ -12,6 +12,9 @@ export const BRANCH_LIST_REQUEST = "BRANCH_LIST_REQUEST";
 export const BRANCH_LIST_SUCCESS = "BRANCH_LIST_SUCCESS";
 export const BRANCH_LIST_FAIL = "BRANCH_LIST_FAIL";
 
+// Add new branch to list (used after creating a branch)
+export const ADD_BRANCH_TO_LIST = "ADD_BRANCH_TO_LIST";
+
 // Environment Variables
 const baseUrl = import.meta.env.VITE_API_27INFINITY_IN;
 const API_KEY = import.meta.env.VITE_API_KEY;
@@ -154,6 +157,42 @@ export const fetchBranches = () => {
   };
 };
 
+// ✅ NEW: List branches only if not already loaded (prevents repeated API calls)
+export const listBranchesIfNeeded = () => {
+  return async (dispatch: AppDispatch, getState: () => RootState) => {
+    const state = getState();
+    const branchesInState = state.branchList?.branches || [];
+
+    // 1. If branches already exist in Redux state, skip
+    if (branchesInState.length > 0) {
+      console.log('✅ Branches already in Redux, skipping API call');
+      return;
+    }
+
+    // 2. Check localStorage cache (no expiration - cleared only on create/update/delete)
+    try {
+      const cached = localStorage.getItem('branchList_cache');
+      if (cached) {
+        const { branches } = JSON.parse(cached);
+        if (branches && branches.length > 0) {
+          console.log('✅ Loading branches from localStorage cache');
+          dispatch({
+            type: BRANCH_LIST_SUCCESS,
+            payload: branches
+          });
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to read branch cache:', e);
+    }
+
+    // 3. No cache, fetch from API
+    console.log('🔄 No cached branches, fetching from API');
+    return dispatch(listBranches());
+  };
+};
+
 // List All Branches - V2 endpoint
 export const listBranches = () => {
   return async (dispatch: AppDispatch, getState: () => RootState) => {
@@ -179,6 +218,17 @@ export const listBranches = () => {
       // ✅ Extract branches array from V2 response
       const branches = data.data?.data || data.data || data.branches || data || [];
 
+      // ✅ Save to localStorage cache after successful API call
+      try {
+        localStorage.setItem('branchList_cache', JSON.stringify({
+          branches,
+          timestamp: Date.now()
+        }));
+        console.log('✅ Branches saved to localStorage cache');
+      } catch (e) {
+        console.warn('Failed to cache branches:', e);
+      }
+
       dispatch({
         type: BRANCH_LIST_SUCCESS,
         payload: branches
@@ -191,4 +241,10 @@ export const listBranches = () => {
       });
     }
   };
+};
+
+// ✅ Clear branch cache (call after creating/updating/deleting a branch)
+export const clearBranchCache = () => {
+  localStorage.removeItem('branchList_cache');
+  console.log('🗑️ Branch cache cleared');
 };

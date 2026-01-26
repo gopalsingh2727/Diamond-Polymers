@@ -230,21 +230,61 @@ const ReportViewer: React.FC = () => {
                 </table>
 
                 {/* Pagination */}
-                <div className="pagination">
+                <div className="pagination" style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '12px',
+                  padding: '12px 16px',
+                  borderTop: '1px solid #e5e7eb',
+                  marginTop: '16px'
+                }}>
                   <button
                     onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
+                    className="pagination-btn"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      padding: '8px 16px',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '6px',
+                      backgroundColor: currentPage === 1 ? '#f3f4f6' : 'white',
+                      color: currentPage === 1 ? '#9ca3af' : '#374151',
+                      cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                      fontWeight: 500,
+                      fontSize: '14px'
+                    }}
                   >
-                    Previous
+                    ← Previous
                   </button>
-                  <span>
-                    Page {reportData.pagination.page} of {reportData.pagination.totalPages}
+                  <span style={{
+                    fontSize: '14px',
+                    color: '#374151',
+                    fontWeight: 500
+                  }}>
+                    Page {reportData.pagination.page} of {reportData.pagination.totalPages} ({reportData.pagination.total} records)
                   </span>
                   <button
                     onClick={() => setCurrentPage(p => Math.min(reportData.pagination.totalPages, p + 1))}
                     disabled={currentPage === reportData.pagination.totalPages}
+                    className="pagination-btn"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      padding: '8px 16px',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '6px',
+                      backgroundColor: currentPage === reportData.pagination.totalPages ? '#f3f4f6' : 'white',
+                      color: currentPage === reportData.pagination.totalPages ? '#9ca3af' : '#374151',
+                      cursor: currentPage === reportData.pagination.totalPages ? 'not-allowed' : 'pointer',
+                      fontWeight: 500,
+                      fontSize: '14px'
+                    }}
                   >
-                    Next
+                    Next →
                   </button>
                 </div>
               </div>

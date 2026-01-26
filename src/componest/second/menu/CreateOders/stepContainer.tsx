@@ -1,4 +1,4 @@
-import { useState, useEffect, useImperativeHandle, forwardRef } from "react";
+import { useState, useEffect, useImperativeHandle, forwardRef, useCallback } from "react";
 import StepSuggestions from "./SuggestionInput/step";
 import { Printer, FileSpreadsheet, Eye } from "lucide-react";
 
@@ -42,6 +42,8 @@ interface StepContainerProps {
   isEditMode?: boolean;
   orderId?: string;
   customerInfo?: CustomerInfo;
+  machines?: any[];
+  machineTypes?: any[];
 }
 
 export interface StepContainerRef {
@@ -49,16 +51,19 @@ export interface StepContainerRef {
   getMachineIds: () => string[];
   setStepData: (stepData: StepData) => void;
   clearSteps: () => void;
+  isStepPopupOpen: () => boolean;
+  isStepInputFocused: () => boolean;
 }
 
 const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
-  ({ onStepsChange, initialData, isEditMode, orderId, customerInfo }, ref) => {
+  ({ onStepsChange, initialData, isEditMode, orderId, customerInfo, machines = [], machineTypes = [] }, ref) => {
     const [savedStep, setSavedStep] = useState<StepData | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [showStepPopup, setShowStepPopup] = useState(false);
     // Keyboard navigation for step suggestions
     const [stepSuggestionIndex, setStepSuggestionIndex] = useState(-1);
     const [currentStepSuggestions, setCurrentStepSuggestions] = useState<any[]>([]);
+    const [isStepInputFocused, setIsStepInputFocused] = useState(false);
     const [selectedStep, setSelectedStep] = useState<StepData | null>(null);
     const [noteIndex, setNoteIndex] = useState<number | null>(null);
     const [noteText, setNoteText] = useState("");
@@ -78,6 +83,54 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
 
     // View All Steps popup state
     const [showAllStepsPopup, setShowAllStepsPopup] = useState(false);
+
+    // Handle keyboard shortcuts when step popup is open
+    useEffect(() => {
+      if (!showStepPopup) return;
+
+      const handlePopupKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          // Don't trigger if user is in a datetime input
+          const activeElement = document.activeElement as HTMLInputElement;
+          const isDateTimeInput = activeElement?.type === 'datetime-local';
+
+          // Enter saves the step (unless in datetime input)
+          if (!isDateTimeInput) {
+            e.preventDefault();
+            e.stopPropagation();
+            handleSaveStep();
+          }
+        } else if (e.key === 'Escape') {
+          // Stop ALL handlers so global handler doesn't show exit confirmation
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          handleCancelEdit();
+        }
+      };
+
+      // Use capture phase to handle before global handlers
+      document.addEventListener('keydown', handlePopupKeyDown, true);
+      return () => document.removeEventListener('keydown', handlePopupKeyDown, true);
+    }, [showStepPopup]);
+
+    // Handle ESC key when step input is focused (document level to catch before global handler)
+    useEffect(() => {
+      if (!isStepInputFocused) return;
+
+      const handleStepInputEsc = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          // Stop ALL handlers so global handler doesn't show exit confirmation
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          setSearchTerm('');
+          setStepSuggestionIndex(-1);
+          setIsStepInputFocused(false);
+        }
+      };
+
+      document.addEventListener('keydown', handleStepInputEsc, true);
+      return () => document.removeEventListener('keydown', handleStepInputEsc, true);
+    }, [isStepInputFocused]);
 
     // WebSocket live updates for order data
     const wsOrderId = initialData?._id || initialData?.orderId;
@@ -184,17 +237,52 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
             steps: []
           };
 
+          // Get stepProgress for additional machine data (notes, status, operator info)
+          const stepProgress = initialData.stepProgress || [];
+          const firstStepProgress = stepProgress[0] || {};
+          const progressMachines = firstStepProgress.machines || [];
+
+          // Debug logging
+          console.log('📋 Loading order data:', {
+            orderId: initialData.orderId,
+            hasStepProgress: stepProgress.length > 0,
+            progressMachinesCount: progressMachines.length,
+            progressMachines: progressMachines.map((pm: any) => ({
+              machineId: pm.machineId,
+              note: pm.note,
+              status: pm.status
+            }))
+          });
+
           if (firstStep.machines && Array.isArray(firstStep.machines)) {
             // Get machineTableData for operator info
             const machineTableData = initialData.machineTableData || [];
 
             stepData.steps = firstStep.machines.map((machine: any, index: number) => {
-              // Get raw date values
-              const rawStartTime = machine.startTime || machine.StartTime || machine.startedAt;
-              const rawEndTime = machine.endTime || machine.EndTime || machine.completedAt;
-
               // Try to get operator name from machineTableData if not in steps.machines
-              const machineId = machine.machineId || machine.MachineId || '';
+              const machineId = machine.machineId?._id || machine.machineId || machine.MachineId || '';
+              const machineIdStr = machineId?.toString() || '';
+
+              // Find matching progress data for this machine (contains note, status, times)
+              // Try matching by machineId first, then fall back to index
+              let progressMachine = progressMachines.find(
+                (pm: any) => {
+                  const pmId = pm.machineId?._id || pm.machineId || '';
+                  return pmId?.toString() === machineIdStr;
+                }
+              );
+
+              // Fallback: match by index if machineId matching fails
+              if (!progressMachine && progressMachines[index]) {
+                progressMachine = progressMachines[index];
+                console.log(`📝 Note: Using index-based match for machine ${index}, note: ${progressMachine?.note}`);
+              }
+
+              progressMachine = progressMachine || {};
+
+              // Get raw date values - prefer from stepProgress, fallback to steps
+              const rawStartTime = progressMachine.startedAt || machine.startTime || machine.StartTime || machine.startedAt;
+              const rawEndTime = progressMachine.completedAt || machine.endTime || machine.EndTime || machine.completedAt;
               const tableDataEntry = machineTableData.find(
                 (m: any) => m.machineId?.toString() === machineId?.toString()
               );
@@ -222,21 +310,45 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
 
 
 
+              // Look up machine details from machines list using machineId
+              const machineDetails = machines.find(
+                (m: any) => m._id === machineId || m._id?.toString() === machineId?.toString()
+              );
+
+              // Look up machine type name from machineTypes list
+              let machineTypeName = machine.machineTypeName || machine.MachineType || '';
+              if (!machineTypeName && machineDetails) {
+                // machineType could be populated object or just an ID
+                if (typeof machineDetails.machineType === 'object' && machineDetails.machineType) {
+                  // Populated object - API returns "type" field not "name"
+                  machineTypeName = machineDetails.machineType.type || machineDetails.machineType.name || '';
+                } else if (machineDetails.machineType) {
+                  // machineType is an ID string, look it up from machineTypes
+                  const typeId = machineDetails.machineType;
+                  const typeDetails = machineTypes.find(
+                    (t: any) => t._id === typeId || t._id?.toString() === typeId?.toString()
+                  );
+                  // MachineType model uses "type" field not "name"
+                  machineTypeName = typeDetails?.type || typeDetails?.name || '';
+                }
+              }
+
               const mappedMachine = {
                 _Id: machine._id || '',
                 MachineId: machineId,
-                MachineType: machine.machineTypeName || machine.MachineType || '',
-                MachineName: machine.machineName || machine.MachineName || '',
+                MachineType: machineTypeName,
+                MachineName: machine.machineName || machine.MachineName || machineDetails?.name || machineDetails?.machineName || '',
                 OptereName: operatorName,
                 StartTime: formatDateForInput(rawStartTime),
                 EndTime: formatDateForInput(rawEndTime),
 
-                note: machine.note || '',
-                operatorId: machine.operatorId,
-                status: machine.status || (index === 0 ? 'pending' : 'none'),
-                startedAt: machine.startedAt,
-                completedAt: machine.completedAt,
-                reason: machine.reason
+                // Get note from stepProgress.machines (where it's actually stored)
+                note: progressMachine.note || machine.note || '',
+                operatorId: progressMachine.operatorId || machine.operatorId,
+                status: progressMachine.status || machine.status || (index === 0 ? 'pending' : 'none'),
+                startedAt: progressMachine.startedAt || machine.startedAt,
+                completedAt: progressMachine.completedAt || machine.completedAt,
+                reason: progressMachine.reason || machine.reason
               };
 
               // Auto-update status based on current data
@@ -281,14 +393,16 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
           throw new Error('Order ID not found. Table data can only be viewed from existing orders.');
         }
 
-        const url = `${baseUrl}/orders/${tableOrderId}/machines/${machineId}/table-data`;
+        const url = `${baseUrl}/v2/orders/${tableOrderId}/machines/${machineId}/table-data`;
+        console.log('📊 Fetching machine table data:', { tableOrderId, machineId, url });
 
-
+        const API_KEY = import.meta.env.VITE_API_KEY;
         const response = await fetch(url, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'x-api-key': API_KEY
           }
         });
 
@@ -301,9 +415,14 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
         }
 
         const result = await response.json();
-
-
-
+        console.log('📊 Machine table data response:', {
+          success: result.success,
+          hasOperatorSessionData: !!result.data?.operatorSessionData,
+          hasTableData: !!result.data?.tableData,
+          hasTableStructure: !!result.data?.tableStructure,
+          sessionCount: result.data?.operatorSessionData?.sessionCount || 0,
+          rowCount: result.data?.tableData?.rowData?.length || 0
+        });
 
         if (result.success && result.data) {
           setTableData(result.data);
@@ -361,8 +480,11 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
         } catch (error) {
           handleError(error, 'clearSteps');
         }
-      }
-    }));
+      },
+      // Methods to check popup/dropdown state for global ESC handling
+      isStepPopupOpen: () => showStepPopup,
+      isStepInputFocused: () => isStepInputFocused
+    }), [savedStep, showStepPopup, isStepInputFocused]);
 
     useEffect(() => {
       try {
@@ -487,7 +609,7 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
       }
     };
 
-    const handleNoteSave = () => {
+    const handleNoteSave = async () => {
       try {
         if (noteIndex === null) return;
 
@@ -497,6 +619,34 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
           if (savedStep) setSavedStep(updated);else
           setSelectedStep(updated);
         }
+
+        // Save to backend if in edit mode with an existing order
+        const tableOrderId = initialData?._id || initialData?.orderId;
+        if (isEditMode && tableOrderId && updated?.steps[noteIndex]) {
+          const machineId = updated.steps[noteIndex].MachineId || updated.steps[noteIndex].machineId;
+          if (machineId) {
+            const token = localStorage.getItem('authToken');
+            const baseUrl = import.meta.env.VITE_API_27INFINITY_IN || '';
+
+            try {
+              const response = await fetch(`${baseUrl}/v2/orders/${tableOrderId}/machines/${machineId}/note`, {
+                method: 'PATCH',
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ note: noteText })
+              });
+
+              if (!response.ok) {
+                console.error('Failed to save note to backend');
+              }
+            } catch (apiError) {
+              console.error('Error saving note to backend:', apiError);
+            }
+          }
+        }
+
         setNoteIndex(null);
         setNoteText("");
       } catch (error) {
@@ -556,7 +706,11 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
 
 
         setIsLoading(false);
+        // First handle the selection (this opens the popup)
         handleSelect(formattedStep);
+        // Then close the dropdown and reset selection
+        setIsStepInputFocused(false);
+        setStepSuggestionIndex(-1);
       } catch (error) {
         handleError(error, 'handleSuggestionSelect');
       }
@@ -564,44 +718,51 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
 
     // Keyboard handler for step search input
     const handleStepSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (currentStepSuggestions.length === 0) return;
-
       switch (e.key) {
         case 'ArrowDown':
+          if (currentStepSuggestions.length === 0) return;
           e.preventDefault();
           setStepSuggestionIndex((prev) =>
             prev < currentStepSuggestions.length - 1 ? prev + 1 : 0
           );
           break;
         case 'ArrowUp':
+          if (currentStepSuggestions.length === 0) return;
           e.preventDefault();
           setStepSuggestionIndex((prev) =>
             prev > 0 ? prev - 1 : currentStepSuggestions.length - 1
           );
           break;
         case 'Enter':
+          if (currentStepSuggestions.length === 0) return;
           e.preventDefault();
-          if (stepSuggestionIndex >= 0 && stepSuggestionIndex < currentStepSuggestions.length) {
-            handleSuggestionSelect(currentStepSuggestions[stepSuggestionIndex]);
-            setStepSuggestionIndex(-1);
+          e.stopPropagation();
+          // If an item is selected, use that. Otherwise select the first item.
+          const indexToSelect = stepSuggestionIndex >= 0 ? stepSuggestionIndex : 0;
+          if (indexToSelect < currentStepSuggestions.length) {
+            handleSuggestionSelect(currentStepSuggestions[indexToSelect]);
           }
           break;
         case 'Escape':
           e.preventDefault();
+          e.stopPropagation();
           setSearchTerm('');
           setStepSuggestionIndex(-1);
+          setIsStepInputFocused(false);
+          // Blur the input to close dropdown
+          (e.target as HTMLInputElement).blur();
           break;
       }
     };
 
     // Handle suggestions change from StepSuggestions component
-    const handleStepSuggestionsChange = (suggestions: any[]) => {
+    const handleStepSuggestionsChange = useCallback((suggestions: any[]) => {
       setCurrentStepSuggestions(suggestions);
       // Reset selection when suggestions change
       if (suggestions.length === 0) {
         setStepSuggestionIndex(-1);
       }
-    };
+    }, []);
 
     const handleCancelEdit = () => {
       try {
@@ -1046,7 +1207,7 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
               <div class="info-grid">
                 ${tableData.order ? `
                   <div><strong>Order ID:</strong> ${tableData.order.orderId}</div>
-                  <div><strong>Customer:</strong> ${tableData.order.customer}</div>
+                  <div><strong>Customer:</strong> ${tableData.order.customer?.companyName || (typeof tableData.order.customer === 'string' ? tableData.order.customer : 'N/A')}</div>
                   <div><strong>Order Status:</strong> ${tableData.order.status}</div>
                 ` : ''}
                 ${tableData.machine ? `
@@ -1174,7 +1335,7 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
         csvRows.push(['--- Order & Machine Details ---']);
         if (tableData.order) {
           csvRows.push(['Order ID:', tableData.order.orderId]);
-          csvRows.push(['Customer:', tableData.order.customer]);
+          csvRows.push(['Customer:', tableData.order.customer?.companyName || (typeof tableData.order.customer === 'string' ? tableData.order.customer : 'N/A')]);
           csvRows.push(['Order Status:', tableData.order.status]);
         }
         if (tableData.machine) {
@@ -1308,21 +1469,26 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
               <input
               id="searchInput"
               type="text"
-              placeholder="Enter step name to search..."
+              placeholder="Click to see all steps or type to search..."
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
                 setStepSuggestionIndex(-1); // Reset selection when typing
               }}
+              onFocus={() => setIsStepInputFocused(true)}
+              onBlur={() => setTimeout(() => setIsStepInputFocused(false), 200)}
               onKeyDown={handleStepSearchKeyDown}
               className="inputBox"
               style={{ width: '100%', padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: '6px', fontSize: '13px' }} />
 
+              {isStepInputFocused && (
               <StepSuggestions
-              stepName={searchTerm}
-              onSelect={handleSuggestionSelect}
-              selectedIndex={stepSuggestionIndex}
-              onSuggestionsChange={handleStepSuggestionsChange} />
+                stepName={searchTerm}
+                onSelect={handleSuggestionSelect}
+                selectedIndex={stepSuggestionIndex}
+                onSuggestionsChange={handleStepSuggestionsChange}
+                showAll={isStepInputFocused} />
+              )}
 
             </div>
           </div>
@@ -1749,7 +1915,7 @@ const StepContainer = forwardRef<StepContainerRef, StepContainerProps>(
                         {tableData.order &&
                     <>
                             <div><strong>Order ID:</strong> {tableData.order.orderId}</div>
-                            <div><strong>Customer:</strong> {tableData.order.customer}</div>
+                            <div><strong>Customer:</strong> {tableData.order.customer?.companyName || (typeof tableData.order.customer === 'string' ? tableData.order.customer : 'N/A')}</div>
                             <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
                               <strong>Order Status:</strong>
                               <span style={{

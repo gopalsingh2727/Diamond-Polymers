@@ -15,6 +15,39 @@ import SectionHelpIcon from '../../../../../components/shared/SectionHelpIcon';
 // Types
 type ColumnDataType = 'text' | 'number' | 'formula' | 'dropdown' | 'boolean' | 'date' | 'image' | 'file' | 'audio';
 type FormulaType = 'SUM' | 'AVERAGE' | 'COUNT' | 'MULTIPLY' | 'DIVIDE' | 'CUSTOM';
+type AlertCondition = 'equals' | 'not_equals' | 'greater_than' | 'less_than' | 'greater_or_equal' | 'less_or_equal' | 'is_empty' | 'is_not_empty';
+type AlertSeverity = 'info' | 'warning' | 'error';
+type AlertSourceType = 'self' | 'optionSpec' | 'formula';
+
+// Alert configuration for validation rules
+type CompareValueType = 'static' | 'formula';
+
+interface AlertConfig {
+  enabled: boolean;
+  // Data source for alert evaluation
+  sourceType: AlertSourceType; // Where to get value from: self (column value), optionSpec, formula
+  // Option Spec source fields
+  optionTypeId?: string;
+  optionTypeName?: string;
+  specField?: string;
+  specFieldUnit?: string;
+  // Formula source
+  formula?: {
+    expression: string;
+    dependencies: string[];
+  };
+  // Comparison
+  condition: AlertCondition;
+  // Compare value configuration
+  compareValueType?: CompareValueType; // static (fixed value) or formula
+  value: string | number;
+  compareFormula?: {
+    expression: string;
+    dependencies: string[];
+  };
+  message: string;
+  severity: AlertSeverity;
+}
 
 interface ColumnConfig {
   id: string;
@@ -45,6 +78,8 @@ interface ColumnConfig {
   optionSpecName?: string; // NEW: Selected OptionSpec name
   specField?: string;
   specFieldUnit?: string;
+  // Alert/Validation config
+  alert?: AlertConfig;
 }
 
 interface CustomerFieldsConfig {
@@ -121,7 +156,7 @@ interface DisplayItemConfig {
   id: string;
   label: string;
   displayType: DisplayItemType;
-  sourceType: 'optionSpec' | 'order' | 'customer' | 'formula';
+  sourceType: 'optionSpec' | 'customer' | 'formula';
   // For optionSpec source
   optionTypeId?: string;
   optionTypeName?: string;
@@ -138,6 +173,8 @@ interface DisplayItemConfig {
   sourceField?: string;
   order: number;
   isVisible: boolean;
+  // Alert/Validation config
+  alert?: AlertConfig;
 }
 
 // Selected Specification Config - which spec fields to show
@@ -456,6 +493,17 @@ const ViewTemplateWizard: React.FC<ViewTemplateWizardProps> = ({ initialData, on
       setLoadingOptionSpecs((prev) => ({ ...prev, [optionTypeId]: false }));
     }
   }, [dispatch, optionSpecsByType, loadingOptionSpecs]);
+
+  // Auto-fetch OptionSpecs when optionTypeIds are loaded (especially for edit mode)
+  useEffect(() => {
+    if (config.optionTypeIds.length > 0) {
+      config.optionTypeIds.forEach((typeId: string) => {
+        if (!optionSpecsByType[typeId] && !loadingOptionSpecs[typeId]) {
+          fetchOptionSpecsForType(typeId);
+        }
+      });
+    }
+  }, [config.optionTypeIds, fetchOptionSpecsForType, optionSpecsByType, loadingOptionSpecs]);
 
   // Check for existing template when Machine + OrderType is selected
   // Rule: One Order Type = One View Template per Machine
@@ -1469,7 +1517,6 @@ const ViewTemplateWizard: React.FC<ViewTemplateWizardProps> = ({ initialData, on
 
                         <option value="customer">Customer</option>
                         <option value="optionSpec">Option Specifications</option>
-                        <option value="order">Order</option>
                         <option value="formula">Formula (combine multiple fields)</option>
                       </select>
                     </div>
@@ -1574,7 +1621,25 @@ const ViewTemplateWizard: React.FC<ViewTemplateWizardProps> = ({ initialData, on
                             {item.optionSpecId && (() => {
                       const optionSpecs = optionSpecsByType[item.optionTypeId || ''] || [];
                       const selectedOptionSpec = optionSpecs.find((s: any) => s._id === item.optionSpecId);
-                      return selectedOptionSpec?.specifications?.map((spec: any, idx: number) =>
+                      return selectedOptionSpec?.specifications
+                        ?.filter((spec: any) => {
+                          // Filter spec fields based on selected display type
+                          if (item.displayType === 'image') {
+                            return spec.dataType === 'file' || spec.dataType === 'link';
+                          }
+                          if (item.displayType === 'number') {
+                            return spec.dataType === 'number';
+                          }
+                          if (item.displayType === 'boolean') {
+                            return spec.dataType === 'boolean';
+                          }
+                          if (item.displayType === 'text') {
+                            return spec.dataType === 'string' || spec.dataType === 'text' || !spec.dataType;
+                          }
+                          // For formula or other types, show all
+                          return true;
+                        })
+                        ?.map((spec: any, idx: number) =>
                       <option key={idx} value={spec.name}>
                                   {spec.name} {spec.unit ? `(${spec.unit})` : ''} - {spec.dataType}
                                 </option>
@@ -1706,41 +1771,6 @@ const ViewTemplateWizard: React.FC<ViewTemplateWizardProps> = ({ initialData, on
                     </div>
             }
 
-                  {/* Order Source */}
-                  {item.sourceType === 'order' &&
-            <div className="viewTemplateWizard-formRow">
-                      <div className="viewTemplateWizard-formGroup">
-                        <label>Order Field</label>
-                        <select
-                  value={item.sourceField || ''}
-                  onChange={(e) => {
-                    updateDisplayItem(index, 'sourceField', e.target.value);
-                    if (!item.label && e.target.value) {
-                      updateDisplayItem(index, 'label', e.target.value.split('.').pop() || '');
-                    }
-                  }}>
-
-                          <option value="">Select Field</option>
-                          <optgroup label="Order Details">
-                            <option value="order.orderId">Order ID</option>
-                            <option value="order.orderDate">Order Date</option>
-                            <option value="order.deliveryDate">Delivery Date</option>
-                            <option value="order.quantity">Quantity</option>
-                            <option value="order.instructions">Instructions</option>
-                          </optgroup>
-                          <optgroup label="Order Status">
-                            <option value="order.status">Status</option>
-                            <option value="order.priority">Priority</option>
-                          </optgroup>
-                          <optgroup label="Order Media">
-                            <option value="order.imageUrl">Order Image</option>
-                            <option value="order.attachments">Attachments</option>
-                          </optgroup>
-                        </select>
-                      </div>
-                    </div>
-            }
-
                   {/* Formula Source - Combine multiple spec fields */}
                   {item.sourceType === 'formula' &&
             <div className="viewTemplateWizard-formulaBuilder" style={{ marginTop: '12px' }}>
@@ -1837,11 +1867,6 @@ const ViewTemplateWizard: React.FC<ViewTemplateWizardProps> = ({ initialData, on
                   {item.sourceField && item.sourceType === 'customer' &&
             <div className="viewTemplateWizard-displayItemPreview">
                       <strong>Source:</strong> Customer → {item.sourceField.replace('customer.', '')}
-                    </div>
-            }
-                  {item.sourceField && item.sourceType === 'order' &&
-            <div className="viewTemplateWizard-displayItemPreview">
-                      <strong>Source:</strong> Order → {item.sourceField.replace('order.', '')}
                     </div>
             }
                   {item.formula?.expression && item.sourceType === 'formula' &&
@@ -2537,6 +2562,126 @@ const ViewTemplateWizard: React.FC<ViewTemplateWizardProps> = ({ initialData, on
                     Visible
                   </label>
                 </div>
+
+                {/* Alert Configuration for Column */}
+                <div className="viewTemplateWizard-alertConfig" style={{
+                  marginTop: '12px',
+                  padding: '12px',
+                  background: col.alert?.enabled ? '#fef3c7' : '#f9fafb',
+                  border: col.alert?.enabled ? '1px solid #f59e0b' : '1px solid #e5e7eb',
+                  borderRadius: '8px'
+                }}>
+                  <label className="viewTemplateWizard-checkbox" style={{ marginBottom: '8px', fontWeight: '600' }}>
+                    <input
+                type="checkbox"
+                checked={col.alert?.enabled || false}
+                onChange={(e) => {
+                  updateColumn(index, 'alert', {
+                    ...col.alert,
+                    enabled: e.target.checked,
+                    sourceType: col.alert?.sourceType || 'self',
+                    condition: col.alert?.condition || 'equals',
+                    value: col.alert?.value ?? 0,
+                    message: col.alert?.message || '',
+                    severity: col.alert?.severity || 'warning'
+                  });
+                }} />
+                    ⚠️ Enable Alert
+                  </label>
+
+                  {col.alert?.enabled && (
+                    <>
+                      {/* Condition and Value */}
+                      <div className="viewTemplateWizard-formRow" style={{ marginTop: '8px' }}>
+                        <div className="viewTemplateWizard-formGroup">
+                          <label>Condition</label>
+                          <select
+                            value={col.alert?.condition || 'equals'}
+                            onChange={(e) => updateColumn(index, 'alert', { ...col.alert, condition: e.target.value })}>
+                            <option value="equals">Equals (=)</option>
+                            <option value="not_equals">Not Equals (≠)</option>
+                            <option value="greater_than">Greater Than (&gt;)</option>
+                            <option value="less_than">Less Than (&lt;)</option>
+                            <option value="greater_or_equal">Greater or Equal (≥)</option>
+                            <option value="less_or_equal">Less or Equal (≤)</option>
+                            <option value="is_empty">Is Empty</option>
+                            <option value="is_not_empty">Is Not Empty</option>
+                          </select>
+                        </div>
+
+                        <div className="viewTemplateWizard-formGroup">
+                          <label>Severity</label>
+                          <select
+                            value={col.alert?.severity || 'warning'}
+                            onChange={(e) => updateColumn(index, 'alert', { ...col.alert, severity: e.target.value })}>
+                            <option value="info">ℹ️ Info</option>
+                            <option value="warning">⚠️ Warning</option>
+                            <option value="error">🚨 Error</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Compare Value Configuration */}
+                      {!['is_empty', 'is_not_empty'].includes(col.alert?.condition || '') && (
+                        <div className="viewTemplateWizard-formRow" style={{ marginTop: '8px' }}>
+                          <div className="viewTemplateWizard-formGroup">
+                            <label>Compare Value Type</label>
+                            <select
+                              value={col.alert?.compareValueType || 'static'}
+                              onChange={(e) => updateColumn(index, 'alert', {
+                                ...col.alert,
+                                compareValueType: e.target.value as CompareValueType,
+                                compareFormula: e.target.value === 'formula' ? col.alert?.compareFormula : undefined
+                              })}>
+                              <option value="static">Static Value</option>
+                              <option value="formula">Formula (Calculated)</option>
+                            </select>
+                          </div>
+
+                          {(col.alert?.compareValueType || 'static') === 'static' ? (
+                            <div className="viewTemplateWizard-formGroup" style={{ flex: 2 }}>
+                              <label>Compare Value</label>
+                              <input
+                                type={col.dataType === 'number' || col.dataType === 'formula' ? 'number' : 'text'}
+                                value={col.alert?.value ?? ''}
+                                onChange={(e) => updateColumn(index, 'alert', {
+                                  ...col.alert,
+                                  value: col.dataType === 'number' || col.dataType === 'formula' ? Number(e.target.value) : e.target.value
+                                })}
+                                placeholder="e.g., 0" />
+                            </div>
+                          ) : (
+                            <div className="viewTemplateWizard-formGroup" style={{ flex: 2 }}>
+                              <label>Compare Formula</label>
+                              <input
+                                type="text"
+                                value={col.alert?.compareFormula?.expression || ''}
+                                onChange={(e) => updateColumn(index, 'alert', {
+                                  ...col.alert,
+                                  compareFormula: {
+                                    expression: e.target.value,
+                                    dependencies: e.target.value.match(/\{([^}]+)\}/g)?.map((m: string) => m.slice(1, -1)) || []
+                                  }
+                                })}
+                                placeholder="e.g., {wt} - {tare} or {col1} * {col2}"
+                                style={{ fontFamily: 'monospace' }} />
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Alert Message */}
+                      <div className="viewTemplateWizard-formGroup" style={{ marginTop: '8px' }}>
+                        <label>Alert Message</label>
+                        <input
+                          type="text"
+                          value={col.alert?.message || ''}
+                          onChange={(e) => updateColumn(index, 'alert', { ...col.alert, message: e.target.value })}
+                          placeholder={`e.g., ${col.label || col.name || 'Value'} is ${col.alert?.condition === 'equals' ? 'equal to' : col.alert?.condition?.replace('_', ' ')} ${col.alert?.value ?? 0}`} />
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
         }
           </div>
@@ -3102,6 +3247,10 @@ const ViewTemplateWizard: React.FC<ViewTemplateWizardProps> = ({ initialData, on
                         updateDisplayItem(index, 'optionTypeName', selectedOptType?.name || '');
                         updateDisplayItem(index, 'optionSpecId', '');
                         updateDisplayItem(index, 'specField', '');
+                        // Fetch option specs for this type if not already loaded
+                        if (e.target.value && !optionSpecsByType[e.target.value]) {
+                          fetchOptionSpecsForType(e.target.value);
+                        }
                       }}>
 
                                 <option value="">Select Option Type</option>
@@ -3123,11 +3272,29 @@ const ViewTemplateWizard: React.FC<ViewTemplateWizardProps> = ({ initialData, on
                           updateDisplayItem(index, 'label', e.target.value);
                         }
                       }}
-                      disabled={!item.optionTypeId}>
+                      disabled={!item.optionTypeId || loadingOptionSpecs[item.optionTypeId || '']}>
 
-                                <option value="">Select Spec Field</option>
+                                <option value="">{loadingOptionSpecs[item.optionTypeId || ''] ? 'Loading specs...' : 'Select Spec Field'}</option>
                                 {item.optionTypeId && (optionSpecsByType[item.optionTypeId] || []).flatMap((spec: any) =>
-                      (spec.specifications || []).map((s: any) =>
+                      (spec.specifications || [])
+                      .filter((s: any) => {
+                        // Filter spec fields based on selected display type
+                        if (item.displayType === 'image') {
+                          return s.dataType === 'file' || s.dataType === 'link';
+                        }
+                        if (item.displayType === 'number') {
+                          return s.dataType === 'number';
+                        }
+                        if (item.displayType === 'boolean') {
+                          return s.dataType === 'boolean';
+                        }
+                        if (item.displayType === 'text') {
+                          return s.dataType === 'string' || s.dataType === 'text' || !s.dataType;
+                        }
+                        // For formula or other types, show all
+                        return true;
+                      })
+                      .map((s: any) =>
                       <option key={`${spec._id}-${s.name}`} value={s.name}>
                                       {s.name} {s.unit ? `(${s.unit})` : ''} - {s.dataType}
                                     </option>
@@ -3600,6 +3767,10 @@ const ViewTemplateWizard: React.FC<ViewTemplateWizardProps> = ({ initialData, on
                           updateColumn(index, 'optionSpecName', '');
                           updateColumn(index, 'specField', '');
                           updateColumn(index, 'specFieldUnit', '');
+                          // Fetch option specs for this type if not already loaded
+                          if (e.target.value && !optionSpecsByType[e.target.value]) {
+                            fetchOptionSpecsForType(e.target.value);
+                          }
                         }}>
 
                                   <option value="">Select Option Type</option>
@@ -3623,9 +3794,9 @@ const ViewTemplateWizard: React.FC<ViewTemplateWizardProps> = ({ initialData, on
                           updateColumn(index, 'specField', '');
                           updateColumn(index, 'specFieldUnit', '');
                         }}
-                        disabled={!col.optionTypeId}>
+                        disabled={!col.optionTypeId || loadingOptionSpecs[col.optionTypeId || '']}>
 
-                                  <option value="">Select Option Spec</option>
+                                  <option value="">{loadingOptionSpecs[col.optionTypeId || ''] ? 'Loading specs...' : 'Select Option Spec'}</option>
                                   {col.optionTypeId && (optionSpecsByType[col.optionTypeId] || []).map((spec: any) =>
                         <option key={spec._id} value={spec._id}>
                                       {spec.name} ({spec.code})
@@ -3704,6 +3875,126 @@ const ViewTemplateWizard: React.FC<ViewTemplateWizardProps> = ({ initialData, on
 
                             Visible
                           </label>
+                        </div>
+
+                        {/* Alert Configuration for Column */}
+                        <div className="viewTemplateWizard-alertConfig" style={{
+                          marginTop: '12px',
+                          padding: '12px',
+                          background: col.alert?.enabled ? '#fef3c7' : '#f9fafb',
+                          border: col.alert?.enabled ? '1px solid #f59e0b' : '1px solid #e5e7eb',
+                          borderRadius: '8px'
+                        }}>
+                          <label className="viewTemplateWizard-checkbox" style={{ marginBottom: '8px', fontWeight: '600' }}>
+                            <input
+                      type="checkbox"
+                      checked={col.alert?.enabled || false}
+                      onChange={(e) => {
+                        updateColumn(index, 'alert', {
+                          ...col.alert,
+                          enabled: e.target.checked,
+                          sourceType: col.alert?.sourceType || 'self',
+                          condition: col.alert?.condition || 'equals',
+                          value: col.alert?.value ?? 0,
+                          message: col.alert?.message || '',
+                          severity: col.alert?.severity || 'warning'
+                        });
+                      }} />
+                            ⚠️ Enable Alert
+                          </label>
+
+                          {col.alert?.enabled && (
+                            <>
+                              {/* Condition and Value */}
+                              <div className="viewTemplateWizard-formRow" style={{ marginTop: '8px' }}>
+                                <div className="viewTemplateWizard-formGroup">
+                                  <label>Condition</label>
+                                  <select
+                                    value={col.alert?.condition || 'equals'}
+                                    onChange={(e) => updateColumn(index, 'alert', { ...col.alert, condition: e.target.value })}>
+                                    <option value="equals">Equals (=)</option>
+                                    <option value="not_equals">Not Equals (≠)</option>
+                                    <option value="greater_than">Greater Than (&gt;)</option>
+                                    <option value="less_than">Less Than (&lt;)</option>
+                                    <option value="greater_or_equal">Greater or Equal (≥)</option>
+                                    <option value="less_or_equal">Less or Equal (≤)</option>
+                                    <option value="is_empty">Is Empty</option>
+                                    <option value="is_not_empty">Is Not Empty</option>
+                                  </select>
+                                </div>
+
+                                <div className="viewTemplateWizard-formGroup">
+                                  <label>Severity</label>
+                                  <select
+                                    value={col.alert?.severity || 'warning'}
+                                    onChange={(e) => updateColumn(index, 'alert', { ...col.alert, severity: e.target.value })}>
+                                    <option value="info">ℹ️ Info</option>
+                                    <option value="warning">⚠️ Warning</option>
+                                    <option value="error">🚨 Error</option>
+                                  </select>
+                                </div>
+                              </div>
+
+                              {/* Compare Value Configuration */}
+                              {!['is_empty', 'is_not_empty'].includes(col.alert?.condition || '') && (
+                                <div className="viewTemplateWizard-formRow" style={{ marginTop: '8px' }}>
+                                  <div className="viewTemplateWizard-formGroup">
+                                    <label>Compare Value Type</label>
+                                    <select
+                                      value={col.alert?.compareValueType || 'static'}
+                                      onChange={(e) => updateColumn(index, 'alert', {
+                                        ...col.alert,
+                                        compareValueType: e.target.value as CompareValueType,
+                                        compareFormula: e.target.value === 'formula' ? col.alert?.compareFormula : undefined
+                                      })}>
+                                      <option value="static">Static Value</option>
+                                      <option value="formula">Formula (Calculated)</option>
+                                    </select>
+                                  </div>
+
+                                  {(col.alert?.compareValueType || 'static') === 'static' ? (
+                                    <div className="viewTemplateWizard-formGroup" style={{ flex: 2 }}>
+                                      <label>Compare Value</label>
+                                      <input
+                                        type={col.dataType === 'number' || col.dataType === 'formula' ? 'number' : 'text'}
+                                        value={col.alert?.value ?? ''}
+                                        onChange={(e) => updateColumn(index, 'alert', {
+                                          ...col.alert,
+                                          value: col.dataType === 'number' || col.dataType === 'formula' ? Number(e.target.value) : e.target.value
+                                        })}
+                                        placeholder="e.g., 0" />
+                                    </div>
+                                  ) : (
+                                    <div className="viewTemplateWizard-formGroup" style={{ flex: 2 }}>
+                                      <label>Compare Formula</label>
+                                      <input
+                                        type="text"
+                                        value={col.alert?.compareFormula?.expression || ''}
+                                        onChange={(e) => updateColumn(index, 'alert', {
+                                          ...col.alert,
+                                          compareFormula: {
+                                            expression: e.target.value,
+                                            dependencies: e.target.value.match(/\{([^}]+)\}/g)?.map((m: string) => m.slice(1, -1)) || []
+                                          }
+                                        })}
+                                        placeholder="e.g., {wt} - {tare} or {col1} * {col2}"
+                                        style={{ fontFamily: 'monospace' }} />
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
+                              {/* Alert Message */}
+                              <div className="viewTemplateWizard-formGroup" style={{ marginTop: '8px' }}>
+                                <label>Alert Message</label>
+                                <input
+                                  type="text"
+                                  value={col.alert?.message || ''}
+                                  onChange={(e) => updateColumn(index, 'alert', { ...col.alert, message: e.target.value })}
+                                  placeholder={`e.g., ${col.label || col.name || 'Value'} is ${col.alert?.condition === 'equals' ? 'equal to' : col.alert?.condition?.replace('_', ' ')} ${col.alert?.value ?? 0}`} />
+                              </div>
+                            </>
+                          )}
                         </div>
                       </div>
               }
@@ -4389,21 +4680,6 @@ const ViewTemplateWizard: React.FC<ViewTemplateWizardProps> = ({ initialData, on
                   <h4>Customer Information</h4>
                   <div className="viewTemplateWizard-previewGrid">
                     {config.displayItems.filter((d) => d.sourceType === 'customer').map((item) =>
-                <div key={item.id} className="viewTemplateWizard-previewItem">
-                        <span className="label">{item.label}</span>
-                        <span className="value">Sample Data</span>
-                      </div>
-                )}
-                  </div>
-                </div>
-            }
-
-              {/* Order Display Section */}
-              {config.displayItems.filter((d) => d.sourceType === 'order').length > 0 &&
-            <div className="viewTemplateWizard-previewSection">
-                  <h4>Order Information</h4>
-                  <div className="viewTemplateWizard-previewGrid">
-                    {config.displayItems.filter((d) => d.sourceType === 'order').map((item) =>
                 <div key={item.id} className="viewTemplateWizard-previewItem">
                         <span className="label">{item.label}</span>
                         <span className="value">Sample Data</span>

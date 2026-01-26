@@ -10,6 +10,7 @@ import { deleteOrder } from "../../../redux/oders/OdersActions";
 import { ToastContainer } from "../../../../components/shared/Toast";
 import { useCRUD } from "../../../../hooks/useCRUD";
 import { crudAPI } from "../../../../utils/crudHelpers";
+import { isValidFileUrl } from "../../../../utils/security";
 import CustomerName, { CustomerNameRef } from "./account/CurstomerName";
 import OrderTypeSelect, { OrderTypeSelectRef } from "./OrderTypeSelect";
 import Notes from "./notes";
@@ -140,7 +141,9 @@ const transformOptionsForEdit = (orderData: any): any[] => {
     // Transform specificationValues from array to object format
     const specsObject: {[key: string]: any;} = {};
     if (Array.isArray(opt.specificationValues)) {
+      console.log('📂 Loading specificationValues from DB:', opt.specificationValues);
       opt.specificationValues.forEach((spec: any) => {
+        console.log(`📂 Spec ${spec.name}:`, spec.value, 'dataType:', spec.dataType);
         specsObject[spec.name] = spec.value;
       });
     } else if (opt.specificationValues && typeof opt.specificationValues === 'object') {
@@ -172,7 +175,7 @@ const transformOptionsForEdit = (orderData: any): any[] => {
 // Helper function to check if value is a file
 const isFileValue = (value: any): boolean => {
   if (!value || typeof value !== 'object') return false;
-  return Boolean(value.fileName || value.url || value.path);
+  return Boolean(value.fileName || value.fileUrl || value.url || value.path);
 };
 
 // Helper function to render spec values
@@ -192,7 +195,7 @@ const CreateOrders = () => {
 
   // Enhanced edit mode detection
   const { orderData, isEdit, isEditMode, hideCustomerDetails, isReceivedForwardedOrder } = location.state || {};
-  const editMode = Boolean(isEdit || isEditMode || orderData && orderData._id);
+  const editMode = Boolean(isEdit || isEditMode || (orderData && orderData._id));
   const shouldHideCustomerDetails = Boolean(hideCustomerDetails || isReceivedForwardedOrder);
 
   // Debug: Log order data to check createdByName
@@ -207,6 +210,30 @@ const CreateOrders = () => {
   // Delete confirmation modal state
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  // Exit confirmation modal state
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+
+  // Handle keyboard for exit confirmation dialog
+  useEffect(() => {
+    if (!showExitConfirm) return;
+
+    const handleExitDialogKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        setShowExitConfirm(false);
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        e.stopPropagation();
+        setShowExitConfirm(false);
+        navigate(-1);
+      }
+    };
+
+    document.addEventListener('keydown', handleExitDialogKeyDown, true);
+    return () => document.removeEventListener('keydown', handleExitDialogKeyDown, true);
+  }, [showExitConfirm, navigate]);
 
   // Print/Excel modal state
   const [showPrintExcelModal, setShowPrintExcelModal] = useState(false);
@@ -223,7 +250,9 @@ const CreateOrders = () => {
     loading: formDataLoading,
     error: formDataError,
     allData,
-    optionTypes
+    optionTypes,
+    machines,
+    machineTypes
   } = useOrderFormData();
 
 
@@ -278,10 +307,10 @@ const CreateOrders = () => {
           e.preventDefault();
           e.stopPropagation();
 
-          // Double ESC (within 500ms) - close popup AND go to menu
+          // Double ESC (within 500ms) - close popup AND show exit confirmation
           if (timeSinceLastEsc < 500) {
             optionsInputRef.current.closePopup();
-            navigate(-1);
+            setShowExitConfirm(true);
           } else {
             // Single ESC - close popup, focus order type
             optionsInputRef.current.closePopup();
@@ -298,9 +327,21 @@ const CreateOrders = () => {
           return;
         }
 
-        // Nothing is open - go back to menu
+        // Check if step popup is open (let stepContainer handle it)
+        if (stepContainerRef.current?.isStepPopupOpen?.()) {
+          // Let the step popup's own ESC handler deal with it
+          return;
+        }
+
+        // Check if step input is focused with dropdown showing (let stepContainer handle it)
+        if (stepContainerRef.current?.isStepInputFocused?.()) {
+          // Let the step input's own ESC handler deal with it
+          return;
+        }
+
+        // Nothing is open - show exit confirmation dialog
         e.preventDefault();
-        navigate(-1);
+        setShowExitConfirm(true);
       }
     };
 
@@ -818,7 +859,7 @@ const CreateOrders = () => {
         const cleanPhone = phoneNumber.replace(/\D/g, '');
         const formattedPhone = cleanPhone.startsWith('91') ? cleanPhone : `91${cleanPhone}`;
         const whatsappUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
-        window.open(whatsappUrl, '_blank');
+        window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
         toast.success('Success', 'Opening WhatsApp...');
         return;
       }
@@ -998,6 +1039,54 @@ const CreateOrders = () => {
               style={{ padding: '10px 24px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
 
                 {deleting ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+
+      {/* Exit Confirmation Modal */}
+      {showExitConfirm &&
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0,0,0,0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000
+      }}>
+          <div style={{
+          background: 'white',
+          padding: '24px',
+          borderRadius: '12px',
+          maxWidth: '400px',
+          width: '90%',
+          textAlign: 'center'
+        }}>
+            <div style={{ fontSize: '48px', marginBottom: '16px' }}>🚪</div>
+            <h3 style={{ margin: '0 0 8px 0', color: '#1f2937' }}>Go Back to Menu?</h3>
+            <p style={{ color: '#6b7280', marginBottom: '24px' }}>
+              Are you sure you want to leave this page? Any unsaved changes will be lost.
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button
+              type="button"
+              onClick={() => setShowExitConfirm(false)}
+              style={{ padding: '10px 24px', background: '#e5e7eb', color: '#374151', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 500 }}>
+                No
+              </button>
+              <button
+              type="button"
+              onClick={() => {
+                setShowExitConfirm(false);
+                navigate(-1);
+              }}
+              style={{ padding: '10px 24px', background: '#FF6B35', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 500 }}>
+                Yes
               </button>
             </div>
           </div>
@@ -1348,7 +1437,9 @@ const CreateOrders = () => {
                               address: orderData.customer.address || orderData.customer.address1,
                               phone: orderData.customer.phone || orderData.customer.phone1,
                               whatsapp: orderData.customer.whatsapp
-                            } : undefined} />
+                            } : undefined}
+                            machines={machines}
+                            machineTypes={machineTypes} />
 
                       </div>);
 
@@ -1487,8 +1578,8 @@ const CreateOrders = () => {
         const createdAt = orderData?.createdAt;
 
         const handleViewFile = (fileData: any) => {
-          if (fileData?.url) {
-            window.open(fileData.url, '_blank');
+          if (fileData?.url && isValidFileUrl(fileData.url)) {
+            window.open(fileData.url, '_blank', 'noopener,noreferrer');
           }
         };
 

@@ -508,3 +508,143 @@
     print-color-adjust: exact;
   }
 }
+
+/* ============================================
+   COMPACT STYLING - Match All Orders Theme
+   ============================================ */
+
+/* Compact Popup Header */
+.print-preview-header {
+  padding: 10px 14px;
+}
+
+.print-preview-title {
+  font-size: 13px;
+  gap: 6px;
+}
+
+.print-preview-title-icon {
+  font-size: 14px;
+}
+
+/* Compact Action Buttons */
+.print-preview-actions {
+  gap: 6px;
+}
+
+.print-preview-btn {
+  padding: 5px 10px;
+  font-size: 10px;
+  gap: 4px;
+}
+
+/* Compact Body */
+.print-preview-body {
+  padding: 12px;
+}
+
+/* Compact Footer */
+.print-preview-footer {
+  padding: 8px 14px;
+}
+
+.print-preview-zoom-label {
+  font-size: 10px;
+}
+
+.print-preview-zoom-btn {
+  width: 26px;
+  height: 26px;
+  font-size: 12px;
+}
+
+.print-preview-zoom-value {
+  font-size: 10px;
+}
+
+.print-preview-page-info {
+  font-size: 10px;
+}
+
+/* Compact Print Content */
+.print-header {
+  padding-bottom: 10px;
+  margin-bottom: 12px;
+}
+
+.print-company-name {
+  font-size: 16px;
+}
+
+.print-company-address {
+  font-size: 9px;
+}
+
+.print-invoice-title {
+  font-size: 12px;
+  margin-top: 6px;
+}
+
+.print-order-info {
+  margin-bottom: 10px;
+  padding: 6px;
+  font-size: 9px;
+}
+
+.print-customer-info {
+  margin-bottom: 10px;
+  padding: 8px;
+}
+
+.print-customer-info h3 {
+  font-size: 9px;
+  margin-bottom: 4px;
+}
+
+.print-table {
+  margin-bottom: 10px;
+  font-size: 9px;
+}
+
+.print-table th {
+  padding: 5px 4px;
+  font-size: 8px;
+}
+
+.print-table td {
+  padding: 4px;
+}
+
+.print-option-badge {
+  padding: 1px 4px;
+  font-size: 7px;
+}
+
+.print-totals-table {
+  width: 160px;
+  font-size: 9px;
+}
+
+.print-totals-table td {
+  padding: 3px 6px;
+}
+
+.print-totals-table .grand-total td {
+  padding: 5px;
+  font-size: 10px;
+}
+
+.print-footer {
+  margin-top: 12px;
+  padding-top: 8px;
+  font-size: 8px;
+}
+
+.print-footer-terms {
+  padding: 6px;
+}
+
+.print-footer-timestamp {
+  margin-top: 6px;
+  font-size: 7px;
+}

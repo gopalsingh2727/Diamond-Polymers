@@ -124,6 +124,106 @@ const inventoryTypeV2Reducer = createEntityReducer('INVENTORY_TYPE');
 // Employee reducers
 const employeeV2Reducer = createEntityReducer('EMPLOYEE');
 
+// Master Admin Profile state interface
+interface MasterAdminProfileState {
+  data: any | null;
+  loading: boolean;
+  updating: boolean;
+  error: string | null;
+}
+
+const masterAdminProfileInitialState: MasterAdminProfileState = {
+  data: null,
+  loading: false,
+  updating: false,
+  error: null,
+};
+
+// Master Admin Profile reducer (custom)
+const masterAdminProfileReducer = (state = masterAdminProfileInitialState, action: any): MasterAdminProfileState => {
+  switch (action.type) {
+    case 'MASTER_ADMIN_PROFILE_REQUEST':
+      return { ...state, loading: true, error: null };
+    case 'MASTER_ADMIN_PROFILE_SUCCESS':
+      return { ...state, loading: false, data: action.payload };
+    case 'MASTER_ADMIN_PROFILE_FAILURE':
+      return { ...state, loading: false, error: action.payload };
+    case 'MASTER_ADMIN_PROFILE_CLEAR':
+      return masterAdminProfileInitialState;
+    case 'MASTER_ADMIN_PROFILE_UPDATE_REQUEST':
+      return { ...state, updating: true, error: null };
+    case 'MASTER_ADMIN_PROFILE_UPDATE_SUCCESS':
+      return { ...state, updating: false };
+    case 'MASTER_ADMIN_PROFILE_UPDATE_FAILURE':
+      return { ...state, updating: false, error: action.payload };
+    default:
+      return state;
+  }
+};
+
+// Billing state interface (READ ONLY - bill status updates managed by dashboard admin only)
+interface BillingState {
+  current: any | null;
+  history: any | null;
+  summary: any | null;
+  loading: boolean;
+  generating: boolean;
+  error: string | null;
+}
+
+const billingInitialState: BillingState = {
+  current: null,
+  history: null,
+  summary: null,
+  loading: false,
+  generating: false,
+  error: null,
+};
+
+// Billing reducer (custom)
+const billingReducer = (state = billingInitialState, action: any): BillingState => {
+  switch (action.type) {
+    case 'BILLING_CURRENT_REQUEST':
+      return { ...state, loading: true, error: null };
+    case 'BILLING_CURRENT_SUCCESS':
+      return { ...state, loading: false, current: action.payload };
+    case 'BILLING_CURRENT_FAILURE':
+      return { ...state, loading: false, error: action.payload };
+
+    case 'BILLING_HISTORY_REQUEST':
+      return { ...state, loading: true, error: null };
+    case 'BILLING_HISTORY_SUCCESS':
+      return {
+        ...state,
+        loading: false,
+        history: action.payload.bills,
+        summary: action.payload.summary,
+      };
+    case 'BILLING_HISTORY_FAILURE':
+      return { ...state, loading: false, error: action.payload };
+
+    case 'BILLING_GENERATE_REQUEST':
+      return { ...state, generating: true, error: null };
+    case 'BILLING_GENERATE_SUCCESS':
+      return {
+        ...state,
+        generating: false,
+        current: { bill: action.payload, isGenerated: true },
+      };
+    case 'BILLING_GENERATE_FAILURE':
+      return { ...state, generating: false, error: action.payload };
+
+    // REMOVED: BILLING_PAY and BILLING_UNPAY cases
+    // Bill status updates are now managed by dashboard admin only
+
+    case 'BILLING_CLEAR':
+      return billingInitialState;
+
+    default:
+      return state;
+  }
+};
+
 // Payroll state interface
 interface PayrollState {
   processing: boolean;
@@ -211,6 +311,8 @@ const unifiedV2Reducer = combineReducers({
   inventoryType: inventoryTypeV2Reducer,
   employee: employeeV2Reducer,
   payroll: payrollV2Reducer,
+  masterAdminProfile: masterAdminProfileReducer,
+  billing: billingReducer,
 });
 
 export default unifiedV2Reducer;
@@ -240,4 +342,6 @@ export {
   inventoryTypeV2Reducer,
   employeeV2Reducer,
   payrollV2Reducer,
+  masterAdminProfileReducer,
+  billingReducer,
 };

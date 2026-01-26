@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { BackButton } from "../../../allCompones/BackButton";
 import * as XLSX from "xlsx";
@@ -8,12 +8,41 @@ import { saveAs } from "file-saver";
 import "../Dispatch/Dispatch.css";
 import "../Oders/indexAllOders.css";
 import "./Daybook.css";
-import { fetchOrders } from "../../../redux/oders/OdersActions";
-import { RootState } from "../../../../store";
+import { fetchOrders, fetchOrderDetails, clearOrderDetails } from "../../../redux/oders/OdersActions";
+import { RootState, AppDispatch } from "../../../../store";
 import { useFormDataCache } from "../Edit/hooks/useFormDataCache";
 import { useDaybookUpdates, useWebSocketStatus } from "../../../../hooks/useWebSocket";
-import { ArrowDownTrayIcon, PrinterIcon, ArrowPathIcon, CheckCircleIcon, XMarkIcon, SignalIcon, SignalSlashIcon, ChevronLeftIcon, ChevronRightIcon, ArrowRightCircleIcon, ClockIcon, XCircleIcon } from "@heroicons/react/24/solid";
-import { crudAPI } from "../../../../utils/crudHelpers";
+import { ArrowDownTrayIcon, PrinterIcon, ArrowPathIcon, CheckCircleIcon, XMarkIcon, SignalIcon, SignalSlashIcon, ArrowRightCircleIcon, ClockIcon, XCircleIcon, EyeIcon } from "@heroicons/react/24/solid";
+
+// Order Details interface for full order data
+interface OrderDetails {
+  _id: string;
+  orderId: string;
+  customerId: string;
+  orderTypeId: string;
+  branchId: string;
+  overallStatus: string;
+  priority: string;
+  quantity: number;
+  createdAt: string;
+  createdByName: string;
+  scheduledStartDate: string;
+  scheduledEndDate: string;
+  customerDetails: {
+    customerName: string;
+    customerCode: string;
+  };
+  billingDetails: {
+    orderDate: string;
+    totalAmount: number;
+  };
+  steps: any[];
+  customer: any;
+  orderType: any;
+  options: any[];
+  notes: string;
+  [key: string]: any;
+}
 
 
 interface Order {
@@ -130,8 +159,10 @@ const defaultOrdersState = {
 
 export default function DayBook() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
+
+  // Redux state for order details
+  const { currentOrder: reduxOrderDetails, loading: reduxOrderLoading } = useSelector((state: RootState) => state.orders.form);
 
   // State declarations
   const [selectedOrderIndex, setSelectedOrderIndex] = useState(0);
@@ -156,7 +187,7 @@ export default function DayBook() {
   const [createdByFilters, setCreatedByFilters] = useState<string[]>([]);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const [limit, setLimit] = useState(50); // ✅ Load 50 orders per page for performance
+  const [limit, setLimit] = useState(50); // ✅ Load 50 orders only
   const [refreshTrigger, setRefreshTrigger] = useState(0); // ✅ ADDED: Force refresh trigger
 
   // Sorting state
@@ -171,10 +202,18 @@ export default function DayBook() {
   const [showBulkDropdown, setShowBulkDropdown] = useState<'status' | 'priority' | 'orderType' | null>(null);
   const [bulkUpdating, setBulkUpdating] = useState(false);
 
+  // Order Details Modal state
+  const [showOrderDetails, setShowOrderDetails] = useState(false);
+  const [selectedOrderDetails, setSelectedOrderDetails] = useState<OrderDetails | null>(null);
+  const [loadingOrderDetails, setLoadingOrderDetails] = useState(false);
+
   // Refs
   const contentRef = useRef<HTMLDivElement>(null);
   const ordersRef = useRef<(HTMLDivElement | null)[]>([]);
   const scrollWrapperRef = useRef<HTMLDivElement | null>(null);
+  const isInitialMount = useRef(true); // Track initial mount to skip unnecessary fetch
+  const lastRefreshTrigger = useRef(0); // Track last refreshTrigger to detect actual updates
+  const lastBranchId = useRef<string | null>(null); // Track last branch to detect actual changes
 
   // Redux selectors
   const ordersState = useSelector((state: RootState) => {
@@ -206,18 +245,23 @@ export default function DayBook() {
   const branchId = selectedBranch || authState?.user?.branchId || localStorage.getItem('selectedBranch') || null; // ✅ For WebSocket subscription
 
   // ✅ Listen for branch changes and refresh daybook
+  // Only fetch when branch actually changes, not on every mount
   useEffect(() => {
-    if (selectedBranch) {
-      console.log('🔄 Daybook refreshing for new branch:', selectedBranch);
-      // Reset filters
-      setSearchTerm('');
-      setStatusFilters([]);
-      setOrderTypeFilters([]);
-      setFromDate('');
-      setToDate('');
-      setCurrentPage(1);
-      // Fetch fresh data
-      dispatch(fetchOrders({}) as any);
+    if (selectedBranch && selectedBranch !== lastBranchId.current) {
+      // Only fetch if branch actually changed (not just on mount with same branch)
+      if (lastBranchId.current !== null) {
+        console.log('🔄 Daybook refreshing for new branch:', selectedBranch);
+        // Reset filters
+        setSearchTerm('');
+        setStatusFilters([]);
+        setOrderTypeFilters([]);
+        setFromDate('');
+        setToDate('');
+        setCurrentPage(1);
+        // Fetch fresh data with limit: 50 to ensure 50 orders from the start
+        dispatch(fetchOrders({ page: 1, limit: 50 }) as any);
+      }
+      lastBranchId.current = selectedBranch;
     }
   }, [selectedBranch, dispatch]);
 
@@ -256,8 +300,8 @@ export default function DayBook() {
     return descriptions[status] || 'Status unknown';
   }
 
-  // Transform orders for display
-  const transformedOrders: Order[] = Array.isArray(reduxOrders) ? reduxOrders.map((order, idx) => {
+  // Transform orders for display - show only 50 orders from API
+  const transformedOrders: Order[] = (Array.isArray(reduxOrders) ? reduxOrders : []).map((order: any, idx: number) => {
     // Handle deleted customers - show indicator
     const isDeletedCustomer = (order.customer as any)?.isDeleted === true;
     const customerName = isDeletedCustomer ?
@@ -312,7 +356,7 @@ export default function DayBook() {
         }
       }
     };
-  }) : [];
+  });
 
 
   // ✅ SIMPLIFIED: All filtering now handled by API server-side for maximum performance
@@ -417,123 +461,199 @@ export default function DayBook() {
     }
   }, [dispatch, currentPage, sortColumn, sortDirection, fromDate, toDate, searchTerm, statusFilters, orderTypeFilters, priorityFilters, createdByFilters]);
 
-  // FIXED: Enhanced handleOrderClick with complete order data structure
-  const handleOrderClick = (order: Order) => {
+  // State for edit loading
+  const [editLoading, setEditLoading] = useState(false);
 
+  // FIXED: Fetch full order details before navigating to edit
+  const handleOrderClick = async (order: Order) => {
+    setEditLoading(true);
 
-    // Create comprehensive order data structure for edit mode
-    const orderDataForEdit = {
-      // Core order info
-      _id: order._id,
-      orderId: order.orderId,
-      overallStatus: order.overallStatus,
-      status: order.overallStatus, // Alias for compatibility
+    try {
+      // Fetch complete order details from API
+      const fullOrderData = await dispatch(fetchOrderDetails(order._id));
 
-      // Timestamps
-      createdAt: order.createdAt,
-      updatedAt: order.updatedAt,
-      date: order.date,
+      if (!fullOrderData) {
+        console.error('Failed to fetch order details for edit');
+        alert('Failed to load order details. Please try again.');
+        setEditLoading(false);
+        return;
+      }
 
-      // Customer information - properly structured
-      customer: {
-        _id: order.customer?._id || order.customerId || '',
-        name: order.customer?.firstName && order.customer?.lastName ?
-        `${order.customer.firstName} ${order.customer.lastName}`.trim() :
-        order.customer?.companyName || order.companyName || '',
-        companyName: order.customer?.companyName || order.companyName || '',
-        firstName: order.customer?.firstName || '',
-        lastName: order.customer?.lastName || '',
-        phone: order.customer?.phone1 || order.customer?.telephone || '',
-        phone1: order.customer?.phone1 || '',
-        phone2: order.customer?.phone2 || '',
-        telephone: order.customer?.telephone || '',
-        whatsapp: order.customer?.whatsapp || '',
-        email: order.customer?.email || '',
-        address: order.customer?.address1 || '',
-        address1: order.customer?.address1 || '',
-        address2: order.customer?.address2 || '',
-        state: order.customer?.state || '',
-        pinCode: order.customer?.pinCode || '',
-        imageUrl: order.customer?.imageUrl || ''
-      },
+      // Use the full order data from API
+      const orderDataForEdit = {
+        // Core order info
+        _id: fullOrderData._id,
+        orderId: fullOrderData.orderId,
+        overallStatus: fullOrderData.overallStatus,
+        status: fullOrderData.overallStatus,
 
-      // Legacy customer fields for backward compatibility
-      customerId: order.customer?._id || order.customerId || '',
-      companyName: order.customer?.companyName || order.companyName || '',
-      customerPhone: order.customer?.phone1 || '',
+        // Timestamps
+        createdAt: fullOrderData.createdAt,
+        updatedAt: fullOrderData.updatedAt,
+        date: fullOrderData.date,
 
-      // ✅ Order Type information - KEPT (still needed for order type dropdown)
-      orderType: (order as any).orderType || null,
-      orderTypeId: (order as any).orderType?._id || (order as any).orderTypeId || '',
+        // Customer information - from full data
+        customer: fullOrderData.customer || {
+          _id: fullOrderData.customerId || '',
+          companyName: fullOrderData.customerDetails?.customerName || '',
+          firstName: '',
+          lastName: '',
+          phone1: fullOrderData.customer?.phone1 || '',
+          email: fullOrderData.customer?.email || '',
+          address: fullOrderData.customer?.address || ''
+        },
+        customerId: fullOrderData.customer?._id || fullOrderData.customerId || '',
+        companyName: fullOrderData.customer?.companyName || fullOrderData.customerDetails?.customerName || '',
+        customerPhone: fullOrderData.customer?.phone1 || '',
 
-      // ❌ REMOVED: Old material, product, mixing fields (replaced by unified options system)
-      // These fields are deprecated and replaced by the options array above
+        // Order Type information
+        orderType: fullOrderData.orderType || null,
+        orderTypeId: fullOrderData.orderType?._id || fullOrderData.orderTypeId || '',
 
-      // Steps and workflow
-      steps: order.steps || [],
-      currentStepIndex: order.currentStepIndex || 0,
-      stepsCount: order.totalSteps || 0,
-      totalMachines: order.steps?.reduce((total, step) => total + (step.machines?.length || 0), 0) || 0,
-      completedSteps: order.completedSteps || 0,
-      progressPercentage: order.progressPercentage || 0,
-      totalSteps: order.totalSteps || 0,
+        // Steps and workflow - from full data
+        steps: fullOrderData.steps || [],
+        stepProgress: fullOrderData.stepProgress || [],
+        currentStepIndex: fullOrderData.currentStepIndex || 0,
+        totalSteps: fullOrderData.totalSteps || fullOrderData.steps?.length || 0,
+        completedSteps: fullOrderData.completedSteps || 0,
+        progressPercentage: fullOrderData.progressPercentage || 0,
 
-      // Branch information
-      branch: order.branch ? {
-        _id: order.branch._id,
-        name: order.branch.name,
-        code: order.branch.code
-      } : null,
-      branchId: order.branchId || order.branch?._id || '',
+        // Branch information
+        branch: fullOrderData.branch || null,
+        branchId: fullOrderData.branchId || fullOrderData.branch?._id || '',
 
-      // Creator information
-      createdBy: order.createdBy || '',
-      createdByRole: order.createdByRole || '',
-      creator: order.creator || null,
+        // Creator information
+        createdBy: fullOrderData.createdBy || '',
+        createdByName: fullOrderData.createdByName || '',
+        createdByRole: fullOrderData.createdByRole || '',
+        creator: fullOrderData.creator || null,
 
-      // Notes and additional info
-      Notes: order.Notes || '',
-      notes: order.Notes || '',
+        // Notes
+        Notes: fullOrderData.Notes || fullOrderData.notes || '',
+        notes: fullOrderData.Notes || fullOrderData.notes || '',
 
-      // ✅ ADDED: Options data (NEW UNIFIED OPTIONS SYSTEM)
-      options: (order as any).options || [],
-      optionsWithDetails: (order as any).optionsWithDetails || [],
+        // ✅ IMPORTANT: Options data (full data from API)
+        options: fullOrderData.options || [],
+        optionsWithDetails: fullOrderData.optionsWithDetails || [],
 
-      // Status tracking
-      AllStatus: order.AllStatus || {
-        [order.overallStatus]: {
-          color: getStatusColor(order.overallStatus),
-          description: getStatusDescription(order.overallStatus)
+        // ✅ Billing details
+        billingDetails: fullOrderData.billingDetails || {},
+        quantity: fullOrderData.quantity || 1,
+        priority: fullOrderData.priority || 'normal',
+
+        // ✅ Dynamic values and other fields
+        dynamicValues: fullOrderData.dynamicValues || {},
+
+        // Status tracking
+        AllStatus: fullOrderData.AllStatus || {
+          [fullOrderData.overallStatus]: {
+            color: getStatusColor(fullOrderData.overallStatus),
+            description: getStatusDescription(fullOrderData.overallStatus)
+          }
         }
-      }
-    };
+      };
 
+      console.log('📝 Navigating to edit with full order data:', orderDataForEdit);
 
+      // Navigate to CreateOrders with complete data
+      navigate("/menu/orderform", {
+        state: {
+          isEdit: true,
+          orderData: orderDataForEdit,
 
-    // Navigate to CreateOrders with comprehensive state
-    navigate("/menu/orderform", {
-      state: {
-        isEdit: true,
-        orderData: orderDataForEdit,
+          // Additional legacy support
+          isEditMode: true,
+          editMode: true,
+          mode: 'edit',
 
-        // Additional legacy support
-        isEditMode: true,
-        editMode: true,
-        mode: 'edit',
-
-        // Quick access fields
-        orderId: order.orderId,
-        customerName: orderDataForEdit.companyName,
-        materialType: orderDataForEdit.materialType,
-        materialName: orderDataForEdit.materialName
-      }
-    });
+          // Quick access fields
+          orderId: fullOrderData.orderId,
+          customerName: orderDataForEdit.companyName
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching order for edit:', error);
+      alert('Error loading order. Please try again.');
+    } finally {
+      setEditLoading(false);
+    }
   };
 
-  // ✅ Effect hooks - Fetch orders when filters change (server-side filtering)
+  // Fetch full order details using Redux action
+  const handleFetchOrderDetails = async (orderId: string) => {
+    setLoadingOrderDetails(true);
+    try {
+      const result = await dispatch(fetchOrderDetails(orderId));
+      if (result) {
+        setSelectedOrderDetails(result as OrderDetails);
+        setShowOrderDetails(true);
+      } else {
+        console.error('Failed to fetch order details');
+        alert('Failed to load order details');
+      }
+    } catch (error) {
+      console.error('Error fetching order details:', error);
+      alert('Error loading order details');
+    } finally {
+      setLoadingOrderDetails(false);
+    }
+  };
+
+  // Handle view details button click
+  const handleViewDetails = (e: React.MouseEvent, order: Order) => {
+    e.stopPropagation(); // Prevent row click from triggering
+    handleFetchOrderDetails(order._id);
+  };
+
+  // Close order details modal
+  const handleCloseOrderDetails = () => {
+    setShowOrderDetails(false);
+    setSelectedOrderDetails(null);
+    dispatch(clearOrderDetails()); // Clear Redux state too
+  };
+
+  // ✅ Initial load - fetch if no cached data or incomplete data
   useEffect(() => {
-    fetchOrdersData();
-  }, [fetchOrdersData, location.key, refreshTrigger]);
+    lastRefreshTrigger.current = refreshTrigger;
+    // Fetch if:
+    // 1. No cached orders exist, OR
+    // 2. Cached orders < 50 AND pagination shows more orders exist
+    const needsFetch = reduxOrders.length === 0 ||
+      (reduxOrders.length < 50 && pagination && pagination.total > reduxOrders.length);
+
+    if (needsFetch) {
+      fetchOrdersData();
+    }
+    // Mark initialization complete after first render cycle
+    const timer = setTimeout(() => {
+      isInitialMount.current = false;
+    }, 0);
+    return () => clearTimeout(timer);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ✅ Handle refreshTrigger changes (from WebSocket updates or sessionStorage flag)
+  useEffect(() => {
+    if (!isInitialMount.current && refreshTrigger !== lastRefreshTrigger.current) {
+      lastRefreshTrigger.current = refreshTrigger;
+      fetchOrdersData();
+    }
+  }, [refreshTrigger, fetchOrdersData]);
+
+  // ✅ Handle filter/pagination changes (user interactions)
+  useEffect(() => {
+    if (!isInitialMount.current) {
+      fetchOrdersData();
+    }
+  }, [currentPage, sortColumn, sortDirection, fromDate, toDate, searchTerm, statusFilters, orderTypeFilters, priorityFilters, createdByFilters]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ✅ Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [fromDate, toDate, searchTerm, statusFilters, orderTypeFilters, priorityFilters, createdByFilters]);
+
+  // Note: Removed CLEAR_ORDERS on unmount to preserve cached data when navigating back
+  // Data will be refreshed via refreshTrigger when orders are actually updated
+
 
   // ✅ FIXED: Check for order updates on mount and navigation (using state trigger to avoid stale closures)
   useEffect(() => {
@@ -547,16 +667,8 @@ export default function DayBook() {
     }
   }, []); // Run on mount
 
-  // ✅ FIXED: Also check on any location change (for navigate(-1) back button)
-  useEffect(() => {
-    const ordersUpdated = sessionStorage.getItem('orders_updated');
-
-    if (ordersUpdated) {
-
-      sessionStorage.removeItem('orders_updated');
-      setRefreshTrigger((prev) => prev + 1);
-    }
-  }, [location]); // Trigger on any location change
+  // Note: Removed location-based effect to prevent unnecessary API calls on navigation
+  // The mount effect above + WebSocket updates handle all necessary refreshes
 
   // ✅ WebSocket real-time subscription for instant order updates
   // This receives updates immediately when orders change - no polling needed
@@ -1626,6 +1738,13 @@ export default function DayBook() {
                       <span>Forward</span>
                     </div>
                   </th>
+
+                  {/* Actions Column */}
+                  <th className="editsectionsTable-th" style={{ width: '80px', textAlign: 'center' }}>
+                    <div className="editsectionsTable-filterBtn" style={{ justifyContent: 'center' }}>
+                      <span>Actions</span>
+                    </div>
+                  </th>
                 </tr>
               </thead>
               <tbody className="editsectionsTable-tbody">
@@ -1691,7 +1810,7 @@ export default function DayBook() {
                       </td>
                       <td className="editsectionsTable-td editsectionsTable-orderIdCell">{order.orderId || 'N/A'}</td>
                       <td className="editsectionsTable-td" style={{ fontWeight: 500 }}>{order.companyName || 'N/A'}</td>
-                      <td className="editsectionsTable-td" style={{ fontSize: '12px', color: '#64748b' }}>
+                      <td className="editsectionsTable-td" style={{ fontSize: '9px', color: '#64748b' }}>
                         {(order as any).createdByName || (order as any).creator?.username || (order as any).creator?.name || '-'}
                       </td>
                       <td className="editsectionsTable-td">
@@ -1723,24 +1842,25 @@ export default function DayBook() {
                       <span style={{
                         display: 'inline-flex',
                         alignItems: 'center',
-                        gap: '6px',
-                        fontSize: '12px',
-                        padding: '4px 8px',
+                        gap: '3px',
+                        fontSize: '8px',
+                        padding: '2px 4px',
                         background: `${orderTypeColor}15`,
-                        borderRadius: '4px',
+                        borderRadius: '3px',
                         border: `1px solid ${orderTypeColor}30`
                       }}>
-                            {orderType?.icon && <span>{orderType.icon}</span>}
+                            {orderType?.icon && <span style={{ fontSize: '8px' }}>{orderType.icon}</span>}
                             <span style={{
                           color: orderTypeColor,
-                          fontWeight: 600
+                          fontWeight: 600,
+                          fontSize: '8px'
                         }}>
                               {orderTypeName}
                             </span>
                             {orderTypeCode &&
                         <span style={{
                           color: orderTypeColor,
-                          fontSize: '10px',
+                          fontSize: '7px',
                           opacity: 0.7
                         }}>
                                 ({orderTypeCode})
@@ -1748,7 +1868,7 @@ export default function DayBook() {
                         }
                           </span> :
 
-                      <span style={{ color: '#94a3b8', fontSize: '12px' }}>-</span>
+                      <span style={{ color: '#94a3b8', fontSize: '8px' }}>-</span>
                       }
                       </td>
 
@@ -1790,8 +1910,33 @@ export default function DayBook() {
                             }} />
                           </div>
                         ) : (
-                          <span style={{ color: '#d1d5db', fontSize: '12px' }}>—</span>
+                          <span style={{ color: '#d1d5db', fontSize: '9px' }}>—</span>
                         )}
+                      </td>
+
+                      {/* Actions Cell */}
+                      <td className="editsectionsTable-td" style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
+                        <button
+                          onClick={(e) => handleViewDetails(e, order)}
+                          disabled={loadingOrderDetails}
+                          style={{
+                            padding: '6px 10px',
+                            backgroundColor: '#3b82f6',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            cursor: loadingOrderDetails ? 'wait' : 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            fontSize: '11px',
+                            fontWeight: 500
+                          }}
+                          title="View Order Details"
+                        >
+                          <EyeIcon style={{ width: '14px', height: '14px' }} />
+                          View
+                        </button>
                       </td>
                     </tr>);
 
@@ -1802,41 +1947,56 @@ export default function DayBook() {
           </div>
         }
 
-        {/* Pagination - ✅ UPDATED: Fixed at bottom, always visible when orders exist */}
-        {!loading && filteredOrders.length > 0 &&
-        <div className="pagination" style={{
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          right: 0,
+        {/* Pagination bar at bottom - NOT fixed, part of flex layout */}
+        {filteredOrders.length > 0 &&
+        <div style={{
           backgroundColor: 'white',
           padding: '12px 16px',
           borderTop: '2px solid #e2e8f0',
           boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.08)',
-          zIndex: 10
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: '16px',
+          flexShrink: 0
         }}>
+            {/* Previous Button */}
             <button
-            className="pagination-btn"
-            onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-            disabled={currentPage === 1 || loading || !pagination || pagination.totalPages <= 1}>
-
-              <ChevronLeftIcon style={{ width: '16px', height: '16px' }} />
-              Previous
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1 || loading}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: currentPage === 1 ? '#e2e8f0' : '#3b82f6',
+                color: currentPage === 1 ? '#94a3b8' : 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                fontSize: '13px',
+                fontWeight: 500
+              }}>
+              ← Previous
             </button>
-            <span className="pagination-info">
-              {pagination ? (
-                <>Page {currentPage} of {pagination.totalPages} ({pagination.totalOrders || 0} orders)</>
-              ) : (
-                <>{filteredOrders.length} order{filteredOrders.length !== 1 ? 's' : ''} shown</>
-              )}
-            </span>
-            <button
-            className="pagination-btn"
-            onClick={() => setCurrentPage((prev) => Math.min(pagination?.totalPages || 1, prev + 1))}
-            disabled={currentPage === (pagination?.totalPages || 1) || loading || !pagination || pagination.totalPages <= 1}>
 
-              Next
-              <ChevronRightIcon style={{ width: '16px', height: '16px' }} />
+            {/* Page Info */}
+            <span style={{ color: '#64748b', fontSize: '14px' }}>
+              Page {currentPage} of {pagination?.totalPages || 1} ({pagination?.totalOrders || filteredOrders.length} orders)
+            </span>
+
+            {/* Next Button */}
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(pagination?.totalPages || 1, prev + 1))}
+              disabled={currentPage >= (pagination?.totalPages || 1) || loading}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: currentPage >= (pagination?.totalPages || 1) ? '#e2e8f0' : '#3b82f6',
+                color: currentPage >= (pagination?.totalPages || 1) ? '#94a3b8' : 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: currentPage >= (pagination?.totalPages || 1) ? 'not-allowed' : 'pointer',
+                fontSize: '13px',
+                fontWeight: 500
+              }}>
+              Next →
             </button>
           </div>
         }
@@ -1904,6 +2064,402 @@ export default function DayBook() {
           </div>
         </div>
       }
+
+      {/* Order Details Modal */}
+      {showOrderDetails && selectedOrderDetails && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.6)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 100
+        }} onClick={handleCloseOrderDetails}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '16px',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            width: '90%',
+            maxWidth: '900px',
+            maxHeight: '90vh',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column'
+          }} onClick={(e) => e.stopPropagation()}>
+            {/* Modal Header */}
+            <div style={{
+              padding: '20px 24px',
+              borderBottom: '1px solid #e2e8f0',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              backgroundColor: '#f8fafc'
+            }}>
+              <div>
+                <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#1e293b', margin: 0 }}>
+                  Order Details
+                </h2>
+                <p style={{ fontSize: '14px', color: '#64748b', margin: '4px 0 0 0' }}>
+                  {selectedOrderDetails.orderId}
+                </p>
+              </div>
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                <span style={{
+                  padding: '6px 12px',
+                  borderRadius: '20px',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  backgroundColor: getStatusColor(selectedOrderDetails.overallStatus) + '20',
+                  color: getStatusColor(selectedOrderDetails.overallStatus)
+                }}>
+                  {selectedOrderDetails.overallStatus?.replace(/_/g, ' ').toUpperCase()}
+                </span>
+                <button
+                  onClick={handleCloseOrderDetails}
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '50%',
+                    border: 'none',
+                    backgroundColor: '#f1f5f9',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <XMarkIcon style={{ width: '20px', height: '20px', color: '#64748b' }} />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div style={{
+              padding: '24px',
+              overflowY: 'auto',
+              flex: 1
+            }}>
+              {/* Order Info Grid */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                gap: '20px',
+                marginBottom: '24px'
+              }}>
+                {/* Customer Info */}
+                <div style={{
+                  padding: '16px',
+                  backgroundColor: '#f8fafc',
+                  borderRadius: '12px',
+                  border: '1px solid #e2e8f0'
+                }}>
+                  <h3 style={{ fontSize: '14px', fontWeight: 600, color: '#64748b', marginBottom: '12px', textTransform: 'uppercase' }}>
+                    Customer Information
+                  </h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div>
+                      <span style={{ fontSize: '12px', color: '#94a3b8' }}>Name</span>
+                      <p style={{ fontSize: '14px', fontWeight: 500, color: '#1e293b', margin: '2px 0 0 0' }}>
+                        {selectedOrderDetails.customer?.companyName || selectedOrderDetails.customerDetails?.customerName || 'N/A'}
+                      </p>
+                    </div>
+                    <div>
+                      <span style={{ fontSize: '12px', color: '#94a3b8' }}>Phone</span>
+                      <p style={{ fontSize: '14px', fontWeight: 500, color: '#1e293b', margin: '2px 0 0 0' }}>
+                        {selectedOrderDetails.customer?.phone1 || 'N/A'}
+                      </p>
+                    </div>
+                    <div>
+                      <span style={{ fontSize: '12px', color: '#94a3b8' }}>Email</span>
+                      <p style={{ fontSize: '14px', fontWeight: 500, color: '#1e293b', margin: '2px 0 0 0' }}>
+                        {selectedOrderDetails.customer?.email || 'N/A'}
+                      </p>
+                    </div>
+                    <div>
+                      <span style={{ fontSize: '12px', color: '#94a3b8' }}>Address</span>
+                      <p style={{ fontSize: '14px', fontWeight: 500, color: '#1e293b', margin: '2px 0 0 0' }}>
+                        {selectedOrderDetails.customer?.address || selectedOrderDetails.customer?.city || 'N/A'}
+                        {selectedOrderDetails.customer?.state && `, ${selectedOrderDetails.customer.state}`}
+                        {selectedOrderDetails.customer?.pinCode && ` - ${selectedOrderDetails.customer.pinCode}`}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Order Info */}
+                <div style={{
+                  padding: '16px',
+                  backgroundColor: '#f8fafc',
+                  borderRadius: '12px',
+                  border: '1px solid #e2e8f0'
+                }}>
+                  <h3 style={{ fontSize: '14px', fontWeight: 600, color: '#64748b', marginBottom: '12px', textTransform: 'uppercase' }}>
+                    Order Information
+                  </h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                      <div>
+                        <span style={{ fontSize: '12px', color: '#94a3b8' }}>Order Type</span>
+                        <p style={{ fontSize: '14px', fontWeight: 500, color: '#1e293b', margin: '2px 0 0 0' }}>
+                          {selectedOrderDetails.orderType?.typeName || 'N/A'}
+                        </p>
+                      </div>
+                      <div>
+                        <span style={{ fontSize: '12px', color: '#94a3b8' }}>Priority</span>
+                        <p style={{ fontSize: '14px', fontWeight: 500, color: '#1e293b', margin: '2px 0 0 0' }}>
+                          {selectedOrderDetails.priority || 'Normal'}
+                        </p>
+                      </div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                      <div>
+                        <span style={{ fontSize: '12px', color: '#94a3b8' }}>Quantity</span>
+                        <p style={{ fontSize: '14px', fontWeight: 500, color: '#1e293b', margin: '2px 0 0 0' }}>
+                          {selectedOrderDetails.quantity || 'N/A'}
+                        </p>
+                      </div>
+                      <div>
+                        <span style={{ fontSize: '12px', color: '#94a3b8' }}>Created By</span>
+                        <p style={{ fontSize: '14px', fontWeight: 500, color: '#1e293b', margin: '2px 0 0 0' }}>
+                          {selectedOrderDetails.createdByName || 'N/A'}
+                        </p>
+                      </div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                      <div>
+                        <span style={{ fontSize: '12px', color: '#94a3b8' }}>Created At</span>
+                        <p style={{ fontSize: '14px', fontWeight: 500, color: '#1e293b', margin: '2px 0 0 0' }}>
+                          {selectedOrderDetails.createdAt ? new Date(selectedOrderDetails.createdAt).toLocaleString() : 'N/A'}
+                        </p>
+                      </div>
+                      <div>
+                        <span style={{ fontSize: '12px', color: '#94a3b8' }}>Total Amount</span>
+                        <p style={{ fontSize: '14px', fontWeight: 500, color: '#1e293b', margin: '2px 0 0 0' }}>
+                          {selectedOrderDetails.billingDetails?.totalAmount ? `₹${selectedOrderDetails.billingDetails.totalAmount.toLocaleString()}` : 'N/A'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Steps/Progress Section */}
+              {selectedOrderDetails.steps && selectedOrderDetails.steps.length > 0 && (
+                <div style={{
+                  padding: '16px',
+                  backgroundColor: '#f8fafc',
+                  borderRadius: '12px',
+                  border: '1px solid #e2e8f0',
+                  marginBottom: '20px'
+                }}>
+                  <h3 style={{ fontSize: '14px', fontWeight: 600, color: '#64748b', marginBottom: '12px', textTransform: 'uppercase' }}>
+                    Production Steps ({selectedOrderDetails.steps.length})
+                  </h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {selectedOrderDetails.steps.map((step: any, index: number) => (
+                      <div key={step._id || index} style={{
+                        padding: '12px',
+                        backgroundColor: 'white',
+                        borderRadius: '8px',
+                        border: '1px solid #e2e8f0',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px'
+                      }}>
+                        <div style={{
+                          width: '28px',
+                          height: '28px',
+                          borderRadius: '50%',
+                          backgroundColor: step.stepStatus === 'completed' ? '#10b981' : step.stepStatus === 'in_progress' ? '#3b82f6' : '#e2e8f0',
+                          color: step.stepStatus === 'completed' || step.stepStatus === 'in_progress' ? 'white' : '#64748b',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '12px',
+                          fontWeight: 600
+                        }}>
+                          {index + 1}
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <p style={{ fontSize: '14px', fontWeight: 500, color: '#1e293b', margin: 0 }}>
+                            {step.stepName || `Step ${index + 1}`}
+                          </p>
+                          <p style={{ fontSize: '12px', color: '#64748b', margin: '2px 0 0 0' }}>
+                            Status: {step.stepStatus || 'Pending'}
+                          </p>
+                        </div>
+                        {step.machines && step.machines.length > 0 && (
+                          <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                            {step.machines.length} machine(s)
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Options Section */}
+              {selectedOrderDetails.options && selectedOrderDetails.options.length > 0 && (
+                <div style={{
+                  padding: '16px',
+                  backgroundColor: '#f8fafc',
+                  borderRadius: '12px',
+                  border: '1px solid #e2e8f0'
+                }}>
+                  <h3 style={{ fontSize: '14px', fontWeight: 600, color: '#64748b', marginBottom: '12px', textTransform: 'uppercase' }}>
+                    Order Options ({selectedOrderDetails.options.length})
+                  </h3>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                    {selectedOrderDetails.options.map((option: any, index: number) => (
+                      <div key={option._id || index} style={{
+                        padding: '8px 12px',
+                        backgroundColor: 'white',
+                        borderRadius: '8px',
+                        border: '1px solid #e2e8f0',
+                        fontSize: '13px'
+                      }}>
+                        <span style={{ color: '#64748b' }}>{option.optionName || option.category}: </span>
+                        <span style={{ fontWeight: 500, color: '#1e293b' }}>{option.value || option.selectedValue || 'N/A'}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Notes Section */}
+              {selectedOrderDetails.notes && (
+                <div style={{
+                  padding: '16px',
+                  backgroundColor: '#fffbeb',
+                  borderRadius: '12px',
+                  border: '1px solid #fcd34d',
+                  marginTop: '20px'
+                }}>
+                  <h3 style={{ fontSize: '14px', fontWeight: 600, color: '#92400e', marginBottom: '8px', textTransform: 'uppercase' }}>
+                    Notes
+                  </h3>
+                  <p style={{ fontSize: '14px', color: '#78350f', margin: 0, whiteSpace: 'pre-wrap' }}>
+                    {selectedOrderDetails.notes}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div style={{
+              padding: '16px 24px',
+              borderTop: '1px solid #e2e8f0',
+              display: 'flex',
+              justifyContent: 'flex-end',
+              gap: '12px',
+              backgroundColor: '#f8fafc'
+            }}>
+              <button
+                onClick={handleCloseOrderDetails}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#e2e8f0',
+                  color: '#475569',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 500
+                }}
+              >
+                Close
+              </button>
+              <button
+                onClick={() => {
+                  handleCloseOrderDetails();
+                  const order = filteredOrders.find(o => o._id === selectedOrderDetails._id);
+                  if (order) handleOrderClick(order);
+                }}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#3b82f6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 500
+                }}
+              >
+                Edit Order
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Loading Overlay for Order Details */}
+      {loadingOrderDetails && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.4)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 150
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            padding: '24px 32px',
+            borderRadius: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            boxShadow: '0 10px 25px rgba(0,0,0,0.2)'
+          }}>
+            <div style={{
+              width: '24px',
+              height: '24px',
+              border: '3px solid #e2e8f0',
+              borderTop: '3px solid #3b82f6',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite'
+            }} />
+            <span style={{ fontSize: '14px', color: '#475569', fontWeight: 500 }}>Loading order details...</span>
+          </div>
+        </div>
+      )}
+
+      {/* Loading Overlay for Edit Order */}
+      {editLoading && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.4)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 150
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            padding: '24px 32px',
+            borderRadius: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            boxShadow: '0 10px 25px rgba(0,0,0,0.2)'
+          }}>
+            <div style={{
+              width: '24px',
+              height: '24px',
+              border: '3px solid #e2e8f0',
+              borderTop: '3px solid #10b981',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite'
+            }} />
+            <span style={{ fontSize: '14px', color: '#475569', fontWeight: 500 }}>Loading order for editing...</span>
+          </div>
+        </div>
+      )}
     </div>);
 
 }

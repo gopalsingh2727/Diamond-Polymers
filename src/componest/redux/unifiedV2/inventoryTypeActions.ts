@@ -80,8 +80,7 @@ export const createInventoryTypeV2 = (data: CreateInventoryTypeData) => async (d
   dispatch({ type: INVENTORY_TYPE_V2_CREATE_REQUEST });
 
   try {
-    // Use /inventory-type endpoint (not /v2/inventory-type)
-    const response = await axios.post(`${baseUrl}/inventory-type`, data, {
+    const response = await axios.post(`${baseUrl}/v2/inventory-type`, data, {
       headers: getHeaders()
     });
 
@@ -102,15 +101,12 @@ export const createInventoryTypeV2 = (data: CreateInventoryTypeData) => async (d
 };
 
 // Get All Inventory Types
-// Note: Backend endpoint /inventory-type may not exist yet
-// Returns empty array gracefully if endpoint not available
 export const getInventoryTypesV2 = (params?: Record<string, any>) => async (dispatch: Dispatch) => {
   dispatch({ type: INVENTORY_TYPE_V2_LIST_REQUEST });
 
   try {
     const queryParams = params ? new URLSearchParams(params).toString() : '';
-    // Use /inventory-type endpoint (not /v2/inventory-type)
-    const url = `${baseUrl}/inventory-type${queryParams ? `?${queryParams}` : ''}`;
+    const url = `${baseUrl}/v2/inventory-type${queryParams ? `?${queryParams}` : ''}`;
 
     const response = await axios.get(url, {
       headers: getHeaders()
@@ -146,8 +142,7 @@ export const getInventoryTypeV2 = (id: string) => async (dispatch: Dispatch) => 
   dispatch({ type: INVENTORY_TYPE_V2_GET_REQUEST });
 
   try {
-    // Use /inventory-type endpoint (not /v2/inventory-type)
-    const response = await axios.get(`${baseUrl}/inventory-type/${id}`, {
+    const response = await axios.get(`${baseUrl}/v2/inventory-type/${id}`, {
       headers: getHeaders()
     });
 
@@ -172,8 +167,7 @@ export const updateInventoryTypeV2 = (id: string, data: Partial<CreateInventoryT
   dispatch({ type: INVENTORY_TYPE_V2_UPDATE_REQUEST });
 
   try {
-    // Use /inventory-type endpoint (not /v2/inventory-type)
-    const response = await axios.put(`${baseUrl}/inventory-type/${id}`, data, {
+    const response = await axios.put(`${baseUrl}/v2/inventory-type/${id}`, data, {
       headers: getHeaders()
     });
 
@@ -198,8 +192,7 @@ export const deleteInventoryTypeV2 = (id: string) => async (dispatch: Dispatch) 
   dispatch({ type: INVENTORY_TYPE_V2_DELETE_REQUEST });
 
   try {
-    // Use /inventory-type endpoint (not /v2/inventory-type)
-    await axios.delete(`${baseUrl}/inventory-type/${id}`, {
+    await axios.delete(`${baseUrl}/v2/inventory-type/${id}`, {
       headers: getHeaders()
     });
 
@@ -223,8 +216,7 @@ export const seedInventoryTypesV2 = () => async (dispatch: Dispatch) => {
   dispatch({ type: INVENTORY_TYPE_V2_SEED_REQUEST });
 
   try {
-    // Use /inventory-type endpoint (not /v2/inventory-type)
-    const response = await axios.post(`${baseUrl}/inventory-type/seed-defaults`, {}, {
+    const response = await axios.post(`${baseUrl}/v2/inventory-type/seed-defaults`, {}, {
       headers: getHeaders()
     });
 

@@ -601,3 +601,243 @@
     break-inside: avoid;
   }
 }
+
+/* ============================================
+   COMPACT STYLING - Match All Orders Theme
+   ============================================ */
+
+/* Compact Container */
+.createOption-container {
+  gap: 1rem;
+  padding: 1rem;
+}
+
+/* Compact Header */
+.createOption-header {
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.createOption-title {
+  font-size: 14px;
+  margin-bottom: 0.25rem;
+}
+
+.createOption-subtitle {
+  font-size: 10px;
+}
+
+/* Compact Form Grid */
+.createOption-formGrid {
+  gap: 1rem;
+}
+
+/* Compact Section */
+.createOption-section {
+  padding: 1rem;
+}
+
+.createOption-sectionTitle {
+  font-size: 11px;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.25rem;
+}
+
+/* Compact Form Row */
+.createOption-formRow {
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+/* Compact Form Group */
+.createOption-group {
+  gap: 0.25rem;
+}
+
+/* Compact Label */
+.createOption-label {
+  font-size: 9px !important;
+}
+
+/* Compact Inputs */
+.createOption-select,
+.createOption-input {
+  padding: 6px 0 !important;
+  font-size: 11px !important;
+}
+
+/* Compact Hint */
+.createOption-hint {
+  font-size: 9px;
+  margin-top: 0.25rem;
+}
+
+/* Compact Option Type Info Box */
+.createOption-optionTypeInfo {
+  margin-top: 5px;
+  padding: 6px 8px;
+  font-size: 10px;
+}
+
+.createOption-optionTypeInfoTitle {
+  font-size: 10px;
+  margin-bottom: 2px;
+}
+
+.createOption-optionTypeInfoFields {
+  font-size: 9px;
+}
+
+/* Compact Option Type Values */
+.createOption-optionTypeValues {
+  padding: 10px;
+}
+
+.createOption-optionTypeValuesTitle {
+  margin-bottom: 6px;
+  font-size: 11px;
+}
+
+.createOption-optionTypeValuesGrid {
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.createOption-optionTypeValueItem {
+  padding: 8px 10px;
+  min-width: 70px;
+}
+
+.createOption-optionTypeValueName {
+  font-size: 9px;
+  margin-bottom: 2px;
+}
+
+.createOption-optionTypeValueNumber {
+  font-size: 14px;
+}
+
+.createOption-formulaHint {
+  padding: 6px;
+  font-size: 9px;
+}
+
+.createOption-formulaCode {
+  padding: 1px 4px;
+  font-size: 9px;
+}
+
+/* Compact Dimensions Header */
+.createOption-dimensionsHeader {
+  margin-bottom: 8px;
+}
+
+.createOption-templateBadge {
+  font-size: 9px;
+}
+
+.createOption-addButton {
+  padding: 4px 8px;
+  font-size: 10px;
+}
+
+/* Compact Empty State */
+.createOption-emptyState {
+  padding: 1rem;
+  font-size: 10px;
+}
+
+/* Compact Dimension Card */
+.createOption-dimensionCard {
+  padding: 10px;
+  margin-bottom: 8px;
+}
+
+.createOption-dimensionRow {
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.createOption-dimensionInput {
+  min-width: 100px;
+  padding: 5px 8px;
+  font-size: 10px;
+}
+
+.createOption-dimensionSelect {
+  width: 80px;
+  padding: 5px;
+  font-size: 10px;
+}
+
+.createOption-unitSelect {
+  width: 55px;
+  padding: 5px;
+  font-size: 10px;
+}
+
+.createOption-removeButton {
+  padding: 5px 8px;
+  font-size: 9px;
+}
+
+/* Compact Formula Row */
+.createOption-formulaRow {
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.createOption-formulaLabel {
+  font-size: 9px;
+  min-width: 50px;
+}
+
+.createOption-formulaInput {
+  padding: 5px 8px;
+  font-size: 10px;
+}
+
+.createOption-autoBadge {
+  padding: 2px 6px;
+  font-size: 8px;
+}
+
+/* Compact Visibility Row */
+.createOption-visibilityRow {
+  gap: 8px;
+  padding: 6px;
+}
+
+.createOption-visibilityLabel {
+  gap: 3px;
+  font-size: 9px;
+}
+
+/* Compact Form Actions */
+.createOption-formActions {
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+}
+
+/* Compact Button */
+.createOption-button {
+  width: 150px;
+  padding: 0.5rem 1rem;
+  font-size: 11px;
+}
+
+/* Compact Back/Delete Button */
+.createOption-actionButtons {
+  margin-bottom: 10px;
+}
+
+.createOption-backButton {
+  padding: 5px 10px;
+  font-size: 10px;
+}
+
+.createOption-deleteButton {
+  padding: 5px 10px;
+  font-size: 10px;
+}

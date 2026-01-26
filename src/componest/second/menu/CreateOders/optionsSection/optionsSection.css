@@ -1689,3 +1689,139 @@
   }
 }
 
+/* ================================================
+   COMPACT STYLING - Match All Orders Theme
+   ================================================ */
+
+/* Compact Container */
+.optionsSectionContainer {
+  padding: 10px;
+  margin-bottom: 15px;
+}
+
+/* Compact Header */
+.optionsSectionHeader {
+  margin-bottom: 10px;
+}
+
+.optionsSectionHeader h3 {
+  font-size: 11px;
+}
+
+/* Compact Buttons */
+.addOptionButton {
+  padding: 6px 12px;
+  font-size: 10px;
+}
+
+/* Compact Table Cells */
+.selectedOptionsList th,
+.selectedOptionsList td {
+  padding: 6px 8px;
+  font-size: 10px;
+}
+
+/* Compact Inputs */
+.quantityInput,
+.editableInput,
+.searchInput,
+.optionSelect {
+  font-size: 11px !important;
+  padding: 4px 8px !important;
+}
+
+/* Compact Chips */
+.specChip {
+  padding: 2px 6px;
+  font-size: 9px;
+}
+
+.specMore {
+  font-size: 9px;
+}
+
+.mixingBadge {
+  padding: 2px 8px;
+  font-size: 9px;
+}
+
+/* Compact Popup */
+.popupContent {
+  padding: 15px;
+}
+
+.popupHeader h3 {
+  font-size: 12px;
+}
+
+/* Compact Form Groups */
+.formGroup label {
+  font-size: 9px !important;
+}
+
+.formGroup input,
+.formGroup select,
+.formGroup textarea {
+  padding: 4px 8px !important;
+  font-size: 11px !important;
+}
+
+/* Compact Buttons in Popups */
+.addButton,
+.cancelButton,
+.submitButton,
+.resetButton,
+.removeButton {
+  padding: 5px 12px;
+  font-size: 10px;
+}
+
+/* Compact Step Rows */
+.optionsStepHeaderRow,
+.optionsStepRow {
+  font-size: 9px;
+}
+
+/* Compact Product Table */
+.options-productTableHeader {
+  font-size: 9px;
+  padding: 6px 8px;
+}
+
+.options-productTableRow {
+  padding: 4px 8px;
+}
+
+.options-tableInput {
+  font-size: 11px !important;
+  padding: 4px 6px !important;
+}
+
+/* Compact Section Styles */
+.createorderstartsections-tableInput {
+  font-size: 11px !important;
+  padding: 4px 6px !important;
+}
+
+.createorderstartsections-productTableHeader {
+  font-size: 9px;
+}
+
+/* Compact Notes Textarea */
+.options-NotesTextarea,
+.createorderstartsections-NotesTextarea {
+  font-size: 11px !important;
+  height: 40px !important;
+}
+
+/* Compact Material Form */
+.options-materialForm label,
+.createorderstartsections-materialForm label {
+  font-size: 9px !important;
+}
+
+.options-materialForm .inputBox,
+.createorderstartsections-materialForm .inputBox {
+  font-size: 11px !important;
+}
+

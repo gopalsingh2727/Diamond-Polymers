@@ -114,9 +114,14 @@ export const login = (identifier: string, password: string) => {
       localStorage.setItem("userData", JSON.stringify(userData));
       localStorage.setItem("userRole", userType);
 
-      // ✅ CRITICAL: Store selectedBranch in localStorage for API calls
+      // ✅ CRITICAL: Handle selectedBranch in localStorage
       if (userData.selectedBranch) {
         localStorage.setItem("selectedBranch", userData.selectedBranch);
+      } else {
+        // ✅ FIX: Clear stale selectedBranch if user has no branches
+        // This ensures master_admin/admin without branches gets redirected to create-branch
+        localStorage.removeItem("selectedBranch");
+        localStorage.removeItem("branchId");
       }
 
       if (import.meta.env.DEV) {
@@ -692,9 +697,13 @@ export const verifyPhoneOTP = (phone: string, otp: string) => {
       localStorage.setItem("userData", JSON.stringify(userData));
       localStorage.setItem("userRole", userType);
 
-      // ✅ CRITICAL: Store selectedBranch in localStorage for API calls
+      // ✅ CRITICAL: Handle selectedBranch in localStorage
       if (userData.selectedBranch) {
         localStorage.setItem("selectedBranch", userData.selectedBranch);
+      } else {
+        // ✅ FIX: Clear stale selectedBranch if user has no branches
+        localStorage.removeItem("selectedBranch");
+        localStorage.removeItem("branchId");
       }
 
       if (import.meta.env.DEV) {

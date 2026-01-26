@@ -471,6 +471,153 @@
   }
 }
 
+/* ========================================
+   ALERT STYLES
+   ======================================== */
+
+/* Cell with Alert */
+.operatorEntry-cellWithAlert {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.operatorEntry-alertCell {
+  position: relative;
+}
+
+.operatorEntry-alertCell input,
+.operatorEntry-alertCell select {
+  width: 100%;
+}
+
+/* Alert Message */
+.operatorEntry-alertMessage {
+  animation: alertFadeIn 0.3s ease-out;
+}
+
+@keyframes alertFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Alert Severity Styles */
+.operatorEntry-alert-info {
+  background: #dbeafe !important;
+  border-color: #3b82f6 !important;
+}
+
+.operatorEntry-alert-info input,
+.operatorEntry-alert-info select {
+  border-color: #3b82f6 !important;
+  background: #eff6ff !important;
+}
+
+.operatorEntry-alert-warning {
+  background: #fef3c7 !important;
+  border-color: #f59e0b !important;
+}
+
+.operatorEntry-alert-warning input,
+.operatorEntry-alert-warning select {
+  border-color: #f59e0b !important;
+  background: #fffbeb !important;
+}
+
+.operatorEntry-alert-error {
+  background: #fee2e2 !important;
+  border-color: #ef4444 !important;
+}
+
+.operatorEntry-alert-error input,
+.operatorEntry-alert-error select {
+  border-color: #ef4444 !important;
+  background: #fef2f2 !important;
+}
+
+/* Has Alert class for inputs */
+.operatorEntry-table input.has-alert,
+.operatorEntry-table select.has-alert {
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.3);
+}
+
+/* Alert icon animation */
+.operatorEntry-alertMessage svg {
+  flex-shrink: 0;
+  animation: alertIconPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes alertIconPulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* Alert Summary Banner (for multiple alerts) */
+.operatorEntry-alertSummary {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 2px solid #f59e0b;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.operatorEntry-alertSummary.error {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  border-color: #ef4444;
+}
+
+.operatorEntry-alertSummary-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(245, 158, 11, 0.2);
+  color: #d97706;
+}
+
+.operatorEntry-alertSummary.error .operatorEntry-alertSummary-icon {
+  background: rgba(239, 68, 68, 0.2);
+  color: #dc2626;
+}
+
+.operatorEntry-alertSummary-text {
+  flex: 1;
+}
+
+.operatorEntry-alertSummary-title {
+  font-weight: 600;
+  color: #92400e;
+  margin-bottom: 2px;
+}
+
+.operatorEntry-alertSummary.error .operatorEntry-alertSummary-title {
+  color: #991b1b;
+}
+
+.operatorEntry-alertSummary-message {
+  font-size: 13px;
+  color: #78350f;
+}
+
+.operatorEntry-alertSummary.error .operatorEntry-alertSummary-message {
+  color: #7f1d1d;
+}
+
 /* Print Styles */
 @media print {
   .operatorEntry-operators,
@@ -485,5 +632,11 @@
   .operatorEntry-table select {
     border: none;
     background: none;
+  }
+
+  /* Show alerts in print */
+  .operatorEntry-alertMessage {
+    border: 1px solid #000 !important;
+    background: #fff !important;
   }
 }

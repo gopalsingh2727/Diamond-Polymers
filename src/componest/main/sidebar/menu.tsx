@@ -1,29 +1,44 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../../redux/login/authActions";
 import type { AppDispatch } from '../../../store';
+import type { RootState } from '../../redux/rootReducer';
 import "./menu.css";
 
 const Menu = () => {
   const navigate = useNavigate();
-
   const dispatch = useDispatch<AppDispatch>();
+  const { userData } = useSelector((state: RootState) => state.auth);
+
+  // Check if user is master_admin or admin (can create branches)
+  const canCreateBranch = userData?.role === 'master_admin' || userData?.role === 'admin';
 
   // Menu items for all users with keyboard shortcuts
-  const allMenuItems = [
-    { name: "Create", path: "/menu/indexcreateroute", shortcut: "C" },
-    { name: "Edit", path: "/menu/edit", shortcut: "E" },
-    { name: "Create Orders", path: "/menu/orderform", shortcut: "O" },
-    { name: "Day Book", path: "/menu/daybook", shortcut: "D" },
-    { name: "Inventory", path: "/menu/inventory", shortcut: "I" },
-    { name: "Dispatch", path: "/menu/dispatch", shortcut: "P" },
-    { name: "Status", path: "/menu/IndexAllOders", shortcut: "S" },
-    { name: "Order Forward", path: "/menu/order-forward/connections", shortcut: "F" },
-    { name: "Account", path: "/menu/Account", shortcut: "A" },
-    { name: "Reports", path: "/menu/reports", shortcut: "R" },
-    { name: "Logout", path: "/login", shortcut: "L" },
-  ];
+  const allMenuItems = useMemo(() => {
+    const baseItems = [
+      { name: "Create", path: "/menu/indexcreateroute", shortcut: "C" },
+      { name: "Edit", path: "/menu/edit", shortcut: "E" },
+      { name: "Create Orders", path: "/menu/orderform", shortcut: "O" },
+      { name: "Day Book", path: "/menu/daybook", shortcut: "D" },
+      // { name: "Inventory", path: "/menu/inventory", shortcut: "I" },
+      { name: "Dispatch", path: "/menu/dispatch", shortcut: "P" },
+      { name: "Status", path: "/menu/IndexAllOders", shortcut: "S" },
+      // { name: "Order Forward", path: "/menu/order-forward/connections", shortcut: "F" },
+      { name: "Account", path: "/menu/Account", shortcut: "A" },
+      // { name: "Reports", path: "/menu/reports", shortcut: "R" },
+    ];
+
+    // Add Create Branch option for master_admin and admin
+    if (canCreateBranch) {
+      baseItems.push({ name: "Create Branch", path: "/create-branch", shortcut: "B" });
+    }
+
+    // Always add Logout at the end
+    baseItems.push({ name: "Logout", path: "/login", shortcut: "L" });
+
+    return baseItems;
+  }, [canCreateBranch]);
 
   const [selectedIndex, setSelectedIndex] = useState(0);
 

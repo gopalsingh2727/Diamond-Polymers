@@ -16,6 +16,7 @@ import SecretManager from "../settings/SecretManager";
 import SeeAll from "../settings/SeeAll";
 import ExternalAPIKeys from "../settings/ExternalAPIKeys";
 import MasterSettings from "../settings/MasterSettings";
+import MasterAdminProfile from "../settings/MasterAdminProfile";
 
 const MainRount = () => {
   const { isAuthenticated, userData, token } = useSelector(
@@ -25,9 +26,15 @@ const MainRount = () => {
   // Check if we have a valid, non-expired token
   const hasValidAuth = Boolean(isAuthenticated && token && !isTokenExpired(token));
 
+  // Check localStorage for selectedBranch as fallback (persists across refreshes)
+  const storedBranchId = localStorage.getItem('selectedBranch') || localStorage.getItem('branchId');
+
   // Master admin and admin need to create/select branch first
+  // Check both Redux state AND localStorage
   const hasSelectedBranch =
-    (userData?.role !== "master_admin" && userData?.role !== "admin") || !!userData?.selectedBranch;
+    (userData?.role !== "master_admin" && userData?.role !== "admin") ||
+    !!userData?.selectedBranch ||
+    !!storedBranchId;
 
   return (
     <Routes>
@@ -91,6 +98,7 @@ const MainRount = () => {
         path="/create-branch"
         element={
           hasValidAuth && (userData?.role === "master_admin" || userData?.role === "admin") ? (
+            // Allow CreateBranch to handle its own success state and redirects
             <CreateBranch />
           ) : (
             <Navigate to="/login" replace />
@@ -148,6 +156,17 @@ const MainRount = () => {
         element={
           hasValidAuth && userData?.role === "master_admin" ? (
             <MasterSettings />
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+
+      <Route
+        path="/settings/master-admin-profile"
+        element={
+          hasValidAuth && userData?.role === "master_admin" ? (
+            <MasterAdminProfile />
           ) : (
             <Navigate to="/login" replace />
           )

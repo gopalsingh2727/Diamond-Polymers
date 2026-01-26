@@ -18,16 +18,13 @@ import {
   deleteInventoryV2,
   getInventoryV2,
 } from '../../../../redux/unifiedV2/inventoryActions';
-import { getOptionTypesV2, getInventoryTypesV2 } from '../../../../redux/unifiedV2';
+import { getOptionTypesV2, getOptionSpecsV2, getInventoryTypesV2, seedInventoryTypesV2 } from '../../../../redux/unifiedV2';
 import { AppDispatch } from '../../../../../store';
 import { ActionButton } from '../../../../../components/shared/ActionButton';
 import { ToastContainer } from '../../../../../components/shared/Toast';
 import { useCRUD } from '../../../../../hooks/useCRUD';
 import './createInventory.css';
 import { BackButton } from '@/componest/allCompones/BackButton';
-import HelpDocModal, { HelpButton } from '../../../../../components/shared/HelpDocModal';
-import { createInventoryHelp } from '../../../../../components/shared/helpContent';
-import SectionHelpIcon from '../../../../../components/shared/SectionHelpIcon';
 
 // Types
 interface SelectedSpec {
@@ -36,6 +33,7 @@ interface SelectedSpec {
   specName: string;
   unit?: string;
   varName: string;
+  value?: any; // Actual value from Option Spec (for products with real values)
 }
 
 interface DynamicCalculation {
@@ -98,6 +96,9 @@ const CreateInventory: React.FC<CreateInventoryProps> = ({
   // Option Types selection
   const [allowedOptionTypes, setAllowedOptionTypes] = useState<string[]>([]);
 
+  // Option Specs selection (products)
+  const [selectedOptionSpecs, setSelectedOptionSpecs] = useState<string[]>([]);
+
   // Selected Specifications for formulas
   const [selectedSpecs, setSelectedSpecs] = useState<SelectedSpec[]>([]);
 
@@ -112,13 +113,16 @@ const CreateInventory: React.FC<CreateInventoryProps> = ({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  // Help modal
-  const [showHelpModal, setShowHelpModal] = useState(false);
+  // Seeding inventory types
+  const [seeding, setSeeding] = useState(false);
 
   // Get data from Redux
   const rawOptionTypes = useSelector((state: any) => state.v2.optionType?.list);
   const optionTypes = Array.isArray(rawOptionTypes) ? rawOptionTypes : [];
   const optionTypesLoading = useSelector((state: any) => state.v2.optionType?.loading);
+  const rawOptionSpecs = useSelector((state: any) => state.v2.optionSpec?.list);
+  const optionSpecs = Array.isArray(rawOptionSpecs) ? rawOptionSpecs : [];
+  const optionSpecsLoading = useSelector((state: any) => state.v2.optionSpec?.loading);
   const rawInventoryTypes = useSelector((state: any) => state.v2.inventoryType?.list);
   const inventoryTypes = Array.isArray(rawInventoryTypes) ? rawInventoryTypes : [];
   const inventoryTypesLoading = useSelector((state: any) => state.v2.inventoryType?.loading);
@@ -126,8 +130,23 @@ const CreateInventory: React.FC<CreateInventoryProps> = ({
   // Fetch data on mount
   useEffect(() => {
     dispatch(getOptionTypesV2());
+    dispatch(getOptionSpecsV2());
     dispatch(getInventoryTypesV2());
   }, [dispatch]);
+
+  // Seed default inventory types (KG, PCS, LTR, etc.)
+  const handleSeedInventoryTypes = async () => {
+    setSeeding(true);
+    try {
+      await dispatch(seedInventoryTypesV2());
+      toast.success('Success', 'Default units created (KG, PCS, LTR, etc.)');
+      dispatch(getInventoryTypesV2());
+    } catch (error: any) {
+      toast.error('Error', error.response?.data?.message || 'Failed to seed units');
+    } finally {
+      setSeeding(false);
+    }
+  };
 
   // Load initial data for edit mode
   useEffect(() => {
@@ -139,6 +158,12 @@ const CreateInventory: React.FC<CreateInventoryProps> = ({
       setAllowedOptionTypes(
         initialData.allowedOptionTypes?.map((ot: any) =>
           typeof ot === 'string' ? ot : ot._id
+        ) || []
+      );
+      // Restore selectedOptionSpecs - extract just IDs for state
+      setSelectedOptionSpecs(
+        initialData.selectedOptionSpecs?.map((os: any) =>
+          typeof os === 'string' ? os : (os.optionSpecId?._id || os.optionSpecId)
         ) || []
       );
       setSelectedSpecs(initialData.selectedSpecs || []);
@@ -169,6 +194,7 @@ const CreateInventory: React.FC<CreateInventoryProps> = ({
     setCode('');
     setDescription('');
     setAllowedOptionTypes([]);
+    setSelectedOptionSpecs([]);
     setSelectedSpecs([]);
     setDynamicCalculations([]);
     setInventoryUnits([]);
@@ -181,8 +207,52 @@ const CreateInventory: React.FC<CreateInventoryProps> = ({
       setAllowedOptionTypes(allowedOptionTypes.filter(id => id !== optionTypeId));
       // Remove specs from this option type
       setSelectedSpecs(selectedSpecs.filter(spec => spec.optionTypeId !== optionTypeId));
+      // Remove option specs that belong to this option type
+      const specsToRemove = optionSpecs
+        .filter((os: any) => {
+          const specOptionTypeId = os.optionTypeId?._id || os.optionTypeId;
+          return specOptionTypeId === optionTypeId;
+        })
+        .map((os: any) => os._id);
+      setSelectedOptionSpecs(selectedOptionSpecs.filter(id => !specsToRemove.includes(id)));
+      // Remove specs from removed option specs
+      setSelectedSpecs(prev => prev.filter(spec =>
+        !specsToRemove.some(id => spec.optionTypeId === `spec_${id}`)
+      ));
     } else {
       setAllowedOptionTypes([...allowedOptionTypes, optionTypeId]);
+    }
+  };
+
+  // Toggle option spec (product) selection
+  const toggleOptionSpec = (optionSpecId: string) => {
+    if (selectedOptionSpecs.includes(optionSpecId)) {
+      setSelectedOptionSpecs(selectedOptionSpecs.filter(id => id !== optionSpecId));
+      // Remove specs from this option spec
+      setSelectedSpecs(selectedSpecs.filter(spec => spec.optionTypeId !== `spec_${optionSpecId}`));
+    } else {
+      setSelectedOptionSpecs([...selectedOptionSpecs, optionSpecId]);
+    }
+  };
+
+  // Toggle specification selection from Option Spec (with actual value)
+  const toggleSpecFromOptionSpec = (optionSpecId: string, optionSpecName: string, specName: string, value: any, unit?: string) => {
+    const varName = `${optionSpecName.replace(/\s+/g, '_')}_${specName.replace(/\s+/g, '_')}`;
+    const existingIndex = selectedSpecs.findIndex(
+      s => s.optionTypeId === `spec_${optionSpecId}` && s.specName === specName
+    );
+
+    if (existingIndex >= 0) {
+      setSelectedSpecs(selectedSpecs.filter((_, i) => i !== existingIndex));
+    } else {
+      setSelectedSpecs([...selectedSpecs, {
+        optionTypeId: `spec_${optionSpecId}`,
+        optionTypeName: optionSpecName,
+        specName,
+        unit,
+        varName,
+        value // Store the actual value from Option Spec
+      }]);
     }
   };
 
@@ -273,11 +343,23 @@ const CreateInventory: React.FC<CreateInventoryProps> = ({
       return;
     }
 
+    // Format selectedOptionSpecs with full data for backend
+    const formattedOptionSpecs = selectedOptionSpecs.map(specId => {
+      const spec = optionSpecs.find((os: any) => os._id === specId);
+      return {
+        optionSpecId: specId,
+        optionSpecName: spec?.name || '',
+        optionTypeId: spec?.optionTypeId?._id || spec?.optionTypeId || '',
+        optionTypeName: spec?.optionTypeId?.name || ''
+      };
+    });
+
     const data = {
       name: name.trim(),
       code: code.trim().toUpperCase(),
       description: description.trim(),
       allowedOptionTypes,
+      selectedOptionSpecs: formattedOptionSpecs,
       selectedSpecs,
       dynamicCalculations,
       inventoryUnits,
@@ -356,10 +438,7 @@ const CreateInventory: React.FC<CreateInventoryProps> = ({
               ← Back
             </button>
           )}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <h1>{isEditMode ? 'Edit Inventory' : 'Create Inventory'}</h1>
-            <HelpButton onClick={() => setShowHelpModal(true)} size="medium" />
-          </div>
+          <h1>{isEditMode ? 'Edit Inventory' : 'Create Inventory'}</h1>
         </div>
         <div className="createinventory-header-actions">
           {isEditMode && (
@@ -392,15 +471,7 @@ const CreateInventory: React.FC<CreateInventoryProps> = ({
 
           {/* Basic Info */}
           <div className="form-section">
-            <h3>
-              Basic Information
-              {createInventoryHelp.sections?.find(s => s.title === '📋 Basic Information') && (
-                <SectionHelpIcon
-                  section={createInventoryHelp.sections.find(s => s.title === '📋 Basic Information')!}
-                  size={20}
-                />
-              )}
-            </h3>
+            <h3>Basic Information</h3>
             <div className="form-row">
               <div className="form-group">
                 <label>Name *</label>
@@ -435,15 +506,7 @@ const CreateInventory: React.FC<CreateInventoryProps> = ({
 
           {/* Option Types */}
           <div className="form-section">
-            <h3>
-              Linked Option Types
-              {createInventoryHelp.sections?.find(s => s.title === '🎯 Linked Option Types') && (
-                <SectionHelpIcon
-                  section={createInventoryHelp.sections.find(s => s.title === '🎯 Linked Option Types')!}
-                  size={20}
-                />
-              )}
-            </h3>
+            <h3>Linked Option Types</h3>
             <p className="section-hint">Select which option types can be tracked in this inventory</p>
             {optionTypesLoading ? (
               <div className="loading-state">Loading option types...</div>
@@ -471,18 +534,89 @@ const CreateInventory: React.FC<CreateInventoryProps> = ({
             )}
           </div>
 
-          {/* Selected Specifications */}
+          {/* Option Specs (Products) - Only show if Option Types are selected */}
+          {allowedOptionTypes.length > 0 && (
+            <div className="form-section">
+              <h3>Option Specs (Products)</h3>
+              <p className="section-hint">Select products from the selected Option Types</p>
+              {optionSpecsLoading ? (
+                <div className="loading-state">Loading option specs...</div>
+              ) : (() => {
+                // Filter option specs based on selected Option Types
+                const filteredOptionSpecs = optionSpecs.filter((os: any) => {
+                  const specOptionTypeId = os.optionTypeId?._id || os.optionTypeId;
+                  return allowedOptionTypes.includes(specOptionTypeId);
+                });
+
+                if (filteredOptionSpecs.length === 0) {
+                  return (
+                    <div className="empty-state">
+                      <p>No products found for the selected Option Types.</p>
+                      <p className="hint">Create products in Create → Options System → Create Option Spec first.</p>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="option-types-grid">
+                    {filteredOptionSpecs.map((os: any) => (
+                      <div
+                        key={os._id}
+                        className={`option-type-card ${selectedOptionSpecs.includes(os._id) ? 'selected' : ''}`}
+                        onClick={() => toggleOptionSpec(os._id)}
+                      >
+                        <span className="check">{selectedOptionSpecs.includes(os._id) ? '✓' : ''}</span>
+                        <span className="name">{os.name}</span>
+                        <span className="code">{os.code}</span>
+                        {os.specifications?.length > 0 && (
+                          <span className="spec-count">{os.specifications.length} specs</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+
+          {/* Specifications from Selected Option Specs */}
+          {selectedOptionSpecs.length > 0 && (
+            <div className="form-section">
+              <h3>Specifications from Products</h3>
+              <p className="section-hint">Select specifications from selected products to use in formulas</p>
+              {optionSpecs
+                .filter((os: any) => selectedOptionSpecs.includes(os._id))
+                .map((os: any) => (
+                  <div key={os._id} className="spec-group">
+                    <h4>{os.name} ({os.code})</h4>
+                    <div className="specs-list">
+                      {os.specifications?.map((spec: any) => {
+                        const isSelected = selectedSpecs.some(
+                          s => s.optionTypeId === `spec_${os._id}` && s.specName === spec.name
+                        );
+                        return (
+                          <div
+                            key={spec.name}
+                            className={`spec-item ${isSelected ? 'selected' : ''}`}
+                            onClick={() => toggleSpecFromOptionSpec(os._id, os.name, spec.name, spec.value, spec.unit)}
+                          >
+                            <span className="check">{isSelected ? '✓' : ''}</span>
+                            <span className="spec-name">{spec.name}</span>
+                            {spec.value !== undefined && <span className="spec-value">= {spec.value}</span>}
+                            {spec.unit && <span className="spec-unit">({spec.unit})</span>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+            </div>
+          )}
+
+          {/* Selected Specifications from Option Types */}
           {selectedOptionTypesData.length > 0 && (
             <div className="form-section">
-              <h3>
-                Specifications for Formulas
-                {createInventoryHelp.sections?.find(s => s.title === '📐 Specifications for Formulas') && (
-                  <SectionHelpIcon
-                    section={createInventoryHelp.sections.find(s => s.title === '📐 Specifications for Formulas')!}
-                    size={20}
-                  />
-                )}
-              </h3>
+              <h3>Specifications for Formulas (from Option Types)</h3>
               <p className="section-hint">Select specifications to use in calculations</p>
               {selectedOptionTypesData.map((ot: any) => (
                 <div key={ot._id} className="spec-group">
@@ -513,15 +647,7 @@ const CreateInventory: React.FC<CreateInventoryProps> = ({
           {/* Dynamic Calculations */}
           <div className="form-section">
             <div className="section-header">
-              <h3>
-                Dynamic Calculations
-                {createInventoryHelp.sections?.find(s => s.title === '🧮 Dynamic Calculations') && (
-                  <SectionHelpIcon
-                    section={createInventoryHelp.sections.find(s => s.title === '🧮 Dynamic Calculations')!}
-                    size={20}
-                  />
-                )}
-              </h3>
+              <h3>Dynamic Calculations</h3>
               <button type="button" className="add-btn" onClick={addCalculation}>
                 + Add Calculation
               </button>
@@ -575,17 +701,29 @@ const CreateInventory: React.FC<CreateInventoryProps> = ({
             {/* Spec Variables for click-to-insert */}
             {activeFormulaIndex !== null && selectedSpecs.length > 0 && (
               <div className="spec-variables">
-                <p className="hint">Click to insert into formula:</p>
+                <p className="hint">Click to insert into formula (use variable name or value):</p>
                 <div className="variables-list">
                   {selectedSpecs.map((spec) => (
-                    <button
-                      key={spec.varName}
-                      type="button"
-                      className="var-btn"
-                      onClick={() => insertSpecIntoFormula(spec.varName)}
-                    >
-                      {spec.varName}
-                    </button>
+                    <div key={spec.varName} className="var-item">
+                      <button
+                        type="button"
+                        className="var-btn"
+                        onClick={() => insertSpecIntoFormula(spec.varName)}
+                        title={`Insert variable: ${spec.varName}`}
+                      >
+                        {spec.varName}
+                      </button>
+                      {spec.value !== undefined && (
+                        <button
+                          type="button"
+                          className="var-btn value-btn"
+                          onClick={() => insertSpecIntoFormula(String(spec.value))}
+                          title={`Insert value: ${spec.value}`}
+                        >
+                          = {spec.value} {spec.unit && `(${spec.unit})`}
+                        </button>
+                      )}
+                    </div>
                   ))}
                 </div>
               </div>
@@ -594,22 +732,22 @@ const CreateInventory: React.FC<CreateInventoryProps> = ({
 
           {/* Inventory Units */}
           <div className="form-section">
-            <h3>
-              Inventory Units
-              {createInventoryHelp.sections?.find(s => s.title === '📦 Inventory Units') && (
-                <SectionHelpIcon
-                  section={createInventoryHelp.sections.find(s => s.title === '📦 Inventory Units')!}
-                  size={20}
-                />
-              )}
-            </h3>
+            <h3>Inventory Units</h3>
             <p className="section-hint">Select which units to track (KG, PCS, etc.)</p>
             {inventoryTypesLoading ? (
               <div className="loading-state">Loading inventory units...</div>
             ) : inventoryTypes.length === 0 ? (
               <div className="empty-state">
                 <p>No inventory units found.</p>
-                <p className="hint">Units like KG, PCS, LTR need to be created in the backend first.</p>
+                <p className="hint">Click below to create default units (KG, PCS, LTR, etc.)</p>
+                <button
+                  type="button"
+                  className="seed-btn"
+                  onClick={handleSeedInventoryTypes}
+                  disabled={seeding}
+                >
+                  {seeding ? 'Creating...' : 'Create Default Units'}
+                </button>
               </div>
             ) : (
               <div className="units-grid">
@@ -738,13 +876,6 @@ const CreateInventory: React.FC<CreateInventoryProps> = ({
           </div>
         </div>
       )}
-
-      {/* Help Documentation Modal */}
-      <HelpDocModal
-        isOpen={showHelpModal}
-        onClose={() => setShowHelpModal(false)}
-        content={createInventoryHelp}
-      />
     </div>
   );
 };

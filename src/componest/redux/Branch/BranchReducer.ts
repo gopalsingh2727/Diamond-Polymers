@@ -7,6 +7,7 @@ import {
   BRANCH_LIST_REQUEST,
   BRANCH_LIST_SUCCESS,
   BRANCH_LIST_FAIL,
+  ADD_BRANCH_TO_LIST,
 } from "./BranchActions";
 
 export interface Branch {
@@ -68,6 +69,23 @@ export const branchReducer = (state = initialState, action: any): BranchState =>
 
     case FETCH_BRANCHES_FAIL:
       return { ...state, loading: false, error: action.payload };
+
+    // ✅ Add new branch to list (after creating a branch)
+    case ADD_BRANCH_TO_LIST:
+      const newBranches = [...state.branches, action.payload];
+      // Update localStorage cache
+      try {
+        localStorage.setItem('cached_branches', JSON.stringify({
+          branches: newBranches,
+          timestamp: new Date().toISOString()
+        }));
+      } catch (error) {
+        console.error('Failed to update branch cache:', error);
+      }
+      return {
+        ...state,
+        branches: newBranches,
+      };
 
     // ✅ Clear branches on logout
     case 'LOGOUT':

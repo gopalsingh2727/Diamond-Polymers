@@ -7,6 +7,7 @@ import { ArrowDownTrayIcon, PrinterIcon, XMarkIcon, ChevronDownIcon, ChevronRigh
 import { CheckCircle2, Circle, PlayCircle, PauseCircle, AlertTriangle, Loader2, AlertCircle, Clock, X, RefreshCw, Share2 } from "lucide-react";
 import CustomSelect from "../../../../components/shared/CustomSelect";
 import ForwardOrderModal from "../OrderForward/components/ForwardOrderModal";
+import OrderDetailsModal from "./OrderDetailsModal";
 
 // Import Redux actions
 import { fetchOrders } from "../../../redux/oders/OdersActions";
@@ -45,6 +46,11 @@ const IndexAllOders = () => {
   const orders = ordersState?.list?.orders || ordersState?.orders || [];
   const ordersLoading = ordersState?.list?.loading || ordersState?.loading || false;
   const ordersError = ordersState?.list?.error || ordersState?.error || null;
+
+  // Get statusCounts, summary, and pagination from API response for accurate totals
+  const statusCounts = ordersState?.list?.statusCounts || null;
+  const summary = ordersState?.list?.summary || null;
+  const pagination = ordersState?.list?.pagination || null;
 
   // Debug logging
   useEffect(() => {
@@ -87,6 +93,10 @@ const IndexAllOders = () => {
   // Forward order modal state
   const [forwardModalOpen, setForwardModalOpen] = useState(false);
   const [selectedOrderForForward, setSelectedOrderForForward] = useState<{id: string; number: string} | null>(null);
+
+  // Order details modal state
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -397,7 +407,8 @@ const IndexAllOders = () => {
     return flattenedOrderRows.slice(startIndex, startIndex + itemsPerPage);
   }, [flattenedOrderRows, currentPage, itemsPerPage]);
 
-  const totalPages = Math.ceil(flattenedOrderRows.length / itemsPerPage);
+  // Use pagination from API when available for accurate total pages
+  const totalPages = pagination?.totalPages || Math.max(1, Math.ceil(flattenedOrderRows.length / itemsPerPage));
 
   // Handle multi-select toggle for Machine Type
   const toggleMachineType = (typeId: string) => {
@@ -781,6 +792,14 @@ const IndexAllOders = () => {
       }
     });
   }, [navigate]);
+
+  // Handle view order details (single click - opens modal)
+  const handleViewOrderDetails = useCallback((orderId: string, event: React.MouseEvent) => {
+    // Stop propagation to prevent row expansion
+    event.stopPropagation();
+    setSelectedOrderId(orderId);
+    setDetailsModalOpen(true);
+  }, []);
 
   // Handle row click - toggle expand
   const handleRowClick = useCallback((orderId: string) => {
@@ -1198,13 +1217,14 @@ const IndexAllOders = () => {
       </div>
 
       {/* Summary Cards - Compact with all statuses - Clickable to filter */}
+      {/* Uses statusCounts from API for accurate totals across ALL orders */}
       <div className="summary-cards summary-cards--compact">
         <div
           className={`summary-card summary-card--mini summary-card--clickable ${filters.status === '' ? 'summary-card--active' : ''}`}
           onClick={() => {handleFilterChange('status', '');setCurrentPage(1);}}
           title="Show all orders">
 
-          <div className="summary-card__value">{orders.length}</div>
+          <div className="summary-card__value">{summary?.totalOrders || pagination?.totalOrders || orders.length}</div>
           <div className="summary-card__label">Total</div>
         </div>
         <div
@@ -1213,7 +1233,7 @@ const IndexAllOders = () => {
           title="Filter: Wait for Approval">
 
           <div className="summary-card__value">
-            {orders.filter((o: any) => o.overallStatus === 'Wait for Approval').length}
+            {statusCounts?.['Wait for Approval'] || 0}
           </div>
           <div className="summary-card__label">Waiting</div>
         </div>
@@ -1223,7 +1243,7 @@ const IndexAllOders = () => {
           title="Filter: Pending">
 
           <div className="summary-card__value">
-            {orders.filter((o: any) => o.overallStatus === 'pending').length}
+            {statusCounts?.['pending'] || 0}
           </div>
           <div className="summary-card__label">Pending</div>
         </div>
@@ -1233,7 +1253,7 @@ const IndexAllOders = () => {
           title="Filter: Approved">
 
           <div className="summary-card__value">
-            {orders.filter((o: any) => o.overallStatus === 'approved').length}
+            {statusCounts?.['approved'] || 0}
           </div>
           <div className="summary-card__label">Approved</div>
         </div>
@@ -1243,7 +1263,7 @@ const IndexAllOders = () => {
           title="Filter: In Progress">
 
           <div className="summary-card__value">
-            {orders.filter((o: any) => o.overallStatus === 'in_progress').length}
+            {statusCounts?.['in_progress'] || 0}
           </div>
           <div className="summary-card__label">In Progress</div>
         </div>
@@ -1253,7 +1273,7 @@ const IndexAllOders = () => {
           title="Filter: Completed">
 
           <div className="summary-card__value">
-            {orders.filter((o: any) => o.overallStatus === 'completed').length}
+            {statusCounts?.['completed'] || 0}
           </div>
           <div className="summary-card__label">Completed</div>
         </div>
@@ -1263,7 +1283,7 @@ const IndexAllOders = () => {
           title="Filter: Dispatched">
 
           <div className="summary-card__value">
-            {orders.filter((o: any) => o.overallStatus === 'dispatched').length}
+            {statusCounts?.['dispatched'] || 0}
           </div>
           <div className="summary-card__label">Dispatched</div>
         </div>
@@ -1273,7 +1293,7 @@ const IndexAllOders = () => {
           title="Filter: Issue">
 
           <div className="summary-card__value">
-            {orders.filter((o: any) => o.overallStatus === 'issue').length}
+            {statusCounts?.['issue'] || 0}
           </div>
           <div className="summary-card__label">Issue</div>
         </div>
@@ -1283,7 +1303,7 @@ const IndexAllOders = () => {
           title="Filter: Cancelled">
 
           <div className="summary-card__value">
-            {orders.filter((o: any) => o.overallStatus === 'cancelled').length}
+            {statusCounts?.['cancelled'] || 0}
           </div>
           <div className="summary-card__label">Cancelled</div>
         </div>
@@ -1403,7 +1423,28 @@ const IndexAllOders = () => {
                           {isFirstRow ? (currentPage - 1) * itemsPerPage + index + 1 : ''}
                         </td>
                         <td className={`order-id-cell ${!isFirstRow ? 'cell-continuation' : ''}`}>
-                          {isFirstRow ? order.orderNumber || order.orderId || order._id?.slice(-8) : ''}
+                          {isFirstRow ? (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span>{order.orderNumber || order.orderId || order._id?.slice(-8)}</span>
+                              <button
+                                className="view-details-btn"
+                                onClick={(e) => handleViewOrderDetails(order._id, e)}
+                                title="View order details"
+                                style={{
+                                  background: '#3b82f6',
+                                  color: 'white',
+                                  border: 'none',
+                                  padding: '4px 8px',
+                                  borderRadius: '4px',
+                                  cursor: 'pointer',
+                                  fontSize: '11px',
+                                  fontWeight: '500'
+                                }}
+                              >
+                                View
+                              </button>
+                            </div>
+                          ) : ''}
                         </td>
                         <td className={!isFirstRow ? 'cell-continuation' : ''}>
                           {isFirstRow ? order.customer?.companyName || order.customerId?.companyName || 'Unknown' : ''}
@@ -1763,43 +1804,25 @@ const IndexAllOders = () => {
           </div>
 
           {/* Pagination */}
-          {totalPages > 1 &&
-        <div className="pagination">
-              <button
-            className="pagination-btn"
-            onClick={() => setCurrentPage(1)}
-            disabled={currentPage === 1}>
-
-                First
-              </button>
-              <button
-            className="pagination-btn"
-            onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-            disabled={currentPage === 1}>
-
-                <ChevronLeftIcon style={{ width: '16px', height: '16px' }} />
-                Prev
-              </button>
-              <span className="pagination-info">
-                Page {currentPage} of {totalPages} ({filteredOrders.length} orders, {flattenedOrderRows.length} rows)
-              </span>
-              <button
-            className="pagination-btn"
-            onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-            disabled={currentPage === totalPages}>
-
-                Next
-                <ChevronRightIcon style={{ width: '16px', height: '16px' }} />
-              </button>
-              <button
-            className="pagination-btn"
-            onClick={() => setCurrentPage(totalPages)}
-            disabled={currentPage === totalPages}>
-
-                Last
-              </button>
-            </div>
-        }
+          <div className="pagination">
+            <button
+              className="pagination-btn"
+              onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}>
+              <ChevronLeftIcon style={{ width: '16px', height: '16px' }} />
+              Previous
+            </button>
+            <span className="pagination-info">
+              Page {currentPage} of {totalPages || 1} pages | Showing {orders.length} of {pagination?.totalOrders || filteredOrders.length} total orders
+            </span>
+            <button
+              className="pagination-btn"
+              onClick={() => setCurrentPage((prev) => Math.min(totalPages || 1, prev + 1))}
+              disabled={currentPage === totalPages}>
+              Next
+              <ChevronRightIcon style={{ width: '16px', height: '16px' }} />
+            </button>
+          </div>
         </>
       }
 
@@ -1822,11 +1845,23 @@ const IndexAllOders = () => {
             setForwardModalOpen(false);
             setSelectedOrderForForward(null);
           }}
-          orderId={selectedOrderForForward.id}
+          orderId={selectedOrderForForForward.id}
           orderNumber={selectedOrderForForward.number}
           onSuccess={() => {
             // Refresh orders list after successful forward
             dispatch(fetchOrders({ page: currentPage, limit: itemsPerPage }));
+          }}
+        />
+      )}
+
+      {/* Order Details Modal */}
+      {selectedOrderId && (
+        <OrderDetailsModal
+          isOpen={detailsModalOpen}
+          orderId={selectedOrderId}
+          onClose={() => {
+            setDetailsModalOpen(false);
+            setSelectedOrderId(null);
           }}
         />
       )}

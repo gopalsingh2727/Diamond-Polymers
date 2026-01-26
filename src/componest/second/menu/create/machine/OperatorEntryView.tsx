@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Plus, Trash2, Save, Mic, Camera, Image as ImageIcon, Check } from 'lucide-react';
+import { Plus, Trash2, Save, Mic, Camera, Image as ImageIcon, Check, AlertTriangle, AlertCircle, Info } from 'lucide-react';
 import "./OperatorEntryView.css";
+import { evaluateAlertWithSource, AlertConfig, AlertResult, getSeverityColor, AlertEvaluationContext } from '../../../../../utils/alertEvaluator';
 
 // Types
 interface ColumnConfig {
@@ -21,6 +22,8 @@ interface ColumnConfig {
   };
   dropdownOptions?: {label: string;value: string;}[];
   sourceType: 'manual' | 'order' | 'customer' | 'optionSpec' | 'calculated';
+  // Alert configuration
+  alert?: AlertConfig;
 }
 
 interface CustomerFieldsConfig {
@@ -80,6 +83,15 @@ interface RowData {
   [key: string]: any;
 }
 
+// Option Type data from order (for alert evaluation)
+interface OptionTypeData {
+  optionTypeId: string;
+  optionTypeName: string;
+  optionSpecId?: string;
+  specs?: Record<string, any>;
+  specificationValues?: Array<{ name: string; value: any; unit?: string }>;
+}
+
 interface OperatorEntryViewProps {
   template?: TemplateConfig;
   orderInfo?: OrderInfo;
@@ -88,6 +100,8 @@ interface OperatorEntryViewProps {
   machines?: {id: string;name: string;}[];
   onSave?: (data: RowData[], metadata: any) => void;
   existingData?: RowData[];
+  // Option Types data for alert evaluation
+  optionTypes?: OptionTypeData[];
 }
 
 // Default template for demo - showing ALL data types
@@ -179,7 +193,8 @@ const OperatorEntryView: React.FC<OperatorEntryViewProps> = ({
   helpers = [{ id: '1', name: 'Ganesh' }, { id: '2', name: 'Lokesh' }],
   machines = [{ id: '1', name: 'LLDPE Machine 1' }, { id: '2', name: 'LLDPE Machine 2' }],
   onSave,
-  existingData = []
+  existingData = [],
+  optionTypes = []
 }) => {
   // State
   const [rows, setRows] = useState<RowData[]>([]);
@@ -328,55 +343,135 @@ const OperatorEntryView: React.FC<OperatorEntryViewProps> = ({
     }
   };
 
+  // Check alert for a cell value with context support
+  const checkCellAlert = (column: ColumnConfig, value: any, rowData?: RowData): AlertResult | null => {
+    if (!column.alert?.enabled) return null;
+
+    // Build evaluation context for alerts with different source types
+    const context: AlertEvaluationContext = {
+      rowData: rowData || {},
+      optionTypes: optionTypes.map(ot => ({
+        optionTypeId: ot.optionTypeId,
+        optionTypeName: ot.optionTypeName,
+        specs: ot.specs,
+        specificationValues: ot.specificationValues
+      })),
+      columns: template.columns.map(c => ({ name: c.name, label: c.label }))
+    };
+
+    const result = evaluateAlertWithSource(column.alert, value, context, column.label);
+    return result.triggered ? result : null;
+  };
+
+  // Get alert icon based on severity
+  const getAlertIcon = (severity: string) => {
+    switch (severity) {
+      case 'error':
+        return <AlertCircle size={14} />;
+      case 'warning':
+        return <AlertTriangle size={14} />;
+      case 'info':
+        return <Info size={14} />;
+      default:
+        return <AlertTriangle size={14} />;
+    }
+  };
+
   // Render cell input based on data type
   const renderCellInput = (column: ColumnConfig, rowIndex: number, value: any) => {
     const isDisabled = column.isReadOnly || column.dataType === 'formula';
+    // Get current row data for alert context (formula evaluation)
+    const currentRowData = rows[rowIndex] || {};
+    const alertResult = checkCellAlert(column, value, currentRowData);
+    const alertColors = alertResult ? getSeverityColor(alertResult.severity) : null;
+
+    // Wrapper with alert styling
+    const wrapWithAlert = (input: React.ReactNode) => {
+      if (alertResult) {
+        return (
+          <div className="operatorEntry-cellWithAlert">
+            <div
+              className={`operatorEntry-alertCell operatorEntry-alert-${alertResult.severity}`}
+              style={{
+                background: alertColors?.background,
+                border: `2px solid ${alertColors?.border}`,
+                borderRadius: '4px',
+                padding: '2px'
+              }}
+            >
+              {input}
+            </div>
+            <div
+              className="operatorEntry-alertMessage"
+              style={{
+                background: alertColors?.background,
+                color: alertColors?.text,
+                border: `1px solid ${alertColors?.border}`,
+                borderRadius: '4px',
+                padding: '4px 8px',
+                fontSize: '11px',
+                marginTop: '2px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}
+            >
+              {getAlertIcon(alertResult.severity)}
+              <span>{alertResult.message || `${column.label} = ${value}`}</span>
+            </div>
+          </div>
+        );
+      }
+      return input;
+    };
 
     switch (column.dataType) {
       case 'number':
       case 'formula':
-        return (
+        return wrapWithAlert(
           <input
             type="number"
             value={value || ''}
             onChange={(e) => updateCell(rowIndex, column.name, e.target.value)}
             disabled={isDisabled}
-            className={isDisabled ? 'calculated' : ''}
-            step="0.01" />);
+            className={`${isDisabled ? 'calculated' : ''} ${alertResult ? 'has-alert' : ''}`}
+            step="0.01" />
+        );
 
 
 
       case 'boolean':
-        return (
+        return wrapWithAlert(
           <input
             type="checkbox"
             checked={!!value}
             onChange={(e) => updateCell(rowIndex, column.name, e.target.checked)}
-            disabled={isDisabled} />);
-
-
+            disabled={isDisabled} />
+        );
 
       case 'dropdown':
-        return (
+        return wrapWithAlert(
           <select
             value={value || ''}
             onChange={(e) => updateCell(rowIndex, column.name, e.target.value)}
-            disabled={isDisabled}>
-
+            disabled={isDisabled}
+            className={alertResult ? 'has-alert' : ''}>
             <option value="">Select</option>
             {column.dropdownOptions?.map((opt) =>
             <option key={opt.value} value={opt.value}>{opt.label}</option>
             )}
-          </select>);
-
+          </select>
+        );
 
       case 'date':
-        return (
+        return wrapWithAlert(
           <input
             type="date"
             value={value || ''}
             onChange={(e) => updateCell(rowIndex, column.name, e.target.value)}
-            disabled={isDisabled} />);
+            disabled={isDisabled}
+            className={alertResult ? 'has-alert' : ''} />
+        );
 
 
 
@@ -410,14 +505,14 @@ const OperatorEntryView: React.FC<OperatorEntryViewProps> = ({
 
 
       default:
-        return (
+        return wrapWithAlert(
           <input
             type="text"
             value={value || ''}
             onChange={(e) => updateCell(rowIndex, column.name, e.target.value)}
-            disabled={isDisabled} />);
-
-
+            disabled={isDisabled}
+            className={alertResult ? 'has-alert' : ''} />
+        );
     }
   };
 

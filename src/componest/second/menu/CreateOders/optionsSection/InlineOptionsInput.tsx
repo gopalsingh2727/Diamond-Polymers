@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
-import { Eye, Printer, FileSpreadsheet } from 'lucide-react';
+// SVG icons used inline - no lucide-react dependency
 import { useOrderFormData } from '../useOrderFormData';
 import { Parser } from 'expr-eval';
 
@@ -87,7 +87,15 @@ const createEmptyOption = (): OptionItem => ({
 // Helper function to check if a value is a file object
 const isFileValue = (value: any): boolean => {
   if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-    return !!(value.fileName || value.name || value.fileSize || value.fileType || value.file);
+    return !!(value.fileName || value.name || value.fileSize || value.fileType || value.fileUrl || value.file);
+  }
+  return false;
+};
+
+// Helper function to check if value is a URL/link
+const isLinkValue = (value: any): boolean => {
+  if (typeof value === 'string') {
+    return value.startsWith('http://') || value.startsWith('https://') || value.startsWith('www.');
   }
   return false;
 };
@@ -260,6 +268,16 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
   // File preview modal state
   const [filePreview, setFilePreview] = useState<{url: string;name: string;type: string;} | null>(null);
 
+  // Cleanup object URLs to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      // Revoke blob URLs when filePreview changes or component unmounts
+      if (filePreview?.url && filePreview.url.startsWith('blob:')) {
+        URL.revokeObjectURL(filePreview.url);
+      }
+    };
+  }, [filePreview]);
+
   // Option type view popup state
   const [viewOptionTypePopup, setViewOptionTypePopup] = useState<{
     show: boolean;
@@ -282,6 +300,12 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
   const isInitialMount = useRef(true);
   const hasLoadedInitialData = useRef(false);
 
+  // ✅ FIXED: Store onDataChange in ref to prevent infinite re-renders
+  const onDataChangeRef = useRef(onDataChange);
+  useEffect(() => {
+    onDataChangeRef.current = onDataChange;
+  }, [onDataChange]);
+
   // Expose methods to parent via ref
   useImperativeHandle(ref, () => ({
     focus: () => {
@@ -297,7 +321,7 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
       setSelectedTypeIndex(-1);
       setSelectedNameIndex(-1);
     }
-  }));
+  }), [showPopup]);
 
   // ✅ REMOVED: No longer need to fetch options/optionSpecs separately
   // Data is now provided by useOrderFormData() hook which uses cached data from /order/form-data API
@@ -330,9 +354,9 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
       setSelectedOptions(initialData);
       hasLoadedInitialData.current = true;
       // Immediately notify parent of initial data for calculations
-      onDataChange(initialData);
+      onDataChangeRef.current(initialData);
     }
-  }, [isEditMode, initialData, onDataChange]);
+  }, [isEditMode, initialData]);
 
   // Notify parent of data changes (skip on initial mount in edit mode)
   useEffect(() => {
@@ -345,9 +369,19 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
       }
     }
 
-    console.log('📦 Options changed, notifying parent:', selectedOptions);
-    onDataChange(selectedOptions);
-  }, [selectedOptions, onDataChange, isEditMode]);
+    // Clean up options before sending to parent - remove empty optionId to prevent backend cast errors
+    const cleanedOptions = selectedOptions.map((opt) => {
+      const cleaned = { ...opt };
+      // Remove empty optionId (type-only options don't have optionId)
+      if (!cleaned.optionId || cleaned.optionId === '') {
+        delete (cleaned as any).optionId;
+      }
+      return cleaned;
+    });
+
+    console.log('📦 Options changed, notifying parent:', cleanedOptions);
+    onDataChangeRef.current(cleanedOptions);
+  }, [selectedOptions, isEditMode]);
 
   // ✅ RECALCULATE ALL OPTIONS when a new option is added (cross-option dependencies)
   // Track previous options count to detect when a new option is added
@@ -698,10 +732,13 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
     }
 
     // Handle Backspace to go back to previous field when empty
+    // IMPORTANT: Only preventDefault and return when we actually navigate
+    // Otherwise, let the default backspace behavior work for text deletion
     if (e.key === 'Backspace') {
       const target = e.target as HTMLInputElement;
       const isEmpty = !target.value || target.value === '';
 
+      // Only handle navigation when input is empty
       if (isEmpty) {
         if (field === 'spec') {
           // Go to previous spec or name field
@@ -710,21 +747,25 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
           if (currentIndex > 0) {
             e.preventDefault();
             specInputs[currentIndex - 1].focus();
+            return;
           } else if (currentIndex === 0) {
             e.preventDefault();
             nameRef.current?.focus();
+            return;
           }
         } else if (field === 'name' && !currentOption.optionName) {
           e.preventDefault();
           typeRef.current?.focus();
+          return;
         } else if (field === 'type' && !currentOption.optionTypeName) {
           e.preventDefault();
           // Close popup and go back to order type
           setShowPopup(false);
           onBackspace?.();
+          return;
         }
       }
-      return;
+      // For non-empty inputs, don't return early - let default backspace behavior work
     }
 
     if (e.key === 'Enter') {
@@ -778,36 +819,41 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
           // Empty row - close popup
           setShowPopup(false);
           setEditingIndex(-1);
-        } else if (currentOption.optionTypeName && currentOption.optionName) {
-          // Save current option
-          if (editingIndex >= 0) {
-            // Editing existing option - replace it
-            setSelectedOptions((prev) => {
-              const updated = [...prev];
-              updated[editingIndex] = { ...currentOption };
-              return updated;
-            });
-            setEditingIndex(-1);
-          } else {
-            // Adding new option
-            setSelectedOptions((prev) => {
-              const updated = [...prev, { ...currentOption, id: generateId() }];
-              return updated;
-            });
-          }
-          setCurrentOption(createEmptyOption());
-          setSelectedBackendOption(null);
-          setSelectedTypeIndex(-1);
-          setSelectedNameIndex(-1);
-          // Focus back to first field
-          typeRef.current?.focus();
-        } else {
-          // Missing required fields - move to first empty field
-          if (!currentOption.optionTypeName) {
+        } else if (currentOption.optionTypeName) {
+          // ✅ Check if this type has options available
+          const hasOptionsForType = getOptionsByType(currentOption.optionTypeName).length > 0;
+          const canSave = hasOptionsForType ? currentOption.optionName : true; // Name required only if options exist
+
+          if (canSave) {
+            // Save current option
+            if (editingIndex >= 0) {
+              // Editing existing option - replace it
+              setSelectedOptions((prev) => {
+                const updated = [...prev];
+                updated[editingIndex] = { ...currentOption };
+                return updated;
+              });
+              setEditingIndex(-1);
+            } else {
+              // Adding new option
+              setSelectedOptions((prev) => {
+                const updated = [...prev, { ...currentOption, id: generateId() }];
+                return updated;
+              });
+            }
+            setCurrentOption(createEmptyOption());
+            setSelectedBackendOption(null);
+            setSelectedTypeIndex(-1);
+            setSelectedNameIndex(-1);
+            // Focus back to first field
             typeRef.current?.focus();
-          } else if (!currentOption.optionName) {
+          } else {
+            // Missing required name - focus on name field
             nameRef.current?.focus();
           }
+        } else {
+          // Missing type - focus on type field
+          typeRef.current?.focus();
         }
       }
     }
@@ -1075,8 +1121,23 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
     }
 
     setShowTypeSuggestions(false);
-    // Focus on name field
-    setTimeout(() => nameRef.current?.focus(), 100);
+
+    // ✅ Check if this option type has any options (names)
+    const optionsForType = getOptionsByType(typeName);
+
+    if (optionsForType.length === 0 && specs.length > 0) {
+      // No options available for this type - skip name field and go to specs
+      console.log('🔍 [handleTypeSelect] No options for this type, skipping to specs');
+      setTimeout(() => {
+        const specInputs = getSpecInputs();
+        if (specInputs.length > 0) {
+          specInputs[0].focus();
+        }
+      }, 100);
+    } else {
+      // Options available - focus on name field
+      setTimeout(() => nameRef.current?.focus(), 100);
+    }
   };
 
   // Option Name Selection Handler
@@ -1600,7 +1661,7 @@ For old files, you need to re-upload them.
                 }}
                 title="View all options details">
 
-                <Eye size={14} />
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
                 View All
               </button>
             </div>
@@ -1687,16 +1748,24 @@ For old files, you need to re-upload them.
                       }}
                       title={`View ${optionTypeName} specifications`}>
 
-                      <Eye size={14} />
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
                       View
                     </button>
                   </div>
 
+                  {(() => {
+                    // Check if this option type has options available
+                    const hasOptionsForType = getOptionsByType(optionTypeName).length > 0;
+                    const showNameColumn = hasOptionsForType;
+
+                    return (
                   <div className="SaveMixingDisplay" style={{ border: 'none' }}>
                     {/* Table Header */}
                     <div className="SaveMixingHeaderRow" style={{
                       display: 'grid',
-                      gridTemplateColumns: `30px 100px 100px ${groupSpecKeys.map(() => '90px').join(' ')} 30px`,
+                      gridTemplateColumns: showNameColumn
+                        ? `30px 100px 100px ${groupSpecKeys.map(() => '90px').join(' ')} 30px`
+                        : `30px 100px ${groupSpecKeys.map(() => '90px').join(' ')} 30px`,
                       gap: '4px',
                       padding: '6px 8px',
                       background: '#f8fafc',
@@ -1705,7 +1774,7 @@ For old files, you need to re-upload them.
                     }}>
                       <strong>#</strong>
                       <strong>Type</strong>
-                      <strong>Name</strong>
+                      {showNameColumn && <strong>Name</strong>}
                       {groupSpecKeys.map((key) =>
                       <strong key={key} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{key}</strong>
                       )}
@@ -1719,7 +1788,9 @@ For old files, you need to re-upload them.
                       return (
                         <div key={option.id} className="SaveMixingstepRow" style={{
                           display: 'grid',
-                          gridTemplateColumns: `30px 100px 100px ${groupSpecKeys.map(() => '90px').join(' ')} 30px`,
+                          gridTemplateColumns: showNameColumn
+                            ? `30px 100px 100px ${groupSpecKeys.map(() => '90px').join(' ')} 30px`
+                            : `30px 100px ${groupSpecKeys.map(() => '90px').join(' ')} 30px`,
                           gap: '4px',
                           padding: '4px 8px',
                           fontSize: '12px',
@@ -1727,42 +1798,64 @@ For old files, you need to re-upload them.
                         }}>
                           <span>{groupRowIndex + 1}</span>
                           <span>{option.optionTypeName}</span>
-                          <span>{option.optionName}</span>
+                          {showNameColumn && <span>{option.optionName}</span>}
                           {groupSpecKeys.map((key) => {
                             const value = option.specificationValues?.[key];
                             const isFile = isFileValue(value);
-
-                            // Debug: Log the value structure
-                            if (isFile) {
-
-                            }
+                            const isLink = isLinkValue(value);
 
                             return (
                               <span key={key} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                {isFile ?
+                                {isFile ? (
                                 <button
                                   type="button"
                                   onClick={(e) => {
                                     e.stopPropagation();
-
                                     handleViewFile(value);
                                   }}
                                   style={{
-                                    background: 'transparent',
+                                    background: '#f59e0b',
                                     border: 'none',
+                                    borderRadius: '4px',
                                     cursor: 'pointer',
-                                    color: '#3b82f6',
+                                    color: 'white',
                                     display: 'flex',
                                     alignItems: 'center',
-                                    padding: '4px'
+                                    gap: '4px',
+                                    padding: '4px 8px',
+                                    fontSize: '11px'
                                   }}
                                   title="View file">
-
-                                    <Eye size={18} />
-                                  </button> :
-
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg> View
+                                  </button>
+                                ) : isLink ? (
+                                  <a
+                                    href={value.startsWith('www.') ? `https://${value}` : value}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
+                                    style={{
+                                      background: '#3b82f6',
+                                      border: 'none',
+                                      borderRadius: '4px',
+                                      cursor: 'pointer',
+                                      color: 'white',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '4px',
+                                      padding: '4px 8px',
+                                      fontSize: '11px',
+                                      textDecoration: 'none'
+                                    }}
+                                    title="Open link">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                                      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                                    </svg> Link
+                                  </a>
+                                ) : (
                                 renderSpecValue(value)
-                                }
+                                )}
                               </span>);
 
                           })}
@@ -1906,7 +1999,9 @@ For old files, you need to re-upload them.
                       return (
                         <div className="SaveMixingstepRow" style={{
                           display: 'grid',
-                          gridTemplateColumns: `30px 100px 100px ${groupSpecKeys.map(() => '90px').join(' ')} 30px`,
+                          gridTemplateColumns: showNameColumn
+                            ? `30px 100px 100px ${groupSpecKeys.map(() => '90px').join(' ')} 30px`
+                            : `30px 100px ${groupSpecKeys.map(() => '90px').join(' ')} 30px`,
                           gap: '4px',
                           padding: '6px 8px',
                           fontSize: '12px',
@@ -1915,8 +2010,14 @@ For old files, you need to re-upload them.
                           fontWeight: '600'
                         }}>
                           <span></span>
-                          <span></span>
-                          <span style={{ color: '#92400e' }}>Total</span>
+                          {showNameColumn ? (
+                            <>
+                              <span></span>
+                              <span style={{ color: '#92400e' }}>Total</span>
+                            </>
+                          ) : (
+                            <span style={{ color: '#92400e' }}>Total</span>
+                          )}
                           {groupSpecKeys.map((key) =>
                           <span key={key} style={{ color: '#92400e' }}>
                               {showTotalFor[key] ? totals[key]?.toLocaleString() || '0' : '-'}
@@ -1928,6 +2029,8 @@ For old files, you need to re-upload them.
                     })()}
 
                   </div>
+                    );
+                  })()}
                 </div>);
 
             })}
@@ -2091,17 +2194,20 @@ For old files, you need to re-upload them.
 
               {/* Current Input Row */}
               <div style={{
-            display: 'grid',
-            gridTemplateColumns: '150px 150px auto',
+            display: 'flex',
+            flexDirection: 'row',
+            flexWrap: 'nowrap',
             gap: '10px',
             padding: '15px',
             backgroundColor: '#f9fafb',
             borderRadius: '6px',
             marginBottom: '15px',
-            overflow: 'visible'
+            overflow: 'visible',
+            alignItems: 'flex-end'
           }}>
+
                 {/* Option Type */}
-                <div style={{ position: 'relative', zIndex: 100000 }}>
+                <div style={{ position: 'relative', zIndex: 100000, minWidth: '150px' }}>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '4px', color: '#374151' }}>Type</label>
                   <input
                 ref={typeRef}
@@ -2144,7 +2250,12 @@ For old files, you need to re-upload them.
                   })()}
                 </div>
 
-                {/* Option Name */}
+                {/* Option Name - Hide when no options available for this type */}
+                {(() => {
+                  const hasOptionsForType = currentOption.optionTypeName ? getOptionsByType(currentOption.optionTypeName).length > 0 : true;
+                  if (!hasOptionsForType) return null; // Skip Name field when no options available
+
+                  return (
                 <div style={{ position: 'relative' }}>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '4px', color: '#374151' }}>Name</label>
                   <input
@@ -2191,10 +2302,12 @@ For old files, you need to re-upload them.
                     );
                   })()}
                 </div>
+                  );
+                })()}
 
                 {/* Specifications Section - dynamically loaded */}
                 {/* ✅ FIX: Show specs when option type is selected OR when backend option is selected */}
-                <div ref={specsContainerRef} style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                <div ref={specsContainerRef} style={{ display: 'flex', gap: '10px', flexWrap: 'nowrap', alignItems: 'flex-end', flex: 1 }}>
                   {(currentOption.optionTypeName || selectedBackendOption) && (() => {
                 // ✅ FIX: Merge specs from all sources (same logic as handleNameSelect)
                 const getMergedSpecs = () => {
@@ -2350,7 +2463,9 @@ For old files, you need to re-upload them.
                               <input
                       type="file"
                       onChange={(e) => {
+                        console.log('🔥 File input onChange triggered for:', spec.name);
                         const file = e.target.files?.[0];
+                        console.log('📄 File object:', file);
                         if (!file) return;
                         const maxSizeInBytes = 50 * 1024 * 1024;
                         if (file.size > maxSizeInBytes) {
@@ -2358,7 +2473,22 @@ For old files, you need to re-upload them.
                           e.target.value = '';
                           return;
                         }
-                        updateSpecificationValue(spec.name, file);
+                        // Convert file to base64 for persistence
+                        const reader = new FileReader();
+                        reader.onload = (ev) => {
+                          const fileData = {
+                            fileName: file.name,
+                            fileUrl: ev.target?.result as string,
+                            fileType: file.type,
+                            fileSize: file.size
+                          };
+                          console.log('📁 File selected:', spec.name, fileData.fileName);
+                          updateSpecificationValue(spec.name, fileData);
+                        };
+                        reader.onerror = (err) => {
+                          console.error('❌ File read error:', err);
+                        };
+                        reader.readAsDataURL(file);
                       }}
                       style={{ display: 'none' }}
                       id={`file-${spec.name}-${index}`} />
@@ -2370,10 +2500,40 @@ For old files, you need to re-upload them.
 
                                 Choose
                               </label>
-                              {currentOption.specificationValues[spec.name]?.name &&
-                    <span style={{ fontSize: '11px', color: '#64748b' }}>
-                                  {currentOption.specificationValues[spec.name].name.substring(0, 15)}...
-                                </span>
+                              {currentOption.specificationValues[spec.name] &&
+                               typeof currentOption.specificationValues[spec.name] === 'object' &&
+                               (currentOption.specificationValues[spec.name]?.name ||
+                                currentOption.specificationValues[spec.name]?.fileName ||
+                                currentOption.specificationValues[spec.name]?.fileUrl) &&
+                    <>
+                      <span style={{ fontSize: '11px', color: '#64748b' }}>
+                        {getFileName(currentOption.specificationValues[spec.name]).substring(0, 15)}...
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const fileValue = currentOption.specificationValues[spec.name];
+                          const url = fileValue?.fileUrl || fileValue?.url;
+                          if (url) {
+                            window.open(url, '_blank');
+                          }
+                        }}
+                        style={{
+                          background: '#3b82f6',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          padding: '2px 6px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '2px',
+                          fontSize: '11px'
+                        }}
+                        title="View file">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                      </button>
+                    </>
                     }
                             </div> :
                   spec.dataType === 'link' ?
@@ -2415,8 +2575,6 @@ For old files, you need to re-upload them.
               }
                 </div>
               </div>
-
-             
 
           </div>
         </div>
@@ -2568,9 +2726,10 @@ For old files, you need to re-upload them.
                       {viewOptionTypePopup.specKeys.map((key) => {
                     const value = option.specificationValues?.[key];
                     const isFile = isFileValue(value);
+                    const isLink = isLinkValue(value);
                     return (
                       <td key={key} style={{ padding: '10px 12px', color: '#334155' }}>
-                            {isFile ?
+                            {isFile ? (
                         <button
                           type="button"
                           onClick={() => handleViewFile(value)}
@@ -2586,12 +2745,34 @@ For old files, you need to re-upload them.
                             padding: '4px 8px',
                             fontSize: '12px'
                           }}>
-
-                                <Eye size={14} /> View
-                              </button> :
-
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg> View
+                              </button>
+                            ) : isLink ? (
+                        <a
+                          href={value.startsWith('www.') ? `https://${value}` : value}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            background: '#eff6ff',
+                            border: '1px solid #bfdbfe',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            color: '#2563eb',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            padding: '4px 8px',
+                            fontSize: '12px',
+                            textDecoration: 'none'
+                          }}>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                                </svg> Link
+                              </a>
+                            ) : (
                         renderSpecValue(value)
-                        }
+                            )}
                           </td>);
 
                   })}
@@ -3349,9 +3530,10 @@ For old files, you need to re-upload them.
                                 {specKeys.map((key) => {
                                 const value = opt.specificationValues?.[key];
                                 const isFile = isFileValue(value);
+                                const isLink = isLinkValue(value);
                                 return (
                                   <td key={key} style={{ padding: '8px 10px', color: '#334155' }}>
-                                      {isFile ?
+                                      {isFile ? (
                                     <button
                                       type="button"
                                       onClick={() => handleViewFile(value)}
@@ -3367,12 +3549,34 @@ For old files, you need to re-upload them.
                                         padding: '3px 6px',
                                         fontSize: '11px'
                                       }}>
-
-                                          <Eye size={12} /> View
-                                        </button> :
-
+                                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg> View
+                                        </button>
+                                      ) : isLink ? (
+                                    <a
+                                      href={value.startsWith('www.') ? `https://${value}` : value}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      style={{
+                                        background: '#eff6ff',
+                                        border: '1px solid #bfdbfe',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer',
+                                        color: '#2563eb',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '4px',
+                                        padding: '3px 6px',
+                                        fontSize: '11px',
+                                        textDecoration: 'none'
+                                      }}>
+                                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                                          </svg> Link
+                                        </a>
+                                      ) : (
                                     renderSpecValue(value)
-                                    }
+                                      )}
                                     </td>);
 
                               })}

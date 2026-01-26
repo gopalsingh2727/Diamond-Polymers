@@ -47,3 +47,34 @@
 .material-name {
   flex: 1;
 }
+
+/* ================================================
+   COMPACT STYLING - Match All Orders Theme
+   ================================================ */
+
+/* Compact Suggestion List */
+.suggestion-list {
+  max-height: 200px;
+}
+
+/* Compact Suggestion Item */
+.suggestionItem {
+  padding: 6px 10px;
+  font-size: 11px;
+}
+
+/* Compact Material Count */
+.material-count {
+  font-size: 9px;
+}
+
+/* Compact Material Name Container */
+.material-name-container {
+  gap: 6px;
+}
+
+/* Compact Material Type Badge */
+.material-type-badge {
+  padding: 1px 6px;
+  font-size: 9px;
+}

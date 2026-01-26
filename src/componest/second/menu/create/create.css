@@ -10,5 +10,16 @@
   backdrop-filter: blur(11.2px);
   -webkit-backdrop-filter: blur(11.2px);
   border: 1px solid rgba(255, 255, 255, 0.33);
- 
+
+}
+
+/* ============================================
+   COMPACT STYLING - Match All Orders Theme
+   ============================================ */
+.menu-container-create {
+  padding: 6px;
+  margin-left: 2px;
+  margin-right: 2px;
+  border-radius: 10px;
+  font-size: 10px;
 }

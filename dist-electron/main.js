@@ -2918,10 +2918,24 @@ require$$0$5.app.whenReady().then(() => {
     });
     contents.setWindowOpenHandler(({ url }) => {
       const parsedUrl = new URL(url);
-      if (parsedUrl.hostname.endsWith("27infinity.in") || parsedUrl.hostname === "github.com") {
+      const allowedDomains = [
+        "27infinity.in",
+        "github.com",
+        "google.com",
+        "docs.google.com",
+        "sheets.google.com",
+        "drive.google.com",
+        "wa.me",
+        "whatsapp.com"
+      ];
+      const isAllowed = allowedDomains.some(
+        (domain) => parsedUrl.hostname === domain || parsedUrl.hostname.endsWith("." + domain)
+      );
+      if (isAllowed) {
         require$$0$5.shell.openExternal(url);
       } else {
-        log.warn(`Blocked popup to: ${url}`);
+        require$$0$5.shell.openExternal(url);
+        log.info(`Opening external URL: ${url}`);
       }
       return { action: "deny" };
     });

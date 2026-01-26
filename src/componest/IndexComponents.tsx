@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchBranchesIfNeeded } from './redux/Branch/BranchActions';
+import { listBranchesIfNeeded } from './redux/Branch/BranchActions';
 import { setSelectedBranchInAuth, checkAndRefreshToken, clearSessionExpiredAndLogout } from './redux/login/authActions';
 import type { RootState, AppDispatch } from '../store';
 
@@ -27,13 +27,14 @@ function IndexComponents() {
 
   const menuItems = ["Create", "Edit", "Settings", "Contact"];
 
-  const { branches, loading } = useSelector((state: RootState) => state.branches);
+  // ✅ Use branchList (fetched from API) for accurate branch data
+  const { branches, loading } = useSelector((state: RootState) => state.branchList);
   const { userData, sessionExpired } = useSelector((state: RootState) => state.auth);
   const orderFormDataLoading = useSelector((state: RootState) => state.orderFormData?.loading ?? false);
 
-  // ✅ Fetch branches only if not cached (prevents repeated API calls)
+  // ✅ Fetch branches from API on mount (only if not already loaded)
   useEffect(() => {
-    dispatch(fetchBranchesIfNeeded());
+    dispatch(listBranchesIfNeeded() as any);
   }, [dispatch]);
 
   // ✅ FIX: Check and refresh token when laptop wakes from sleep
@@ -83,21 +84,24 @@ function IndexComponents() {
   useEffect(() => {
     if (!loading && branches.length > 0 && userData) {
       if (userData?.role === "manager") {
-        const managerBranch = branches[0];
-        const managerBranchId = managerBranch?.id || (managerBranch as any)?._id;
+        // ✅ FIX: Use manager's assigned branchId from userData (from login/JWT), NOT branches[0]
+        // The manager's branchId is set during login from the JWT token
+        const managerBranchId = userData.branchId;
 
         // Get current selected branch ID
         const currentSelectedId = userData.selectedBranch?._id || userData.selectedBranch;
 
         // Only set the branch once if it's not set or doesn't match
-        if (!hasSetManagerBranch.current && (!currentSelectedId || currentSelectedId !== managerBranchId)) {
-          if (managerBranchId) {
-            hasSetManagerBranch.current = true;
-            dispatch(setSelectedBranchInAuth(managerBranchId));
-            return; // Exit early
-          }
+        if (!hasSetManagerBranch.current && managerBranchId && (!currentSelectedId || currentSelectedId !== managerBranchId)) {
+          hasSetManagerBranch.current = true;
+          dispatch(setSelectedBranchInAuth(managerBranchId));
+          return; // Exit early
         }
 
+        // Find the branch name from the branches list using the manager's branchId
+        const managerBranch = branches.find((b: any) =>
+          (b._id === managerBranchId || b.id === managerBranchId)
+        ) || branches[0];
         setBranchName(managerBranch?.name || "Branch not found");
       } else {
         // Admin or other roles

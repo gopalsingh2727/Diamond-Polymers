@@ -2007,3 +2007,251 @@
   background: var(--co-accent, #FF6B35);
   color: white;
 }
+
+/* ================================================
+   COMPACT STYLING - Match All Orders Theme
+   ================================================ */
+
+/* Compact Input Sizes - Override to match All Orders */
+.CreateOrders input,
+.CreateOrders select,
+.CreateOrders textarea,
+.co-container input,
+.co-container select,
+.co-container textarea {
+  font-size: 11px !important;
+  padding: 4px 2px !important;
+}
+
+.CreateOrders input::placeholder,
+.co-container input::placeholder {
+  font-size: 11px;
+}
+
+/* Compact Labels */
+.CreateOrders label,
+.co-container label,
+.co-label,
+.CreateOrdersForm label,
+.CustomerNameRow label {
+  font-size: 9px !important;
+  margin-bottom: 1px;
+}
+
+/* Compact Section Titles */
+.co-section-title,
+.dynamicSection-title {
+  font-size: 9px;
+  margin-bottom: 4px;
+  padding-bottom: 3px;
+}
+
+/* Compact Header */
+.co-header,
+.CrateOrdersHaders {
+  height: 32px;
+  padding: 0 10px;
+}
+
+.co-title,
+.CreteOrdersTitel {
+  font-size: 12px;
+}
+
+/* Compact Header Order ID badge */
+.HeaderOrderID {
+  font-size: 10px;
+  padding: 2px 8px;
+}
+
+/* Compact Customer Form Grid */
+.co-customer-form,
+.CreateOrdersForm {
+  gap: 3px 6px;
+}
+
+.co-customer-row,
+.CustomerNameRow {
+  gap: 3px 6px;
+}
+
+/* Compact Sections */
+.co-section,
+.dynamicSection {
+  padding: 6px 8px;
+  margin-bottom: 4px;
+}
+
+/* Compact Order Type Select */
+.co-order-type,
+.SeleteType {
+  padding: 4px 0;
+}
+
+.SeleteType label {
+  font-size: 9px !important;
+}
+
+.SeleteType select {
+  height: 24px;
+  font-size: 10px !important;
+}
+
+/* Compact Calculation Items */
+.co-calc-item,
+.dynamicColumnItem {
+  padding: 4px 6px;
+}
+
+.co-calc-label,
+.dynamicColumnLabel {
+  font-size: 8px;
+}
+
+.co-calc-input,
+.dynamicColumnInput {
+  font-size: 10px !important;
+  padding: 3px 2px !important;
+}
+
+/* Compact Count Badge */
+.co-calc-count,
+.dynamicSection-count {
+  font-size: 8px;
+  padding: 1px 5px;
+}
+
+/* Compact Step Table */
+.co-step-header,
+.stepHeaderRow {
+  padding: 4px 10px;
+  font-size: 8px !important;
+}
+
+.co-step-row,
+.stepRow {
+  padding: 3px 10px;
+  font-size: 9px !important;
+}
+
+/* Compact Mixing Display */
+.co-mixing-header,
+.SaveMixingHeaderRow {
+  font-size: 8px !important;
+  padding: 4px 8px;
+}
+
+.co-mixing-row,
+.SaveMixingstepRow {
+  font-size: 9px !important;
+  padding: 3px 8px;
+}
+
+/* Compact Footer */
+.co-footer,
+.CreateOrdersFooter {
+  height: 44px !important;
+  min-height: 44px !important;
+  max-height: 44px !important;
+  padding: 0 16px !important;
+  gap: 12px;
+}
+
+.co-footer-notes textarea,
+.NotesSection textarea,
+.NotesTextarea {
+  height: 24px !important;
+  min-height: 24px !important;
+  max-height: 24px !important;
+  font-size: 10px !important;
+  padding: 3px 8px !important;
+}
+
+.co-footer-status select,
+.ordersCreateSections-Status select,
+.co-footer-priority select,
+.PrioritySection select {
+  height: 26px;
+  font-size: 10px !important;
+  padding: 2px 6px;
+  min-width: 100px;
+}
+
+.co-footer-save,
+.CreateOrdersButton {
+  height: 26px;
+  padding: 0 12px;
+  font-size: 10px;
+}
+
+/* Compact Popup Styles */
+.co-popup-title,
+.popup-content h3,
+.popup-content .popup-title {
+  font-size: 12px;
+}
+
+.popupitemallStep,
+.popupitemallStep.popupitemall {
+  font-size: 10px;
+}
+
+.popupitemallStep input[type="text"],
+.popupitemallStep input[type="datetime-local"] {
+  font-size: 10px !important;
+}
+
+/* Compact Sidebar */
+.co-sidebar-item,
+.sideMenu p {
+  font-size: 10px;
+  padding: 6px 8px;
+}
+
+/* Compact Suggestions List */
+.co-suggestion-item,
+.suggestionItem {
+  padding: 6px 10px;
+  font-size: 11px;
+}
+
+.co-suggestion-name,
+.suggestionItem-name {
+  font-size: 11px;
+}
+
+.co-suggestion-meta,
+.suggestionItem-meta {
+  font-size: 9px;
+}
+
+/* Compact Body Padding */
+.co-form,
+.createOdersForm {
+  gap: 4px;
+  padding: 0 10px;
+  padding-bottom: 60px;
+}
+
+/* Compact Order Info */
+.co-order-id,
+.OrderIDCreate {
+  font-size: 10px;
+}
+
+.OrderIDCreate h5,
+.OrderIDCreate h6 {
+  font-size: 10px;
+}
+
+/* Compact Order Type Dropdown */
+.order-type-select {
+  height: 24px;
+  font-size: 10px;
+  padding: 2px 6px;
+}
+
+.order-type-dropdown li {
+  padding: 4px 8px;
+  font-size: 10px;
+}

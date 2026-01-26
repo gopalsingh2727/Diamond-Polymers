@@ -15,6 +15,7 @@ import {
 } from "./branchConstants";
 import { AppDispatch, RootState } from "../../../store";
 import { addBranchToAuth } from "../login/authActions";
+import { clearBranchCache } from "../Branch/BranchActions";
 
 // Helpers
 const getToken = (getState: () => RootState): string | null => {
@@ -82,6 +83,9 @@ export const createBranch = (data: {
         payload: response.data,
       });
 
+      // ✅ Clear branch cache so next load fetches fresh data
+      clearBranchCache();
+
       // Update user's branches in Redux state and localStorage
       const newBranch = response.data.branch;
       if (newBranch?._id) {
@@ -144,6 +148,9 @@ export const updateBranch = (branchId: string, data: { name?: string; location?:
         { headers: getHeaders(token) }
       );
 
+      // ✅ Clear branch cache so next load fetches fresh data
+      clearBranchCache();
+
       dispatch({ type: BRANCH_UPDATE_SUCCESS, payload: response.data });
 
     } catch (error: any) {
@@ -166,6 +173,9 @@ export const deleteBranch = (branchId: string) => {
       await axios.delete(`${baseUrl}/v2/branch/${branchId}`, {
         headers: getHeaders(token),
       });
+
+      // ✅ Clear branch cache so next load fetches fresh data
+      clearBranchCache();
 
       dispatch({ type: BRANCH_DELETE_SUCCESS, payload: branchId });
 

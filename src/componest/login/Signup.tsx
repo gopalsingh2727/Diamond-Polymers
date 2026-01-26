@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import { InfinitySpinner } from '../../components/InfinitySpinner';
 import OTPVerification from './OTPVerification';
 import '../../styles/otp-verification.css';
@@ -19,6 +20,7 @@ const Signup: React.FC<SignupProps> = ({
   onBack,
   branchId
 }) => {
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState<SignupStep>('details');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -45,6 +47,11 @@ const Signup: React.FC<SignupProps> = ({
   const validateForm = (): boolean => {
     if (!formData.username.trim()) {
       setError('Username is required');
+      return false;
+    }
+
+    if (formData.username.trim().length < 3) {
+      setError('Username must be at least 3 characters');
       return false;
     }
 
@@ -88,13 +95,14 @@ const Signup: React.FC<SignupProps> = ({
     setError('');
 
     try {
-      // Step 1: Send email OTP
+      // Step 1: Send email OTP with username for pre-validation
       await axios.post(
         `${baseUrl}/signup/send-email-otp`,
         {
           email: formData.email,
           phone: formData.phone,
-          userType: userType
+          userType: userType,
+          username: formData.username // Pass username for pre-validation
         },
         {
           headers: {
@@ -103,8 +111,6 @@ const Signup: React.FC<SignupProps> = ({
           }
         }
       );
-
-
 
       // Step 2: Move to email verification
       setCurrentStep('email-verification');
@@ -144,18 +150,18 @@ const Signup: React.FC<SignupProps> = ({
         }
       );
 
-
+      // Account created successfully - redirect to login page (no auto-login)
       setCurrentStep('complete');
 
-      // Redirect to login after 2 seconds
+      // Redirect to login page after 2 seconds
       setTimeout(() => {
-        onSignupSuccess();
+        navigate('/login', { replace: true });
       }, 2000);
     } catch (err: any) {
-
-      setError(
-        err.response?.data?.message || 'Failed to create account. Please try again.'
-      );
+      console.error('Signup error:', err);
+      // Check for specific error message from backend (in 'error' field)
+      const errorMessage = err.response?.data?.error || err.response?.data?.message || err.message || 'Failed to create account. Please try again.';
+      setError(errorMessage);
       setCurrentStep('details');
     } finally {
       setLoading(false);
@@ -387,9 +393,9 @@ const Signup: React.FC<SignupProps> = ({
           </h2>
 
           <p className="text-gray-600 mb-6">
-            Your email has been verified.
+            Your account has been created.
             <br />
-            Redirecting to login...
+            Please go to login to continue.
           </p>
 
           <div className="flex justify-center">

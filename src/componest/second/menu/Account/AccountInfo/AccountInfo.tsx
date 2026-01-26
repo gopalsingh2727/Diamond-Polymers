@@ -6,7 +6,8 @@ import { saveAs } from "file-saver";
 import { RootState } from "../../../../redux/rootReducer";
 
 import { BackButton } from "../../../../allCompones/BackButton";
-import { getAccountOrders } from "../../../../redux/oders/OdersActions";
+import { getAccountOrders, fetchOrderDetails } from "../../../../redux/oders/OdersActions";
+import { AppDispatch } from "../../../../../store";
 import { useDaybookUpdates } from "../../../../../hooks/useWebSocket"; // ✅ WebSocket real-time updates
 import "../../Oders/indexAllOders.css"; // ✅ Import All Orders styling
 import "../../Edit/EditMachineType/EditMachineyType.css"; // ✅ Import Table styling
@@ -120,7 +121,7 @@ const defaultOrdersState = {
 };
 
 const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDate: propToDate }) => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -155,11 +156,14 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
   const [currentPage, setCurrentPage] = useState(1); // ✅ Pagination state
   const [refreshTrigger, setRefreshTrigger] = useState(0); // ✅ ADDED: Force refresh trigger
   const [showAccountModal, setShowAccountModal] = useState(false); // ✅ Account info modal
+  const [editLoading, setEditLoading] = useState(false); // ✅ Loading state for edit
 
   // Refs - must be declared before useEffect
   const scrollWrapperRef = useRef<HTMLDivElement>(null);
   const ordersRef = useRef<(HTMLDivElement | null)[]>([]);
   const contentRef = useRef<HTMLDivElement>(null);
+  const isInitialMount = useRef(true); // Track initial mount to skip unnecessary fetch
+  const lastRefreshTrigger = useRef(0); // Track last refreshTrigger to detect actual updates
 
   // Redux selectors
   const ordersState = useSelector((state: RootState) => {
@@ -176,8 +180,10 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
     error = null
   } = ordersState;
 
-
-
+  // Get pagination, statusCounts, and summary from state
+  const pagination = (ordersState as any)?.pagination || null;
+  const statusCounts = (ordersState as any)?.statusCounts || null;
+  const summary = (ordersState as any)?.summary || null;
 
 
 
@@ -353,11 +359,40 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
     setCurrentPage(1);
   }, [fromDate, toDate, searchTerm, statusFilter]);
 
-  // Fetch orders when component mounts, filters change, or navigation back to page
+  // ✅ Initial load - fetch if no cached data or incomplete data
   useEffect(() => {
-    fetchAccountOrdersData();
+    lastRefreshTrigger.current = refreshTrigger;
+    // Fetch if no cached orders OR cached orders < 50 AND more exist
+    const needsFetch = reduxOrders.length === 0 ||
+      (reduxOrders.length < 50 && pagination && pagination.total > reduxOrders.length);
+
+    if (needsFetch) {
+      fetchAccountOrdersData();
+    }
+    // Mark initialization complete after first render cycle
+    const timer = setTimeout(() => {
+      isInitialMount.current = false;
+    }, 0);
+    return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dispatch, accountData?._id, currentPage, fromDate, toDate, searchTerm, statusFilter, location.key, refreshTrigger]);
+  }, []);
+
+  // ✅ Handle refreshTrigger changes (from WebSocket updates or sessionStorage flag)
+  useEffect(() => {
+    if (!isInitialMount.current && refreshTrigger !== lastRefreshTrigger.current) {
+      lastRefreshTrigger.current = refreshTrigger;
+      fetchAccountOrdersData();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshTrigger]);
+
+  // ✅ Handle filter/pagination changes (user interactions)
+  useEffect(() => {
+    if (!isInitialMount.current) {
+      fetchAccountOrdersData();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, fromDate, toDate, searchTerm, statusFilter]);
 
   // ✅ FIXED: Check for order updates on mount (using state trigger to avoid stale closures)
   useEffect(() => {
@@ -369,15 +404,8 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
     }
   }, []); // Run on mount
 
-  // ✅ FIXED: Also check on any location change (for navigate(-1) back button)
-  useEffect(() => {
-    const ordersUpdated = sessionStorage.getItem('orders_updated');
-    if (ordersUpdated) {
-
-      sessionStorage.removeItem('orders_updated');
-      setRefreshTrigger((prev) => prev + 1);
-    }
-  }, [location]); // Trigger on any location change
+  // Note: Removed location-based effect to prevent unnecessary API calls on navigation
+  // The mount effect above + WebSocket updates handle all necessary refreshes
 
   // ✅ WebSocket real-time subscription for instant order updates
   const handleOrderUpdate = useCallback(() => {
@@ -443,135 +471,93 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
     }
   }, [filteredOrders.length, selectedOrderIndex]);
 
-  // Handle order click to navigate to edit
-  const handleOrderClick = (order: Order) => {
+  // Handle order click to navigate to edit - FETCH FULL ORDER DETAILS FIRST
+  const handleOrderClick = async (order: Order) => {
+    setEditLoading(true);
 
+    try {
+      // Fetch complete order details from API
+      const fullOrderData = await dispatch(fetchOrderDetails(order._id));
 
-    const orderDataForEdit = {
-      _id: order._id,
-      orderId: order.orderId,
-
-      // Order type information - CRITICAL for showing options
-      orderType: order.orderType,
-      orderTypeId: order.orderTypeId || order.orderType?._id || order.orderType,
-
-      // Options data - CRITICAL for edit mode
-      options: order.options || [],
-      optionsWithDetails: order.optionsWithDetails || [],
-
-      // Customer information - use accountData as primary source (with safe optional chaining)
-      customer: {
-        _id: accountData?._id || order.customer?._id || '',
-        name: accountData?.name || accountData?.companyName || order.customer?.name || order.customer?.companyName || '',
-        companyName: accountData?.companyName || accountData?.name || order.customer?.companyName || order.customer?.name || '',
-        phone: accountData?.phone || order.customer?.phone1 || order.customer?.phone || '',
-        email: accountData?.email || order.customer?.email || '',
-        address: accountData?.address || order.customer?.address1 || '',
-        whatsapp: accountData?.whatsapp || order.customer?.whatsapp || '',
-        phone2: accountData?.phone2 || order.customer?.phone2 || '',
-        pinCode: accountData?.pinCode || order.customer?.pinCode || '',
-        state: accountData?.state || order.customer?.state || '',
-        imageUrl: accountData?.imageUrl || order.customer?.imageUrl || '',
-        address1: accountData?.address1 || order.customer?.address1 || '',
-        address2: accountData?.address2 || order.customer?.address2 || '',
-        phone1: accountData?.phone1 || accountData?.phone || order.customer?.phone1 || '',
-        telephone: accountData?.telephone || order.customer?.telephone || '',
-        firstName: accountData?.firstName || order.customer?.firstName || '',
-        lastName: accountData?.lastName || order.customer?.lastName || ''
-      },
-
-      // Order details
-      status: order.overallStatus,
-      overallStatus: order.overallStatus,
-      createdAt: order.createdAt,
-      updatedAt: order.updatedAt,
-
-      // Material information
-      material: order.material ? {
-        _id: order.material._id || '',
-        name: order.material.name || '',
-        type: order.material.type || ''
-      } : null,
-      materialId: order.materialId,
-
-      // Order specifications
-      materialWeight: order.materialWeight,
-      Width: order.Width,
-      Height: order.Height,
-      Thickness: order.Thickness,
-
-      // Additional fields
-      SealingType: order.SealingType || '',
-      BottomGusset: order.BottomGusset || '',
-      Flap: order.Flap || '',
-      AirHole: order.AirHole || '',
-      Printing: order.Printing || false,
-      mixMaterial: order.mixMaterial || [],
-
-      // Steps information
-      steps: order.steps || [],
-      currentStepIndex: order.currentStepIndex || 0,
-      stepsCount: order.stepsCount || 0,
-      totalMachines: order.totalMachines || 0,
-      completedSteps: order.completedSteps || 0,
-
-      // Branch information
-      branch: order.branch || null,
-      branchId: order.branchId,
-
-      // Creator information
-      createdBy: order.createdBy,
-      createdByRole: order.createdByRole,
-
-      // Notes
-      Notes: order.Notes || ''
-    };
-
-    navigate("/menu/orderform", {
-      state: {
-        isEdit: true,
-        orderData: orderDataForEdit,
-        fromAccountInfo: true,
-        accountData: accountData,
-
-        // Legacy compatibility - Fix: Check all customer name fields
-        companyName: accountData?.companyName || accountData?.name || order.customer?.companyName || order.customer?.name || order.companyName || 'Unknown Customer',
-        customerPhone: accountData?.phone || order.customer?.phone1 || order.customer?.phone || '',
-        customerId: accountData?._id || order.customer?._id || '',
-        orderDate: order.date || '',
-        status: order.overallStatus || order.status || '',
-        orderId: order.orderId,
-
-        // All other order data...
-        customer: orderDataForEdit.customer,
-        material: orderDataForEdit.material,
-        Width: order.Width || 0,
-        Height: order.Height || 0,
-        Thickness: order.Thickness || 0,
-        materialWeight: order.materialWeight || 0,
-        SealingType: order.SealingType || '',
-        BottomGusset: order.BottomGusset || '',
-        Flap: order.Flap || '',
-        AirHole: order.AirHole || '',
-        Printing: order.Printing || false,
-        mixMaterial: order.mixMaterial || [],
-        steps: order.steps || [],
-        stepsCount: order.stepsCount || 0,
-        totalMachines: order.totalMachines || 0,
-        completedSteps: order.completedSteps || 0,
-        currentStepIndex: order.currentStepIndex ?? 0,
-        Notes: order.Notes || '',
-        createdAt: order.createdAt || '',
-        updatedAt: order.updatedAt || '',
-        branch: order.branch || null,
-        branchId: order.branchId || order.branch?._id || '',
-        creator: order.creator || null,
-        createdBy: order.createdBy || '',
-        createdByRole: order.createdByRole || '',
-        AllStatus: order.AllStatus || {},
-        id: order.id || order._id
+      if (!fullOrderData) {
+        console.error('Failed to fetch order details for edit');
+        alert('Failed to load order details. Please try again.');
+        setEditLoading(false);
+        return;
       }
-    });
+
+      // Use the full order data from API
+      const orderDataForEdit = {
+        _id: fullOrderData._id,
+        orderId: fullOrderData.orderId,
+        overallStatus: fullOrderData.overallStatus,
+        status: fullOrderData.overallStatus,
+        createdAt: fullOrderData.createdAt,
+        updatedAt: fullOrderData.updatedAt,
+
+        // Customer - merge with accountData
+        customer: fullOrderData.customer || {
+          _id: accountData?._id || fullOrderData.customerId || '',
+          companyName: accountData?.companyName || fullOrderData.customerDetails?.customerName || '',
+          phone1: accountData?.phone || fullOrderData.customer?.phone1 || '',
+          email: accountData?.email || fullOrderData.customer?.email || ''
+        },
+        customerId: fullOrderData.customer?._id || fullOrderData.customerId || '',
+
+        // Order Type
+        orderType: fullOrderData.orderType || null,
+        orderTypeId: fullOrderData.orderType?._id || fullOrderData.orderTypeId || '',
+
+        // Steps and workflow - FULL DATA
+        steps: fullOrderData.steps || [],
+        stepProgress: fullOrderData.stepProgress || [],
+        currentStepIndex: fullOrderData.currentStepIndex || 0,
+        totalSteps: fullOrderData.totalSteps || fullOrderData.steps?.length || 0,
+        completedSteps: fullOrderData.completedSteps || 0,
+
+        // Branch
+        branch: fullOrderData.branch || null,
+        branchId: fullOrderData.branchId || fullOrderData.branch?._id || '',
+
+        // Creator
+        createdBy: fullOrderData.createdBy || '',
+        createdByName: fullOrderData.createdByName || '',
+        createdByRole: fullOrderData.createdByRole || '',
+
+        // Notes
+        Notes: fullOrderData.Notes || fullOrderData.notes || '',
+
+        // Options - FULL DATA
+        options: fullOrderData.options || [],
+        optionsWithDetails: fullOrderData.optionsWithDetails || [],
+
+        // Billing
+        billingDetails: fullOrderData.billingDetails || {},
+        quantity: fullOrderData.quantity || 1,
+        priority: fullOrderData.priority || 'normal',
+
+        // Dynamic values
+        dynamicValues: fullOrderData.dynamicValues || {}
+      };
+
+      console.log('📝 Navigating to edit with full order data:', orderDataForEdit);
+
+      navigate("/menu/orderform", {
+        state: {
+          isEdit: true,
+          orderData: orderDataForEdit,
+          fromAccountInfo: true,
+          accountData: accountData,
+          orderId: fullOrderData.orderId,
+          companyName: accountData?.companyName || fullOrderData.customer?.companyName || ''
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching order for edit:', error);
+      alert('Error loading order. Please try again.');
+    } finally {
+      setEditLoading(false);
+    }
   };
 
   // Event handlers
@@ -1006,7 +992,34 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
         </div>
       </div>
 
-      {/* Status Summary Cards - Removed (not available in accountOrders reducer) */}
+      {/* Status Summary Cards */}
+      {statusCounts && (
+        <div className="editsectionsTable-summary editsectionsTable-summary--compact">
+          <div className="editsectionsTable-summaryCard editsectionsTable-summaryCard--mini">
+            <div className="editsectionsTable-summaryCard__value">{summary?.totalOrders || filteredOrders.length}</div>
+            <div className="editsectionsTable-summaryCard__label">Total</div>
+          </div>
+          {Object.entries(statusCounts).map(([status, count]) => {
+            const statusClassMap: Record<string, string> = {
+              'Wait for Approval': 'waiting',
+              'pending': 'pending',
+              'approved': 'approved',
+              'in_progress': 'progress',
+              'completed': 'completed',
+              'dispatched': 'dispatched',
+              'issue': 'issue',
+              'cancelled': 'cancelled'
+            };
+            const statusClass = statusClassMap[status] || '';
+            return (
+              <div key={status} className={`editsectionsTable-summaryCard editsectionsTable-summaryCard--mini editsectionsTable-summaryCard--${statusClass}`}>
+                <div className="editsectionsTable-summaryCard__value">{count as number}</div>
+                <div className="editsectionsTable-summaryCard__label">{status.replace(/_/g, ' ')}</div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Loading & Error States */}
       {loading &&
@@ -1017,7 +1030,7 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
       }
 
       {/* Orders Table */}
-      <div className="editsectionsTable-container" style={{ paddingBottom: '60px' }}>
+      <div className="editsectionsTable-container">
         {!loading && filteredOrders.length === 0 &&
         <div className="editsectionsTable-empty">
             <p>No orders found for this account with the selected criteria.</p>
@@ -1121,6 +1134,60 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
 
         </div>
       }
+
+        {/* Pagination bar at bottom */}
+        {!loading && filteredOrders.length > 0 && (
+          <div style={{
+            backgroundColor: 'white',
+            padding: '12px 16px',
+            borderTop: '2px solid #e2e8f0',
+            boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.08)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: '16px',
+            flexShrink: 0
+          }}>
+            {/* Previous Button */}
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1 || loading}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: currentPage === 1 ? '#e2e8f0' : '#3b82f6',
+                color: currentPage === 1 ? '#94a3b8' : 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                fontSize: '13px',
+                fontWeight: 500
+              }}>
+              ← Previous
+            </button>
+
+            {/* Page Info */}
+            <span style={{ color: '#64748b', fontSize: '14px' }}>
+              Page {currentPage} of {pagination?.totalPages || '?'} pages | Showing {reduxOrders.length} of {pagination?.totalOrders || filteredOrders.length} total orders
+            </span>
+
+            {/* Next Button - disabled based on pagination info or if we got less than 50 orders */}
+            <button
+              onClick={() => setCurrentPage(prev => prev + 1)}
+              disabled={pagination?.hasNextPage === false || (!pagination && reduxOrders.length < 50) || loading}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: (pagination?.hasNextPage === false || (!pagination && reduxOrders.length < 50)) ? '#e2e8f0' : '#3b82f6',
+                color: (pagination?.hasNextPage === false || (!pagination && reduxOrders.length < 50)) ? '#94a3b8' : 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: (pagination?.hasNextPage === false || (!pagination && reduxOrders.length < 50)) ? 'not-allowed' : 'pointer',
+                fontSize: '13px',
+                fontWeight: 500
+              }}>
+              Next →
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Account Info Modal */}

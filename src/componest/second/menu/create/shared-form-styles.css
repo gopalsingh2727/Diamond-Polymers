@@ -367,20 +367,27 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   padding: 10px 15px;
   background: transparent;
 }
 
-/* Inner form wrapper for centering */
-.CreateForm > div:first-child,
-.CreateForm > form:first-child {
+/* Inner form wrapper for centering - only for non-orderTypeContainer */
+.CreateForm:not(.orderTypeContainer) > div:first-child,
+.CreateForm:not(.orderTypeContainer) > form:first-child {
   width: 100%;
   max-width: 500px;
+  margin: 0 auto;
   background: white;
   padding: 20px 30px;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Full width for orderTypeContainer */
+.CreateForm.orderTypeContainer {
+  align-items: stretch;
+  max-width: 100%;
 }
 
 /* Form Title */
@@ -677,4 +684,223 @@
   font-weight: 500;
   color: #374151;
   margin-bottom: 2px;
+}
+
+/* ============================================
+   COMPACT STYLING - Match All Orders Theme
+   Smaller text and inputs across all Create forms
+   ============================================ */
+
+/* Compact CSS Variables Override */
+:root {
+  --font-xs: 0.625rem;
+  --font-sm: 0.6875rem;
+  --font-base: 0.75rem;
+  --font-lg: 0.875rem;
+  --font-xl: 1rem;
+  --font-2xl: 1.125rem;
+}
+
+/* Compact Form Container */
+.shared-form-container {
+  padding: 10px;
+}
+
+/* Compact Form Title */
+.shared-form-title {
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+/* Compact Form Label */
+.shared-form-label {
+  font-size: 9px;
+  margin-bottom: 2px;
+}
+
+/* Compact Form Input */
+.shared-form-input {
+  padding: 6px 0;
+  font-size: 11px;
+}
+
+/* Compact Form Select */
+.shared-form-select {
+  padding: 6px 0;
+  font-size: 11px;
+}
+
+/* Compact Form Textarea */
+.shared-form-textarea {
+  padding: 6px 0;
+  font-size: 11px;
+  min-height: 60px;
+}
+
+/* Compact Buttons */
+.shared-save-button,
+.shared-cancel-button,
+.shared-success-button {
+  padding: 6px 12px;
+  font-size: 10px;
+}
+
+/* Compact Button Container */
+.shared-button-container {
+  margin-top: 15px;
+  gap: 10px;
+}
+
+/* Compact Messages */
+.shared-success-msg,
+.shared-error-msg {
+  padding: 8px;
+  font-size: 10px;
+}
+
+/* Compact Helper Text */
+.shared-helper-text {
+  font-size: 8px;
+}
+
+/* Compact Section Title */
+.shared-section-title {
+  font-size: 11px;
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+}
+
+/* Compact Checkbox */
+.shared-checkbox-label {
+  font-size: 10px;
+}
+
+/* ============================================
+   CREATEFORM COMPACT OVERRIDES
+   ============================================ */
+
+/* Compact CreateForm Container */
+.CreateForm {
+  padding: 6px 10px;
+}
+
+.CreateForm:not(.orderTypeContainer) > div:first-child,
+.CreateForm:not(.orderTypeContainer) > form:first-child {
+  padding: 12px 16px;
+}
+
+/* Ensure full width for orderTypeContainer in compact mode */
+.CreateForm.orderTypeContainer {
+  max-width: 100%;
+  align-items: stretch;
+}
+
+/* Compact Form Title */
+.CreateForm h2,
+.CreateForm .form-title {
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+/* Compact Form Section */
+.CreateForm .form-section {
+  margin-bottom: 6px;
+}
+
+/* Compact Form Row */
+.CreateForm .form-row {
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.CreateForm .form-row > * {
+  min-width: 140px;
+}
+
+/* Compact Form Group */
+.CreateForm .form-group {
+  margin-bottom: 8px;
+}
+
+/* Compact Labels */
+.CreateForm label {
+  font-size: 9px !important;
+  margin-bottom: 2px;
+}
+
+/* Compact Inputs */
+.CreateForm input[type="text"],
+.CreateForm input[type="number"],
+.CreateForm input[type="email"],
+.CreateForm input[type="password"],
+.CreateForm input[type="tel"],
+.CreateForm input[type="date"],
+.CreateForm textarea {
+  padding: 5px 2px !important;
+  font-size: 11px !important;
+}
+
+/* Compact Select */
+.CreateForm select {
+  padding: 5px 4px !important;
+  font-size: 11px !important;
+}
+
+/* Compact Textarea */
+.CreateForm textarea {
+  min-height: 50px;
+}
+
+/* Compact Buttons */
+.CreateForm button,
+.CreateForm .save-button,
+.CreateForm .submit-button,
+.CreateForm [type="submit"] {
+  padding: 6px 16px;
+  font-size: 10px;
+}
+
+/* Compact Button Container */
+.CreateForm .button-container,
+.CreateForm .form-actions {
+  gap: 10px;
+  margin-top: 15px;
+  padding-top: 10px;
+}
+
+/* Compact Messages */
+.CreateForm .success-message,
+.CreateForm .error-message {
+  padding: 8px 12px;
+  font-size: 10px;
+  margin-bottom: 10px;
+}
+
+/* Compact Loading */
+.CreateForm .loading {
+  padding: 20px;
+  font-size: 10px;
+}
+
+/* Compact createDiv Inputs */
+.CreateForm .createDivInput,
+.CreateForm .createDivInputwidth {
+  padding: 4px 0;
+  font-size: 11px;
+}
+
+/* Compact Grid createDiv */
+.CreateForm.createDiv {
+  gap: 8px;
+  padding: 6px 10px;
+}
+
+.CreateForm .form-column,
+.CreateForm .form-input-group {
+  margin-bottom: 6px;
+}
+
+.CreateForm .input-label {
+  font-size: 9px;
+  margin-bottom: 1px;
 }

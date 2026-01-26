@@ -1893,3 +1893,747 @@
 .viewTemplateWizard-closePreviewBtn:hover {
   background: #4b5563;
 }
+
+/* ============================================
+   COMPACT STYLING - Match All Orders Theme
+   ============================================ */
+
+/* Compact Container */
+.viewTemplateWizard {
+  padding: 12px;
+}
+
+/* Compact Header */
+.viewTemplateWizard-header {
+  margin-bottom: 16px;
+}
+
+.viewTemplateWizard-header h2 {
+  font-size: 14px;
+  margin: 0 0 4px;
+}
+
+.viewTemplateWizard-header p {
+  font-size: 10px;
+}
+
+/* Compact Step Indicator */
+.viewTemplateWizard-steps {
+  gap: 4px;
+  margin-bottom: 16px;
+}
+
+.viewTemplateWizard-step {
+  padding: 4px 10px;
+}
+
+.viewTemplateWizard-stepNumber {
+  width: 22px;
+  height: 22px;
+  font-size: 10px;
+}
+
+.viewTemplateWizard-stepLabel {
+  font-size: 9px;
+}
+
+/* Compact Content */
+.viewTemplateWizard-content {
+  padding: 12px;
+  min-height: 250px;
+}
+
+.viewTemplateWizard-stepContent h3 {
+  font-size: 12px;
+  margin: 0 0 4px;
+}
+
+.viewTemplateWizard-stepDesc {
+  font-size: 10px;
+  margin: 0 0 12px;
+}
+
+/* Compact Form Groups */
+.viewTemplateWizard-formGroup {
+  margin-bottom: 10px;
+}
+
+.viewTemplateWizard-formGroup label {
+  font-size: 9px !important;
+  margin-bottom: 3px;
+}
+
+.viewTemplateWizard-formGroup input,
+.viewTemplateWizard-formGroup select,
+.viewTemplateWizard-formGroup textarea {
+  padding: 6px 8px !important;
+  font-size: 11px !important;
+}
+
+.viewTemplateWizard-formRow {
+  gap: 10px;
+}
+
+.viewTemplateWizard-hint {
+  font-size: 9px;
+  margin-top: 2px;
+}
+
+/* Compact Checkbox Grid */
+.viewTemplateWizard-checkboxGrid {
+  gap: 6px;
+}
+
+.viewTemplateWizard-checkbox {
+  gap: 5px;
+  font-size: 10px;
+}
+
+.viewTemplateWizard-checkbox input {
+  width: 12px;
+  height: 12px;
+}
+
+/* Compact Sections */
+.viewTemplateWizard-section {
+  margin-top: 14px;
+  padding-top: 14px;
+}
+
+.viewTemplateWizard-section h4 {
+  margin: 0 0 10px;
+  font-size: 11px;
+}
+
+.viewTemplateWizard-sectionHeader {
+  margin-bottom: 10px;
+}
+
+/* Compact Buttons */
+.viewTemplateWizard-addBtn,
+.viewTemplateWizard-copyBtn {
+  padding: 5px 10px;
+  font-size: 10px;
+  gap: 4px;
+}
+
+.viewTemplateWizard-smallBtn {
+  padding: 4px 8px;
+  font-size: 10px;
+  gap: 3px;
+}
+
+.viewTemplateWizard-iconBtn {
+  padding: 3px;
+  width: 24px;
+  height: 24px;
+}
+
+/* Compact Quick Add */
+.viewTemplateWizard-quickAdd {
+  gap: 5px;
+  padding: 8px;
+  margin-bottom: 10px;
+}
+
+.viewTemplateWizard-quickAdd > span {
+  font-size: 10px;
+}
+
+.viewTemplateWizard-quickBtn {
+  padding: 4px 8px;
+  font-size: 9px;
+}
+
+/* Compact Column Items */
+.viewTemplateWizard-columns {
+  gap: 5px;
+}
+
+.viewTemplateWizard-columnHeader {
+  padding: 8px 10px;
+}
+
+.viewTemplateWizard-columnName {
+  font-size: 11px;
+}
+
+.viewTemplateWizard-columnType {
+  font-size: 9px;
+  padding: 1px 5px;
+}
+
+.viewTemplateWizard-required {
+  font-size: 8px;
+  padding: 1px 4px;
+}
+
+.viewTemplateWizard-columnBody {
+  padding: 10px;
+}
+
+.viewTemplateWizard-flags {
+  gap: 10px;
+  margin-top: 10px;
+  padding-top: 10px;
+}
+
+/* Compact Formula */
+.viewTemplateWizard-formulaSection {
+  margin-top: 8px;
+  padding: 8px;
+}
+
+.viewTemplateWizard-formulaInput {
+  gap: 5px;
+}
+
+.viewTemplateWizard-helpBtn {
+  padding: 5px 8px;
+  font-size: 10px;
+}
+
+/* Compact Dropdown Section */
+.viewTemplateWizard-dropdownSection textarea {
+  font-size: 10px;
+}
+
+/* Compact Totals */
+.viewTemplateWizard-totalItem {
+  gap: 5px;
+  margin-bottom: 5px;
+}
+
+.viewTemplateWizard-totalItem select,
+.viewTemplateWizard-totalItem input {
+  padding: 5px;
+  font-size: 10px;
+}
+
+/* Compact Modal */
+.viewTemplateWizard-modalContent {
+  padding: 14px;
+  max-width: 400px;
+}
+
+.viewTemplateWizard-modalContent h4 {
+  margin: 0 0 10px;
+  font-size: 12px;
+}
+
+.viewTemplateWizard-formulaList {
+  gap: 5px;
+}
+
+.viewTemplateWizard-formulaItem {
+  padding: 8px;
+}
+
+.viewTemplateWizard-formulaItem strong {
+  font-size: 11px;
+}
+
+.viewTemplateWizard-formulaItem code {
+  font-size: 9px;
+  margin: 2px 0;
+}
+
+.viewTemplateWizard-formulaItem span {
+  font-size: 9px;
+}
+
+.viewTemplateWizard-closeBtn {
+  margin-top: 10px;
+  padding: 6px;
+  font-size: 10px;
+}
+
+/* Compact Summary */
+.viewTemplateWizard-summary {
+  margin-top: 14px;
+  padding: 10px;
+}
+
+.viewTemplateWizard-summary h4 {
+  margin: 0 0 10px;
+  font-size: 11px;
+}
+
+.viewTemplateWizard-summary h5 {
+  margin: 10px 0 5px;
+  font-size: 10px;
+}
+
+.viewTemplateWizard-summaryGrid {
+  gap: 8px;
+}
+
+.viewTemplateWizard-summaryItem {
+  gap: 1px;
+}
+
+.viewTemplateWizard-summaryItem span {
+  font-size: 9px;
+}
+
+.viewTemplateWizard-summaryItem strong {
+  font-size: 10px;
+}
+
+/* Compact Preview Table */
+.viewTemplateWizard-previewTable {
+  margin-top: 5px;
+}
+
+.viewTemplateWizard-previewTable table {
+  font-size: 10px;
+}
+
+.viewTemplateWizard-previewTable th,
+.viewTemplateWizard-previewTable td {
+  padding: 5px 8px;
+}
+
+.viewTemplateWizard-previewTable .unit {
+  font-size: 8px;
+}
+
+/* Compact Display Preview */
+.viewTemplateWizard-displayPreview {
+  gap: 5px;
+  padding: 8px;
+  margin-bottom: 10px;
+}
+
+.viewTemplateWizard-displayPreviewItem {
+  padding: 4px 8px;
+  font-size: 10px;
+  gap: 4px;
+}
+
+.viewTemplateWizard-displayPreviewItem .type {
+  font-size: 8px;
+}
+
+.viewTemplateWizard-displayPreviewItem .source {
+  font-size: 8px;
+}
+
+.viewTemplateWizard-displayPreviewItem .unit {
+  font-size: 8px;
+}
+
+/* Compact Save Actions */
+.viewTemplateWizard-saveActions {
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.viewTemplateWizard-previewBtn,
+.viewTemplateWizard-saveBtn {
+  padding: 8px 16px;
+  font-size: 11px;
+  gap: 5px;
+}
+
+/* Compact Navigation */
+.viewTemplateWizard-navigation {
+  margin-top: 14px;
+  padding-top: 14px;
+}
+
+.viewTemplateWizard-navBtn {
+  padding: 8px 16px;
+  font-size: 11px;
+  gap: 5px;
+}
+
+/* Compact Loading State */
+.viewTemplateWizard-loading {
+  padding: 8px 10px;
+  font-size: 10px;
+  margin-bottom: 10px;
+}
+
+/* Compact Option Types List */
+.viewTemplateWizard-optionTypesList {
+  gap: 8px;
+}
+
+.viewTemplateWizard-optionTypeCard {
+  padding: 10px;
+}
+
+.viewTemplateWizard-optionTypeHeader {
+  gap: 6px;
+}
+
+.viewTemplateWizard-optionTypeHeader input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+}
+
+.viewTemplateWizard-optionTypeName {
+  font-size: 11px;
+}
+
+.viewTemplateWizard-optionTypeCategory {
+  font-size: 8px;
+  padding: 2px 6px;
+}
+
+/* Compact Specs */
+.viewTemplateWizard-specsList {
+  margin-top: 8px;
+  padding-top: 8px;
+}
+
+.viewTemplateWizard-specsLabel {
+  font-size: 9px;
+  margin-bottom: 5px;
+}
+
+.viewTemplateWizard-specsTags {
+  gap: 4px;
+}
+
+.viewTemplateWizard-specTag {
+  padding: 3px 8px;
+  font-size: 9px;
+  gap: 3px;
+}
+
+.viewTemplateWizard-specTag small {
+  font-size: 8px;
+}
+
+.viewTemplateWizard-specType {
+  font-size: 8px;
+  padding: 1px 4px;
+}
+
+/* Compact Selected Summary */
+.viewTemplateWizard-selectedSummary {
+  margin-top: 10px;
+  padding: 8px 10px;
+  font-size: 10px;
+}
+
+/* Compact Empty State */
+.viewTemplateWizard-emptyState {
+  padding: 20px;
+  font-size: 10px;
+}
+
+/* Compact Option Spec Configuration */
+.viewTemplateWizard-optionSpecConfig {
+  margin-top: 8px;
+  padding: 10px;
+}
+
+.viewTemplateWizard-specPreview {
+  margin-top: 6px;
+  padding: 5px 8px;
+  font-size: 10px;
+}
+
+.viewTemplateWizard-warning {
+  font-size: 9px;
+  margin-top: 3px;
+}
+
+/* Compact Warning Banner */
+.viewTemplateWizard-warning.existingTemplate {
+  gap: 8px;
+  padding: 10px;
+  font-size: 10px;
+  margin: 10px 0;
+}
+
+/* Compact Info Banner */
+.viewTemplateWizard-info {
+  gap: 5px;
+  padding: 8px 10px;
+  font-size: 10px;
+  margin: 8px 0;
+}
+
+/* Compact Formula Fields Builder */
+.viewTemplateWizard-formulaFields {
+  margin-top: 8px;
+}
+
+.viewTemplateWizard-formulaFields > label {
+  font-size: 9px;
+  margin-bottom: 5px;
+}
+
+.viewTemplateWizard-fieldsList {
+  gap: 6px;
+}
+
+.viewTemplateWizard-fieldsGroup {
+  gap: 4px;
+}
+
+.viewTemplateWizard-fieldsGroupLabel {
+  font-size: 8px;
+}
+
+.viewTemplateWizard-fieldBtn {
+  padding: 3px 6px;
+  font-size: 9px;
+}
+
+/* Compact OptionSpecs List */
+.viewTemplateWizard-optionSpecsList {
+  margin-top: 8px;
+  padding: 8px;
+}
+
+.viewTemplateWizard-optionSpecItem {
+  padding: 6px 8px;
+  gap: 5px;
+  margin-bottom: 5px;
+}
+
+.viewTemplateWizard-optionSpecName {
+  font-size: 10px;
+}
+
+.viewTemplateWizard-optionSpecCode {
+  font-size: 8px;
+  padding: 1px 5px;
+}
+
+.viewTemplateWizard-emptySpecs {
+  margin-top: 6px;
+  padding: 8px;
+  font-size: 10px;
+}
+
+/* Compact Display Items */
+.viewTemplateWizard-displayItems {
+  gap: 8px;
+}
+
+.viewTemplateWizard-displayItemHeader {
+  gap: 8px;
+  padding: 8px;
+}
+
+.viewTemplateWizard-displayItemNum {
+  width: 18px;
+  height: 18px;
+  font-size: 9px;
+}
+
+.viewTemplateWizard-displayItemLabel {
+  padding: 5px 8px;
+  font-size: 11px;
+}
+
+.viewTemplateWizard-displayItemBody {
+  padding: 10px;
+  gap: 8px;
+}
+
+.viewTemplateWizard-displayItemPreview {
+  padding: 5px 8px;
+  font-size: 10px;
+}
+
+/* Compact Formula Builder */
+.viewTemplateWizard-formulaBuilder {
+  margin-top: 8px;
+  padding: 8px;
+}
+
+.viewTemplateWizard-formulaBuilder .viewTemplateWizard-formulaInput {
+  padding: 6px 8px;
+  font-size: 10px;
+}
+
+.viewTemplateWizard-formulaBuilder .viewTemplateWizard-fieldBtn {
+  padding: 3px 6px;
+  font-size: 9px;
+}
+
+.viewTemplateWizard-formulaBuilder .viewTemplateWizard-fieldType {
+  font-size: 8px;
+}
+
+.viewTemplateWizard-formulaBuilder .viewTemplateWizard-operatorLabel {
+  font-size: 8px;
+}
+
+/* Compact Formula Toggle */
+.viewTemplateWizard-formulaToggle {
+  margin: 5px 0;
+  padding: 5px 8px;
+}
+
+.viewTemplateWizard-formulaToggle .viewTemplateWizard-checkbox {
+  font-size: 10px;
+  gap: 5px;
+}
+
+.viewTemplateWizard-formulaToggle .viewTemplateWizard-checkbox input {
+  width: 12px;
+  height: 12px;
+}
+
+/* Compact Edit Sections Button */
+.viewTemplateWizard-editSectionsBtn {
+  padding: 6px 14px;
+  font-size: 11px;
+  gap: 5px;
+  margin-top: 8px;
+}
+
+/* Compact Section Card */
+.viewTemplateWizard-sectionCard {
+  border-radius: 8px;
+}
+
+.viewTemplateWizard-sectionCardHeader {
+  padding: 10px 14px;
+}
+
+.viewTemplateWizard-sectionCardTitle {
+  gap: 8px;
+  font-size: 11px;
+}
+
+.viewTemplateWizard-totalsIcon {
+  font-size: 14px;
+}
+
+.viewTemplateWizard-sectionBadge {
+  font-size: 9px;
+  padding: 3px 8px;
+}
+
+.viewTemplateWizard-editBtn {
+  padding: 4px 10px;
+  font-size: 10px;
+  gap: 4px;
+}
+
+/* Compact Section Summary */
+.viewTemplateWizard-sectionSummary {
+  gap: 5px;
+  padding: 8px 14px 10px;
+}
+
+.viewTemplateWizard-summaryTag {
+  padding: 4px 8px;
+  font-size: 10px;
+  gap: 4px;
+}
+
+.viewTemplateWizard-summaryTagType {
+  font-size: 8px;
+  padding: 1px 4px;
+}
+
+/* Compact Section Card Body */
+.viewTemplateWizard-sectionCardBody {
+  padding: 12px;
+}
+
+/* Compact Section Save Row */
+.viewTemplateWizard-sectionSaveRow {
+  padding-top: 10px;
+  margin-top: 10px;
+}
+
+.viewTemplateWizard-saveSectionBtn {
+  padding: 6px 16px;
+  font-size: 11px;
+  gap: 5px;
+}
+
+/* Compact Preview Modal */
+.viewTemplateWizard-previewModalContent {
+  max-width: 700px;
+}
+
+.viewTemplateWizard-previewModalHeader {
+  padding: 12px 16px;
+}
+
+.viewTemplateWizard-previewModalHeader h3 {
+  font-size: 13px;
+}
+
+.viewTemplateWizard-previewModalBody {
+  padding: 14px;
+}
+
+.viewTemplateWizard-previewSection {
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+}
+
+.viewTemplateWizard-previewSection h4 {
+  margin: 0 0 10px 0;
+  font-size: 10px;
+}
+
+.viewTemplateWizard-previewGrid {
+  gap: 10px;
+}
+
+.viewTemplateWizard-previewItem {
+  padding: 8px;
+}
+
+.viewTemplateWizard-previewItem .label {
+  font-size: 9px;
+}
+
+.viewTemplateWizard-previewItem .value {
+  font-size: 10px;
+}
+
+.viewTemplateWizard-previewModalTable {
+  font-size: 10px;
+}
+
+.viewTemplateWizard-previewModalTable th {
+  padding: 8px 10px;
+}
+
+.viewTemplateWizard-previewModalTable th .unit {
+  font-size: 8px;
+}
+
+.viewTemplateWizard-previewModalTable td {
+  padding: 8px 10px;
+}
+
+.viewTemplateWizard-previewRules {
+  gap: 5px;
+}
+
+.viewTemplateWizard-previewRule {
+  padding: 8px 10px;
+}
+
+.viewTemplateWizard-previewRule .ruleName {
+  font-size: 10px;
+}
+
+.viewTemplateWizard-previewRule .ruleType {
+  font-size: 9px;
+}
+
+.viewTemplateWizard-previewModalFooter {
+  padding: 10px 16px;
+}
+
+.viewTemplateWizard-closePreviewBtn {
+  padding: 6px 16px;
+  font-size: 11px;
+}

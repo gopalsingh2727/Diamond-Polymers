@@ -589,3 +589,220 @@
     break-inside: avoid;
   }
 }
+
+/* ============================================
+   COMPACT STYLING - Match All Orders Theme
+   ============================================ */
+
+/* Compact Container */
+.createOptionSpec-container {
+  gap: 1rem;
+  padding: 1rem;
+}
+
+/* Compact Header */
+.createOptionSpec-header {
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.createOptionSpec-title {
+  font-size: 14px;
+  margin-bottom: 0.25rem;
+}
+
+.createOptionSpec-subtitle {
+  font-size: 10px;
+}
+
+/* Compact Template Buttons */
+.createOptionSpec-templateButtons {
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.createOptionSpec-templateBtn {
+  padding: 6px 12px;
+  font-size: 10px;
+}
+
+/* Compact Form Grid */
+.createOptionSpec-formGrid {
+  gap: 1rem;
+}
+
+/* Compact Section */
+.createOptionSpec-section {
+  padding: 1rem;
+}
+
+.createOptionSpec-sectionTitle {
+  font-size: 11px;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.25rem;
+}
+
+/* Compact Form Row */
+.createOptionSpec-formRow {
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+/* Compact Label */
+.createOptionSpec-label {
+  font-size: 9px !important;
+}
+
+/* Compact Input */
+.createOptionSpec-input {
+  padding: 6px 0 !important;
+  font-size: 11px !important;
+}
+
+/* Compact Reference Box */
+.createOptionSpec-referenceBox {
+  padding: 10px;
+  margin-top: 5px;
+}
+
+.createOptionSpec-referenceTitle {
+  font-size: 12px;
+  margin-bottom: 5px;
+}
+
+.createOptionSpec-referenceText {
+  font-size: 10px;
+  margin-bottom: 8px;
+}
+
+.createOptionSpec-referenceLabel {
+  font-size: 10px;
+}
+
+.createOptionSpec-dimensionTags {
+  gap: 5px;
+  margin-top: 5px;
+  margin-bottom: 8px;
+}
+
+.createOptionSpec-dimensionTag {
+  padding: 4px 8px;
+  font-size: 9px;
+}
+
+.createOptionSpec-referenceHint {
+  padding: 8px;
+  font-size: 9px;
+}
+
+.createOptionSpec-code {
+  padding: 1px 4px;
+  font-size: 9px;
+}
+
+.createOptionSpec-referenceEmpty {
+  padding: 12px;
+  font-size: 10px;
+}
+
+/* Compact Dimensions Header */
+.createOptionSpec-dimensionsHeader {
+  margin-bottom: 8px;
+}
+
+.createOptionSpec-addDimensionBtn {
+  padding: 5px 10px;
+  font-size: 10px;
+}
+
+/* Compact Dimension Row */
+.createOptionSpec-dimensionRow {
+  padding: 8px;
+  margin-bottom: 6px;
+}
+
+.createOptionSpec-dimensionFields {
+  gap: 6px;
+}
+
+.createOptionSpec-dimensionFields input,
+.createOptionSpec-dimensionFields select {
+  padding: 5px 6px;
+  font-size: 10px;
+}
+
+.createOptionSpec-removeDimensionBtn {
+  width: 24px;
+  height: 24px;
+  font-size: 14px;
+}
+
+/* Compact Formula Row */
+.createOptionSpec-formulaRow {
+  gap: 5px;
+  margin-top: 5px;
+  padding-top: 5px;
+}
+
+.createOptionSpec-formulaLabel {
+  font-size: 9px;
+  min-width: 45px;
+}
+
+.createOptionSpec-formulaInput {
+  padding: 4px 6px;
+  font-size: 9px;
+}
+
+.createOptionSpec-formulaBadge {
+  padding: 2px 6px;
+  font-size: 8px;
+  gap: 3px;
+}
+
+/* Compact Empty State */
+.createOptionSpec-emptyState {
+  padding: 1rem;
+  font-size: 10px;
+}
+
+/* Compact Form Actions */
+.createOptionSpec-formActions {
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+}
+
+/* Compact Save Button */
+.createOptionSpec-button {
+  width: 150px;
+  padding: 0.5rem 1rem;
+  font-size: 11px;
+}
+
+/* Compact Reference Buttons */
+.createOptionSpec-addReferenceBtn {
+  padding: 10px 16px;
+  margin-top: 10px;
+  font-size: 11px;
+}
+
+.createOptionSpec-saveReferencesBtn {
+  padding: 8px 18px;
+  font-size: 11px;
+}
+
+.createOptionSpec-cancelBtn {
+  padding: 8px 18px;
+  font-size: 11px;
+}
+
+.createOptionSpec-popupAddDimensionBtn {
+  padding: 5px 10px;
+  font-size: 10px;
+}
+
+.createOptionSpec-removeItemBtn {
+  padding: 5px 10px;
+  font-size: 10px;
+}

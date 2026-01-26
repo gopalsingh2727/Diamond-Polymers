@@ -119,11 +119,26 @@ app.whenReady().then(() => {
     // Security: Block new window creation to untrusted URLs
     contents.setWindowOpenHandler(({ url }) => {
       const parsedUrl = new URL(url);
-      // Only allow opening trusted URLs in external browser
-      if (parsedUrl.hostname.endsWith('27infinity.in') || parsedUrl.hostname === 'github.com') {
+      // Allow opening trusted URLs in external browser
+      const allowedDomains = [
+        '27infinity.in',
+        'github.com',
+        'google.com',
+        'docs.google.com',
+        'sheets.google.com',
+        'drive.google.com',
+        'wa.me',
+        'whatsapp.com'
+      ];
+      const isAllowed = allowedDomains.some(domain =>
+        parsedUrl.hostname === domain || parsedUrl.hostname.endsWith('.' + domain)
+      );
+      if (isAllowed) {
         shell.openExternal(url);
       } else {
-        log.warn(`Blocked popup to: ${url}`);
+        // For any other URL, still open in browser (user clicked a link intentionally)
+        shell.openExternal(url);
+        log.info(`Opening external URL: ${url}`);
       }
       return { action: 'deny' };
     });

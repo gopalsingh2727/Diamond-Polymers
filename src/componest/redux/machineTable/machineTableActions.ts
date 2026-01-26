@@ -74,7 +74,7 @@ async (dispatch: Dispatch<MachineTableActionTypes>, getState: () => RootState) =
     }
 
     const response = await axios.get<{success: boolean;data: MachineTableResponse;}>(
-      `${baseUrl}/orders/${orderId}/machines/${machineId}/table-data`,
+      `${baseUrl}/v2/orders/${orderId}/machines/${machineId}/table-data`,
       { headers: getAuthHeaders(token) }
     );
 
@@ -190,7 +190,7 @@ async (dispatch: Dispatch<MachineTableActionTypes>, getState: () => RootState) =
     const token = getToken(getState);
 
     const response = await axios.post<{success: boolean;data: MachineTableResponse;}>(
-      `${baseUrl}/orders/${orderId}/machines/${machineId}/table-data/rows`,
+      `${baseUrl}/v2/orders/${orderId}/machines/${machineId}/table-data/rows`,
       { rowData },
       { headers: getAuthHeaders(token) }
     );
@@ -241,7 +241,7 @@ async (dispatch: Dispatch<MachineTableActionTypes>, getState: () => RootState) =
     const token = getToken(getState);
 
     const response = await axios.put<{success: boolean;data: MachineTableResponse;}>(
-      `${baseUrl}/orders/${orderId}/machines/${machineId}/table-data/rows/${rowIndex}`,
+      `${baseUrl}/v2/orders/${orderId}/machines/${machineId}/table-data/rows/${rowIndex}`,
       { rowData },
       { headers: getAuthHeaders(token) }
     );
@@ -292,7 +292,7 @@ async (dispatch: Dispatch<MachineTableActionTypes>, getState: () => RootState) =
     const token = getToken(getState);
 
     const response = await axios.delete<{success: boolean;data: MachineTableResponse;}>(
-      `${baseUrl}/orders/${orderId}/machines/${machineId}/table-data/rows/${rowIndex}`,
+      `${baseUrl}/v2/orders/${orderId}/machines/${machineId}/table-data/rows/${rowIndex}`,
       { headers: getAuthHeaders(token) }
     );
 

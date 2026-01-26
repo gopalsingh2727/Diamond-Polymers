@@ -677,15 +677,7 @@
   gap: 8px;
 }
 
-.editsectionsTable-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin: 0;
-  padding: 0;
-  border: none;
-  text-align: left;
-}
+/* Note: .editsectionsTable-title is defined above at line 446-454 with proper styling */
 
 /* ====================================
    Summary Cards - Below header
@@ -745,14 +737,17 @@
 
 /* ====================================
    Table Container - Takes remaining space
+   Note: Main .editsectionsTable-container is defined above with padding: 20px
    ==================================== */
 
+/* Additional container properties for flex layout */
 .editsectionsTable-container {
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding: 0;
+  padding: 20px;
+  gap: 20px;
   min-height: 0; /* Critical for flex children to shrink */
 }
 

@@ -248,3 +248,63 @@
   border: 1px solid #e5e7eb;
   word-break: break-word;
 }
+
+/* ================================================
+   COMPACT STYLING - Match All Orders Theme
+   ================================================ */
+
+/* Compact Image Container */
+.createorders-customername-imageDiv {
+  width: 40px;
+  height: 40px;
+}
+
+/* Compact Image + Status */
+.createorders-customername-image h6 {
+  font-size: 10px;
+}
+
+.createorders-customername-image select {
+  padding: 4px 8px;
+  font-size: 10px !important;
+}
+
+/* Compact Date Row */
+.createorders-customername-dateRow {
+  font-size: 9px;
+}
+
+/* Compact Customer Image */
+.customerImageDiv {
+  width: 28px;
+  height: 28px;
+}
+
+/* Compact Order ID Badge */
+.OrderIDBadge {
+  font-size: 9px;
+  padding: 2px 6px;
+}
+
+.OrderIDCreate h5 {
+  font-size: 10px;
+}
+
+/* Compact Create Date */
+.createDateAndupdateDate {
+  font-size: 9px;
+}
+
+/* Compact Popup */
+.customer-details-header h3 {
+  font-size: 12px;
+}
+
+.customer-detail-item label {
+  font-size: 9px;
+}
+
+.customer-detail-item span {
+  font-size: 11px;
+  padding: 6px 10px;
+}

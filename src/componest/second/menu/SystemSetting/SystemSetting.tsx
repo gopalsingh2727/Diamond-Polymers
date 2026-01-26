@@ -100,12 +100,12 @@ const SystemSetting = () => {
     { key: "createBranch", label: "Create Branch", masterAdminOnly: true, section: "create" },
     { key: "createManager", label: "Create Manager", masterAdminOnly: true, section: "create" },
     { key: "createAdmin", label: "Create Admin", masterAdminOnly: true, section: "create" },
-    { key: "createEmployee", label: "Create Employee", masterAdminOnly: false, section: "create" },
+    // { key: "createEmployee", label: "Create Employee", masterAdminOnly: false, section: "create" },
     { key: "editBranch", label: "Edit Branch", masterAdminOnly: false, section: "edit" },
     { key: "editManager", label: "Edit Manager", masterAdminOnly: false, section: "edit" },
     { key: "editAdmin", label: "Edit Admin", masterAdminOnly: false, section: "edit" },
-    { key: "editEmployee", label: "Edit Employee", masterAdminOnly: false, section: "edit" },
-    { key: "payroll", label: "Payroll", masterAdminOnly: false, section: "payroll" },
+    // { key: "editEmployee", label: "Edit Employee", masterAdminOnly: false, section: "edit" },
+    // { key: "payroll", label: "Payroll", masterAdminOnly: false, section: "payroll" },
   ];
 
   // Filter menu items based on user role
@@ -137,12 +137,12 @@ const SystemSetting = () => {
       createBranch: "Create Branch",
       createManager: "Create Manager",
       createAdmin: "Create Admin",
-      createEmployee: "Create Employee",
+      // createEmployee: "Create Employee",
       editBranch: "Edit Branch",
       editManager: "Edit Manager",
       editAdmin: "Edit Admin",
-      editEmployee: "Edit Employee",
-      payroll: "Payroll",
+      // editEmployee: "Edit Employee",
+      // payroll: "Payroll",
     };
     setTitle(titles[activeComponent] || "Select an Option");
   }, [activeComponent]);

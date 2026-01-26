@@ -287,3 +287,81 @@
 .selectedOptionsTable tbody tr {
   animation: fadeIn 0.3s ease-in-out;
 }
+
+/* ================================================
+   COMPACT STYLING - Match All Orders Theme
+   ================================================ */
+
+/* Compact Container */
+.inlineOptionsContainer {
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+/* Compact Header */
+.inlineOptionsHeader h3 {
+  font-size: 11px;
+}
+
+/* Compact Input Fields */
+.createDivInput {
+  padding: 6px 8px !important;
+  font-size: 11px !important;
+}
+
+.createDivInputwidth {
+  min-width: 140px;
+}
+
+/* Compact Boolean Spec */
+.booleanSpecTitle {
+  font-size: 10px;
+  margin-bottom: 4px;
+}
+
+.booleanSpecLabel {
+  font-size: 10px;
+}
+
+/* Compact Table */
+.selectedOptionsTable th,
+.selectedOptionsTable td {
+  padding: 6px 8px;
+  font-size: 10px;
+}
+
+.selectedOptionsTable th {
+  font-size: 9px;
+}
+
+/* Compact Quantity Input */
+.qtyInputSmall {
+  width: 60px;
+  padding: 4px 6px;
+  font-size: 10px;
+}
+
+/* Compact Specs Display */
+.specChip {
+  padding: 2px 6px;
+  font-size: 9px;
+}
+
+.specMore {
+  font-size: 9px;
+}
+
+/* Compact Suggestions */
+.suggestionItem {
+  padding: 6px 10px;
+  font-size: 11px;
+}
+
+/* Compact No Options Text */
+.noOptionsText {
+  padding: 15px;
+}
+
+.noOptionsText p {
+  font-size: 11px;
+}

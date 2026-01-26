@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useLayoutEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../../redux/rootReducer";
 
@@ -35,9 +35,10 @@ interface Props {
   onSelect: (step: Step) => void;
   selectedIndex?: number;
   onSuggestionsChange?: (suggestions: Step[]) => void;
+  showAll?: boolean; // Show all steps when focused (even if no search term)
 }
 
-const StepSuggestions: React.FC<Props> = ({ stepName, onSelect, selectedIndex = -1, onSuggestionsChange }) => {
+const StepSuggestions: React.FC<Props> = ({ stepName, onSelect, selectedIndex = -1, onSuggestionsChange, showAll = false }) => {
   // ✅ OPTIMIZED: Use cached data from orderFormData
   const orderFormData = useSelector((state: RootState) => state.orderFormData);
   const steps = orderFormData?.data?.steps || [];
@@ -46,17 +47,32 @@ const StepSuggestions: React.FC<Props> = ({ stepName, onSelect, selectedIndex = 
 
   const [filtered, setFiltered] = useState<Step[]>([]);
 
-  useEffect(() => {
-    if (stepName.trim().length > 0 && Array.isArray(steps)) {
-      const searchTerm = stepName.toLowerCase();
-      const results = steps.filter((step: any) =>
-        step.stepName.toLowerCase().includes(searchTerm)
-      );
-      const limited = results.slice(0, 5);
-      setFiltered(limited);
-      // Notify parent of suggestions for keyboard navigation
+  // Use useLayoutEffect for synchronous updates before paint
+  useLayoutEffect(() => {
+    if (!Array.isArray(steps)) {
+      setFiltered([]);
       if (onSuggestionsChange) {
-        onSuggestionsChange(limited);
+        onSuggestionsChange([]);
+      }
+      return;
+    }
+
+    // Show all steps when showAll is true (input is focused)
+    if (showAll && stepName.trim().length === 0) {
+      // Show all steps (no limit when showing all)
+      setFiltered(steps);
+      if (onSuggestionsChange) {
+        onSuggestionsChange(steps);
+      }
+    } else if (stepName.trim().length > 0) {
+      // Filter based on search term
+      const searchTermLower = stepName.toLowerCase();
+      const results = steps.filter((step: any) =>
+        step.stepName.toLowerCase().includes(searchTermLower)
+      );
+      setFiltered(results);
+      if (onSuggestionsChange) {
+        onSuggestionsChange(results);
       }
     } else {
       setFiltered([]);
@@ -64,7 +80,7 @@ const StepSuggestions: React.FC<Props> = ({ stepName, onSelect, selectedIndex = 
         onSuggestionsChange([]);
       }
     }
-  }, [stepName, steps, onSuggestionsChange]);
+  }, [stepName, steps, onSuggestionsChange, showAll]);
   
   if (loading) return (
     <div style={{
@@ -127,23 +143,25 @@ const StepSuggestions: React.FC<Props> = ({ stepName, onSelect, selectedIndex = 
   }
 
   return (
-    <ul style={{
+    <div style={{
       position: 'absolute',
       top: '100%',
       left: 0,
       right: 0,
-      maxHeight: '200px',
-      overflowY: 'auto',
       background: 'white',
       border: '1px solid #e5e7eb',
       borderTop: 'none',
       borderRadius: '0 0 6px 6px',
       boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-      zIndex: 1000,
-      listStyle: 'none',
-      margin: 0,
-      padding: 0
+      zIndex: 1000
     }}>
+      <ul style={{
+        maxHeight: '250px',
+        overflowY: 'auto',
+        listStyle: 'none',
+        margin: 0,
+        padding: 0
+      }}>
       {filtered.map((step, index) => (
         <li
           key={step._id}
@@ -166,7 +184,10 @@ const StepSuggestions: React.FC<Props> = ({ stepName, onSelect, selectedIndex = 
               e.currentTarget.style.background = 'white';
             }
           }}
-          onClick={() => onSelect(step)}
+          onMouseDown={(e) => {
+            e.preventDefault(); // Prevent input blur
+            onSelect(step);
+          }}
         >
           <div style={{ fontWeight: '500' }}>{step.stepName}</div>
           {step.machines && step.machines.length > 0 && (
@@ -176,7 +197,8 @@ const StepSuggestions: React.FC<Props> = ({ stepName, onSelect, selectedIndex = 
           )}
         </li>
       ))}
-    </ul>
+      </ul>
+    </div>
   );
 };
 

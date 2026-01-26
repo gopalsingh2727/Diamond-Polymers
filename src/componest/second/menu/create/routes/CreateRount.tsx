@@ -11,6 +11,7 @@ import CreateOptionType from "../optionType/CreateOptionType";
 import CreateOption from "../option/CreateOption";
 import CreateOptionSpec from "../optionSpec/CreateOptionSpec";
 import CreateInventory from "../inventory/CreateInventory";
+// import CreateInventoryType from "../inventoryType/CreateInventoryType";
 
 function IndexCreateRoute() {
   return (
@@ -27,6 +28,7 @@ function IndexCreateRoute() {
       <Route path="optionSpec" element={<CreateOptionSpec />} />
       <Route path="option" element={<CreateOption />} />
       <Route path="inventory" element={<CreateInventory />} />
+      {/* <Route path="inventoryType" element={<CreateInventoryType />} /> */}
 
     </Routes>
   );

@@ -157,35 +157,6 @@ const Settings = ({ branchName, onBranchClick, showBranchOption = false, userBra
   const [modalOpen, setModalOpen] = useState<boolean>(false);
   const [downloadProgress, setDownloadProgress] = useState<DownloadProgress>({ progress: 0, downloaded: 0, total: 0 });
 
-  // Theme state
-  const [isDark, setIsDark] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('theme');
-      if (saved) {
-        return saved === 'dark';
-      }
-      return window.matchMedia('(prefers-color-scheme: dark)').matches;
-    }
-    return false;
-  });
-
-  // Theme effect
-  useEffect(() => {
-    const root = document.documentElement;
-    if (isDark) {
-      root.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      root.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
-  }, [isDark]);
-
-  const toggleTheme = () => {
-    setIsDark(!isDark);
-    setIsOpen(false);
-  };
-
   // Load chat settings on mount
   useEffect(() => {
     dispatch(loadChatSettings() as any);
@@ -480,9 +451,26 @@ const Settings = ({ branchName, onBranchClick, showBranchOption = false, userBra
 
         }
 
-        {/* Master Admin Only - Create & Management Section */}
+        {/* Master Admin Only - Profile & Management Section */}
         {userRole === 'master_admin' &&
         <>
+            <div className="settings-section-divider">
+              <span className="settings-section-label">Master Admin</span>
+            </div>
+            <button
+            className="settings-menu-item"
+            onClick={() => {
+              window.location.hash = '/settings/master-admin-profile';
+              setIsOpen(false);
+            }}>
+
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+              My Profile & Company
+            </button>
+
             <div className="settings-section-divider">
               <span className="settings-section-label">Create & Manage</span>
             </div>
@@ -527,7 +515,7 @@ const Settings = ({ branchName, onBranchClick, showBranchOption = false, userBra
               </svg>
               Email Settings
             </button>
-            <button
+            {/* <button
             className="settings-menu-item"
             onClick={() => {
               window.location.hash = '/settings/master';
@@ -538,8 +526,8 @@ const Settings = ({ branchName, onBranchClick, showBranchOption = false, userBra
                 <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
               </svg>
               WhatsApp Settings
-            </button>
-            <button
+            </button> */}
+            {/* <button
             className="settings-menu-item"
             onClick={() => {
               window.location.hash = '/settings/master';
@@ -551,97 +539,8 @@ const Settings = ({ branchName, onBranchClick, showBranchOption = false, userBra
                 <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
               </svg>
               API Keys
-            </button>
+            </button> */}
 
-            <div className="settings-section-divider">
-              <span className="settings-section-label">Payroll & Employees</span>
-            </div>
-            <button
-            className="settings-menu-item"
-            onClick={() => {
-              window.location.hash = '/menu/create-employee';
-              setIsOpen(false);
-            }}>
-
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
-                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                <circle cx="8.5" cy="7" r="4"></circle>
-                <line x1="20" y1="8" x2="20" y2="14"></line>
-                <line x1="23" y1="11" x2="17" y2="11"></line>
-              </svg>
-              Create Employee
-            </button>
-            <button
-            className="settings-menu-item"
-            onClick={() => {
-              window.location.hash = '/menu/edit-employee';
-              setIsOpen(false);
-            }}>
-
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                <circle cx="9" cy="7" r="4"></circle>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-              </svg>
-              Edit Employee
-            </button>
-            <button
-            className="settings-menu-item"
-            onClick={() => {
-              window.location.hash = '/menu/payroll';
-              setIsOpen(false);
-            }}>
-
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
-                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
-                <line x1="1" y1="10" x2="23" y2="10"></line>
-              </svg>
-              Payroll Management
-            </button>
-            <button
-            className="settings-menu-item"
-            onClick={() => {
-              window.location.hash = '/menu/payroll-settings';
-              setIsOpen(false);
-            }}>
-
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
-                <circle cx="12" cy="12" r="3"></circle>
-                <path d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24"></path>
-              </svg>
-              Payroll Settings
-            </button>
-
-            <div className="settings-section-divider">
-              <span className="settings-section-label">Billing</span>
-            </div>
-            <button
-            className="settings-menu-item"
-            onClick={() => {
-              window.location.hash = '/menu/Account';
-              setIsOpen(false);
-            }}>
-
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
-                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
-                <line x1="1" y1="10" x2="23" y2="10"></line>
-              </svg>
-              Current Bill
-            </button>
-            <button
-            className="settings-menu-item"
-            onClick={() => {
-              window.location.hash = '/menu/AccountInfo';
-              setIsOpen(false);
-            }}>
-
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
-                <circle cx="12" cy="12" r="10"></circle>
-                <polyline points="12 6 12 12 16 14"></polyline>
-              </svg>
-              Payment History
-            </button>
           </>
         }
 
@@ -667,50 +566,6 @@ const Settings = ({ branchName, onBranchClick, showBranchOption = false, userBra
               Create Employee
             </button>
 
-            <div className="settings-section-divider">
-              <span className="settings-section-label">Payroll & Employees</span>
-            </div>
-            <button
-            className="settings-menu-item"
-            onClick={() => {
-              window.location.hash = '/menu/edit-employee';
-              setIsOpen(false);
-            }}>
-
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                <circle cx="9" cy="7" r="4"></circle>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-              </svg>
-              Edit Employee
-            </button>
-            <button
-            className="settings-menu-item"
-            onClick={() => {
-              window.location.hash = '/menu/payroll';
-              setIsOpen(false);
-            }}>
-
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
-                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
-                <line x1="1" y1="10" x2="23" y2="10"></line>
-              </svg>
-              Payroll Management
-            </button>
-            <button
-            className="settings-menu-item"
-            onClick={() => {
-              window.location.hash = '/menu/payroll-settings';
-              setIsOpen(false);
-            }}>
-
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
-                <circle cx="12" cy="12" r="3"></circle>
-                <path d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24"></path>
-              </svg>
-              Payroll Settings
-            </button>
           </>
         }
 
@@ -775,26 +630,6 @@ const Settings = ({ branchName, onBranchClick, showBranchOption = false, userBra
             <path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" />
           </svg>
           {status === 'checking' ? 'Checking...' : 'Check for Updates'}
-        </button>
-        <button
-          className="settings-menu-item"
-          onClick={toggleTheme}>
-
-          {isDark ?
-          <>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-              </svg>
-              Switch to Light Mode
-            </> :
-
-          <>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-              </svg>
-              Switch to Dark Mode
-            </>
-          }
         </button>
       </DropdownMenu>
 

@@ -13,6 +13,7 @@ import { ActionButton } from "../../../../components/shared/ActionButton";
 import { ToastContainer } from "../../../../components/shared/Toast";
 import { useCRUD } from "../../../../hooks/useCRUD";
 import ForwardToPersonModal from "../OrderForward/components/ForwardToPersonModal";
+import { sanitizeString } from "../../../../utils/security";
 
 interface SaveOrdersProps {
   isEditMode?: boolean;
@@ -123,7 +124,18 @@ const SaveOrders = forwardRef<SaveOrdersRef, SaveOrdersProps>(({
 
             // Convert value based on dataType
             let convertedValue = value;
-            if (specTemplate) {
+            let detectedDataType = specTemplate?.dataType || 'string';
+
+            // Check if value is a file object (has fileName and fileUrl)
+            const isFileObject = typeof value === 'object' && value !== null &&
+              (value.fileName || value.fileUrl);
+
+            if (isFileObject) {
+              // Preserve file object and set dataType to file
+              convertedValue = value;
+              detectedDataType = 'file';
+              console.log('📁 Saving file spec:', name, value);
+            } else if (specTemplate) {
               if (specTemplate.dataType === 'number') {
                 // Convert to number
                 convertedValue = typeof value === 'number' ? value : parseFloat(value as string) || 0;
@@ -141,7 +153,7 @@ const SaveOrders = forwardRef<SaveOrdersRef, SaveOrdersProps>(({
               name,
               value: convertedValue,
               unit: specTemplate?.unit || '',
-              dataType: specTemplate?.dataType || 'string' // Include dataType for backend
+              dataType: detectedDataType
             };
           }),
           mixingData: option.mixingData || undefined
@@ -220,10 +232,10 @@ const SaveOrders = forwardRef<SaveOrdersRef, SaveOrdersProps>(({
   // Watch for Redux success message
   useEffect(() => {
     if (successMessage) {
-
       toast.success('Success', successMessage);
     }
-  }, [successMessage, toast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [successMessage]); // Only re-run when successMessage changes, not toast
 
   // Watch for Redux order state changes
   useEffect(() => {
@@ -267,7 +279,7 @@ const SaveOrders = forwardRef<SaveOrdersRef, SaveOrdersProps>(({
       // Refresh orders
       sessionStorage.setItem('orders_updated', Date.now().toString());
     } catch (err: any) {
-      toast.error(err.message || 'Failed to forward order');
+      toast.error('Error', err.message || 'Failed to forward order');
     }
   };
 
@@ -379,12 +391,12 @@ const SaveOrders = forwardRef<SaveOrdersRef, SaveOrdersProps>(({
           let itemResult = itemTemplate;
           // Replace @index
           itemResult = itemResult.replace(/\{\{@index\}\}/g, String(index + 1));
-          // Replace item properties
-          itemResult = itemResult.replace(/\{\{optionName\}\}/g, item.optionName || item.name || 'N/A');
-          itemResult = itemResult.replace(/\{\{optionType\}\}/g, item.optionTypeName || item.optionType || item.category || 'N/A');
-          itemResult = itemResult.replace(/\{\{optionCode\}\}/g, item.optionCode || 'N/A');
+          // Replace item properties - sanitized to prevent XSS
+          itemResult = itemResult.replace(/\{\{optionName\}\}/g, sanitizeString(item.optionName || item.name || 'N/A'));
+          itemResult = itemResult.replace(/\{\{optionType\}\}/g, sanitizeString(item.optionTypeName || item.optionType || item.category || 'N/A'));
+          itemResult = itemResult.replace(/\{\{optionCode\}\}/g, sanitizeString(item.optionCode || 'N/A'));
           itemResult = itemResult.replace(/\{\{quantity\}\}/g, String(item.quantity || 1));
-          itemResult = itemResult.replace(/\{\{amount\}\}/g, item.amount || item.total || 'N/A');
+          itemResult = itemResult.replace(/\{\{amount\}\}/g, sanitizeString(String(item.amount || item.total || 'N/A')));
 
           // Replace dimension variables - convert array to object if needed
           const itemSpecs = specsToObject(item.specificationValues);
@@ -469,11 +481,11 @@ const SaveOrders = forwardRef<SaveOrdersRef, SaveOrdersProps>(({
       replace(/\{\{orderNumber\}\}/g, orderId).
       replace(/\{\{orderDate\}\}/g, new Date(orderData?.createdAt || Date.now()).toLocaleDateString('en-IN')).
       replace(/\{\{date\}\}/g, new Date(orderData?.createdAt || Date.now()).toLocaleDateString('en-IN')).
-      replace(/\{\{orderStatus\}\}/g, orderData?.status || orderData?.overallStatus || 'Pending').
-      replace(/\{\{status\}\}/g, orderData?.status || orderData?.overallStatus || 'Pending').
-      replace(/\{\{orderType\}\}/g, orderData?.orderTypeName || orderData?.orderType?.name || '').
-      replace(/\{\{priority\}\}/g, orderData?.priority || 'Normal').
-      replace(/\{\{notes\}\}/g, orderData?.notes || '').
+      replace(/\{\{orderStatus\}\}/g, sanitizeString(orderData?.status || orderData?.overallStatus || 'Pending')).
+      replace(/\{\{status\}\}/g, sanitizeString(orderData?.status || orderData?.overallStatus || 'Pending')).
+      replace(/\{\{orderType\}\}/g, sanitizeString(orderData?.orderTypeName || orderData?.orderType?.name || '')).
+      replace(/\{\{priority\}\}/g, sanitizeString(orderData?.priority || 'Normal')).
+      replace(/\{\{notes\}\}/g, sanitizeString(orderData?.notes || '')).
       replace(/\{\{totalOptions\}\}/g, String(options.length)).
       replace(/\{\{totalItems\}\}/g, String(options.length)).
       replace(/\{\{totalQuantity\}\}/g, String(options.reduce((sum: number, o: any) => sum + (o.quantity || 1), 0))).
@@ -481,11 +493,11 @@ const SaveOrders = forwardRef<SaveOrdersRef, SaveOrdersProps>(({
       replace(/\{\{companyAddress\}\}/g, '').
       replace(/\{\{companyPhone\}\}/g, '').
       replace(/\{\{companyEmail\}\}/g, '')
-      // Customer placeholders
-      .replace(/\{\{customerName\}\}/g, customer.name || customer.accountName || '').
-      replace(/\{\{customerPhone\}\}/g, customer.phone || customer.mobile || '').
-      replace(/\{\{customerEmail\}\}/g, customer.email || '').
-      replace(/\{\{customerAddress\}\}/g, customer.address || '')
+      // Customer placeholders - sanitized to prevent XSS
+      .replace(/\{\{customerName\}\}/g, sanitizeString(customer.name || customer.accountName || '')).
+      replace(/\{\{customerPhone\}\}/g, sanitizeString(customer.phone || customer.mobile || '')).
+      replace(/\{\{customerEmail\}\}/g, sanitizeString(customer.email || '')).
+      replace(/\{\{customerAddress\}\}/g, sanitizeString(customer.address || ''))
       // Totals
       .replace(/\{\{subtotal\}\}/g, orderData?.subtotal || '').
       replace(/\{\{tax\}\}/g, orderData?.tax || '').
@@ -495,7 +507,7 @@ const SaveOrders = forwardRef<SaveOrdersRef, SaveOrdersProps>(({
       return result;
     };
 
-    // Build options table
+    // Build options table - sanitized to prevent XSS
     const optionsHtml = options.length > 0 ? `
       <table style="width: 100%; border-collapse: collapse; margin: 10px 0;">
         <thead>
@@ -510,10 +522,10 @@ const SaveOrders = forwardRef<SaveOrdersRef, SaveOrdersProps>(({
           ${options.map((opt: any, idx: number) => `
             <tr>
               <td style="border: 1px solid #e5e7eb; padding: 8px;">${idx + 1}</td>
-              <td style="border: 1px solid #e5e7eb; padding: 8px;">${opt.optionName || 'N/A'}</td>
-              <td style="border: 1px solid #e5e7eb; padding: 8px;">${opt.optionTypeName || opt.category || 'N/A'}</td>
+              <td style="border: 1px solid #e5e7eb; padding: 8px;">${sanitizeString(opt.optionName || 'N/A')}</td>
+              <td style="border: 1px solid #e5e7eb; padding: 8px;">${sanitizeString(opt.optionTypeName || opt.category || 'N/A')}</td>
               <td style="border: 1px solid #e5e7eb; padding: 8px;">
-                ${opt.specificationValues ? Object.entries(opt.specificationValues).map(([k, v]) => `${k}: ${v}`).join(', ') : 'N/A'}
+                ${opt.specificationValues ? Object.entries(opt.specificationValues).map(([k, v]) => `${sanitizeString(String(k))}: ${sanitizeString(String(v))}`).join(', ') : 'N/A'}
               </td>
             </tr>
           `).join('')}
@@ -547,7 +559,7 @@ const SaveOrders = forwardRef<SaveOrdersRef, SaveOrdersProps>(({
         </div>
         <h3>Order Items</h3>
         ${optionsHtml}
-        ${orderData?.notes ? `<div style="margin-top: 20px;"><strong>Notes:</strong> ${orderData.notes}</div>` : ''}
+        ${orderData?.notes ? `<div style="margin-top: 20px;"><strong>Notes:</strong> ${sanitizeString(orderData.notes)}</div>` : ''}
       </div>
     `;
 
@@ -1010,9 +1022,10 @@ const spinnerStyle: React.CSSProperties = {
   margin: "0 auto"
 };
 
-// Add CSS animations
-if (typeof document !== 'undefined') {
+// Add CSS animations (only once, check before creating element)
+if (typeof document !== 'undefined' && !document.head.querySelector('style[data-save-orders]')) {
   const styleSheet = document.createElement("style");
+  styleSheet.setAttribute('data-save-orders', 'true');
   styleSheet.textContent = `
     @keyframes fadeIn {
       from { opacity: 0; }
@@ -1044,11 +1057,7 @@ if (typeof document !== 'undefined') {
       100% { transform: rotate(360deg); }
     }
   `;
-
-  if (!document.head.querySelector('style[data-save-orders]')) {
-    styleSheet.setAttribute('data-save-orders', 'true');
-    document.head.appendChild(styleSheet);
-  }
+  document.head.appendChild(styleSheet);
 }
 
 export default SaveOrders;

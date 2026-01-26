@@ -11,29 +11,29 @@
 /* Main Container */
 .editsectionsTable-container {
   width: 100%;
-  padding: 20px;
+  padding: 4px 8px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 4px;
   flex: 1;
   overflow: hidden;
 }
 
 /* Page Title */
 .editsectionsTable-title {
-  font-size: 1.5rem;
+  font-size: 14px;
   font-weight: 600;
   color: #1f2937;
   text-align: center;
-  margin: 0 0 10px 0;
-  padding-bottom: 12px;
-  border-bottom: 2px solid #FF6B35;
+  margin: 0 0 4px 0;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #FF6B35;
 }
 
 /* Search Section */
 .editsectionsTable-searchWrapper {
   display: flex;
-  gap: 12px;
+  gap: 4px;
   align-items: center;
   flex-shrink: 0;
 }
@@ -45,15 +45,16 @@
 
 .editsectionsTable-searchInput {
   width: 100%;
-  padding: 8px 32px 8px 36px !important;
-  font-size: 12px !important;
-  color: #374151 !important;
-  background: #fff !important;
-  border: 1px solid #e5e7eb !important;
-  border-radius: 6px !important;
+  padding: 3px 28px 3px 30px !important;
+  font-size: 10px !important;
+  color: #1e293b !important;
+  background: #f9fafb !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 4px !important;
   outline: none;
   transition: all 0.2s ease;
   box-sizing: border-box;
+  height: 24px;
 }
 
 .editsectionsTable-searchInput:focus {
@@ -67,26 +68,26 @@
 
 .editsectionsTable-searchIcon {
   position: absolute;
-  left: 10px;
+  left: 8px;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 14px;
+  font-size: 12px;
   color: #9ca3af;
   pointer-events: none;
 }
 
 .editsectionsTable-clearButton {
   position: absolute;
-  right: 8px;
+  right: 6px;
   top: 50%;
   transform: translateY(-50%);
   background: none;
   border: none;
-  font-size: 14px;
+  font-size: 12px;
   cursor: pointer;
   color: #9ca3af;
-  padding: 2px 6px;
-  border-radius: 4px;
+  padding: 2px 4px;
+  border-radius: 3px;
   transition: all 0.2s ease;
 }
 
@@ -96,23 +97,26 @@
 }
 
 .editsectionsTable-countBadge {
-  padding: 6px 12px;
+  padding: 3px 8px;
   background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  font-size: 11px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 9px;
   color: #6b7280;
   white-space: nowrap;
   font-weight: 500;
+  height: 24px;
+  display: flex;
+  align-items: center;
 }
 
 /* Table Wrapper */
 .editsectionsTable-wrapper {
   background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  border-radius: 3px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
   overflow: auto;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #e2e8f0;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -127,26 +131,27 @@
 
 /* Table Header */
 .editsectionsTable-thead {
-  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  background: #f8fafc;
 }
 
 .editsectionsTable-th {
-  padding: 8px 10px;
+  padding: 4px 6px !important;
   text-align: left;
-  font-size: 11px;
+  font-size: 8px !important;
   font-weight: 600;
-  color: #374151;
+  color: #475569;
   text-transform: uppercase;
-  letter-spacing: 0.4px;
-  border-bottom: 2px solid #FF6B35;
+  letter-spacing: 0.2px;
+  border-bottom: 2px solid #e2e8f0;
+  line-height: 1.2;
 }
 
 .editsectionsTable-th:first-child {
-  padding-left: 12px;
+  padding-left: 6px !important;
 }
 
 .editsectionsTable-th:last-child {
-  padding-right: 12px;
+  padding-right: 6px !important;
 }
 
 /* Table Body */
@@ -157,7 +162,8 @@
 .editsectionsTable-tr {
   cursor: pointer;
   transition: all 0.15s ease;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid #f1f5f9;
+  height: auto;
 }
 
 .editsectionsTable-tr:last-child {
@@ -177,31 +183,32 @@
 }
 
 .editsectionsTable-td {
-  padding: 6px 10px;
-  font-size: 12px;
-  color: #4b5563;
+  padding: 3px 6px !important;
+  font-size: 9px !important;
+  color: #1e293b;
   vertical-align: middle;
+  line-height: 1.2;
 }
 
 .editsectionsTable-td:first-child {
-  padding-left: 12px;
+  padding-left: 6px !important;
   font-weight: 500;
-  color: #6b7280;
+  color: #1e293b;
 }
 
 .editsectionsTable-td:last-child {
-  padding-right: 12px;
+  padding-right: 6px !important;
 }
 
 /* Empty State */
 .editsectionsTable-empty {
-  padding: 30px 20px;
+  padding: 16px 12px;
   text-align: center;
-  color: #9ca3af;
-  font-size: 13px;
-  background: #fafafa;
-  border-radius: 8px;
-  border: 1px dashed #e5e7eb;
+  color: #94a3b8;
+  font-size: 11px;
+  background: #f8fafc;
+  border-radius: 4px;
+  border: 1px dashed #e2e8f0;
 }
 
 .editsectionsTable-empty span {
@@ -235,9 +242,9 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 16px;
+  padding: 3px 8px;
   background: #fff;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e2e8f0;
   flex-shrink: 0;
   z-index: 100;
 }
@@ -245,19 +252,19 @@
 .editsectionsTable-header__left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 6px;
 }
 
 .editsectionsTable-header__actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
 }
 
 .editsectionsTable-title {
-  font-size: 1rem;
+  font-size: 13px;
   font-weight: 600;
-  color: #1f2937;
+  color: #1e293b;
   margin: 0;
   padding: 0;
   border: none;
@@ -270,44 +277,52 @@
 
 .editsectionsTable-summary {
   display: flex;
-  gap: 8px;
-  padding: 6px 16px;
-  background: #f9fafb;
-  border-bottom: 1px solid #e5e7eb;
-  flex-wrap: wrap;
+  gap: 3px;
+  padding: 3px 8px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  flex-wrap: nowrap;
   flex-shrink: 0;
+  overflow-x: auto;
 }
 
 .editsectionsTable-summary--compact {
-  padding: 4px 16px;
-  gap: 6px;
+  padding: 2px 8px;
+  gap: 2px;
 }
 
 .editsectionsTable-summaryCard {
   background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  padding: 6px 10px;
-  min-width: 50px;
+  border: 1px solid #e2e8f0;
+  border-radius: 3px;
+  padding: 2px 4px;
+  min-width: 55px;
   text-align: center;
+  flex: 1 1 0;
+  max-width: 100px;
 }
 
 .editsectionsTable-summaryCard--mini {
-  padding: 4px 8px;
-  min-width: 40px;
+  padding: 2px 3px;
+  min-width: 50px;
 }
 
 .editsectionsTable-summaryCard__value {
-  font-size: 0.9rem;
+  font-size: 12px;
   font-weight: 700;
-  color: #1f2937;
+  color: #1e293b;
+  line-height: 1;
 }
 
 .editsectionsTable-summaryCard__label {
-  font-size: 9px;
-  color: #6b7280;
+  font-size: 6px;
+  color: #64748b;
   text-transform: uppercase;
-  margin-top: 1px;
+  margin-top: 0;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Status-specific colors */
@@ -370,19 +385,20 @@
 }
 
 .editsectionsTable-th {
-  padding: 8px 10px;
+  padding: 4px 6px !important;
   text-align: left;
-  font-size: 11px;
+  font-size: 8px !important;
   font-weight: 600;
-  color: #374151;
+  color: #475569;
   text-transform: uppercase;
-  letter-spacing: 0.4px;
-  border-bottom: 2px solid #FF6B35;
-  background: #f9fafb;
+  letter-spacing: 0.2px;
+  border-bottom: 2px solid #e2e8f0;
+  background: #f8fafc;
   white-space: nowrap;
   position: sticky;
   top: 0;
   z-index: 10;
+  line-height: 1.2;
 }
 
 /* ====================================
@@ -466,11 +482,14 @@
 .editsectionsTable-dropdownItem input[type="date"],
 .editsectionsTable-dropdownItem input[type="text"] {
   width: 100%;
-  padding: 5px 8px;
-  border: 1px solid #e5e7eb;
-  border-radius: 5px;
-  font-size: 11px;
-  background: #fff;
+  padding: 2px 6px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 10px;
+  background: #f9fafb;
+  color: #1e293b;
+  height: 24px;
+  box-sizing: border-box;
 }
 
 .editsectionsTable-dropdownItem input:focus {
@@ -485,10 +504,10 @@
 }
 
 .editsectionsTable-dropdownOption {
-  padding: 6px 10px;
+  padding: 4px 8px;
   cursor: pointer;
   transition: background 0.15s ease;
-  font-size: 11px;
+  font-size: 10px;
 }
 
 .editsectionsTable-dropdownOption:hover {
@@ -542,13 +561,16 @@
 .editsectionsTable-statusBadge,
 .editsectionsTable-priorityBadge {
   display: inline-block;
-  padding: 2px 6px;
-  border-radius: 10px;
-  font-size: 10px;
+  padding: 1px 4px !important;
+  border-radius: 3px;
+  font-size: 8px !important;
   font-weight: 600;
   color: #fff;
   text-transform: capitalize;
   white-space: nowrap;
+  min-width: 45px;
+  text-align: center;
+  line-height: 1.3;
 }
 
 /* ====================================
@@ -556,15 +578,15 @@
    ==================================== */
 
 .editsectionsTable-dateCell {
-  font-size: 11px;
-  color: #6b7280;
+  font-size: 8px !important;
+  color: #64748b;
   white-space: nowrap;
 }
 
 .editsectionsTable-orderIdCell {
   font-weight: 600;
-  font-size: 11px;
-  color: #1f2937;
+  font-size: 9px !important;
+  color: #1e293b;
 }
 
 /* ====================================
@@ -575,39 +597,40 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  padding: 8px 16px;
+  gap: 8px;
+  padding: 4px 8px;
   background: #fff;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid #e2e8f0;
   flex-shrink: 0;
 }
 
 .pagination-btn {
-  padding: 5px 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 5px;
+  padding: 3px 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
   background: #fff;
-  color: #374151;
-  font-size: 11px;
+  color: var(--color-primary, #FF6B35);
+  font-size: 10px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .pagination-btn:hover:not(:disabled) {
-  background: #f9fafb;
-  border-color: #FF6B35;
-  color: #FF6B35;
+  background: var(--color-primary, #FF6B35);
+  color: white;
 }
 
 .pagination-btn:disabled {
-  opacity: 0.5;
+  background: #f1f5f9;
+  color: #94a3b8;
+  border-color: #e2e8f0;
   cursor: not-allowed;
 }
 
 .pagination-info {
-  font-size: 11px;
-  color: #6b7280;
+  font-size: 10px;
+  color: #64748b;
 }
 
 /* ====================================
@@ -615,41 +638,47 @@
    ==================================== */
 
 .editsectionsTable-filterInput {
-  padding: 6px 10px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  font-size: 12px;
+  padding: 2px 6px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 10px;
+  background-color: #f9fafb;
+  color: #1e293b;
   transition: all 0.2s ease;
+  height: 24px;
+  box-sizing: border-box;
 }
 
 .editsectionsTable-filterInput:focus {
   border-color: #FF6B35;
   outline: none;
-  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+  box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.1);
 }
 
 .editsectionsTable-resetBtn {
-  padding: 6px 14px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  background: #fff;
-  color: #6b7280;
-  font-size: 12px;
+  padding: 2px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: #f9fafb;
+  color: #64748b;
+  font-size: 10px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
+  height: 24px;
+  box-sizing: border-box;
 }
 
 .editsectionsTable-resetBtn:hover {
-  background: #f9fafb;
-  border-color: #d1d5db;
+  background: #e2e8f0;
+  color: #1e293b;
 }
 
 .editsectionsTable-actionBtn {
-  padding: 6px 14px;
+  padding: 3px 10px;
   border: none;
-  border-radius: 6px;
-  font-size: 12px;
+  border-radius: 4px;
+  font-size: 10px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -671,7 +700,124 @@
 
 .loadingAndError {
   text-align: center;
-  padding: 20px 16px;
-  font-size: 12px;
-  color: #6b7280;
+  padding: 12px 8px;
+  font-size: 11px;
+  color: #64748b;
+}
+
+/* ====================================
+   Force Compact Styling - Override Inline Styles
+   ==================================== */
+
+/* Override any inline font-size on table cells */
+.editsectionsTable-td[style*="font-size"] {
+  font-size: 9px !important;
+}
+
+/* Force compact row height */
+.editsectionsTable-table tr {
+  height: auto !important;
+}
+
+.editsectionsTable-table td {
+  padding: 3px 6px !important;
+  font-size: 9px !important;
+  line-height: 1.2 !important;
+}
+
+.editsectionsTable-table th {
+  padding: 4px 6px !important;
+  font-size: 8px !important;
+  line-height: 1.2 !important;
+}
+
+/* Compact checkbox column */
+.editsectionsTable-td input[type="checkbox"] {
+  width: 12px !important;
+  height: 12px !important;
+}
+
+/* Override Order Type column - make it compact */
+.editsectionsTable-td[style*="Order"] {
+  font-size: 8px !important;
+}
+
+/* Make Forward button smaller */
+.editsectionsTable-td button {
+  padding: 2px 6px !important;
+  font-size: 8px !important;
+}
+
+/* Order Type column - compact styling */
+.editsectionsTable-td span[style*="inline-flex"] {
+  font-size: 8px !important;
+  padding: 2px 4px !important;
+  gap: 3px !important;
+}
+
+.editsectionsTable-td span[style*="inline-flex"] span {
+  font-size: 8px !important;
+}
+
+.editsectionsTable-td span[style*="inline-flex"] span[style*="opacity"] {
+  font-size: 7px !important;
+}
+
+/* Override any font-size 12px in cells */
+.editsectionsTable-td span[style*="12px"],
+.editsectionsTable-td [style*="font-size: 12px"],
+.editsectionsTable-td [style*="fontSize"] {
+  font-size: 8px !important;
+}
+
+/* Status and Priority badges in table - smaller */
+.editsectionsTable-td span[style*="padding"][style*="background"] {
+  font-size: 8px !important;
+  padding: 1px 4px !important;
+}
+
+/* Company name cell */
+.editsectionsTable-td[style*="fontWeight: 500"],
+.editsectionsTable-td[style*="font-weight: 500"] {
+  font-size: 9px !important;
+}
+
+/* Created by cell */
+.editsectionsTable-td[style*="color: #64748b"] {
+  font-size: 8px !important;
+}
+
+/* AGGRESSIVE OVERRIDES - Force all text in table cells to be small */
+.editsectionsTable-table tbody td * {
+  font-size: inherit !important;
+}
+
+.editsectionsTable-table tbody td {
+  font-size: 9px !important;
+}
+
+.editsectionsTable-table tbody td span {
+  font-size: 8px !important;
+}
+
+/* Order Type badge specific - override inline fontSize: 12px */
+.editsectionsTable-tbody .editsectionsTable-td > span {
+  font-size: 8px !important;
+  padding: 2px 4px !important;
+}
+
+.editsectionsTable-tbody .editsectionsTable-td > span > span {
+  font-size: 8px !important;
+}
+
+/* Smaller gap for order type badge */
+.editsectionsTable-tbody .editsectionsTable-td > span[style] {
+  gap: 3px !important;
+}
+
+/* Status badge override */
+.editsectionsTable-tbody td span[style*="background"] {
+  font-size: 8px !important;
+  padding: 1px 4px !important;
+  line-height: 1.2 !important;
 }

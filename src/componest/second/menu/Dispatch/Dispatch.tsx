@@ -6,8 +6,8 @@ import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import "../Dispatch/Dispatch.css";
 import "../Oders/indexAllOders.css"; // ✅ Import All Orders styling
-import { fetchOrders, updateOrder } from "../../../redux/oders/OdersActions";
-import { RootState } from "../../../../store";
+import { fetchOrders, updateOrder, fetchOrderDetails } from "../../../redux/oders/OdersActions";
+import { RootState, AppDispatch } from "../../../../store";
 import { useDispatchUpdates, useWebSocketStatus } from "../../../../hooks/useWebSocket"; // ✅ WebSocket real-time updates
 import ExcelExportSelector from "../../../../components/shared/ExcelExportSelector";
 import { ArrowDownTrayIcon, PrinterIcon, ArrowPathIcon, TagIcon, SignalIcon, SignalSlashIcon, CheckCircleIcon, XMarkIcon, ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
@@ -1533,7 +1533,7 @@ export default function Dispatch() {
         </div>
       }
 
-      {!loading && filteredOrders.length > 0 &&
+      {!loading && filteredOrders.length > 0 && <>
       <div
         className="orders-table-container"
         ref={contentRef}
@@ -1890,33 +1890,29 @@ export default function Dispatch() {
             })}
             </tbody>
           </table>
+        </div>
 
-          {/* Pagination */}
-          {pagination && pagination.totalPages > 1 &&
+        {/* Pagination - outside table container for proper positioning */}
         <div className="pagination">
-              <button
+          <button
             onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
             disabled={currentPage === 1 || loading}
             className="pagination-btn">
-
-                <ChevronLeftIcon style={{ width: '16px', height: '16px' }} />
-                Previous
-              </button>
-              <span className="pagination-info">
-                Page {currentPage} of {pagination.totalPages}
-              </span>
-              <button
-            onClick={() => setCurrentPage((prev) => Math.min(pagination.totalPages, prev + 1))}
-            disabled={currentPage === pagination.totalPages || loading}
+            <ChevronLeftIcon style={{ width: '16px', height: '16px' }} />
+            Previous
+          </button>
+          <span className="pagination-info">
+            Page {currentPage} of {pagination?.totalPages || Math.ceil(filteredOrders.length / limit) || 1} pages | Showing {filteredOrders.length} of {pagination?.total || filteredOrders.length} total orders
+          </span>
+          <button
+            onClick={() => setCurrentPage((prev) => Math.min(pagination?.totalPages || 1, prev + 1))}
+            disabled={currentPage === (pagination?.totalPages || 1) || loading}
             className="pagination-btn">
-
-                Next
-                <ChevronRightIcon style={{ width: '16px', height: '16px' }} />
-              </button>
-            </div>
-        }
+            Next
+            <ChevronRightIcon style={{ width: '16px', height: '16px' }} />
+          </button>
         </div>
-      }
+      </>}
 
       {/* Period Modal */}
       {showPeriodModal &&
