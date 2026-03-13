@@ -1786,7 +1786,7 @@ const CreateExcelExportType: React.FC<CreateExcelExportTypeProps> = ({ initialDa
               Loading order types...
             </div>
           ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minHeight: '100px', maxHeight: '400px', overflowY: 'auto', paddingRight: '4px', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '10px', background: '#fafafa' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minHeight: '100px', overflowY: 'auto', paddingRight: '4px', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '10px', background: '#fafafa' }}>
             {!orderTypes || orderTypes.length === 0 ? (
               <div style={{ padding: '20px', textAlign: 'center', color: '#9ca3af', fontSize: '12px' }}>
                 No order types found. Create order types first.
@@ -2216,7 +2216,7 @@ const CreateExcelExportType: React.FC<CreateExcelExportTypeProps> = ({ initialDa
               Loading option types...
             </div> :
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minHeight: '100px', maxHeight: '400px', overflowY: 'auto', paddingRight: '4px', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '10px', background: '#fafafa' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minHeight: '100px', overflowY: 'auto', paddingRight: '4px', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '10px', background: '#fafafa' }}>
               {!optionTypes || optionTypes.length === 0 ? (
                 <div style={{ padding: '20px', textAlign: 'center', color: '#9ca3af', fontSize: '12px' }}>
                   No option types found. Create option types first.
@@ -2389,7 +2389,7 @@ const CreateExcelExportType: React.FC<CreateExcelExportTypeProps> = ({ initialDa
         </div>
 
         {/* Column Configuration Section */}
-        <div className="orderTypeSection">
+        {/* <div className="orderTypeSection">
           <h3 className="orderTypeSectionTitle">
             Export Columns Configuration
             {createExcelExportTypeHelp.sections?.find(s => s.title === '📊 Export Columns Configuration') && (
@@ -2495,7 +2495,7 @@ const CreateExcelExportType: React.FC<CreateExcelExportTypeProps> = ({ initialDa
 
             })}
           </div>
-        </div>
+        </div> */}
 
         {/* Export Settings Section */}
         <div className="orderTypeSection">

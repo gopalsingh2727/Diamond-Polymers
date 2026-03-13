@@ -13,8 +13,8 @@ import Marketing from "../../second/menu/marketing/Marketing";
 import Account from "../../second/menu/Account/Account";
 import AccountInfo from "../../second/menu/Account/AccountInfo/AccountInfo";
 import ExportReport from "../../second/menu/Account/ExportReport/ExportReport";
-// import ReportDashboard from "../../../reports/ReportDashboard";
-// import ReportViewer from "../../second/menu/Reports/ReportViewer";
+
+import ReportViewer from "../../second/menu/Reports/ReportViewer";
 // import InventoryDashboard from "../../second/menu/Inventory/InventoryDashboard";
 // import InventoryTransactions from "../../second/menu/Inventory/InventoryTransactions";
 // import CreateEmployee from "../../second/menu/SystemSetting/create/createEmployee/CreateEmployee";
@@ -49,10 +49,10 @@ function IndexMenuRoute() {
       <Route path="Account" element={<Account/>} />
       <Route path="AccountInfo" element={<AccountInfo/>} />
       <Route path="ExportReport" element={<ExportReport/>} />
-      {/* <Route path="reports">
-        <Route index element={<ReportDashboard/>} />
-        <Route path="viewer" element={<ReportViewer/>} />
-      </Route> */}
+      <Route path="reports" element={<ReportViewer/>} />
+    
+ 
+
       {/* <Route path="create-employee" element={<CreateEmployee/>} />
       <Route path="edit-employee" element={<EditEmployeeList/>} />
       <Route path="payroll" element={<PayrollDashboard/>} />

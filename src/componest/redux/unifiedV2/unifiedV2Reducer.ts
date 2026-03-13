@@ -114,6 +114,7 @@ const optionV2Reducer = createEntityReducer('OPTION');
 const orderTypeV2Reducer = createEntityReducer('ORDER_TYPE');
 const printTypeV2Reducer = createEntityReducer('PRINT_TYPE');
 const excelExportTypeV2Reducer = createEntityReducer('EXCEL_EXPORT_TYPE');
+const excelTypeV2Reducer = createEntityReducer('EXCEL_TYPE');
 const reportTypeV2Reducer = createEntityReducer('REPORT_TYPE');
 const templateV2Reducer = createEntityReducer('TEMPLATE');
 // Inventory reducers
@@ -303,6 +304,7 @@ const unifiedV2Reducer = combineReducers({
   orderType: orderTypeV2Reducer,
   printType: printTypeV2Reducer,
   excelExportType: excelExportTypeV2Reducer,
+  excelType: excelTypeV2Reducer,
   reportType: reportTypeV2Reducer,
   template: templateV2Reducer,
   inventory: inventoryV2Reducer,
@@ -334,6 +336,7 @@ export {
   orderTypeV2Reducer,
   printTypeV2Reducer,
   excelExportTypeV2Reducer,
+  excelTypeV2Reducer,
   reportTypeV2Reducer,
   templateV2Reducer,
   inventoryV2Reducer,

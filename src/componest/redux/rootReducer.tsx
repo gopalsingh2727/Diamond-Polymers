@@ -47,8 +47,7 @@ import chatReducer from "./chat/chatSlice";
 // WebSocket
 import websocketReducer from "./websocket/websocketSlice";
 
-// Reports Dashboard
-import reportReducer from "./reports/reportReducer";
+
 import reportGroupReducer from "./reportGroups/reportGroupReducer";
 
 // Order Forwarding
@@ -59,6 +58,8 @@ import p2pChatReducer from "./p2pChat/p2pChatSlice";
 
 // Contacts
 import contactsReducer from "./contacts/contactsSlice";
+import dashboardTypeReducer from "./dashbroadtype/dashboardTypeReducer";
+import dashboardReportDataReducer from "./dashbroadData/dashboardreportdatareducer";
 
 const appReducer = combineReducers({
   // Auth
@@ -81,7 +82,7 @@ const appReducer = combineReducers({
   managerList: managerListReducer,
   managerUpdate: managerUpdateReducer,
   managerDelete: managerDeleteReducer,
-
+  dashboardType: dashboardTypeReducer,
   // ==========================================
   // UNIFIED V2 (all entities in one reducer)
   // Includes: account, customerCategory, parentCompany,
@@ -112,7 +113,7 @@ const appReducer = combineReducers({
   websocket: websocketReducer,
 
   // Reports Dashboard
-  reports: reportReducer,
+  DashboardData: dashboardReportDataReducer,
   reportGroups: reportGroupReducer,
 
   // Order Forwarding

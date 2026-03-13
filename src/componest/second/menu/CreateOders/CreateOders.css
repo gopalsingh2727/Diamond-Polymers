@@ -2034,7 +2034,7 @@
 .co-label,
 .CreateOrdersForm label,
 .CustomerNameRow label {
-  font-size: 9px !important;
+  font-size: 12px !important;
   margin-bottom: 1px;
 }
 
@@ -2089,7 +2089,7 @@
 }
 
 .SeleteType label {
-  font-size: 9px !important;
+  font-size: 12px !important;
 }
 
 .SeleteType select {
@@ -2131,7 +2131,7 @@
 .co-step-row,
 .stepRow {
   padding: 3px 10px;
-  font-size: 9px !important;
+  font-size: 12px !important;
 }
 
 /* Compact Mixing Display */
@@ -2143,7 +2143,7 @@
 
 .co-mixing-row,
 .SaveMixingstepRow {
-  font-size: 9px !important;
+  font-size: 12px !important;
   padding: 3px 8px;
 }
 

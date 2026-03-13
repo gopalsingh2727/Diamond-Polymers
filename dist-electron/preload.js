@@ -17,50 +17,42 @@ const ALLOWED_INVOKE_CHANNELS = [
   "open-download-page",
   "download-update",
   "install-update",
-  "show-notification"
+  "show-notification",
+  "save-file",
+  // ── Dashboard file cache ─────────────────────────────────────────────────
+  "dashboard-cache:saveFromText",
+  // ★ new — writes raw S3 text to disk (no IPC size limit issues)
+  "dashboard-cache:save",
+  "dashboard-cache:read",
+  "dashboard-cache:list",
+  "dashboard-cache:delete",
+  "dashboard-cache:open-folder",
+  "dashboard-cache:download"
 ];
 console.log("[Preload] Loading preload script...");
 try {
   electron.contextBridge.exposeInMainWorld("ipcRenderer", {
-    /**
-     * Listen for events from main process (whitelisted channels only)
-     */
     on: (channel, listener) => {
-      if (!ALLOWED_RECEIVE_CHANNELS.includes(channel)) {
-        return;
-      }
+      if (!ALLOWED_RECEIVE_CHANNELS.includes(channel)) return;
       try {
         electron.ipcRenderer.on(channel, listener);
-      } catch (err) {
+      } catch {
       }
     },
-    /**
-     * Remove event listener
-     */
     off: (channel, listener) => {
-      if (!ALLOWED_RECEIVE_CHANNELS.includes(channel)) {
-        return;
-      }
+      if (!ALLOWED_RECEIVE_CHANNELS.includes(channel)) return;
       try {
         electron.ipcRenderer.off(channel, listener);
-      } catch (err) {
+      } catch {
       }
     },
-    /**
-     * Send message to main process (whitelisted channels only)
-     */
     send: (channel, ...args) => {
-      if (!ALLOWED_SEND_CHANNELS.includes(channel)) {
-        return;
-      }
+      if (!ALLOWED_SEND_CHANNELS.includes(channel)) return;
       try {
         electron.ipcRenderer.send(channel, ...args);
-      } catch (err) {
+      } catch {
       }
     },
-    /**
-     * Invoke method in main process (whitelisted channels only)
-     */
     invoke: (channel, ...args) => {
       if (!ALLOWED_INVOKE_CHANNELS.includes(channel)) {
         return Promise.reject(new Error(`Unauthorized channel: ${channel}`));
@@ -71,22 +63,39 @@ try {
         return Promise.reject(err);
       }
     },
-    /**
-     * Listen once for event from main process (whitelisted channels only)
-     */
     once: (channel, listener) => {
-      if (!ALLOWED_RECEIVE_CHANNELS.includes(channel)) {
-        return;
-      }
+      if (!ALLOWED_RECEIVE_CHANNELS.includes(channel)) return;
       try {
         electron.ipcRenderer.once(channel, listener);
-      } catch (err) {
+      } catch {
       }
     }
   });
-  console.log("[Preload] IPC Renderer successfully exposed to window");
+  electron.contextBridge.exposeInMainWorld("dashboardCache", {
+    // ★ KEY: sends raw text string — avoids serializing huge JS arrays through IPC
+    saveFromText: (data) => electron.ipcRenderer.invoke("dashboard-cache:saveFromText", data),
+    // Fallback for small datasets (passes JS object)
+    save: (data) => electron.ipcRenderer.invoke("dashboard-cache:save", data),
+    read: (params) => electron.ipcRenderer.invoke("dashboard-cache:read", params),
+    list: () => electron.ipcRenderer.invoke("dashboard-cache:list"),
+    delete: (params) => electron.ipcRenderer.invoke("dashboard-cache:delete", params),
+    openFolder: () => electron.ipcRenderer.invoke("dashboard-cache:open-folder"),
+    download: (params) => electron.ipcRenderer.invoke("dashboard-cache:download", params)
+  });
+  electron.ipcRenderer.on("main-process-message", (_event, ...args) => {
+  });
+  electron.ipcRenderer.on("clear-storage-and-reload", () => {
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
+      window.location.reload();
+    } catch {
+      window.location.reload();
+    }
+  });
+  console.log("[Preload] IPC Renderer + dashboardCache successfully exposed to window");
 } catch (e) {
   console.error("[Preload] Failed to expose IPC Renderer:", e);
 }
-process.on("uncaughtException", (error) => {
+process.on("uncaughtException", () => {
 });

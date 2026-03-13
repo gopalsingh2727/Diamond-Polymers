@@ -46,7 +46,7 @@ export const REPORT_TYPE_V2_DELETE_SUCCESS = 'REPORT_TYPE_V2_DELETE_SUCCESS';
 export const REPORT_TYPE_V2_DELETE_FAILURE = 'REPORT_TYPE_V2_DELETE_FAILURE';
 
 // Create Report Type
-export const createReportTypeV2 = (data: any) => async (dispatch: Dispatch) => {
+export const CreateDashboardTypeV2 = (data: any) => async (dispatch: Dispatch) => {
   dispatch({ type: REPORT_TYPE_V2_CREATE_REQUEST });
 
   try {

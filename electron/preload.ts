@@ -21,84 +21,77 @@ const ALLOWED_INVOKE_CHANNELS = [
   'download-update',
   'install-update',
   'show-notification',
+  'save-file',
+  // ── Dashboard file cache ─────────────────────────────────────────────────
+  'dashboard-cache:saveFromText',   // ★ new — writes raw S3 text to disk (no IPC size limit issues)
+  'dashboard-cache:save',
+  'dashboard-cache:read',
+  'dashboard-cache:list',
+  'dashboard-cache:delete',
+  'dashboard-cache:open-folder',
+  'dashboard-cache:download',
 ];
 
 console.log('[Preload] Loading preload script...');
 
 try {
   contextBridge.exposeInMainWorld('ipcRenderer', {
-    /**
-     * Listen for events from main process (whitelisted channels only)
-     */
     on: (channel: string, listener: (event: IpcRendererEvent, ...args: any[]) => void) => {
-      if (!ALLOWED_RECEIVE_CHANNELS.includes(channel)) {
-        return;
-      }
-      try {
-        ipcRenderer.on(channel, listener);
-      } catch (err) {
-      }
+      if (!ALLOWED_RECEIVE_CHANNELS.includes(channel)) return;
+      try { ipcRenderer.on(channel, listener); } catch {}
     },
-
-    /**
-     * Remove event listener
-     */
     off: (channel: string, listener: (...args: any[]) => void) => {
-      if (!ALLOWED_RECEIVE_CHANNELS.includes(channel)) {
-        return;
-      }
-      try {
-        ipcRenderer.off(channel, listener);
-      } catch (err) {
-      }
+      if (!ALLOWED_RECEIVE_CHANNELS.includes(channel)) return;
+      try { ipcRenderer.off(channel, listener); } catch {}
     },
-
-    /**
-     * Send message to main process (whitelisted channels only)
-     */
     send: (channel: string, ...args: any[]) => {
-      if (!ALLOWED_SEND_CHANNELS.includes(channel)) {
-        return;
-      }
-      try {
-        ipcRenderer.send(channel, ...args);
-      } catch (err) {
-      }
+      if (!ALLOWED_SEND_CHANNELS.includes(channel)) return;
+      try { ipcRenderer.send(channel, ...args); } catch {}
     },
-
-    /**
-     * Invoke method in main process (whitelisted channels only)
-     */
     invoke: (channel: string, ...args: any[]) => {
       if (!ALLOWED_INVOKE_CHANNELS.includes(channel)) {
         return Promise.reject(new Error(`Unauthorized channel: ${channel}`));
       }
-      try {
-        return ipcRenderer.invoke(channel, ...args);
-      } catch (err) {
-        return Promise.reject(err);
-      }
+      try { return ipcRenderer.invoke(channel, ...args); }
+      catch (err) { return Promise.reject(err); }
     },
-
-    /**
-     * Listen once for event from main process (whitelisted channels only)
-     */
     once: (channel: string, listener: (event: IpcRendererEvent, ...args: any[]) => void) => {
-      if (!ALLOWED_RECEIVE_CHANNELS.includes(channel)) {
-        return;
-      }
-      try {
-        ipcRenderer.once(channel, listener);
-      } catch (err) {
-      }
+      if (!ALLOWED_RECEIVE_CHANNELS.includes(channel)) return;
+      try { ipcRenderer.once(channel, listener); } catch {}
+    },
+  });
+
+  // ── dashboardCache convenience wrapper ────────────────────────────────────
+  contextBridge.exposeInMainWorld('dashboardCache', {
+    // ★ KEY: sends raw text string — avoids serializing huge JS arrays through IPC
+    saveFromText: (data: any) => ipcRenderer.invoke('dashboard-cache:saveFromText', data),
+    // Fallback for small datasets (passes JS object)
+    save:         (data: any) => ipcRenderer.invoke('dashboard-cache:save',         data),
+    read:         (params: any) => ipcRenderer.invoke('dashboard-cache:read',       params),
+    list:         ()            => ipcRenderer.invoke('dashboard-cache:list'),
+    delete:       (params: any) => ipcRenderer.invoke('dashboard-cache:delete',     params),
+    openFolder:   ()            => ipcRenderer.invoke('dashboard-cache:open-folder'),
+    download:     (params: any) => ipcRenderer.invoke('dashboard-cache:download',   params),
+  });
+
+  // ── Existing ipcRenderer listeners ───────────────────────────────────────
+  ipcRenderer.on('main-process-message', (_event, ...args) => {
+    // handle main process messages here if needed
+  });
+
+  ipcRenderer.on('clear-storage-and-reload', () => {
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
+      window.location.reload();
+    } catch {
+      window.location.reload();
     }
   });
 
-  console.log('[Preload] IPC Renderer successfully exposed to window');
+  console.log('[Preload] IPC Renderer + dashboardCache successfully exposed to window');
 } catch (e) {
   console.error('[Preload] Failed to expose IPC Renderer:', e);
 }
 
-// ✅ Uncaught exception handler added outside
-process.on('uncaughtException', (error) => {
-});
+process.on('uncaughtException', () => {});

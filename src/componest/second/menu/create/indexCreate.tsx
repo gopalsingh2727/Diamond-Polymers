@@ -11,7 +11,8 @@ import DiveceAccessCreate from "./deviceAccess/deviceAccessCreate";
 import CreateOrderType from "./orderType/CreateOrderType";
 import CreatePrintType from "./printType/CreatePrintType";
 import CreateExcelExportType from "./excelExportType/CreateExcelExportType";
-import CreateReportType from "./reportType/CreateReportType";
+import { CreateExcelType } from "./excelType";
+import CreateDashboardType from "./DashboardType/CreateDashboardType";
 import CreateOptionType from "./optionType/CreateOptionType";
 import CreateOption from "./option/CreateOption";
 import CreateOptionSpec from "./optionSpec/CreateOptionSpec";
@@ -89,6 +90,7 @@ const Layout = () => {
         // { key: "inventory", label: "Create Inventory", masterAdminOnly: false },
         // { key: "inventoryType", label: "Manage Units (KG, PCS)", masterAdminOnly: false },
         { key: "printType", label: "Create Print Type", masterAdminOnly: false },
+        { key: "excelType", label: "Create Excel Type", masterAdminOnly: false },
         { key: "excelExportType", label: "Create Excel Export Type", masterAdminOnly: false },
         { key: "viewTemplate", label: "View Template", masterAdminOnly: false },
       ]
@@ -209,10 +211,12 @@ const Layout = () => {
       //   return <ErrorBoundary><CreateInventoryType /></ErrorBoundary>;
       case "printType":
         return <ErrorBoundary><CreatePrintType /></ErrorBoundary>;
+      case "excelType":
+        return <ErrorBoundary><CreateExcelType /></ErrorBoundary>;
       case "excelExportType":
         return <ErrorBoundary><CreateExcelExportType /></ErrorBoundary>;
       case "reportType":
-        return <ErrorBoundary><CreateReportType /></ErrorBoundary>;
+        return <ErrorBoundary><CreateDashboardType /></ErrorBoundary>;
       case "viewTemplate":
         return <ErrorBoundary><ViewTemplateWizard /></ErrorBoundary>;
  

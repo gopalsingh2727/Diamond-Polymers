@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, shell, Notification, session, globalShortcut, Menu } from 'electron';
+import { app, BrowserWindow, ipcMain, shell, Notification, session, globalShortcut, Menu, dialog } from 'electron';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import fs from 'node:fs';
@@ -9,14 +9,13 @@ import log from 'electron-log';
 
 dotenv.config();
 
-// Security: Content Security Policy
 const CSP_POLICY = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // Required for Vite dev mode
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com data:",
   "img-src 'self' data: blob: https:",
-  "connect-src 'self' http://localhost:* ws://localhost:* wss://* https://api.github.com https://*.27infinity.in https://*.execute-api.ap-south-1.amazonaws.com",
+  "connect-src 'self' http://localhost:* ws://localhost:* wss://* https://api.github.com https://*.27infinity.in https://*.execute-api.ap-south-1.amazonaws.com https://*.amazonaws.com",
   "media-src 'self' blob: data:",
   "worker-src 'self' blob:",
 ].join('; ');
@@ -35,64 +34,71 @@ let win: BrowserWindow | null = null;
 let splash: BrowserWindow | null = null;
 let downloadedInstallerPath: string | null = null;
 
+// ─────────────────────────────────────────────────────────────────────────────
+// DASHBOARD CACHE HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
+function getCacheDir(): string {
+  const dir = path.join(app.getPath('userData'), 'dashboard-cache');
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  return dir;
+}
+
+function cachePath(fromDate: string, toDate: string): string {
+  return path.join(getCacheDir(), `orders_${fromDate || 'all'}_${toDate || 'all'}.json`);
+}
+
+function ordersToCSV(orders: any[]): string {
+  if (!orders.length) return '';
+  const allKeys = [...new Set(orders.flatMap((o: any) =>
+    Object.keys(o).filter(k => typeof o[k] !== 'object' || o[k] === null)
+  ))] as string[];
+  const esc = (v: any) => {
+    const s = v == null ? '' : String(v);
+    return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  return [
+    allKeys.map(esc).join(','),
+    ...orders.map((o: any) => allKeys.map(k => esc(o[k])).join(','))
+  ].join('\n');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 function createWindow() {
   splash = new BrowserWindow({
-    width: 400,
-    height: 300,
-    frame: false,
-    transparent: true,
-    alwaysOnTop: true,
-    resizable: false,
+    width: 400, height: 300,
+    frame: false, transparent: true, alwaysOnTop: true, resizable: false,
   });
-
   splash.loadFile(path.join(process.env.VITE_PUBLIC!, 'splash.html'));
 
   win = new BrowserWindow({
-    show: false,
-    width: 1200,
-    height: 800,
+    show: false, width: 1200, height: 800,
     icon: path.join(process.env.VITE_PUBLIC!, 'electron-vite.svg'),
-    autoHideMenuBar: true,
-    // Performance optimizations
-    backgroundColor: '#f9fafb', // Match app background - faster first paint
+    autoHideMenuBar: true, backgroundColor: '#f9fafb',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
-      webSecurity: true,
-      allowRunningInsecureContent: false,
-      contextIsolation: true,
-      nodeIntegration: false,
-      // Performance: cache compiled JS
-      v8CacheOptions: 'bypassHeatCheck',
-      // Performance: enable hardware acceleration
-      backgroundThrottling: false,
+      webSecurity: true, allowRunningInsecureContent: false,
+      contextIsolation: true, nodeIntegration: false,
+      v8CacheOptions: 'bypassHeatCheck', backgroundThrottling: false,
     },
   });
 
   win.webContents.on('did-finish-load', () => {
-    splash?.close();
-    win?.show();
+    splash?.close(); win?.show();
     win?.webContents.send('main-process-message', new Date().toLocaleString());
   });
 
-  if (VITE_DEV_SERVER_URL) {
-    win.loadURL(VITE_DEV_SERVER_URL);
-  } else {
-    win.loadFile(path.join(RENDERER_DIST, 'index.html'));
-  }
+  if (VITE_DEV_SERVER_URL) win.loadURL(VITE_DEV_SERVER_URL);
+  else win.loadFile(path.join(RENDERER_DIST, 'index.html'));
 
   return win;
 }
 
 app.whenReady().then(() => {
-  // Remove menu bar for all platforms
   Menu.setApplicationMenu(null);
-
-  // Initialize logger
   log.transports.file.level = 'info';
   log.info('Logger initialized');
   log.info('App version:', app.getVersion());
 
-  // Security: Apply Content Security Policy headers
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
     callback({
       responseHeaders: {
@@ -105,429 +111,333 @@ app.whenReady().then(() => {
     });
   });
 
-  // Security: Block navigation to external URLs (prevent phishing)
-  app.on('web-contents-created', (event, contents) => {
+  app.on('web-contents-created', (_event, contents) => {
     contents.on('will-navigate', (event, navigationUrl) => {
       const parsedUrl = new URL(navigationUrl);
-      // Allow localhost and the app's own URLs
       if (parsedUrl.hostname !== 'localhost' && !parsedUrl.hostname.endsWith('27infinity.in')) {
         log.warn(`Blocked navigation to: ${navigationUrl}`);
         event.preventDefault();
       }
     });
-
-    // Security: Block new window creation to untrusted URLs
     contents.setWindowOpenHandler(({ url }) => {
-      const parsedUrl = new URL(url);
-      // Allow opening trusted URLs in external browser
-      const allowedDomains = [
-        '27infinity.in',
-        'github.com',
-        'google.com',
-        'docs.google.com',
-        'sheets.google.com',
-        'drive.google.com',
-        'wa.me',
-        'whatsapp.com'
-      ];
-      const isAllowed = allowedDomains.some(domain =>
-        parsedUrl.hostname === domain || parsedUrl.hostname.endsWith('.' + domain)
-      );
-      if (isAllowed) {
-        shell.openExternal(url);
-      } else {
-        // For any other URL, still open in browser (user clicked a link intentionally)
-        shell.openExternal(url);
-        log.info(`Opening external URL: ${url}`);
-      }
+      shell.openExternal(url);
+      log.info(`Opening external URL: ${url}`);
       return { action: 'deny' };
     });
   });
 
-  // Set up permission handlers for microphone access and notifications
   session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
-    const allowedPermissions = ['media', 'microphone', 'audioCapture', 'notifications'];
-    if (allowedPermissions.includes(permission)) {
-      log.info(`Permission granted: ${permission}`);
-      callback(true);
-    } else {
-      log.info(`Permission denied: ${permission}`);
-      callback(false);
-    }
+    const allowed = ['media', 'microphone', 'audioCapture', 'notifications'];
+    callback(allowed.includes(permission));
   });
-
-  session.defaultSession.setPermissionCheckHandler((webContents, permission) => {
-    const allowedPermissions = ['media', 'microphone', 'audioCapture', 'notifications'];
-    return allowedPermissions.includes(permission);
+  session.defaultSession.setPermissionCheckHandler((_wc, permission) => {
+    return ['media', 'microphone', 'audioCapture', 'notifications'].includes(permission);
   });
 
   const win = createWindow();
 
-  // Register global keyboard shortcut for hard refresh (Cmd+R on macOS, Ctrl+R on Windows/Linux)
+  // ── Shortcuts ──────────────────────────────────────────────────────────────
   const refreshShortcut = process.platform === 'darwin' ? 'Command+R' : 'Control+R';
-  const registered = globalShortcut.register(refreshShortcut, () => {
-    log.info('Refresh shortcut triggered - clearing storage and reloading');
-    if (win && !win.isDestroyed()) {
-      // Send IPC message to renderer to clear localStorage
-      win.webContents.send('clear-storage-and-reload');
-    }
-  });
+  if (globalShortcut.register(refreshShortcut, () => {
+    if (win && !win.isDestroyed()) win.webContents.send('clear-storage-and-reload');
+  })) log.info(`Registered: ${refreshShortcut}`);
 
-  if (registered) {
-    log.info(`Refresh shortcut registered: ${refreshShortcut}`);
-  } else {
-    log.error(`Failed to register refresh shortcut: ${refreshShortcut}`);
-  }
-
-  // Register global keyboard shortcut for DevTools (Option+Cmd+I on macOS, Ctrl+Shift+I on Windows/Linux)
   const devToolsShortcut = process.platform === 'darwin' ? 'Option+Command+I' : 'Control+Shift+I';
-  const devToolsRegistered = globalShortcut.register(devToolsShortcut, () => {
-    log.info('DevTools shortcut triggered');
+  if (globalShortcut.register(devToolsShortcut, () => {
     if (win && !win.isDestroyed()) {
-      if (win.webContents.isDevToolsOpened()) {
-        win.webContents.closeDevTools();
-      } else {
-        win.webContents.openDevTools();
-      }
+      if (win.webContents.isDevToolsOpened()) win.webContents.closeDevTools();
+      else win.webContents.openDevTools();
     }
-  });
+  })) log.info(`Registered: ${devToolsShortcut}`);
 
-  if (devToolsRegistered) {
-    log.info(`DevTools shortcut registered: ${devToolsShortcut}`);
-  } else {
-    log.error(`Failed to register DevTools shortcut: ${devToolsShortcut}`);
-  }
-
-  // Get download URL with platform-specific auto-download parameter
+  // ── Update helpers ─────────────────────────────────────────────────────────
   const getDownloadUrl = (): string => {
-    const baseUrl = 'https://27infinity.in/products';
-
-    if (process.platform === 'darwin') {
-      // macOS - check if ARM or Intel
-      if (process.arch === 'arm64') {
-        return `${baseUrl}?download=mac-arm64`;
-      } else {
-        return `${baseUrl}?download=mac-intel`;
-      }
-    } else if (process.platform === 'win32') {
-      // Windows - check if 64-bit or 32-bit
-      if (process.arch === 'x64' || process.arch === 'arm64') {
-        return `${baseUrl}?download=win64`;
-      } else {
-        return `${baseUrl}?download=win32`;
-      }
-    }
-
-    // Default - no auto-download parameter
-    return baseUrl;
+    const base = 'https://27infinity.in/products';
+    if (process.platform === 'darwin') return process.arch === 'arm64' ? `${base}?download=mac-arm64` : `${base}?download=mac-intel`;
+    if (process.platform === 'win32') return (process.arch === 'x64' || process.arch === 'arm64') ? `${base}?download=win64` : `${base}?download=win32`;
+    return base;
   };
 
-  // GitHub API check for updates
   const checkForUpdatesViaGitHub = async () => {
     try {
-      const response = await fetch(
-        'https://api.github.com/repos/gopalsingh2727/Diamond-Polymers/releases/latest'
-      );
-
-      if (!response.ok) {
-        throw new Error(`GitHub API error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const latestVersion = data.tag_name.replace('v', '');
-      const currentVersion = app.getVersion();
-
-      // Compare versions
-      const isNewer = latestVersion !== currentVersion &&
-        latestVersion.localeCompare(currentVersion, undefined, { numeric: true }) > 0;
-
-      return {
-        version: currentVersion,
-        newVersion: latestVersion,
-        update: isNewer,
-        releaseNotes: data.body || ''
-      };
+      const res = await fetch('https://api.github.com/repos/gopalsingh2727/Diamond-Polymers/releases/latest');
+      if (!res.ok) throw new Error(`GitHub API error: ${res.status}`);
+      const data = await res.json();
+      const latest  = data.tag_name.replace('v', '');
+      const current = app.getVersion();
+      const isNewer = latest !== current && latest.localeCompare(current, undefined, { numeric: true }) > 0;
+      return { version: current, newVersion: latest, update: isNewer, releaseNotes: data.body || '' };
     } catch (err: any) {
       log.error('Update check failed:', err.message);
-      return {
-        error: {
-          message: err.message || 'Failed to check for updates'
-        },
-        version: app.getVersion()
-      };
+      return { error: { message: err.message || 'Failed to check for updates' }, version: app.getVersion() };
     }
   };
 
-  // Check for updates on startup
   setTimeout(async () => {
     const result = await checkForUpdatesViaGitHub();
     if (result.update) {
-      log.info('Update available:', result.newVersion);
-
-      // Show system notification
       if (Notification.isSupported()) {
-        const notification = new Notification({
-          title: 'Update Available',
-          body: `Version ${result.newVersion} is available. Click to download.`,
-          icon: path.join(process.env.VITE_PUBLIC!, 'electron-vite.svg')
-        });
-
-        notification.on('click', () => {
-          shell.openExternal(getDownloadUrl());
-        });
-
-        notification.show();
+        const n = new Notification({ title: 'Update Available', body: `Version ${result.newVersion} is available.`, icon: path.join(process.env.VITE_PUBLIC!, 'electron-vite.svg') });
+        n.on('click', () => shell.openExternal(getDownloadUrl()));
+        n.show();
       }
-
-      // Also notify the renderer
       win?.webContents.send('update-can-available', result);
     }
-  }, 10000); // Check 10 seconds after startup - don't interfere with initial load
+  }, 10000);
 
-  // IPC handler for manual update check
-  ipcMain.handle('check-update', async () => {
-    return await checkForUpdatesViaGitHub();
-  });
+  // ── Standard IPC handlers ──────────────────────────────────────────────────
+  ipcMain.handle('check-update', async () => checkForUpdatesViaGitHub());
 
-  // IPC handler for showing native Electron notifications
-  ipcMain.handle('show-notification', async (event, options: {
-    title: string;
-    body: string;
-    icon?: string;
-    tag?: string;
-    silent?: boolean;
-  }) => {
+  ipcMain.handle('show-notification', async (_event, options: { title: string; body: string; icon?: string; silent?: boolean }) => {
     try {
-      if (!Notification.isSupported()) {
-        log.warn('Notifications not supported on this platform');
-        return { success: false, error: 'Notifications not supported' };
-      }
-
-      // Use app icon from public folder (your logo)
-      const appIcon = path.join(process.env.VITE_PUBLIC!, 'icon.png');
-
-      const notification = new Notification({
-        title: options.title,
-        body: options.body,
-        icon: appIcon,
-        silent: options.silent || false
-      });
-
-      notification.on('click', () => {
-        // Bring window to front when notification is clicked
-        if (win && !win.isDestroyed()) {
-          if (win.isMinimized()) win.restore();
-          win.focus();
-        }
-      });
-
-      notification.show();
-      log.info(`Notification shown: ${options.title}`);
+      if (!Notification.isSupported()) return { success: false, error: 'Not supported' };
+      const n = new Notification({ title: options.title, body: options.body, icon: path.join(process.env.VITE_PUBLIC!, 'icon.png'), silent: options.silent || false });
+      n.on('click', () => { if (win && !win.isDestroyed()) { if (win.isMinimized()) win.restore(); win.focus(); } });
+      n.show();
       return { success: true };
-    } catch (error: any) {
-      log.error('Failed to show notification:', error.message);
-      return { success: false, error: error.message };
-    }
+    } catch (err: any) { return { success: false, error: err.message }; }
   });
 
-  // IPC handler to open download page
   ipcMain.handle('open-download-page', async () => {
-    try {
-      const downloadUrl = getDownloadUrl();
-      log.info('Opening download URL:', downloadUrl);
-      await shell.openExternal(downloadUrl);
-      return { success: true };
-    } catch (err: any) {
-      log.error('Failed to open download page:', err.message);
-      return { success: false, error: err.message };
-    }
+    try { await shell.openExternal(getDownloadUrl()); return { success: true }; }
+    catch (err: any) { return { success: false, error: err.message }; }
   });
 
-  // Get installer download URL from GitHub release
   const getInstallerUrl = async (): Promise<{ url: string; filename: string } | null> => {
     try {
-      const response = await fetch(
-        'https://api.github.com/repos/gopalsingh2727/Diamond-Polymers/releases/latest'
-      );
-
-      if (!response.ok) {
-        throw new Error(`GitHub API error: ${response.status}`);
-      }
-
-      const data = await response.json();
+      const res = await fetch('https://api.github.com/repos/gopalsingh2727/Diamond-Polymers/releases/latest');
+      if (!res.ok) throw new Error(`GitHub API error: ${res.status}`);
+      const data = await res.json();
       const assets = data.assets || [];
-
       let asset = null;
-
       if (process.platform === 'win32') {
-        // Find Windows installer (.exe)
-        if (process.arch === 'x64' || process.arch === 'arm64') {
-          asset = assets.find((a: any) =>
-            a.name.endsWith('.exe') && !a.name.includes('ia32')
-          );
-        } else {
-          asset = assets.find((a: any) =>
-            a.name.endsWith('.exe') && a.name.includes('ia32')
-          );
-        }
+        asset = (process.arch === 'x64' || process.arch === 'arm64')
+          ? assets.find((a: any) => a.name.endsWith('.exe') && !a.name.includes('ia32'))
+          : assets.find((a: any) => a.name.endsWith('.exe') && a.name.includes('ia32'));
       } else if (process.platform === 'darwin') {
-        // Find macOS installer (.dmg)
-        if (process.arch === 'arm64') {
-          asset = assets.find((a: any) =>
-            a.name.includes('arm64') && a.name.endsWith('.dmg')
-          );
-        } else {
-          asset = assets.find((a: any) =>
-            a.name.includes('x64') && a.name.endsWith('.dmg')
-          ) || assets.find((a: any) =>
-            a.name.endsWith('.dmg') && !a.name.includes('arm64')
-          );
-        }
+        asset = process.arch === 'arm64'
+          ? assets.find((a: any) => a.name.includes('arm64') && a.name.endsWith('.dmg'))
+          : assets.find((a: any) => a.name.includes('x64') && a.name.endsWith('.dmg'))
+            || assets.find((a: any) => a.name.endsWith('.dmg') && !a.name.includes('arm64'));
       }
-
-      if (asset) {
-        return {
-          url: asset.browser_download_url,
-          filename: asset.name
-        };
-      }
-
-      return null;
-    } catch (err: any) {
-      log.error('Failed to get installer URL:', err.message);
-      return null;
-    }
+      return asset ? { url: asset.browser_download_url, filename: asset.name } : null;
+    } catch (err: any) { log.error('getInstallerUrl failed:', err.message); return null; }
   };
 
-  // IPC handler to download update
   ipcMain.handle('download-update', async () => {
     try {
-      const installerInfo = await getInstallerUrl();
-
-      if (!installerInfo) {
-        return { success: false, error: 'No installer found for your platform' };
-      }
-
-      log.info('Downloading installer:', installerInfo.url);
-
-      // Create temp directory for download
-      const tempDir = path.join(os.tmpdir(), '27-manufacturing-update');
-      if (!fs.existsSync(tempDir)) {
-        fs.mkdirSync(tempDir, { recursive: true });
-      }
-
-      const filePath = path.join(tempDir, installerInfo.filename);
-
-      // Download the file
-      const response = await fetch(installerInfo.url);
-
-      if (!response.ok) {
-        throw new Error(`Download failed: ${response.status}`);
-      }
-
-      const totalSize = parseInt(response.headers.get('content-length') || '0', 10);
-      let downloadedSize = 0;
-
+      const info = await getInstallerUrl();
+      if (!info) return { success: false, error: 'No installer found' };
+      const tempDir  = path.join(os.tmpdir(), '27-manufacturing-update');
+      if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
+      const filePath = path.join(tempDir, info.filename);
+      const res      = await fetch(info.url);
+      if (!res.ok) throw new Error(`Download failed: ${res.status}`);
+      const totalSize = parseInt(res.headers.get('content-length') || '0', 10);
+      let downloaded  = 0;
       const fileStream = fs.createWriteStream(filePath);
-      const reader = response.body?.getReader();
-
-      if (!reader) {
-        throw new Error('Failed to get response reader');
-      }
-
+      const reader     = res.body?.getReader();
+      if (!reader) throw new Error('No reader');
       while (true) {
         const { done, value } = await reader.read();
-
         if (done) break;
-
         fileStream.write(value);
-        downloadedSize += value.length;
-
-        // Send progress to renderer
-        const progress = totalSize > 0 ? Math.round((downloadedSize / totalSize) * 100) : 0;
-        win?.webContents.send('download-progress', {
-          progress,
-          downloaded: downloadedSize,
-          total: totalSize
-        });
+        downloaded += value.length;
+        const progress = totalSize > 0 ? Math.round((downloaded / totalSize) * 100) : 0;
+        win?.webContents.send('download-progress', { progress, downloaded, total: totalSize });
       }
-
       fileStream.end();
-
-      // Wait for file to finish writing
-      await new Promise((resolve) => fileStream.on('finish', resolve));
-
+      await new Promise(r => fileStream.on('finish', r));
       downloadedInstallerPath = filePath;
-      log.info('Download complete:', filePath);
-
-      return {
-        success: true,
-        filePath,
-        filename: installerInfo.filename
-      };
-    } catch (err: any) {
-      log.error('Download failed:', err.message);
-      return { success: false, error: err.message };
-    }
+      return { success: true, filePath, filename: info.filename };
+    } catch (err: any) { return { success: false, error: err.message }; }
   });
 
-  // IPC handler to install update
+  ipcMain.handle('save-file', async (_event, { filename, content }: { filename: string; content: string }) => {
+    try {
+      const { filePath, canceled } = await dialog.showSaveDialog({
+        defaultPath: filename,
+        filters: [
+          { name: 'JSON', extensions: ['json'] }, { name: 'CSV', extensions: ['csv'] },
+          { name: 'ZIP',  extensions: ['zip']  }, { name: 'HTML', extensions: ['html'] },
+          { name: 'All Files', extensions: ['*'] },
+        ],
+      });
+      if (canceled || !filePath) return { success: false, canceled: true };
+      if (filename.endsWith('.zip')) fs.writeFileSync(filePath, Buffer.from(content, 'base64'));
+      else fs.writeFileSync(filePath, content, 'utf-8');
+      log.info('File saved:', filePath);
+      return { success: true, filePath };
+    } catch (err: any) { return { success: false, error: err.message }; }
+  });
+
   ipcMain.handle('install-update', async () => {
     try {
-      if (!downloadedInstallerPath || !fs.existsSync(downloadedInstallerPath)) {
-        return { success: false, error: 'No downloaded installer found' };
+      if (!downloadedInstallerPath || !fs.existsSync(downloadedInstallerPath)) return { success: false, error: 'No installer found' };
+      if (process.platform === 'win32') spawn(downloadedInstallerPath, [], { detached: true, stdio: 'ignore' }).unref();
+      else if (process.platform === 'darwin') spawn('open', [downloadedInstallerPath], { detached: true, stdio: 'ignore' }).unref();
+      setTimeout(() => app.quit(), 1000);
+      return { success: true };
+    } catch (err: any) { return { success: false, error: err.message }; }
+  });
+
+  // ── Dashboard cache IPC handlers ───────────────────────────────────────────
+
+  // ★ KEY FIX: saveFromText — receives raw JSON text string already downloaded
+  // by the renderer, writes it straight to disk. Avoids IPC serialization of
+  // huge JS object arrays which causes "Invalid string length" error.
+  ipcMain.handle('dashboard-cache:saveFromText', async (_event, {
+    fromDate, toDate, total, savedAt, s3Text,
+  }: { fromDate: string; toDate: string; total: number; savedAt: number; s3Text: string }) => {
+    try {
+      const fp = cachePath(fromDate, toDate);
+
+      // s3Text is the raw S3 response: { orders: [...] }
+      // We need to wrap it with our metadata. Parse minimally to get orders count,
+      // then write a combined file without re-serializing the whole array.
+      // Strategy: write metadata header + splice in orders array from s3Text
+      let ordersJson = '[]';
+      try {
+        const parsed = JSON.parse(s3Text);
+        // Re-stringify just the orders — this works because we're in Node.js main
+        // process where the 512MB string limit is much more generous, and the
+        // string was already transmitted as text so no extra serialization cost.
+        ordersJson = JSON.stringify(parsed.orders || parsed);
+      } catch (parseErr: any) {
+        log.warn('[cache:saveFromText] Could not parse s3Text, saving raw:', parseErr.message);
+        // Save raw s3Text as-is with a wrapper
+        const wrapper = `{"orders":${s3Text},"total":${total},"fromDate":"${fromDate}","toDate":"${toDate}","savedAt":${savedAt}}`;
+        fs.writeFileSync(fp, wrapper, 'utf-8');
+        log.info(`[cache] Saved raw s3Text to ${fp}`);
+        return { success: true };
       }
 
-      log.info('Installing update from:', downloadedInstallerPath);
-
-      if (process.platform === 'win32') {
-        // Run Windows installer
-        // The /S flag runs NSIS installer silently, but we'll let user see it
-        spawn(downloadedInstallerPath, [], {
-          detached: true,
-          stdio: 'ignore'
-        }).unref();
-      } else if (process.platform === 'darwin') {
-        // Open DMG file on macOS
-        spawn('open', [downloadedInstallerPath], {
-          detached: true,
-          stdio: 'ignore'
-        }).unref();
-      }
-
-      // Quit the app to allow installation
-      setTimeout(() => {
-        app.quit();
-      }, 1000);
-
+      const payload = `{"orders":${ordersJson},"total":${total},"fromDate":"${fromDate}","toDate":"${toDate}","savedAt":${savedAt}}`;
+      fs.writeFileSync(fp, payload, 'utf-8');
+      log.info(`[cache] saveFromText → ${fp} (${(payload.length / 1024).toFixed(0)} KB)`);
       return { success: true };
     } catch (err: any) {
-      log.error('Installation failed:', err.message);
+      log.error('[cache] saveFromText error:', err.message);
       return { success: false, error: err.message };
     }
   });
+
+  // Save small orders array (passed as JS object via IPC — only for small datasets)
+  ipcMain.handle('dashboard-cache:save', async (_event, {
+    fromDate, toDate, orders, total, savedAt,
+  }: { fromDate: string; toDate: string; orders: any[]; total: number; savedAt: number }) => {
+    try {
+      const payload = JSON.stringify({ orders, total, fromDate, toDate, savedAt: savedAt || Date.now() }, null, 2);
+      fs.writeFileSync(cachePath(fromDate, toDate), payload, 'utf-8');
+      log.info(`[cache] Saved ${orders.length} orders (${fromDate} → ${toDate})`);
+      return { success: true };
+    } catch (err: any) {
+      log.error('[cache] save error:', err.message);
+      return { success: false, error: err.message };
+    }
+  });
+
+  // Read orders from disk
+  ipcMain.handle('dashboard-cache:read', async (_event, { fromDate, toDate }: { fromDate: string; toDate: string }) => {
+    try {
+      const fp = cachePath(fromDate, toDate);
+      if (!fs.existsSync(fp)) return { success: false, orders: [], error: 'No cache file found' };
+      const raw    = fs.readFileSync(fp, 'utf-8');
+      const parsed = JSON.parse(raw);
+      log.info(`[cache] Read ${parsed.orders?.length ?? 0} orders (${fromDate} → ${toDate})`);
+      return { success: true, orders: parsed.orders || [], total: parsed.total || 0, savedAt: parsed.savedAt };
+    } catch (err: any) {
+      log.error('[cache] read error:', err.message);
+      return { success: false, orders: [], error: err.message };
+    }
+  });
+
+  // List all cached files
+  ipcMain.handle('dashboard-cache:list', async () => {
+    try {
+      const dir   = getCacheDir();
+      const files = fs.readdirSync(dir).filter(f => f.endsWith('.json'));
+      const now   = Date.now();
+      const result = files.map(filename => {
+        const fp = path.join(dir, filename);
+        try {
+          const raw    = fs.readFileSync(fp, 'utf-8');
+          const parsed = JSON.parse(raw);
+          const stat   = fs.statSync(fp);
+          return {
+            filename, filepath: fp,
+            fromDate:   parsed.fromDate || '',
+            toDate:     parsed.toDate   || '',
+            total:      parsed.total    || (Array.isArray(parsed.orders) ? parsed.orders.length : 0),
+            savedAt:    parsed.savedAt  || stat.mtimeMs,
+            ageMinutes: Math.round((now - (parsed.savedAt || stat.mtimeMs)) / 60000),
+            sizeKB:     Math.round(stat.size / 1024),
+          };
+        } catch { return null; }
+      }).filter(Boolean);
+      return { files: result };
+    } catch (err: any) {
+      log.error('[cache] list error:', err.message);
+      return { files: [] };
+    }
+  });
+
+  // Delete a cached file
+  ipcMain.handle('dashboard-cache:delete', async (_event, { fromDate, toDate }: { fromDate: string; toDate: string }) => {
+    try {
+      const fp = cachePath(fromDate, toDate);
+      if (fs.existsSync(fp)) fs.unlinkSync(fp);
+      log.info(`[cache] Deleted ${fp}`);
+      return { success: true };
+    } catch (err: any) { return { success: false, error: err.message }; }
+  });
+
+  // Download via native Save dialog
+  ipcMain.handle('dashboard-cache:download', async (_event, { fromDate, toDate, format }: { fromDate: string; toDate: string; format: 'JSON' | 'CSV' }) => {
+    try {
+      const fp = cachePath(fromDate, toDate);
+      if (!fs.existsSync(fp)) return { success: false, error: 'Cache file not found' };
+
+      const raw    = fs.readFileSync(fp, 'utf-8');
+      const parsed = JSON.parse(raw);
+      const orders = parsed.orders || [];
+      const slug   = `orders_${fromDate || 'all'}_${toDate || 'all'}`;
+      const isCSV  = format === 'CSV';
+
+      const { canceled, filePath } = await dialog.showSaveDialog({
+        title: `Save ${format}`,
+        defaultPath: path.join(app.getPath('downloads'), `${slug}.${isCSV ? 'csv' : 'json'}`),
+        filters: [isCSV ? { name: 'CSV', extensions: ['csv'] } : { name: 'JSON', extensions: ['json'] }],
+      });
+      if (canceled || !filePath) return { canceled: true };
+
+      fs.writeFileSync(filePath, isCSV ? ordersToCSV(orders) : JSON.stringify({ orders, total: orders.length, fromDate, toDate }, null, 2), 'utf-8');
+      log.info(`[cache] Downloaded ${format} → ${filePath}`);
+      return { success: true, filePath };
+    } catch (err: any) { return { success: false, error: err.message }; }
+  });
+
+  // Open cache folder
+  ipcMain.handle('dashboard-cache:open-folder', async () => {
+    shell.openPath(getCacheDir());
+    return { success: true };
+  });
+
+  log.info('All IPC handlers registered ✓');
 });
 
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
-    win = null;
-  }
+  if (process.platform !== 'darwin') { app.quit(); win = null; }
 });
 
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
-    if (app.isReady()) {
-      createWindow();
-    } else {
-      app.whenReady().then(createWindow);
-    }
+    if (app.isReady()) createWindow();
+    else app.whenReady().then(createWindow);
   }
 });
 
-// Unregister all shortcuts when app is quitting
 app.on('will-quit', () => {
   globalShortcut.unregisterAll();
   log.info('All global shortcuts unregistered');
 });
-

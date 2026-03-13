@@ -5,7 +5,7 @@ import './index.css'
 import { Provider } from 'react-redux'
 import store, { persistor } from './store'
 import { PersistGate } from 'redux-persist/integration/react'
-import './demos/ipc'
+
 
 // Initialize axios interceptor for automatic server fallback
 // Primary: api.27infinity.in, Fallback: api.27infinity.com

@@ -184,7 +184,7 @@
 
 .editsectionsTable-td {
   padding: 3px 6px !important;
-  font-size: 9px !important;
+  font-size: 12px !important;
   color: #1e293b;
   vertical-align: middle;
   line-height: 1.2;
@@ -585,7 +585,7 @@
 
 .editsectionsTable-orderIdCell {
   font-weight: 600;
-  font-size: 9px !important;
+  font-size: 12px !important;
   color: #1e293b;
 }
 
@@ -711,7 +711,7 @@
 
 /* Override any inline font-size on table cells */
 .editsectionsTable-td[style*="font-size"] {
-  font-size: 9px !important;
+  font-size: 12px !important;
 }
 
 /* Force compact row height */
@@ -721,7 +721,7 @@
 
 .editsectionsTable-table td {
   padding: 3px 6px !important;
-  font-size: 9px !important;
+  font-size: 12px !important;
   line-height: 1.2 !important;
 }
 
@@ -779,7 +779,7 @@
 /* Company name cell */
 .editsectionsTable-td[style*="fontWeight: 500"],
 .editsectionsTable-td[style*="font-weight: 500"] {
-  font-size: 9px !important;
+  font-size: 12px !important;
 }
 
 /* Created by cell */
@@ -793,7 +793,7 @@
 }
 
 .editsectionsTable-table tbody td {
-  font-size: 9px !important;
+  font-size: 12px !important;
 }
 
 .editsectionsTable-table tbody td span {

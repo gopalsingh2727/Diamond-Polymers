@@ -21,6 +21,21 @@ export default defineConfig({
       },
     }),
   ],
+
+  // ── Dev server CSP — allows S3 fetches in browser dev mode ───────────────
+  server: {
+    headers: {
+      'Content-Security-Policy': [
+        "default-src 'self'",
+        "connect-src 'self' http://localhost:* ws://localhost:* wss://* https://api.github.com https://*.27infinity.in https://*.execute-api.ap-south-1.amazonaws.com https://*.s3.ap-south-1.amazonaws.com",
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+        "style-src 'self' 'unsafe-inline'",
+        "img-src 'self' data: blob:",
+        "font-src 'self' data:",
+      ].join('; '),
+    },
+  },
+
   // Exclude large Vosk models from build - they'll be fetched from CDN
   publicDir: 'public',
   build: {

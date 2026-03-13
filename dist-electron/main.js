@@ -2832,11 +2832,10 @@ dotenv.config();
 const CSP_POLICY = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-  // Required for Vite dev mode
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com data:",
   "img-src 'self' data: blob: https:",
-  "connect-src 'self' http://localhost:* ws://localhost:* wss://* https://api.github.com https://*.27infinity.in https://*.execute-api.ap-south-1.amazonaws.com",
+  "connect-src 'self' http://localhost:* ws://localhost:* wss://* https://api.github.com https://*.27infinity.in https://*.execute-api.ap-south-1.amazonaws.com https://*.amazonaws.com",
   "media-src 'self' blob: data:",
   "worker-src 'self' blob:"
 ].join("; ");
@@ -2849,6 +2848,28 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 
 let win = null;
 let splash = null;
 let downloadedInstallerPath = null;
+function getCacheDir() {
+  const dir = path.join(require$$0$5.app.getPath("userData"), "dashboard-cache");
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  return dir;
+}
+function cachePath(fromDate, toDate) {
+  return path.join(getCacheDir(), `orders_${fromDate || "all"}_${toDate || "all"}.json`);
+}
+function ordersToCSV(orders) {
+  if (!orders.length) return "";
+  const allKeys = [...new Set(orders.flatMap(
+    (o) => Object.keys(o).filter((k) => typeof o[k] !== "object" || o[k] === null)
+  ))];
+  const esc = (v) => {
+    const s = v == null ? "" : String(v);
+    return s.includes(",") || s.includes('"') || s.includes("\n") ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  return [
+    allKeys.map(esc).join(","),
+    ...orders.map((o) => allKeys.map((k) => esc(o[k])).join(","))
+  ].join("\n");
+}
 function createWindow() {
   splash = new require$$0$5.BrowserWindow({
     width: 400,
@@ -2865,18 +2886,14 @@ function createWindow() {
     height: 800,
     icon: path.join(process.env.VITE_PUBLIC, "electron-vite.svg"),
     autoHideMenuBar: true,
-    // Performance optimizations
     backgroundColor: "#f9fafb",
-    // Match app background - faster first paint
     webPreferences: {
       preload: path.join(__dirname$1, "preload.js"),
       webSecurity: true,
       allowRunningInsecureContent: false,
       contextIsolation: true,
       nodeIntegration: false,
-      // Performance: cache compiled JS
       v8CacheOptions: "bypassHeatCheck",
-      // Performance: enable hardware acceleration
       backgroundThrottling: false
     }
   });
@@ -2885,11 +2902,8 @@ function createWindow() {
     win?.show();
     win?.webContents.send("main-process-message", (/* @__PURE__ */ new Date()).toLocaleString());
   });
-  if (VITE_DEV_SERVER_URL) {
-    win.loadURL(VITE_DEV_SERVER_URL);
-  } else {
-    win.loadFile(path.join(RENDERER_DIST, "index.html"));
-  }
+  if (VITE_DEV_SERVER_URL) win.loadURL(VITE_DEV_SERVER_URL);
+  else win.loadFile(path.join(RENDERER_DIST, "index.html"));
   return win;
 }
 require$$0$5.app.whenReady().then(() => {
@@ -2908,306 +2922,302 @@ require$$0$5.app.whenReady().then(() => {
       }
     });
   });
-  require$$0$5.app.on("web-contents-created", (event, contents) => {
-    contents.on("will-navigate", (event2, navigationUrl) => {
+  require$$0$5.app.on("web-contents-created", (_event, contents) => {
+    contents.on("will-navigate", (event, navigationUrl) => {
       const parsedUrl = new URL(navigationUrl);
       if (parsedUrl.hostname !== "localhost" && !parsedUrl.hostname.endsWith("27infinity.in")) {
         log.warn(`Blocked navigation to: ${navigationUrl}`);
-        event2.preventDefault();
+        event.preventDefault();
       }
     });
     contents.setWindowOpenHandler(({ url }) => {
-      const parsedUrl = new URL(url);
-      const allowedDomains = [
-        "27infinity.in",
-        "github.com",
-        "google.com",
-        "docs.google.com",
-        "sheets.google.com",
-        "drive.google.com",
-        "wa.me",
-        "whatsapp.com"
-      ];
-      const isAllowed = allowedDomains.some(
-        (domain) => parsedUrl.hostname === domain || parsedUrl.hostname.endsWith("." + domain)
-      );
-      if (isAllowed) {
-        require$$0$5.shell.openExternal(url);
-      } else {
-        require$$0$5.shell.openExternal(url);
-        log.info(`Opening external URL: ${url}`);
-      }
+      require$$0$5.shell.openExternal(url);
+      log.info(`Opening external URL: ${url}`);
       return { action: "deny" };
     });
   });
   require$$0$5.session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
-    const allowedPermissions = ["media", "microphone", "audioCapture", "notifications"];
-    if (allowedPermissions.includes(permission)) {
-      log.info(`Permission granted: ${permission}`);
-      callback(true);
-    } else {
-      log.info(`Permission denied: ${permission}`);
-      callback(false);
-    }
+    const allowed = ["media", "microphone", "audioCapture", "notifications"];
+    callback(allowed.includes(permission));
   });
-  require$$0$5.session.defaultSession.setPermissionCheckHandler((webContents, permission) => {
-    const allowedPermissions = ["media", "microphone", "audioCapture", "notifications"];
-    return allowedPermissions.includes(permission);
+  require$$0$5.session.defaultSession.setPermissionCheckHandler((_wc, permission) => {
+    return ["media", "microphone", "audioCapture", "notifications"].includes(permission);
   });
   const win2 = createWindow();
   const refreshShortcut = process.platform === "darwin" ? "Command+R" : "Control+R";
-  const registered = require$$0$5.globalShortcut.register(refreshShortcut, () => {
-    log.info("Refresh shortcut triggered - clearing storage and reloading");
-    if (win2 && !win2.isDestroyed()) {
-      win2.webContents.send("clear-storage-and-reload");
-    }
-  });
-  if (registered) {
-    log.info(`Refresh shortcut registered: ${refreshShortcut}`);
-  } else {
-    log.error(`Failed to register refresh shortcut: ${refreshShortcut}`);
-  }
+  if (require$$0$5.globalShortcut.register(refreshShortcut, () => {
+    if (win2 && !win2.isDestroyed()) win2.webContents.send("clear-storage-and-reload");
+  })) log.info(`Registered: ${refreshShortcut}`);
   const devToolsShortcut = process.platform === "darwin" ? "Option+Command+I" : "Control+Shift+I";
-  const devToolsRegistered = require$$0$5.globalShortcut.register(devToolsShortcut, () => {
-    log.info("DevTools shortcut triggered");
+  if (require$$0$5.globalShortcut.register(devToolsShortcut, () => {
     if (win2 && !win2.isDestroyed()) {
-      if (win2.webContents.isDevToolsOpened()) {
-        win2.webContents.closeDevTools();
-      } else {
-        win2.webContents.openDevTools();
-      }
+      if (win2.webContents.isDevToolsOpened()) win2.webContents.closeDevTools();
+      else win2.webContents.openDevTools();
     }
-  });
-  if (devToolsRegistered) {
-    log.info(`DevTools shortcut registered: ${devToolsShortcut}`);
-  } else {
-    log.error(`Failed to register DevTools shortcut: ${devToolsShortcut}`);
-  }
+  })) log.info(`Registered: ${devToolsShortcut}`);
   const getDownloadUrl = () => {
-    const baseUrl = "https://27infinity.in/products";
-    if (process.platform === "darwin") {
-      if (process.arch === "arm64") {
-        return `${baseUrl}?download=mac-arm64`;
-      } else {
-        return `${baseUrl}?download=mac-intel`;
-      }
-    } else if (process.platform === "win32") {
-      if (process.arch === "x64" || process.arch === "arm64") {
-        return `${baseUrl}?download=win64`;
-      } else {
-        return `${baseUrl}?download=win32`;
-      }
-    }
-    return baseUrl;
+    const base = "https://27infinity.in/products";
+    if (process.platform === "darwin") return process.arch === "arm64" ? `${base}?download=mac-arm64` : `${base}?download=mac-intel`;
+    if (process.platform === "win32") return process.arch === "x64" || process.arch === "arm64" ? `${base}?download=win64` : `${base}?download=win32`;
+    return base;
   };
   const checkForUpdatesViaGitHub = async () => {
     try {
-      const response = await fetch(
-        "https://api.github.com/repos/gopalsingh2727/Diamond-Polymers/releases/latest"
-      );
-      if (!response.ok) {
-        throw new Error(`GitHub API error: ${response.status}`);
-      }
-      const data = await response.json();
-      const latestVersion = data.tag_name.replace("v", "");
-      const currentVersion = require$$0$5.app.getVersion();
-      const isNewer = latestVersion !== currentVersion && latestVersion.localeCompare(currentVersion, void 0, { numeric: true }) > 0;
-      return {
-        version: currentVersion,
-        newVersion: latestVersion,
-        update: isNewer,
-        releaseNotes: data.body || ""
-      };
+      const res = await fetch("https://api.github.com/repos/gopalsingh2727/Diamond-Polymers/releases/latest");
+      if (!res.ok) throw new Error(`GitHub API error: ${res.status}`);
+      const data = await res.json();
+      const latest = data.tag_name.replace("v", "");
+      const current = require$$0$5.app.getVersion();
+      const isNewer = latest !== current && latest.localeCompare(current, void 0, { numeric: true }) > 0;
+      return { version: current, newVersion: latest, update: isNewer, releaseNotes: data.body || "" };
     } catch (err) {
       log.error("Update check failed:", err.message);
-      return {
-        error: {
-          message: err.message || "Failed to check for updates"
-        },
-        version: require$$0$5.app.getVersion()
-      };
+      return { error: { message: err.message || "Failed to check for updates" }, version: require$$0$5.app.getVersion() };
     }
   };
   setTimeout(async () => {
     const result = await checkForUpdatesViaGitHub();
     if (result.update) {
-      log.info("Update available:", result.newVersion);
       if (require$$0$5.Notification.isSupported()) {
-        const notification = new require$$0$5.Notification({
-          title: "Update Available",
-          body: `Version ${result.newVersion} is available. Click to download.`,
-          icon: path.join(process.env.VITE_PUBLIC, "electron-vite.svg")
-        });
-        notification.on("click", () => {
-          require$$0$5.shell.openExternal(getDownloadUrl());
-        });
-        notification.show();
+        const n = new require$$0$5.Notification({ title: "Update Available", body: `Version ${result.newVersion} is available.`, icon: path.join(process.env.VITE_PUBLIC, "electron-vite.svg") });
+        n.on("click", () => require$$0$5.shell.openExternal(getDownloadUrl()));
+        n.show();
       }
       win2?.webContents.send("update-can-available", result);
     }
   }, 1e4);
-  require$$0$5.ipcMain.handle("check-update", async () => {
-    return await checkForUpdatesViaGitHub();
-  });
-  require$$0$5.ipcMain.handle("show-notification", async (event, options) => {
+  require$$0$5.ipcMain.handle("check-update", async () => checkForUpdatesViaGitHub());
+  require$$0$5.ipcMain.handle("show-notification", async (_event, options) => {
     try {
-      if (!require$$0$5.Notification.isSupported()) {
-        log.warn("Notifications not supported on this platform");
-        return { success: false, error: "Notifications not supported" };
-      }
-      const appIcon = path.join(process.env.VITE_PUBLIC, "icon.png");
-      const notification = new require$$0$5.Notification({
-        title: options.title,
-        body: options.body,
-        icon: appIcon,
-        silent: options.silent || false
-      });
-      notification.on("click", () => {
+      if (!require$$0$5.Notification.isSupported()) return { success: false, error: "Not supported" };
+      const n = new require$$0$5.Notification({ title: options.title, body: options.body, icon: path.join(process.env.VITE_PUBLIC, "icon.png"), silent: options.silent || false });
+      n.on("click", () => {
         if (win2 && !win2.isDestroyed()) {
           if (win2.isMinimized()) win2.restore();
           win2.focus();
         }
       });
-      notification.show();
-      log.info(`Notification shown: ${options.title}`);
+      n.show();
       return { success: true };
-    } catch (error) {
-      log.error("Failed to show notification:", error.message);
-      return { success: false, error: error.message };
+    } catch (err) {
+      return { success: false, error: err.message };
     }
   });
   require$$0$5.ipcMain.handle("open-download-page", async () => {
     try {
-      const downloadUrl = getDownloadUrl();
-      log.info("Opening download URL:", downloadUrl);
-      await require$$0$5.shell.openExternal(downloadUrl);
+      await require$$0$5.shell.openExternal(getDownloadUrl());
       return { success: true };
     } catch (err) {
-      log.error("Failed to open download page:", err.message);
       return { success: false, error: err.message };
     }
   });
   const getInstallerUrl = async () => {
     try {
-      const response = await fetch(
-        "https://api.github.com/repos/gopalsingh2727/Diamond-Polymers/releases/latest"
-      );
-      if (!response.ok) {
-        throw new Error(`GitHub API error: ${response.status}`);
-      }
-      const data = await response.json();
+      const res = await fetch("https://api.github.com/repos/gopalsingh2727/Diamond-Polymers/releases/latest");
+      if (!res.ok) throw new Error(`GitHub API error: ${res.status}`);
+      const data = await res.json();
       const assets = data.assets || [];
       let asset = null;
       if (process.platform === "win32") {
-        if (process.arch === "x64" || process.arch === "arm64") {
-          asset = assets.find(
-            (a) => a.name.endsWith(".exe") && !a.name.includes("ia32")
-          );
-        } else {
-          asset = assets.find(
-            (a) => a.name.endsWith(".exe") && a.name.includes("ia32")
-          );
-        }
+        asset = process.arch === "x64" || process.arch === "arm64" ? assets.find((a) => a.name.endsWith(".exe") && !a.name.includes("ia32")) : assets.find((a) => a.name.endsWith(".exe") && a.name.includes("ia32"));
       } else if (process.platform === "darwin") {
-        if (process.arch === "arm64") {
-          asset = assets.find(
-            (a) => a.name.includes("arm64") && a.name.endsWith(".dmg")
-          );
-        } else {
-          asset = assets.find(
-            (a) => a.name.includes("x64") && a.name.endsWith(".dmg")
-          ) || assets.find(
-            (a) => a.name.endsWith(".dmg") && !a.name.includes("arm64")
-          );
-        }
+        asset = process.arch === "arm64" ? assets.find((a) => a.name.includes("arm64") && a.name.endsWith(".dmg")) : assets.find((a) => a.name.includes("x64") && a.name.endsWith(".dmg")) || assets.find((a) => a.name.endsWith(".dmg") && !a.name.includes("arm64"));
       }
-      if (asset) {
-        return {
-          url: asset.browser_download_url,
-          filename: asset.name
-        };
-      }
-      return null;
+      return asset ? { url: asset.browser_download_url, filename: asset.name } : null;
     } catch (err) {
-      log.error("Failed to get installer URL:", err.message);
+      log.error("getInstallerUrl failed:", err.message);
       return null;
     }
   };
   require$$0$5.ipcMain.handle("download-update", async () => {
     try {
-      const installerInfo = await getInstallerUrl();
-      if (!installerInfo) {
-        return { success: false, error: "No installer found for your platform" };
-      }
-      log.info("Downloading installer:", installerInfo.url);
+      const info = await getInstallerUrl();
+      if (!info) return { success: false, error: "No installer found" };
       const tempDir = path.join(os.tmpdir(), "27-manufacturing-update");
-      if (!fs.existsSync(tempDir)) {
-        fs.mkdirSync(tempDir, { recursive: true });
-      }
-      const filePath = path.join(tempDir, installerInfo.filename);
-      const response = await fetch(installerInfo.url);
-      if (!response.ok) {
-        throw new Error(`Download failed: ${response.status}`);
-      }
-      const totalSize = parseInt(response.headers.get("content-length") || "0", 10);
-      let downloadedSize = 0;
+      if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
+      const filePath = path.join(tempDir, info.filename);
+      const res = await fetch(info.url);
+      if (!res.ok) throw new Error(`Download failed: ${res.status}`);
+      const totalSize = parseInt(res.headers.get("content-length") || "0", 10);
+      let downloaded = 0;
       const fileStream = fs.createWriteStream(filePath);
-      const reader = response.body?.getReader();
-      if (!reader) {
-        throw new Error("Failed to get response reader");
-      }
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error("No reader");
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         fileStream.write(value);
-        downloadedSize += value.length;
-        const progress = totalSize > 0 ? Math.round(downloadedSize / totalSize * 100) : 0;
-        win2?.webContents.send("download-progress", {
-          progress,
-          downloaded: downloadedSize,
-          total: totalSize
-        });
+        downloaded += value.length;
+        const progress = totalSize > 0 ? Math.round(downloaded / totalSize * 100) : 0;
+        win2?.webContents.send("download-progress", { progress, downloaded, total: totalSize });
       }
       fileStream.end();
-      await new Promise((resolve) => fileStream.on("finish", resolve));
+      await new Promise((r) => fileStream.on("finish", r));
       downloadedInstallerPath = filePath;
-      log.info("Download complete:", filePath);
-      return {
-        success: true,
-        filePath,
-        filename: installerInfo.filename
-      };
+      return { success: true, filePath, filename: info.filename };
     } catch (err) {
-      log.error("Download failed:", err.message);
+      return { success: false, error: err.message };
+    }
+  });
+  require$$0$5.ipcMain.handle("save-file", async (_event, { filename, content }) => {
+    try {
+      const { filePath, canceled } = await require$$0$5.dialog.showSaveDialog({
+        defaultPath: filename,
+        filters: [
+          { name: "JSON", extensions: ["json"] },
+          { name: "CSV", extensions: ["csv"] },
+          { name: "ZIP", extensions: ["zip"] },
+          { name: "HTML", extensions: ["html"] },
+          { name: "All Files", extensions: ["*"] }
+        ]
+      });
+      if (canceled || !filePath) return { success: false, canceled: true };
+      if (filename.endsWith(".zip")) fs.writeFileSync(filePath, Buffer.from(content, "base64"));
+      else fs.writeFileSync(filePath, content, "utf-8");
+      log.info("File saved:", filePath);
+      return { success: true, filePath };
+    } catch (err) {
       return { success: false, error: err.message };
     }
   });
   require$$0$5.ipcMain.handle("install-update", async () => {
     try {
-      if (!downloadedInstallerPath || !fs.existsSync(downloadedInstallerPath)) {
-        return { success: false, error: "No downloaded installer found" };
-      }
-      log.info("Installing update from:", downloadedInstallerPath);
-      if (process.platform === "win32") {
-        node_child_process.spawn(downloadedInstallerPath, [], {
-          detached: true,
-          stdio: "ignore"
-        }).unref();
-      } else if (process.platform === "darwin") {
-        node_child_process.spawn("open", [downloadedInstallerPath], {
-          detached: true,
-          stdio: "ignore"
-        }).unref();
-      }
-      setTimeout(() => {
-        require$$0$5.app.quit();
-      }, 1e3);
+      if (!downloadedInstallerPath || !fs.existsSync(downloadedInstallerPath)) return { success: false, error: "No installer found" };
+      if (process.platform === "win32") node_child_process.spawn(downloadedInstallerPath, [], { detached: true, stdio: "ignore" }).unref();
+      else if (process.platform === "darwin") node_child_process.spawn("open", [downloadedInstallerPath], { detached: true, stdio: "ignore" }).unref();
+      setTimeout(() => require$$0$5.app.quit(), 1e3);
       return { success: true };
     } catch (err) {
-      log.error("Installation failed:", err.message);
       return { success: false, error: err.message };
     }
   });
+  require$$0$5.ipcMain.handle("dashboard-cache:saveFromText", async (_event, {
+    fromDate,
+    toDate,
+    total,
+    savedAt,
+    s3Text
+  }) => {
+    try {
+      const fp = cachePath(fromDate, toDate);
+      let ordersJson = "[]";
+      try {
+        const parsed = JSON.parse(s3Text);
+        ordersJson = JSON.stringify(parsed.orders || parsed);
+      } catch (parseErr) {
+        log.warn("[cache:saveFromText] Could not parse s3Text, saving raw:", parseErr.message);
+        const wrapper = `{"orders":${s3Text},"total":${total},"fromDate":"${fromDate}","toDate":"${toDate}","savedAt":${savedAt}}`;
+        fs.writeFileSync(fp, wrapper, "utf-8");
+        log.info(`[cache] Saved raw s3Text to ${fp}`);
+        return { success: true };
+      }
+      const payload = `{"orders":${ordersJson},"total":${total},"fromDate":"${fromDate}","toDate":"${toDate}","savedAt":${savedAt}}`;
+      fs.writeFileSync(fp, payload, "utf-8");
+      log.info(`[cache] saveFromText → ${fp} (${(payload.length / 1024).toFixed(0)} KB)`);
+      return { success: true };
+    } catch (err) {
+      log.error("[cache] saveFromText error:", err.message);
+      return { success: false, error: err.message };
+    }
+  });
+  require$$0$5.ipcMain.handle("dashboard-cache:save", async (_event, {
+    fromDate,
+    toDate,
+    orders,
+    total,
+    savedAt
+  }) => {
+    try {
+      const payload = JSON.stringify({ orders, total, fromDate, toDate, savedAt: savedAt || Date.now() }, null, 2);
+      fs.writeFileSync(cachePath(fromDate, toDate), payload, "utf-8");
+      log.info(`[cache] Saved ${orders.length} orders (${fromDate} → ${toDate})`);
+      return { success: true };
+    } catch (err) {
+      log.error("[cache] save error:", err.message);
+      return { success: false, error: err.message };
+    }
+  });
+  require$$0$5.ipcMain.handle("dashboard-cache:read", async (_event, { fromDate, toDate }) => {
+    try {
+      const fp = cachePath(fromDate, toDate);
+      if (!fs.existsSync(fp)) return { success: false, orders: [], error: "No cache file found" };
+      const raw = fs.readFileSync(fp, "utf-8");
+      const parsed = JSON.parse(raw);
+      log.info(`[cache] Read ${parsed.orders?.length ?? 0} orders (${fromDate} → ${toDate})`);
+      return { success: true, orders: parsed.orders || [], total: parsed.total || 0, savedAt: parsed.savedAt };
+    } catch (err) {
+      log.error("[cache] read error:", err.message);
+      return { success: false, orders: [], error: err.message };
+    }
+  });
+  require$$0$5.ipcMain.handle("dashboard-cache:list", async () => {
+    try {
+      const dir = getCacheDir();
+      const files = fs.readdirSync(dir).filter((f) => f.endsWith(".json"));
+      const now = Date.now();
+      const result = files.map((filename) => {
+        const fp = path.join(dir, filename);
+        try {
+          const raw = fs.readFileSync(fp, "utf-8");
+          const parsed = JSON.parse(raw);
+          const stat = fs.statSync(fp);
+          return {
+            filename,
+            filepath: fp,
+            fromDate: parsed.fromDate || "",
+            toDate: parsed.toDate || "",
+            total: parsed.total || (Array.isArray(parsed.orders) ? parsed.orders.length : 0),
+            savedAt: parsed.savedAt || stat.mtimeMs,
+            ageMinutes: Math.round((now - (parsed.savedAt || stat.mtimeMs)) / 6e4),
+            sizeKB: Math.round(stat.size / 1024)
+          };
+        } catch {
+          return null;
+        }
+      }).filter(Boolean);
+      return { files: result };
+    } catch (err) {
+      log.error("[cache] list error:", err.message);
+      return { files: [] };
+    }
+  });
+  require$$0$5.ipcMain.handle("dashboard-cache:delete", async (_event, { fromDate, toDate }) => {
+    try {
+      const fp = cachePath(fromDate, toDate);
+      if (fs.existsSync(fp)) fs.unlinkSync(fp);
+      log.info(`[cache] Deleted ${fp}`);
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  });
+  require$$0$5.ipcMain.handle("dashboard-cache:download", async (_event, { fromDate, toDate, format: format2 }) => {
+    try {
+      const fp = cachePath(fromDate, toDate);
+      if (!fs.existsSync(fp)) return { success: false, error: "Cache file not found" };
+      const raw = fs.readFileSync(fp, "utf-8");
+      const parsed = JSON.parse(raw);
+      const orders = parsed.orders || [];
+      const slug = `orders_${fromDate || "all"}_${toDate || "all"}`;
+      const isCSV = format2 === "CSV";
+      const { canceled, filePath } = await require$$0$5.dialog.showSaveDialog({
+        title: `Save ${format2}`,
+        defaultPath: path.join(require$$0$5.app.getPath("downloads"), `${slug}.${isCSV ? "csv" : "json"}`),
+        filters: [isCSV ? { name: "CSV", extensions: ["csv"] } : { name: "JSON", extensions: ["json"] }]
+      });
+      if (canceled || !filePath) return { canceled: true };
+      fs.writeFileSync(filePath, isCSV ? ordersToCSV(orders) : JSON.stringify({ orders, total: orders.length, fromDate, toDate }, null, 2), "utf-8");
+      log.info(`[cache] Downloaded ${format2} → ${filePath}`);
+      return { success: true, filePath };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  });
+  require$$0$5.ipcMain.handle("dashboard-cache:open-folder", async () => {
+    require$$0$5.shell.openPath(getCacheDir());
+    return { success: true };
+  });
+  log.info("All IPC handlers registered ✓");
 });
 require$$0$5.app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
@@ -3217,11 +3227,8 @@ require$$0$5.app.on("window-all-closed", () => {
 });
 require$$0$5.app.on("activate", () => {
   if (require$$0$5.BrowserWindow.getAllWindows().length === 0) {
-    if (require$$0$5.app.isReady()) {
-      createWindow();
-    } else {
-      require$$0$5.app.whenReady().then(createWindow);
-    }
+    if (require$$0$5.app.isReady()) createWindow();
+    else require$$0$5.app.whenReady().then(createWindow);
   }
 });
 require$$0$5.app.on("will-quit", () => {

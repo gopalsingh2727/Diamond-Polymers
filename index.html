@@ -1,13 +1,31 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/eagle-icon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>27this</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/eagle-icon.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  connect-src 'self'
+    http://localhost:*
+    ws://localhost:*
+    wss://*
+    https://api.github.com
+    https://*.27infinity.in
+    https://*.execute-api.ap-south-1.amazonaws.com
+    https://*.s3.ap-south-1.amazonaws.com
+    https://*.s3.amazonaws.com
+    https://s3.ap-south-1.amazonaws.com
+    https://this27-exports-dev.s3.ap-south-1.amazonaws.com;
+  script-src 'self' 'unsafe-inline' 'unsafe-eval';
+  style-src 'self' 'unsafe-inline';
+  img-src 'self' data: blob:;
+  font-src 'self' data:;
+" />
+  <title>27this</title>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
 </html>

@@ -4,6 +4,7 @@ import { useOrderFormData } from '../useOrderFormData';
 import { Parser } from 'expr-eval';
 
 import './optionsSection.css';
+import { FileSpreadsheet, Printer } from 'lucide-react';
 
 // OptionType specification template from backend
 type SpecificationTemplate = {

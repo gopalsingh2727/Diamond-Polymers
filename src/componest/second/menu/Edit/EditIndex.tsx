@@ -26,7 +26,7 @@ import UpdataIDAndPassword from "./UpdataIDandPassword/UpdataIDAndPassword";
 import EditCustomerCategoryList from "./EditCustomerCategory/EditCustomerCategoryList";
 import EditParentCompanyList from "./EditParentCompany/EditParentCompanyList";
 import EditInventoryList from "./EditInventory/EditInventoryList";
-import EditReportTypeList from "./EditReportType/EditReportTypeList";
+import EditDashboardTypeList from "./EditReportType/EditDashboardTypeList";
 // ========== CREATE Components (reused for both Create & Edit) ==========
 import CreateNewAccount from "../create/createNewAccount/createNewAccount";
 import CreateMachine from "../create/machine/CreateMachine";
@@ -44,7 +44,7 @@ import DeviceAccessCreate from "../create/deviceAccess/deviceAccessCreate";
 import CustomerCategory from "../create/customerCategory/CustomerCategory";
 import CustomerParentCompany from "../create/customerParentCompany/CustomerParentCompany";
 import CreateInventory from "../create/inventory/CreateInventory";
-import CreateReportType from "../create/reportType/CreateReportType";
+import CreateDashboardType from "../create/DashboardType/CreateDashboardType";
 import { BackButton } from "@/componest/allCompones/BackButton";
 interface LocationStateType {
   editMode?: boolean;
@@ -194,7 +194,7 @@ const EditIndex = () => {
         case 'inventory':
           return <ErrorBoundary key={`edit-inventory-${componentKey}`}><CreateInventory initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
         case 'reportType':
-          return <ErrorBoundary key={`edit-reportType-${componentKey}`}><CreateReportType initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
+          return <ErrorBoundary key={`edit-reportType-${componentKey}`}><CreateDashboardType initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
         case 'machineTemplate':
           return <ErrorBoundary key={`edit-machineTemplate-${componentKey}`}><ViewTemplateWizard initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
         case 'Access':
@@ -222,7 +222,7 @@ const EditIndex = () => {
       optionSpec: <ErrorBoundary key={`optionSpec-${componentKey}`}><EditOptionSpecList /></ErrorBoundary>,
       orderType: <ErrorBoundary key={`orderType-${componentKey}`}><EditOrderTypeList onEdit={setEdit('orderType')} /></ErrorBoundary>,
       inventory: <ErrorBoundary key={`inventory-${componentKey}`}><EditInventoryList onEdit={setEdit('inventory')} /></ErrorBoundary>,
-      reportType: <ErrorBoundary key={`reportType-${componentKey}`}><EditReportTypeList onEdit={setEdit('reportType')} /></ErrorBoundary>,
+      reportType: <ErrorBoundary key={`reportType-${componentKey}`}><EditDashboardTypeList onEdit={setEdit('reportType')} /></ErrorBoundary>,
       printType: <ErrorBoundary key={`printType-${componentKey}`}><EditPrintTypeList /></ErrorBoundary>,
       excelExportType: <ErrorBoundary key={`excelExportType-${componentKey}`}><EditExcelExportTypeList /></ErrorBoundary>,
       machineTemplate: <ErrorBoundary key={`machineTemplate-${componentKey}`}><EditMachineTemplateList onEdit={setEdit('machineTemplate')} /></ErrorBoundary>

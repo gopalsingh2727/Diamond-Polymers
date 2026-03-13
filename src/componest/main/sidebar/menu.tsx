@@ -26,7 +26,7 @@ const Menu = () => {
       { name: "Status", path: "/menu/IndexAllOders", shortcut: "S" },
       // { name: "Order Forward", path: "/menu/order-forward/connections", shortcut: "F" },
       { name: "Account", path: "/menu/Account", shortcut: "A" },
-      // { name: "Reports", path: "/menu/reports", shortcut: "R" },
+      { name: "Reports", path: "/menu/reports", shortcut: "R" },
     ];
 
     // Add Create Branch option for master_admin and admin
