@@ -1,0 +1,336 @@
+/* ============================================================
+   27 MANUFACTURING — DESIGN SYSTEM REFERENCE
+   Master CSS Pattern File
+   Based on: CreateOders.css (gold standard)
+   All create-form pages must follow these exact patterns.
+   ============================================================ */
+
+/* ============================================================
+   1. COLOR TOKENS
+   ============================================================ */
+/*
+  --accent:         #FF6B35   (orange — primary action, focus rings)
+  --accent-hover:   #E55A2B   (orange dark — button hover)
+  --text-primary:   #1f2937   (near-black — body text, icons)
+  --text-secondary: #6b7280   (gray — labels, placeholders)
+  --text-muted:     #9ca3af   (light gray — disabled states)
+  --border:         #e5e7eb   (light gray — card borders, dividers)
+  --border-input:   #d1d5db   (slightly darker — input underline, btn borders)
+  --bg-page:        #f9fafb   (near-white — page background)
+  --bg-card:        #ffffff   (white — form cards)
+  --bg-btn-gray:    #f3f4f6   (flat gray — import / secondary buttons)
+  --success-bg:     #d1fae5   border #10b981  text #059669
+  --error-bg:       #fee2e2   border #fecaca  text #dc2626
+*/
+
+/* ============================================================
+   2. PAGE CONTAINER
+   Always top-aligned, full-width, light background.
+   ============================================================ */
+.pattern-container {
+  width: 100%;
+  min-height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;      /* TOP — never center */
+  padding: 16px;
+  background: #f9fafb;
+  box-sizing: border-box;
+}
+
+/* ============================================================
+   3. FORM CARD
+   White card, thin border, NO shadow, 8px radius.
+   Max-width 480px for simple forms, 520px+ for complex ones.
+   ============================================================ */
+.pattern-form {
+  background: #ffffff;
+  padding: 16px 20px;
+  max-width: 480px;
+  width: 100%;
+  border: 1px solid #e5e7eb;   /* NOT box-shadow */
+  border-radius: 8px;
+  box-shadow: none;
+  box-sizing: border-box;
+}
+
+/* ============================================================
+   4. TITLE ROW (with optional import button)
+   ============================================================ */
+.pattern-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.pattern-title {
+  font-size: 14px;              /* NOT 28px, NOT 1.25rem */
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+/* ============================================================
+   5. IMPORT / SECONDARY BUTTON (flat gray, never blue)
+   ============================================================ */
+.pattern-import-btn {
+  height: 28px;
+  padding: 0 12px;
+  background: #f3f4f6;
+  color: #1f2937;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.pattern-import-btn:hover:not(:disabled) { background: #e5e7eb; }
+.pattern-import-btn:disabled { color: #9ca3af; cursor: not-allowed; }
+
+/* ============================================================
+   6. FORM GROUP & LABEL
+   ============================================================ */
+.pattern-group {
+  margin-bottom: 14px;
+}
+
+.pattern-label {
+  display: block;
+  font-size: 10px;              /* NOT 13px, NOT 14px */
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;   /* always uppercase */
+  letter-spacing: 0.3px;
+  margin-bottom: 2px;
+}
+
+/* ============================================================
+   7. INPUT — UNDERLINE ONLY (no border-box, no background)
+   ============================================================ */
+.pattern-input {
+  width: 100%;
+  padding: 6px 2px;            /* NOT 10px 0, NOT 12px 16px */
+  font-size: 13px;
+  color: #1f2937;
+  background: transparent;     /* NOT white, NOT rgba(...) */
+  border: none;
+  border-bottom: 1.5px solid #d1d5db;  /* NOT 0.5px solid #333 */
+  border-radius: 0;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease;
+}
+.pattern-input:focus { border-bottom-color: #FF6B35; }
+.pattern-input::placeholder { color: #9ca3af; font-size: 13px; }
+
+/* ============================================================
+   8. SELECT — UNDERLINE ONLY (no default chevron via appearance:none)
+   ============================================================ */
+.pattern-select {
+  width: 100%;
+  padding: 6px 2px;
+  font-size: 13px;
+  color: #1f2937;
+  background: transparent;
+  border: none;
+  border-bottom: 1.5px solid #d1d5db;
+  border-radius: 0;
+  outline: none;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.pattern-select:focus { border-bottom-color: #FF6B35; }
+
+/* ============================================================
+   9. PASSWORD / EYE-TOGGLE WRAPPER
+   ============================================================ */
+.pattern-password-wrapper {
+  position: relative;
+}
+.pattern-password-wrapper .pattern-input {
+  padding-right: 32px;
+}
+.pattern-eye-toggle {
+  position: absolute;
+  right: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  color: #1f2937;              /* BLACK default */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease;
+}
+.pattern-eye-toggle:hover { color: #FF6B35; }  /* ORANGE on hover */
+.pattern-eye-toggle svg { width: 16px; height: 16px; }
+
+/* ============================================================
+   10. PRIMARY ACTION BUTTON (flat orange, compact, right-aligned)
+   ============================================================ */
+.pattern-submit-btn {
+  display: block;
+  margin: 16px 0 0 auto;      /* right-aligned */
+  height: 32px;
+  padding: 0 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+  background: #FF6B35;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  box-shadow: none;            /* NO gradient, NO shadow */
+}
+.pattern-submit-btn:hover:not(:disabled) { background: #E55A2B; }
+.pattern-submit-btn:disabled {
+  background: #d1d5db;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+/* ============================================================
+   11. SUCCESS / ERROR MESSAGES
+   ============================================================ */
+.pattern-success {
+  color: #059669;
+  background-color: #d1fae5;
+  border: 1px solid #10b981;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-top: 12px;
+  font-size: 12px;
+  text-align: center;
+}
+
+.pattern-error {
+  color: #dc2626;
+  background-color: #fee2e2;
+  border: 1px solid #fecaca;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-top: 12px;
+  font-size: 12px;
+  text-align: center;
+}
+
+/* ============================================================
+   12. HINT / HELPER TEXT
+   ============================================================ */
+.pattern-hint {
+  font-size: 10px;
+  color: #6b7280;
+  margin-top: 3px;
+  display: block;
+}
+.pattern-hint.success { color: #059669; }
+.pattern-hint.error   { color: #dc2626; }
+
+/* ============================================================
+   13. SECTION DIVIDERS (within a form card)
+   ============================================================ */
+.pattern-section-title {
+  font-size: 10px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin: 0 0 12px 0;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* ============================================================
+   14. IMPORT SUMMARY MODAL (shared across create pages)
+   ============================================================ */
+.pattern-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.pattern-modal-content {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 480px;
+  width: 90%;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.pattern-stat-box {
+  flex: 1;
+  padding: 16px;
+  border-radius: 8px;
+  text-align: center;
+}
+.pattern-stat-box.success { background: #d1fae5; border: 1px solid #10b981; }
+.pattern-stat-box.failed  { background: #fee2e2; border: 1px solid #ef4444; }
+
+.pattern-stat-number { font-size: 2rem; font-weight: 700; margin-bottom: 4px; }
+.pattern-stat-box.success .pattern-stat-number { color: #059669; }
+.pattern-stat-box.failed  .pattern-stat-number { color: #dc2626; }
+
+.pattern-stat-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #374151;
+}
+
+/* ============================================================
+   15. RESPONSIVE BREAKPOINTS
+   Apply to every create-form container and form card.
+   ============================================================ */
+@media (max-width: 1024px) {
+  .pattern-form { max-width: 100%; }
+}
+
+@media (max-width: 768px) {
+  .pattern-container { padding: 12px; }
+  .pattern-form { padding: 12px 14px; }
+}
+
+@media (max-width: 480px) {
+  .pattern-container { padding: 8px; }
+  .pattern-form { padding: 10px 12px; border-radius: 6px; }
+  /* Submit button goes full-width on mobile */
+  .pattern-submit-btn { width: 100%; margin-left: 0; }
+}
+
+/* ============================================================
+   ANTI-PATTERNS — DO NOT USE
+   ============================================================ */
+/*
+  ✗ background: linear-gradient(...)      → use flat #FF6B35
+  ✗ box-shadow: 0 4px 20px rgba(...)      → use border: 1px solid #e5e7eb
+  ✗ border: 2px solid #e5e7eb + border-radius: 6px on inputs → use border-bottom only
+  ✗ font-size: 28px / 1.75rem on titles  → use 14px
+  ✗ font-size: 13px / 14px on labels     → use 10px uppercase
+  ✗ color: #3498db / #3b82f6 (blue)      → zero blue, use orange or gray only
+  ✗ align-items: center on container     → use align-items: flex-start
+  ✗ padding: 4rem / 2rem on form card    → use padding: 16px 20px
+  ✗ min-width: 200px on buttons          → use height: 32px; padding: 0 16px
+  ✗ transform: translateY on hover       → no transforms on hover
+*/

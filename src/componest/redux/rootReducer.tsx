@@ -1,6 +1,7 @@
 // components/redux/rootReducer.ts
 import { combineReducers } from "redux";
 import { LOGOUT, CLEAR_BRANCH_DATA } from "./login/authConstants";
+
 // Auth
 import authReducer from "./login/authReducer";
 
@@ -38,6 +39,9 @@ import orderReducer, { accountOrdersReducer } from "./oders/orderReducers";
 import orderFormDataReducer from "./oders/orderFormDataReducer";
 import machineTableReducer from "./machineTable/machineTableReducer";
 
+// ✅ GraphQL Orders (read-only, POST /graphql)
+import graphqlOrdersReducer from "./graphql/graphqlOrderReducer";
+
 // ✅ Universal Data Cache
 import { dataCacheReducer } from "./cache/dataCacheReducer";
 
@@ -46,7 +50,6 @@ import chatReducer from "./chat/chatSlice";
 
 // WebSocket
 import websocketReducer from "./websocket/websocketSlice";
-
 
 import reportGroupReducer from "./reportGroups/reportGroupReducer";
 
@@ -83,12 +86,9 @@ const appReducer = combineReducers({
   managerUpdate: managerUpdateReducer,
   managerDelete: managerDeleteReducer,
   dashboardType: dashboardTypeReducer,
+
   // ==========================================
   // UNIFIED V2 (all entities in one reducer)
-  // Includes: account, customerCategory, parentCompany,
-  // machineType, machine, step, operator, deviceAccess,
-  // category, optionType, optionSpec, option, orderType,
-  // printType, excelExportType, reportType, template
   // ==========================================
   v2: unifiedV2Reducer,
 
@@ -98,13 +98,16 @@ const appReducer = combineReducers({
   // Operator View
   operatorView: operatorViewReducer,
 
-  //machineTable
+  // Machine Table
   machineTable: machineTableReducer,
 
-  // Orders (includes list, form, and machineTable sub-reducers)
+  // Orders (REST — list, form, machineTable)
   orders: orderReducer,
   accountOrders: accountOrdersReducer,
-  orderFormData: orderFormDataReducer, // Single API call for all order form data
+  orderFormData: orderFormDataReducer,
+
+  // ✅ GraphQL Orders (POST /graphql — read-only, used by window.x + templates)
+  graphqlOrders: graphqlOrdersReducer,
 
   // Chat Agent
   chat: chatReducer,
@@ -124,7 +127,6 @@ const appReducer = combineReducers({
 
   // Contacts
   contacts: contactsReducer,
-
 });
 
 const rootReducer = (state: any, action: any) => {
@@ -134,28 +136,20 @@ const rootReducer = (state: any, action: any) => {
 
   // Clear all branch-specific data when branch changes
   if (action.type === CLEAR_BRANCH_DATA) {
-    // Keep auth, but clear everything else
-    // ⚠️ CRITICAL: Return empty objects instead of undefined to prevent reducers
-    // from falling back to stale initialState
     const { auth } = state;
     state = {
       auth,
-      // Reset all other states to empty (NOT undefined)
-      dataCache: undefined,
-      orderFormData: {
-        loading: false,
-        error: null,
-        data: null,
-        lastFetched: null
-      },
-      v2: undefined,
-      machineTable: undefined,
-      orders: undefined,
+      dataCache:     undefined,
+      orderFormData: { loading: false, error: null, data: null, lastFetched: null },
+      v2:            undefined,
+      machineTable:  undefined,
+      orders:        undefined,
       accountOrders: undefined,
-      reports: undefined,
-      reportGroups: undefined,
-      branches: state.branches, // Keep branches list
-      branchList: state.branchList, // Keep branch list
+      graphqlOrders: undefined,   // ← clear on branch switch
+      reports:       undefined,
+      reportGroups:  undefined,
+      branches:      state.branches,
+      branchList:    state.branchList,
     };
   }
 

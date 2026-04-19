@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { BackButton } from '../../../allCompones/BackButton';
 import {
   fetchForwardedOrdersFromPerson,
@@ -20,6 +21,7 @@ import { RootState, AppDispatch } from '../../../../store';
 import MessagesList from './components/MessagesList';
 import PersonChat from './components/PersonChat';
 import OrdersRoleSideMenu from './components/OrdersRoleSideMenu';
+import ConnectionManagement from './components/ConnectionManagement';
 import './OrdersForward.css';
 
 // Icons
@@ -78,7 +80,7 @@ const PhoneIcon = () => (
 );
 
 interface OrdersForwardProps {
-  initialView?: 'all' | 'forwarded' | 'received' | 'pending';
+  initialView?: 'all' | 'forwarded' | 'received' | 'pending' | 'connections';
 }
 
 interface Contact {
@@ -94,8 +96,12 @@ const OrdersForward: React.FC<OrdersForwardProps> = ({ initialView = 'pending' }
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
 
-  const [mainView, setMainView] = useState<'orders' | 'messages'>('orders');
-  const [activeTab, setActiveTab] = useState<'all' | 'forwarded' | 'received' | 'pending'>(initialView);
+  const [mainView, setMainView] = useState<'orders' | 'messages' | 'connections'>(
+    initialView === 'connections' ? 'connections' : 'orders'
+  );
+  const [activeTab, setActiveTab] = useState<'all' | 'forwarded' | 'received' | 'pending'>(
+    initialView === 'connections' ? 'pending' : (initialView ?? 'pending')
+  );
   const [denyModalOpen, setDenyModalOpen] = useState(false);
   const [denyingOrderId, setDenyingOrderId] = useState<string | null>(null);
   const [denyReason, setDenyReason] = useState('');
@@ -292,18 +298,18 @@ const OrdersForward: React.FC<OrdersForwardProps> = ({ initialView = 'pending' }
   // Cancel order handler
   const handleCancelOrder = async () => {
     if (!cancellingOrderId || !cancelReason.trim()) {
-      alert('Please provide a cancellation reason');
+      toast.error('Please provide a cancellation reason');
       return;
     }
 
     if (cancelReason.trim().length < 5) {
-      alert('Cancellation reason must be at least 5 characters');
+      toast.error('Cancellation reason must be at least 5 characters');
       return;
     }
 
     try {
       await dispatch(cancelOrder(cancellingOrderId, cancelReason));
-      alert('Order cancelled successfully');
+      toast.success('Order cancelled successfully');
 
       // Refresh current view
       fetchOrdersForView(roleView);
@@ -314,7 +320,7 @@ const OrdersForward: React.FC<OrdersForwardProps> = ({ initialView = 'pending' }
       setCancelReason('');
     } catch (error: any) {
       console.error('Failed to cancel order:', error);
-      alert(error.response?.data?.message || error.message || 'Failed to cancel order');
+      toast.error(error.response?.data?.message || error.message || 'Failed to cancel order');
     }
   };
 
@@ -397,11 +403,11 @@ const OrdersForward: React.FC<OrdersForwardProps> = ({ initialView = 'pending' }
           }
         });
       } else {
-        alert(`Failed to load order details`);
+        toast.error('Failed to load order details');
       }
     } catch (error) {
       console.error('Error fetching order:', error);
-      alert('Error loading order details. Please try again.');
+      toast.error('Error loading order details. Please try again.');
     }
   };
 
@@ -427,7 +433,7 @@ const OrdersForward: React.FC<OrdersForwardProps> = ({ initialView = 'pending' }
   };
 
   const currentOrders = getCurrentOrders();
-  const isLoading = receivedOrdersLoading || forwardedOrdersLoading;
+  const isLoading = receivedOrdersLoading || forwardedOrdersLoading || roleBasedLoading;
 
   return (
     <div className="orders-forward-page-wrapper">
@@ -459,6 +465,13 @@ const OrdersForward: React.FC<OrdersForwardProps> = ({ initialView = 'pending' }
           <MessageIcon />
           <span>Messages</span>
         </button>
+        <button
+          className={`side-menu-btn ${mainView === 'connections' ? 'active' : ''}`}
+          onClick={() => setMainView('connections')}
+        >
+          <AllIcon />
+          <span>Connections</span>
+        </button>
       </div>
 
       {/* Main Area */}
@@ -467,15 +480,32 @@ const OrdersForward: React.FC<OrdersForwardProps> = ({ initialView = 'pending' }
         <div className="orders-forward-header">
           <div className="header-left">
             <BackButton />
-            <h1 className="page-title">{mainView === 'orders' ? 'Orders' : 'Messages'}</h1>
+            <h1 className="page-title">
+              {mainView === 'orders' ? 'Orders' : mainView === 'messages' ? 'Messages' : 'Connections'}
+            </h1>
           </div>
           <div className="header-subtitle">
-            {mainView === 'orders' ? 'Manage and track all orders' : 'Messages and conversations'}
+            {mainView === 'orders'
+              ? 'Manage and track all orders'
+              : mainView === 'messages'
+              ? 'Messages and conversations'
+              : 'Manage your connections'}
           </div>
         </div>
 
         {/* Main Content */}
-        {mainView === 'messages' ? (
+        {mainView === 'connections' ? (
+          <div style={{ minHeight: 'calc(100vh - 180px)', display: 'flex', flexDirection: 'column' }}>
+            <ConnectionManagement
+              onClose={() => setMainView('orders')}
+              onOpenChat={(personId, personName, personEmail) => {
+                setActivePerson({ id: personId, name: personName, email: personEmail || '' });
+                setIsChatOpen(true);
+                setMainView('messages');
+              }}
+            />
+          </div>
+        ) : mainView === 'messages' ? (
           <div className="messages-view-wrapper">
             <MessagesList
               contacts={contacts}

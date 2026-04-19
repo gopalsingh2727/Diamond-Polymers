@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
+import { createPortal } from 'react-dom';
 // SVG icons used inline - no lucide-react dependency
 import { useOrderFormData } from '../useOrderFormData';
 import { Parser } from 'expr-eval';
@@ -212,8 +213,19 @@ const renderSpecValue = (value: any): string => {
     return value.join(', ');
   }
 
-  // Handle everything else
-  return String(value);
+  // Handle numbers — round to max 2 decimal places
+  if (typeof value === 'number') {
+    return parseFloat(value.toFixed(2)).toLocaleString();
+  }
+
+  const str = String(value);
+  // If it looks like a plain number string, round it too
+  const num = parseFloat(str);
+  if (!isNaN(num) && /^-?\d*\.?\d+$/.test(str.trim())) {
+    return parseFloat(num.toFixed(2)).toLocaleString();
+  }
+
+  return str;
 };
 
 const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputProps>(({
@@ -262,6 +274,14 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
   // Refs for suggestion list scrolling
   const typeSuggestionsRef = useRef<HTMLDivElement>(null);
   const nameSuggestionsRef = useRef<HTMLDivElement>(null);
+
+  // Refs for input wrappers — used to position portal dropdowns
+  const typeInputWrapperRef = useRef<HTMLDivElement>(null);
+  const nameInputWrapperRef = useRef<HTMLDivElement>(null);
+
+  // Dropdown anchor positions for portal rendering
+  const [typeDropdownPos, setTypeDropdownPos] = useState<{top: number; left: number; width: number} | null>(null);
+  const [nameDropdownPos, setNameDropdownPos] = useState<{top: number; left: number; width: number} | null>(null);
 
   // Selected backend option for loading specs
   const [selectedBackendOption, setSelectedBackendOption] = useState<any>(null);
@@ -351,7 +371,6 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
 
     // Only load initial data once in edit mode
     if (isEditMode && initialData && initialData.length > 0 && !hasLoadedInitialData.current) {
-      console.log('📦 Loading initial options in edit mode:', initialData);
       setSelectedOptions(initialData);
       hasLoadedInitialData.current = true;
       // Immediately notify parent of initial data for calculations
@@ -380,7 +399,6 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
       return cleaned;
     });
 
-    console.log('📦 Options changed, notifying parent:', cleanedOptions);
     onDataChangeRef.current(cleanedOptions);
   }, [selectedOptions, isEditMode]);
 
@@ -401,19 +419,27 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
     }
 
     prevOptionsCountRef.current = selectedOptions.length;
-    console.log('🔄 New option added, recalculating ALL options...');
 
     // Build global context from ALL options
+    // Keys: OptionName_DimName (unique) + OptionTypeName_DimName (type-level)
     const globalContext: {[key: string]: number} = {};
 
+    const toVarName = (name: string) =>
+      (name || '').replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+
     selectedOptions.forEach((opt: OptionItem) => {
+      const optVarName  = toVarName(opt.optionName  || '');
+      const typeVarName = toVarName(opt.optionTypeName || '');
+
       if (opt.specificationValues) {
         Object.entries(opt.specificationValues).forEach(([key, val]) => {
           if (typeof val === 'number' || !isNaN(parseFloat(String(val)))) {
-            // Use optionTypeName prefix for the variable name
-            const varName = opt.optionTypeName ? `${opt.optionTypeName}_${key}` : key;
-            globalContext[varName] = parseFloat(String(val)) || 0;
-            globalContext[key] = parseFloat(String(val)) || 0; // Also add without prefix
+            const numVal = parseFloat(String(val)) || 0;
+            const cleanKey = toVarName(key);
+            // Option-specific — unique, never collides
+            if (optVarName)  globalContext[`${optVarName}_${cleanKey}`]  = numVal;
+            // Type-level — last option of that type wins (for single-option-per-type orders)
+            if (typeVarName) globalContext[`${typeVarName}_${cleanKey}`] = numVal;
           }
         });
       }
@@ -423,19 +449,18 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
       if (optionType && optionType.specifications) {
         optionType.specifications.forEach((spec: any) => {
           if (spec.dataType === 'number' && spec.defaultValue != null) {
-            const varName = opt.optionTypeName ? `${opt.optionTypeName}_${spec.name}` : spec.name;
-            if (globalContext[varName] === undefined) {
-              globalContext[varName] = parseFloat(String(spec.defaultValue)) || 0;
+            const cleanKey = toVarName(spec.name);
+            if (typeVarName && globalContext[`${typeVarName}_${cleanKey}`] === undefined) {
+              globalContext[`${typeVarName}_${cleanKey}`] = parseFloat(String(spec.defaultValue)) || 0;
             }
-            if (globalContext[spec.name] === undefined) {
-              globalContext[spec.name] = parseFloat(String(spec.defaultValue)) || 0;
+            if (optVarName && globalContext[`${optVarName}_${cleanKey}`] === undefined) {
+              globalContext[`${optVarName}_${cleanKey}`] = parseFloat(String(spec.defaultValue)) || 0;
             }
           }
         });
       }
     });
 
-    console.log('🌍 Global formula context for all options:', globalContext);
 
     // Recalculate each option's formulas
     let hasAnyChanges = false;
@@ -471,19 +496,47 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
       const updatedValues = { ...opt.specificationValues };
       let optionChanged = false;
 
+      // Build per-option context: global prefixed keys + THIS option's own bare keys
+      // This ensures formula "Dart - CoverWt" uses THIS option's Dart and CoverWt,
+      // not another option's values (which only exist as prefixed keys in globalContext)
+      const optVarNameLocal = toVarName(opt.optionName || '');
+      const perOptionContext: {[key: string]: number} = { ...globalContext };
+      if (opt.specificationValues) {
+        Object.entries(opt.specificationValues).forEach(([key, val]) => {
+          if (typeof val === 'number' || !isNaN(parseFloat(String(val)))) {
+            perOptionContext[toVarName(key)] = parseFloat(String(val)) || 0;
+          }
+        });
+      }
+      // Also add OptionType spec defaults as bare keys for this option
+      if (optionType && optionType.specifications) {
+        optionType.specifications.forEach((spec: any) => {
+          if (spec.dataType === 'number' && spec.defaultValue != null) {
+            const k = toVarName(spec.name);
+            if (perOptionContext[k] === undefined) {
+              perOptionContext[k] = parseFloat(String(spec.defaultValue)) || 0;
+            }
+          }
+        });
+      }
+
       formulaSpecs.forEach((spec: any) => {
         try {
           const parser = new Parser();
           const expr = parser.parse(spec.formula);
-          const result = expr.evaluate(globalContext);
+          const result = expr.evaluate(perOptionContext);
 
           if (isFinite(result)) {
+            const rounded = parseFloat(result.toFixed(2));
             const previousValue = updatedValues[spec.name];
-            if (previousValue !== result) {
-              updatedValues[spec.name] = result;
+            if (previousValue !== rounded) {
+              updatedValues[spec.name] = rounded;
+              // Update per-option context for chained formulas
+              perOptionContext[toVarName(spec.name)] = rounded;
+              // Update global context prefixed key for cross-option formulas
+              if (optVarNameLocal) globalContext[`${optVarNameLocal}_${toVarName(spec.name)}`] = rounded;
               optionChanged = true;
               hasAnyChanges = true;
-              console.log(`♻️ Recalculated ${opt.optionTypeName}.${spec.name} = ${result} (was ${previousValue})`);
             }
           }
         } catch (err: any) {
@@ -498,7 +551,6 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
     });
 
     if (hasAnyChanges) {
-      console.log('♻️ Updating options with recalculated values');
       setSelectedOptions(recalculatedOptions);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -873,7 +925,6 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
 
   // Update current option field
   const updateCurrentOption = (field: keyof OptionItem, value: any) => {
-    console.log(`🔧 updateCurrentOption: ${field} = "${value}"`);
     setCurrentOption((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -900,25 +951,30 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
       // Build context for formula evaluation
       const context: {[key: string]: number} = {};
 
-      // ✅ STEP 1: Load values from ALL options in the order (for cross-option dependencies)
-      console.log('🔍 Loading values from all options in order...');
+      // Helper: convert any name to safe variable name (no spaces/special chars)
+      const toVarName = (name: string) =>
+        (name || '').replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
 
-      // Load from already saved options
+      // ✅ STEP 1: Load values from OTHER options using PREFIXED keys only
+      // (bare keys must only come from the CURRENT option to avoid collision)
       selectedOptions.forEach((opt: any) => {
+        const optVarName = toVarName(opt.optionName || '');
         if (opt.specificationValues) {
           Object.entries(opt.specificationValues).forEach(([key, val]) => {
             if (typeof val === 'number' || !isNaN(parseFloat(String(val)))) {
-              context[key] = parseFloat(String(val)) || 0;
+              const numVal = parseFloat(String(val)) || 0;
+              // Prefixed key only — e.g. Fancy_payal_Vc_CoverWt = 3.2
+              if (optVarName) context[`${optVarName}_${toVarName(key)}`] = numVal;
             }
           });
         }
       });
 
-      // Load from current option being edited (before the update)
+      // Load current option being edited — bare keys (these are safe, single option)
       if (prev.specificationValues) {
         Object.entries(prev.specificationValues).forEach(([key, val]) => {
           if (typeof val === 'number' || !isNaN(parseFloat(String(val)))) {
-            context[key] = parseFloat(String(val)) || 0;
+            context[toVarName(key)] = parseFloat(String(val)) || 0;
           }
         });
       }
@@ -927,9 +983,9 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
       if (optionType && optionType.specifications) {
         optionType.specifications.forEach((spec: any) => {
           if (spec.dataType === 'number' && spec.defaultValue != null) {
-            // Only add if not already in context (don't override user values)
-            if (context[spec.name] === undefined) {
-              context[spec.name] = parseFloat(String(spec.defaultValue)) || 0;
+            const k = toVarName(spec.name);
+            if (context[k] === undefined) {
+              context[k] = parseFloat(String(spec.defaultValue)) || 0;
             }
           }
         });
@@ -939,58 +995,47 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
       if (matchingOptionSpec && matchingOptionSpec.specifications) {
         matchingOptionSpec.specifications.forEach((spec: any) => {
           if (spec.dataType === 'number' && spec.value != null) {
-            // Only add if not already in context
-            if (context[spec.name] === undefined) {
-              context[spec.name] = parseFloat(String(spec.value)) || 0;
+            const k = toVarName(spec.name);
+            if (context[k] === undefined) {
+              context[k] = parseFloat(String(spec.value)) || 0;
             }
           }
         });
       }
 
-      // ✅ STEP 4: Add Option dimensions (actual option values)
+      // ✅ STEP 4: Add Option dimensions (actual option values from DB)
       if (selectedOption && selectedOption.dimensions) {
         selectedOption.dimensions.forEach((dim: any) => {
           if (dim.dataType === 'number' && dim.value != null) {
-            // Only add if not already in context
-            if (context[dim.name] === undefined) {
-              context[dim.name] = parseFloat(String(dim.value)) || 0;
+            const k = toVarName(dim.name);
+            if (context[k] === undefined) {
+              context[k] = parseFloat(String(dim.value)) || 0;
             }
           }
         });
       }
 
-      // ✅ STEP 5: Add/override with current values being updated
+      // ✅ STEP 5: Override with current values being edited (highest priority)
       Object.entries(updatedValues).forEach(([key, val]) => {
         if (typeof val === 'number' || !isNaN(parseFloat(String(val)))) {
-          context[key] = parseFloat(String(val)) || 0;
+          context[toVarName(key)] = parseFloat(String(val)) || 0;
         }
       });
-
-      console.log('🧮 Formula evaluation context:', context);
 
       // Evaluate formulas for all calculated specifications
       const allSpecs: any[] = [];
 
       if (optionType && optionType.specifications) {
-        console.log('📦 Loading OptionType specs:', optionType.specifications);
         allSpecs.push(...optionType.specifications);
-      } else {
-        console.warn('⚠️ No OptionType or specifications found!');
       }
 
       if (matchingOptionSpec && matchingOptionSpec.specifications) {
-        console.log('📦 Loading OptionSpec specs:', matchingOptionSpec.specifications);
         matchingOptionSpec.specifications.forEach((spec: any) => {
           if (!allSpecs.find(s => s.name === spec.name)) {
             allSpecs.push(spec);
           }
         });
-      } else {
-        console.warn('⚠️ No OptionSpec or specifications found!');
       }
-
-      console.log('📊 Total specs available:', allSpecs.length);
-      console.log('📊 Specs with formulas:', allSpecs.filter(s => s.formula).map(s => `${s.name}: ${s.formula}`));
 
       // ✅ EVALUATE FORMULAS IN DEPENDENCY ORDER
       // Some formulas depend on other calculated fields, so we need multiple passes
@@ -1010,26 +1055,24 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
               const result = expr.evaluate(context);
 
               if (isFinite(result)) {
+                const rounded = parseFloat(result.toFixed(2));
                 const previousValue = updatedValues[spec.name];
-                updatedValues[spec.name] = result;
-                context[spec.name] = result; // Add to context for chained formulas
+                updatedValues[spec.name] = rounded;
+                context[spec.name] = rounded; // Add to context for chained formulas
 
                 // Track if we calculated something new (value changed)
-                if (previousValue !== result) {
+                if (previousValue !== rounded) {
                   hasChanges = true;
                 }
 
-                console.log(`✅ [Pass ${pass}] Calculated ${spec.name} = ${result} from formula: ${spec.formula}`);
               }
             } catch (err: any) {
               // Formula might depend on values not yet calculated - skip for now
-              console.log(`⏸️ [Pass ${pass}] Skipping ${spec.name}, dependencies not ready:`, err.message);
             }
           }
         });
       }
 
-      console.log(`✅ Formula evaluation completed in ${pass} passes`);
 
       return {
         ...prev,
@@ -1042,20 +1085,9 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
   const handleTypeSelect = (selectedType: any) => {
     const typeName = selectedType.name || selectedType.optionTypeName || selectedType;
 
-    console.log('🔍 [handleTypeSelect] Selected type:', typeName);
-
     // ✅ FIX: Find OptionType and load its specifications automatically
     const optionType = allowedOptionTypes.find((ot) => ot.name === typeName);
     const typeId = optionType?._id || '';
-
-    console.log('🔍 [handleTypeSelect] Found optionType:', optionType ? `${optionType.name} (${typeId})` : 'NOT FOUND');
-    console.log('🔍 [handleTypeSelect] Available optionSpecs:', optionSpecs?.length || 0);
-    if (optionSpecs && optionSpecs.length > 0) {
-      optionSpecs.forEach((spec: any, idx: number) => {
-        const specTypeId = spec.optionTypeId?._id || spec.optionTypeId;
-        console.log(`   [${idx}] OptionSpec: "${spec.name}", optionTypeId: ${specTypeId}, matches: ${specTypeId === typeId}`);
-      });
-    }
 
     // ✅ FIX: Find matching OptionSpec for this OptionType
     const matchingOptionSpec = Array.isArray(optionSpecs) ?
@@ -1065,13 +1097,11 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
       }) :
       null;
 
-    console.log('🔍 [handleTypeSelect] Matching OptionSpec:', matchingOptionSpec ? `Found: "${matchingOptionSpec.name}"` : 'NOT FOUND');
-
     // ✅ FIX: Merge specs from OptionSpec and OptionType template
     const specs: any[] = [];
     const specNames = new Set<string>();
 
-    const addSpecs = (newSpecs: any[], source: string) => {
+    const addSpecs = (newSpecs: any[]) => {
       if (!newSpecs || !Array.isArray(newSpecs)) return;
       newSpecs.forEach((spec: any) => {
         if (!specNames.has(spec.name)) {
@@ -1083,17 +1113,13 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
 
     // Priority 1: OptionSpec specifications (if exists)
     if (matchingOptionSpec?.specifications) {
-      console.log('✅ Adding specs from OptionSpec:', matchingOptionSpec.specifications.length);
-      addSpecs(matchingOptionSpec.specifications, 'OptionSpec');
+      addSpecs(matchingOptionSpec.specifications);
     }
 
     // Priority 2: OptionType template specifications
     if (optionType?.specifications) {
-      console.log('✅ Adding specs from OptionType template:', optionType.specifications.length);
-      addSpecs(optionType.specifications, 'OptionType');
+      addSpecs(optionType.specifications);
     }
-
-    console.log('📊 Total merged specs:', specs.length);
 
     // ✅ FIX: Initialize spec values from default values
     const specValues = specs.reduce((acc: any, spec: any) => {
@@ -1128,7 +1154,6 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
 
     if (optionsForType.length === 0 && specs.length > 0) {
       // No options available for this type - skip name field and go to specs
-      console.log('🔍 [handleTypeSelect] No options for this type, skipping to specs');
       setTimeout(() => {
         const specInputs = getSpecInputs();
         if (specInputs.length > 0) {
@@ -1393,13 +1418,13 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
         const isNum = sp?.dataType === 'number' || !sp?.dataType && !isNaN(parseFloat(optionsToPrint[0]?.specificationValues?.[k]));
         if (isNum && sp?.includeInTotal !== false) {
           showT[k] = true;
-          totals[k] = optionsToPrint.reduce((sum, o) => sum + (parseFloat(o.specificationValues?.[k]) || 0), 0);
+          totals[k] = parseFloat(optionsToPrint.reduce((sum, o) => sum + (parseFloat(o.specificationValues?.[k]) || 0), 0).toFixed(2));
         }
       });
 
       return `<tfoot><tr style="background:#fef3c7;border-top:2px solid #f59e0b;font-weight:700;color:#92400e;">
               <td></td><td>Total</td>
-              ${specKeys.map((k) => `<td>${showT[k] ? totals[k]?.toLocaleString() || '0' : '-'}</td>`).join('')}
+              ${specKeys.map((k) => `<td>${showT[k] ? parseFloat((totals[k] || 0).toFixed(2)).toLocaleString() : '-'}</td>`).join('')}
             </tr></tfoot>`;
     })()}
         </table>
@@ -1489,10 +1514,10 @@ const InlineOptionsInput = forwardRef<InlineOptionsInputRef, InlineOptionsInputP
         const isNum = sp?.dataType === 'number' || !sp?.dataType && !isNaN(parseFloat(optionsToExport[0]?.specificationValues?.[k]));
         if (isNum && sp?.includeInTotal !== false) {
           showT[k] = true;
-          totals[k] = optionsToExport.reduce((sum, o) => sum + (parseFloat(o.specificationValues?.[k]) || 0), 0);
+          totals[k] = parseFloat(optionsToExport.reduce((sum, o) => sum + (parseFloat(o.specificationValues?.[k]) || 0), 0).toFixed(2));
         }
       });
-      totalRow = ['', 'TOTAL', ...specKeys.map((k) => showT[k] ? String(totals[k] || 0) : '-')];
+      totalRow = ['', 'TOTAL', ...specKeys.map((k) => showT[k] ? String(parseFloat((totals[k] || 0).toFixed(2))) : '-')];
     }
 
     // Add header info
@@ -1586,21 +1611,6 @@ For old files, you need to re-upload them.
 
   return (
     <div>
-      {/* Show trigger only when no options */}
-      {selectedOptions.length === 0 &&
-      <div
-        onClick={openPopup}
-        style={{
-          cursor: 'pointer',
-          padding: '10px 15px',
-          color: '#666',
-          fontSize: '14px'
-        }}>
-
-          Click to add options
-        </div>
-      }
-
       {/* Options list display - grouped by Option Type */}
       {selectedOptions.length > 0 && (() => {
         // Group options by optionTypeId
@@ -1988,10 +1998,10 @@ For old files, you need to re-upload them.
 
                         if (isNumeric && shouldInclude) {
                           showTotalFor[key] = true;
-                          totals[key] = optionsInGroup.reduce((sum, opt) => {
+                          totals[key] = parseFloat(optionsInGroup.reduce((sum, opt) => {
                             const val = parseFloat(opt.specificationValues?.[key]) || 0;
                             return sum + val;
-                          }, 0);
+                          }, 0).toFixed(2));
                         }
                       });
 
@@ -2021,7 +2031,7 @@ For old files, you need to re-upload them.
                           )}
                           {groupSpecKeys.map((key) =>
                           <span key={key} style={{ color: '#92400e' }}>
-                              {showTotalFor[key] ? totals[key]?.toLocaleString() || '0' : '-'}
+                              {showTotalFor[key] ? parseFloat((totals[key] || 0).toFixed(2)).toLocaleString() : '-'}
                             </span>
                           )}
                           <span></span>
@@ -2068,6 +2078,8 @@ For old files, you need to re-upload them.
             width: '95vw',
             maxHeight: '90vh',
             overflow: 'visible',
+            display: 'flex',
+            flexDirection: 'column',
             boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
             position: 'relative'
           }}>
@@ -2149,7 +2161,7 @@ For old files, you need to re-upload them.
               </div>
 
               {/* Saved Options Rows */}
-              <div style={{ maxHeight: '200px', overflowY: 'auto', marginBottom: '10px' }}>
+              <div style={{ maxHeight: '180px', overflowY: 'auto', overflowX: 'auto', marginBottom: '10px', flex: '0 0 auto' }}>
                 {selectedOptions.map((option, index) =>
             <div key={option.id} className="createorderstartsections-popupitemall" style={{
               gridTemplateColumns: '150px 150px auto 30px 30px',
@@ -2197,7 +2209,7 @@ For old files, you need to re-upload them.
               <div style={{
             display: 'flex',
             flexDirection: 'row',
-            flexWrap: 'nowrap',
+            flexWrap: 'wrap',
             gap: '10px',
             padding: '15px',
             backgroundColor: '#f9fafb',
@@ -2208,7 +2220,7 @@ For old files, you need to re-upload them.
           }}>
 
                 {/* Option Type */}
-                <div style={{ position: 'relative', zIndex: 100000, minWidth: '150px' }}>
+                <div ref={typeInputWrapperRef} style={{ position: 'relative', minWidth: '150px' }}>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '4px', color: '#374151' }}>Type</label>
                   <input
                 ref={typeRef}
@@ -2217,39 +2229,51 @@ For old files, you need to re-upload them.
                 onChange={(e) => handleTypeInputChange(e.target.value)}
                 onKeyDown={(e) => handleKeyDown(e, 'type')}
                 placeholder="Type or * for all (↑↓ to navigate)"
-                onFocus={() => { setShowTypeSuggestions(true); setSelectedTypeIndex(-1); }}
+                onFocus={() => {
+                  setShowTypeSuggestions(true);
+                  setSelectedTypeIndex(-1);
+                  if (typeInputWrapperRef.current) {
+                    const rect = typeInputWrapperRef.current.getBoundingClientRect();
+                    setTypeDropdownPos({ top: rect.bottom, left: rect.left, width: rect.width });
+                  }
+                }}
                 onBlur={() => setTimeout(() => setShowTypeSuggestions(false), 200)}
                 className="createorderstartsections-tableInput" />
+                </div>
 
-                  {showTypeSuggestions && (() => {
-                    const filtered = getFilteredTypeSuggestions();
-
-                    return (
-              <div ref={typeSuggestionsRef} className="createorderstartsections-suggestion-list" style={{ position: 'absolute', zIndex: 99999 }}>
+                {/* TYPE dropdown rendered in portal — escapes all overflow/stacking contexts */}
+                {showTypeSuggestions && typeDropdownPos && (() => {
+                  const filtered = getFilteredTypeSuggestions();
+                  return createPortal(
+                    <div
+                      ref={typeSuggestionsRef}
+                      className="createorderstartsections-suggestion-list"
+                      style={{
+                        position: 'fixed',
+                        top: typeDropdownPos.top,
+                        left: typeDropdownPos.left,
+                        width: typeDropdownPos.width,
+                        zIndex: 999999,
+                        margin: 0
+                      }}>
                       {optionTypes.length === 0 ?
-                <div className="createorderstartsections-suggestionItem" style={{ color: '#999', fontStyle: 'italic' }}>
-                          No option types available
-                        </div> :
-                      filtered.length === 0 ?
-                        <div className="createorderstartsections-suggestionItem" style={{ color: '#999', fontStyle: 'italic' }}>
-                          No matching types found (try typing "*" to see all)
-                        </div> :
-
-                filtered.map((type, i) =>
-                <div
-                  key={i}
-                  className={`createorderstartsections-suggestionItem ${i === selectedTypeIndex ? 'selected' : ''}`}
-                  onMouseDown={() => handleTypeSelect({ name: type })}
-                  onMouseEnter={() => setSelectedTypeIndex(i)}>
-
+                        <div className="createorderstartsections-suggestionItem" style={{ color: '#999', fontStyle: 'italic' }}>No option types available</div> :
+                        filtered.length === 0 ?
+                          <div className="createorderstartsections-suggestionItem" style={{ color: '#999', fontStyle: 'italic' }}>No matching types (try "*" to see all)</div> :
+                          filtered.map((type, i) =>
+                            <div
+                              key={i}
+                              className={`createorderstartsections-suggestionItem ${i === selectedTypeIndex ? 'selected' : ''}`}
+                              onMouseDown={() => handleTypeSelect({ name: type })}
+                              onMouseEnter={() => setSelectedTypeIndex(i)}>
                               {type}
                             </div>
-                )
-                }
-                    </div>
-                    );
-                  })()}
-                </div>
+                          )
+                      }
+                    </div>,
+                    document.body
+                  );
+                })()}
 
                 {/* Option Name - Hide when no options available for this type */}
                 {(() => {
@@ -2257,7 +2281,7 @@ For old files, you need to re-upload them.
                   if (!hasOptionsForType) return null; // Skip Name field when no options available
 
                   return (
-                <div style={{ position: 'relative' }}>
+                <div ref={nameInputWrapperRef} style={{ position: 'relative', minWidth: '150px' }}>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '4px', color: '#374151' }}>Name</label>
                   <input
                 ref={nameRef}
@@ -2266,43 +2290,53 @@ For old files, you need to re-upload them.
                 onChange={(e) => handleNameInputChange(e.target.value)}
                 onKeyDown={(e) => handleKeyDown(e, 'name')}
                 placeholder="Name or * for all (↑↓ to navigate)"
-                onFocus={() => { setShowNameSuggestions(true); setSelectedNameIndex(-1); }}
+                onFocus={() => {
+                  setShowNameSuggestions(true);
+                  setSelectedNameIndex(-1);
+                  if (nameInputWrapperRef.current) {
+                    const rect = nameInputWrapperRef.current.getBoundingClientRect();
+                    setNameDropdownPos({ top: rect.bottom, left: rect.left, width: rect.width });
+                  }
+                }}
                 onBlur={() => setTimeout(() => setShowNameSuggestions(false), 200)}
                 className="createorderstartsections-tableInput" />
-
-                  {showNameSuggestions && currentOption.optionTypeName && (() => {
-                    const filtered = getFilteredNameSuggestions();
-                    const allOptions = getOptionsByType(currentOption.optionTypeName);
-
-                    return (
-              <div ref={nameSuggestionsRef} className="createorderstartsections-suggestion-list" style={{ position: 'absolute', zIndex: 99999 }}>
-                      {allOptions.length === 0 ?
-                <div className="createorderstartsections-suggestionItem" style={{ color: '#999', fontStyle: 'italic' }}>
-                          No options available for this type
-                        </div> :
-                      filtered.length === 0 ?
-                        <div className="createorderstartsections-suggestionItem" style={{ color: '#999', fontStyle: 'italic' }}>
-                          No matching options found (try typing "*" to see all)
-                        </div> :
-
-                filtered.map((opt: any, i: number) =>
-                <div
-                  key={i}
-                  className={`createorderstartsections-suggestionItem ${i === selectedNameIndex ? 'selected' : ''}`}
-                  onMouseDown={() => handleNameSelect(opt)}
-                  onMouseEnter={() => setSelectedNameIndex(i)}>
-
-                              <div style={{ fontWeight: 500 }}>{opt.name}</div>
-                              {opt.code &&
-                  <div style={{ fontSize: '11px', color: '#666' }}>Code: {opt.code}</div>
-                  }
-                            </div>
-                )
-                }
-                    </div>
-                    );
-                  })()}
                 </div>
+                  );
+                })()}
+
+                {/* NAME dropdown rendered in portal — escapes all overflow/stacking contexts */}
+                {showNameSuggestions && nameDropdownPos && currentOption.optionTypeName && (() => {
+                  const filtered = getFilteredNameSuggestions();
+                  const allOptions = getOptionsByType(currentOption.optionTypeName);
+                  return createPortal(
+                    <div
+                      ref={nameSuggestionsRef}
+                      className="createorderstartsections-suggestion-list"
+                      style={{
+                        position: 'fixed',
+                        top: nameDropdownPos.top,
+                        left: nameDropdownPos.left,
+                        width: nameDropdownPos.width,
+                        zIndex: 999999,
+                        margin: 0
+                      }}>
+                      {allOptions.length === 0 ?
+                        <div className="createorderstartsections-suggestionItem" style={{ color: '#999', fontStyle: 'italic' }}>No options available for this type</div> :
+                        filtered.length === 0 ?
+                          <div className="createorderstartsections-suggestionItem" style={{ color: '#999', fontStyle: 'italic' }}>No matching options (try "*" to see all)</div> :
+                          filtered.map((opt: any, i: number) =>
+                            <div
+                              key={i}
+                              className={`createorderstartsections-suggestionItem ${i === selectedNameIndex ? 'selected' : ''}`}
+                              onMouseDown={() => handleNameSelect(opt)}
+                              onMouseEnter={() => setSelectedNameIndex(i)}>
+                              <div style={{ fontWeight: 500 }}>{opt.name}</div>
+                              {opt.code && <div style={{ fontSize: '11px', color: '#666' }}>Code: {opt.code}</div>}
+                            </div>
+                          )
+                      }
+                    </div>,
+                    document.body
                   );
                 })()}
 
@@ -2420,7 +2454,7 @@ For old files, you need to re-upload them.
                   };
                   return getMergedSpecs();
                 })().map((spec: SpecificationTemplate, index: number) =>
-                <div key={index} style={{ minWidth: '120px', flex: '1' }}>
+                <div key={index} style={{ minWidth: '90px', maxWidth: '160px', flex: '1' }}>
                           <label style={{ display: 'block', fontSize: '11px', fontWeight: '600', marginBottom: '4px', color: '#374151' }}>
                             {spec.name} {spec.unit ? `(${spec.unit})` : ''}
                           </label>
@@ -2464,9 +2498,7 @@ For old files, you need to re-upload them.
                               <input
                       type="file"
                       onChange={(e) => {
-                        console.log('🔥 File input onChange triggered for:', spec.name);
                         const file = e.target.files?.[0];
-                        console.log('📄 File object:', file);
                         if (!file) return;
                         const maxSizeInBytes = 50 * 1024 * 1024;
                         if (file.size > maxSizeInBytes) {
@@ -2483,11 +2515,10 @@ For old files, you need to re-upload them.
                             fileType: file.type,
                             fileSize: file.size
                           };
-                          console.log('📁 File selected:', spec.name, fileData.fileName);
                           updateSpecificationValue(spec.name, fileData);
                         };
-                        reader.onerror = (err) => {
-                          console.error('❌ File read error:', err);
+                        reader.onerror = () => {
+                          console.error('File read error for:', spec.name);
                         };
                         reader.readAsDataURL(file);
                       }}
@@ -2820,7 +2851,7 @@ For old files, you need to re-upload them.
                   const isNumeric = spec?.dataType === 'number' || !spec?.dataType && !isNaN(parseFloat(popupOptions[0]?.specificationValues?.[key]));
                   if (isNumeric && spec?.includeInTotal !== false) {
                     showTotal[key] = true;
-                    totals[key] = popupOptions.reduce((sum, opt) => sum + (parseFloat(opt.specificationValues?.[key]) || 0), 0);
+                    totals[key] = parseFloat(popupOptions.reduce((sum, opt) => sum + (parseFloat(opt.specificationValues?.[key]) || 0), 0).toFixed(2));
                   }
                 });
 
@@ -2831,7 +2862,7 @@ For old files, you need to re-upload them.
                         <td style={{ padding: '10px 12px', fontWeight: '700', color: '#92400e' }}>Total</td>
                         {popupSpecKeys.map((key) =>
                       <td key={key} style={{ padding: '10px 12px', fontWeight: '700', color: '#92400e' }}>
-                            {showTotal[key] ? totals[key]?.toLocaleString() || '0' : '-'}
+                            {showTotal[key] ? parseFloat((totals[key] || 0).toFixed(2)).toLocaleString() : '-'}
                           </td>
                       )}
                       </tr>
@@ -3045,42 +3076,47 @@ For old files, you need to re-upload them.
               {/* Header */}
               <div
                 style={{
-                  padding: '16px 20px',
+                  padding: '12px 16px',
                   borderBottom: '1px solid #e5e7eb',
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
-                  backgroundColor: '#fef3c7'
+                  backgroundColor: '#fef3c7',
+                  gap: '8px'
                 }}>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
                   {orderId &&
                   <span style={{
                     background: '#f59e0b',
                     color: 'white',
-                    padding: '4px 10px',
+                    padding: '3px 8px',
                     borderRadius: '4px',
-                    fontSize: '12px',
-                    fontWeight: '600'
+                    fontSize: '11px',
+                    fontWeight: '600',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0
                   }}>
                       {orderId}
                     </span>
                   }
-                  <h3 style={{ margin: 0, fontSize: '16px', color: '#92400e', fontWeight: '600' }}>
+                  <h3 style={{ margin: 0, fontSize: '14px', color: '#92400e', fontWeight: '600', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     All Options Summary
                   </h3>
                   <span style={{
                     background: '#fbbf24',
                     color: '#78350f',
-                    padding: '4px 10px',
+                    padding: '3px 8px',
                     borderRadius: '12px',
-                    fontSize: '12px',
-                    fontWeight: '500'
+                    fontSize: '11px',
+                    fontWeight: '500',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0
                   }}>
                     {selectedOptions.length} options • {Object.keys(groupedOptions).length} types
                   </span>
                 </div>
-                <div style={{ display: 'flex', gap: '8px' }}>
+                <div style={{ display: 'flex', gap: '0', flexShrink: 0, alignItems: 'center' }}>
                   <button
                     onClick={() => {
                       // Print all options
@@ -3180,13 +3216,13 @@ For old files, you need to re-upload them.
                             const isNum = sp?.dataType === 'number' || !sp?.dataType && !isNaN(parseFloat(opts[0]?.specificationValues?.[k]));
                             if (isNum && sp?.includeInTotal !== false) {
                               showT[k] = true;
-                              totals[k] = opts.reduce((sum, o) => sum + (parseFloat(o.specificationValues?.[k]) || 0), 0);
+                              totals[k] = parseFloat(opts.reduce((sum, o) => sum + (parseFloat(o.specificationValues?.[k]) || 0), 0).toFixed(2));
                             }
                           });
 
                           return `<tfoot><tr style="background:#fef3c7;border-top:2px solid #f59e0b;font-weight:700;color:#92400e;">
                                       <td></td><td>Total</td>
-                                      ${specKeys.map((k) => `<td>${showT[k] ? totals[k]?.toLocaleString() || '0' : '-'}</td>`).join('')}
+                                      ${specKeys.map((k) => `<td>${showT[k] ? parseFloat((totals[k] || 0).toFixed(2)).toLocaleString() : '-'}</td>`).join('')}
                                     </tr></tfoot>`;
                         })()}
                                 </table>
@@ -3248,22 +3284,13 @@ For old files, you need to re-upload them.
                         }, 500);
                       }
                     }}
-                    style={{
-                      background: '#f59e0b',
-                      border: 'none',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      padding: '6px 12px',
-                      fontSize: '13px',
-                      color: 'white',
-                      fontWeight: '500',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px'
-                    }}>
-
-                    <Printer size={14} />
-                    Print All
+                    style={{ width: '55px', height: '32px', backgroundColor: 'transparent', color: '#3b82f6', border: '1px solid #e5e7eb', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    title="Print All">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polyline points="6 9 6 2 18 2 18 9" />
+                      <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                      <rect x="6" y="14" width="12" height="8" />
+                    </svg>
                   </button>
                   <button
                     onClick={() => {
@@ -3326,14 +3353,14 @@ For old files, you need to re-upload them.
                             const isNum = sp?.dataType === 'number' || !sp?.dataType && !isNaN(parseFloat(opts[0]?.specificationValues?.[k]));
                             if (isNum && sp?.includeInTotal !== false) {
                               showT[k] = true;
-                              totals[k] = opts.reduce((sum, o) => sum + (parseFloat(o.specificationValues?.[k]) || 0), 0);
+                              totals[k] = parseFloat(opts.reduce((sum, o) => sum + (parseFloat(o.specificationValues?.[k]) || 0), 0).toFixed(2));
                             }
                           });
 
                           csvRows.push([
                           '',
                           'TOTAL',
-                          ...specKeys.map((k) => showT[k] ? String(totals[k] || 0) : '-')]
+                          ...specKeys.map((k) => showT[k] ? String(parseFloat((totals[k] || 0).toFixed(2))) : '-')]
                           );
                         }
 
@@ -3377,37 +3404,22 @@ For old files, you need to re-upload them.
                       link.click();
                       URL.revokeObjectURL(link.href);
                     }}
-                    style={{
-                      background: '#10b981',
-                      border: 'none',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      padding: '6px 12px',
-                      fontSize: '13px',
-                      color: 'white',
-                      fontWeight: '500',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px'
-                    }}>
-
-                    <FileSpreadsheet size={14} />
-                    Excel All
+                    style={{ width: '55px', height: '32px', backgroundColor: 'transparent', color: '#10b981', border: '1px solid #e5e7eb', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    title="Excel All">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="7 10 12 15 17 10" />
+                      <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
                   </button>
                   <button
                     onClick={() => setShowAllOptionsPopup(false)}
-                    style={{
-                      background: '#f1f5f9',
-                      border: 'none',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      padding: '6px 12px',
-                      fontSize: '13px',
-                      color: '#64748b',
-                      fontWeight: '500'
-                    }}>
-
-                    ✕ Close
+                    style={{ width: '55px', height: '32px', backgroundColor: 'transparent', color: '#64748b', border: '1px solid #e5e7eb', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    title="Close">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
                   </button>
                 </div>
               </div>
@@ -3617,7 +3629,7 @@ For old files, you need to re-upload them.
                               const isNum = sp?.dataType === 'number' || !sp?.dataType && !isNaN(parseFloat(opts[0]?.specificationValues?.[k]));
                               if (isNum && sp?.includeInTotal !== false) {
                                 showT[k] = true;
-                                totals[k] = opts.reduce((sum, o) => sum + (parseFloat(o.specificationValues?.[k]) || 0), 0);
+                                totals[k] = parseFloat(opts.reduce((sum, o) => sum + (parseFloat(o.specificationValues?.[k]) || 0), 0).toFixed(2));
                               }
                             });
 
@@ -3628,7 +3640,7 @@ For old files, you need to re-upload them.
                                   <td style={{ padding: '8px 10px', fontWeight: '700', color: '#92400e' }}>Total</td>
                                   {specKeys.map((k) =>
                                   <td key={k} style={{ padding: '8px 10px', fontWeight: '700', color: '#92400e' }}>
-                                      {showT[k] ? totals[k]?.toLocaleString() || '0' : '-'}
+                                      {showT[k] ? parseFloat((totals[k] || 0).toFixed(2)).toLocaleString() : '-'}
                                     </td>
                                   )}
                                 </tr>

@@ -725,7 +725,7 @@ const CreateOrder = () => {
       } else {
         // For edit mode, navigate back to orders list after 1.5 seconds
         setTimeout(() => {
-          navigate('/menu/Oders', { state: { refresh: true } });
+          navigate('/menu/IndexAllOders', { state: { refresh: true } });
         }, 1500);
       }
     } catch (err: any) {

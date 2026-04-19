@@ -21,11 +21,9 @@ import EditOptionSpecList from "./EditOptionSpec/EditOptionSpecList";
 import EditOrderTypeList from "./EditOrderType/EditOrderTypeList";
 import EditMachineTemplateList from "./EditMachineTemplate/EditMachineTemplateList";
 import EditPrintTypeList from "./EditPrintType/EditPrintTypeList";
-import EditExcelExportTypeList from "./EditExcelExportType/EditExcelExportTypeList";
 import UpdataIDAndPassword from "./UpdataIDandPassword/UpdataIDAndPassword";
 import EditCustomerCategoryList from "./EditCustomerCategory/EditCustomerCategoryList";
 import EditParentCompanyList from "./EditParentCompany/EditParentCompanyList";
-import EditInventoryList from "./EditInventory/EditInventoryList";
 import EditDashboardTypeList from "./EditReportType/EditDashboardTypeList";
 // ========== CREATE Components (reused for both Create & Edit) ==========
 import CreateNewAccount from "../create/createNewAccount/createNewAccount";
@@ -38,12 +36,10 @@ import CreateOptionType from "../create/optionType/CreateOptionType";
 import CreateOption from "../create/option/CreateOption";
 import CreateOrderType from "../create/orderType/CreateOrderType";
 import CreatePrintType from "../create/printType/CreatePrintType";
-import CreateExcelExportType from "../create/excelExportType/CreateExcelExportType";
 import ViewTemplateWizard from "../create/machine/ViewTemplateWizard";
 import DeviceAccessCreate from "../create/deviceAccess/deviceAccessCreate";
 import CustomerCategory from "../create/customerCategory/CustomerCategory";
 import CustomerParentCompany from "../create/customerParentCompany/CustomerParentCompany";
-import CreateInventory from "../create/inventory/CreateInventory";
 import CreateDashboardType from "../create/DashboardType/CreateDashboardType";
 import { BackButton } from "@/componest/allCompones/BackButton";
 interface LocationStateType {
@@ -147,9 +143,7 @@ const EditIndex = () => {
     ]},
     { title: "Order Management", items: [
       { key: "orderType", label: "Order Type" },
-      { key: "inventory", label: "Inventory" },
-      { key: "printType", label: "Print Type" },
-      { key: "excelExportType", label: "Excel Export Type" }
+      { key: "printType", label: "Print Type" }
     ]},
     { title: "Report", items: [
       { key: "reportType", label: "Report Type" }
@@ -189,10 +183,6 @@ const EditIndex = () => {
           return <ErrorBoundary key={`edit-orderType-${componentKey}`}><CreateOrderType initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
         case 'printType':
           return <ErrorBoundary key={`edit-printType-${componentKey}`}><CreatePrintType initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
-        case 'excelExportType':
-          return <ErrorBoundary key={`edit-excelExportType-${componentKey}`}><CreateExcelExportType initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
-        case 'inventory':
-          return <ErrorBoundary key={`edit-inventory-${componentKey}`}><CreateInventory initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
         case 'reportType':
           return <ErrorBoundary key={`edit-reportType-${componentKey}`}><CreateDashboardType initialData={editState.editData} onCancel={clearEditState} onSaveSuccess={clearEditState} /></ErrorBoundary>;
         case 'machineTemplate':
@@ -221,10 +211,8 @@ const EditIndex = () => {
       option: <ErrorBoundary key={`option-${componentKey}`}><EditOptionListOnly onEdit={setEdit('option')} /></ErrorBoundary>,
       optionSpec: <ErrorBoundary key={`optionSpec-${componentKey}`}><EditOptionSpecList /></ErrorBoundary>,
       orderType: <ErrorBoundary key={`orderType-${componentKey}`}><EditOrderTypeList onEdit={setEdit('orderType')} /></ErrorBoundary>,
-      inventory: <ErrorBoundary key={`inventory-${componentKey}`}><EditInventoryList onEdit={setEdit('inventory')} /></ErrorBoundary>,
       reportType: <ErrorBoundary key={`reportType-${componentKey}`}><EditDashboardTypeList onEdit={setEdit('reportType')} /></ErrorBoundary>,
       printType: <ErrorBoundary key={`printType-${componentKey}`}><EditPrintTypeList /></ErrorBoundary>,
-      excelExportType: <ErrorBoundary key={`excelExportType-${componentKey}`}><EditExcelExportTypeList /></ErrorBoundary>,
       machineTemplate: <ErrorBoundary key={`machineTemplate-${componentKey}`}><EditMachineTemplateList onEdit={setEdit('machineTemplate')} /></ErrorBoundary>
     };
 

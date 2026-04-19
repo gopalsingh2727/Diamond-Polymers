@@ -49,26 +49,12 @@ export * from './orderTypeActions';
 // Print Type
 export * from './printTypeActions';
 
-// Excel Export Type
-export * from './excelExportTypeActions';
-
 // Report Type
 export * from './reportTypeActions';
 
 // Template
 export * from './templateActions';
 
-// Inventory
-export * from './inventoryActions';
-
-// Inventory Transaction
-export * from './inventoryTransactionActions';
-
-// Inventory Location
-export * from './inventoryLocationActions';
-
-// Inventory Type (Units of Measure)
-export * from './inventoryTypeActions';
 
 // Employee
 export * from './employeeActions';

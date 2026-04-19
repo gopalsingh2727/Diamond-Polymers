@@ -162,7 +162,10 @@ const SaveOrders = forwardRef<SaveOrdersRef, SaveOrdersProps>(({
 
       const orderDataWithOptions = {
         ...(orderData || {}),
-        options: allOptions
+        options: allOptions,
+        // Include customer category and parent company from customer data
+        customerCategoryId: orderData?.customer?.categoryId?._id || orderData?.customer?.categoryId || orderData?.customerCategoryId || undefined,
+        customerParentCompanyId: orderData?.customer?.parentCompanyId?._id || orderData?.customer?.parentCompanyId || orderData?.customerParentCompanyId || undefined
       };
 
 

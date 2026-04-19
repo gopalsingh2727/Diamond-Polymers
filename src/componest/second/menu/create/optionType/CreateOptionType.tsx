@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { createOptionType, updateOptionType, deleteOptionType } from '../../../../redux/option/optionTypeActions';
 import { getCategories } from '../../../../redux/category/categoryActions';
-import { getInventoryTypesV2, seedInventoryTypesV2 } from '../../../../redux/unifiedV2';
+
 import { RootState } from '../../../../redux/rootReducer';
 import { AppDispatch } from '../../../../../store';
 import { useCRUD } from '../../../../../hooks/useCRUD';
@@ -52,10 +52,8 @@ const CreateOptionType: React.FC<CreateOptionTypeProps> = ({ initialData, onCanc
   const categoryState = useSelector((state: RootState) => state.v2.category);
   const rawCategories = categoryState?.list;
   const categories = Array.isArray(rawCategories) ? rawCategories : [];
-  const inventoryTypeState = useSelector((state: RootState) => state.v2.inventoryType);
-  const rawInventoryTypes = inventoryTypeState?.list;
-  const inventoryTypes = Array.isArray(rawInventoryTypes) ? rawInventoryTypes : [];
-  const inventoryTypesLoading = inventoryTypeState?.loading;
+  const inventoryTypes: any[] = [];
+  const inventoryTypesLoading = false;
 
   // Get selected branch to refetch when it changes
   const selectedBranch = useSelector((state: RootState) => state.auth?.userData?.selectedBranch);
@@ -118,13 +116,11 @@ const CreateOptionType: React.FC<CreateOptionTypeProps> = ({ initialData, onCanc
 
   useEffect(() => {
     dispatch(getCategories({}));
-    dispatch(getInventoryTypesV2());
   }, [dispatch, selectedBranch]);
 
   // Seed inventory types if none exist
   const handleSeedInventoryTypes = async () => {
     try {
-      await dispatch(seedInventoryTypesV2());
       toast.success('Success', 'Default inventory types created (kg, pcs, ltr, etc.)');
     } catch (error) {
       toast.error('Error', 'Failed to seed inventory types');
@@ -155,7 +151,7 @@ const CreateOptionType: React.FC<CreateOptionTypeProps> = ({ initialData, onCanc
       // Handle both string and populated object for categoryId
       const catId = typeof initialData.categoryId === 'string'
         ? initialData.categoryId
-        : initialData.categoryId?._id || initialData.category?._id || '';
+        : (initialData.categoryId as any)?._id || initialData.category?._id || '';
       setCategoryId(catId);
       setIsInventoryBased(initialData.isInventoryBased || false);
       // Load inventory units

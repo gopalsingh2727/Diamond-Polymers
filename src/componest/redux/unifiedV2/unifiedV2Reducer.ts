@@ -113,15 +113,8 @@ const optionSpecV2Reducer = createEntityReducer('OPTION_SPEC');
 const optionV2Reducer = createEntityReducer('OPTION');
 const orderTypeV2Reducer = createEntityReducer('ORDER_TYPE');
 const printTypeV2Reducer = createEntityReducer('PRINT_TYPE');
-const excelExportTypeV2Reducer = createEntityReducer('EXCEL_EXPORT_TYPE');
-const excelTypeV2Reducer = createEntityReducer('EXCEL_TYPE');
 const reportTypeV2Reducer = createEntityReducer('REPORT_TYPE');
 const templateV2Reducer = createEntityReducer('TEMPLATE');
-// Inventory reducers
-const inventoryV2Reducer = createEntityReducer('INVENTORY');
-const inventoryTransactionV2Reducer = createEntityReducer('INVENTORY_TRANSACTION');
-const inventoryLocationV2Reducer = createEntityReducer('INVENTORY_LOCATION');
-const inventoryTypeV2Reducer = createEntityReducer('INVENTORY_TYPE');
 // Employee reducers
 const employeeV2Reducer = createEntityReducer('EMPLOYEE');
 
@@ -303,14 +296,8 @@ const unifiedV2Reducer = combineReducers({
   option: optionV2Reducer,
   orderType: orderTypeV2Reducer,
   printType: printTypeV2Reducer,
-  excelExportType: excelExportTypeV2Reducer,
-  excelType: excelTypeV2Reducer,
   reportType: reportTypeV2Reducer,
   template: templateV2Reducer,
-  inventory: inventoryV2Reducer,
-  inventoryTransaction: inventoryTransactionV2Reducer,
-  inventoryLocation: inventoryLocationV2Reducer,
-  inventoryType: inventoryTypeV2Reducer,
   employee: employeeV2Reducer,
   payroll: payrollV2Reducer,
   masterAdminProfile: masterAdminProfileReducer,
@@ -335,14 +322,8 @@ export {
   optionV2Reducer,
   orderTypeV2Reducer,
   printTypeV2Reducer,
-  excelExportTypeV2Reducer,
-  excelTypeV2Reducer,
   reportTypeV2Reducer,
   templateV2Reducer,
-  inventoryV2Reducer,
-  inventoryTransactionV2Reducer,
-  inventoryLocationV2Reducer,
-  inventoryTypeV2Reducer,
   employeeV2Reducer,
   payrollV2Reducer,
   masterAdminProfileReducer,

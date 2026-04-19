@@ -10,8 +10,6 @@ import  DeviceAccess from './deviceAccess/deviceAccess';
 import DiveceAccessCreate from "./deviceAccess/deviceAccessCreate";
 import CreateOrderType from "./orderType/CreateOrderType";
 import CreatePrintType from "./printType/CreatePrintType";
-import CreateExcelExportType from "./excelExportType/CreateExcelExportType";
-import { CreateExcelType } from "./excelType";
 import CreateDashboardType from "./DashboardType/CreateDashboardType";
 import CreateOptionType from "./optionType/CreateOptionType";
 import CreateOption from "./option/CreateOption";
@@ -78,8 +76,9 @@ const Layout = () => {
       items: [
         { key: "category", label: "Create Category", masterAdminOnly: false },
         { key: "optionType", label: "Create Option Type", masterAdminOnly: false },
+        { key: "option", label: "Create Option", masterAdminOnly: false },
         { key: "optionSpec", label: "Create Option Spec", masterAdminOnly: false },
-        { key: "option", label: "Create Option", masterAdminOnly: false }
+
       ]
     },
     {
@@ -90,16 +89,14 @@ const Layout = () => {
         // { key: "inventory", label: "Create Inventory", masterAdminOnly: false },
         // { key: "inventoryType", label: "Manage Units (KG, PCS)", masterAdminOnly: false },
         { key: "printType", label: "Create Print Type", masterAdminOnly: false },
-        { key: "excelType", label: "Create Excel Type", masterAdminOnly: false },
-        { key: "excelExportType", label: "Create Excel Export Type", masterAdminOnly: false },
         { key: "viewTemplate", label: "View Template", masterAdminOnly: false },
       ]
     },
     {
-      title: "Report",
+      title: "Dashboard",
       masterAdminOnly: false,
       items: [
-        { key: "reportType", label: "Create Report Type", masterAdminOnly: false }
+        { key: "reportType", label: "Create Dashboard Type", masterAdminOnly: false }
       ]
     }
   ];
@@ -130,7 +127,7 @@ const Layout = () => {
     "Device Access": false,
     "Options System": false,
     "Order Management": false,
-    "Report": false
+    "Dashboard": false
   });
 
   const toggleSection = (sectionTitle: string) => {
@@ -205,16 +202,8 @@ const Layout = () => {
         return <ErrorBoundary><CreateOption /></ErrorBoundary>;
       case "orderType":
         return <ErrorBoundary><CreateOrderType /></ErrorBoundary>;
-      case "inventory":
-        return <ErrorBoundary><CreateInventory /></ErrorBoundary>;
-      // case "inventoryType":
-      //   return <ErrorBoundary><CreateInventoryType /></ErrorBoundary>;
       case "printType":
         return <ErrorBoundary><CreatePrintType /></ErrorBoundary>;
-      case "excelType":
-        return <ErrorBoundary><CreateExcelType /></ErrorBoundary>;
-      case "excelExportType":
-        return <ErrorBoundary><CreateExcelExportType /></ErrorBoundary>;
       case "reportType":
         return <ErrorBoundary><CreateDashboardType /></ErrorBoundary>;
       case "viewTemplate":

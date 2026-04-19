@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import ReactDOM from "react-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -13,7 +13,165 @@ import FieldTooltip from "../../../../../components/shared/FieldTooltip";
 import { useInternalBackNavigation } from "../../../../allCompones/BackButton";
 import HelpDocModal, { HelpButton } from "../../../../../components/shared/HelpDocModal";
 import { printTypeHelp } from "../../../../../components/shared/helpContent";
+import { uploadTemplateFile, deleteTemplateFile, UploadProgress } from "../../../../../services/firebaseStorage";
 import "../orderType/orderType.css";
+
+// ─── Template Variables Guide ─────────────────────────────────────────────────
+const GUIDE_S = {
+  wrap:    { background: '#0f172a', borderRadius: 10, border: '1px solid #1e293b', overflow: 'hidden', marginBottom: 16 } as React.CSSProperties,
+  header:  { background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)', padding: '14px 18px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' } as React.CSSProperties,
+  title:   { color: '#fff', fontWeight: 700, fontSize: 14, margin: 0 } as React.CSSProperties,
+  body:    { padding: '16px 18px', background: '#0f172a' } as React.CSSProperties,
+  section: { marginBottom: 16 } as React.CSSProperties,
+  sh:      { color: '#94a3b8', fontSize: 11, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: 1, marginBottom: 8 } as React.CSSProperties,
+  code:    { background: '#1e293b', borderRadius: 6, padding: '8px 12px', fontFamily: 'monospace', fontSize: 12, color: '#e2e8f0', marginBottom: 8, whiteSpace: 'pre-wrap' as const, wordBreak: 'break-all' as const } as React.CSSProperties,
+  tag:     { display: 'inline-block', background: '#312e81', color: '#c7d2fe', fontSize: 11, borderRadius: 4, padding: '2px 7px', margin: '2px 3px', fontFamily: 'monospace', border: '1px solid #4338ca' } as React.CSSProperties,
+  note:    { fontSize: 11, color: '#64748b', marginTop: 6, lineHeight: 1.5 } as React.CSSProperties,
+};
+
+interface GuideSectionProps { title: string; children: React.ReactNode; defaultOpen?: boolean }
+function GuideSection({ title, children, defaultOpen = false }: GuideSectionProps) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div style={{ marginBottom: 8, border: '1px solid #1e293b', borderRadius: 8, overflow: 'hidden' }}>
+      <div style={{ padding: '10px 14px', background: '#1e293b', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} onClick={() => setOpen(o => !o)}>
+        <span style={{ color: '#cbd5e1', fontWeight: 600, fontSize: 13 }}>{title}</span>
+        <span style={{ color: '#64748b', fontSize: 16 }}>{open ? '▾' : '▸'}</span>
+      </div>
+      {open && <div style={{ padding: '12px 14px', background: '#0f172a' }}>{children}</div>}
+    </div>
+  );
+}
+
+function PrintTemplateGuide() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={GUIDE_S.wrap}>
+      <div style={GUIDE_S.header} onClick={() => setOpen(o => !o)}>
+        <div>
+          <p style={GUIDE_S.title}>📋 Print Template Variables Reference</p>
+          <p style={{ color: '#c4b5fd', fontSize: 12, margin: '4px 0 0 0' }}>All available {'{{variables}}'}, loops, and conditionals for your print templates</p>
+        </div>
+        <span style={{ color: '#fff', fontSize: 20 }}>{open ? '▾' : '▸'}</span>
+      </div>
+      {open && (
+        <div style={GUIDE_S.body}>
+
+          <GuideSection title="Order Variables" defaultOpen>
+            <div style={GUIDE_S.sh}>Basic Order Fields</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap' as const }}>
+              {['{{orderNumber}}','{{orderDate}}','{{orderStatus}}','{{orderType}}','{{grandTotal}}','{{subtotal}}','{{tax}}','{{discount}}','{{totalItems}}','{{totalQuantity}}','{{notes}}'].map(t => <span key={t} style={GUIDE_S.tag}>{t}</span>)}
+            </div>
+            <div style={GUIDE_S.note}>These come directly from the order document.</div>
+          </GuideSection>
+
+          <GuideSection title="Customer Variables">
+            <div style={GUIDE_S.sh}>Customer / Bill-To Fields</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap' as const }}>
+              {['{{customerName}}','{{customerAddress}}','{{customerPhone}}','{{customerEmail}}','{{customerId}}'].map(t => <span key={t} style={GUIDE_S.tag}>{t}</span>)}
+            </div>
+          </GuideSection>
+
+          <GuideSection title="Company Variables">
+            <div style={GUIDE_S.sh}>Your Company / Branch Fields</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap' as const }}>
+              {['{{companyName}}','{{companyAddress}}','{{companyPhone}}','{{companyEmail}}','{{companyGST}}','{{branchName}}'].map(t => <span key={t} style={GUIDE_S.tag}>{t}</span>)}
+            </div>
+          </GuideSection>
+
+          <GuideSection title="Items Loop — {{#items}}...{{/items}}">
+            <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Item Fields (inside the loop)</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap' as const }}>
+              {['{{optionName}}','{{optionCode}}','{{optionType}}','{{quantity}}','{{amount}}','{{@index}}','{{dim.weight}}','{{dim.purity}}','{{dim.rate}}','{{dim.mc_gram}}','{{dim.calculation}}','{{dim.wastage}}'].map(t => <span key={t} style={GUIDE_S.tag}>{t}</span>)}
+            </div>
+            <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, marginTop: 10 }}>Example</div>
+            <div style={GUIDE_S.code}>{`{{#items}}
+<tr>
+  <td>{{@index}}</td>
+  <td>{{optionName}}</td>
+  <td>{{quantity}}</td>
+  <td>{{dim.weight}}</td>
+  <td style="text-align:right">{{amount}}</td>
+</tr>
+{{/items}}`}</div>
+          </GuideSection>
+
+          <GuideSection title="Conditional Blocks — {{#var}}...{{/var}}">
+            <div style={GUIDE_S.note}>Show a block only when a value exists / is truthy.</div>
+            <div style={GUIDE_S.code}>{`{{#customerAddress}}
+<p>Ship To: {{customerAddress}}</p>
+{{/customerAddress}}
+
+{{#dim.weight}}
+<p>Weight: {{dim.weight}}</p>
+{{/dim.weight}}`}</div>
+          </GuideSection>
+
+          <GuideSection title="Full Invoice Example">
+            <div style={GUIDE_S.code}>{`<!DOCTYPE html>
+<html>
+<head>
+<style>
+  body { font-family: Arial, sans-serif; font-size: 12px; }
+  table { width:100%; border-collapse: collapse; }
+  th { background:#1e40af; color:#fff; padding:8px; }
+  td { border-bottom:1px solid #ddd; padding:8px; }
+  .total { font-size:16px; font-weight:bold; text-align:right; }
+</style>
+</head>
+<body>
+
+<div class="print-header">
+  <h1>{{companyName}}</h1>
+  <p>{{companyAddress}} | {{companyPhone}}</p>
+  <h2>INVOICE #{{orderNumber}}</h2>
+</div>
+
+<div class="print-body">
+  <p><strong>Bill To:</strong> {{customerName}}, {{customerAddress}}</p>
+  <p><strong>Date:</strong> {{orderDate}} | <strong>Status:</strong> {{orderStatus}}</p>
+
+  <table>
+    <thead>
+      <tr><th>#</th><th>Item</th><th>Qty</th><th>Weight</th><th>Amount</th></tr>
+    </thead>
+    <tbody>
+      {{#items}}
+      <tr>
+        <td>{{@index}}</td>
+        <td>{{optionName}} ({{optionCode}})</td>
+        <td>{{quantity}}</td>
+        <td>{{dim.weight}}</td>
+        <td>{{amount}}</td>
+      </tr>
+      {{/items}}
+    </tbody>
+  </table>
+
+  <p class="total">Grand Total: {{grandTotal}}</p>
+</div>
+
+<div class="print-footer">
+  <p style="text-align:center">Thank you for your business!</p>
+</div>
+
+</body>
+</html>`}</div>
+          </GuideSection>
+
+          <GuideSection title="Upload Tips">
+            <div style={GUIDE_S.note}>
+              <strong style={{ color: '#94a3b8' }}>HTML Upload:</strong> Upload a full .html file — it gets stored in Firebase Storage (not MongoDB), so there's no size limit or billing impact.<br/><br/>
+              <strong style={{ color: '#94a3b8' }}>Section Detection:</strong> The parser looks for elements with class <code style={{ color: '#c7d2fe' }}>.print-header</code>, <code style={{ color: '#c7d2fe' }}>.print-body</code>, <code style={{ color: '#c7d2fe' }}>.print-footer</code>, or HTML5 <code style={{ color: '#c7d2fe' }}>&lt;header&gt;</code> / <code style={{ color: '#c7d2fe' }}>&lt;main&gt;</code> / <code style={{ color: '#c7d2fe' }}>&lt;footer&gt;</code> tags.<br/><br/>
+              <strong style={{ color: '#94a3b8' }}>Style tags:</strong> All <code style={{ color: '#c7d2fe' }}>&lt;style&gt;</code> blocks are extracted into the CSS field automatically.
+            </div>
+          </GuideSection>
+
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface CreatePrintTypeProps {
   initialData?: any;
@@ -63,15 +221,21 @@ const CreatePrintType: React.FC<CreatePrintTypeProps> = ({ initialData: propInit
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  // New features state
+  // HTML upload & template library
+  const [isUploadingHtml, setIsUploadingHtml] = useState(false);
+  const [uploadedHtmlFile, setUploadedHtmlFile] = useState("");
   const [showTemplateLibrary, setShowTemplateLibrary] = useState(false);
   const [useSampleData, setUseSampleData] = useState(true);
-  const [activeTemplateField, setActiveTemplateField] = useState<'header' | 'body' | 'footer' | 'css' | null>(null);
+  const htmlFileRef = useRef<HTMLInputElement>(null);
 
-  // Refs for cursor position
-  const headerRef = useRef<HTMLTextAreaElement>(null);
-  const bodyRef = useRef<HTMLTextAreaElement>(null);
-  const footerRef = useRef<HTMLTextAreaElement>(null);
+  // Firebase Storage state
+  const [firebaseFileUrl,  setFirebaseFileUrl]  = useState("");
+  const [firebaseFileType, setFirebaseFileType] = useState<'html' | 'build' | ''>("");
+  const [firebaseFileName, setFirebaseFileName] = useState("");
+  const [firebaseFileSize, setFirebaseFileSize] = useState(0);
+  const [uploadPct,        setUploadPct]        = useState(0);
+
+  const useFirebaseFile = !!firebaseFileUrl;
 
   const dispatch = useDispatch<AppDispatch>();
   const { saveState, handleSave, toast } = useCRUD();
@@ -232,7 +396,6 @@ const CreatePrintType: React.FC<CreatePrintTypeProps> = ({ initialData: propInit
     cssTemplate: `body { font-family: Arial, sans-serif; margin: 0; padding: 10px; }`
   }];
 
-
   // Sample data generator for preview
   const generateSampleData = () => {
     return {
@@ -253,14 +416,7 @@ const CreatePrintType: React.FC<CreatePrintTypeProps> = ({ initialData: propInit
         optionType: "Packaging",
         optionCode: "PPB-001",
         quantity: 100,
-        dim: {
-          mc_gram: "50",
-          calculation: "5000",
-          wastage: "250",
-          purity: "98%",
-          weight: "5 kg",
-          rate: "₹10.00"
-        },
+        dim: { mc_gram: "50", calculation: "5000", wastage: "250", purity: "98%", weight: "5 kg", rate: "₹10.00" },
         amount: "₹1,000.00"
       },
       {
@@ -268,14 +424,7 @@ const CreatePrintType: React.FC<CreatePrintTypeProps> = ({ initialData: propInit
         optionType: "Material",
         optionCode: "SPI-002",
         quantity: 50,
-        dim: {
-          mc_gram: "25",
-          calculation: "1250",
-          wastage: "125",
-          purity: "95%",
-          weight: "1.25 kg",
-          rate: "₹25.00"
-        },
+        dim: { mc_gram: "25", calculation: "1250", wastage: "125", purity: "95%", weight: "1.25 kg", rate: "₹25.00" },
         amount: "₹1,250.00"
       },
       {
@@ -283,13 +432,9 @@ const CreatePrintType: React.FC<CreatePrintTypeProps> = ({ initialData: propInit
         optionType: "Printing",
         optionCode: "CL-003",
         quantity: 200,
-        dim: {
-          weight: "2 kg",
-          rate: "₹5.00"
-        },
+        dim: { weight: "2 kg", rate: "₹5.00" },
         amount: "₹1,000.00"
       }],
-
       subtotal: "₹3,250.00",
       tax: "₹585.00",
       discount: "₹0.00",
@@ -320,9 +465,7 @@ const CreatePrintType: React.FC<CreatePrintTypeProps> = ({ initialData: propInit
       if (!data.items || !Array.isArray(data.items)) return '';
       return data.items.map((item: any, index: number) => {
         let itemRendered = itemTemplate;
-        // Replace @index
         itemRendered = itemRendered.replace(/\{\{@index\}\}/g, String(index + 1));
-        // Replace item properties
         itemRendered = itemRendered.replace(/\{\{([^}]+)\}\}/g, (m: string, k: string) => {
           const keys = k.trim().split('.');
           let value: any = item;
@@ -348,28 +491,96 @@ const CreatePrintType: React.FC<CreatePrintTypeProps> = ({ initialData: propInit
     return rendered;
   };
 
-  // Insert variable at cursor position
-  const insertVariable = (variable: string, field: 'header' | 'body' | 'footer') => {
-    const ref = field === 'header' ? headerRef : field === 'body' ? bodyRef : footerRef;
-    const textarea = ref.current;
-    if (!textarea) return;
+  // Upload HTML file — parses sections for preview AND uploads full file to Firebase
+  const handleHtmlFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const text = textarea.value;
-    const before = text.substring(0, start);
-    const after = text.substring(end, text.length);
-    const newText = before + variable + after;
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    if (ext !== 'html' && ext !== 'htm') {
+      toast.error('Invalid File', 'Please select an .html or .htm file');
+      if (htmlFileRef.current) htmlFileRef.current.value = '';
+      return;
+    }
 
-    if (field === 'header') setHeaderTemplate(newText);else
-    if (field === 'body') setBodyTemplate(newText);else
-    setFooterTemplate(newText);
+    setIsUploadingHtml(true);
+    setUploadPct(0);
+    try {
+      const content = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsText(file);
+      });
 
-    // Set cursor position after inserted variable
-    setTimeout(() => {
-      textarea.focus();
-      textarea.setSelectionRange(start + variable.length, start + variable.length);
-    }, 0);
+      // Parse the HTML to extract sections (for preview only)
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(content, 'text/html');
+
+      const styleTags = doc.querySelectorAll('style');
+      let extractedCss = '';
+      styleTags.forEach(tag => { extractedCss += tag.textContent + '\n'; });
+
+      const headerEl = doc.querySelector('.print-header, header, [data-section="header"]');
+      const footerEl = doc.querySelector('.print-footer, footer, [data-section="footer"]');
+      const bodyEl   = doc.querySelector('.print-body, main, [data-section="body"]');
+
+      if (headerEl || bodyEl || footerEl) {
+        if (headerEl) setHeaderTemplate(headerEl.outerHTML);
+        if (bodyEl)   setBodyTemplate(bodyEl.outerHTML);
+        if (footerEl) setFooterTemplate(footerEl.outerHTML);
+      } else {
+        const bodyContent = doc.body?.innerHTML || content;
+        setBodyTemplate(bodyContent.trim());
+        setHeaderTemplate('');
+        setFooterTemplate('');
+      }
+      if (extractedCss.trim()) setCssTemplate(extractedCss.trim());
+
+      setUploadedHtmlFile(file.name);
+
+      // Upload full file to Firebase Storage
+      if (firebaseFileUrl) {
+        try { await deleteTemplateFile(firebaseFileUrl); } catch (_) {}
+      }
+      const result = await uploadTemplateFile(
+        content, file.name, 'html',
+        (p: UploadProgress) => setUploadPct(p.pct),
+        'v2/print-type/upload-url',
+      );
+      setFirebaseFileUrl(result.downloadUrl);
+      setFirebaseFileType('html');
+      setFirebaseFileName(result.fileName);
+      setFirebaseFileSize(result.fileSize);
+      setUploadPct(100);
+
+      toast.success('HTML Uploaded', `${file.name} saved to Firebase Storage`);
+      if (!showPreview) setShowPreview(true);
+    } catch (err: any) {
+      toast.error('Upload Error', err?.message || 'Could not upload the HTML file');
+      setUploadPct(0);
+    } finally {
+      setIsUploadingHtml(false);
+      if (htmlFileRef.current) htmlFileRef.current.value = '';
+    }
+  };
+
+  // Remove Firebase file
+  const handleClearFirebaseFile = async () => {
+    if (firebaseFileUrl) {
+      try { await deleteTemplateFile(firebaseFileUrl); } catch (_) {}
+    }
+    setFirebaseFileUrl('');
+    setFirebaseFileType('');
+    setFirebaseFileName('');
+    setFirebaseFileSize(0);
+    setUploadPct(0);
+    setUploadedHtmlFile('');
+    setHeaderTemplate('');
+    setBodyTemplate('');
+    setFooterTemplate('');
+    setCssTemplate('');
+    toast.success('Cleared', 'Firebase file removed');
   };
 
   // Load template from library
@@ -379,77 +590,8 @@ const CreatePrintType: React.FC<CreatePrintTypeProps> = ({ initialData: propInit
     setFooterTemplate(template.footerTemplate);
     setCssTemplate(template.cssTemplate);
     setShowTemplateLibrary(false);
+    setUploadedHtmlFile('');
     toast.success('Template Loaded', `"${template.name}" has been loaded successfully`);
-  };
-
-  // Export template as JSON
-  const exportTemplate = () => {
-    const templateData = {
-      typeName,
-      typeCode,
-      description,
-      paperSize,
-      orientation,
-      margins,
-      headerTemplate,
-      bodyTemplate,
-      footerTemplate,
-      cssTemplate,
-      linkedOrderTypes,
-      isGlobal,
-      isDefault,
-      isActive,
-      exportedAt: new Date().toISOString(),
-      version: "1.0"
-    };
-
-    const blob = new Blob([JSON.stringify(templateData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `print-template-${typeCode || 'export'}-${Date.now()}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    toast.success('Export Success', 'Template exported successfully');
-  };
-
-  // Import template from JSON
-  const importTemplate = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const data = JSON.parse(e.target?.result as string);
-
-        // Load all fields from imported data
-        if (data.typeName) setTypeName(data.typeName);
-        if (data.typeCode) setTypeCode(data.typeCode);
-        if (data.description) setDescription(data.description);
-        if (data.paperSize) setPaperSize(data.paperSize);
-        if (data.orientation) setOrientation(data.orientation);
-        if (data.margins) setMargins(data.margins);
-        if (data.headerTemplate) setHeaderTemplate(data.headerTemplate);
-        if (data.bodyTemplate) setBodyTemplate(data.bodyTemplate);
-        if (data.footerTemplate) setFooterTemplate(data.footerTemplate);
-        if (data.cssTemplate) setCssTemplate(data.cssTemplate);
-        if (data.linkedOrderTypes) setLinkedOrderTypes(data.linkedOrderTypes);
-        if (data.isGlobal !== undefined) setIsGlobal(data.isGlobal);
-        if (data.isDefault !== undefined) setIsDefault(data.isDefault);
-        if (data.isActive !== undefined) setIsActive(data.isActive);
-
-        toast.success('Import Success', 'Template imported successfully');
-      } catch (error) {
-        toast.error('Import Error', 'Invalid template file format');
-      }
-    };
-    reader.readAsText(file);
-
-    // Reset input
-    event.target.value = '';
   };
 
   // Handle ESC key to go back to list in edit mode
@@ -469,7 +611,6 @@ const CreatePrintType: React.FC<CreatePrintTypeProps> = ({ initialData: propInit
   useEffect(() => {
     if (editMode && printTypeData) {
 
-
       // Basic Information
       setTypeName(printTypeData.typeName || "");
       setTypeCode(printTypeData.typeCode || "");
@@ -487,6 +628,14 @@ const CreatePrintType: React.FC<CreatePrintTypeProps> = ({ initialData: propInit
       setBodyTemplate(printTypeData.bodyTemplate || "");
       setFooterTemplate(printTypeData.footerTemplate || "");
       setCssTemplate(printTypeData.cssTemplate || "");
+
+      // Firebase Storage metadata
+      if (printTypeData.fileUrl) {
+        setFirebaseFileUrl(printTypeData.fileUrl);
+        setFirebaseFileType(printTypeData.fileType || '');
+        setFirebaseFileName(printTypeData.fileName || '');
+        setFirebaseFileSize(printTypeData.fileSize || 0);
+      }
 
       // Linked Order Types
       if (printTypeData.linkedOrderTypes && Array.isArray(printTypeData.linkedOrderTypes)) {
@@ -510,76 +659,25 @@ const CreatePrintType: React.FC<CreatePrintTypeProps> = ({ initialData: propInit
       return;
     }
 
-    // Template validation - at least one template should have content
-    if (!headerTemplate.trim() && !bodyTemplate.trim() && !footerTemplate.trim()) {
-      toast.error("Validation Error", "Please provide at least one template (Header, Body, or Footer)");
-      return;
-    }
-
-    // Basic HTML validation - check for common unclosed tags
-    const validateHTML = (html: string, templateName: string) => {
-      const openTags = html.match(/<([a-z]+)(?:\s[^>]*)?>/gi) || [];
-      const closeTags = html.match(/<\/([a-z]+)>/gi) || [];
-      const selfClosingTags = ['br', 'hr', 'img', 'input', 'meta', 'link'];
-
-      const openTagNames = openTags.map((tag) => {
-        const match = tag.match(/<([a-z]+)/i);
-        return match ? match[1].toLowerCase() : '';
-      }).filter((tag) => !selfClosingTags.includes(tag));
-
-      const closeTagNames = closeTags.map((tag) => {
-        const match = tag.match(/<\/([a-z]+)/i);
-        return match ? match[1].toLowerCase() : '';
-      });
-
-      // Check if number of open and close tags match for common tags
-      const commonTags = ['div', 'span', 'p', 'table', 'tr', 'td', 'th', 'tbody', 'thead', 'h1', 'h2', 'h3'];
-      for (const tag of commonTags) {
-        const openCount = openTagNames.filter((t) => t === tag).length;
-        const closeCount = closeTagNames.filter((t) => t === tag).length;
-        if (openCount !== closeCount) {
-          return `${templateName} has mismatched <${tag}> tags (${openCount} open, ${closeCount} close)`;
-        }
-      }
-      return null;
-    };
-
-    // Validate each template
-    if (headerTemplate.trim()) {
-      const error = validateHTML(headerTemplate, "Header Template");
-      if (error) {
-        toast.error("Template Validation Error", error);
-        return;
-      }
-    }
-    if (bodyTemplate.trim()) {
-      const error = validateHTML(bodyTemplate, "Body Template");
-      if (error) {
-        toast.error("Template Validation Error", error);
-        return;
-      }
-    }
-    if (footerTemplate.trim()) {
-      const error = validateHTML(footerTemplate, "Footer Template");
-      if (error) {
-        toast.error("Template Validation Error", error);
-        return;
-      }
-    }
-
     // Build print type data
-    const branchId = localStorage.getItem('selectedBranch') || localStorage.getItem('selectedBranch') || '';
-    const dataToSave = {
+    const branchId = localStorage.getItem('selectedBranch') || '';
+    const dataToSave: Record<string, any> = {
       typeName,
       typeCode: typeCode.toUpperCase(),
       description,
       paperSize,
       orientation,
       margins,
-      headerTemplate,
-      bodyTemplate,
-      footerTemplate,
-      cssTemplate,
+      // If Firebase file exists, clear inline templates to save MongoDB billing
+      headerTemplate: useFirebaseFile ? '' : headerTemplate,
+      bodyTemplate:   useFirebaseFile ? '' : bodyTemplate,
+      footerTemplate: useFirebaseFile ? '' : footerTemplate,
+      cssTemplate:    useFirebaseFile ? '' : cssTemplate,
+      // Firebase Storage file metadata
+      fileUrl:   firebaseFileUrl  || '',
+      fileType:  firebaseFileType || '',
+      fileName:  firebaseFileName || '',
+      fileSize:  firebaseFileSize || 0,
       linkedOrderTypes,
       branchId,
       isGlobal,
@@ -588,7 +686,6 @@ const CreatePrintType: React.FC<CreatePrintTypeProps> = ({ initialData: propInit
     };
 
     if (editMode && printTypeId) {
-      // Update existing print type
       handleSave(
         () => dispatch(updatePrintType(printTypeId, dataToSave)),
         {
@@ -605,13 +702,11 @@ const CreatePrintType: React.FC<CreatePrintTypeProps> = ({ initialData: propInit
         }
       );
     } else {
-      // Create new print type
       handleSave(
         () => dispatch(createPrintType(dataToSave)),
         {
           successMessage: "Print type created successfully!",
           onSuccess: () => {
-            // Reset form
             setTypeName("");
             setTypeCode("");
             setDescription("");
@@ -625,6 +720,12 @@ const CreatePrintType: React.FC<CreatePrintTypeProps> = ({ initialData: propInit
             setLinkedOrderTypes([]);
             setIsGlobal(false);
             setIsDefault(false);
+            setUploadedHtmlFile("");
+            setFirebaseFileUrl("");
+            setFirebaseFileType("");
+            setFirebaseFileName("");
+            setFirebaseFileSize(0);
+            setUploadPct(0);
           }
         }
       );
@@ -653,6 +754,8 @@ const CreatePrintType: React.FC<CreatePrintTypeProps> = ({ initialData: propInit
       setDeleting(false);
     }
   };
+
+  const hasTemplateContent = !!(firebaseFileUrl || headerTemplate || bodyTemplate || footerTemplate);
 
   return (
     <div className="orderTypeContainer CreateForm">
@@ -688,7 +791,6 @@ const CreatePrintType: React.FC<CreatePrintTypeProps> = ({ initialData: propInit
               type="button"
               onClick={() => setShowDeleteConfirm(false)}
               style={{ padding: '10px 24px', background: '#e5e7eb', color: '#374151', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
-
                 Cancel
               </button>
               <button
@@ -696,7 +798,6 @@ const CreatePrintType: React.FC<CreatePrintTypeProps> = ({ initialData: propInit
               onClick={handleDelete}
               disabled={deleting}
               style={{ padding: '10px 24px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
-
                 {deleting ? 'Deleting...' : 'Delete'}
               </button>
             </div>
@@ -712,7 +813,6 @@ const CreatePrintType: React.FC<CreatePrintTypeProps> = ({ initialData: propInit
               type="button"
               onClick={onCancel}
               style={{ padding: '8px 16px', background: '#6b7280', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
-
                 Back to List
               </button>
             }
@@ -746,7 +846,6 @@ const CreatePrintType: React.FC<CreatePrintTypeProps> = ({ initialData: propInit
               alignItems: 'center',
               gap: '6px'
             }}>
-
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14zM10 11v6M14 11v6" />
               </svg>
@@ -768,7 +867,6 @@ const CreatePrintType: React.FC<CreatePrintTypeProps> = ({ initialData: propInit
                 <FieldTooltip
                   content="Enter a descriptive name for this print type (e.g., Invoice Print, Label Print, Report Print)"
                   position="right" />
-
               </div>
               <input
                 type="text"
@@ -777,7 +875,6 @@ const CreatePrintType: React.FC<CreatePrintTypeProps> = ({ initialData: propInit
                 className="orderTypeFormInput"
                 placeholder="e.g., Invoice Print"
                 required />
-
             </div>
 
             <div className="orderTypeFormColumn">
@@ -786,7 +883,6 @@ const CreatePrintType: React.FC<CreatePrintTypeProps> = ({ initialData: propInit
                 <FieldTooltip
                   content="Short code for this print type (e.g., INV, LBL, RPT). Will be converted to uppercase."
                   position="right" />
-
               </div>
               <input
                 type="text"
@@ -796,7 +892,6 @@ const CreatePrintType: React.FC<CreatePrintTypeProps> = ({ initialData: propInit
                 placeholder="e.g., INV"
                 maxLength={10}
                 required />
-
             </div>
           </div>
 
@@ -806,7 +901,6 @@ const CreatePrintType: React.FC<CreatePrintTypeProps> = ({ initialData: propInit
               <FieldTooltip
                 content="Optional description explaining when to use this print type"
                 position="right" />
-
             </div>
             <textarea
               value={description}
@@ -814,7 +908,6 @@ const CreatePrintType: React.FC<CreatePrintTypeProps> = ({ initialData: propInit
               className="orderTypeFormTextarea"
               placeholder="Describe when to use this print type..."
               rows={3} />
-
           </div>
         </div>
 
@@ -826,16 +919,12 @@ const CreatePrintType: React.FC<CreatePrintTypeProps> = ({ initialData: propInit
             <div className="orderTypeFormColumn">
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                 <label className="orderTypeInputLabel">Paper Size</label>
-                <FieldTooltip
-                  content="Select the paper size for printing"
-                  position="right" />
-
+                <FieldTooltip content="Select the paper size for printing" position="right" />
               </div>
               <select
                 value={paperSize}
                 onChange={(e) => setPaperSize(e.target.value)}
                 className="orderTypeFormInput">
-
                 <option value="A4">A4</option>
                 <option value="A5">A5</option>
                 <option value="Letter">Letter</option>
@@ -847,16 +936,12 @@ const CreatePrintType: React.FC<CreatePrintTypeProps> = ({ initialData: propInit
             <div className="orderTypeFormColumn">
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                 <label className="orderTypeInputLabel">Orientation</label>
-                <FieldTooltip
-                  content="Select page orientation"
-                  position="right" />
-
+                <FieldTooltip content="Select page orientation" position="right" />
               </div>
               <select
                 value={orientation}
                 onChange={(e) => setOrientation(e.target.value)}
                 className="orderTypeFormInput">
-
                 <option value="portrait">Portrait</option>
                 <option value="landscape">Landscape</option>
               </select>
@@ -875,7 +960,6 @@ const CreatePrintType: React.FC<CreatePrintTypeProps> = ({ initialData: propInit
                     onChange={(e) => setMargins({ ...margins, top: Number(e.target.value) })}
                     className="orderTypeFormInput"
                     min={0} />
-
                 </div>
                 <div>
                   <label style={{ fontSize: '0.75rem', color: '#666' }}>Right</label>
@@ -885,7 +969,6 @@ const CreatePrintType: React.FC<CreatePrintTypeProps> = ({ initialData: propInit
                     onChange={(e) => setMargins({ ...margins, right: Number(e.target.value) })}
                     className="orderTypeFormInput"
                     min={0} />
-
                 </div>
                 <div>
                   <label style={{ fontSize: '0.75rem', color: '#666' }}>Bottom</label>
@@ -895,7 +978,6 @@ const CreatePrintType: React.FC<CreatePrintTypeProps> = ({ initialData: propInit
                     onChange={(e) => setMargins({ ...margins, bottom: Number(e.target.value) })}
                     className="orderTypeFormInput"
                     min={0} />
-
                 </div>
                 <div>
                   <label style={{ fontSize: '0.75rem', color: '#666' }}>Left</label>
@@ -905,11 +987,193 @@ const CreatePrintType: React.FC<CreatePrintTypeProps> = ({ initialData: propInit
                     onChange={(e) => setMargins({ ...margins, left: Number(e.target.value) })}
                     className="orderTypeFormInput"
                     min={0} />
-
                 </div>
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Template Variables Guide */}
+        <PrintTemplateGuide />
+
+        {/* Template Section — Upload HTML + Template Library + Preview */}
+        <div className="orderTypeSection">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '10px' }}>
+            <h3 className="orderTypeSectionTitle" style={{ marginBottom: 0, borderBottom: 'none', paddingBottom: 0 }}>
+              Template
+              <FieldTooltip
+                content="Upload an HTML file (saved to Firebase Storage) or choose a pre-built template from the library"
+                position="right" />
+            </h3>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+              {/* Upload HTML Button */}
+              <input
+                ref={htmlFileRef}
+                type="file"
+                accept=".html,.htm"
+                onChange={handleHtmlFileUpload}
+                style={{ display: 'none' }}
+              />
+              <button
+                type="button"
+                disabled={isUploadingHtml}
+                onClick={() => htmlFileRef.current?.click()}
+                style={{
+                  padding: '8px 16px',
+                  background: '#d97706',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: isUploadingHtml ? 'not-allowed' : 'pointer',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  opacity: isUploadingHtml ? 0.7 : 1
+                }}>
+                {isUploadingHtml ? `Uploading ${uploadPct}%…` : 'Upload HTML'}
+              </button>
+
+              {/* Template Library Button */}
+              <button
+                type="button"
+                onClick={() => setShowTemplateLibrary(true)}
+                style={{
+                  padding: '8px 16px',
+                  background: '#8b5cf6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  fontWeight: 500
+                }}>
+                Template Library
+              </button>
+
+              {/* Preview Button */}
+              <button
+                type="button"
+                onClick={() => setShowPreview(!showPreview)}
+                style={{
+                  padding: '8px 16px',
+                  background: showPreview ? '#ef4444' : '#3b82f6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  fontWeight: 500
+                }}>
+                {showPreview ? 'Close Preview' : 'Live Preview'}
+              </button>
+            </div>
+          </div>
+
+          {/* Upload progress bar */}
+          {isUploadingHtml && (
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ height: 6, background: '#e2e8f0', borderRadius: 3, overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${uploadPct}%`, background: 'linear-gradient(90deg,#3b82f6,#6366f1)', borderRadius: 3, transition: 'width 0.3s ease' }} />
+              </div>
+              <div style={{ fontSize: 11, color: '#64748b', marginTop: 4 }}>Uploading to Firebase Storage… {uploadPct}%</div>
+            </div>
+          )}
+
+          {/* Firebase file saved banner */}
+          {useFirebaseFile && !isUploadingHtml && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 8, marginBottom: 12 }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2">
+                <path d="M22 11.08V12a10 10 0 11-5.93-9.14" /><path d="M22 4L12 14.01l-3-3" />
+              </svg>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#166534' }}>Firebase file saved</div>
+                <div style={{ fontSize: 11, color: '#15803d', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {firebaseFileName} {firebaseFileSize ? `(${(firebaseFileSize / 1024).toFixed(1)} KB)` : ''}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleClearFirebaseFile}
+                style={{ padding: '4px 10px', background: '#ef4444', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: 11, flexShrink: 0 }}>
+                Remove
+              </button>
+            </div>
+          )}
+
+          {/* Show loaded source badge (non-Firebase parsed file) */}
+          {uploadedHtmlFile && !useFirebaseFile &&
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+              <span style={{
+                fontSize: 12, color: '#92400e', fontWeight: 600,
+                padding: '6px 12px', background: '#fef3c7', borderRadius: 6,
+                border: '1px solid #fcd34d',
+              }}>
+                HTML: {uploadedHtmlFile}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setUploadedHtmlFile('');
+                  setHeaderTemplate('');
+                  setBodyTemplate('');
+                  setFooterTemplate('');
+                  setCssTemplate('');
+                  toast.success('Cleared', 'HTML file removed');
+                }}
+                style={{
+                  padding: '4px 10px',
+                  background: '#ef4444',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '11px'
+                }}>
+                Clear
+              </button>
+            </div>
+          }
+
+          {/* Template status */}
+          {hasTemplateContent ?
+          <div style={{
+            padding: '12px 16px',
+            background: '#f0fdf4',
+            border: '1px solid #86efac',
+            borderRadius: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            fontSize: '13px',
+            color: '#166534'
+          }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2">
+                <path d="M22 11.08V12a10 10 0 11-5.93-9.14" /><path d="M22 4L12 14.01l-3-3" />
+              </svg>
+              <span>
+                Template loaded
+                {useFirebaseFile ? ' — Firebase file' : ''}
+                {!useFirebaseFile && headerTemplate ? ' — Header' : ''}
+                {!useFirebaseFile && bodyTemplate ? ' — Body' : ''}
+                {!useFirebaseFile && footerTemplate ? ' — Footer' : ''}
+                {cssTemplate ? ' — CSS' : ''}
+              </span>
+            </div> :
+
+          <div style={{
+            padding: '16px',
+            background: '#f9fafb',
+            border: '2px dashed #d1d5db',
+            borderRadius: '8px',
+            textAlign: 'center',
+            color: '#6b7280',
+            fontSize: '13px'
+          }}>
+              <p style={{ margin: '0 0 8px 0', fontWeight: 500 }}>No template loaded</p>
+              <p style={{ margin: 0, fontSize: '12px' }}>
+                Upload an HTML file or select a template from the library to get started.
+              </p>
+            </div>
+          }
         </div>
 
         {/* Linked Order Types Section */}
@@ -919,7 +1183,6 @@ const CreatePrintType: React.FC<CreatePrintTypeProps> = ({ initialData: propInit
             <FieldTooltip
               content="Select which order types can use this print type. When an order is created with these order types, this print template will be available for printing."
               position="right" />
-
           </div>
 
           <div style={{ marginBottom: '1rem' }}>
@@ -941,7 +1204,6 @@ const CreatePrintType: React.FC<CreatePrintTypeProps> = ({ initialData: propInit
                     fontSize: '13px',
                     fontWeight: 500
                   }}>
-
                       <span>{orderType.name}</span>
                       <button
                     type="button"
@@ -956,13 +1218,11 @@ const CreatePrintType: React.FC<CreatePrintTypeProps> = ({ initialData: propInit
                       alignItems: 'center',
                       fontSize: '16px'
                     }}>
-
                         ×
                       </button>
                     </div> :
                 null;
               }) :
-
               <div style={{ fontSize: '13px', color: '#6b7280', fontStyle: 'italic' }}>
                   No order types selected. This print type will be available for all order types.
                 </div>
@@ -980,7 +1240,6 @@ const CreatePrintType: React.FC<CreatePrintTypeProps> = ({ initialData: propInit
                     setLinkedOrderTypes([...linkedOrderTypes, selectedId]);
                   }
                 }}>
-
                 <option value="">-- Select Order Type --</option>
                 {orderTypes.
                 filter((ot: any) => !linkedOrderTypes.includes(ot._id)).
@@ -990,387 +1249,6 @@ const CreatePrintType: React.FC<CreatePrintTypeProps> = ({ initialData: propInit
                     </option>
                 )}
               </select>
-            </div>
-          </div>
-        </div>
-
-        {/* Template Configuration Section */}
-        <div className="orderTypeSection">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '10px' }}>
-            <h3 className="orderTypeSectionTitle" style={{ marginBottom: 0, borderBottom: 'none', paddingBottom: 0 }}>
-              Template Configuration
-              <FieldTooltip
-                content="Define HTML and CSS templates for header, body, and footer sections of the print output"
-                position="right" />
-
-            </h3>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              <button
-                type="button"
-                onClick={() => setShowTemplateLibrary(true)}
-                style={{
-                  padding: '8px 16px',
-                  background: '#8b5cf6',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '13px',
-                  fontWeight: 500
-                }}>
-
-                📚 Template Library
-              </button>
-              <button
-                type="button"
-                onClick={exportTemplate}
-                style={{
-                  padding: '8px 16px',
-                  background: '#10b981',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '13px',
-                  fontWeight: 500
-                }}>
-
-                ⬇ Export
-              </button>
-              <label
-                style={{
-                  padding: '8px 16px',
-                  background: '#f59e0b',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                  display: 'inline-block'
-                }}>
-
-                ⬆ Import
-                <input
-                  type="file"
-                  accept=".json"
-                  onChange={importTemplate}
-                  style={{ display: 'none' }} />
-
-              </label>
-              <button
-                type="button"
-                onClick={() => setShowPreview(!showPreview)}
-                style={{
-                  padding: '8px 16px',
-                  background: showPreview ? '#ef4444' : '#3b82f6',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '13px',
-                  fontWeight: 500
-                }}>
-
-                {showPreview ? '✕ Close Preview' : '👁 Live Preview'}
-              </button>
-            </div>
-          </div>
-
-          {/* CSS Template */}
-          <div className="orderTypeFormColumn">
-            <label className="orderTypeInputLabel" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ background: '#8b5cf6', color: 'white', padding: '2px 8px', borderRadius: '4px', fontSize: '11px' }}>CSS</span>
-              CSS Styles
-            </label>
-            <textarea
-              value={cssTemplate}
-              onChange={(e) => setCssTemplate(e.target.value)}
-              className="orderTypeFormTextarea"
-              placeholder={`/* Example CSS */
-.print-header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; }
-.print-body { padding: 20px 0; }
-.print-footer { text-align: center; border-top: 1px solid #ccc; padding-top: 10px; font-size: 12px; }
-table { width: 100%; border-collapse: collapse; }
-th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-th { background-color: #f5f5f5; }`}
-              rows={8}
-              style={{ fontFamily: 'monospace', fontSize: '0.8rem', background: '#1e1e1e', color: '#d4d4d4', border: '1px solid #333' }} />
-
-          </div>
-
-          <div className="orderTypeFormColumn">
-            <label className="orderTypeInputLabel" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ background: '#22c55e', color: 'white', padding: '2px 8px', borderRadius: '4px', fontSize: '11px' }}>HTML</span>
-                Header Template
-              </div>
-              <button
-                type="button"
-                onClick={() => setActiveTemplateField(activeTemplateField === 'header' ? null : 'header')}
-                style={{
-                  padding: '4px 8px',
-                  background: activeTemplateField === 'header' ? '#3b82f6' : '#e5e7eb',
-                  color: activeTemplateField === 'header' ? 'white' : '#374151',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '11px'
-                }}>
-
-                {activeTemplateField === 'header' ? '✓ Variables' : '+ Variables'}
-              </button>
-            </label>
-            {activeTemplateField === 'header' &&
-            <div style={{ marginBottom: '8px', padding: '8px', background: '#f0f9ff', borderRadius: '4px', border: '1px solid #bfdbfe' }}>
-                <div style={{ fontSize: '11px', fontWeight: 600, marginBottom: '6px', color: '#1e40af' }}>Click to insert:</div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                  {['{{companyName}}', '{{companyAddress}}', '{{companyPhone}}', '{{orderNumber}}', '{{orderDate}}', '{{customerName}}'].map((v) =>
-                <button
-                  key={v}
-                  type="button"
-                  onClick={() => insertVariable(v, 'header')}
-                  style={{
-                    padding: '3px 8px',
-                    background: '#dbeafe',
-                    color: '#1e40af',
-                    border: '1px solid #93c5fd',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '10px',
-                    fontFamily: 'monospace'
-                  }}>
-
-                      {v}
-                    </button>
-                )}
-                </div>
-              </div>
-            }
-            <textarea
-              ref={headerRef}
-              value={headerTemplate}
-              onChange={(e) => setHeaderTemplate(e.target.value)}
-              className="orderTypeFormTextarea"
-              placeholder={`<div class="print-header">
-  <h1>Company Name</h1>
-  <p>Address Line 1, City, State - PIN</p>
-  <p>Phone: +91-XXXXXXXXXX | Email: info@company.com</p>
-</div>`}
-              rows={5}
-              style={{ fontFamily: 'monospace', fontSize: '0.8rem', background: '#fefce8', border: '1px solid #eab308' }} />
-
-          </div>
-
-          <div className="orderTypeFormColumn">
-            <label className="orderTypeInputLabel" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ background: '#3b82f6', color: 'white', padding: '2px 8px', borderRadius: '4px', fontSize: '11px' }}>HTML</span>
-                Body Template
-              </div>
-              <button
-                type="button"
-                onClick={() => setActiveTemplateField(activeTemplateField === 'body' ? null : 'body')}
-                style={{
-                  padding: '4px 8px',
-                  background: activeTemplateField === 'body' ? '#3b82f6' : '#e5e7eb',
-                  color: activeTemplateField === 'body' ? 'white' : '#374151',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '11px'
-                }}>
-
-                {activeTemplateField === 'body' ? '✓ Variables' : '+ Variables'}
-              </button>
-            </label>
-            {activeTemplateField === 'body' &&
-            <div style={{ marginBottom: '8px', padding: '8px', background: '#f0f9ff', borderRadius: '4px', border: '1px solid #bfdbfe' }}>
-                <div style={{ fontSize: '11px', fontWeight: 600, marginBottom: '6px', color: '#1e40af' }}>Click to insert:</div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                  {['{{#items}}', '{{/items}}', '{{optionName}}', '{{optionType}}', '{{quantity}}', '{{dim.weight}}', '{{dim.rate}}', '{{amount}}', '{{subtotal}}', '{{grandTotal}}'].map((v) =>
-                <button
-                  key={v}
-                  type="button"
-                  onClick={() => insertVariable(v, 'body')}
-                  style={{
-                    padding: '3px 8px',
-                    background: '#dbeafe',
-                    color: '#1e40af',
-                    border: '1px solid #93c5fd',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '10px',
-                    fontFamily: 'monospace'
-                  }}>
-
-                      {v}
-                    </button>
-                )}
-                </div>
-              </div>
-            }
-            <textarea
-              ref={bodyRef}
-              value={bodyTemplate}
-              onChange={(e) => setBodyTemplate(e.target.value)}
-              className="orderTypeFormTextarea"
-              placeholder={`<div class="print-body">
-  <h2>Invoice / Bill</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Item</th>
-        <th>Qty</th>
-        <th>Rate</th>
-        <th>Amount</th>
-      </tr>
-    </thead>
-    <tbody>
-      {{#items}}
-      <tr>
-        <td>{{optionName}}</td>
-        <td>{{quantity}}</td>
-        <td>{{dim.rate}}</td>
-        <td>{{amount}}</td>
-      </tr>
-      {{/items}}
-    </tbody>
-  </table>
-  <p><strong>Total: {{grandTotal}}</strong></p>
-</div>`}
-              rows={10}
-              style={{ fontFamily: 'monospace', fontSize: '0.8rem', background: '#eff6ff', border: '1px solid #3b82f6' }} />
-
-          </div>
-
-          <div className="orderTypeFormColumn">
-            <label className="orderTypeInputLabel" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ background: '#f97316', color: 'white', padding: '2px 8px', borderRadius: '4px', fontSize: '11px' }}>HTML</span>
-                Footer Template
-              </div>
-              <button
-                type="button"
-                onClick={() => setActiveTemplateField(activeTemplateField === 'footer' ? null : 'footer')}
-                style={{
-                  padding: '4px 8px',
-                  background: activeTemplateField === 'footer' ? '#3b82f6' : '#e5e7eb',
-                  color: activeTemplateField === 'footer' ? 'white' : '#374151',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '11px'
-                }}>
-
-                {activeTemplateField === 'footer' ? '✓ Variables' : '+ Variables'}
-              </button>
-            </label>
-            {activeTemplateField === 'footer' &&
-            <div style={{ marginBottom: '8px', padding: '8px', background: '#f0f9ff', borderRadius: '4px', border: '1px solid #bfdbfe' }}>
-                <div style={{ fontSize: '11px', fontWeight: 600, marginBottom: '6px', color: '#1e40af' }}>Click to insert:</div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                  {['{{orderNumber}}', '{{orderDate}}', '{{companyName}}', '{{companyPhone}}', '{{totalItems}}'].map((v) =>
-                <button
-                  key={v}
-                  type="button"
-                  onClick={() => insertVariable(v, 'footer')}
-                  style={{
-                    padding: '3px 8px',
-                    background: '#dbeafe',
-                    color: '#1e40af',
-                    border: '1px solid #93c5fd',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '10px',
-                    fontFamily: 'monospace'
-                  }}>
-
-                      {v}
-                    </button>
-                )}
-                </div>
-              </div>
-            }
-            <textarea
-              ref={footerRef}
-              value={footerTemplate}
-              onChange={(e) => setFooterTemplate(e.target.value)}
-              className="orderTypeFormTextarea"
-              placeholder={`<div class="print-footer">
-  <p>Thank you for your business!</p>
-  <p>Terms & Conditions Apply</p>
-</div>`}
-              rows={4}
-              style={{ fontFamily: 'monospace', fontSize: '0.8rem', background: '#fff7ed', border: '1px solid #f97316' }} />
-
-          </div>
-
-          {/* Variable Reference */}
-          <div style={{ marginTop: '12px', padding: '12px', background: '#f0f9ff', borderRadius: '8px', border: '1px solid #0ea5e9' }}>
-            <div style={{ fontSize: '13px', fontWeight: 600, color: '#0369a1', marginBottom: '8px' }}>
-              📝 Available Variables (use with {'{{variableName}}'})
-            </div>
-
-            {/* Order Variables */}
-            <div style={{ marginBottom: '10px' }}>
-              <div style={{ fontSize: '11px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Order Info:</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', fontSize: '11px' }}>
-                {['orderNumber', 'orderDate', 'orderType', 'orderStatus', 'customerName', 'customerAddress', 'customerPhone'].map((v) =>
-                <code key={v} style={{ background: '#dbeafe', padding: '2px 8px', borderRadius: '4px', color: '#1e40af' }}>
-                    {`{{${v}}}`}
-                  </code>
-                )}
-              </div>
-            </div>
-
-            {/* Option Variables */}
-            <div style={{ marginBottom: '10px' }}>
-              <div style={{ fontSize: '11px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Option Info (per item):</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', fontSize: '11px' }}>
-                {['optionName', 'optionType', 'optionCode', 'optionDimensions'].map((v) =>
-                <code key={v} style={{ background: '#d1fae5', padding: '2px 8px', borderRadius: '4px', color: '#065f46' }}>
-                    {`{{${v}}}`}
-                  </code>
-                )}
-              </div>
-            </div>
-
-            {/* Dimension Variables - Dynamic based on Option Type */}
-            <div style={{ marginBottom: '10px' }}>
-              <div style={{ fontSize: '11px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Dimension Variables (from Option):</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', fontSize: '11px' }}>
-                {['dim.mc_gram', 'dim.calculation', 'dim.wastage', 'dim.purity', 'dim.weight', 'dim.rate'].map((v) =>
-                <code key={v} style={{ background: '#fef3c7', padding: '2px 8px', borderRadius: '4px', color: '#92400e' }}>
-                    {`{{${v}}}`}
-                  </code>
-                )}
-              </div>
-              <div style={{ fontSize: '10px', color: '#6b7280', marginTop: '4px' }}>
-                Use <code style={{ background: '#fef3c7', padding: '1px 4px', borderRadius: '2px' }}>{'{{dim.YOUR_DIMENSION_NAME}}'}</code> for any dimension
-              </div>
-            </div>
-
-            {/* Calculation Variables */}
-            <div style={{ marginBottom: '10px' }}>
-              <div style={{ fontSize: '11px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Totals & Calculations:</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', fontSize: '11px' }}>
-                {['subtotal', 'tax', 'discount', 'grandTotal', 'totalItems', 'totalQuantity'].map((v) =>
-                <code key={v} style={{ background: '#fce7f3', padding: '2px 8px', borderRadius: '4px', color: '#9d174d' }}>
-                    {`{{${v}}}`}
-                  </code>
-                )}
-              </div>
-            </div>
-
-            {/* Loop Variables */}
-            <div>
-              <div style={{ fontSize: '11px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Loop through items:</div>
-              <div style={{ fontSize: '10px', color: '#6b7280', fontFamily: 'monospace', background: '#f3f4f6', padding: '8px', borderRadius: '4px' }}>
-                {'{{#items}}'}<br />
-                {'  <tr><td>{{optionName}}</td><td>{{optionType}}</td><td>{{dim.weight}}</td></tr>'}<br />
-                {'{{/items}}'}
-              </div>
             </div>
           </div>
         </div>
@@ -1392,7 +1270,6 @@ th { background-color: #f5f5f5; }`}
               padding: '20px'
             }}
             onClick={() => setShowTemplateLibrary(false)}>
-
             <div
               style={{
                 background: 'white',
@@ -1414,7 +1291,7 @@ th { background-color: #f5f5f5; }`}
                 borderRadius: '12px 12px 0 0'
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <h2 style={{ margin: 0, fontSize: '20px' }}>📚 Template Library</h2>
+                  <h2 style={{ margin: 0, fontSize: '20px' }}>Template Library</h2>
                   <button
                     type="button"
                     onClick={() => setShowTemplateLibrary(false)}
@@ -1431,7 +1308,6 @@ th { background-color: #f5f5f5; }`}
                       alignItems: 'center',
                       justifyContent: 'center'
                     }}>
-
                     ×
                   </button>
                 </div>
@@ -1451,11 +1327,9 @@ th { background-color: #f5f5f5; }`}
                       borderRadius: '8px',
                       padding: '16px',
                       cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      ':hover': { borderColor: '#8b5cf6', boxShadow: '0 4px 12px rgba(139, 92, 246, 0.2)' }
+                      transition: 'all 0.2s'
                     }}
                     onClick={() => loadTemplate(template)}>
-
                       <div style={{ display: 'flex', alignItems: 'start', gap: '12px', marginBottom: '12px' }}>
                         <div style={{
                         width: '48px',
@@ -1465,10 +1339,12 @@ th { background-color: #f5f5f5; }`}
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        fontSize: '24px',
+                        fontSize: '20px',
+                        color: 'white',
+                        fontWeight: 700,
                         flexShrink: 0
                       }}>
-                          📄
+                          {template.name.charAt(0)}
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <h3 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: 600, color: '#1f2937' }}>
@@ -1496,7 +1372,6 @@ th { background-color: #f5f5f5; }`}
                         fontSize: '13px',
                         fontWeight: 500
                       }}>
-
                         Use This Template
                       </button>
                     </div>
@@ -1508,7 +1383,7 @@ th { background-color: #f5f5f5; }`}
           document.body
         )}
 
-        {/* Live Preview Popup Modal - Using Portal */}
+        {/* Live Preview Popup Modal */}
         {showPreview && ReactDOM.createPortal(
           <div
             className="print-preview-modal-overlay"
@@ -1562,7 +1437,6 @@ th { background-color: #f5f5f5; }`}
                   <button
                     type="button"
                     onClick={() => {
-                      // Generate print HTML
                       const sampleData = generateSampleData();
                       const header = useSampleData ? renderTemplate(headerTemplate, sampleData) : headerTemplate;
                       const body = useSampleData ? renderTemplate(bodyTemplate, sampleData) : bodyTemplate;
@@ -1597,7 +1471,6 @@ th { background-color: #f5f5f5; }`}
                         </html>
                       `;
 
-                      // Use iframe for Electron compatibility (window.open is blocked)
                       const printFrame = document.createElement('iframe');
                       printFrame.style.position = 'fixed';
                       printFrame.style.right = '0';
@@ -1619,7 +1492,7 @@ th { background-color: #f5f5f5; }`}
                             printFrame.contentWindow?.focus();
                             printFrame.contentWindow?.print();
                           } catch (e) {
-
+                            // Print failed silently
                           }
                           setTimeout(() => {
                             document.body.removeChild(printFrame);
@@ -1637,8 +1510,7 @@ th { background-color: #f5f5f5; }`}
                       fontWeight: 500,
                       cursor: 'pointer'
                     }}>
-
-                    🖨️ Print
+                    Print
                   </button>
                   <button
                     type="button"
@@ -1653,13 +1525,12 @@ th { background-color: #f5f5f5; }`}
                       fontWeight: 500,
                       cursor: 'pointer'
                     }}>
-
                     Close
                   </button>
                 </div>
               </div>
 
-              {/* Popup Header Controls */}
+              {/* Sample Data Toggle */}
               <div style={{
                 padding: '10px 20px',
                 background: '#f3f4f6',
@@ -1673,7 +1544,6 @@ th { background-color: #f5f5f5; }`}
                     type="checkbox"
                     checked={useSampleData}
                     onChange={(e) => setUseSampleData(e.target.checked)} />
-
                   <span>Use Sample Data</span>
                 </label>
                 <span style={{ fontSize: '11px', color: '#6b7280' }}>
@@ -1704,10 +1574,8 @@ th { background-color: #f5f5f5; }`}
                   lineHeight: 1.5,
                   color: '#333'
                 }}>
-                  {/* CSS Styles - use style tag directly without DOMPurify for CSS */}
                   {cssTemplate && <style>{cssTemplate}</style>}
 
-                  {/* Render templates */}
                   {(() => {
                     const sampleData = generateSampleData();
                     const headerHtml = useSampleData ? renderTemplate(headerTemplate, sampleData) : headerTemplate;
@@ -1743,11 +1611,10 @@ th { background-color: #f5f5f5; }`}
                         {!headerHtml && !bodyHtml && !footerHtml &&
                         <div style={{ textAlign: 'center', color: '#6b7280', padding: '40px' }}>
                             <p style={{ fontSize: '16px', marginBottom: '10px' }}>No template content</p>
-                            <p style={{ fontSize: '12px' }}>Add HTML content to Header, Body, or Footer templates to see the preview.</p>
+                            <p style={{ fontSize: '12px' }}>Upload an HTML file or select a template from the library.</p>
                           </div>
                         }
                       </>);
-
                   })()}
                 </div>
               </div>
@@ -1787,12 +1654,10 @@ th { background-color: #f5f5f5; }`}
                 type="checkbox"
                 checked={isGlobal}
                 onChange={(e) => setIsGlobal(e.target.checked)} />
-
                 <span>Global Print Type</span>
                 <FieldTooltip
                 content="Make this print type available across all branches"
                 position="right" />
-
               </label>
             }
 
@@ -1801,12 +1666,10 @@ th { background-color: #f5f5f5; }`}
                 type="checkbox"
                 checked={isDefault}
                 onChange={(e) => setIsDefault(e.target.checked)} />
-
               <span>Set as Default</span>
               <FieldTooltip
                 content="Make this the default print type when printing"
                 position="right" />
-
             </label>
           </div>
 
@@ -1826,7 +1689,6 @@ th { background-color: #f5f5f5; }`}
                   cursor: 'pointer',
                   fontWeight: isActive ? '600' : '400'
                 }}>
-
                 Active
               </button>
               <button
@@ -1841,7 +1703,6 @@ th { background-color: #f5f5f5; }`}
                   cursor: 'pointer',
                   fontWeight: !isActive ? '600' : '400'
                 }}>
-
                 Inactive
               </button>
             </div>
@@ -1856,7 +1717,6 @@ th { background-color: #f5f5f5; }`}
             onClick={handleSubmit}
             className="orderTypeSaveButton"
             disabled={!typeName.trim() || !typeCode.trim()}>
-
             {editMode ? 'Update Print Type' : 'Create Print Type'}
           </ActionButton>
         </div>

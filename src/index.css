@@ -1,3 +1,6 @@
+/* Design tokens — must load before everything else */
+@import './styles/design-tokens.css';
+
 /* CRUD System Animations - Must be first */
 @import './styles/animations.css';
 

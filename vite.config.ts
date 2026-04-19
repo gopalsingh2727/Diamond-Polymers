@@ -29,6 +29,7 @@ export default defineConfig({
         "default-src 'self'",
         "connect-src 'self' http://localhost:* ws://localhost:* wss://* https://api.github.com https://*.27infinity.in https://*.execute-api.ap-south-1.amazonaws.com https://*.s3.ap-south-1.amazonaws.com",
         "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+        "worker-src 'self' blob:",
         "style-src 'self' 'unsafe-inline'",
         "img-src 'self' data: blob:",
         "font-src 'self' data:",

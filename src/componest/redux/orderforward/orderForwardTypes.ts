@@ -256,6 +256,31 @@ export interface OrderForwardState {
   forwardingChain: ForwardingChain | null;
   forwardingChainLoading: boolean;
 
+  // Role-based orders
+  myOrders: ForwardedOrder[];
+  myOrdersPagination: Pagination | null;
+  myOrdersLoading: boolean;
+
+  teamOrders: ForwardedOrder[];
+  teamOrdersPagination: Pagination | null;
+  teamOrdersLoading: boolean;
+
+  branchOrders: ForwardedOrder[];
+  branchOrdersPagination: Pagination | null;
+  branchOrdersLoading: boolean;
+
+  allBranchOrders: ForwardedOrder[];
+  allBranchOrdersPagination: Pagination | null;
+  allBranchOrdersLoading: boolean;
+
+  companyOrders: ForwardedOrder[];
+  companyOrdersPagination: Pagination | null;
+  companyOrdersLoading: boolean;
+
+  sharedOrders: ForwardedOrder[];
+  sharedOrdersPagination: Pagination | null;
+  sharedOrdersLoading: boolean;
+
   // UI state
   forwardModalOpen: boolean;
   connectionModalOpen: boolean;
@@ -321,6 +346,29 @@ export type OrderForwardActionTypes =
   | { type: 'SYNC_STATUS_REQUEST' }
   | { type: 'SYNC_STATUS_SUCCESS'; payload: { orderNumber: string; newStatus: string; modifiedCount: number } }
   | { type: 'SYNC_STATUS_FAILURE'; payload: string }
+  // Role-based order actions
+  | { type: 'FETCH_MY_ORDERS_REQUEST' }
+  | { type: 'FETCH_MY_ORDERS_SUCCESS'; payload: { orders: ForwardedOrder[]; pagination: Pagination } }
+  | { type: 'FETCH_MY_ORDERS_FAILURE'; payload: string }
+  | { type: 'FETCH_TEAM_ORDERS_REQUEST' }
+  | { type: 'FETCH_TEAM_ORDERS_SUCCESS'; payload: { orders: ForwardedOrder[]; pagination: Pagination } }
+  | { type: 'FETCH_TEAM_ORDERS_FAILURE'; payload: string }
+  | { type: 'FETCH_BRANCH_ORDERS_REQUEST' }
+  | { type: 'FETCH_BRANCH_ORDERS_SUCCESS'; payload: { orders: ForwardedOrder[]; pagination: Pagination } }
+  | { type: 'FETCH_BRANCH_ORDERS_FAILURE'; payload: string }
+  | { type: 'FETCH_ALL_BRANCH_ORDERS_REQUEST' }
+  | { type: 'FETCH_ALL_BRANCH_ORDERS_SUCCESS'; payload: { orders: ForwardedOrder[]; pagination: Pagination } }
+  | { type: 'FETCH_ALL_BRANCH_ORDERS_FAILURE'; payload: string }
+  | { type: 'FETCH_COMPANY_ORDERS_REQUEST' }
+  | { type: 'FETCH_COMPANY_ORDERS_SUCCESS'; payload: { orders: ForwardedOrder[]; pagination: Pagination } }
+  | { type: 'FETCH_COMPANY_ORDERS_FAILURE'; payload: string }
+  | { type: 'FETCH_SHARED_ORDERS_REQUEST' }
+  | { type: 'FETCH_SHARED_ORDERS_SUCCESS'; payload: { orders: ForwardedOrder[]; pagination: Pagination } }
+  | { type: 'FETCH_SHARED_ORDERS_FAILURE'; payload: string }
+  // Cancel order actions
+  | { type: 'CANCEL_ORDER_REQUEST' }
+  | { type: 'CANCEL_ORDER_SUCCESS'; payload: any }
+  | { type: 'CANCEL_ORDER_FAILURE'; payload: string }
   // UI actions
   | { type: 'SET_FORWARD_MODAL_OPEN'; payload: boolean }
   | { type: 'SET_CONNECTION_MODAL_OPEN'; payload: boolean }

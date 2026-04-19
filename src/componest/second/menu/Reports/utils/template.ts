@@ -97,9 +97,17 @@ export function buildFullHtml(
   dt: { htmlHeader?: string; htmlBody?: string; htmlFooter?: string; css?: string; js?: string },
   context: Record<string, any>
 ): string {
+  const body = dt.htmlBody || '';
+
+  // If htmlBody is already a complete HTML document (uploaded file), render it
+  // directly — don't wrap it again in another <html> shell.
+  if (/^\s*<!DOCTYPE\s+html/i.test(body) || /^\s*<html[\s>]/i.test(body)) {
+    return renderMustache(body, context);
+  }
+
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'Segoe UI',sans-serif;}${dt.css || ''}</style></head><body>
-${renderMustache(dt.htmlHeader || '', context)}${renderMustache(dt.htmlBody || '', context)}${renderMustache(dt.htmlFooter || '', context)}
+${renderMustache(dt.htmlHeader || '', context)}${renderMustache(body, context)}${renderMustache(dt.htmlFooter || '', context)}
 <script>${dt.js || ''}<\/script></body></html>`;
 }
 

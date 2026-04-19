@@ -337,7 +337,7 @@ const SeeAll = () => {
                   </button>
 
                   <button
-                onClick={() => navigate("/settings/branch-settings")}
+                onClick={() => navigate("/settings/branches")}
                 className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
 
                     <div className="w-10 h-10 bg-gradient-to-r from-cyan-500 to-cyan-600 rounded-lg flex items-center justify-center text-white">

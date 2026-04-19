@@ -1,56 +1,56 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-
 import { getDashboardTypesV2 as getDashboardTypes } from '../../../../redux/dashbroadtype/dashboardTypeActions';
 import { AppDispatch } from '../../../../../store';
-
 import { DashboardType } from '../types';
 import { S } from '../styles';
 import { fmtDisplay, CATEGORY_COLORS } from '../utils/template';
-import { DownloadMenu } from './DownloadMenu';
-import { SavedFilesPanel } from './SavedFilesPanel';
 import { BackButton } from '@/componest/allCompones/BackButton';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// STEP 3 — Template List
-// ─────────────────────────────────────────────────────────────────────────────
-
 interface Props {
-  fromDate: string;
-  toDate: string;
-  onSelect: (dt: DashboardType) => void;
+  fromDate:      string;
+  toDate:        string;
+  onSelect:      (dt: DashboardType) => void;
   onChangeDates: () => void;
   onRefreshData: () => void;
-  cacheInfo: string | null;
-  orderCount: number;
-  reduxOrders: any[];
+  cacheInfo:     string | null;
+  orderCount:    number;
+  reduxOrders:   any[];
 }
 
 export function TemplateList({
   fromDate, toDate, onSelect, onChangeDates, onRefreshData, cacheInfo, orderCount, reduxOrders,
 }: Props) {
   const dispatch = useDispatch<AppDispatch>();
-  const dashboardTypeState = useSelector((state: any) => state.v2?.dashboardType ?? state.dashboardType ?? {});
+
+  const dashboardTypeState = useSelector(
+    (state: any) => state.v2?.dashboardType ?? state.dashboardType ?? {},
+  );
   const rawList = dashboardTypeState?.list;
   const templates: DashboardType[] = Array.isArray(rawList)
     ? rawList
     : Array.isArray(rawList?.data)
-      ? rawList.data
-      : Array.isArray(rawList?.data?.data)
-        ? rawList.data.data
-        : [];
+    ? rawList.data
+    : Array.isArray(rawList?.data?.data)
+    ? rawList.data.data
+    : [];
+
   const loading = dashboardTypeState?.loading || false;
   const error   = dashboardTypeState?.error   || null;
 
-  const [search,    setSearch]    = useState('');
-  const [showFiles, setShowFiles] = useState(false);
+  const [search, setSearch] = useState('');
 
-  useEffect(() => { if (templates.length === 0) dispatch(getDashboardTypes()); }, [dispatch]);
+  // ✅ FIX Bug 6: added templates.length to deps so refetch fires after cache clear
+  useEffect(() => {
+    if (templates.length === 0 && !loading) {
+      dispatch(getDashboardTypes());
+    }
+  }, [dispatch, templates.length, loading]);
 
   const filtered = templates.filter(dt =>
     (dt.typeName || '').toLowerCase().includes(search.toLowerCase()) ||
     (dt.typeCode  || '').toLowerCase().includes(search.toLowerCase()) ||
-    (dt.category  || '').toLowerCase().includes(search.toLowerCase())
+    (dt.category  || '').toLowerCase().includes(search.toLowerCase()),
   );
 
   const dateLabel = fromDate
@@ -59,109 +59,134 @@ export function TemplateList({
 
   return (
     <div style={S.listPage}>
-      {showFiles && (
-        <SavedFilesPanel
-          onClose={() => setShowFiles(false)}
-          onLoad={(_from, _to) => { setShowFiles(false); }}
-        />
-      )}
 
       {/* Header */}
       <div style={S.listHeader}>
         <div style={S.listHeaderLeft}>
-          <BackButton/>
-          <span style={S.listTitle}>📊 Dashboard Reports</span>
-          <span style={S.dateBadge}>📅 {dateLabel}</span>
-          <span style={S.countBadge}>{filtered.length} templates</span>
-          {orderCount > 0 && (
-            <span style={{ ...S.countBadge, background: '#dcfce7', color: '#15803d' }}>
-              📦 {orderCount.toLocaleString()} orders
-            </span>
-          )}
-          {cacheInfo && <span style={S.cacheBadge}>⚡ {cacheInfo}</span>}
+          <BackButton />
+          <span style={S.listTitle}>Dashboard Reports</span>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <DownloadMenu fromDate={fromDate} toDate={toDate} reduxOrders={reduxOrders} />
-          <button style={{ ...S.secondaryBtn, background: '#f0fdf4', borderColor: '#bbf7d0', color: '#15803d' }} onClick={() => setShowFiles(true)}>
-            💿 Saved Files
-          </button>
-          <button style={S.secondaryBtn} onClick={onRefreshData}>🔄 Refresh</button>
+          {cacheInfo && (
+            <span style={{ fontSize: 11, color: '#64748b', fontStyle: 'italic' }}>
+              {cacheInfo}
+            </span>
+          )}
+          <button style={S.secondaryBtn} onClick={onRefreshData}>↻ Refresh Data</button>
+          <button style={S.secondaryBtn} onClick={onChangeDates}>📅 Change Dates</button>
           <button style={S.secondaryBtn} onClick={() => dispatch(getDashboardTypes())}>↻ Templates</button>
-          <button style={S.secondaryBtn} onClick={onChangeDates}>✏️ Dates</button>
         </div>
       </div>
+
+      {/* Date / order info bar */}
+      {fromDate && (
+        <div style={{
+          padding: '8px 16px', background: '#f8fafc', borderBottom: '1px solid #e2e8f0',
+          fontSize: 12, color: '#64748b', display: 'flex', gap: 16, alignItems: 'center',
+        }}>
+          <span>📅 {dateLabel}</span>
+          {orderCount > 0 && <span>✓ {orderCount.toLocaleString()} orders cached</span>}
+        </div>
+      )}
 
       {/* Search */}
-      <div style={S.searchBarWrap}>
-        <div style={S.searchBar}>
-          <span style={{ fontSize: 16, color: '#94a3b8' }}>🔍</span>
-          <input
-            type="text" placeholder="Search templates…" value={search}
-            onChange={e => setSearch(e.target.value)}
-            style={S.searchInput}
-          />
-          {search && <button onClick={() => setSearch('')} style={S.clearBtn}>✕</button>}
-        </div>
+      <div style={{ padding: '12px 16px' }}>
+        <input
+          style={{
+            width: '100%', maxWidth: 360, padding: '8px 12px',
+            border: '1px solid #e2e8f0', borderRadius: 8,
+            fontSize: 13, outline: 'none', boxSizing: 'border-box',
+          }}
+          placeholder="Search templates…"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
       </div>
 
-      {/* Body */}
+      {/* Loading */}
       {loading && (
-        <div style={S.stateBox}><div style={S.spinner} /><span>Loading templates…</span></div>
+        <div style={{ textAlign: 'center', padding: 60, color: '#64748b' }}>
+          <div style={S.bigSpinner} />
+          <div style={{ marginTop: 16 }}>Loading templates…</div>
+        </div>
       )}
+
+      {/* Error */}
       {!loading && error && (
-        <div style={{ ...S.stateBox, color: '#ef4444' }}>⚠️ {error}</div>
+        <div style={{ textAlign: 'center', padding: 60 }}>
+          <div style={{ fontSize: 40 }}>⚠️</div>
+          <div style={{ color: '#ef4444', marginTop: 8 }}>Failed to load templates</div>
+          <div style={{ color: '#64748b', fontSize: 13, marginTop: 4 }}>{error}</div>
+          <button style={{ ...S.confirmBtn, marginTop: 16 }} onClick={() => dispatch(getDashboardTypes())}>
+            🔄 Retry
+          </button>
+        </div>
       )}
-      {!loading && !error && (
-        filtered.length === 0 ? (
-          <div style={S.stateBox}>
-            <div style={{ fontSize: 48 }}>📭</div>
-            <div style={{ fontWeight: 700, color: '#374151', fontSize: 16 }}>
-              {search ? `No results for "${search}"` : 'No dashboard templates yet'}
-            </div>
-          </div>
-        ) : (
-          <div style={S.grid}>
-            {filtered.map(dt => {
-              const c = CATEGORY_COLORS[dt.category || 'other'] || CATEGORY_COLORS.other;
-              const hasTpl = !!(dt.htmlHeader || dt.htmlBody || dt.htmlFooter);
-              return (
-                <div key={dt._id} style={S.card} onClick={() => onSelect(dt)}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.transform = 'translateY(-3px)';
-                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,.1)';
-                    e.currentTarget.style.borderColor = '#3b82f6';
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,.06)';
-                    e.currentTarget.style.borderColor = '#e2e8f0';
-                  }}
-                >
-                  <div style={S.cardTopRow}>
-                    <span style={{ ...S.catBadge, background: c.bg, color: c.color }}>
-                      <span style={{ ...S.catDot, background: c.dot }} />
-                      {(dt.category || 'other').charAt(0).toUpperCase() + (dt.category || 'other').slice(1)}
-                    </span>
-                    <span style={{ ...S.tplBadge, background: hasTpl ? '#dcfce7' : '#f3f4f6', color: hasTpl ? '#15803d' : '#9ca3af' }}>
-                      {hasTpl ? '✓ Has Template' : 'No Template'}
-                    </span>
+
+      {/* Empty */}
+      {!loading && !error && filtered.length === 0 && (
+        <div style={{ textAlign: 'center', padding: 60, color: '#94a3b8' }}>
+          <div style={{ fontSize: 40 }}>📭</div>
+          <div style={{ marginTop: 8 }}>No templates found</div>
+          {search && (
+            <button style={{ ...S.secondaryBtn, marginTop: 12 }} onClick={() => setSearch('')}>
+              Clear Search
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Template Grid */}
+      {!loading && !error && filtered.length > 0 && (
+        <div style={S.grid}>
+          {filtered.map(dt => {
+            const cat   = CATEGORY_COLORS[dt.category || ''] || CATEGORY_COLORS['other'];
+            const color = cat.color;
+            const bg    = cat.bg;
+            const dot   = cat.dot;
+            return (
+              <div
+                key={dt._id ?? dt.typeCode}
+                style={S.card}
+                onClick={() => onSelect(dt)}
+              >
+                {/* coloured left accent */}
+                <div style={{ width: 4, height: '100%', minHeight: 70, background: dot, borderRadius: 4, flexShrink: 0, position: 'absolute', left: 0, top: 0, bottom: 0 }} />
+                <div style={{ paddingLeft: 14 }}>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', marginBottom: 4 }}>
+                    {dt.typeName || dt.typeCode}
                   </div>
-                  <div style={S.cardName}>{dt.typeName}</div>
-                  <div style={S.cardCode}>{dt.typeCode}</div>
-                  {dt.description && <div style={S.cardDesc}>{dt.description}</div>}
-                  <div style={S.cardFooter}>
-                    <span style={S.cardParts}>
-                      {[dt.htmlHeader && 'Header', dt.htmlBody && 'Body', dt.htmlFooter && 'Footer', dt.css && 'CSS', dt.js && 'JS']
-                        .filter(Boolean).join(' · ') || 'Empty'}
+                  {dt.typeCode && (
+                    <div style={{ fontSize: 11, color: '#94a3b8', fontFamily: 'monospace', fontWeight: 600, marginBottom: 6 }}>
+                      {dt.typeCode}
+                    </div>
+                  )}
+                  {dt.category && (
+                    <span style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 5,
+                      padding: '3px 9px', borderRadius: 20,
+                      fontSize: 11, fontWeight: 700, textTransform: 'capitalize',
+                      background: bg, color,
+                    }}>
+                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: dot, flexShrink: 0 }} />
+                      {dt.category}
                     </span>
-                    <span style={S.openBtn}>Open →</span>
-                  </div>
+                  )}
+                  {dt.description && (
+                    <div style={{ fontSize: 12, color: '#64748b', marginTop: 6, lineHeight: 1.5 }}>
+                      {dt.description}
+                    </div>
+                  )}
                 </div>
-              );
-            })}
-          </div>
-        )
+                <div style={{ marginTop: 'auto', paddingLeft: 14, paddingTop: 10, borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'flex-end' }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: '#3b82f6' }}>Open →</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       )}
+
     </div>
   );
 }

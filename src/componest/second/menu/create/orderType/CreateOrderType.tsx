@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
-import { createOrderTypeV2, updateOrderTypeV2, deleteOrderTypeV2, getOptionTypesV2, getOptionSpecsV2, getInventoryTypesV2, seedInventoryTypesV2, getPrintTypesV2, getExcelExportTypesV2 } from "../../../../redux/unifiedV2";
+import { createOrderTypeV2, updateOrderTypeV2, deleteOrderTypeV2, getOptionTypesV2, getOptionSpecsV2, getPrintTypesV2 } from "../../../../redux/unifiedV2";
 import { AppDispatch } from "../../../../../store";
 import { ActionButton } from "../../../../../components/shared/ActionButton";
 import { ToastContainer } from "../../../../../components/shared/Toast";
@@ -133,21 +133,12 @@ const CreateOrderType: React.FC<CreateOrderTypeProps> = ({ initialData: propInit
   // Linked Print Types (for print/export functionality)
   const [linkedPrintTypes, setLinkedPrintTypes] = useState<string[]>([]);
 
-  // Linked Excel Export Types (for excel export functionality)
-  const [linkedExcelExportTypes, setLinkedExcelExportTypes] = useState<string[]>([]);
-
   // Order Category Settings (manufacturing vs billing)
   const [orderCategory, setOrderCategory] = useState<'manufacturing' | 'billing'>('manufacturing');
   const [billingType, setBillingType] = useState<string>('');
   const [allowManufacturingLink, setAllowManufacturingLink] = useState(false);
   const [hideManufacturingSteps, setHideManufacturingSteps] = useState(false);
   const [allowForwarding, setAllowForwarding] = useState(true);
-
-  // Inventory Mode (none/debit/credit)
-  const [inventoryMode, setInventoryMode] = useState<'none' | 'debit' | 'credit'>('none');
-
-  // Inventory Units Configuration (for multi-unit tracking)
-  const [inventoryUnits, setInventoryUnits] = useState<{inventoryTypeId: string;isActive: boolean;isPrimary: boolean;}[]>([]);
 
   // Delete confirmation modal
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -184,59 +175,12 @@ const CreateOrderType: React.FC<CreateOrderTypeProps> = ({ initialData: propInit
   const rawPrintTypes = useSelector((state: any) => state.v2.printType?.list);
   const printTypes = Array.isArray(rawPrintTypes) ? rawPrintTypes : [];
 
-  // Get excel export types from Redux store
-  const rawExcelExportTypes = useSelector((state: any) => state.v2.excelExportType?.list);
-  const excelExportTypes = Array.isArray(rawExcelExportTypes) ? rawExcelExportTypes : [];
-
-  // Get inventory types from Redux store (units of measure)
-  const rawInventoryTypes = useSelector((state: any) => state.v2.inventoryType?.list);
-  const inventoryTypes = Array.isArray(rawInventoryTypes) ? rawInventoryTypes : [];
-  const inventoryTypesLoading = useSelector((state: any) => state.v2.inventoryType?.loading || false);
-
-  // Fetch option types, option specs, print types, excel export types, and inventory types on mount
+  // Fetch option types, option specs, and print types on mount
   useEffect(() => {
     dispatch(getOptionTypesV2());
     dispatch(getOptionSpecsV2());
     dispatch(getPrintTypesV2());
-    dispatch(getExcelExportTypesV2());
-    dispatch(getInventoryTypesV2());
   }, [dispatch]);
-
-  // Seed default inventory types
-  const handleSeedInventoryTypes = async () => {
-    try {
-      await dispatch(seedInventoryTypesV2());
-      toast.success('Success', 'Default inventory types created (kg, pcs, ltr, etc.)');
-    } catch (error) {
-      toast.error('Error', 'Failed to seed inventory types');
-    }
-  };
-
-  // Toggle inventory unit for order type
-  const toggleInventoryUnit = (unitId: string) => {
-    const existingIndex = inventoryUnits.findIndex((u) => u.inventoryTypeId === unitId);
-    if (existingIndex >= 0) {
-      // Remove it
-      const newUnits = inventoryUnits.filter((u) => u.inventoryTypeId !== unitId);
-      // If we removed the primary, set a new primary
-      if (inventoryUnits[existingIndex].isPrimary && newUnits.length > 0) {
-        newUnits[0].isPrimary = true;
-      }
-      setInventoryUnits(newUnits);
-    } else {
-      // Add it
-      const isPrimary = inventoryUnits.length === 0; // First one is primary
-      setInventoryUnits([...inventoryUnits, { inventoryTypeId: unitId, isActive: true, isPrimary }]);
-    }
-  };
-
-  // Set primary inventory unit
-  const setPrimaryUnit = (unitId: string) => {
-    setInventoryUnits(inventoryUnits.map((u) => ({
-      ...u,
-      isPrimary: u.inventoryTypeId === unitId
-    })));
-  };
 
   // Listen for WebSocket updates to refetch data in real-time
   useEffect(() => {
@@ -313,33 +257,12 @@ const CreateOrderType: React.FC<CreateOrderTypeProps> = ({ initialData: propInit
         setLinkedPrintTypes(printTypeIds);
       }
 
-      // Linked Excel Export Types
-      if (orderTypeData.linkedExcelExportTypes && Array.isArray(orderTypeData.linkedExcelExportTypes)) {
-        // Extract IDs from populated objects or use IDs directly
-        const excelTypeIds = orderTypeData.linkedExcelExportTypes.map((et: any) =>
-        typeof et === 'string' ? et : et._id
-        );
-        setLinkedExcelExportTypes(excelTypeIds);
-      }
-
       // Order Category Settings
       setOrderCategory(orderTypeData.orderCategory || 'manufacturing');
       setBillingType(orderTypeData.billingType || '');
       setAllowManufacturingLink(orderTypeData.allowManufacturingLink || false);
       setHideManufacturingSteps(orderTypeData.hideManufacturingSteps || false);
       setAllowForwarding(orderTypeData.allowForwarding !== false);
-
-      // Inventory Mode
-      setInventoryMode(orderTypeData.inventoryMode || 'none');
-
-      // Inventory Units Configuration
-      if (orderTypeData.inventoryUnits && Array.isArray(orderTypeData.inventoryUnits)) {
-        setInventoryUnits(orderTypeData.inventoryUnits.map((u: any) => ({
-          inventoryTypeId: typeof u.inventoryTypeId === 'string' ? u.inventoryTypeId : u.inventoryTypeId?._id,
-          isActive: u.isActive !== false,
-          isPrimary: u.isPrimary || false
-        })));
-      }
 
       // Section Configuration
       if (orderTypeData.sections && orderTypeData.sections.length > 0) {
@@ -632,18 +555,12 @@ const CreateOrderType: React.FC<CreateOrderTypeProps> = ({ initialData: propInit
       allowedOptionTypes,
       // Linked Print Types (for print/export)
       linkedPrintTypes,
-      // Linked Excel Export Types (for excel export)
-      linkedExcelExportTypes,
       // Order Category Settings
       orderCategory,
       billingType: orderCategory === 'billing' ? billingType : undefined,
       allowManufacturingLink: orderCategory === 'billing' ? allowManufacturingLink : false,
       hideManufacturingSteps: orderCategory === 'billing' ? hideManufacturingSteps : false,
       allowForwarding,
-      // Inventory Mode
-      inventoryMode,
-      // Inventory Units (for multi-unit tracking when inventoryMode is debit/credit)
-      inventoryUnits: inventoryMode !== 'none' ? inventoryUnits : [],
       // Section configuration for dynamic form rendering - save all sections sorted by order
       sections: sections.
       sort((a, b) => a.order - b.order).
@@ -717,15 +634,10 @@ const CreateOrderType: React.FC<CreateOrderTypeProps> = ({ initialData: propInit
             setSequencePadding(4);
             setAllowedOptionTypes([]);
             setLinkedPrintTypes([]);
-            setLinkedExcelExportTypes([]);
-            setIsGlobal(false);
-            setIsDefault(false);
             setOrderCategory('manufacturing');
             setBillingType('');
             setAllowManufacturingLink(false);
             setHideManufacturingSteps(false);
-            setInventoryMode('none');
-            setInventoryUnits([]);
             setSections(defaultSections);
             setExpandedSection(null);
             setDynamicCalculations([]);
@@ -1073,222 +985,6 @@ const CreateOrderType: React.FC<CreateOrderTypeProps> = ({ initialData: propInit
           }
         </div>
 
-        {/* Inventory Mode Section */}
-        <div className="orderTypeSection">
-          <h3 className="orderTypeSectionTitle">
-            Inventory Mode
-            <FieldTooltip
-              content="Control how orders of this type affect inventory. When Debit or Credit is selected, only inventory-based options will be available in the order form."
-              position="right" />
-            {createOrderTypeHelp.sections?.find(s => s.title === '📊 Inventory Mode Configuration') && (
-              <SectionHelpIcon
-                section={createOrderTypeHelp.sections.find(s => s.title === '📊 Inventory Mode Configuration')!}
-                size={20}
-              />
-            )}
-          </h3>
-
-          <div className="orderTypeFormRow">
-            <div className="orderTypeFormColumn">
-              <label className="orderTypeInputLabel">How should orders affect inventory?</label>
-              <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
-                <button
-                  type="button"
-                  onClick={() => setInventoryMode('none')}
-                  style={{
-                    flex: 1,
-                    padding: '16px 24px',
-                    background: inventoryMode === 'none' ? '#6b7280' : '#f3f4f6',
-                    color: inventoryMode === 'none' ? 'white' : '#374151',
-                    border: inventoryMode === 'none' ? '2px solid #4b5563' : '2px solid #e5e7eb',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontWeight: inventoryMode === 'none' ? 600 : 400,
-                    transition: 'all 0.2s'
-                  }}>
-
-                  <div style={{ fontSize: '24px', marginBottom: '8px' }}>⊘</div>
-                  <div style={{ fontSize: '14px' }}>None</div>
-                  <div style={{ fontSize: '11px', opacity: 0.7, marginTop: '4px' }}>No inventory impact</div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setInventoryMode('debit')}
-                  style={{
-                    flex: 1,
-                    padding: '16px 24px',
-                    background: inventoryMode === 'debit' ? '#ef4444' : '#f3f4f6',
-                    color: inventoryMode === 'debit' ? 'white' : '#374151',
-                    border: inventoryMode === 'debit' ? '2px solid #dc2626' : '2px solid #e5e7eb',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontWeight: inventoryMode === 'debit' ? 600 : 400,
-                    transition: 'all 0.2s'
-                  }}>
-
-                  <div style={{ fontSize: '24px', marginBottom: '8px' }}>📤</div>
-                  <div style={{ fontSize: '14px' }}>Debit</div>
-                  <div style={{ fontSize: '11px', opacity: 0.7, marginTop: '4px' }}>Reduce stock on approval</div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setInventoryMode('credit')}
-                  style={{
-                    flex: 1,
-                    padding: '16px 24px',
-                    background: inventoryMode === 'credit' ? '#10b981' : '#f3f4f6',
-                    color: inventoryMode === 'credit' ? 'white' : '#374151',
-                    border: inventoryMode === 'credit' ? '2px solid #059669' : '2px solid #e5e7eb',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontWeight: inventoryMode === 'credit' ? 600 : 400,
-                    transition: 'all 0.2s'
-                  }}>
-
-                  <div style={{ fontSize: '24px', marginBottom: '8px' }}>📥</div>
-                  <div style={{ fontSize: '14px' }}>Credit</div>
-                  <div style={{ fontSize: '11px', opacity: 0.7, marginTop: '4px' }}>Add stock on approval</div>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {inventoryMode !== 'none' &&
-          <div style={{ marginTop: '16px', padding: '16px', background: inventoryMode === 'debit' ? '#fef2f2' : '#ecfdf5', borderRadius: '8px', border: `1px solid ${inventoryMode === 'debit' ? '#ef4444' : '#10b981'}` }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: inventoryMode === 'debit' ? '#991b1b' : '#065f46' }}>
-                <span style={{ fontSize: '18px' }}>{inventoryMode === 'debit' ? '⚠️' : 'ℹ️'}</span>
-                <div>
-                  <div style={{ fontWeight: 600, fontSize: '14px' }}>
-                    {inventoryMode === 'debit' ? 'Auto-Debit Enabled' : 'Auto-Credit Enabled'}
-                  </div>
-                  <div style={{ fontSize: '12px', opacity: 0.8 }}>
-                    {inventoryMode === 'debit' ?
-                  'When orders of this type are approved, inventory will be automatically debited (reduced). Only inventory-based options will be shown in the order form.' :
-                  'When orders of this type are approved, inventory will be automatically credited (increased). Only inventory-based options will be shown in the order form.'}
-                  </div>
-                </div>
-              </div>
-            </div>
-          }
-
-          {/* Inventory Units Configuration - Show when inventoryMode is debit or credit */}
-          {inventoryMode !== 'none' &&
-          <div style={{ marginTop: '16px', padding: '16px', background: '#eff6ff', borderRadius: '8px', border: '1px solid #3b82f6' }}>
-              <div style={{ fontWeight: 600, fontSize: '14px', color: '#1e40af', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span>📏</span>
-                Inventory Units (Multi-Unit Tracking)
-              </div>
-              <p style={{ fontSize: '12px', color: '#1e40af', marginBottom: '12px' }}>
-                Select which units to track for orders of this type (e.g., track by Weight AND Pieces)
-              </p>
-
-              {inventoryTypesLoading ?
-            <p style={{ color: '#6b7280', fontSize: '13px' }}>Loading inventory units...</p> :
-            Array.isArray(inventoryTypes) && inventoryTypes.length > 0 ?
-            <>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '10px', marginBottom: '16px' }}>
-                    {inventoryTypes.map((unit: any) => {
-                  const isSelected = inventoryUnits.some((u) => u.inventoryTypeId === unit._id);
-                  const unitConfig = inventoryUnits.find((u) => u.inventoryTypeId === unit._id);
-                  return (
-                    <label
-                      key={unit._id}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        padding: '10px 14px',
-                        background: isSelected ? '#dbeafe' : 'white',
-                        border: isSelected ? '2px solid #3b82f6' : '1px solid #e5e7eb',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s'
-                      }}>
-
-                          <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => toggleInventoryUnit(unit._id)}
-                        style={{ width: '16px', height: '16px', accentColor: '#3b82f6' }} />
-
-                          <div>
-                            <div style={{ fontWeight: 500, color: '#1f2937', fontSize: '13px' }}>{unit.name}</div>
-                            <div style={{ color: '#6b7280', fontSize: '11px' }}>({unit.symbol})</div>
-                          </div>
-                          {unitConfig?.isPrimary &&
-                      <span style={{ fontSize: '10px', background: '#3b82f6', color: 'white', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>
-                              Primary
-                            </span>
-                      }
-                        </label>);
-
-                })}
-                  </div>
-
-                  {/* Primary Unit Selector */}
-                  {inventoryUnits.length > 1 &&
-              <div style={{ marginTop: '12px', padding: '12px', background: '#dbeafe', borderRadius: '8px' }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 500, color: '#1e40af' }}>
-                        Primary Unit:
-                        <select
-                    value={inventoryUnits.find((u) => u.isPrimary)?.inventoryTypeId || ''}
-                    onChange={(e) => setPrimaryUnit(e.target.value)}
-                    style={{
-                      padding: '6px 12px',
-                      border: '1px solid #93c5fd',
-                      borderRadius: '6px',
-                      fontSize: '13px',
-                      cursor: 'pointer',
-                      background: 'white'
-                    }}>
-
-                          {inventoryUnits.map((u) => {
-                      const unit = inventoryTypes.find((t: any) => t._id === u.inventoryTypeId);
-                      return unit ?
-                      <option key={unit._id} value={unit._id}>
-                                {unit.name} ({unit.symbol})
-                              </option> :
-                      null;
-                    })}
-                        </select>
-                      </label>
-                      <p style={{ fontSize: '11px', color: '#1e40af', marginTop: '6px', marginLeft: '0' }}>
-                        The primary unit is used for default display and calculations.
-                      </p>
-                    </div>
-              }
-
-                  {inventoryUnits.length === 0 &&
-              <p style={{ fontSize: '12px', color: '#dc2626', padding: '12px', background: '#fee2e2', borderRadius: '6px' }}>
-                      Please select at least one inventory unit to track.
-                    </p>
-              }
-                </> :
-
-            <div style={{ textAlign: 'center', padding: '16px' }}>
-                  <p style={{ color: '#6b7280', marginBottom: '12px' }}>No inventory units found.</p>
-                  <button
-                type="button"
-                onClick={handleSeedInventoryTypes}
-                style={{
-                  padding: '10px 20px',
-                  background: '#3b82f6',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: 500
-                }}>
-
-                    Create Default Units (kg, pcs, ltr, etc.)
-                  </button>
-                </div>
-            }
-            </div>
-          }
-        </div>
-
         {/* Numbering Configuration Section */}
         <div className="orderTypeSection">
           <h3 className="orderTypeSectionTitle">Order Numbering</h3>
@@ -1630,92 +1326,6 @@ const CreateOrderType: React.FC<CreateOrderTypeProps> = ({ initialData: propInit
                   {linkedPrintTypes.length === 0 ?
                 "No print types selected (all print types will be available)" :
                 `${linkedPrintTypes.length} print type(s) selected`
-                }
-                </div>
-              }
-            </div>
-          </div>
-        </div>
-
-        {/* Linked Excel Export Types Section */}
-        <div className="orderTypeSection">
-          <h3 className="orderTypeSectionTitle">
-            Linked Excel Export Types
-            <FieldTooltip
-              content="Select which excel export types/templates are available when exporting orders of this type to Excel. These will appear in the export dialog."
-              position="right" />
-            {createOrderTypeHelp.sections?.find(s => s.title === '📊 Linked Excel Export Types') && (
-              <SectionHelpIcon
-                section={createOrderTypeHelp.sections.find(s => s.title === '📊 Linked Excel Export Types')!}
-                size={20}
-              />
-            )}
-          </h3>
-
-          <div className="orderTypeFormRow">
-            <div style={{ width: '100%' }}>
-              {excelExportTypes.length === 0 ?
-              <div style={{ color: '#666', fontStyle: 'italic', padding: '16px', background: '#fef3c7', borderRadius: '8px', border: '1px solid #fbbf24' }}>
-                  <p style={{ margin: 0 }}>No excel export types available.</p>
-                  <p style={{ margin: '8px 0 0', fontSize: '13px' }}>Create excel export types in Settings &gt; Excel Export Types to enable Excel export functionality for orders.</p>
-                </div> :
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '0.5rem' }}>
-                  {excelExportTypes.map((excelType: any) =>
-                <label
-                  key={excelType._id}
-                  className="orderTypeCheckboxLabel"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: '0.5rem',
-                    padding: '0.75rem',
-                    border: linkedExcelExportTypes.includes(excelType._id) ? '2px solid #10b981' : '1px solid #e0e0e0',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    background: linkedExcelExportTypes.includes(excelType._id) ? '#ecfdf5' : 'white',
-                    transition: 'all 0.2s'
-                  }}>
-
-                      <input
-                    type="checkbox"
-                    checked={linkedExcelExportTypes.includes(excelType._id)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setLinkedExcelExportTypes([...linkedExcelExportTypes, excelType._id]);
-                      } else {
-                        setLinkedExcelExportTypes(linkedExcelExportTypes.filter((id) => id !== excelType._id));
-                      }
-                    }}
-                    style={{ marginTop: '0.25rem', flexShrink: 0 }} />
-
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          {excelType.typeName}
-                          {excelType.isDefault &&
-                      <span style={{ fontSize: '10px', background: '#10b981', color: 'white', padding: '2px 6px', borderRadius: '4px' }}>
-                              Default
-                            </span>
-                      }
-                        </div>
-                        <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '4px' }}>
-                          {excelType.typeCode && <span style={{ fontFamily: 'monospace' }}>({excelType.typeCode})</span>}
-                        </div>
-                        {excelType.description &&
-                    <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
-                            {excelType.description}
-                          </div>
-                    }
-                      </div>
-                    </label>
-                )}
-                </div>
-              }
-              {excelExportTypes.length > 0 &&
-              <div style={{ marginTop: '0.75rem', fontSize: '0.875rem', color: '#666' }}>
-                  {linkedExcelExportTypes.length === 0 ?
-                "No excel export types selected (all excel export types will be available)" :
-                `${linkedExcelExportTypes.length} excel export type(s) selected`
                 }
                 </div>
               }

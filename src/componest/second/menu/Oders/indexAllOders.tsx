@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useLocation } from "react-router-dom";
 import { BackButton } from "../../../allCompones/BackButton";
@@ -10,11 +11,11 @@ import ForwardOrderModal from "../OrderForward/components/ForwardOrderModal";
 import OrderDetailsModal from "./OrderDetailsModal";
 
 // Import Redux actions
-import { fetchOrders } from "../../../redux/oders/OdersActions";
+import { fetchOrders, fetchOrderDetails } from "../../../redux/oders/OdersActions";
 import { getOrderFormDataIfNeeded } from "../../../redux/oders/orderFormDataActions";
 import { RootState } from "../../../redux/rootReducer";
 import { AppDispatch } from "../../../../store";
-import { useDaybookUpdates, useWebSocketStatus } from "../../../../hooks/useWebSocket"; // ✅ WebSocket real-time updates
+import { useDaybookUpdates, useWebSocketStatus } from "../../../../hooks/useWebSocket";
 
 interface OrderFilters {
   status: string;
@@ -24,9 +25,38 @@ interface OrderFilters {
   operatorIds: string[];
   orderTypeId: string;
   stepNames: string[];
-  machineStatus: string; // Machine-level status filter
+  machineStatus: string;
   search: string;
 }
+
+
+// ── Portal Menu: renders outside any overflow/stacking context ──────────
+const PortalMenu: React.FC<{
+  open: boolean;
+  anchorEl: HTMLButtonElement | null;
+  children: React.ReactNode;
+  minWidth?: number;
+}> = ({ open, anchorEl, children, minWidth = 180 }) => {
+  const [pos, setPos] = useState({ top: 0, left: 0, width: 0 });
+
+  useEffect(() => {
+    if (open && anchorEl) {
+      const r = anchorEl.getBoundingClientRect();
+      setPos({ top: r.bottom + 3, left: r.left, width: Math.max(r.width, minWidth) });
+    }
+  }, [open, anchorEl, minWidth]);
+
+  if (!open) return null;
+  return createPortal(
+    <div
+      className="multi-select-menu"
+      style={{ top: pos.top, left: pos.left, width: pos.width, position: "fixed", zIndex: 99999 }}
+    >
+      {children}
+    </div>,
+    document.body
+  );
+};
 
 const IndexAllOders = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -42,29 +72,15 @@ const IndexAllOders = () => {
   const stepsFromFormData = orderFormData?.data?.steps || [];
 
   const ordersState = useSelector((state: RootState) => state.orders as any);
-  // Orders are in state.orders.list (orderListReducer)
   const orders = ordersState?.list?.orders || ordersState?.orders || [];
   const ordersLoading = ordersState?.list?.loading || ordersState?.loading || false;
   const ordersError = ordersState?.list?.error || ordersState?.error || null;
 
-  // Get statusCounts, summary, and pagination from API response for accurate totals
-  const statusCounts = ordersState?.list?.statusCounts || null;
-  const summary = ordersState?.list?.summary || null;
+  const statusCounts = null; // removed summary cards
+  const summary = null;      // removed summary cards
   const pagination = ordersState?.list?.pagination || null;
 
-  // Debug logging
-  useEffect(() => {
-
-
-
-
-
-
-
-
-  }, [ordersState, orders, machineTypes, machines, operators, orderTypes, orderFormData, stepsFromFormData]);
-
-  // Filters state (old working pattern)
+  // Filters state
   const [filters, setFilters] = useState<OrderFilters>({
     status: '',
     priority: '',
@@ -77,17 +93,19 @@ const IndexAllOders = () => {
     search: ''
   });
 
-  // Date range filters - empty by default to show all orders
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
 
-  // Dropdown state for multi-select filters
+  // Dropdown state + anchor refs for portal positioning
   const [machineTypeDropdownOpen, setMachineTypeDropdownOpen] = useState(false);
   const [machineNameDropdownOpen, setMachineNameDropdownOpen] = useState(false);
   const [operatorDropdownOpen, setOperatorDropdownOpen] = useState(false);
   const [stepNameDropdownOpen, setStepNameDropdownOpen] = useState(false);
+  const machineTypeAnchor = useRef<HTMLButtonElement | null>(null);
+  const machineNameAnchor = useRef<HTMLButtonElement | null>(null);
+  const operatorAnchor    = useRef<HTMLButtonElement | null>(null);
+  const stepNameAnchor    = useRef<HTMLButtonElement | null>(null);
 
-  // Expanded rows for step details
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
   // Forward order modal state
@@ -98,53 +116,57 @@ const IndexAllOders = () => {
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
 
-  // Pagination
+  // Edit loading state (same as Daybook)
+  const [editLoading, setEditLoading] = useState(false);
+
+  // ✅ FIX: Pagination — page is purely for server-side requests
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(50); // ✅ Load 50 orders per page for performance
+  const itemsPerPage = 50;
 
-  // Status and Priority options
+  // ✅ Ref to prevent double-fetch when resetting page and filters simultaneously
+  const isFetchingRef = useRef(false);
+
   const statusOptions = [
-  { value: '', label: 'All Status' },
-  { value: 'Wait for Approval', label: 'Wait for Approval' },
-  { value: 'pending', label: 'Pending' },
-  { value: 'approved', label: 'Approved' },
-  { value: 'in_progress', label: 'In Progress' },
-  { value: 'completed', label: 'Completed' },
-  { value: 'dispatched', label: 'Dispatched' },
-  { value: 'issue', label: 'Issue' },
-  { value: 'cancelled', label: 'Cancelled' }];
-
+    { value: '', label: 'All Status' },
+    { value: 'Wait for Approval', label: 'Wait for Approval' },
+    { value: 'pending', label: 'Pending' },
+    { value: 'approved', label: 'Approved' },
+    { value: 'in_progress', label: 'In Progress' },
+    { value: 'completed', label: 'Completed' },
+    { value: 'dispatched', label: 'Dispatched' },
+    { value: 'issue', label: 'Issue' },
+    { value: 'cancelled', label: 'Cancelled' },
+  ];
 
   const priorityOptions = [
-  { value: '', label: 'All Priority' },
-  { value: 'urgent', label: 'Urgent' },
-  { value: 'high', label: 'High' },
-  { value: 'normal', label: 'Normal' },
-  { value: 'low', label: 'Low' }];
+    { value: '', label: 'All Priority' },
+    { value: 'urgent', label: 'Urgent' },
+    { value: 'high', label: 'High' },
+    { value: 'normal', label: 'Normal' },
+    { value: 'low', label: 'Low' },
+  ];
 
-
-  // Machine status options (step machine level)
   const machineStatusOptions = [
-  { value: '', label: 'All Machine Status' },
-  { value: 'none', label: 'None' },
-  { value: 'pending', label: 'Pending' },
-  { value: 'in-progress', label: 'In Progress' },
-  { value: 'completed', label: 'Completed' },
-  { value: 'paused', label: 'Paused' },
-  { value: 'error', label: 'Error' },
-  { value: 'issue', label: 'Issue' }];
+    { value: '', label: 'All Machine Status' },
+    { value: 'none', label: 'None' },
+    { value: 'pending', label: 'Pending' },
+    { value: 'in-progress', label: 'In Progress' },
+    { value: 'completed', label: 'Completed' },
+    { value: 'paused', label: 'Paused' },
+    { value: 'error', label: 'Error' },
+    { value: 'issue', label: 'Issue' },
+  ];
 
-
-  // Helper function to fetch orders - ✅ Server-side filtering for performance
-  const fetchOrdersData = useCallback(() => {
+  // ✅ FIX: Single unified fetch function — no duplicate triggers
+  const fetchOrdersData = useCallback((overridePage?: number) => {
+    const page = overridePage ?? currentPage;
     const apiFilters: any = {
-      page: currentPage,
+      page,
       limit: itemsPerPage,
       sortBy: 'createdAt',
-      sortOrder: 'desc'
+      sortOrder: 'desc',
     };
 
-    // ✅ Send date filters to API to reduce database load (server-side filtering)
     if (fromDate) apiFilters.startDate = fromDate;
     if (toDate) apiFilters.endDate = toDate;
     if (filters.search) apiFilters.search = filters.search;
@@ -155,496 +177,297 @@ const IndexAllOders = () => {
     dispatch(fetchOrders(apiFilters));
   }, [dispatch, currentPage, itemsPerPage, fromDate, toDate, filters.search, filters.status, filters.priority, filters.orderTypeId]);
 
-  // Get branchId from auth state for WebSocket subscription
   const authState = useSelector((state: RootState) => state.auth);
   const selectedBranch = useSelector((state: RootState) => state.auth.userData?.selectedBranch);
   const branchId = selectedBranch || (authState as any)?.user?.branchId || localStorage.getItem('selectedBranch') || null;
 
-  // ✅ Listen for branch changes and refresh orders
+  const { isConnected: wsConnected } = useWebSocketStatus();
+
+  // ✅ FIX: Branch change — reset and fetch once (page 1)
+  const lastBranchRef = useRef<string | null>(null);
   useEffect(() => {
-    if (selectedBranch) {
-      console.log('🔄 Orders list refreshing for new branch:', selectedBranch);
-      // Reset filters and pagination when branch changes
+    if (selectedBranch && selectedBranch !== lastBranchRef.current) {
+      lastBranchRef.current = selectedBranch;
       setFilters({
-        status: '',
-        priority: '',
-        machineTypeIds: [],
-        machineNames: [],
-        operatorIds: [],
-        orderTypeId: '',
-        stepNames: [],
-        machineStatus: '',
-        search: ''
+        status: '', priority: '', machineTypeIds: [], machineNames: [],
+        operatorIds: [], orderTypeId: '', stepNames: [], machineStatus: '', search: '',
       });
       setFromDate('');
       setToDate('');
       setCurrentPage(1);
-      // Fetch fresh orders
-      dispatch(fetchOrders({}));
+      dispatch(fetchOrders({ page: 1, limit: itemsPerPage, sortBy: 'createdAt', sortOrder: 'desc' }));
     }
   }, [selectedBranch, dispatch]);
 
-  // ✅ WebSocket status for real-time indicator
-  const { isConnected: wsConnected, status: wsStatus } = useWebSocketStatus();
-
-  // ✅ Reset page when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [fromDate, toDate, filters.status, filters.priority, filters.orderTypeId, filters.search]);
-
-  // ✅ Load orders when filters or page changes (server-side filtering)
+  // ✅ FIX: Fetch on page change only (filters have their own effect below)
   useEffect(() => {
     fetchOrdersData();
-    // Also load machine types and machines on mount
-    if (location.key) {
-      dispatch(getOrderFormDataIfNeeded());
-    }
+    dispatch(getOrderFormDataIfNeeded());
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dispatch, currentPage, fromDate, toDate, filters.status, filters.priority, filters.orderTypeId, filters.search, location.key]);
+  }, [currentPage]);
 
-  // ✅ WebSocket real-time subscription for live order updates
-  // NO NEED to refetch - Redux state is automatically updated by WebSocket middleware
-  // The reducer already handles: ORDER_CREATED_VIA_WS, ORDER_UPDATED_VIA_WS, ORDER_DELETED_VIA_WS, etc.
-  // Subscribe to real-time daybook updates via WebSocket (this enables WebSocket events)
-  useDaybookUpdates(branchId, undefined); // Pass undefined - we don't need the callback
+  // ✅ FIX: Fetch on filter changes — reset to page 1 and fetch in ONE effect (no double fetch)
+  const filtersKey = `${fromDate}|${toDate}|${filters.status}|${filters.priority}|${filters.orderTypeId}|${filters.search}`;
+  const prevFiltersKeyRef = useRef(filtersKey);
+  useEffect(() => {
+    if (filtersKey === prevFiltersKeyRef.current) return; // no change
+    prevFiltersKeyRef.current = filtersKey;
+    // Reset to page 1 and fetch with page=1 directly (avoids double-fetch from page change effect)
+    setCurrentPage(1);
+    const apiFilters: any = {
+      page: 1,
+      limit: itemsPerPage,
+      sortBy: 'createdAt',
+      sortOrder: 'desc',
+    };
+    if (fromDate) apiFilters.startDate = fromDate;
+    if (toDate) apiFilters.endDate = toDate;
+    if (filters.search) apiFilters.search = filters.search;
+    if (filters.status) apiFilters.status = filters.status;
+    if (filters.priority) apiFilters.priority = filters.priority;
+    if (filters.orderTypeId) apiFilters.orderTypeId = filters.orderTypeId;
+    dispatch(fetchOrders(apiFilters));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtersKey]);
 
-  // Get machines for selected machine types (multiple)
+  // WebSocket subscription
+  useDaybookUpdates(branchId, undefined);
+
+  // Machines for selected types
   const machinesForSelectedTypes = useMemo(() => {
     if (filters.machineTypeIds.length === 0) return machines;
-
     const filteredMachines: any[] = [];
     filters.machineTypeIds.forEach((typeId) => {
       const selectedType = machineTypes.find((mt: any) => mt._id === typeId);
       if (selectedType?.machines) {
         filteredMachines.push(...selectedType.machines);
       } else {
-        const typeMachines = machines.filter((m: any) => m.machineType?._id === typeId);
-        filteredMachines.push(...typeMachines);
+        filteredMachines.push(...machines.filter((m: any) => m.machineType?._id === typeId));
       }
     });
     return filteredMachines;
   }, [filters.machineTypeIds, machineTypes, machines]);
 
-  // Get operators - combine API data with operators from orders
+  // Available operators
   const availableOperators = useMemo(() => {
-    const operatorMap = new Map<string, {id: string;name: string;}>();
-
-    // First add operators from API (orderFormData)
+    const operatorMap = new Map<string, {id: string; name: string}>();
     operators.forEach((op: any) => {
-      if (op._id && op.operatorName) {
-        operatorMap.set(op._id, { id: op._id, name: op.operatorName });
-      }
+      if (op._id && op.operatorName) operatorMap.set(op._id, { id: op._id, name: op.operatorName });
     });
-
-    // Also extract operators from orders (in case some are not in the API list)
     orders.forEach((order: any) => {
-      const operatorName = order.operator || order.assignedOperator || order.operatorName;
-      const operatorId = order.operatorId || order.assignedOperatorId || operatorName;
-
-      if (operatorName && operatorId && !operatorMap.has(operatorId)) {
-        operatorMap.set(operatorId, { id: operatorId, name: operatorName });
-      }
-
-      // Also check steps for operators
       order.steps?.forEach((step: any) => {
         step.machines?.forEach((machine: any) => {
-          const machineOperator = machine.operator || machine.operatorName;
-          const machineOperatorId = machine.operatorId || machineOperator;
-
-          if (machineOperator && machineOperatorId && !operatorMap.has(machineOperatorId)) {
-            operatorMap.set(machineOperatorId, { id: machineOperatorId, name: machineOperator });
-          }
+          const name = machine.operator || machine.operatorName;
+          const id = machine.operatorId || name;
+          if (name && id && !operatorMap.has(id)) operatorMap.set(id, { id, name });
         });
       });
     });
-
     return Array.from(operatorMap.values());
   }, [operators, orders]);
 
-  // Filter orders based on filters
+  // ✅ FIX: Client-side filters (machine type/name/operator/step/machineStatus) applied to current page data
   const filteredOrders = useMemo(() => {
     if (!orders || !Array.isArray(orders)) return [];
 
-    return orders.filter((order: any, index: number) => {
-      // Status filter
-      if (filters.status && order.overallStatus !== filters.status) return false;
-
-      // Priority filter
-      if (filters.priority && order.priority !== filters.priority) return false;
-
-      // Order Type filter
-      if (filters.orderTypeId && order.orderTypeId !== filters.orderTypeId &&
-      order.orderTypeId?._id !== filters.orderTypeId) return false;
-
-      // Machine Type filter (multiple)
+    return orders.filter((order: any) => {
+      // Machine Type filter
       if (filters.machineTypeIds.length > 0) {
         const orderMachines = order.steps?.flatMap((step: any) => step.machines || []) || [];
         const hasMachineType = orderMachines.some((m: any) =>
-        filters.machineTypeIds.includes(m.machineType) ||
-        filters.machineTypeIds.some((typeId) =>
-        machineTypes.find((mt: any) => mt._id === typeId)?.type === m.machineType
-        )
+          filters.machineTypeIds.includes(m.machineType) ||
+          filters.machineTypeIds.some((typeId) =>
+            machineTypes.find((mt: any) => mt._id === typeId)?.type === m.machineType
+          )
         );
         if (!hasMachineType) return false;
       }
 
-      // Machine Name filter (multiple)
+      // Machine Name filter
       if (filters.machineNames.length > 0) {
         const orderMachines = order.steps?.flatMap((step: any) => step.machines || []) || [];
-
-        // Debug: Log first order's machines for troubleshooting
-        if (index === 0) {
-
-
-
-
-
-
-
-
-
-
-        }
-
         const hasMachine = orderMachines.some((m: any) => {
-          // Get the machine ID - could be ObjectId, string, or populated object
-          const machineIdStr = typeof m.machineId === 'object' ?
-          m.machineId?._id?.toString() || m.machineId?.toString() :
-          m.machineId?.toString();
-
+          const machineIdStr = typeof m.machineId === 'object'
+            ? m.machineId?._id?.toString() || m.machineId?.toString()
+            : m.machineId?.toString();
           return filters.machineNames.includes(machineIdStr) ||
-          filters.machineNames.includes(m.machineName) ||
-          filters.machineNames.includes(m._id?.toString()) ||
-          // Also check if the machineId object has a matching _id
-          m.machineId?._id && filters.machineNames.includes(m.machineId._id.toString());
+            filters.machineNames.includes(m.machineName) ||
+            (m.machineId?._id && filters.machineNames.includes(m.machineId._id.toString()));
         });
         if (!hasMachine) return false;
       }
 
-      // Operator filter (multiple)
+      // Operator filter
       if (filters.operatorIds.length > 0) {
-        const orderOperator = order.operator || order.assignedOperator || order.operatorName || order.operatorId;
         const stepOperators = order.steps?.flatMap((step: any) =>
-        step.machines?.map((m: any) => m.operator || m.operatorName || m.operatorId) || []
+          step.machines?.map((m: any) => m.operator || m.operatorName || m.operatorId) || []
         ) || [];
-
-        const allOperators = [orderOperator, ...stepOperators].filter(Boolean);
-        const hasOperator = allOperators.some((op) => filters.operatorIds.includes(op));
-        if (!hasOperator) return false;
+        const allOperators = [order.operatorId, ...stepOperators].filter(Boolean);
+        if (!allOperators.some((op) => filters.operatorIds.includes(op))) return false;
       }
 
-      // Step Name filter (multiple)
+      // Step Name filter
       if (filters.stepNames.length > 0) {
         const orderStepNames = order.steps?.map((step: any, idx: number) =>
-        step.stepName || step.name || step.stepId?.stepName || step.stepId?.name || `Step ${idx + 1}`
+          step.stepName || step.name || step.stepId?.stepName || `Step ${idx + 1}`
         ) || [];
-        const hasStepName = orderStepNames.some((name: string) => filters.stepNames.includes(name));
-        if (!hasStepName) return false;
+        if (!orderStepNames.some((name: string) => filters.stepNames.includes(name))) return false;
       }
 
-      // Machine Status filter (filters orders that have at least one machine with selected status)
+      // Machine Status filter
       if (filters.machineStatus) {
         const orderMachines = order.steps?.flatMap((step: any) => step.machines || []) || [];
-        const hasMachineWithStatus = orderMachines.some((m: any) => m.status === filters.machineStatus);
-        if (!hasMachineWithStatus) return false;
-      }
-
-      // ✅ Date range filter removed - API handles this now (server-side filtering)
-
-      // Search filter
-      if (filters.search) {
-        const searchLower = filters.search.toLowerCase();
-        const matchesOrderNumber = order.orderNumber?.toLowerCase().includes(searchLower) ||
-        order.orderId?.toLowerCase().includes(searchLower);
-        const matchesCompany = order.customer?.companyName?.toLowerCase().includes(searchLower) ||
-        order.customerId?.companyName?.toLowerCase().includes(searchLower);
-        const matchesId = order._id?.toLowerCase().includes(searchLower);
-        if (!matchesOrderNumber && !matchesCompany && !matchesId) return false;
+        if (!orderMachines.some((m: any) => m.status === filters.machineStatus)) return false;
       }
 
       return true;
     });
-  }, [orders, filters, machineTypes, fromDate, toDate]);
+  }, [orders, filters, machineTypes]);
 
-  // Flatten orders to show each step as a separate row
+  // ✅ FIX: Flatten rows AND attach orderIndex for correct "No" column numbering
   const flattenedOrderRows = useMemo(() => {
     const rows: any[] = [];
+    let orderIdx = 0;
 
     filteredOrders.forEach((order: any) => {
       const steps = order.steps || [];
-
       if (steps.length === 0) {
-        // Order has no steps - show as single row
         rows.push({
-          order,
-          step: null,
-          stepIndex: -1,
-          isFirstRow: true,
-          totalSteps: 0,
-          rowKey: `${order._id}-no-step`
+          order, step: null, stepIndex: -1,
+          isFirstRow: true, totalSteps: 0,
+          rowKey: `${order._id}-no-step`,
+          orderIndex: orderIdx,
         });
+        orderIdx++;
       } else {
-        // Order has steps - create a row for each step
         steps.forEach((step: any, stepIndex: number) => {
           rows.push({
-            order,
-            step,
-            stepIndex,
+            order, step, stepIndex,
             isFirstRow: stepIndex === 0,
             totalSteps: steps.length,
-            rowKey: `${order._id}-step-${stepIndex}`
+            rowKey: `${order._id}-step-${stepIndex}`,
+            orderIndex: orderIdx,
           });
         });
+        orderIdx++;
       }
     });
 
     return rows;
   }, [filteredOrders]);
 
-  // Paginated rows (now step-based)
-  const paginatedRows = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    return flattenedOrderRows.slice(startIndex, startIndex + itemsPerPage);
-  }, [flattenedOrderRows, currentPage, itemsPerPage]);
+  // ✅ FIX: No client-side slicing — API already returns the correct page of data
+  // paginatedRows = all rows from current API page
+  const paginatedRows = flattenedOrderRows;
 
-  // Use pagination from API when available for accurate total pages
-  const totalPages = pagination?.totalPages || Math.max(1, Math.ceil(flattenedOrderRows.length / itemsPerPage));
+  // ✅ FIX: Total pages from API pagination
+  const totalPages = pagination?.totalPages || 1;
+  const totalOrderCount = pagination?.totalOrders || filteredOrders.length;
 
-  // Handle multi-select toggle for Machine Type
+  // Multi-select handlers
   const toggleMachineType = (typeId: string) => {
-    setFilters((prev) => {
-      const newTypes = prev.machineTypeIds.includes(typeId) ?
-      prev.machineTypeIds.filter((id) => id !== typeId) :
-      [...prev.machineTypeIds, typeId];
-      return { ...prev, machineTypeIds: newTypes, machineNames: [] }; // Reset machine names when type changes
-    });
-    setCurrentPage(1);
+    setFilters((prev) => ({
+      ...prev,
+      machineTypeIds: prev.machineTypeIds.includes(typeId)
+        ? prev.machineTypeIds.filter((id) => id !== typeId)
+        : [...prev.machineTypeIds, typeId],
+      machineNames: [],
+    }));
   };
 
-  // Handle multi-select toggle for Machine Name
   const toggleMachineName = (machineId: string) => {
-    setFilters((prev) => {
-      const newMachines = prev.machineNames.includes(machineId) ?
-      prev.machineNames.filter((id) => id !== machineId) :
-      [...prev.machineNames, machineId];
-      return { ...prev, machineNames: newMachines };
-    });
-    setCurrentPage(1);
+    setFilters((prev) => ({
+      ...prev,
+      machineNames: prev.machineNames.includes(machineId)
+        ? prev.machineNames.filter((id) => id !== machineId)
+        : [...prev.machineNames, machineId],
+    }));
   };
 
-  // Handle multi-select toggle for Operator
   const toggleOperator = (operatorId: string) => {
-    setFilters((prev) => {
-      const newOperators = prev.operatorIds.includes(operatorId) ?
-      prev.operatorIds.filter((id) => id !== operatorId) :
-      [...prev.operatorIds, operatorId];
-      return { ...prev, operatorIds: newOperators };
-    });
-    setCurrentPage(1);
+    setFilters((prev) => ({
+      ...prev,
+      operatorIds: prev.operatorIds.includes(operatorId)
+        ? prev.operatorIds.filter((id) => id !== operatorId)
+        : [...prev.operatorIds, operatorId],
+    }));
   };
 
-  // Handle single select filter change
+  const toggleStepName = (stepName: string) => {
+    setFilters((prev) => ({
+      ...prev,
+      stepNames: prev.stepNames.includes(stepName)
+        ? prev.stepNames.filter((n) => n !== stepName)
+        : [...prev.stepNames, stepName],
+    }));
+  };
+
   const handleFilterChange = (field: 'status' | 'priority', value: string) => {
     setFilters((prev) => ({ ...prev, [field]: value }));
-    setCurrentPage(1);
   };
 
-  // Reset filters
   const handleResetFilters = () => {
     setFilters({
-      status: '',
-      priority: '',
-      machineTypeIds: [],
-      machineNames: [],
-      operatorIds: [],
-      orderTypeId: '',
-      stepNames: [],
-      machineStatus: '',
-      search: ''
+      status: '', priority: '', machineTypeIds: [], machineNames: [],
+      operatorIds: [], orderTypeId: '', stepNames: [], machineStatus: '', search: '',
     });
     setFromDate('');
     setToDate('');
-    setCurrentPage(1);
-    // Re-fetch orders
-    dispatch(fetchOrders({}));
+    // fetch will trigger via filtersKey effect
   };
 
-  // Get status color
+  // Status/priority colors
   const getStatusColor = (status: string): string => {
     const colors: Record<string, string> = {
-      'completed': '#22c55e',
-      'pending': '#eab308',
-      'in_progress': '#3b82f6',
-      'issue': '#ef4444',
-      'cancelled': '#94a3b8',
-      'dispatched': '#10b981',
-      'approved': '#6366f1',
-      'Wait for Approval': '#f97316'
+      'completed': '#22c55e', 'pending': '#eab308', 'in_progress': '#3b82f6',
+      'issue': '#ef4444', 'cancelled': '#94a3b8', 'dispatched': '#10b981',
+      'approved': '#6366f1', 'Wait for Approval': '#f97316',
     };
     return colors[status] || '#94a3b8';
   };
 
-  // Get priority color
   const getPriorityColor = (priority: string): string => {
     const colors: Record<string, string> = {
-      'urgent': '#ef4444',
-      'high': '#f97316',
-      'normal': '#3b82f6',
-      'low': '#94a3b8'
+      'urgent': '#ef4444', 'high': '#f97316', 'normal': '#3b82f6', 'low': '#94a3b8',
     };
     return colors[priority] || '#94a3b8';
   };
 
-  // Get machine names for display - shows count if many machines
-  const getMachineNames = (order: any): React.ReactNode => {
-    const orderMachines = order.steps?.flatMap((step: any) => step.machines || []) || [];
-    if (orderMachines.length === 0) return '-';
+  const getMachineStatusColor = (status: string): string => {
+    const colors: Record<string, string> = {
+      'completed': '#22c55e', 'in-progress': '#3b82f6', 'in_progress': '#3b82f6',
+      'paused': '#f59e0b', 'pending': '#94a3b8', 'error': '#ef4444',
+      'issue': '#ef4444', 'none': '#e2e8f0',
+    };
+    return colors[status] || '#e2e8f0';
+  };
 
-    const machineNames: string[] = orderMachines.map((m: any) => m.machineName).filter(Boolean);
-    const uniqueMachines: string[] = [...new Set(machineNames)];
-
-    if (uniqueMachines.length === 0) return '-';
-    if (uniqueMachines.length <= 2) {
-      return uniqueMachines.join(', ');
+  const getMachineStatusIcon = (status: string) => {
+    switch (status) {
+      case 'completed': return <CheckCircle2 size={16} className="status-icon status-icon--completed" />;
+      case 'in-progress':
+      case 'in_progress': return <PlayCircle size={16} className="status-icon status-icon--progress" />;
+      case 'paused': return <PauseCircle size={16} className="status-icon status-icon--paused" />;
+      case 'pending': return <Clock size={16} className="status-icon status-icon--pending" />;
+      case 'error':
+      case 'issue': return <AlertTriangle size={16} className="status-icon status-icon--error" />;
+      default: return <Circle size={16} className="status-icon status-icon--none" />;
     }
-    // Show first machine + count of others
-    return (
-      <span title={uniqueMachines.join(', ')}>
-        {uniqueMachines[0]} <span className="machine-count">+{uniqueMachines.length - 1}</span>
-      </span>);
-
   };
 
-  // Get operator names for display - shows all unique operators
-  const getOperatorName = (order: any): React.ReactNode => {
-    // Collect all operators from order and steps
-    const allOperators: string[] = [];
-
-    // Main order operator
-    const mainOperator = order.operator || order.assignedOperator || order.operatorName;
-    if (mainOperator) allOperators.push(mainOperator);
-
-    // Step machine operators
-    order.steps?.forEach((step: any) => {
-      step.machines?.forEach((m: any) => {
-        const op = m.operator || m.operatorName;
-        if (op && !allOperators.includes(op)) {
-          allOperators.push(op);
-        }
-      });
+  const getStepProgress = (order: any) => {
+    if (!order.steps || order.steps.length === 0) return { completed: 0, total: 0, percentage: 0 };
+    let totalMachines = 0, completedMachines = 0;
+    order.steps.forEach((step: any) => {
+      if (step.machines?.length > 0) {
+        totalMachines += step.machines.length;
+        completedMachines += step.machines.filter((m: any) => m.status === 'completed').length;
+      }
     });
-
-    if (allOperators.length === 0) return '-';
-    if (allOperators.length === 1) return allOperators[0];
-
-    // Show first operator + count of others
-    return (
-      <span title={allOperators.join(', ')}>
-        {allOperators[0]} <span className="operator-count">+{allOperators.length - 1}</span>
-      </span>);
-
+    const percentage = totalMachines > 0 ? Math.round(completedMachines / totalMachines * 100) : 0;
+    return { completed: completedMachines, total: totalMachines, percentage };
   };
 
-  // Get step/machine summary for display
-  const getStepMachineSummary = (order: any): {steps: number;machines: number;completed: number;} => {
-    const steps = order.steps?.length || 0;
-    let machines = 0;
-    let completed = 0;
-
-    order.steps?.forEach((step: any) => {
-      const stepMachines = step.machines || [];
-      machines += stepMachines.length;
-      completed += stepMachines.filter((m: any) => m.status === 'completed').length;
-    });
-
-    return { steps, machines, completed };
-  };
-
-  // Get step names for display
-  const getStepNames = (order: any): React.ReactNode => {
-    const steps = order.steps || [];
-    if (steps.length === 0) return '-';
-
-    const stepNames = steps.map((s: any) => s.stepName || s.name).filter(Boolean);
-    if (stepNames.length === 0) return '-';
-    if (stepNames.length === 1) return stepNames[0];
-
-    return (
-      <span title={stepNames.join(' → ')}>
-        {stepNames[0]} <span className="step-count">+{stepNames.length - 1}</span>
-      </span>);
-
-  };
-
-  // Get machine types for display
-  const getMachineTypes = (order: any): React.ReactNode => {
-    const orderMachines = order.steps?.flatMap((step: any) => step.machines || []) || [];
-    if (orderMachines.length === 0) return '-';
-
-    const types: string[] = orderMachines.map((m: any) => m.machineType || m.machineTypeName).filter(Boolean);
-    const uniqueTypes: string[] = [...new Set(types)];
-
-    if (uniqueTypes.length === 0) return '-';
-    if (uniqueTypes.length === 1) return uniqueTypes[0];
-
-    return (
-      <span title={uniqueTypes.join(', ')}>
-        {uniqueTypes[0]} <span className="type-count">+{uniqueTypes.length - 1}</span>
-      </span>);
-
-  };
-
-  // Get available step names from form data (all steps for the branch) or from orders
-  const availableStepNames = useMemo(() => {
-    // First try to get steps from form data API (all available steps for the branch)
-    if (stepsFromFormData && stepsFromFormData.length > 0) {
-      const stepNames = stepsFromFormData.
-      map((s: any) => s.stepName || s.name).
-      filter(Boolean);
-      return [...new Set(stepNames)].sort() as string[];
-    }
-
-    // Fallback: extract step names from orders
-    const stepNameSet = new Set<string>();
-    orders.forEach((order: any) => {
-      order.steps?.forEach((step: any, index: number) => {
-        // Try to get actual step name, or use populated stepId name, or generate one
-        const name = step.stepName || step.name || step.stepId?.stepName || step.stepId?.name || `Step ${index + 1}`;
-        if (name) stepNameSet.add(name);
-      });
-    });
-    return Array.from(stepNameSet).sort();
-  }, [stepsFromFormData, orders]);
-
-  // Debug log for step names
-  useEffect(() => {
-
-
-    if (orders?.[0]?.steps?.[0]) {
-
-
-    }
-  }, [availableStepNames, stepsFromFormData, orders]);
-
-  // Toggle step name filter
-  const toggleStepName = (stepName: string) => {
-    setFilters((prev) => {
-      const newStepNames = prev.stepNames.includes(stepName) ?
-      prev.stepNames.filter((n) => n !== stepName) :
-      [...prev.stepNames, stepName];
-      return { ...prev, stepNames: newStepNames };
-    });
-    setCurrentPage(1);
-  };
-
-  // Get selected step names label
-  const getSelectedStepNamesLabel = () => {
-    if (filters.stepNames.length === 0) return 'All Steps';
-    if (filters.stepNames.length === 1) return filters.stepNames[0];
-    return `${filters.stepNames.length} selected`;
-  };
-
-  // Format duration in minutes to display string (e.g., 30m, 1h 15m)
   const formatDuration = (minutes: number | undefined): string => {
     if (!minutes || minutes === 0) return '-';
     if (minutes < 60) return `${minutes}m`;
@@ -653,189 +476,121 @@ const IndexAllOders = () => {
     return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
   };
 
-  // Get machine status icon
-  const getMachineStatusIcon = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return <CheckCircle2 size={16} className="status-icon status-icon--completed" />;
-      case 'in-progress':
-      case 'in_progress':
-        return <PlayCircle size={16} className="status-icon status-icon--progress" />;
-      case 'paused':
-        return <PauseCircle size={16} className="status-icon status-icon--paused" />;
-      case 'pending':
-        return <Clock size={16} className="status-icon status-icon--pending" />;
-      case 'error':
-      case 'issue':
-        return <AlertTriangle size={16} className="status-icon status-icon--error" />;
-      default:
-        return <Circle size={16} className="status-icon status-icon--none" />;
+  const availableStepNames = useMemo(() => {
+    if (stepsFromFormData?.length > 0) {
+      return [...new Set(stepsFromFormData.map((s: any) => s.stepName || s.name).filter(Boolean))].sort() as string[];
     }
-  };
-
-  // Get machine status color
-  const getMachineStatusColor = (status: string): string => {
-    const colors: Record<string, string> = {
-      'completed': '#22c55e',
-      'in-progress': '#3b82f6',
-      'in_progress': '#3b82f6',
-      'paused': '#f59e0b',
-      'pending': '#94a3b8',
-      'error': '#ef4444',
-      'issue': '#ef4444',
-      'none': '#e2e8f0'
-    };
-    return colors[status] || '#e2e8f0';
-  };
-
-  // Calculate step progress
-  const getStepProgress = (order: any): {completed: number;total: number;percentage: number;} => {
-    if (!order.steps || order.steps.length === 0) {
-      return { completed: 0, total: 0, percentage: 0 };
-    }
-
-    let totalMachines = 0;
-    let completedMachines = 0;
-
-    order.steps.forEach((step: any) => {
-      if (step.machines && step.machines.length > 0) {
-        totalMachines += step.machines.length;
-        completedMachines += step.machines.filter((m: any) =>
-        m.status === 'completed'
-        ).length;
-      }
-    });
-
-    const percentage = totalMachines > 0 ? Math.round(completedMachines / totalMachines * 100) : 0;
-    return { completed: completedMachines, total: totalMachines, percentage };
-  };
-
-  // Helper for export - get all machine names as string
-  const getMachineNamesForExport = (order: any): string => {
-    const orderMachines = order.steps?.flatMap((step: any) => step.machines || []) || [];
-    const machineNames = orderMachines.map((m: any) => m.machineName).filter(Boolean);
-    return [...new Set(machineNames)].join(', ') || '-';
-  };
-
-  // Helper for export - get all operator names as string
-  const getOperatorNamesForExport = (order: any): string => {
-    const allOperators: string[] = [];
-    const mainOperator = order.operator || order.assignedOperator || order.operatorName;
-    if (mainOperator) allOperators.push(mainOperator);
-    order.steps?.forEach((step: any) => {
-      step.machines?.forEach((m: any) => {
-        const op = m.operator || m.operatorName;
-        if (op && !allOperators.includes(op)) allOperators.push(op);
+    const stepNameSet = new Set<string>();
+    orders.forEach((order: any) => {
+      order.steps?.forEach((step: any, index: number) => {
+        const name = step.stepName || step.name || step.stepId?.stepName || `Step ${index + 1}`;
+        if (name) stepNameSet.add(name);
       });
     });
-    return allOperators.join(', ') || '-';
-  };
+    return Array.from(stepNameSet).sort();
+  }, [stepsFromFormData, orders]);
 
-  // Export to Excel
+  // Export
   const exportToExcel = () => {
-    const data = filteredOrders;
     const csv = [
-    ["No", "Order ID", "Company", "Status", "Priority", "Steps", "Machines", "Operators", "End Date", "Created Date"],
-    ...data.map((order: any, index: number) => {
-      const summary = getStepMachineSummary(order);
-      return [
-      index + 1,
-      order.orderNumber || order.orderId || order._id?.slice(-8),
-      order.customer?.companyName || order.customerId?.companyName || 'Unknown',
-      order.overallStatus || 'Unknown',
-      order.priority || 'normal',
-      `${summary.steps} steps`,
-      getMachineNamesForExport(order),
-      getOperatorNamesForExport(order),
-      order.endDate || order.expectedEndDate || order.dueDate ?
-      new Date(order.endDate || order.expectedEndDate || order.dueDate).toLocaleDateString() :
-      '-',
-      new Date(order.createdAt).toLocaleDateString()];
+      ["No", "Order ID", "Company", "Status", "Priority", "Created Date"],
+      ...filteredOrders.map((order: any, index: number) => [
+        index + 1,
+        order.orderNumber || order.orderId || order._id?.slice(-8),
+        order.customer?.companyName || order.customerId?.companyName || 'Unknown',
+        order.overallStatus || 'Unknown',
+        order.priority || 'normal',
+        new Date(order.createdAt).toLocaleDateString(),
+      ]),
+    ]
+      .map((row) => row.map((cell) => `"${cell}"`).join(','))
+      .join('\n');
 
-    })].
-
-    map((row) => row.map((cell) => `"${cell}"`).join(",")).
-    join("\n");
-
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", `orders_${new Date().toISOString().split("T")[0]}.csv`);
-    link.style.visibility = "hidden";
-    document.body.appendChild(link);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `orders_${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
-    document.body.removeChild(link);
   };
 
-  // Print
-  const handlePrint = () => {
-    window.print();
-  };
-
-  // Retry loading orders
   const handleRetry = useCallback(() => {
-    dispatch(fetchOrders({}));
-  }, [dispatch]);
+    fetchOrdersData();
+  }, [fetchOrdersData]);
 
-  // Navigate to order details/edit (on double-click)
-  const handleOrderDoubleClick = useCallback((order: any) => {
-    navigate("/menu/orderform", {
-      state: {
-        isEdit: true,
-        orderData: order,
-        isEditMode: true,
-        editMode: true,
-        mode: 'edit',
-        orderId: order.orderId || order._id,
-        customerName: order.customer?.companyName || order.customerId?.companyName
-      }
-    });
-  }, [navigate]);
+  // ✅ FIX: Navigate to edit — fetch FULL order details first (same as Daybook)
+  const handleOrderNavigate = useCallback(async (order: any) => {
+    setEditLoading(true);
+    try {
+      const fullOrderData = await dispatch(fetchOrderDetails(order._id) as any) as any;
+      const data = fullOrderData || order;
 
-  // Handle view order details (single click - opens modal)
-  const handleViewOrderDetails = useCallback((orderId: string, event: React.MouseEvent) => {
-    // Stop propagation to prevent row expansion
-    event.stopPropagation();
-    setSelectedOrderId(orderId);
-    setDetailsModalOpen(true);
-  }, []);
+      navigate('/menu/orderform', {
+        state: {
+          isEdit: true,
+          orderData: data,
+          isEditMode: true,
+          editMode: true,
+          mode: 'edit',
+          orderId: data.orderId || data._id,
+          customerName: data.customer?.companyName || data.customerId?.companyName,
+        },
+      });
+    } catch {
+      // Fallback: navigate with list data if fetch fails
+      navigate('/menu/orderform', {
+        state: {
+          isEdit: true,
+          orderData: order,
+          isEditMode: true,
+          editMode: true,
+          mode: 'edit',
+          orderId: order.orderId || order._id,
+          customerName: order.customer?.companyName || order.customerId?.companyName,
+        },
+      });
+    } finally {
+      setEditLoading(false);
+    }
+  }, [navigate, dispatch]);
 
-  // Handle row click - toggle expand
-  const handleRowClick = useCallback((orderId: string) => {
+  // ✅ FIX: Row click now NAVIGATES (like Daybook) — expand is chevron-button only
+  const handleRowClick = useCallback((order: any) => {
+    handleOrderNavigate(order);
+  }, [handleOrderNavigate]);
+
+  // ✅ Keep expand toggle for the chevron button only
+  const toggleExpand = useCallback((orderId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
     setExpandedRows((prev) => {
       const newSet = new Set(prev);
-      if (newSet.has(orderId)) {
-        newSet.delete(orderId);
-      } else {
-        newSet.add(orderId);
-      }
+      if (newSet.has(orderId)) newSet.delete(orderId);
+      else newSet.add(orderId);
       return newSet;
     });
   }, []);
 
-  // Close dropdowns when clicking outside
+  // Close dropdowns on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
-      if (!target.closest('.multi-select-dropdown')) {
+      // Close if click is outside any trigger button AND outside a portal menu
+      const inTrigger = target.closest('.multi-select-dropdown');
+      const inMenu = target.closest('.multi-select-menu');
+      if (!inTrigger && !inMenu) {
         setMachineTypeDropdownOpen(false);
         setMachineNameDropdownOpen(false);
         setOperatorDropdownOpen(false);
         setStepNameDropdownOpen(false);
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Get selected labels for display
   const getSelectedMachineTypesLabel = () => {
     if (filters.machineTypeIds.length === 0) return 'All Machine Types';
     if (filters.machineTypeIds.length === 1) {
-      const type = machineTypes.find((mt: any) => mt._id === filters.machineTypeIds[0]);
-      return type?.type || '1 selected';
+      return machineTypes.find((mt: any) => mt._id === filters.machineTypeIds[0])?.type || '1 selected';
     }
     return `${filters.machineTypeIds.length} selected`;
   };
@@ -843,8 +598,7 @@ const IndexAllOders = () => {
   const getSelectedMachineNamesLabel = () => {
     if (filters.machineNames.length === 0) return 'All Machines';
     if (filters.machineNames.length === 1) {
-      const machine = machinesForSelectedTypes.find((m: any) => m._id === filters.machineNames[0] || m.machineName === filters.machineNames[0]);
-      return machine?.machineName || '1 selected';
+      return machinesForSelectedTypes.find((m: any) => m._id === filters.machineNames[0] || m.machineName === filters.machineNames[0])?.machineName || '1 selected';
     }
     return `${filters.machineNames.length} selected`;
   };
@@ -852,10 +606,23 @@ const IndexAllOders = () => {
   const getSelectedOperatorsLabel = () => {
     if (filters.operatorIds.length === 0) return 'All Operators';
     if (filters.operatorIds.length === 1) {
-      const operator = availableOperators.find((op) => op.id === filters.operatorIds[0]);
-      return operator?.name || '1 selected';
+      return availableOperators.find((op) => op.id === filters.operatorIds[0])?.name || '1 selected';
     }
     return `${filters.operatorIds.length} selected`;
+  };
+
+  const getSelectedStepNamesLabel = () => {
+    if (filters.stepNames.length === 0) return 'All Steps';
+    if (filters.stepNames.length === 1) return filters.stepNames[0];
+    return `${filters.stepNames.length} selected`;
+  };
+
+  // ✅ FIX: Pagination handlers — change page then useEffect [currentPage] fetches
+  const handlePrevPage = () => {
+    if (currentPage > 1) setCurrentPage((p) => p - 1);
+  };
+  const handleNextPage = () => {
+    if (currentPage < totalPages) setCurrentPage((p) => p + 1);
   };
 
   return (
@@ -865,75 +632,31 @@ const IndexAllOders = () => {
         <div className="all-orders-header__left">
           <BackButton />
           <h1 className="all-orders-title">All Orders</h1>
-          {/* WebSocket Status Indicator */}
           <div
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              marginLeft: '12px',
-              padding: '4px 10px',
-              borderRadius: '12px',
+              display: 'flex', alignItems: 'center', gap: '6px', marginLeft: '12px',
+              padding: '4px 10px', borderRadius: '12px',
               backgroundColor: wsConnected ? '#dcfce7' : '#fef2f2',
-              fontSize: '12px',
-              fontWeight: 500
+              fontSize: '12px', fontWeight: 500,
             }}
-            title={wsConnected ? 'Real-time updates active' : 'Not connected - updates require manual refresh'}>
-
-            {wsConnected ?
-            <>
-                <SignalIcon style={{ width: '14px', height: '14px', color: '#16a34a' }} />
-                <span style={{ color: '#16a34a' }}>Live</span>
-              </> :
-
-            <>
-                <SignalSlashIcon style={{ width: '14px', height: '14px', color: '#dc2626' }} />
-                <span style={{ color: '#dc2626' }}>Offline</span>
-              </>
-            }
+            title={wsConnected ? 'Real-time updates active' : 'Not connected'}
+          >
+            {wsConnected ? (
+              <><SignalIcon style={{ width: '14px', height: '14px', color: '#16a34a' }} /><span style={{ color: '#16a34a' }}>Live</span></>
+            ) : (
+              <><SignalSlashIcon style={{ width: '14px', height: '14px', color: '#dc2626' }} /><span style={{ color: '#dc2626' }}>Offline</span></>
+            )}
           </div>
         </div>
-        <div className="all-orders-header__actions" style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          flexShrink: 0
-        }}>
-          <button
-            style={{ width: '40px', height: '40px', backgroundColor: 'transparent', color: '#3b82f6', border: '1px solid #e5e7eb', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            onClick={exportToExcel}
-            title="Export to Excel">
-
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
+        <div className="all-orders-header__actions" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+          <button style={{ width: '40px', height: '40px', backgroundColor: 'transparent', color: '#3b82f6', border: '1px solid #e5e7eb', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={exportToExcel} title="Export to Excel">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           </button>
-          <button
-            style={{ width: '40px', height: '40px', backgroundColor: 'transparent', color: '#8b5cf6', border: '1px solid #e5e7eb', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            onClick={handlePrint}
-            title="Print Report">
-
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polyline points="6 9 6 2 18 2 18 9" />
-              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
-              <rect x="6" y="14" width="12" height="8" />
-            </svg>
+          <button style={{ width: '40px', height: '40px', backgroundColor: 'transparent', color: '#8b5cf6', border: '1px solid #e5e7eb', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => window.print()} title="Print Report">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
           </button>
-          <button
-            style={{ width: '40px', height: '40px', backgroundColor: 'transparent', color: '#f59e0b', border: '1px solid #e5e7eb', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            onClick={() => {
-
-              dispatch(fetchOrders({}));
-            }}
-            title="Refresh Orders">
-
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polyline points="23 4 23 10 17 10" />
-              <polyline points="1 20 1 14 7 14" />
-              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-            </svg>
+          <button style={{ width: '40px', height: '40px', backgroundColor: 'transparent', color: '#f59e0b', border: '1px solid #e5e7eb', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => fetchOrdersData()} title="Refresh Orders">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
           </button>
         </div>
       </div>
@@ -943,79 +666,40 @@ const IndexAllOders = () => {
         <div className="filter-row">
           <div className="filter-group">
             <label>Search</label>
-            <input
-              type="text"
-              placeholder="Order ID, Company..."
-              value={filters.search}
-              onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value }))}
-              className="filter-input" />
-
+            <input type="text" placeholder="Order ID, Company..." value={filters.search} onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value }))} className="filter-input" />
           </div>
-
           <div className="filter-group">
             <label>Order Status</label>
-            <CustomSelect
-              value={filters.status}
-              options={statusOptions}
-              onChange={(value) => handleFilterChange('status', value)}
-              className="filter-select"
-            />
+            <select className="filter-native-select" value={filters.status} onChange={(e) => handleFilterChange('status', e.target.value)}>
+              {statusOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
           </div>
-
           <div className="filter-group">
             <label>Priority</label>
-            <CustomSelect
-              value={filters.priority}
-              options={priorityOptions}
-              onChange={(value) => handleFilterChange('priority', value)}
-              className="filter-select"
-            />
+            <select className="filter-native-select" value={filters.priority} onChange={(e) => handleFilterChange('priority', e.target.value)}>
+              {priorityOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
           </div>
-
           <div className="filter-group">
             <label>Machine Status</label>
-            <CustomSelect
-              value={filters.machineStatus}
-              options={machineStatusOptions}
-              onChange={(value) => {setFilters((prev) => ({ ...prev, machineStatus: value }));setCurrentPage(1);}}
-              className="filter-select"
-            />
+            <select className="filter-native-select" value={filters.machineStatus} onChange={(e) => setFilters((prev) => ({ ...prev, machineStatus: e.target.value }))}>
+              {machineStatusOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
           </div>
-
           <div className="filter-group">
             <label>Order Type</label>
-            <CustomSelect
-              value={filters.orderTypeId}
-              options={[
-                { value: '', label: 'All Order Types' },
-                ...orderTypes.map((ot: any) => ({
-                  value: ot._id,
-                  label: ot.typeName || ot.name
-                }))
-              ]}
-              onChange={(value) => setFilters((prev) => ({ ...prev, orderTypeId: value }))}
-              className="filter-select"
-            />
+            <select className="filter-native-select" value={filters.orderTypeId} onChange={(e) => setFilters((prev) => ({ ...prev, orderTypeId: e.target.value }))}>
+              <option value="">All Order Types</option>
+              {orderTypes.map((ot: any) => <option key={ot._id} value={ot._id}>{ot.typeName || ot.name}</option>)}
+            </select>
           </div>
-
           <div className="filter-group">
             <label>From</label>
-            <input
-              type="date"
-              value={fromDate}
-              onChange={(e) => {setFromDate(e.target.value);setCurrentPage(1);}}
-              className="filter-input" />
-
+            <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="filter-input" />
           </div>
-
           <div className="filter-group">
             <label>To</label>
-            <input
-              type="date"
-              value={toDate}
-              onChange={(e) => {setToDate(e.target.value);setCurrentPage(1);}}
-              className="filter-input" />
-
+            <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="filter-input" />
           </div>
         </div>
 
@@ -1024,321 +708,137 @@ const IndexAllOders = () => {
           <div className="filter-group">
             <label>Machine Type</label>
             <div className="multi-select-dropdown">
-              <button
-                className="multi-select-trigger"
-                onClick={() => {
-                  setMachineTypeDropdownOpen(!machineTypeDropdownOpen);
-                  setMachineNameDropdownOpen(false);
-                  setOperatorDropdownOpen(false);
-                }}>
-
+              <button ref={machineTypeAnchor} className="multi-select-trigger" onClick={() => { setMachineTypeDropdownOpen(p => !p); setMachineNameDropdownOpen(false); setOperatorDropdownOpen(false); setStepNameDropdownOpen(false); }}>
                 <span>{getSelectedMachineTypesLabel()}</span>
                 <ChevronDownIcon style={{ width: '16px', height: '16px' }} />
               </button>
-              {machineTypeDropdownOpen &&
-              <div className="multi-select-menu">
-                  {machineTypes?.map((mt: any) =>
-                <label key={mt._id} className="multi-select-option">
-                      <input
-                    type="checkbox"
-                    checked={filters.machineTypeIds.includes(mt._id)}
-                    onChange={() => toggleMachineType(mt._id)} />
-
+              <PortalMenu open={machineTypeDropdownOpen} anchorEl={machineTypeAnchor.current}>
+                  {machineTypes?.map((mt: any) => (
+                    <label key={mt._id} className="multi-select-option">
+                      <input type="checkbox" checked={filters.machineTypeIds.includes(mt._id)} onChange={() => toggleMachineType(mt._id)} />
                       <span>{mt.type}</span>
                     </label>
-                )}
-                  {machineTypes?.length === 0 &&
-                <div className="multi-select-empty">No machine types available</div>
-                }
-                </div>
-              }
+                  ))}
+                  {machineTypes?.length === 0 && <div className="multi-select-empty">No machine types available</div>}
+              </PortalMenu>
             </div>
-            {filters.machineTypeIds.length > 0 &&
-            <div className="selected-tags">
+            {filters.machineTypeIds.length > 0 && (
+              <div className="selected-tags">
                 {filters.machineTypeIds.map((typeId) => {
-                const type = machineTypes.find((mt: any) => mt._id === typeId);
-                return (
-                  <span key={typeId} className="selected-tag">
-                      {type?.type}
-                      <XMarkIcon style={{ width: '12px', height: '12px' }} onClick={() => toggleMachineType(typeId)} />
-                    </span>);
-
-              })}
+                  const type = machineTypes.find((mt: any) => mt._id === typeId);
+                  return <span key={typeId} className="selected-tag">{type?.type}<XMarkIcon style={{ width: '12px', height: '12px' }} onClick={() => toggleMachineType(typeId)} /></span>;
+                })}
               </div>
-            }
+            )}
           </div>
 
           {/* Machine Name Multi-Select */}
           <div className="filter-group">
             <label>Machine Name</label>
             <div className="multi-select-dropdown">
-              <button
-                className="multi-select-trigger"
-                onClick={() => {
-                  setMachineNameDropdownOpen(!machineNameDropdownOpen);
-                  setMachineTypeDropdownOpen(false);
-                  setOperatorDropdownOpen(false);
-                }}>
-
+              <button ref={machineNameAnchor} className="multi-select-trigger" onClick={() => { setMachineNameDropdownOpen(p => !p); setMachineTypeDropdownOpen(false); setOperatorDropdownOpen(false); setStepNameDropdownOpen(false); }}>
                 <span>{getSelectedMachineNamesLabel()}</span>
                 <ChevronDownIcon style={{ width: '16px', height: '16px' }} />
               </button>
-              {machineNameDropdownOpen &&
-              <div className="multi-select-menu">
-                  {machinesForSelectedTypes?.map((m: any) =>
-                <label key={m._id} className="multi-select-option">
-                      <input
-                    type="checkbox"
-                    checked={filters.machineNames.includes(m._id) || filters.machineNames.includes(m.machineName)}
-                    onChange={() => toggleMachineName(m._id)} />
-
+              <PortalMenu open={machineNameDropdownOpen} anchorEl={machineNameAnchor.current}>
+                  {machinesForSelectedTypes?.map((m: any) => (
+                    <label key={m._id} className="multi-select-option">
+                      <input type="checkbox" checked={filters.machineNames.includes(m._id) || filters.machineNames.includes(m.machineName)} onChange={() => toggleMachineName(m._id)} />
                       <span>{m.machineName}</span>
                     </label>
-                )}
-                  {machinesForSelectedTypes?.length === 0 &&
-                <div className="multi-select-empty">No machines available</div>
-                }
-                </div>
-              }
+                  ))}
+                  {machinesForSelectedTypes?.length === 0 && <div className="multi-select-empty">No machines available</div>}
+              </PortalMenu>
             </div>
-            {filters.machineNames.length > 0 &&
-            <div className="selected-tags">
+            {filters.machineNames.length > 0 && (
+              <div className="selected-tags">
                 {filters.machineNames.map((machineId) => {
-                const machine = machinesForSelectedTypes.find((m: any) => m._id === machineId || m.machineName === machineId);
-                return (
-                  <span key={machineId} className="selected-tag">
-                      {machine?.machineName || machineId}
-                      <X size={12} onClick={() => toggleMachineName(machineId)} />
-                    </span>);
-
-              })}
+                  const machine = machinesForSelectedTypes.find((m: any) => m._id === machineId || m.machineName === machineId);
+                  return <span key={machineId} className="selected-tag">{machine?.machineName || machineId}<X size={12} onClick={() => toggleMachineName(machineId)} /></span>;
+                })}
               </div>
-            }
+            )}
           </div>
 
           {/* Operator Multi-Select */}
           <div className="filter-group">
             <label>Operator</label>
             <div className="multi-select-dropdown">
-              <button
-                className="multi-select-trigger"
-                onClick={() => {
-                  setOperatorDropdownOpen(!operatorDropdownOpen);
-                  setMachineTypeDropdownOpen(false);
-                  setMachineNameDropdownOpen(false);
-                }}>
-
+              <button ref={operatorAnchor} className="multi-select-trigger" onClick={() => { setOperatorDropdownOpen(p => !p); setMachineTypeDropdownOpen(false); setMachineNameDropdownOpen(false); setStepNameDropdownOpen(false); }}>
                 <span>{getSelectedOperatorsLabel()}</span>
                 <ChevronDownIcon style={{ width: '16px', height: '16px' }} />
               </button>
-              {operatorDropdownOpen &&
-              <div className="multi-select-menu">
-                  {availableOperators.map((op) =>
-                <label key={op.id} className="multi-select-option">
-                      <input
-                    type="checkbox"
-                    checked={filters.operatorIds.includes(op.id)}
-                    onChange={() => toggleOperator(op.id)} />
-
+              <PortalMenu open={operatorDropdownOpen} anchorEl={operatorAnchor.current}>
+                  {availableOperators.map((op) => (
+                    <label key={op.id} className="multi-select-option">
+                      <input type="checkbox" checked={filters.operatorIds.includes(op.id)} onChange={() => toggleOperator(op.id)} />
                       <span>{op.name}</span>
                     </label>
-                )}
-                  {availableOperators.length === 0 &&
-                <div className="multi-select-empty">No operators available</div>
-                }
-                </div>
-              }
+                  ))}
+                  {availableOperators.length === 0 && <div className="multi-select-empty">No operators available</div>}
+              </PortalMenu>
             </div>
-            {filters.operatorIds.length > 0 &&
-            <div className="selected-tags">
+            {filters.operatorIds.length > 0 && (
+              <div className="selected-tags">
                 {filters.operatorIds.map((opId) => {
-                const operator = availableOperators.find((op) => op.id === opId);
-                return (
-                  <span key={opId} className="selected-tag">
-                      {operator?.name || opId}
-                      <XMarkIcon style={{ width: '12px', height: '12px' }} onClick={() => toggleOperator(opId)} />
-                    </span>);
-
-              })}
+                  const operator = availableOperators.find((op) => op.id === opId);
+                  return <span key={opId} className="selected-tag">{operator?.name || opId}<XMarkIcon style={{ width: '12px', height: '12px' }} onClick={() => toggleOperator(opId)} /></span>;
+                })}
               </div>
-            }
+            )}
           </div>
 
           {/* Step Name Multi-Select */}
           <div className="filter-group">
             <label>Step Name</label>
             <div className="multi-select-dropdown">
-              <button
-                className="multi-select-trigger"
-                onClick={() => {
-                  setStepNameDropdownOpen(!stepNameDropdownOpen);
-                  setMachineTypeDropdownOpen(false);
-                  setMachineNameDropdownOpen(false);
-                  setOperatorDropdownOpen(false);
-                }}>
-
+              <button ref={stepNameAnchor} className="multi-select-trigger" onClick={() => { setStepNameDropdownOpen(p => !p); setMachineTypeDropdownOpen(false); setMachineNameDropdownOpen(false); setOperatorDropdownOpen(false); }}>
                 <span>{getSelectedStepNamesLabel()}</span>
                 <ChevronDownIcon style={{ width: '16px', height: '16px' }} />
               </button>
-              {stepNameDropdownOpen &&
-              <div className="multi-select-menu">
-                  {availableStepNames.map((stepName) =>
-                <label key={stepName} className="multi-select-option">
-                      <input
-                    type="checkbox"
-                    checked={filters.stepNames.includes(stepName)}
-                    onChange={() => toggleStepName(stepName)} />
-
+              <PortalMenu open={stepNameDropdownOpen} anchorEl={stepNameAnchor.current}>
+                  {availableStepNames.map((stepName) => (
+                    <label key={stepName} className="multi-select-option">
+                      <input type="checkbox" checked={filters.stepNames.includes(stepName)} onChange={() => toggleStepName(stepName)} />
                       <span>{stepName}</span>
                     </label>
-                )}
-                  {availableStepNames.length === 0 &&
-                <div className="multi-select-empty">No steps available</div>
-                }
-                </div>
-              }
+                  ))}
+                  {availableStepNames.length === 0 && <div className="multi-select-empty">No steps available</div>}
+              </PortalMenu>
             </div>
-            {filters.stepNames.length > 0 &&
-            <div className="selected-tags">
-                {filters.stepNames.map((name) =>
-              <span key={name} className="selected-tag">
-                    {name}
-                    <X size={12} onClick={() => toggleStepName(name)} />
-                  </span>
-              )}
+            {filters.stepNames.length > 0 && (
+              <div className="selected-tags">
+                {filters.stepNames.map((name) => (
+                  <span key={name} className="selected-tag">{name}<X size={12} onClick={() => toggleStepName(name)} /></span>
+                ))}
               </div>
-            }
+            )}
           </div>
 
-          <button className="filter-reset-btn" onClick={handleResetFilters}>
-            Reset Filters
-          </button>
-        </div>
-      </div>
-
-      {/* Summary Cards - Compact with all statuses - Clickable to filter */}
-      {/* Uses statusCounts from API for accurate totals across ALL orders */}
-      <div className="summary-cards summary-cards--compact">
-        <div
-          className={`summary-card summary-card--mini summary-card--clickable ${filters.status === '' ? 'summary-card--active' : ''}`}
-          onClick={() => {handleFilterChange('status', '');setCurrentPage(1);}}
-          title="Show all orders">
-
-          <div className="summary-card__value">{summary?.totalOrders || pagination?.totalOrders || orders.length}</div>
-          <div className="summary-card__label">Total</div>
-        </div>
-        <div
-          className={`summary-card summary-card--mini summary-card--waiting summary-card--clickable ${filters.status === 'Wait for Approval' ? 'summary-card--active' : ''}`}
-          onClick={() => {handleFilterChange('status', 'Wait for Approval');setCurrentPage(1);}}
-          title="Filter: Wait for Approval">
-
-          <div className="summary-card__value">
-            {statusCounts?.['Wait for Approval'] || 0}
-          </div>
-          <div className="summary-card__label">Waiting</div>
-        </div>
-        <div
-          className={`summary-card summary-card--mini summary-card--pending summary-card--clickable ${filters.status === 'pending' ? 'summary-card--active' : ''}`}
-          onClick={() => {handleFilterChange('status', 'pending');setCurrentPage(1);}}
-          title="Filter: Pending">
-
-          <div className="summary-card__value">
-            {statusCounts?.['pending'] || 0}
-          </div>
-          <div className="summary-card__label">Pending</div>
-        </div>
-        <div
-          className={`summary-card summary-card--mini summary-card--approved summary-card--clickable ${filters.status === 'approved' ? 'summary-card--active' : ''}`}
-          onClick={() => {handleFilterChange('status', 'approved');setCurrentPage(1);}}
-          title="Filter: Approved">
-
-          <div className="summary-card__value">
-            {statusCounts?.['approved'] || 0}
-          </div>
-          <div className="summary-card__label">Approved</div>
-        </div>
-        <div
-          className={`summary-card summary-card--mini summary-card--progress summary-card--clickable ${filters.status === 'in_progress' ? 'summary-card--active' : ''}`}
-          onClick={() => {handleFilterChange('status', 'in_progress');setCurrentPage(1);}}
-          title="Filter: In Progress">
-
-          <div className="summary-card__value">
-            {statusCounts?.['in_progress'] || 0}
-          </div>
-          <div className="summary-card__label">In Progress</div>
-        </div>
-        <div
-          className={`summary-card summary-card--mini summary-card--completed summary-card--clickable ${filters.status === 'completed' ? 'summary-card--active' : ''}`}
-          onClick={() => {handleFilterChange('status', 'completed');setCurrentPage(1);}}
-          title="Filter: Completed">
-
-          <div className="summary-card__value">
-            {statusCounts?.['completed'] || 0}
-          </div>
-          <div className="summary-card__label">Completed</div>
-        </div>
-        <div
-          className={`summary-card summary-card--mini summary-card--dispatched summary-card--clickable ${filters.status === 'dispatched' ? 'summary-card--active' : ''}`}
-          onClick={() => {handleFilterChange('status', 'dispatched');setCurrentPage(1);}}
-          title="Filter: Dispatched">
-
-          <div className="summary-card__value">
-            {statusCounts?.['dispatched'] || 0}
-          </div>
-          <div className="summary-card__label">Dispatched</div>
-        </div>
-        <div
-          className={`summary-card summary-card--mini summary-card--issue summary-card--clickable ${filters.status === 'issue' ? 'summary-card--active' : ''}`}
-          onClick={() => {handleFilterChange('status', 'issue');setCurrentPage(1);}}
-          title="Filter: Issue">
-
-          <div className="summary-card__value">
-            {statusCounts?.['issue'] || 0}
-          </div>
-          <div className="summary-card__label">Issue</div>
-        </div>
-        <div
-          className={`summary-card summary-card--mini summary-card--cancelled summary-card--clickable ${filters.status === 'cancelled' ? 'summary-card--active' : ''}`}
-          onClick={() => {handleFilterChange('status', 'cancelled');setCurrentPage(1);}}
-          title="Filter: Cancelled">
-
-          <div className="summary-card__value">
-            {statusCounts?.['cancelled'] || 0}
-          </div>
-          <div className="summary-card__label">Cancelled</div>
+          <button className="filter-reset-btn" onClick={handleResetFilters}>Reset Filters</button>
         </div>
       </div>
 
       {/* Orders Table */}
-      {ordersLoading ?
-      <div className="loading-state">
+      {ordersLoading ? (
+        <div className="loading-state">
           <Loader2 size={32} className="loading-spinner" />
           <p>Loading orders...</p>
-        </div> :
-      ordersError ?
-      <div className="error-state">
+        </div>
+      ) : ordersError ? (
+        <div className="error-state">
           <AlertCircle size={32} className="error-icon" />
           <p className="error-message">{ordersError}</p>
-          <button className="retry-btn" onClick={handleRetry}>
-            <RefreshCw size={16} /> Retry
-          </button>
-        </div> :
-      filteredOrders.length === 0 ?
-      <div className="empty-state">
-          <p>{orders.length === 0 ? 'No orders found. Create your first order to get started.' : 'No orders found matching the filters'}</p>
-          {orders.length > 0 &&
-        <button className="filter-reset-btn" onClick={handleResetFilters}>
-              Clear Filters
-            </button>
-        }
-          {orders.length === 0 &&
-        <button className="retry-btn" onClick={handleRetry}>
-              <RefreshCw size={16} /> Refresh
-            </button>
-        }
-        </div> :
-
-      <>
+          <button className="retry-btn" onClick={handleRetry}><RefreshCw size={16} /> Retry</button>
+        </div>
+      ) : filteredOrders.length === 0 ? (
+        <div className="empty-state">
+          <p>{orders.length === 0 ? 'No orders found. Create your first order to get started.' : 'No orders match the current filters.'}</p>
+          {orders.length > 0 && <button className="filter-reset-btn" onClick={handleResetFilters}>Clear Filters</button>}
+          {orders.length === 0 && <button className="retry-btn" onClick={handleRetry}><RefreshCw size={16} /> Refresh</button>}
+        </div>
+      ) : (
+        <>
           <div className="orders-table-container">
             <table className="orders-table orders-table--step-view">
               <thead>
@@ -1361,240 +861,118 @@ const IndexAllOders = () => {
                 </tr>
               </thead>
               <tbody>
-                {paginatedRows.map((row: any, index: number) => {
-                const { order, step, stepIndex, isFirstRow, totalSteps, rowKey } = row;
-                const isExpanded = expandedRows.has(order._id);
+                {paginatedRows.map((row: any) => {
+                  const { order, step, stepIndex, isFirstRow, totalSteps, rowKey, orderIndex } = row;
+                  const isExpanded = expandedRows.has(order._id);
 
-                // Get machines from step
-                const stepMachines = step?.machines || [];
+                  const stepMachines = step?.machines || [];
+                  const uniqueStepTypes = [...new Set(stepMachines.map((m: any) => m.machineType || m.machineTypeName).filter(Boolean))] as string[];
+                  const stepMachineNames = stepMachines.map((m: any) => m.machineName).filter(Boolean) as string[];
+                  const stepOperators = [...new Set(stepMachines.map((m: any) => m.operatorName || m.operator).filter(Boolean))] as string[];
+                  const uniqueStatuses = [...new Set(stepMachines.map((m: any) => m.status).filter(Boolean))] as string[];
+                  const stepProgress = getStepProgress(order);
 
-                // Get machine types from this step's machines
-                const stepMachineTypes = stepMachines.
-                map((m: any) => m.machineType || m.machineTypeName).
-                filter(Boolean) as string[];
-                const uniqueStepTypes = [...new Set(stepMachineTypes)] as string[];
+                  const displayOrderNo = isFirstRow ? (currentPage - 1) * itemsPerPage + orderIndex + 1 : '';
 
-                // Get machine names from this step
-                const stepMachineNames = stepMachines.
-                map((m: any) => m.machineName).
-                filter(Boolean) as string[];
-
-                // Get operators from this step's machines
-                const stepOperators = stepMachines.
-                map((m: any) => m.operatorName || m.operator).
-                filter(Boolean) as string[];
-                const uniqueStepOperators = [...new Set(stepOperators)] as string[];
-
-                // Get machine statuses from this step
-                const machineStatuses = stepMachines.
-                map((m: any) => m.status).
-                filter(Boolean) as string[];
-                const uniqueStatuses = [...new Set(machineStatuses)] as string[];
-
-                // Calculate step progress for expanded view
-                const stepProgress = getStepProgress(order);
-
-                // Check if order has steps for expanded view
-                const hasSteps = order.steps && order.steps.length > 0;
-
-                return (
-                  <React.Fragment key={rowKey}>
+                  return (
+                    <React.Fragment key={rowKey}>
                       <tr
-                      onClick={() => handleRowClick(order._id)}
-                      onDoubleClick={() => handleOrderDoubleClick(order)}
-                      className={`clickable-row ${isExpanded ? 'row-expanded' : ''} ${!isFirstRow ? 'row-continuation' : 'row-first'}`}
-                      title="Click to expand, Double-click to edit">
-
+                        onClick={() => isFirstRow && handleRowClick(order)}
+                        className={`clickable-row ${isExpanded ? 'row-expanded' : ''} ${!isFirstRow ? 'row-continuation' : 'row-first'}`}
+                        title="Click to open order"
+                        style={{ cursor: isFirstRow ? 'pointer' : 'default' }}
+                      >
                         <td className="expand-cell">
-                          {isFirstRow &&
-                        <button
-                          className="expand-btn"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRowClick(order._id);
-                          }}
-                          title={isExpanded ? 'Collapse' : 'Expand details'}>
-
+                          {isFirstRow && (
+                            <button className="expand-btn" onClick={(e) => toggleExpand(order._id, e)} title={isExpanded ? 'Collapse' : 'Expand steps'}>
                               {isExpanded ? <ChevronDownIcon style={{ width: '18px', height: '18px' }} /> : <ChevronRightIcon style={{ width: '18px', height: '18px' }} />}
                             </button>
-                        }
+                          )}
                         </td>
-                        <td className={!isFirstRow ? 'cell-continuation' : ''}>
-                          {isFirstRow ? (currentPage - 1) * itemsPerPage + index + 1 : ''}
-                        </td>
+                        <td className={!isFirstRow ? 'cell-continuation' : ''}>{displayOrderNo}</td>
                         <td className={`order-id-cell ${!isFirstRow ? 'cell-continuation' : ''}`}>
-                          {isFirstRow ? (
+                          {isFirstRow && (
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                               <span>{order.orderNumber || order.orderId || order._id?.slice(-8)}</span>
                               <button
                                 className="view-details-btn"
-                                onClick={(e) => handleViewOrderDetails(order._id, e)}
-                                title="View order details"
-                                style={{
-                                  background: '#3b82f6',
-                                  color: 'white',
-                                  border: 'none',
-                                  padding: '4px 8px',
-                                  borderRadius: '4px',
-                                  cursor: 'pointer',
-                                  fontSize: '11px',
-                                  fontWeight: '500'
-                                }}
+                                onClick={(e) => { e.stopPropagation(); setSelectedOrderId(order._id); setDetailsModalOpen(true); }}
+                                title="View full order details"
+                                style={{ background: '#3b82f6', color: 'white', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px', fontWeight: '500' }}
                               >
                                 View
                               </button>
                             </div>
-                          ) : ''}
+                          )}
+                        </td>
+                        <td className={!isFirstRow ? 'cell-continuation' : ''}>{isFirstRow ? order.customer?.companyName || order.customerId?.companyName || 'Unknown' : ''}</td>
+                        <td className={!isFirstRow ? 'cell-continuation' : ''} style={{ fontSize: '12px', color: '#64748b' }}>{isFirstRow ? order.createdByName || order.creator?.username || order.creator?.name || '-' : ''}</td>
+                        <td className={!isFirstRow ? 'cell-continuation' : ''}>
+                          {isFirstRow && <span className="status-badge" style={{ backgroundColor: getStatusColor(order.overallStatus) }}>{order.overallStatus || 'Unknown'}</span>}
                         </td>
                         <td className={!isFirstRow ? 'cell-continuation' : ''}>
-                          {isFirstRow ? order.customer?.companyName || order.customerId?.companyName || 'Unknown' : ''}
-                        </td>
-                        <td className={!isFirstRow ? 'cell-continuation' : ''} style={{ fontSize: '12px', color: '#64748b' }}>
-                          {isFirstRow ? order.createdByName || order.creator?.username || order.creator?.name || '-' : ''}
-                        </td>
-                        <td className={!isFirstRow ? 'cell-continuation' : ''}>
-                          {isFirstRow ?
-                        <span
-                          className="status-badge"
-                          style={{ backgroundColor: getStatusColor(order.overallStatus) }}>
-
-                              {order.overallStatus || 'Unknown'}
-                            </span> :
-                        ''}
-                        </td>
-                        <td className={!isFirstRow ? 'cell-continuation' : ''}>
-                          {isFirstRow ?
-                        <span
-                          className="priority-badge"
-                          style={{ backgroundColor: getPriorityColor(order.priority) }}>
-
-                              {order.priority || 'normal'}
-                            </span> :
-                        ''}
+                          {isFirstRow && <span className="priority-badge" style={{ backgroundColor: getPriorityColor(order.priority) }}>{order.priority || 'normal'}</span>}
                         </td>
                         <td className="step-cell">
-                          {step ?
-                        <span className="step-name-badge">
+                          {step ? (
+                            <span className="step-name-badge">
                               <span className="step-number">{stepIndex + 1}/{totalSteps}</span>
                               {step.stepName || step.name || step.stepId?.stepName || step.stepId?.name || `Step ${stepIndex + 1}`}
-                            </span> :
-                        '-'}
+                            </span>
+                          ) : '-'}
                         </td>
                         <td>
-                          {step ?
-                        <span
-                          className="status-badge status-badge--small"
-                          style={{ backgroundColor: getMachineStatusColor(step.stepStatus || 'pending') }}>
-
-                              {step.stepStatus || 'pending'}
-                            </span> :
-                        '-'}
+                          {step && <span className="status-badge status-badge--small" style={{ backgroundColor: getMachineStatusColor(step.stepStatus || 'pending') }}>{step.stepStatus || 'pending'}</span>}
                         </td>
                         <td className="type-cell">
-                          {uniqueStepTypes.length > 0 ?
-                        uniqueStepTypes.length === 1 ? uniqueStepTypes[0] :
-                        <span title={uniqueStepTypes.join(', ')}>
-                                {uniqueStepTypes[0]} <span className="type-count">+{uniqueStepTypes.length - 1}</span>
-                              </span> :
-
-                        '-'}
+                          {uniqueStepTypes.length > 0
+                            ? uniqueStepTypes.length === 1 ? uniqueStepTypes[0]
+                              : <span title={uniqueStepTypes.join(', ')}>{uniqueStepTypes[0]} <span className="type-count">+{uniqueStepTypes.length - 1}</span></span>
+                            : '-'}
                         </td>
                         <td className="machine-cell">
-                          {stepMachineNames.length > 0 ?
-                        stepMachineNames.length === 1 ? stepMachineNames[0] :
-                        <span title={stepMachineNames.join(', ')}>
-                                {stepMachineNames[0]} <span className="machine-count">+{stepMachineNames.length - 1}</span>
-                              </span> :
-
-                        '-'}
+                          {stepMachineNames.length > 0
+                            ? stepMachineNames.length === 1 ? stepMachineNames[0]
+                              : <span title={stepMachineNames.join(', ')}>{stepMachineNames[0]} <span className="machine-count">+{stepMachineNames.length - 1}</span></span>
+                            : '-'}
                         </td>
                         <td>
-                          {uniqueStatuses.length > 0 ?
-                        <span
-                          className="status-badge status-badge--small"
-                          style={{ backgroundColor: getMachineStatusColor(uniqueStatuses[0] || 'none') }}
-                          title={uniqueStatuses.join(', ')}>
-
-                              {uniqueStatuses[0]}
-                              {uniqueStatuses.length > 1 && <span className="status-count"> +{uniqueStatuses.length - 1}</span>}
-                            </span> :
-                        '-'}
+                          {uniqueStatuses.length > 0
+                            ? <span className="status-badge status-badge--small" style={{ backgroundColor: getMachineStatusColor(uniqueStatuses[0]) }} title={uniqueStatuses.join(', ')}>
+                                {uniqueStatuses[0]}{uniqueStatuses.length > 1 && <span className="status-count"> +{uniqueStatuses.length - 1}</span>}
+                              </span>
+                            : '-'}
                         </td>
                         <td>
-                          {uniqueStepOperators.length > 0 ?
-                        uniqueStepOperators.length === 1 ? uniqueStepOperators[0] :
-                        <span title={uniqueStepOperators.join(', ')}>
-                                {uniqueStepOperators[0]} <span className="operator-count">+{uniqueStepOperators.length - 1}</span>
-                              </span> :
-
-                        '-'}
+                          {stepOperators.length > 0
+                            ? stepOperators.length === 1 ? stepOperators[0]
+                              : <span title={stepOperators.join(', ')}>{stepOperators[0]} <span className="operator-count">+{stepOperators.length - 1}</span></span>
+                            : '-'}
                         </td>
-                        <td className="date-cell">
-                          {isFirstRow ? new Date(order.createdAt).toLocaleDateString() : ''}
-                        </td>
+                        <td className="date-cell">{isFirstRow ? new Date(order.createdAt).toLocaleDateString() : ''}</td>
                         <td style={{ textAlign: 'center' }} className={!isFirstRow ? 'cell-continuation' : ''}>
                           {isFirstRow && (
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                              {/* Forward Status Indicator */}
                               {order.isForwarded && (
-                                <div
-                                  style={{
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    padding: '4px 6px',
-                                    borderRadius: '4px',
-                                    backgroundColor: order.forwardAcceptanceStatus === 'accepted'
-                                      ? '#d1fae5'
-                                      : order.forwardAcceptanceStatus === 'denied'
-                                        ? '#fee2e2'
-                                        : '#fef3c7'
-                                  }}
-                                  title={`Forwarded: ${order.forwardAcceptanceStatus || 'Pending'}`}
-                                >
-                                  {order.forwardAcceptanceStatus === 'accepted' ? (
-                                    <CheckCircle2 size={14} className="text-green-500" style={{ color: '#10b981' }} />
-                                  ) : order.forwardAcceptanceStatus === 'denied' ? (
-                                    <X size={14} style={{ color: '#ef4444' }} />
-                                  ) : (
-                                    <Clock size={14} style={{ color: '#f59e0b' }} />
-                                  )}
+                                <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '4px 6px', borderRadius: '4px', backgroundColor: order.forwardAcceptanceStatus === 'accepted' ? '#d1fae5' : order.forwardAcceptanceStatus === 'denied' ? '#fee2e2' : '#fef3c7' }} title={`Forwarded: ${order.forwardAcceptanceStatus || 'Pending'}`}>
+                                  {order.forwardAcceptanceStatus === 'accepted' ? <CheckCircle2 size={14} style={{ color: '#10b981' }} /> : order.forwardAcceptanceStatus === 'denied' ? <X size={14} style={{ color: '#ef4444' }} /> : <Clock size={14} style={{ color: '#f59e0b' }} />}
                                 </div>
                               )}
-                              {/* Forward Button */}
+                              {/* ✅ FIX: Forward button - correct variable name (was selectedOrderForForForward) */}
                               <button
                                 className="forward-order-btn"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setSelectedOrderForForward({
                                     id: order._id,
-                                    number: order.orderNumber || order.orderId || order._id?.slice(-8)
+                                    number: order.orderNumber || order.orderId || order._id?.slice(-8),
                                   });
                                   setForwardModalOpen(true);
                                 }}
-                                title="Forward this order to another branch"
-                                style={{
-                                  background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                                  border: 'none',
-                                  borderRadius: '6px',
-                                  padding: '6px 10px',
-                                  cursor: 'pointer',
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: '4px',
-                                  color: 'white',
-                                  fontSize: '13px',
-                                  fontWeight: '500',
-                                  transition: 'all 0.2s'
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.transform = 'scale(1.05)';
-                                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.4)';
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.transform = 'scale(1)';
-                                  e.currentTarget.style.boxShadow = 'none';
-                                }}
+                                title="Forward this order"
+                                style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', border: 'none', borderRadius: '6px', padding: '6px 10px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'white', fontSize: '13px', fontWeight: '500' }}
+                                onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(59,130,246,0.4)'; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = 'none'; }}
                               >
                                 <Share2 size={14} />
                                 Forward
@@ -1604,253 +982,128 @@ const IndexAllOders = () => {
                         </td>
                       </tr>
 
-                      {/* Expanded Row - Order Details - Only show on first row of each order */}
-                      {isExpanded && isFirstRow &&
-                    <tr key={`${order._id}-expanded`} className="expanded-row">
+                      {/* Expanded Row */}
+                      {isExpanded && isFirstRow && (
+                        <tr key={`${order._id}-expanded`} className="expanded-row">
                           <td colSpan={15}>
                             <div className="order-details-expanded">
-                              {/* Order Info Grid */}
                               <div className="order-details-grid">
-                                {/* Customer & Order Info */}
+                                {/* Customer Info */}
                                 <div className="detail-section">
                                   <h5 className="detail-section-title">Order Information</h5>
                                   <div className="detail-items">
-                                    <div className="detail-item">
-                                      <span className="detail-label">Order ID:</span>
-                                      <span className="detail-value">{order.orderNumber || order.orderId || order._id?.slice(-8)}</span>
-                                    </div>
-                                    <div className="detail-item">
-                                      <span className="detail-label">Customer:</span>
-                                      <span className="detail-value">{order.customer?.companyName || order.customerId?.companyName || 'Unknown'}</span>
-                                    </div>
-                                    {(order.customer?.phone1 || order.customer?.telephone) &&
-                                <div className="detail-item">
-                                        <span className="detail-label">Phone:</span>
-                                        <span className="detail-value">{order.customer?.phone1 || order.customer?.telephone}</span>
-                                      </div>
-                                }
-                                    {order.customer?.email &&
-                                <div className="detail-item">
-                                        <span className="detail-label">Email:</span>
-                                        <span className="detail-value">{order.customer.email}</span>
-                                      </div>
-                                }
-                                    {order.orderType &&
-                                <div className="detail-item">
-                                        <span className="detail-label">Order Type:</span>
-                                        <span className="detail-value">{order.orderType?.typeName || order.orderType?.name || '-'}</span>
-                                      </div>
-                                }
+                                    <div className="detail-item"><span className="detail-label">Order ID:</span><span className="detail-value">{order.orderNumber || order.orderId || order._id?.slice(-8)}</span></div>
+                                    <div className="detail-item"><span className="detail-label">Customer:</span><span className="detail-value">{order.customer?.companyName || order.customerId?.companyName || 'Unknown'}</span></div>
+                                    {(order.customer?.phone1 || order.customer?.telephone) && <div className="detail-item"><span className="detail-label">Phone:</span><span className="detail-value">{order.customer?.phone1 || order.customer?.telephone}</span></div>}
+                                    {order.customer?.email && <div className="detail-item"><span className="detail-label">Email:</span><span className="detail-value">{order.customer.email}</span></div>}
+                                    {order.orderType && <div className="detail-item"><span className="detail-label">Order Type:</span><span className="detail-value">{order.orderType?.typeName || order.orderType?.name || '-'}</span></div>}
                                   </div>
                                 </div>
-
-                                {/* Options & Specifications */}
-                                <div className="detail-section">
-                                  <h5 className="detail-section-title">Options & Specifications</h5>
-                                  <div className="detail-items">
-                                    {order.options && order.options.length > 0 ?
-                                order.options.map((opt: any, idx: number) =>
-                                <div key={idx} className="detail-item">
-                                          <span className="detail-label">{opt.optionTypeName || opt.category || 'Option'}:</span>
-                                          <span className="detail-value">{opt.optionName || opt.value}</span>
-                                        </div>
-                                ) :
-
-                                <>
-                                        {order.material?.materialName &&
-                                  <div className="detail-item">
-                                            <span className="detail-label">Material:</span>
-                                            <span className="detail-value">{order.material.materialName}</span>
-                                          </div>
-                                  }
-                                        {order.materialWeight &&
-                                  <div className="detail-item">
-                                            <span className="detail-label">Weight:</span>
-                                            <span className="detail-value">{order.materialWeight} kg</span>
-                                          </div>
-                                  }
-                                        {(order.Width || order.Height) &&
-                                  <div className="detail-item">
-                                            <span className="detail-label">Dimensions:</span>
-                                            <span className="detail-value">
-                                              {order.Width} × {order.Height} {order.Thickness ? `× ${order.Thickness}` : ''}
-                                            </span>
-                                          </div>
-                                  }
-                                      </>
-                                }
-                                    {order.totalQuantity &&
-                                <div className="detail-item">
-                                        <span className="detail-label">Quantity:</span>
-                                        <span className="detail-value">{order.totalQuantity}</span>
-                                      </div>
-                                }
-                                  </div>
-                                </div>
-
                                 {/* Production Progress */}
                                 <div className="detail-section">
                                   <h5 className="detail-section-title">Production Progress</h5>
                                   <div className="detail-items">
-                                    <div className="detail-item">
-                                      <span className="detail-label">Steps:</span>
-                                      <span className="detail-value">{stepProgress.completed}/{stepProgress.total} ({stepProgress.percentage}%)</span>
-                                    </div>
-                                    <div className="detail-item">
-                                      <span className="detail-label">Created:</span>
-                                      <span className="detail-value">{new Date(order.createdAt).toLocaleString()}</span>
-                                    </div>
-                                    {order.updatedAt &&
-                                <div className="detail-item">
-                                        <span className="detail-label">Updated:</span>
-                                        <span className="detail-value">{new Date(order.updatedAt).toLocaleString()}</span>
-                                      </div>
-                                }
-                                    {order.Notes &&
-                                <div className="detail-item detail-item--full">
-                                        <span className="detail-label">Notes:</span>
-                                        <span className="detail-value">{order.Notes}</span>
-                                      </div>
-                                }
+                                    <div className="detail-item"><span className="detail-label">Steps:</span><span className="detail-value">{stepProgress.completed}/{stepProgress.total} ({stepProgress.percentage}%)</span></div>
+                                    <div className="detail-item"><span className="detail-label">Created:</span><span className="detail-value">{new Date(order.createdAt).toLocaleString()}</span></div>
+                                    {order.updatedAt && <div className="detail-item"><span className="detail-label">Updated:</span><span className="detail-value">{new Date(order.updatedAt).toLocaleString()}</span></div>}
+                                    {order.Notes && <div className="detail-item detail-item--full"><span className="detail-label">Notes:</span><span className="detail-value">{order.Notes}</span></div>}
                                   </div>
                                 </div>
                               </div>
 
-                              {/* Step Workflow - only if has steps */}
-                              {hasSteps &&
-                          <div className="step-workflow">
+                              {/* Workflow Steps */}
+                              {order.steps?.length > 0 && (
+                                <div className="step-workflow">
                                   <h5 className="step-workflow-title">Workflow Steps</h5>
                                   <div className="step-flow-container">
-                                    {order.steps.map((step: any, stepIndex: number) =>
-                              <div key={step._id || stepIndex} className="step-card">
+                                    {order.steps.map((s: any, sIdx: number) => (
+                                      <div key={s._id || sIdx} className="step-card">
                                         <div className="step-header">
-                                          <span className="step-number">Step {stepIndex + 1}</span>
-                                          <span className="step-name">{step.stepName || step.name || `Step ${stepIndex + 1}`}</span>
+                                          <span className="step-number">Step {sIdx + 1}</span>
+                                          <span className="step-name">{s.stepName || s.name || `Step ${sIdx + 1}`}</span>
                                         </div>
                                         <div className="step-machines">
-                                          {step.machines && step.machines.length > 0 ?
-                                  step.machines.map((machine: any, machineIndex: number) =>
-                                  <div
-                                    key={machine._id || machineIndex}
-                                    className="machine-item"
-                                    style={{ borderLeftColor: getMachineStatusColor(machine.status || 'none') }}>
-
-                                                <div className="machine-info">
-                                                  <div className="machine-status-row">
-                                                    {getMachineStatusIcon(machine.status || 'none')}
-                                                    <span className="machine-name-text">
-                                                      {machine.machineName || machine.machineId?.machineName || 'Machine'}
-                                                    </span>
+                                          {s.machines?.length > 0
+                                            ? s.machines.map((machine: any, mIdx: number) => (
+                                                <div key={machine._id || mIdx} className="machine-item" style={{ borderLeftColor: getMachineStatusColor(machine.status || 'none') }}>
+                                                  <div className="machine-info">
+                                                    <div className="machine-status-row">
+                                                      {getMachineStatusIcon(machine.status || 'none')}
+                                                      <span className="machine-name-text">{machine.machineName || machine.machineId?.machineName || 'Machine'}</span>
+                                                    </div>
+                                                    <div className="machine-details">
+                                                      {(machine.operatorName || machine.operator) && <span className="machine-operator">{machine.operatorName || machine.operator}</span>}
+                                                      {(machine.estimatedTime || machine.actualTime) && (
+                                                        <span className="machine-time">
+                                                          <Clock size={12} />
+                                                          {machine.actualTime ? formatDuration(machine.actualTime) : formatDuration(machine.estimatedTime)}
+                                                        </span>
+                                                      )}
+                                                    </div>
                                                   </div>
-                                                  <div className="machine-details">
-                                                    {machine.operatorName || machine.operator ?
-                                        <span className="machine-operator">
-                                                        {machine.operatorName || machine.operator}
-                                                      </span> :
-                                        null}
-                                                    {(machine.estimatedTime || machine.actualTime) &&
-                                        <span className="machine-time">
-                                                        <Clock size={12} />
-                                                        {machine.actualTime ?
-                                          formatDuration(machine.actualTime) :
-                                          formatDuration(machine.estimatedTime)}
-                                                        {machine.actualTime && machine.estimatedTime &&
-                                          <span className={`time-diff ${machine.actualTime > machine.estimatedTime ? 'over' : 'under'}`}>
-                                                            ({machine.actualTime > machine.estimatedTime ? '+' : '-'}
-                                                            {formatDuration(Math.abs(machine.actualTime - machine.estimatedTime))})
-                                                          </span>
-                                          }
-                                                      </span>
-                                        }
-                                                  </div>
+                                                  <span className="machine-status-text" style={{ color: getMachineStatusColor(machine.status || 'none') }}>{machine.status || 'none'}</span>
                                                 </div>
-                                                <span
-                                      className="machine-status-text"
-                                      style={{ color: getMachineStatusColor(machine.status || 'none') }}>
-
-                                                  {machine.status || 'none'}
-                                                </span>
-                                              </div>
-                                  ) :
-
-                                  <div className="no-machines">No machines assigned</div>
-                                  }
+                                              ))
+                                            : <div className="no-machines">No machines assigned</div>}
                                         </div>
-                                        {/* Flow Arrow */}
-                                        {stepIndex < order.steps.length - 1 &&
-                                <div className="step-arrow">
-                                            <ChevronRightIcon style={{ width: '24px', height: '24px' }} />
-                                          </div>
-                                }
+                                        {sIdx < order.steps.length - 1 && <div className="step-arrow"><ChevronRightIcon style={{ width: '24px', height: '24px' }} /></div>}
                                       </div>
-                              )}
+                                    ))}
                                   </div>
                                 </div>
-                          }
-
-                              {/* Edit Hint */}
-                              <div className="edit-hint">
-                                Double-click order row to edit
-                              </div>
+                              )}
+                              <div className="edit-hint">Double-click order row to edit</div>
                             </div>
                           </td>
                         </tr>
-                    }
-                    </React.Fragment>);
-
-              })}
+                      )}
+                    </React.Fragment>
+                  );
+                })}
               </tbody>
             </table>
           </div>
 
-          {/* Pagination */}
+          {/* ✅ FIX: Pagination — uses server totalPages, buttons update currentPage which triggers fetch */}
           <div className="pagination">
-            <button
-              className="pagination-btn"
-              onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-              disabled={currentPage === 1}>
+            <button className="pagination-btn" onClick={handlePrevPage} disabled={currentPage === 1 || ordersLoading}>
               <ChevronLeftIcon style={{ width: '16px', height: '16px' }} />
               Previous
             </button>
             <span className="pagination-info">
-              Page {currentPage} of {totalPages || 1} pages | Showing {orders.length} of {pagination?.totalOrders || filteredOrders.length} total orders
+              Page {currentPage} of {totalPages} &nbsp;|&nbsp; {orders.length} orders loaded &nbsp;|&nbsp; {totalOrderCount} total
             </span>
-            <button
-              className="pagination-btn"
-              onClick={() => setCurrentPage((prev) => Math.min(totalPages || 1, prev + 1))}
-              disabled={currentPage === totalPages}>
+            <button className="pagination-btn" onClick={handleNextPage} disabled={currentPage >= totalPages || ordersLoading}>
               Next
               <ChevronRightIcon style={{ width: '16px', height: '16px' }} />
             </button>
           </div>
         </>
-      }
+      )}
 
-      {/* Print Styles */}
+      {/* ✅ Loading Overlay for row-click navigation */}
+      {editLoading && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 200 }}>
+          <div style={{ backgroundColor: 'white', padding: '24px 32px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
+            <div style={{ width: '24px', height: '24px', border: '3px solid #e2e8f0', borderTop: '3px solid #10b981', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+            <span style={{ fontSize: '14px', color: '#475569', fontWeight: 500 }}>Loading order...</span>
+          </div>
+        </div>
+      )}
+
       <style>{`
-        @media print {
-          .all-orders-header__actions,
-          .all-orders-filters,
-          .pagination { display: none !important; }
-          .orders-table { border: 1px solid #000; }
-          .orders-table th, .orders-table td { border: 1px solid #000 !important; }
-        }
+        @media print { .all-orders-header__actions, .all-orders-filters, .pagination { display: none !important; } .orders-table { border: 1px solid #000; } .orders-table th, .orders-table td { border: 1px solid #000 !important; } }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>
 
-      {/* Forward Order Modal */}
+      {/* ✅ FIX: Forward Order Modal — fixed variable name (was selectedOrderForForForward typo) */}
       {selectedOrderForForward && (
         <ForwardOrderModal
           isOpen={forwardModalOpen}
-          onClose={() => {
-            setForwardModalOpen(false);
-            setSelectedOrderForForward(null);
-          }}
-          orderId={selectedOrderForForForward.id}
+          onClose={() => { setForwardModalOpen(false); setSelectedOrderForForward(null); }}
+          orderId={selectedOrderForForward.id}
           orderNumber={selectedOrderForForward.number}
-          onSuccess={() => {
-            // Refresh orders list after successful forward
-            dispatch(fetchOrders({ page: currentPage, limit: itemsPerPage }));
-          }}
+          onSuccess={() => fetchOrdersData()}
         />
       )}
 
@@ -1859,14 +1112,11 @@ const IndexAllOders = () => {
         <OrderDetailsModal
           isOpen={detailsModalOpen}
           orderId={selectedOrderId}
-          onClose={() => {
-            setDetailsModalOpen(false);
-            setSelectedOrderId(null);
-          }}
+          onClose={() => { setDetailsModalOpen(false); setSelectedOrderId(null); }}
         />
       )}
-    </div>);
-
+    </div>
+  );
 };
 
 export default IndexAllOders;

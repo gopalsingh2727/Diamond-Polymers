@@ -1,6 +1,7 @@
 import './App.css';
 import { useState } from 'react';
 import { HashRouter } from "react-router-dom";
+import { Toaster } from 'sonner';
 import { useSelector } from 'react-redux';
 import MainRount from './componest/MainRounts/MainRount';
 import { InfinityLoader } from './components/InfinityLoader';
@@ -42,6 +43,7 @@ function App() {
       <MainRount />
       <AuthenticatedChatWidget />
       <UniversalSearchModal />
+      <Toaster position="top-right" richColors />
     </HashRouter>
   );
 }

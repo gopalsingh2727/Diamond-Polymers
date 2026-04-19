@@ -24,7 +24,7 @@ const Menu = () => {
       // { name: "Inventory", path: "/menu/inventory", shortcut: "I" },
       { name: "Dispatch", path: "/menu/dispatch", shortcut: "P" },
       { name: "Status", path: "/menu/IndexAllOders", shortcut: "S" },
-      // { name: "Order Forward", path: "/menu/order-forward/connections", shortcut: "F" },
+      { name: "Order Forward", path: "/menu/connections", shortcut: "F" },
       { name: "Account", path: "/menu/Account", shortcut: "A" },
       { name: "Reports", path: "/menu/reports", shortcut: "R" },
     ];

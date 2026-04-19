@@ -13,6 +13,11 @@ export interface DashboardType {
   htmlFooter?: string;
   css?: string;
   js?: string;
+  // Firebase Storage file (replaces htmlBody for large files)
+  fileUrl?:  string;
+  fileType?: 'html' | 'build' | '';
+  fileName?: string;
+  fileSize?: number;
 }
 
 export type Step = 'date' | 'loading' | 'list' | 'preview';

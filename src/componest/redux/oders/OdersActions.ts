@@ -431,6 +431,12 @@ const collectDataFromDOM = (): SchemaAlignedOrderData => {
     const prioritySelect = document.querySelector('select[name="priority"]') as HTMLSelectElement;
     const statusSelect = document.querySelector('select[name="overallStatus"]') as HTMLSelectElement;
 
+    // Collect customer category and parent company from hidden inputs
+    const customerCategoryIdInput = document.querySelector('input[name="customerCategoryId"]') as HTMLInputElement;
+    const customerParentCompanyIdInput = document.querySelector('input[name="customerParentCompanyId"]') as HTMLInputElement;
+    const customerCategoryId = customerCategoryIdInput?.value || undefined;
+    const customerParentCompanyId = customerParentCompanyIdInput?.value || undefined;
+
     // Structure the order data
     const orderData: SchemaAlignedOrderData = {
       customerId: customerId, // ✅ FIXED: Use variable with localStorage fallback
@@ -444,7 +450,9 @@ const collectDataFromDOM = (): SchemaAlignedOrderData => {
       product27InfinityId: productInfinityId || '',
       Notes: notesTextarea?.value || '',
       priority: prioritySelect?.value as any || 'normal',
-      overallStatus: statusSelect?.value || 'Wait for Approval'
+      overallStatus: statusSelect?.value || 'Wait for Approval',
+      customerCategoryId: customerCategoryId || undefined,
+      customerParentCompanyId: customerParentCompanyId || undefined
     } as any;
 
 

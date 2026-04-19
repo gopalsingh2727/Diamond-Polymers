@@ -41,17 +41,11 @@ const OptionsSection: React.FC<OptionsSectionProps> = ({
   onDataChange,
   initialData = []
 }) => {
-  // ✅ DEBUG: Try multiple sources for options data
   const optionsFromFormData = useSelector((state: any) => state.orderFormData?.data?.options || []);
   const optionsFromV2 = useSelector((state: any) => state.v2?.option?.list || []);
 
   // Use whichever has data
   const options = optionsFromFormData.length > 0 ? optionsFromFormData : optionsFromV2;
-
-  console.log('🔍 DEBUG Options Sources:');
-  console.log('  - From orderFormData:', optionsFromFormData.length, 'items');
-  console.log('  - From v2.option.list:', optionsFromV2.length, 'items');
-  console.log('  - Using:', options.length, 'items');
 
   const [selectedOptions, setSelectedOptions] = useState<OptionItem[]>(initialData);
   const [showPopup, setShowPopup] = useState(false);
@@ -72,16 +66,6 @@ const OptionsSection: React.FC<OptionsSectionProps> = ({
   opt.code.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  // Debug: Log first option to see structure
-  useEffect(() => {
-    if (filteredOptions.length > 0) {
-      console.log('📋 First filtered option structure:', filteredOptions[0]);
-      console.log('📋 Dimensions field:', filteredOptions[0].dimensions);
-      console.log('📋 Specifications field (legacy):', filteredOptions[0].specifications);
-      console.log('📋 Has dimensions?', !!filteredOptions[0].dimensions);
-      console.log('📋 Dimensions length:', filteredOptions[0].dimensions?.length || 0);
-    }
-  }, [filteredOptions]);
 
   const handleAddOption = () => {
     if (!selectedOptionId || !quantity || quantity <= 0) {
@@ -94,14 +78,6 @@ const OptionsSection: React.FC<OptionsSectionProps> = ({
       alert('Option not found');
       return;
     }
-
-    // 🔍 DEBUG: Log the selected option structure
-    console.log('🔍 DEBUG Selected Option:', option);
-    console.log('🔍 Has dimensions?', !!option.dimensions);
-    console.log('🔍 Has specifications?', !!option.specifications);
-    console.log('🔍 dimensions value:', option.dimensions);
-    console.log('🔍 specifications value:', option.specifications);
-    console.log('🔍 All option keys:', Object.keys(option));
 
     // ✅ COLLECT ALL SPECIFICATIONS from 3 sources:
     // 1. OptionType specifications (parent type specs)
@@ -145,8 +121,6 @@ const OptionsSection: React.FC<OptionsSectionProps> = ({
         isCalculated: spec.isCalculated || false
       });
     });
-
-    console.log('🔍 Final combined specs (Type + Spec + Option):', allSpecs);
 
     // Create option item for order
     const optionItem: OptionItem = {
@@ -360,7 +334,7 @@ const OptionsSection: React.FC<OptionsSectionProps> = ({
                     <div className="specificationsList">
                       {item.specificationValues.slice(0, 3).map((spec, i) =>
                   <span key={i} className="specChip">
-                          {spec.name}: {spec.value} {spec.unit}
+                          {spec.name}: {typeof spec.value === 'number' ? parseFloat(spec.value.toFixed(2)).toLocaleString() : spec.value} {spec.unit}
                         </span>
                   )}
                       {item.specificationValues.length > 3 &&

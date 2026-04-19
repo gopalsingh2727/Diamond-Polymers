@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { Parser } from "expr-eval";
-import { Printer, FileSpreadsheet, Eye } from "lucide-react";
+import { Eye } from "lucide-react";
 import "./CreateOders.css";
 import "./DynamicForm.css";
 import { BackButton } from "../../../allCompones/BackButton";
@@ -141,9 +141,7 @@ const transformOptionsForEdit = (orderData: any): any[] => {
     // Transform specificationValues from array to object format
     const specsObject: {[key: string]: any;} = {};
     if (Array.isArray(opt.specificationValues)) {
-      console.log('📂 Loading specificationValues from DB:', opt.specificationValues);
       opt.specificationValues.forEach((spec: any) => {
-        console.log(`📂 Spec ${spec.name}:`, spec.value, 'dataType:', spec.dataType);
         specsObject[spec.name] = spec.value;
       });
     } else if (opt.specificationValues && typeof opt.specificationValues === 'object') {
@@ -182,8 +180,16 @@ const isFileValue = (value: any): boolean => {
 const renderSpecValue = (value: any): string => {
   if (value === undefined || value === null || value === '') return '-';
   if (typeof value === 'boolean') return value ? 'Yes' : 'No';
-  if (typeof value === 'number') return value.toLocaleString();
+  if (typeof value === 'number') {
+    // Round to max 2 decimal places, strip trailing zeros
+    return parseFloat(value.toFixed(2)).toLocaleString();
+  }
   if (typeof value === 'object' && value.fileName) return value.fileName;
+  // If value is a numeric string, round it too
+  const num = parseFloat(String(value));
+  if (!isNaN(num) && String(value).trim() !== '' && /^-?\d*\.?\d+$/.test(String(value).trim())) {
+    return parseFloat(num.toFixed(2)).toLocaleString();
+  }
   return String(value);
 };
 
@@ -419,12 +425,6 @@ const CreateOrders = () => {
           });
         }
 
-        console.log('🔧 OrderType Config loaded:', {
-          typeName: selectedConfig.typeName,
-          hideManufacturingSteps: selectedConfig.hideManufacturingSteps,
-          orderCategory: selectedConfig.orderCategory
-        });
-
         setOrderTypeConfig(selectedConfig);
 
 
@@ -450,47 +450,19 @@ const CreateOrders = () => {
 
   // Helper function to check if a section is enabled
   const isSectionEnabled = (sectionId: string): boolean => {
-    console.log(`🔎 isSectionEnabled called for: "${sectionId}"`);
 
     // BILLING ORDER: Hide steps section if hideManufacturingSteps is true
     if (sectionId === 'steps') {
-      console.log('🔍 Checking steps section visibility:', {
-        hideManufacturingSteps: orderTypeConfig?.hideManufacturingSteps,
-        orderCategory: orderTypeConfig?.orderCategory,
-        typeCode: orderTypeConfig?.typeCode,
-        typeName: orderTypeConfig?.typeName,
-        shouldHide: !!orderTypeConfig?.hideManufacturingSteps
-      });
-
-      // ✅ FIX: Check hideManufacturingSteps field
       if (orderTypeConfig?.hideManufacturingSteps === true) {
-        console.log('✅ HIDING manufacturing steps section (hideManufacturingSteps=true)');
         return false;
       }
-
-      // ✅ FIX: Hide for billing category orders
       if (orderTypeConfig?.orderCategory === 'billing') {
-        console.log('✅ HIDING manufacturing steps section (billing category)');
         return false;
       }
-
-      // ✅ FALLBACK: Check specific order types that should hide steps (until API is fixed)
-      // This list includes order types where hideManufacturingSteps is true in DB but not returned by API
       const hideStepsOrderTypes = ['SILVER_TEST', 'mrk', '99', '222', 'EWEWE'];
-      const isInFallbackList = hideStepsOrderTypes.includes(orderTypeConfig?.typeCode || '');
-
-      console.log('🔍 Fallback list check:', {
-        typeCode: orderTypeConfig?.typeCode,
-        hideStepsOrderTypes,
-        isInFallbackList
-      });
-
-      if (isInFallbackList) {
-        console.log('✅ HIDING manufacturing steps section (typeCode in fallback list)');
+      if (hideStepsOrderTypes.includes(orderTypeConfig?.typeCode || '')) {
         return false;
       }
-
-      console.log('❌ NOT HIDING steps section - no conditions matched');
     }
 
     if (!orderTypeConfig || !orderTypeConfig.sections || orderTypeConfig.sections.length === 0) {
@@ -597,17 +569,17 @@ const CreateOrders = () => {
     const aggregated: {[key: string]: number[];} = {};
     const single: {[key: string]: number;} = {};
 
-    console.log('🔍 Building formula context from options:', options);
-    console.log('🔍 All available option data:', allData?.options);
+
+    // Convert any name to a safe formula variable name (same logic as backend toVarName)
+    const toVarName = (name: string) =>
+      (name || '').replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
 
     options.forEach((opt) => {
-      // Clean option type name for variable naming
-      const cleanTypeName = (opt.optionTypeName || 'Option').
-      replace(/\s+/g, '_').
-      replace(/[.%]/g, '').
-      replace(/_+/g, '_');
+      // Clean option TYPE name for variable naming (backward compat key)
+      const cleanTypeName = toVarName(opt.optionTypeName || 'Option');
+      // Clean option INSTANCE name for unique key (Option A fix)
+      const cleanOptionName = toVarName(opt.optionName || '');
 
-      console.log(`🔍 Processing option: ${opt.optionName} (${cleanTypeName})`, opt);
 
       // ✅ STEP 1: Load OptionType specifications (e.g., purity = 80%)
       if (orderTypeConfig?.allowedOptionTypes && opt.optionTypeId) {
@@ -618,63 +590,60 @@ const CreateOrders = () => {
         if (optionType && optionType.specifications) {
           optionType.specifications.forEach((spec: any) => {
             if (spec.dataType === 'number' && spec.defaultValue != null) {
-              const cleanKey = spec.name.replace(/\s+/g, '_');
-              const varName = `${cleanTypeName}_${cleanKey}`;
+              const cleanKey = toVarName(spec.name);
               const numValue = parseFloat(String(spec.defaultValue)) || 0;
-
-              // Add to single (OptionType specs are templates, not aggregated)
-              single[varName] = numValue;
+              single[cleanKey] = numValue;                                    // bare
+              single[`${cleanTypeName}_${cleanKey}`] = numValue;              // type-prefixed
+              if (cleanOptionName) single[`${cleanOptionName}_${cleanKey}`] = numValue; // option-specific
             }
           });
         }
       }
 
-      // ✅ STEP 2: Load Option dimensions (actual option instance values like rate_value = 8000)
+      // ✅ STEP 2: Load Option dimensions (actual option instance values)
       const optionData = allData?.options?.find((o: any) => o._id === opt.optionId);
-      console.log(`🔍 Found option data for ${opt.optionName}:`, optionData);
 
       if (optionData && optionData.dimensions && Array.isArray(optionData.dimensions)) {
-        console.log(`✅ Loading ${optionData.dimensions.length} dimensions from option ${opt.optionName}`);
         optionData.dimensions.forEach((dim: any) => {
           if (dim.dataType === 'number' && dim.value != null) {
-            const cleanKey = dim.name.replace(/\s+/g, '_');
-            const varName = `${cleanTypeName}_${cleanKey}`;
+            const cleanKey = toVarName(dim.name);
             const numValue = typeof dim.value === 'number' ? dim.value : parseFloat(String(dim.value)) || 0;
-
-            console.log(`  ✅ ${varName} = ${numValue}`);
-            // Add to single (Option dimensions are instance values, not aggregated)
-            single[varName] = numValue;
+            if (isNaN(numValue)) return;
+            single[cleanKey] = numValue;
+            single[`${cleanTypeName}_${cleanKey}`] = numValue;
+            if (cleanOptionName) single[`${cleanOptionName}_${cleanKey}`] = numValue;
           }
         });
-      } else {
-        console.log(`⚠️ No dimensions found for option ${opt.optionName}`);
       }
 
       // ✅ STEP 3: Load specificationValues from the order (user input)
       if (opt.specificationValues) {
         Object.entries(opt.specificationValues).forEach(([key, value]) => {
-          const cleanKey = key.replace(/\s+/g, '_');
-          const varName = `${cleanTypeName}_${cleanKey}`;
+          const cleanKey = toVarName(key);
+          const typeVarName = `${cleanTypeName}_${cleanKey}`;
           const numValue = typeof value === 'number' ? value : parseFloat(String(value)) || 0;
+          if (isNaN(numValue)) return;
 
-          // Add to aggregated array
-          if (!aggregated[varName]) {
-            aggregated[varName] = [];
-          }
-          aggregated[varName].push(numValue);
+          // 1. Bare key — e.g. "Dart", "GrossWt" (for formulas written without type prefix)
+          if (!aggregated[cleanKey]) aggregated[cleanKey] = [];
+          aggregated[cleanKey].push(numValue);
+          single[cleanKey] = numValue; // last option wins for bare key
 
-          // For single values: Rate options take precedence, others use last value
-          if (cleanTypeName.toLowerCase().includes('rate')) {
-            single[varName] = numValue;
-          } else {
-            single[varName] = numValue;
+          // 2. Type-prefixed key — e.g. "Idea_Dart" (SUM all options of same type)
+          if (!aggregated[typeVarName]) aggregated[typeVarName] = [];
+          aggregated[typeVarName].push(numValue);
+          single[typeVarName] = (single[typeVarName] || 0) + numValue;
+
+          // 3. Option-specific key — e.g. "Fancy_payal_Idea_Dart" (unique, no collision)
+          if (cleanOptionName) {
+            const optVarName = `${cleanOptionName}_${cleanKey}`;
+            single[optVarName] = numValue;
+            if (!aggregated[optVarName]) aggregated[optVarName] = [];
+            aggregated[optVarName].push(numValue);
           }
         });
       }
     });
-
-    console.log('✅ Final formula context - single values:', single);
-    console.log('✅ Final formula context - aggregated values:', aggregated);
 
     return { aggregated, single };
   };
@@ -702,23 +671,30 @@ const CreateOrders = () => {
         return '0';
       });
 
-      // Step 2: Replace single variable names with their values
-      Object.keys(single).forEach((key) => {
+      // Step 2: Replace known variable names with their values
+      // Sort longest keys first to prevent partial matches (e.g. Idea_Gwt before Gwt)
+      Object.keys(single).sort((a, b) => b.length - a.length).forEach((key) => {
         const value = single[key];
-        // Use word boundary to avoid partial matches
         const regex = new RegExp(`\\b${key}\\b`, 'g');
         evalFormula = evalFormula.replace(regex, String(value));
       });
 
-      // Step 3: Evaluate the formula if it's valid
-      // Check if formula is ready for evaluation (only numbers and operators)
+      // Step 3: Replace any remaining OptionTypeName_SpecName variables with 0
+      const knownTypeNames = (orderTypeConfig?.allowedOptionTypes || [])
+        .map((ot: any) => (ot.name || '').replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, ''));
+
+      if (knownTypeNames.length > 0) {
+        const typePrefix = knownTypeNames.join('|');
+        const missingTypeVarRegex = new RegExp(`\\b(${typePrefix})_[a-zA-Z0-9_]+\\b`, 'g');
+        evalFormula = evalFormula.replace(missingTypeVarRegex, '0');
+      }
+
+      // Step 4: Evaluate if fully resolved
       if (/^[\d\s+\-*/().]+$/.test(evalFormula)) {
         const parser = new Parser();
         const result = parser.evaluate(evalFormula);
         return typeof result === 'number' ? Math.round(result * 100) / 100 : result;
       }
-
-      // If formula still has unresolved variables, return empty
 
       return '';
     } catch (e) {
@@ -736,20 +712,14 @@ const CreateOrders = () => {
       const { aggregated, single } = getSpecValuesFromOptions();
       const newCalculatedValues: {[key: string]: number | string;} = {};
 
-      console.log('📊 Recalculating dynamic values...', { aggregated, single });
-
       orderTypeConfig.dynamicCalculations.
       filter((calc) => calc.enabled && calc.autoPopulate).
       forEach((calc) => {
         const value = calculateDynamicValue(calc.formula, aggregated, single);
-        console.log(`  📊 ${calc.name} = ${value} (formula: ${calc.formula})`);
-
         if (value !== '') {
           newCalculatedValues[calc.name] = value;
         }
       });
-
-      console.log('📊 New calculated values:', newCalculatedValues);
       setCalculatedValues(newCalculatedValues);
     } else if (options.length === 0) {
       // Clear calculations when no options
@@ -820,14 +790,15 @@ const CreateOrders = () => {
   };
 
   // Handle sending email from Print/Excel modal
-  const handlePrintExcelEmail = async (emailAddress: string, content: string, subject: string, attachments?: any[]) => {
+  const handlePrintExcelEmail = async (emailAddress: string, content: string, subject: string, attachments?: any[], sender?: 'branch' | 'global') => {
     try {
       await crudAPI.create('/send-email', {
         to: emailAddress,
         subject,
         html: content,
-        text: content.replace(/<[^>]*>/g, ''), // Strip HTML tags for plain text
-        attachments: attachments || []
+        text: content.replace(/<[^>]*>/g, ''),
+        attachments: attachments || [],
+        useSender: sender || 'branch'
       });
 
       // Show specific success message based on attachment type
@@ -852,10 +823,9 @@ const CreateOrders = () => {
   };
 
   // Handle sending WhatsApp from Print/Excel modal
-  const handlePrintExcelWhatsApp = async (phoneNumber: string, message: string, document?: any) => {
+  const handlePrintExcelWhatsApp = async (phoneNumber: string, message: string, document?: any, sender?: 'branch' | 'global') => {
     try {
       if (!document) {
-        // Fallback to web link if no document
         const cleanPhone = phoneNumber.replace(/\D/g, '');
         const formattedPhone = cleanPhone.startsWith('91') ? cleanPhone : `91${cleanPhone}`;
         const whatsappUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
@@ -864,11 +834,11 @@ const CreateOrders = () => {
         return;
       }
 
-      // Send via backend API with document
       await crudAPI.create('/send-whatsapp', {
         to: phoneNumber,
         message: message,
-        document: document
+        document: document,
+        useSender: sender || 'branch'
       });
 
       // Show specific success message based on document type
@@ -1314,14 +1284,7 @@ const CreateOrders = () => {
                   // Check if this section should be shown
                   const isEnabled = isSectionEnabled(section.id);
 
-                  console.log(`📋 Section "${section.id}":`, {
-                    enabled: isEnabled,
-                    sectionName: section.name,
-                    willRender: isEnabled
-                  });
-
                   if (!isEnabled) {
-                    console.log(`🚫 SKIPPING section "${section.id}" - not enabled`);
                     return null;
                   }
 
@@ -1625,90 +1588,168 @@ const CreateOrders = () => {
                   backgroundColor: '#fef3c7'
                 }}>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
                   {orderData?.orderId &&
                   <span style={{
                     background: '#f59e0b',
                     color: 'white',
-                    padding: '4px 10px',
+                    padding: '3px 8px',
                     borderRadius: '4px',
-                    fontSize: '12px',
-                    fontWeight: '600'
+                    fontSize: '11px',
+                    fontWeight: '600',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0
                   }}>
                       {orderData.orderId}
                     </span>
                   }
-                  <h3 style={{ margin: 0, fontSize: '16px', color: '#92400e', fontWeight: '600' }}>
+                  <h3 style={{ margin: 0, fontSize: '14px', color: '#92400e', fontWeight: '600', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     All Options Summary
                   </h3>
                   <span style={{
                     background: '#fbbf24',
                     color: '#78350f',
-                    padding: '4px 10px',
+                    padding: '3px 8px',
                     borderRadius: '12px',
-                    fontSize: '12px',
-                    fontWeight: '500'
+                    fontSize: '11px',
+                    fontWeight: '500',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0
                   }}>
                     {options.length} options • {Object.keys(groupedOptions).length} types
                   </span>
                 </div>
-                <div style={{ display: 'flex', gap: '8px' }}>
+                <div style={{ display: 'flex', gap: '0', flexShrink: 0, alignItems: 'center' }}>
                   <button
                     onClick={() => {
-                      window.print();
+                      const printContent = `
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                          <title>All Options - Print</title>
+                          <style>
+                            * { margin: 0; padding: 0; box-sizing: border-box; }
+                            body { font-family: Arial, sans-serif; padding: 20px; font-size: 12px; }
+                            .header { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #333; }
+                            .header h1 { font-size: 18px; margin-bottom: 5px; }
+                            .order-badge { display: inline-block; background: #fef3c7; color: #d97706; padding: 4px 10px; border-radius: 4px; font-weight: 600; font-size: 12px; margin-bottom: 10px; border: 1px solid #f59e0b; }
+                            .customer-info { font-size: 11px; margin-top: 10px; }
+                            .type-section { margin-bottom: 20px; }
+                            .type-header { background: #f0f9ff; padding: 8px 12px; border-radius: 4px; margin-bottom: 8px; font-weight: 600; color: #0369a1; }
+                            table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+                            th, td { border: 1px solid #ddd; padding: 6px 8px; text-align: left; font-size: 11px; }
+                            th { background: #f8fafc; font-weight: 600; }
+                            tfoot tr { background: #fef3c7; border-top: 2px solid #f59e0b; font-weight: 700; color: #92400e; }
+                            @media print { body { padding: 10px; } }
+                          </style>
+                        </head>
+                        <body>
+                          <div class="header">
+                            ${orderData?.orderId ? `<div class="order-badge">${orderData.orderId}</div>` : ''}
+                            <h1>All Options Summary</h1>
+                            ${customerInfo ? `
+                              <div class="customer-info">
+                                ${customerInfo.name ? `<strong>${customerInfo.name}</strong>` : ''}
+                                ${customerInfo.companyName ? ` - ${customerInfo.companyName}` : ''}
+                                ${customerInfo.address ? `<br/>${customerInfo.address}` : ''}
+                                ${customerInfo.phone || customerInfo.whatsapp ? `<br/>Ph: ${customerInfo.phone || customerInfo.whatsapp}` : ''}
+                              </div>
+                            ` : ''}
+                            ${createdByName || createdAt ? `
+                              <div class="customer-info" style="margin-top:10px;padding-top:10px;border-top:1px solid #e5e7eb;">
+                                ${createdByName ? `<strong>${createdByName}</strong>` : ''}
+                                ${createdAt ? `${createdByName ? ' | ' : ''}${new Date(createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}` : ''}
+                              </div>
+                            ` : ''}
+                          </div>
+                          ${Object.entries(groupedOptions).map(([, opts]: [string, any[]]) => {
+                            const typeName = opts[0]?.optionTypeName || 'Unknown';
+                            const specKeys = Array.from(new Set(opts.flatMap((o: any) => Object.keys(o.specificationValues || {})))) as string[];
+                            const totals: Record<string, number> = {};
+                            const showT: Record<string, boolean> = {};
+                            let hasTotal = false;
+                            specKeys.forEach((k) => {
+                              const allNums = opts.every((o: any) => !isNaN(parseFloat(o.specificationValues?.[k])));
+                              if (allNums) {
+                                showT[k] = true;
+                                hasTotal = true;
+                                totals[k] = parseFloat(opts.reduce((sum: number, o: any) => sum + (parseFloat(o.specificationValues?.[k]) || 0), 0).toFixed(2));
+                              }
+                            });
+                            return `
+                              <div class="type-section">
+                                <div class="type-header">${typeName} (${opts.length} items)</div>
+                                <table>
+                                  <thead>
+                                    <tr>
+                                      <th>#</th>
+                                      <th>Option Name</th>
+                                      ${specKeys.map((k) => `<th>${k}</th>`).join('')}
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    ${opts.map((opt: any, idx: number) => `
+                                      <tr>
+                                        <td>${idx + 1}</td>
+                                        <td><strong>${opt.optionName}</strong></td>
+                                        ${specKeys.map((k) => `<td>${opt.specificationValues?.[k] ?? '-'}</td>`).join('')}
+                                      </tr>
+                                    `).join('')}
+                                  </tbody>
+                                  ${hasTotal ? `<tfoot><tr>
+                                    <td></td><td>Total</td>
+                                    ${specKeys.map((k) => `<td>${showT[k] ? parseFloat((totals[k] || 0).toFixed(2)).toLocaleString() : '-'}</td>`).join('')}
+                                  </tr></tfoot>` : ''}
+                                </table>
+                              </div>
+                            `;
+                          }).join('')}
+                        </body>
+                        </html>
+                      `;
+                      const iframe = document.createElement('iframe');
+                      iframe.style.cssText = 'position:fixed;width:100%;height:100%;border:none;left:-9999px;top:0;z-index:-1';
+                      document.body.appendChild(iframe);
+                      const doc = iframe.contentWindow?.document;
+                      if (doc) {
+                        doc.open();
+                        doc.write(printContent);
+                        doc.close();
+                        setTimeout(() => {
+                          iframe.contentWindow?.focus();
+                          iframe.contentWindow?.print();
+                          setTimeout(() => document.body.removeChild(iframe), 1000);
+                        }, 500);
+                      }
                     }}
-                    style={{
-                      background: '#f59e0b',
-                      border: 'none',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      padding: '6px 12px',
-                      fontSize: '13px',
-                      color: 'white',
-                      fontWeight: '500',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px'
-                    }}>
-
-                    <Printer size={14} />
-                    Print All
+                    style={{ width: '55px', height: '32px', backgroundColor: 'transparent', color: '#3b82f6', border: '1px solid #e5e7eb', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    title="Print All">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polyline points="6 9 6 2 18 2 18 9" />
+                      <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                      <rect x="6" y="14" width="12" height="8" />
+                    </svg>
                   </button>
                   <button
                     onClick={() => {
                       toast.success('Success', 'Excel export feature coming soon!');
                     }}
-                    style={{
-                      background: '#10b981',
-                      border: 'none',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      padding: '6px 12px',
-                      fontSize: '13px',
-                      color: 'white',
-                      fontWeight: '500',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px'
-                    }}>
-
-                    <FileSpreadsheet size={14} />
-                    Excel All
+                    style={{ width: '55px', height: '32px', backgroundColor: 'transparent', color: '#10b981', border: '1px solid #e5e7eb', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    title="Excel All">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="7 10 12 15 17 10" />
+                      <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
                   </button>
                   <button
                     onClick={() => setShowViewAllOptions(false)}
-                    style={{
-                      background: '#f1f5f9',
-                      border: 'none',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      padding: '6px 12px',
-                      fontSize: '13px',
-                      color: '#64748b',
-                      fontWeight: '500'
-                    }}>
-
-                    ✕ Close
+                    style={{ width: '55px', height: '32px', backgroundColor: 'transparent', color: '#64748b', border: '1px solid #e5e7eb', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    title="Close">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
                   </button>
                 </div>
               </div>
@@ -1956,7 +1997,10 @@ const CreateOrders = () => {
                         filter((c: any) => c.enabled).
                         sort((a: any, b: any) => (a.order || 0) - (b.order || 0)).
                         map((calc: any, idx: number) => {
-                          const value = calculatedValues[calc.name] || '-';
+                          const rawVal = calculatedValues[calc.name];
+                          const value = typeof rawVal === 'number'
+                            ? parseFloat(rawVal.toFixed(2)).toLocaleString()
+                            : (rawVal || '-');
                           const rowBg = calc.columnFormat === 'highlight' ? '#fef3c7' :
                           calc.columnFormat === 'summary' ? '#dbeafe' :
                           idx % 2 === 0 ? '#ffffff' : '#f9fafb';

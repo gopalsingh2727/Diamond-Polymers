@@ -218,17 +218,6 @@ export const listBranches = () => {
       // ✅ Extract branches array from V2 response
       const branches = data.data?.data || data.data || data.branches || data || [];
 
-      // ✅ Save to localStorage cache after successful API call
-      try {
-        localStorage.setItem('branchList_cache', JSON.stringify({
-          branches,
-          timestamp: Date.now()
-        }));
-        console.log('✅ Branches saved to localStorage cache');
-      } catch (e) {
-        console.warn('Failed to cache branches:', e);
-      }
-
       dispatch({
         type: BRANCH_LIST_SUCCESS,
         payload: branches

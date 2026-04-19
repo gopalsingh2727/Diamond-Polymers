@@ -13,6 +13,97 @@
   padding: 20px;
 }
 
+/* ==========================================================================
+   GLOBAL INPUT & DROPDOWN OVERRIDE
+   Matches createNewAccount.css pixel-for-pixel: underline-only, 14px font,
+   10px 0 padding, 36px min-height, appearance:none on selects.
+   Does NOT touch checkboxes / radios / file / color / range.
+   ========================================================================== */
+.createMachineType-container input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="color"]):not([type="range"]),
+.createMachineType-container select,
+.createMachineType-container textarea {
+  width: 100% !important;
+  padding: 6px 2px !important;
+  font-size: 13px !important;
+  color: #1f2937 !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: none !important;
+  border-bottom: 1.5px solid #d1d5db !important;
+  border-radius: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+  box-sizing: border-box !important;
+  font-family: inherit !important;
+  transition: border-color 0.2s ease !important;
+}
+
+.createMachineType-container input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="color"]):not([type="range"]):hover,
+.createMachineType-container select:hover,
+.createMachineType-container textarea:hover {
+  border-bottom-color: #6b7280 !important;
+}
+
+.createMachineType-container input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="color"]):not([type="range"]):focus,
+.createMachineType-container select:focus,
+.createMachineType-container textarea:focus {
+  border: none !important;
+  border-bottom: 2px solid #FF6B35 !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.createMachineType-container input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="color"]):not([type="range"]):disabled,
+.createMachineType-container select:disabled,
+.createMachineType-container textarea:disabled {
+  background-color: #f3f4f6 !important;
+  cursor: not-allowed !important;
+  opacity: 0.6 !important;
+}
+
+.createMachineType-container textarea {
+  resize: vertical !important;
+  min-height: 60px !important;
+  padding: 6px 2px !important;
+}
+
+.createMachineType-container select {
+  cursor: pointer !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+}
+
+.createMachineType-container select option {
+  background-color: #ffffff !important;
+  color: #1f2937 !important;
+  font-size: 14px !important;
+  font-family: inherit !important;
+  padding: 10px 12px !important;
+  border: none !important;
+}
+
+.createMachineType-container select option:hover,
+.createMachineType-container select option:focus,
+.createMachineType-container select option:checked {
+  background-color: #fff5f0 !important;
+  color: #FF6B35 !important;
+  font-weight: 500 !important;
+}
+
+.createMachineType-container select option:disabled {
+  color: #9ca3af !important;
+  background-color: #f3f4f6 !important;
+}
+
+.createMachineType-container select optgroup {
+  background-color: #f9fafb !important;
+  color: #374151 !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  font-style: normal !important;
+}
+
 /* Edit Mode - Full Width Layout */
 .createMachineType-container.edit-mode {
   justify-content: flex-start !important;
@@ -23,11 +114,12 @@
 /* Form Card */
 .createMachineType-form {
   background: white;
-  padding: 24px 32px;
-  max-width: 500px;
+  padding: 16px 20px;
+  max-width: 520px;
   width: 100%;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  box-shadow: none;
 }
 
 /* Edit Mode - Full Width Form */
@@ -51,7 +143,7 @@
 
 /* Title */
 .createMachineType-title {
-  font-size: 1.25rem;
+  font-size: 14px;
   font-weight: 600;
   color: #1f2937;
   text-align: center;
@@ -69,33 +161,30 @@
 
 /* Import Machine Type Button */
 .import-machinetype-btn {
-  padding: 6px 14px;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 13px;
+  height: 28px;
+  padding: 0 12px;
+  background: #f3f4f6;
+  color: #1f2937;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
-  display: flex;
+  transition: background 0.15s ease;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
   white-space: nowrap;
 }
 
 .import-machinetype-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.35);
+  background: #e5e7eb;
 }
 
 .import-machinetype-btn:disabled {
-  background: #9ca3af;
+  background: #f3f4f6;
+  color: #9ca3af;
   cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
 }
 
 /* Form Group - Compact spacing */
@@ -103,13 +192,15 @@
   margin-bottom: 16px;
 }
 
-/* Label - Close to input */
+/* Label */
 .createMachineType-label {
   display: block;
-  font-size: 13px;
-  font-weight: 500;
-  color: #374151;
-  margin-bottom: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 2px;
 }
 
 /* Input - Underline Style */
@@ -134,33 +225,32 @@
   color: #9ca3af;
 }
 
-/* Button - Full Width Orange */
+/* Button - Flat Orange, Fixed Width, Right-aligned */
 .createMachineType-button {
-  width: 100%;
-  padding: 14px 24px;
-  margin-top: 24px;
-  font-size: 15px;
+  display: block;
+  margin: 20px 0 0 auto;
+  height: 34px;
+  padding: 0 24px;
+  min-width: 160px;
+  width: auto;
+  font-size: 13px;
   font-weight: 600;
   color: white;
-  background: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%);
+  background: #FF6B35;
   border: none;
-  border-radius: 8px;
+  border-radius: 4px;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.25);
+  transition: background 0.15s ease;
 }
 
 .createMachineType-button:hover:not(:disabled) {
-  background: linear-gradient(135deg, #E55A2B 0%, #d44a1b 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(255, 107, 53, 0.35);
+  background: #E55A2B;
 }
 
 .createMachineType-button:disabled {
-  background: #9ca3af;
+  background: #d1d5db;
+  color: #6b7280;
   cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
 }
 
 /* Size Inputs - Row Layout */
@@ -350,15 +440,16 @@
 }
 
 .createMachineType-back-btn {
-  padding: 10px 24px !important;
+  height: 32px !important;
+  padding: 0 16px !important;
   background: #f3f4f6 !important;
-  color: #374151 !important;
+  color: #1f2937 !important;
   border: 1px solid #d1d5db !important;
-  border-radius: 8px !important;
-  font-size: 14px !important;
+  border-radius: 4px !important;
+  font-size: 12px !important;
   font-weight: 600 !important;
   cursor: pointer !important;
-  transition: all 0.2s ease !important;
+  transition: background 0.15s ease !important;
 }
 
 .createMachineType-back-btn:hover {
@@ -366,25 +457,28 @@
 }
 
 .createMachineType-delete-btn {
-  padding: 10px 24px !important;
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
-  color: white !important;
-  border: none !important;
-  border-radius: 8px !important;
-  font-size: 14px !important;
+  height: 32px !important;
+  padding: 0 16px !important;
+  background: #fee2e2 !important;
+  color: #dc2626 !important;
+  border: 1px solid #fecaca !important;
+  border-radius: 4px !important;
+  font-size: 12px !important;
   font-weight: 600 !important;
   cursor: pointer !important;
-  transition: all 0.2s ease !important;
+  transition: all 0.15s ease !important;
 }
 
 .createMachineType-delete-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
+  background: #dc2626 !important;
+  color: white !important;
+  border-color: #dc2626 !important;
 }
 
 .createMachineType-delete-btn:disabled {
-  background: #9ca3af !important;
+  background: #f3f4f6 !important;
+  color: #9ca3af !important;
+  border-color: #e5e7eb !important;
   cursor: not-allowed !important;
 }
 
@@ -428,15 +522,17 @@
 .createMachineType-container.edit-mode .createMachineType-title {
   text-align: left !important;
   justify-content: flex-start !important;
-  font-size: 1.5rem !important;
-  margin-bottom: 24px !important;
+  font-size: 14px !important;
+  margin-bottom: 16px !important;
 }
 
 /* ====================================
    Edit Mode - Update Button
    ==================================== */
 .createMachineType-container.edit-mode .createMachineType-button {
-  max-width: 300px !important;
+  min-width: 160px !important;
+  width: auto !important;
+  max-width: none !important;
 }
 
 /* ====================================
@@ -449,12 +545,12 @@
 }
 
 .machines-title {
-  font-size: 16px !important;
+  font-size: 13px !important;
   font-weight: 600 !important;
   color: #1f2937 !important;
-  margin: 0 0 16px 0 !important;
-  padding-bottom: 8px !important;
-  border-bottom: 2px solid #FF6B35 !important;
+  margin: 0 0 12px 0 !important;
+  padding-bottom: 6px !important;
+  border-bottom: 1px solid #e5e7eb !important;
 }
 
 .machines-table-wrapper {
@@ -472,7 +568,7 @@
 }
 
 .machines-table thead {
-  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  background: #f9fafb;
 }
 
 .machines-table th,

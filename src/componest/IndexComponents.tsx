@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { listBranchesIfNeeded } from './redux/Branch/BranchActions';
+import { listBranchesIfNeeded, listBranches } from './redux/Branch/BranchActions'; // listBranchesIfNeeded used on mount, listBranches used on dropdown click
 import { setSelectedBranchInAuth, checkAndRefreshToken, clearSessionExpiredAndLogout } from './redux/login/authActions';
 import type { RootState, AppDispatch } from '../store';
 
@@ -36,6 +36,7 @@ function IndexComponents() {
   useEffect(() => {
     dispatch(listBranchesIfNeeded() as any);
   }, [dispatch]);
+
 
   // ✅ FIX: Check and refresh token when laptop wakes from sleep
   // setTimeout stops during sleep, so we need to check on visibility change
@@ -168,6 +169,9 @@ function IndexComponents() {
       const currentBranchId = userData?.selectedBranch?._id || userData?.selectedBranch || "";
       setTempSelectedBranch(currentBranchId);
       setShowBranchModal(true);
+      // Clear cache then force fresh API fetch every time dropdown opens
+      localStorage.removeItem('branchList_cache');
+      dispatch(listBranches() as any);
     }
   };
 
@@ -313,14 +317,17 @@ function IndexComponents() {
             {/* Branch Dropdown - Near Settings for admin/master_admin */}
             {(userData?.role === "admin" || userData?.role === "master_admin") &&
             <div className="header-branch-selector">
-                {loading ?
-              <span className="header-no-branch">Loading...</span> :
-              branches.length > 0 ?
+                {branches.length > 0 ?
               <div className="relative">
                     <select
                   className={`header-branch-dropdown ${isBranchChanging || orderFormDataLoading ? 'opacity-50' : ''}`}
                   value={userData?.selectedBranch?._id || userData?.selectedBranch || ''}
                   disabled={isBranchChanging || orderFormDataLoading}
+                  onFocus={() => {
+                    // Fetch fresh branches every time user opens the dropdown
+                    localStorage.removeItem('branchList_cache');
+                    dispatch(listBranches() as any);
+                  }}
                   onChange={async (e) => {
                     const newBranchId = e.target.value;
                     const currentBranchId = userData?.selectedBranch?._id || userData?.selectedBranch;

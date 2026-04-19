@@ -5,7 +5,7 @@
 
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/dev';
+const API_BASE_URL = import.meta.env.VITE_API_27INFINITY_IN || import.meta.env.VITE_API_URL || 'http://localhost:4000';
 
 export interface OrderUpdate {
   type: 'order:updated' | 'order:created' | 'order:deleted' | 'order:status_changed';

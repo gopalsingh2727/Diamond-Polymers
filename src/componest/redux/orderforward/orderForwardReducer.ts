@@ -42,6 +42,31 @@ const initialState: OrderForwardState = {
   forwardingChain: null,
   forwardingChainLoading: false,
 
+  // Role-based orders
+  myOrders: [],
+  myOrdersPagination: null,
+  myOrdersLoading: false,
+
+  teamOrders: [],
+  teamOrdersPagination: null,
+  teamOrdersLoading: false,
+
+  branchOrders: [],
+  branchOrdersPagination: null,
+  branchOrdersLoading: false,
+
+  allBranchOrders: [],
+  allBranchOrdersPagination: null,
+  allBranchOrdersLoading: false,
+
+  companyOrders: [],
+  companyOrdersPagination: null,
+  companyOrdersLoading: false,
+
+  sharedOrders: [],
+  sharedOrdersPagination: null,
+  sharedOrdersLoading: false,
+
   // UI state
   forwardModalOpen: false,
   connectionModalOpen: false,
@@ -417,6 +442,107 @@ const orderForwardReducer = (
         loading: false,
         error: action.payload
       };
+
+    // ============= ROLE-BASED ORDER FETCHING =============
+
+    case types.FETCH_MY_ORDERS_REQUEST:
+      return { ...state, myOrdersLoading: true, error: null };
+
+    case types.FETCH_MY_ORDERS_SUCCESS:
+      return {
+        ...state,
+        myOrdersLoading: false,
+        myOrders: action.payload.orders,
+        myOrdersPagination: action.payload.pagination
+      };
+
+    case types.FETCH_MY_ORDERS_FAILURE:
+      return { ...state, myOrdersLoading: false, error: action.payload };
+
+    case types.FETCH_TEAM_ORDERS_REQUEST:
+      return { ...state, teamOrdersLoading: true, error: null };
+
+    case types.FETCH_TEAM_ORDERS_SUCCESS:
+      return {
+        ...state,
+        teamOrdersLoading: false,
+        teamOrders: action.payload.orders,
+        teamOrdersPagination: action.payload.pagination
+      };
+
+    case types.FETCH_TEAM_ORDERS_FAILURE:
+      return { ...state, teamOrdersLoading: false, error: action.payload };
+
+    case types.FETCH_BRANCH_ORDERS_REQUEST:
+      return { ...state, branchOrdersLoading: true, error: null };
+
+    case types.FETCH_BRANCH_ORDERS_SUCCESS:
+      return {
+        ...state,
+        branchOrdersLoading: false,
+        branchOrders: action.payload.orders,
+        branchOrdersPagination: action.payload.pagination
+      };
+
+    case types.FETCH_BRANCH_ORDERS_FAILURE:
+      return { ...state, branchOrdersLoading: false, error: action.payload };
+
+    case types.FETCH_ALL_BRANCH_ORDERS_REQUEST:
+      return { ...state, allBranchOrdersLoading: true, error: null };
+
+    case types.FETCH_ALL_BRANCH_ORDERS_SUCCESS:
+      return {
+        ...state,
+        allBranchOrdersLoading: false,
+        allBranchOrders: action.payload.orders,
+        allBranchOrdersPagination: action.payload.pagination
+      };
+
+    case types.FETCH_ALL_BRANCH_ORDERS_FAILURE:
+      return { ...state, allBranchOrdersLoading: false, error: action.payload };
+
+    case types.FETCH_COMPANY_ORDERS_REQUEST:
+      return { ...state, companyOrdersLoading: true, error: null };
+
+    case types.FETCH_COMPANY_ORDERS_SUCCESS:
+      return {
+        ...state,
+        companyOrdersLoading: false,
+        companyOrders: action.payload.orders,
+        companyOrdersPagination: action.payload.pagination
+      };
+
+    case types.FETCH_COMPANY_ORDERS_FAILURE:
+      return { ...state, companyOrdersLoading: false, error: action.payload };
+
+    case types.FETCH_SHARED_ORDERS_REQUEST:
+      return { ...state, sharedOrdersLoading: true, error: null };
+
+    case types.FETCH_SHARED_ORDERS_SUCCESS:
+      return {
+        ...state,
+        sharedOrdersLoading: false,
+        sharedOrders: action.payload.orders,
+        sharedOrdersPagination: action.payload.pagination
+      };
+
+    case types.FETCH_SHARED_ORDERS_FAILURE:
+      return { ...state, sharedOrdersLoading: false, error: action.payload };
+
+    // ============= ORDER CANCELLATION =============
+
+    case types.CANCEL_ORDER_REQUEST:
+      return { ...state, loading: true, error: null };
+
+    case types.CANCEL_ORDER_SUCCESS:
+      return {
+        ...state,
+        loading: false,
+        successMessage: 'Order cancelled successfully'
+      };
+
+    case types.CANCEL_ORDER_FAILURE:
+      return { ...state, loading: false, error: action.payload };
 
     // ============= UI STATE =============
 

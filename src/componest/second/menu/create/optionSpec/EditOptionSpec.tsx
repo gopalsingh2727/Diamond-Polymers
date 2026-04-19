@@ -47,11 +47,11 @@ const EditOptionSpec = () => {
   const { handleSave, saveState, toast } = useCRUD();
 
   // Get option types and option specs from Redux
-  const { optionTypes, loading: optionTypesLoading } = useSelector(
-    (state: RootState) => state.optionType
+  const { list: optionTypes, loading: optionTypesLoading } = useSelector(
+    (state: RootState) => state.v2.optionType
   );
-  const { currentOptionSpec, optionSpecs, loading: optionSpecsLoading } = useSelector(
-    (state: RootState) => state.optionSpec
+  const { list: optionSpecs, item: currentOptionSpec } = useSelector(
+    (state: RootState) => state.v2.optionSpec
   );
 
   const [name, setName] = useState("");
@@ -359,7 +359,7 @@ const EditOptionSpec = () => {
     handleSave(saveAction, {
       successMessage: 'Option Spec updated successfully',
       onSuccess: () => {
-        navigate('/edit/option-spec-list');
+        navigate('/menu/edit');
       }
     });
   };
@@ -836,7 +836,7 @@ const EditOptionSpec = () => {
             {saveState === 'loading' ? "Updating..." : "Update Option Spec"}
           </button>
           <button
-            onClick={() => navigate('/edit/option-spec-list')}
+            onClick={() => navigate('/menu/edit')}
             style={{
               width: '100%',
               padding: '14px 24px',

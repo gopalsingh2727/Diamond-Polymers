@@ -5,6 +5,114 @@
   margin: 0 auto;
 }
 
+/* ==========================================================================
+   GLOBAL INPUT & DROPDOWN OVERRIDE
+   Matches createNewAccount.css (.createaccount-input / .createaccount-select)
+   pixel-for-pixel: underline-only, 14px font, 10px 0 padding, 36px min-height,
+   appearance:none on selects (no chevron — same as createNewAccount).
+   Does NOT touch checkboxes / radios / file / color / range.
+   ========================================================================== */
+.viewTemplateWizard input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="color"]):not([type="range"]),
+.viewTemplateWizard select,
+.viewTemplateWizard textarea {
+  width: 100% !important;
+  padding: 10px 0 !important;
+  font-size: 14px !important;
+  color: #1f2937 !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  background-image: none !important;
+  border: none !important;
+  border-bottom: 0.5px solid #333 !important;
+  border-radius: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+  box-sizing: border-box !important;
+  min-height: 36px !important;
+  font-family: inherit !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+.viewTemplateWizard input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="color"]):not([type="range"]):hover,
+.viewTemplateWizard select:hover,
+.viewTemplateWizard textarea:hover {
+  border-bottom-color: #6b7280 !important;
+}
+
+.viewTemplateWizard input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="color"]):not([type="range"]):focus,
+.viewTemplateWizard select:focus,
+.viewTemplateWizard textarea:focus {
+  border: none !important;
+  border-bottom: 2px solid #FF6B35 !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.viewTemplateWizard input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="color"]):not([type="range"]):disabled,
+.viewTemplateWizard select:disabled,
+.viewTemplateWizard textarea:disabled {
+  background-color: #f3f4f6 !important;
+  cursor: not-allowed !important;
+  opacity: 0.6 !important;
+}
+
+.viewTemplateWizard textarea {
+  resize: vertical !important;
+  min-height: 60px !important;
+  padding: 10px 4px !important;
+}
+
+/* Select: matches .createaccount-select — appearance:none, no custom chevron */
+.viewTemplateWizard select {
+  cursor: pointer !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+}
+
+/* Formula inputs keep monospace font */
+.viewTemplateWizard input[style*="monospace"],
+.viewTemplateWizard textarea[style*="monospace"],
+.viewTemplateWizard .viewTemplateWizard-formulaInput input,
+.viewTemplateWizard .viewTemplateWizard-formulaBuilder input {
+  font-family: 'Courier New', monospace !important;
+}
+
+/* --------------------------------------------------------------------------
+   Native <select> dropdown menu items (popup option list)
+   Browsers (esp. macOS) limit option styling, but bg/color/font work where
+   supported. createNewAccount has no custom option styling either — these
+   rules just keep the popup readable and on-brand.
+   -------------------------------------------------------------------------- */
+.viewTemplateWizard select option {
+  background-color: #ffffff !important;
+  color: #1f2937 !important;
+  font-size: 14px !important;
+  font-family: inherit !important;
+  padding: 10px 12px !important;
+  border: none !important;
+}
+
+.viewTemplateWizard select option:hover,
+.viewTemplateWizard select option:focus,
+.viewTemplateWizard select option:checked {
+  background-color: #fff5f0 !important;
+  color: #FF6B35 !important;
+  font-weight: 500 !important;
+}
+
+.viewTemplateWizard select option:disabled {
+  color: #9ca3af !important;
+  background-color: #f3f4f6 !important;
+}
+
+.viewTemplateWizard select optgroup {
+  background-color: #f9fafb !important;
+  color: #374151 !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  font-style: normal !important;
+}
+
 .viewTemplateWizard-header {
   text-align: center;
   margin-bottom: 32px;
@@ -114,18 +222,32 @@
 .viewTemplateWizard-formGroup select,
 .viewTemplateWizard-formGroup textarea {
   width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 14px;
-  transition: border-color 0.2s;
+  padding: 8px 0;
+  font-size: 13px;
+  color: #1f2937;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-bottom: 0.5px solid #333;
+  border-radius: 0;
+  outline: none;
+  box-sizing: border-box;
+  min-height: 34px;
+  font-family: inherit;
+  transition: border-color 0.15s ease-in-out;
+}
+
+.viewTemplateWizard-formGroup input:hover,
+.viewTemplateWizard-formGroup select:hover,
+.viewTemplateWizard-formGroup textarea:hover {
+  border-bottom-color: #6b7280;
 }
 
 .viewTemplateWizard-formGroup input:focus,
 .viewTemplateWizard-formGroup select:focus,
 .viewTemplateWizard-formGroup textarea:focus {
+  border: none;
+  border-bottom: 2px solid #FF6B35;
   outline: none;
-  border-color: #FF6B35;
 }
 
 .viewTemplateWizard-formRow {
@@ -1163,24 +1285,31 @@
 .viewTemplateWizard-formGroup select,
 .viewTemplateWizard-formGroup input[type="text"] {
   width: 100%;
-  padding: 8px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 14px;
-  background: white;
+  padding: 6px 0;
+  font-size: 13px;
+  color: #1f2937;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-bottom: 0.5px solid #333;
+  border-radius: 0;
+  outline: none;
+  box-sizing: border-box;
+  min-height: 32px;
 }
 
 .viewTemplateWizard-formGroup select:focus,
 .viewTemplateWizard-formGroup input[type="text"]:focus {
+  border: none;
+  border-bottom: 2px solid #FF6B35;
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  box-shadow: none;
 }
 
 .viewTemplateWizard-formGroup select:disabled {
   background: #f3f4f6;
   color: #9ca3af;
   cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .viewTemplateWizard-iconBtn {

@@ -7,6 +7,98 @@
   min-height: 100vh;
 }
 
+/* ==========================================================================
+   GLOBAL INPUT & DROPDOWN OVERRIDE
+   Matches createNewAccount.css pixel-for-pixel: underline-only, 14px font,
+   10px 0 padding, 36px min-height, appearance:none on selects.
+   Does NOT touch checkboxes / radios / file / color / range.
+   ========================================================================== */
+.operatorEntry input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="color"]):not([type="range"]),
+.operatorEntry select,
+.operatorEntry textarea {
+  width: 100% !important;
+  padding: 10px 0 !important;
+  font-size: 14px !important;
+  color: #1f2937 !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  background-image: none !important;
+  border: none !important;
+  border-bottom: 0.5px solid #333 !important;
+  border-radius: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+  box-sizing: border-box !important;
+  min-height: 36px !important;
+  font-family: inherit !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+.operatorEntry input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="color"]):not([type="range"]):hover,
+.operatorEntry select:hover,
+.operatorEntry textarea:hover {
+  border-bottom-color: #6b7280 !important;
+}
+
+.operatorEntry input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="color"]):not([type="range"]):focus,
+.operatorEntry select:focus,
+.operatorEntry textarea:focus {
+  border: none !important;
+  border-bottom: 2px solid #FF6B35 !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.operatorEntry input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="color"]):not([type="range"]):disabled,
+.operatorEntry select:disabled,
+.operatorEntry textarea:disabled {
+  background-color: #f3f4f6 !important;
+  cursor: not-allowed !important;
+  opacity: 0.6 !important;
+}
+
+.operatorEntry textarea {
+  resize: vertical !important;
+  min-height: 60px !important;
+  padding: 10px 4px !important;
+}
+
+.operatorEntry select {
+  cursor: pointer !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+}
+
+.operatorEntry select option {
+  background-color: #ffffff !important;
+  color: #1f2937 !important;
+  font-size: 14px !important;
+  font-family: inherit !important;
+  padding: 10px 12px !important;
+  border: none !important;
+}
+
+.operatorEntry select option:hover,
+.operatorEntry select option:focus,
+.operatorEntry select option:checked {
+  background-color: #fff5f0 !important;
+  color: #FF6B35 !important;
+  font-weight: 500 !important;
+}
+
+.operatorEntry select option:disabled {
+  color: #9ca3af !important;
+  background-color: #f3f4f6 !important;
+}
+
+.operatorEntry select optgroup {
+  background-color: #f9fafb !important;
+  color: #374151 !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  font-style: normal !important;
+}
+
 /* Header with Order Info */
 .operatorEntry-header {
   background: white;

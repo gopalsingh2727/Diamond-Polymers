@@ -267,6 +267,15 @@ export const materialAPI = {
   delete: (id: string) => crudAPI.delete(`/material/material/${id}`)
 };
 
+// MCP API Keys — for connecting AI models to the MCP server
+export const mcpKeyAPI = {
+  getAll: () => crudAPI.read('/mcp-keys'),
+  create: (data: any) => crudAPI.create('/mcp-keys', data),
+  update: (id: string, data: any) => crudAPI.update(`/mcp-keys/${id}`, data),
+  delete: (id: string) => crudAPI.delete(`/mcp-keys/${id}`),
+  rotate: (id: string) => crudAPI.create(`/mcp-keys/${id}/rotate`, {}),
+};
+
 // External API Key CRUD (Master Admin only)
 export const externalAPIKeyAPI = {
   create: (data: any) => crudAPI.create('/external-api-keys', data),

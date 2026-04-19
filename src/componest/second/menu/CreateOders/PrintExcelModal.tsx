@@ -4,7 +4,6 @@ import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import html2pdf from 'html2pdf.js';
 import { getPrintTypesV2 as getPrintTypes, getPrintTypesByOrderTypeV2 as getPrintTypesByOrderType } from '../../../redux/unifiedV2/printTypeActions';
-import { getExcelExportTypesV2 as getExcelExportTypes } from '../../../redux/unifiedV2/excelExportTypeActions';
 import { sanitizeString } from '../../../../utils/security';
 
 // Print Type interface
@@ -42,8 +41,8 @@ interface PrintExcelModalProps {
   mode: 'print' | 'excel';
   orderData: any;
   orderTypeId?: string;
-  onSendEmail?: (emailAddress: string, content: string, subject: string, attachments?: any[]) => void;
-  onSendWhatsApp?: (phoneNumber: string, message: string, document?: any) => void;
+  onSendEmail?: (emailAddress: string, content: string, subject: string, attachments?: any[], sender?: 'branch' | 'global') => void;
+  onSendWhatsApp?: (phoneNumber: string, message: string, document?: any, sender?: 'branch' | 'global') => void;
 }
 
 const PrintExcelModal: React.FC<PrintExcelModalProps> = ({
@@ -76,6 +75,9 @@ const PrintExcelModal: React.FC<PrintExcelModalProps> = ({
   const [showSendOptions, setShowSendOptions] = useState(false);
   const [sendEmail, setSendEmail] = useState('');
   const [sendWhatsApp, setSendWhatsApp] = useState('');
+  // 'branch' = use branch config, 'global' = use global config
+  const [emailSender, setEmailSender] = useState<'branch' | 'global'>('branch');
+  const [whatsappSender, setWhatsappSender] = useState<'branch' | 'global'>('branch');
 
   // Fetch print types
   useEffect(() => {
@@ -124,21 +126,70 @@ const PrintExcelModal: React.FC<PrintExcelModalProps> = ({
   const fetchExcelTypes = async () => {
     setLoadingExcelTypes(true);
     try {
-      const result = await dispatch(getExcelExportTypes());
-
-
-      // Handle both old format (result.excelExportTypes) and new format (result.data or result directly)
-      const excelTypesData = result?.excelExportTypes || result?.data || (Array.isArray(result) ? result : []);
-
-      if (excelTypesData && excelTypesData.length > 0) {
-        setExcelTypes(excelTypesData);
-        const defaultType = excelTypesData.find((et: ExcelExportType) => et.isDefault);
-        setSelectedExcelType(defaultType || excelTypesData[0]);
-      } else {
-        setExcelTypes([]);
-      }
+      // Built-in default export types — always available, no backend needed
+      const defaults: ExcelExportType[] = [
+        {
+          _id: 'default-full',
+          typeName: 'Full Order Export',
+          typeCode: 'FULL',
+          description: 'All order details including customer info, items, and specs',
+          sheetName: 'Order',
+          fileNamePrefix: 'Order',
+          isDefault: true,
+          includeHeaders: true,
+          columns: [
+            { key: 'orderId', label: 'Order ID', selected: true },
+            { key: 'date', label: 'Date', selected: true },
+            { key: 'customerName', label: 'Customer Name', selected: true },
+            { key: 'phone', label: 'Phone', selected: true },
+            { key: 'email', label: 'Email', selected: true },
+            { key: 'orderType', label: 'Order Type', selected: true },
+            { key: 'overallStatus', label: 'Status', selected: true },
+            { key: 'priority', label: 'Priority', selected: true },
+            { key: 'totalItems', label: 'Total Items', selected: true },
+            { key: 'notes', label: 'Notes', selected: true },
+          ]
+        },
+        {
+          _id: 'default-items',
+          typeName: 'Items Only Export',
+          typeCode: 'ITEMS',
+          description: 'Only item/option details with specifications',
+          sheetName: 'Items',
+          fileNamePrefix: 'Items',
+          isDefault: false,
+          includeHeaders: true,
+          columns: [
+            { key: 'orderId', label: 'Order ID', selected: true },
+            { key: 'customerName', label: 'Customer', selected: true },
+            { key: 'allOptions', label: 'Items', selected: true },
+            { key: 'totalItems', label: 'Total Items', selected: true },
+            { key: 'totalQuantity', label: 'Total Qty', selected: true },
+          ]
+        },
+        {
+          _id: 'default-delivery',
+          typeName: 'Delivery Challan Export',
+          typeCode: 'DELIVERY',
+          description: 'Customer and delivery information',
+          sheetName: 'Delivery',
+          fileNamePrefix: 'Delivery',
+          isDefault: false,
+          includeHeaders: true,
+          columns: [
+            { key: 'orderId', label: 'Order ID', selected: true },
+            { key: 'date', label: 'Date', selected: true },
+            { key: 'customerName', label: 'Customer Name', selected: true },
+            { key: 'phone', label: 'Phone', selected: true },
+            { key: 'address', label: 'Address', selected: true },
+            { key: 'allOptions', label: 'Items', selected: true },
+            { key: 'totalQuantity', label: 'Total Qty', selected: true },
+          ]
+        }
+      ];
+      setExcelTypes(defaults);
+      setSelectedExcelType(defaults[0]);
     } catch (error) {
-
       setExcelTypes([]);
     } finally {
       setLoadingExcelTypes(false);
@@ -658,6 +709,16 @@ const PrintExcelModal: React.FC<PrintExcelModalProps> = ({
     }
   };
 
+  // Pre-fill send fields when send options opens
+  const openSendOptions = () => {
+    const customer = orderData?.customer || orderData?.account || {};
+    if (!sendEmail && customer.email) setSendEmail(customer.email);
+    if (!sendWhatsApp && (customer.phone || customer.mobile || customer.whatsapp)) {
+      setSendWhatsApp(customer.whatsapp || customer.phone || customer.mobile || '');
+    }
+    setShowSendOptions(!showSendOptions);
+  };
+
   // Handle send via email
   const handleSendEmail = async () => {
     const customer = orderData?.customer || orderData?.account || {};
@@ -926,7 +987,7 @@ const PrintExcelModal: React.FC<PrintExcelModalProps> = ({
     }
 
     if (onSendEmail) {
-      onSendEmail(emailAddress, content, subject, attachments);
+      onSendEmail(emailAddress, content, subject, attachments, emailSender);
     }
 
     setShowSendOptions(false);
@@ -944,10 +1005,17 @@ const PrintExcelModal: React.FC<PrintExcelModalProps> = ({
     }
 
     const message = `Order ${orderData?.orderId || ''} - 27 Infinity Manufacturing`;
-    let document: any = null;
+    let docPayload: any = null;
 
     if (mode === 'print') {
-      // Generate PDF for WhatsApp
+      const content = generatePrintHtml(selectedPrintType || {
+        _id: 'default',
+        typeName: 'Default',
+        typeCode: 'DEFAULT',
+        paperSize: 'A4',
+        orientation: 'portrait'
+      });
+
       try {
         const printType = selectedPrintType || { paperSize: 'A4', orientation: 'portrait' };
         const orientation = (printType.orientation === 'landscape' ? 'landscape' : 'portrait') as 'portrait' | 'landscape';
@@ -963,15 +1031,6 @@ const PrintExcelModal: React.FC<PrintExcelModalProps> = ({
           }
         };
 
-        const content = generatePrintHtml(selectedPrintType || {
-          _id: 'default',
-          typeName: 'Default',
-          typeCode: 'DEFAULT',
-          paperSize: 'A4',
-          orientation: 'portrait'
-        });
-
-        // Create iframe for rendering
         const iframe = document.createElement('iframe');
         iframe.style.position = 'absolute';
         iframe.style.left = '-9999px';
@@ -994,28 +1053,28 @@ const PrintExcelModal: React.FC<PrintExcelModalProps> = ({
 
           document.body.removeChild(iframe);
 
-          // Convert blob to base64
           const reader = new FileReader();
           const base64Promise = new Promise<string>((resolve) => {
             reader.onloadend = () => {
               const base64data = reader.result as string;
-              const base64 = base64data.split(',')[1];
-              resolve(base64);
+              resolve(base64data.split(',')[1]);
             };
             reader.readAsDataURL(pdfBlob);
           });
 
           const base64 = await base64Promise;
 
-          document = {
+          docPayload = {
             filename: `Order_${orderData?.orderId || 'print'}.pdf`,
             content: base64,
             contentType: 'application/pdf'
           };
+        } else {
+          throw new Error('Failed to access iframe document');
         }
-      } catch (error) {
-        console.error('Error generating PDF for WhatsApp:', error);
-        alert('Failed to generate PDF for WhatsApp');
+      } catch (error: any) {
+        console.error('Error generating PDF for WhatsApp:', error?.message, error);
+        alert(`Failed to generate PDF for WhatsApp: ${error?.message || 'Unknown error'}`);
         return;
       }
     } else if (mode === 'excel') {
@@ -1141,7 +1200,7 @@ const PrintExcelModal: React.FC<PrintExcelModalProps> = ({
           new Uint8Array(excelBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
         );
 
-        document = {
+        docPayload = {
           filename: `${exportType?.fileNamePrefix || 'Order'}_${orderData?.orderId || 'export'}.xlsx`,
           content: base64,
           contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
@@ -1153,9 +1212,9 @@ const PrintExcelModal: React.FC<PrintExcelModalProps> = ({
       }
     }
 
-    if (onSendWhatsApp && document) {
-      await onSendWhatsApp(phone, message, document);
-    } else if (document) {
+    if (onSendWhatsApp && docPayload) {
+      await onSendWhatsApp(phone, message, docPayload, whatsappSender);
+    } else if (docPayload) {
       alert('WhatsApp functionality not configured. Please contact administrator.');
     } else {
       // Fallback to text message only (old behavior)
@@ -1404,78 +1463,86 @@ const PrintExcelModal: React.FC<PrintExcelModalProps> = ({
               </h4>
 
               {/* Email */}
-              <div style={{ marginBottom: '12px' }}>
-                <label style={{ display: 'block', fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>
-                  Email Address
-                </label>
+              <div style={{ marginBottom: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <label style={{ fontSize: '12px', color: '#6b7280' }}>
+                    EMAIL ADDRESS
+                  </label>
+                  {/* Branch / Global toggle */}
+                  <div style={{ display: 'flex', background: '#e5e7eb', borderRadius: '6px', padding: '2px', gap: '2px' }}>
+                    {(['branch', 'global'] as const).map(opt => (
+                      <button key={opt} onClick={() => setEmailSender(opt)} style={{
+                        padding: '3px 10px', fontSize: '11px', fontWeight: 500, border: 'none', borderRadius: '4px', cursor: 'pointer',
+                        background: emailSender === opt ? '#6366f1' : 'transparent',
+                        color: emailSender === opt ? 'white' : '#6b7280'
+                      }}>
+                        {opt === 'branch' ? 'Branch' : 'Global'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <input
                   type="email"
                   value={sendEmail}
                   onChange={(e) => setSendEmail(e.target.value)}
                   placeholder={customer.email || 'Enter email address'}
-                  style={{
-                    flex: 1,
-                    padding: '10px 12px',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '6px',
-                    fontSize: '14px'
-                  }} />
-
-                  <button
-                  onClick={handleSendEmail}
-                  disabled={!sendEmail && !customer.email}
-                  style={{
+                  style={{ flex: 1, padding: '10px 12px', border: '1px solid #e5e7eb', borderRadius: '6px', fontSize: '14px' }} />
+                  <button onClick={handleSendEmail} disabled={!sendEmail && !customer.email} style={{
                     padding: '10px 16px',
                     background: sendEmail || customer.email ? '#FF6B35' : '#e5e7eb',
                     color: sendEmail || customer.email ? 'white' : '#9ca3af',
-                    border: 'none',
-                    borderRadius: '6px',
+                    border: 'none', borderRadius: '6px',
                     cursor: sendEmail || customer.email ? 'pointer' : 'not-allowed',
-                    fontSize: '13px',
-                    fontWeight: 500
-                  }}>
-
-                    Send
-                  </button>
+                    fontSize: '13px', fontWeight: 500
+                  }}>Send</button>
+                </div>
+                <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '4px' }}>
+                  Sending via: <strong style={{ color: emailSender === 'branch' ? '#6366f1' : '#f59e0b' }}>
+                    {emailSender === 'branch' ? 'Branch Email' : 'Global Email'}
+                  </strong>
                 </div>
               </div>
 
               {/* WhatsApp */}
               <div>
-                <label style={{ display: 'block', fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>
-                  WhatsApp Number
-                </label>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <label style={{ fontSize: '12px', color: '#6b7280' }}>
+                    WHATSAPP NUMBER
+                  </label>
+                  {/* Branch / Global toggle */}
+                  <div style={{ display: 'flex', background: '#e5e7eb', borderRadius: '6px', padding: '2px', gap: '2px' }}>
+                    {(['branch', 'global'] as const).map(opt => (
+                      <button key={opt} onClick={() => setWhatsappSender(opt)} style={{
+                        padding: '3px 10px', fontSize: '11px', fontWeight: 500, border: 'none', borderRadius: '4px', cursor: 'pointer',
+                        background: whatsappSender === opt ? '#25D366' : 'transparent',
+                        color: whatsappSender === opt ? 'white' : '#6b7280'
+                      }}>
+                        {opt === 'branch' ? 'Branch' : 'Global'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <input
                   type="tel"
                   value={sendWhatsApp}
                   onChange={(e) => setSendWhatsApp(e.target.value)}
                   placeholder={customer.phone || customer.mobile || 'Enter phone number'}
-                  style={{
-                    flex: 1,
-                    padding: '10px 12px',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '6px',
-                    fontSize: '14px'
-                  }} />
-
-                  <button
-                  onClick={handleSendWhatsApp}
-                  disabled={!sendWhatsApp && !customer.phone && !customer.mobile}
-                  style={{
+                  style={{ flex: 1, padding: '10px 12px', border: '1px solid #e5e7eb', borderRadius: '6px', fontSize: '14px' }} />
+                  <button onClick={handleSendWhatsApp} disabled={!sendWhatsApp && !customer.phone && !customer.mobile} style={{
                     padding: '10px 16px',
                     background: sendWhatsApp || customer.phone || customer.mobile ? '#25D366' : '#e5e7eb',
                     color: sendWhatsApp || customer.phone || customer.mobile ? 'white' : '#9ca3af',
-                    border: 'none',
-                    borderRadius: '6px',
+                    border: 'none', borderRadius: '6px',
                     cursor: sendWhatsApp || customer.phone || customer.mobile ? 'pointer' : 'not-allowed',
-                    fontSize: '13px',
-                    fontWeight: 500
-                  }}>
-
-                    Send
-                  </button>
+                    fontSize: '13px', fontWeight: 500
+                  }}>Send</button>
+                </div>
+                <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '4px' }}>
+                  Sending via: <strong style={{ color: whatsappSender === 'branch' ? '#25D366' : '#f59e0b' }}>
+                    {whatsappSender === 'branch' ? 'Branch WhatsApp' : 'Global WhatsApp'}
+                  </strong>
                 </div>
               </div>
             </div>
@@ -1492,7 +1559,7 @@ const PrintExcelModal: React.FC<PrintExcelModalProps> = ({
           background: '#f9fafb'
         }}>
           <button
-            onClick={() => setShowSendOptions(!showSendOptions)}
+            onClick={openSendOptions}
             style={{
               padding: '10px 16px',
               border: '1px solid #e5e7eb',

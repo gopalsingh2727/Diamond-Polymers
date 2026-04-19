@@ -4,11 +4,104 @@
   flex-direction: column;
   align-items: center;
   width: 100%;
-  background-color: #f5f7fa;
-  border-radius: 12px;
-  padding: 20px;
+  background-color: #f9fafb;
+  border-radius: 0;
+  padding: 16px;
   min-height: 100vh;
   box-sizing: border-box;
+}
+
+/* ==========================================================================
+   GLOBAL INPUT & DROPDOWN OVERRIDE
+   Matches createNewAccount.css (.createaccount-input / .createaccount-select)
+   pixel-for-pixel: underline-only, 14px font, 10px 0 padding, 36px min-height,
+   appearance:none on selects (no chevron — same as createNewAccount).
+   Does NOT touch checkboxes / radios / file / color / range.
+   ========================================================================== */
+.createMachineCss input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="color"]):not([type="range"]),
+.createMachineCss select,
+.createMachineCss textarea {
+  width: 100% !important;
+  padding: 6px 2px !important;
+  margin: 0 !important;
+  font-size: 13px !important;
+  color: #1f2937 !important;
+  background: transparent !important;
+  background-image: none !important;
+  border: none !important;
+  border-bottom: 1.5px solid #d1d5db !important;
+  border-radius: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+  box-sizing: border-box !important;
+  font-family: inherit !important;
+  transition: border-color 0.2s ease !important;
+}
+
+.createMachineCss input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="color"]):not([type="range"]):hover,
+.createMachineCss select:hover,
+.createMachineCss textarea:hover {
+  border-bottom-color: #6b7280 !important;
+}
+
+.createMachineCss input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="color"]):not([type="range"]):focus,
+.createMachineCss select:focus,
+.createMachineCss textarea:focus {
+  border: none !important;
+  border-bottom: 1.5px solid #FF6B35 !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.createMachineCss input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="color"]):not([type="range"]):disabled,
+.createMachineCss select:disabled,
+.createMachineCss textarea:disabled {
+  background-color: #f3f4f6 !important;
+  cursor: not-allowed !important;
+  opacity: 0.6 !important;
+}
+
+.createMachineCss textarea {
+  resize: vertical !important;
+  min-height: 60px !important;
+  padding: 6px 2px !important;
+}
+
+.createMachineCss select {
+  cursor: pointer !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+}
+
+.createMachineCss select option {
+  background-color: #ffffff !important;
+  color: #1f2937 !important;
+  font-size: 14px !important;
+  font-family: inherit !important;
+  padding: 10px 12px !important;
+  border: none !important;
+}
+
+.createMachineCss select option:hover,
+.createMachineCss select option:focus,
+.createMachineCss select option:checked {
+  background-color: #fff5f0 !important;
+  color: #FF6B35 !important;
+  font-weight: 500 !important;
+}
+
+.createMachineCss select option:disabled {
+  color: #9ca3af !important;
+  background-color: #f3f4f6 !important;
+}
+
+.createMachineCss select optgroup {
+  background-color: #f9fafb !important;
+  color: #374151 !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  font-style: normal !important;
 }
 
 /* Title Row with Import Button */
@@ -16,41 +109,41 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 1rem;
-  margin-bottom: 8px;
-  border-bottom: 1px solid #ccc;
-  padding-bottom: 6px;
+  padding: 0;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e5e7eb;
   width: 100%;
 }
 
 .import-accounts-title-btn {
-  padding: 8px 16px;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
+  height: 28px;
+  padding: 0 12px;
+  background: #f3f4f6;
+  color: #1f2937;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 11px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
-  display: flex;
+  transition: background 0.15s ease;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
   white-space: nowrap;
+  box-shadow: none;
 }
 
 .import-accounts-title-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.35);
+  background: #e5e7eb;
+  transform: none;
+  box-shadow: none;
 }
 
 .import-accounts-title-btn:disabled {
-  background: #9ca3af;
+  background: #f3f4f6;
+  color: #9ca3af;
   cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
 }
 
 /* Import Summary Modal */
@@ -245,25 +338,26 @@
 .CreateMachineForm {
   display: flex;
   flex-direction: column;
-  width: 45%;
-  max-width: 1200px;
-  padding: 4rem;
+  width: 100%;
+  max-width: 520px;
+  padding: 16px 20px;
   background-color: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  margin: 20px 0;
+  border-radius: 8px;
+  box-shadow: none;
+  border: 1px solid #e5e7eb;
+  margin: 0;
   box-sizing: border-box;
 }
 
 /* Form Title */
 .CreateMachineFormTitle {
-  font-size: 28px;
-  font-weight: 700;
-  color: #2c3e50;
-  text-align: center;
-  margin-bottom: 30px;
-  padding-bottom: 15px;
-  border-bottom: 3px solid #3498db;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+  text-align: left;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 /* Success Message */
@@ -286,24 +380,26 @@
 
 /* Form Groups */
 .CreateMachineFormGroup {
-  margin-bottom: 25px;
+  margin-bottom: 14px;
   display: flex;
   flex-direction: column;
 }
 
 .CrareMachineform-group {
-  margin-bottom: 25px;
+  margin-bottom: 14px;
   display: flex;
   flex-direction: column;
 }
 
 /* Form Labels */
 .CreateMachineFormLabel {
+  display: block;
+  font-size: 10px;
   font-weight: 600;
-  color: #34495e;
-  margin-bottom: 8px;
-  font-size: 14px;
-  letter-spacing: 0.5px;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 2px;
 }
 
 /* Form Inputs */
@@ -406,24 +502,23 @@
 
 /* Export Config Button */
 .CreateMachineExportConfigBtn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  background-color: #27ae60;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
+  gap: 6px;
+  height: 28px;
+  padding: 0 12px;
+  background: #f3f4f6;
+  color: #1f2937;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: background 0.15s ease;
 }
 
 .CreateMachineExportConfigBtn:hover {
-  background-color: #229954;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+  background: #e5e7eb;
 }
 
 /* Template Selection */
@@ -439,25 +534,24 @@
 }
 
 .CreateMachineTemplateBtn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 18px;
-  background-color: #ffffff;
-  color: #3498db;
-  border: 2px solid #3498db;
-  border-radius: 8px;
-  font-size: 14px;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  background: #ffffff;
+  color: #FF6B35;
+  border: 1px solid #FF6B35;
+  border-radius: 4px;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
 .CreateMachineTemplateBtn:hover {
-  background-color: #3498db;
+  background: #FF6B35;
   color: white;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
 }
 
 /* Column Management */
@@ -611,25 +705,24 @@
 }
 
 .CreateMachineAddColumnBtn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 10px 16px;
-  background-color: #3498db;
+  height: 30px;
+  padding: 0 12px;
+  background: #FF6B35;
   color: white;
   border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: background 0.15s ease;
   white-space: nowrap;
 }
 
 .CreateMachineAddColumnBtn:hover {
-  background-color: #2980b9;
-  transform: translateY(-1px);
-  box-shadow: 0 3px 8px rgba(52, 152, 219, 0.3);
+  background: #E55A2B;
 }
 
 /* Formula Management */
@@ -864,47 +957,49 @@
 /* Form Actions */
 .CreateMachineFormActions {
   display: flex;
-  justify-content: center;
-  margin-top: 30px;
-  padding-top: 20px;
-  border-top: 2px solid #ecf0f1;
+  justify-content: flex-end;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
 }
 
 .CreateMachineSaveButton {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 10px;
-  padding: 15px 30px;
-  background: linear-gradient(135deg, #FF6B35, #e55a2b);
+  gap: 6px;
+  height: 32px;
+  padding: 0 16px;
+  background: #FF6B35;
   color: white;
   border: none;
-  border-radius: 8px;
-  font-size: 16px;
+  border-radius: 4px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
-  min-width: 200px;
-  justify-content: center;
-}
-
-.CreateMachineSaveButton:hover:not(:disabled) {
-  background: linear-gradient(135deg, #e55a2b, #d14a1b);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(255, 107, 53, 0.3);
-}
-
-.CreateMachineSaveButton:disabled {
-  background: linear-gradient(135deg, #bdc3c7, #95a5a6);
-  cursor: not-allowed;
-  transform: none;
+  transition: background 0.15s ease;
   box-shadow: none;
 }
 
+.CreateMachineSaveButton:hover:not(:disabled) {
+  background: #E55A2B;
+}
+
+.CreateMachineSaveButton:disabled {
+  background: #d1d5db;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
 /* Responsive Design */
+@media (max-width: 1024px) {
+  .CreateMachineForm {
+    max-width: 100%;
+  }
+}
+
 @media (max-width: 768px) {
   .CreateMachineForm {
-    padding: 20px;
-    margin: 10px;
+    padding: 12px 14px;
   }
 
   .CreateMachineSizeInputs {
@@ -940,16 +1035,14 @@
 }
 
 @media (max-width: 480px) {
-  .CreateMachineFormTitle {
-    font-size: 24px;
+  .CreateMachineForm {
+    padding: 10px 12px;
+    border-radius: 6px;
   }
 
-  .CreateMachineSectionTitle {
-    font-size: 18px;
-  }
-
-  .CreateMachineSubsectionTitle {
-    font-size: 16px;
+  .CreateMachineSaveButton {
+    width: 100%;
+    justify-content: center;
   }
 
   .CreateMachineColumnItem {
@@ -1309,21 +1402,23 @@
 }
 
 .machineTemplateAddBtn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: #3b82f6;
+  height: 30px;
+  padding: 0 12px;
+  background: #FF6B35;
   color: white;
   border: none;
-  border-radius: 6px;
-  font-size: 0.875rem;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.15s ease;
 }
 
 .machineTemplateAddBtn:hover {
-  background: #2563eb;
+  background: #E55A2B;
 }
 
 /* Template Form */
@@ -1390,8 +1485,8 @@
 .machineTemplateFormField input:focus,
 .machineTemplateFormField select:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+  border-color: #FF6B35;
+  box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.1);
 }
 
 .machineTemplateFormSection {
@@ -1471,8 +1566,8 @@
 
 .machineTemplateColumnType {
   font-size: 0.75rem;
-  background: #dbeafe;
-  color: #1d4ed8;
+  background: #fff5f0;
+  color: #FF6B35;
   padding: 0.125rem 0.5rem;
   border-radius: 4px;
 }
@@ -1539,7 +1634,7 @@
 }
 
 .machineTemplateCheckbox input {
-  accent-color: #3b82f6;
+  accent-color: #FF6B35;
 }
 
 /* Total Item */
@@ -1583,21 +1678,25 @@
 }
 
 .machineTemplateSaveBtn {
-  padding: 0.5rem 1.25rem;
-  background: #3b82f6;
+  height: 30px;
+  padding: 0 14px;
+  background: #FF6B35;
   color: white;
   border: none;
-  border-radius: 6px;
-  font-size: 0.875rem;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
+  transition: background 0.15s ease;
 }
 
 .machineTemplateSaveBtn:hover {
-  background: #2563eb;
+  background: #E55A2B;
 }
 
 .machineTemplateSaveBtn:disabled {
-  background: #9ca3af;
+  background: #d1d5db;
+  color: #6b7280;
   cursor: not-allowed;
 }
 
@@ -1643,8 +1742,8 @@
 
 .machineTemplateListItemType {
   font-size: 0.75rem;
-  background: #e0e7ff;
-  color: #3730a3;
+  background: #fff5f0;
+  color: #FF6B35;
   padding: 0.125rem 0.5rem;
   border-radius: 4px;
 }

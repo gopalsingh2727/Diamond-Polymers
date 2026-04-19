@@ -17,6 +17,8 @@ interface CustomerData {
   state: string;
   imageUrl: string;
   gstNumber: string;
+  categoryId: string;
+  parentCompanyId: string;
 }
 
 export interface CustomerNameRef {
@@ -57,7 +59,9 @@ const CustomerName = forwardRef<CustomerNameRef, CustomerNameProps>(({ initialDa
     pinCode: '',
     state: '',
     imageUrl: '',
-    gstNumber: ''
+    gstNumber: '',
+    categoryId: '',
+    parentCompanyId: ''
   });
 
   const [status, setStatus] = useState<string>('Wait for Approval');
@@ -98,7 +102,9 @@ const CustomerName = forwardRef<CustomerNameRef, CustomerNameProps>(({ initialDa
         pinCode: customer.pinCode || '',
         state: customer.state || '',
         imageUrl: customer.imageUrl || '',
-        gstNumber: customer.gstNumber || ''
+        gstNumber: customer.gstNumber || '',
+        categoryId: customer.categoryId?._id || customer.categoryId || initialData.customerCategoryId || '',
+        parentCompanyId: customer.parentCompanyId?._id || customer.parentCompanyId || initialData.customerParentCompanyId || ''
       });
 
       // Set status from initial data
@@ -144,7 +150,9 @@ const CustomerName = forwardRef<CustomerNameRef, CustomerNameProps>(({ initialDa
       pinCode: account.pinCode || "",
       state: account.state || "",
       imageUrl: account.imageUrl || "",
-      gstNumber: account.gstNumber || ""
+      gstNumber: account.gstNumber || "",
+      categoryId: account.categoryId?._id || account.categoryId || "",
+      parentCompanyId: account.parentCompanyId?._id || account.parentCompanyId || ""
     });
     setShowCustomerSuggestions(false);
     // Notify parent that customer was selected (for auto-focus on next field)
@@ -312,6 +320,14 @@ const CustomerName = forwardRef<CustomerNameRef, CustomerNameProps>(({ initialDa
             type="hidden"
             name="customerId"
             value={customerData._id} />
+          <input
+            type="hidden"
+            name="customerCategoryId"
+            value={customerData.categoryId || ''} />
+          <input
+            type="hidden"
+            name="customerParentCompanyId"
+            value={customerData.parentCompanyId || ''} />
 
           <input
             name="address"

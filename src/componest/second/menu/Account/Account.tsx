@@ -1,7 +1,9 @@
 import { BackButton } from "../../../allCompones/BackButton";
 import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import { useFormDataCache } from "../Edit/hooks/useFormDataCache";
+import { getCustomerCategoriesV2 } from "../../../redux/unifiedV2/customerCategoryActions";
 import './Account.css';
 
 // Quick Send Modal Component
@@ -125,18 +127,36 @@ export interface AccountData {
   pinCode: string;
   email: string;
   branchId?: string;
+  categoryId?: string;
   orderTypes?: string[];
   totalOrders?: number;
 }
 
 const Account: React.FC = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   // 🚀 OPTIMIZED: Get data from cached form data (no API calls!)
   const { customers: rawAccounts, loading, error } = useFormDataCache();
 
+  // Customer categories from Redux
+  const customerCategories: any[] = useSelector((state: any) => state.unifiedV2?.customerCategory?.items || []);
+
+  useEffect(() => {
+    dispatch(getCustomerCategoriesV2() as any);
+  }, [dispatch]);
+
+  const categoryMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    customerCategories.forEach((cat: any) => {
+      map[cat._id] = cat.name;
+    });
+    return map;
+  }, [customerCategories]);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -172,6 +192,7 @@ const Account: React.FC = () => {
       pinCode: customer.pinCode || '',
       email: customer.email || '',
       branchId: customer.branchId || '',
+      categoryId: customer.categoryId || '',
       orderTypes: [], // Note: Order types not available in customer data
       totalOrders: 0  // Note: Order count not available in customer data
     }));
@@ -179,9 +200,15 @@ const Account: React.FC = () => {
 
   const displayedAccounts = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
-    if (!query) return accounts || [];
+    let filtered = accounts || [];
 
-    return (accounts || []).filter((acc) =>
+    if (selectedCategory) {
+      filtered = filtered.filter((acc) => acc.categoryId === selectedCategory);
+    }
+
+    if (!query) return filtered;
+
+    return filtered.filter((acc) =>
     acc.companyName?.toLowerCase().includes(query) ||
     acc.firstName?.toLowerCase().includes(query) ||
     acc.lastName?.toLowerCase().includes(query) ||
@@ -196,7 +223,7 @@ const Account: React.FC = () => {
     acc.address1?.toLowerCase().includes(query) ||
     acc.address2?.toLowerCase().includes(query)
     );
-  }, [searchQuery, accounts]);
+  }, [searchQuery, selectedCategory, accounts]);
 
   // Paginated accounts
   const totalPages = Math.max(1, Math.ceil(displayedAccounts.length / itemsPerPage));
@@ -205,10 +232,10 @@ const Account: React.FC = () => {
     return displayedAccounts.slice(startIndex, startIndex + itemsPerPage);
   }, [displayedAccounts, currentPage, itemsPerPage]);
 
-  // Reset page when search changes
+  // Reset page when search or category filter changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery]);
+  }, [searchQuery, selectedCategory]);
 
   useEffect(() => {
     if (selectedIndex >= 0) {
@@ -285,19 +312,7 @@ const Account: React.FC = () => {
             <h1 className="text-3xl font-bold text-gray-800 mb-2">Search Accounts</h1>
             <p className="text-gray-600">Find companies and contacts</p>
           </div>
-          <button
-            onClick={() => navigate('/menu/ExportReport')}
-            className="flex items-center gap-2 px-4 py-2 bg-[#FF6B35] text-white rounded-lg hover:bg-[#E55A2B] transition-colors font-medium"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-              <polyline points="14 2 14 8 20 8" />
-              <line x1="16" y1="13" x2="8" y2="13" />
-              <line x1="16" y1="17" x2="8" y2="17" />
-              <polyline points="10 9 9 9 8 9" />
-            </svg>
-            Export Report
-          </button>
+        
         </div>
 
         <div className="relative mb-2">
@@ -308,8 +323,33 @@ const Account: React.FC = () => {
             onKeyDown={handleKeyDown}
             placeholder="Search by company, name, email, phone..."
             className="w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-[#FF6B35] transition-all" />
-
         </div>
+
+        {customerCategories.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-3">
+            <button
+              onClick={() => setSelectedCategory("")}
+              className={`px-3 py-1 rounded-full text-sm font-medium border transition-colors ${
+                !selectedCategory
+                  ? 'bg-[#FF6B35] border-[#FF6B35] text-white'
+                  : 'bg-white border-gray-300 text-gray-600 hover:border-[#FF6B35] hover:text-[#FF6B35]'
+              }`}>
+              All
+            </button>
+            {customerCategories.map((cat: any) => (
+              <button
+                key={cat._id}
+                onClick={() => setSelectedCategory(selectedCategory === cat._id ? "" : cat._id)}
+                className={`px-3 py-1 rounded-full text-sm font-medium border transition-colors ${
+                  selectedCategory === cat._id
+                    ? 'bg-[#FF6B35] border-[#FF6B35] text-white'
+                    : 'bg-white border-gray-300 text-gray-600 hover:border-[#FF6B35] hover:text-[#FF6B35]'
+                }`}>
+                {cat.name}
+              </button>
+            ))}
+          </div>
+        )}
 
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
           <div className="px-4 py-2 border-b bg-gray-50 rounded-t-lg sticky top-0 z-10">
@@ -340,6 +380,11 @@ const Account: React.FC = () => {
                     <div className="flex items-baseline flex-wrap gap-2">
                       <h3 className="text-lg font-semibold text-gray-800">{acc.companyName}</h3>
                       {acc.state && <span className="text-xs px-2 py-1 bg-orange-100 text-[#FF6B35] rounded-full">{acc.state}</span>}
+                      {acc.categoryId && categoryMap[acc.categoryId] && (
+                        <span className="text-xs px-2 py-1 bg-blue-50 text-blue-600 rounded-full border border-blue-200">
+                          {categoryMap[acc.categoryId]}
+                        </span>
+                      )}
                     </div>
                     <p className="text-gray-600 mt-1 font-medium">{getFullName(acc)}</p>
 

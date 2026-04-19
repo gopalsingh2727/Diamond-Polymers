@@ -48,6 +48,10 @@ interface Specification {
   totalFormula?: string; // Formula for totals row calculation
   referenceItems?: ReferenceItem[]; // For refer type - multiple reference items
   visible?: boolean; // Whether this specification is visible (default true)
+  public?: boolean;
+  usedForFormulas?: boolean;
+  orderTypeOnly?: boolean;
+  query?: boolean;
 }
 
 // Evaluate formula for TOTALS row

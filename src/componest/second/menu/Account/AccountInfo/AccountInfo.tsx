@@ -9,6 +9,7 @@ import { BackButton } from "../../../../allCompones/BackButton";
 import { getAccountOrders, fetchOrderDetails } from "../../../../redux/oders/OdersActions";
 import { AppDispatch } from "../../../../../store";
 import { useDaybookUpdates } from "../../../../../hooks/useWebSocket"; // ✅ WebSocket real-time updates
+import { getDashboardTypesV2 as getDashboardTypes } from "../../../../redux/dashbroadtype/dashboardTypeActions";
 import "../../Oders/indexAllOders.css"; // ✅ Import All Orders styling
 import "../../Edit/EditMachineType/EditMachineyType.css"; // ✅ Import Table styling
 import "./accountInfo.css"; // ✅ Import AccountInfo specific styling
@@ -157,6 +158,11 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
   const [refreshTrigger, setRefreshTrigger] = useState(0); // ✅ ADDED: Force refresh trigger
   const [showAccountModal, setShowAccountModal] = useState(false); // ✅ Account info modal
   const [editLoading, setEditLoading] = useState(false); // ✅ Loading state for edit
+  const [showTemplates, setShowTemplates] = useState(false); // ✅ Template overlay
+  const [selectedTemplate, setSelectedTemplate] = useState<any>(null); // ✅ Selected template for preview
+  const [showTemplateCode, setShowTemplateCode] = useState(false); // ✅ Show template source code
+  const [templateCodeTab, setTemplateCodeTab] = useState<'header' | 'body' | 'footer' | 'css' | 'js'>('body');
+  const [templateSearch, setTemplateSearch] = useState(''); // ✅ Template search
 
   // Refs - must be declared before useEffect
   const scrollWrapperRef = useRef<HTMLDivElement>(null);
@@ -619,6 +625,7 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
             th { background: #eee; font-weight: bold; }
             .total { margin-top: 10px; font-weight: bold; text-align: right; }
           </style>
+
         </head>
         <body>
           <div class="header">
@@ -883,8 +890,120 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
     };
   };
 
+  // ── Template System ───────────────────────────────────────────────────────
+  const dashboardTypeState = useSelector(
+    (state: RootState) => (state as any).v2?.dashboardType ?? (state as any).dashboardType ?? {},
+  );
+  const rawTplList = dashboardTypeState?.list;
+  const allTemplates: any[] = Array.isArray(rawTplList)
+    ? rawTplList
+    : Array.isArray(rawTplList?.data)
+    ? rawTplList.data
+    : Array.isArray(rawTplList?.data?.data)
+    ? rawTplList.data.data
+    : [];
+  const tplLoading = dashboardTypeState?.loading || false;
+
+  useEffect(() => {
+    if (showTemplates && allTemplates.length === 0 && !tplLoading) {
+      dispatch(getDashboardTypes());
+    }
+  }, [showTemplates, allTemplates.length, tplLoading, dispatch]);
+
+  const filteredTemplates = allTemplates.filter((dt: any) =>
+    (dt.typeName || '').toLowerCase().includes(templateSearch.toLowerCase()) ||
+    (dt.typeCode || '').toLowerCase().includes(templateSearch.toLowerCase()) ||
+    (dt.category || '').toLowerCase().includes(templateSearch.toLowerCase()),
+  );
+
+  // Mustache renderer
+  const renderMustache = (tpl: string, ctx: Record<string, any>): string => {
+    if (!tpl) return '';
+    let result = tpl.replace(
+      /\{\{#(\w+)\}\}([\s\S]*?)\{\{\/\1\}\}/g,
+      (_m: string, key: string, inner: string) => {
+        const arr = ctx[key];
+        if (!Array.isArray(arr) || arr.length === 0) return '';
+        return arr.map((item: any, index: number) => {
+          let row = inner;
+          row = row.replace(/\{\{@index\}\}/g, String(index + 1));
+          row = row.replace(/\{\{([\w\s]+)\}\}/g, (_m2: string, k: string) => {
+            const v = item[k.trim()];
+            return v != null ? String(v) : '';
+          });
+          return row;
+        }).join('');
+      },
+    );
+    return result.replace(/\{\{([\w\s]+)\}\}/g, (_m: string, key: string) => {
+      const v = ctx[key.trim()];
+      return v == null ? '' : String(v);
+    });
+  };
+
+  // Build template context from account orders
+  const buildTemplateHtml = (dt: any) => {
+    const now = new Date();
+    const orders = filteredOrders || [];
+    const statusCts: Record<string, number> = {};
+    orders.forEach((o: any) => { const s = o.overallStatus || o.status || 'unknown'; statusCts[s] = (statusCts[s] || 0) + 1; });
+
+    const ctx: Record<string, any> = {
+      orders,
+      totalOrders: orders.length,
+      statusCounts: statusCts,
+      companyName: accountData?.companyName || companyName,
+      accountName: `${accountData?.firstName || ''} ${accountData?.lastName || ''}`.trim(),
+      accountPhone: accountData?.phone1 || accountData?.phone || '',
+      accountEmail: accountData?.email || '',
+      accountState: accountData?.state || '',
+      accountAddress: [accountData?.address1, accountData?.address2, accountData?.state, accountData?.pinCode].filter(Boolean).join(', '),
+      branchName,
+      generatedAt: now.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+      generatedTime: now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+      dateFrom: fromDate || 'All',
+      dateTo: toDate || 'All',
+      periodLabel: fromDate ? `${fromDate} – ${toDate || 'Now'}` : 'All Time',
+    };
+
+    return `<!DOCTYPE html><html><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'Segoe UI',sans-serif;}${dt.css || ''}</style></head><body>
+${renderMustache(dt.htmlHeader || '', ctx)}${renderMustache(dt.htmlBody || '', ctx)}${renderMustache(dt.htmlFooter || '', ctx)}
+<script>${dt.js || ''}<\/script></body></html>`;
+  };
+
+  // Print from template
+  const handleTemplatePrint = (dt: any) => {
+    const html = buildTemplateHtml(dt);
+    const pf = document.createElement('iframe');
+    pf.style.display = 'none';
+    document.body.appendChild(pf);
+    const doc = pf.contentDocument || pf.contentWindow?.document;
+    if (!doc) return;
+    doc.open(); doc.write(html); doc.close();
+    setTimeout(() => {
+      try { pf.contentWindow?.focus(); pf.contentWindow?.print(); } catch {}
+      setTimeout(() => document.body.removeChild(pf), 1000);
+    }, 400);
+  };
+
+  // Download HTML from template
+  const handleTemplateDownload = (dt: any) => {
+    const html = buildTemplateHtml(dt);
+    const blob = new Blob([html], { type: 'text/html' });
+    import('file-saver').then(({ saveAs: s }) => s(blob, `${dt.typeCode}_${accountData?.companyName || 'account'}.html`));
+  };
+
+  const TCAT_COLORS: Record<string, { bg: string; color: string }> = {
+    customer: { bg: '#fce7f3', color: '#be185d' }, account: { bg: '#ffedd5', color: '#c2410c' },
+    analytics: { bg: '#dbeafe', color: '#1d4ed8' }, finance: { bg: '#fef9c3', color: '#a16207' },
+    operations: { bg: '#dcfce7', color: '#15803d' }, production: { bg: '#ede9fe', color: '#7c3aed' },
+    management: { bg: '#ffedd5', color: '#c2410c' }, other: { bg: '#f3f4f6', color: '#4b5563' },
+  };
+
   return (
     <div className="all-orders-page">
+     
       {/* Header */}
       <div className="all-orders-header">
         <div className="all-orders-header__left">
@@ -901,6 +1020,18 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
               <line x1="12" y1="16" x2="12" y2="12" />
               <line x1="12" y1="8" x2="12.01" y2="8" />
             </svg>
+          </button>
+            <button
+            onClick={() => setShowTemplates(true)}
+            className="action-btn action-btn--template"
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#FF6B35', color: 'white', border: 'none', borderRadius: '6px', padding: '8px 14px', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+              <line x1="3" y1="9" x2="21" y2="9" />
+              <line x1="9" y1="21" x2="9" y2="9" />
+            </svg>
+            Templates
           </button>
           <button className="action-btn action-btn--export" onClick={handleExportExcel} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
@@ -1189,6 +1320,142 @@ const AccountInfo: React.FC<AccountInfoProps> = ({ fromDate: propFromDate, toDat
           </div>
         )}
       </div>
+
+      {/* ══════════ Templates Overlay ══════════ */}
+      {showTemplates && (
+        selectedTemplate ? (
+          /* ── Template Preview ── */
+          <div style={{ position: 'fixed', inset: 0, background: '#0f172a', display: 'flex', flexDirection: 'column', zIndex: 100 }}>
+            {/* Preview Toolbar */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 18px', background: '#1e293b', borderBottom: '1px solid #334155', flexWrap: 'wrap', gap: 8, flexShrink: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                <button onClick={() => { setSelectedTemplate(null); setShowTemplateCode(false); }} style={{ padding: '6px 14px', background: '#334155', border: 'none', borderRadius: 7, color: '#94a3b8', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>← Back</button>
+                <span style={{ fontWeight: 700, fontSize: 15, color: '#f1f5f9' }}>{selectedTemplate.typeName}</span>
+                <span style={{ color: '#475569', fontFamily: 'monospace', fontSize: 13 }}>{selectedTemplate.typeCode}</span>
+                <span style={{ padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 600, background: 'rgba(255,107,53,0.15)', color: '#FF6B35', border: '1px solid rgba(255,107,53,0.3)' }}>
+                  {filteredOrders.length} orders
+                </span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <button onClick={() => handleTemplatePrint(selectedTemplate)} style={{ padding: '6px 13px', background: '#334155', border: '1px solid #475569', borderRadius: 7, color: '#cbd5e1', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Print</button>
+                <button onClick={() => handleTemplateDownload(selectedTemplate)} style={{ padding: '6px 13px', background: '#334155', border: '1px solid #475569', borderRadius: 7, color: '#cbd5e1', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Download HTML</button>
+                <button onClick={() => setShowTemplateCode(v => !v)} style={{ padding: '6px 13px', background: showTemplateCode ? '#FF6B35' : '#334155', border: `1px solid ${showTemplateCode ? '#FF6B35' : '#475569'}`, borderRadius: 7, color: showTemplateCode ? '#fff' : '#cbd5e1', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>{showTemplateCode ? 'Hide Code' : 'View Code'}</button>
+                <button onClick={() => { setSelectedTemplate(null); setShowTemplates(false); setShowTemplateCode(false); }} style={{ padding: '6px 13px', background: '#ef4444', border: 'none', borderRadius: 7, color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Close</button>
+              </div>
+            </div>
+
+            {/* Preview Body */}
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+              {showTemplateCode ? (
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#0f172a' }}>
+                  <div style={{ display: 'flex', gap: 0, padding: '0 16px', background: '#1e293b', borderBottom: '1px solid #334155', flexShrink: 0, overflowX: 'auto' }}>
+                    {(['header', 'body', 'footer', 'css', 'js'] as const).map(tab => (
+                      <button key={tab} onClick={() => setTemplateCodeTab(tab)} style={{ padding: '10px 18px', background: 'none', border: 'none', borderBottom: `2px solid ${templateCodeTab === tab ? '#FF6B35' : 'transparent'}`, color: templateCodeTab === tab ? '#FF6B35' : '#64748b', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                        {tab.toUpperCase()}{tab === 'header' && selectedTemplate.htmlHeader ? ' *' : ''}{tab === 'body' && selectedTemplate.htmlBody ? ' *' : ''}{tab === 'footer' && selectedTemplate.htmlFooter ? ' *' : ''}{tab === 'css' && selectedTemplate.css ? ' *' : ''}{tab === 'js' && selectedTemplate.js ? ' *' : ''}
+                      </button>
+                    ))}
+                  </div>
+                  <pre style={{ flex: 1, overflow: 'auto', padding: '20px 24px', margin: 0, fontFamily: "'Cascadia Code','Fira Code','Consolas',monospace", fontSize: 13, lineHeight: 1.7, color: '#e2e8f0', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                    {templateCodeTab === 'header' && (selectedTemplate.htmlHeader || '(empty)')}
+                    {templateCodeTab === 'body' && (selectedTemplate.htmlBody || '(empty)')}
+                    {templateCodeTab === 'footer' && (selectedTemplate.htmlFooter || '(empty)')}
+                    {templateCodeTab === 'css' && (selectedTemplate.css || '(empty)')}
+                    {templateCodeTab === 'js' && (selectedTemplate.js || '(empty)')}
+                  </pre>
+                </div>
+              ) : (selectedTemplate.htmlHeader || selectedTemplate.htmlBody || selectedTemplate.htmlFooter) ? (
+                <iframe
+                  title="template-preview"
+                  style={{ flex: 1, width: '100%', border: 'none', background: '#fff' }}
+                  srcDoc={buildTemplateHtml(selectedTemplate)}
+                  sandbox="allow-scripts allow-same-origin"
+                />
+              ) : (
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, color: '#64748b' }}>
+                  <div style={{ fontSize: 48 }}>&#128196;</div>
+                  <div style={{ fontWeight: 700, color: '#94a3b8' }}>No template content</div>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          /* ── Template List ── */
+          <div style={{ position: 'fixed', inset: 0, background: '#f8fafc', display: 'flex', flexDirection: 'column', zIndex: 100 }}>
+            {/* List Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 24px', background: '#fff', borderBottom: '1px solid #e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.05)', flexWrap: 'wrap', gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                <button onClick={() => setShowTemplates(false)} style={{ padding: '6px 14px', background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: 7, color: '#475569', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>← Back</button>
+                <span style={{ fontSize: 18, fontWeight: 800, color: '#0f172a' }}>Templates</span>
+                <span style={{ background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 20, padding: '4px 13px', fontSize: 12, fontWeight: 600, color: '#c2410c' }}>
+                  {accountData?.companyName} · {filteredOrders.length} orders
+                </span>
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={() => dispatch(getDashboardTypes())} style={{ padding: '7px 16px', background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: 8, fontSize: 13, fontWeight: 600, color: '#374151', cursor: 'pointer' }}>↻ Refresh</button>
+                <button onClick={() => setShowTemplates(false)} style={{ padding: '7px 16px', background: '#ef4444', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, color: '#fff', cursor: 'pointer' }}>Close</button>
+              </div>
+            </div>
+
+            {/* Search */}
+            <div style={{ padding: '12px 24px', background: '#fff', borderBottom: '1px solid #f1f5f9' }}>
+              <input
+                style={{ width: '100%', maxWidth: 360, padding: '9px 14px', border: '1.5px solid #e2e8f0', borderRadius: 8, fontSize: 14, color: '#0f172a', outline: 'none', background: '#f8fafc', boxSizing: 'border-box' as const }}
+                placeholder="Search templates..."
+                value={templateSearch}
+                onChange={e => setTemplateSearch(e.target.value)}
+              />
+            </div>
+
+            {/* Loading */}
+            {tplLoading && (
+              <div style={{ textAlign: 'center', padding: 60, color: '#64748b' }}>
+                <div style={{ width: 40, height: 40, border: '4px solid #e2e8f0', borderTopColor: '#FF6B35', borderRadius: '50%', animation: 'spin .8s linear infinite', margin: '0 auto' }} />
+                <div style={{ marginTop: 16 }}>Loading templates...</div>
+              </div>
+            )}
+
+            {/* Empty */}
+            {!tplLoading && filteredTemplates.length === 0 && (
+              <div style={{ textAlign: 'center' as const, padding: 60, color: '#94a3b8' }}>
+                <div style={{ fontSize: 48 }}>&#128196;</div>
+                <div style={{ marginTop: 8, fontWeight: 600 }}>{templateSearch ? 'No templates match' : 'No templates available'}</div>
+              </div>
+            )}
+
+            {/* Template Grid */}
+            {!tplLoading && filteredTemplates.length > 0 && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16, padding: 24, overflowY: 'auto' as const, flex: 1 }}>
+                {filteredTemplates.map((dt: any) => {
+                  const cat = TCAT_COLORS[dt.category || ''] || TCAT_COLORS.other;
+                  const parts = [dt.htmlHeader ? 'H' : '', dt.htmlBody ? 'B' : '', dt.htmlFooter ? 'F' : '', dt.css ? 'CSS' : '', dt.js ? 'JS' : ''].filter(Boolean).join(' · ');
+                  return (
+                    <div
+                      key={dt._id ?? dt.typeCode}
+                      onClick={() => setSelectedTemplate(dt)}
+                      style={{ background: '#fff', border: '1.5px solid #e2e8f0', borderRadius: 12, padding: '18px 20px', cursor: 'pointer', transition: 'transform .15s, box-shadow .15s', display: 'flex', flexDirection: 'column' as const, gap: 8, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-3px)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 24px rgba(0,0,0,0.1)'; (e.currentTarget as HTMLElement).style.borderColor = '#FF6B35'; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'none'; (e.currentTarget as HTMLElement).style.boxShadow = '0 1px 4px rgba(0,0,0,0.06)'; (e.currentTarget as HTMLElement).style.borderColor = '#e2e8f0'; }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                        <div style={{ fontSize: 16, fontWeight: 700, color: '#0f172a', lineHeight: 1.3 }}>{dt.typeName || dt.typeCode}</div>
+                        {dt.category && (
+                          <span style={{ padding: '3px 9px', borderRadius: 20, fontSize: 11, fontWeight: 700, textTransform: 'capitalize' as const, background: cat.bg, color: cat.color }}>{dt.category}</span>
+                        )}
+                      </div>
+                      <div style={{ fontSize: 11, color: '#94a3b8', fontFamily: 'monospace', fontWeight: 600 }}>{dt.typeCode}</div>
+                      {dt.description && <div style={{ fontSize: 12, color: '#64748b', lineHeight: 1.5 }}>{dt.description}</div>}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4, paddingTop: 10, borderTop: '1px solid #f1f5f9' }}>
+                        <span style={{ fontSize: 11, color: '#94a3b8', fontFamily: 'monospace' }}>{parts || 'Empty'}</span>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: '#FF6B35' }}>Open Preview →</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )
+      )}
 
       {/* Account Info Modal */}
       {showAccountModal && (

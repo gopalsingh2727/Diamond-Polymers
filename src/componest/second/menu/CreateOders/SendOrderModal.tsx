@@ -51,6 +51,8 @@ const SendOrderModal: React.FC<SendOrderModalProps> = ({
   const [sending, setSending] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [emailSender, setEmailSender] = useState<'branch' | 'global'>('branch');
+  const [whatsappSender, setWhatsappSender] = useState<'branch' | 'global'>('branch');
 
   // Template states
   const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>([]);
@@ -202,7 +204,8 @@ const SendOrderModal: React.FC<SendOrderModalProps> = ({
           </div>
         </div>`,
         text: emailBody,
-        fromName: '27 Infinity'
+        fromName: '27 Infinity',
+        useSender: emailSender
       });
 
       setSuccess('Email sent successfully!');
@@ -237,7 +240,7 @@ const SendOrderModal: React.FC<SendOrderModalProps> = ({
       await crudAPI.create('/send-whatsapp', {
         to: phone,
         message: whatsappMessage,
-        branchId: branchId
+        useSender: whatsappSender
       });
 
       setSuccess('WhatsApp sent successfully!');
@@ -487,6 +490,24 @@ const SendOrderModal: React.FC<SendOrderModalProps> = ({
                 </select>
               </div>
 
+              {/* Sender selector */}
+              <div style={{ marginBottom: '16px', padding: '10px 14px', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px', fontWeight: 500 }}>SEND FROM</div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  {(['branch', 'global'] as const).map(opt => (
+                    <button key={opt} onClick={() => setEmailSender(opt)} style={{
+                      flex: 1, padding: '8px', fontSize: '13px', fontWeight: 500,
+                      border: emailSender === opt ? '2px solid #FF6B35' : '2px solid #e5e7eb',
+                      borderRadius: '6px', cursor: 'pointer',
+                      background: emailSender === opt ? '#fff7ed' : 'white',
+                      color: emailSender === opt ? '#FF6B35' : '#6b7280'
+                    }}>
+                      {opt === 'branch' ? '🏢 Branch Email' : '🌐 Global Email'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div style={{ marginBottom: '16px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
                   <label style={{ fontSize: '14px', fontWeight: 500, color: '#374151' }}>
@@ -624,6 +645,24 @@ const SendOrderModal: React.FC<SendOrderModalProps> = ({
                     </option>
                   ))}
                 </select>
+              </div>
+
+              {/* Sender selector */}
+              <div style={{ marginBottom: '16px', padding: '10px 14px', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px', fontWeight: 500 }}>SEND FROM</div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  {(['branch', 'global'] as const).map(opt => (
+                    <button key={opt} onClick={() => setWhatsappSender(opt)} style={{
+                      flex: 1, padding: '8px', fontSize: '13px', fontWeight: 500,
+                      border: whatsappSender === opt ? '2px solid #25D366' : '2px solid #e5e7eb',
+                      borderRadius: '6px', cursor: 'pointer',
+                      background: whatsappSender === opt ? '#f0fdf4' : 'white',
+                      color: whatsappSender === opt ? '#25D366' : '#6b7280'
+                    }}>
+                      {opt === 'branch' ? '🏢 Branch WhatsApp' : '🌐 Global WhatsApp'}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div style={{ marginBottom: '16px' }}>

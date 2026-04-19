@@ -24,7 +24,7 @@ function buildJsonBlob(orders: any[], fromDate: string, toDate: string): Blob {
   const header = `{\n  "total": ${orders.length},\n  "fromDate": ${JSON.stringify(fromDate)},\n  "toDate": ${JSON.stringify(toDate)},\n  "orders": [\n`;
   const footer = `\n  ]\n}`;
 
-  const parts: (string | Uint8Array)[] = [header];
+  const parts: BlobPart[] = [header];
 
   for (let i = 0; i < orders.length; i += CHUNK_SIZE) {
     const chunk = orders.slice(i, i + CHUNK_SIZE);

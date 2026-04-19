@@ -379,9 +379,10 @@
   max-width: 500px;
   margin: 0 auto;
   background: white;
-  padding: 20px 30px;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 16px 20px;
+  border-radius: 8px;
+  box-shadow: none;
+  border: 1px solid #e5e7eb;
 }
 
 /* Full width for orderTypeContainer */
@@ -393,7 +394,7 @@
 /* Form Title */
 .CreateForm h2,
 .CreateForm .form-title {
-  font-size: 1.25rem;
+  font-size: 14px;
   font-weight: 600;
   color: #1f2937;
   text-align: center;
@@ -429,10 +430,12 @@
 /* Labels */
 .CreateForm label {
   display: block;
-  font-size: 13px;
-  font-weight: 500;
-  color: #374151;
-  margin-bottom: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 2px;
 }
 
 /* ============================================
@@ -519,25 +522,26 @@
 .CreateForm .save-button,
 .CreateForm .submit-button,
 .CreateForm [type="submit"] {
-  padding: 12px 32px;
-  font-size: 15px;
+  height: 32px;
+  padding: 0 16px;
+  font-size: 12px;
   font-weight: 600;
   color: white;
-  background: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%);
+  background: #FF6B35;
   border: none;
-  border-radius: 8px;
+  border-radius: 4px;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.25);
+  transition: background 0.15s ease;
+  box-shadow: none;
 }
 
 .CreateForm button:hover,
 .CreateForm .save-button:hover,
 .CreateForm .submit-button:hover,
 .CreateForm [type="submit"]:hover {
-  background: linear-gradient(135deg, #E55A2B 0%, #d44a1b 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(255, 107, 53, 0.35);
+  background: #E55A2B;
+  transform: none;
+  box-shadow: none;
 }
 
 .CreateForm button:active,
@@ -824,7 +828,7 @@
 
 /* Compact Labels */
 .CreateForm label {
-  font-size: 12px !important;
+  font-size: 10px !important;
   margin-bottom: 2px;
 }
 
@@ -851,13 +855,14 @@
   min-height: 50px;
 }
 
-/* Compact Buttons */
+/* Compact Buttons - keep flat, just reduce font */
 .CreateForm button,
 .CreateForm .save-button,
 .CreateForm .submit-button,
 .CreateForm [type="submit"] {
-  padding: 6px 16px;
-  font-size: 10px;
+  height: 30px;
+  padding: 0 14px;
+  font-size: 11px;
 }
 
 /* Compact Button Container */

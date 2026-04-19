@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
-import { getExcelExportTypesV2 as getExcelExportTypes, getExcelExportTypesByOptionTypeV2 as getExcelExportTypesByOptionType } from '../../componest/redux/unifiedV2/excelExportTypeActions';
-
 // Define available export columns
 export interface ExportColumn {
   key: string;
@@ -158,30 +156,8 @@ const ExcelExportSelector: React.FC<ExcelExportSelectorProps> = ({
   }, [isOpen, optionTypeId]);
 
   const fetchExportTypes = async () => {
-    setLoadingTypes(true);
-    try {
-      let result;
-      if (optionTypeId) {
-        result = await dispatch(getExcelExportTypesByOptionType(optionTypeId));
-      } else {
-        result = await dispatch(getExcelExportTypes());
-      }
-
-      if (result?.excelExportTypes && result.excelExportTypes.length > 0) {
-        setSavedExportTypes(result.excelExportTypes);
-        // Auto-select default export type if available
-        const defaultType = result.excelExportTypes.find((t: SavedExportType) => t.isDefault);
-        if (defaultType) {
-          applyExportType(defaultType);
-        }
-      }
-    } catch (error) {
-
-      // Fall back to default templates
-      setSavedExportTypes([]);
-    } finally {
-      setLoadingTypes(false);
-    }
+    setLoadingTypes(false);
+    setSavedExportTypes([]);
   };
 
   // Apply a saved export type

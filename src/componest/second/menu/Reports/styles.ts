@@ -32,7 +32,7 @@ export const S: Record<string, React.CSSProperties> = {
   searchInput:     { flex: 1, border: 'none', outline: 'none', fontSize: 14, color: '#0f172a', background: 'transparent', minWidth: 0 },
   clearBtn:        { background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: 14 },
   grid:            { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16, padding: 24 },
-  card:            { background: '#fff', border: '1.5px solid #e2e8f0', borderRadius: 12, padding: '18px 20px', cursor: 'pointer', transition: 'transform .15s, box-shadow .15s, border-color .15s', display: 'flex', flexDirection: 'column', gap: 8, boxShadow: '0 1px 4px rgba(0,0,0,.06)' },
+  card:            { background: '#fff', border: '1.5px solid #e2e8f0', borderRadius: 12, padding: '18px 20px', cursor: 'pointer', transition: 'transform .15s, box-shadow .15s, border-color .15s', display: 'flex', flexDirection: 'column', gap: 8, boxShadow: '0 1px 4px rgba(0,0,0,.06)', position: 'relative', overflow: 'hidden' },
   cardTopRow:      { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   cardName:        { fontSize: 16, fontWeight: 700, color: '#0f172a', lineHeight: 1.3 },
   cardCode:        { fontSize: 11, color: '#94a3b8', fontFamily: 'monospace', fontWeight: 600 },

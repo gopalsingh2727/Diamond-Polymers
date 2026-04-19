@@ -423,7 +423,7 @@ const CreateMachine: React.FC<CreateMachineProps> = ({ initialData, onCancel, on
           </div>
         ) : (
           <div className="createaccount-title-row">
-            <h2 id="CreateMachineFormTitle" className="CreateMachineFormTitle" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px', flex: 1, justifyContent: 'center' }}>
+            <h2 id="CreateMachineFormTitle" className="CreateMachineFormTitle" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               Create Machine
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '8px', verticalAlign: 'middle', color: '#FF6B35' }}>
                 <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
